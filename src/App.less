@@ -1,0 +1,1105 @@
+@import '~antd/lib/style/themes/default.less';
+@import '~antd/dist/antd.less'; // Import Ant Design styles by less entry
+
+@font-face {
+  font-family: "FF Oxide Solid";
+  src: url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.eot");
+  src: url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.eot?#iefix") format("embedded-opentype"),
+        url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.woff2") format("woff2"),
+        url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.woff") format("woff"),
+        url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.ttf") format("truetype"),
+        url("//db.onlinewebfonts.com/t/bc30adee89b44a44a5cfdff676aef0fe.svg#FF Oxide Solid") format("svg");
+}
+
+// Main colors
+@color-primary: #B7001C;
+@color-primary-highlight: #FF0017;
+@color_secondary: #212121;
+
+@color-selection: #F0F0F0;
+@color-incoming-transaction: #4E9800;
+@color-outgoing-transaction: #E02020;
+
+// GRAY TO WHITE SCALE
+@color-dark: #313131;
+@color-fgdefault: #373A3C;
+@color-gray_dark: #373A3C;
+@color-dark_active: #474747;
+@color-skin_gray_text: #727272;
+@color-gray_normal: #AFAFAF;
+@color-lightgray: #C2C2C2;
+@color-dimmed: #C9C9C9;
+@color-borders: #DEDEDE;
+@color-blue-gray: #ECEFF1;
+@color-smoke: #EEEEEE;
+@color-item-hover: #F4F4F4;
+@color-card-header: #F7F7F7;
+@color-white_smoke: #F8F8F8;
+@color-almost_white: #FCFCFC;
+
+@color-black-02: rgba(0,0,0,0.02);
+@color-black-10: rgba(0,0,0,0.10);
+@color-black-15: rgba(0,0,0,0.15);
+@color-black-20: rgba(0,0,0,0.20);
+@color-black-85: rgba(0,0,0,0.85);
+
+// Properties
+@custom-border-radius: 10px;
+
+::selection {
+  color: #fff;
+  background: @color-primary-highlight;
+}
+
+// Layout
+#root {
+  height: 100%;
+}
+.App {
+  height: 100%;
+}
+.ant-layout {
+  background-color: #FFFFFF;
+  height: 100%;
+}
+main.ant-layout-content {
+  height: 100%;
+}
+.ant-layout-content {
+  display: flex;
+  overflow: auto;
+}
+.ant-layout-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  min-height: 42px;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+
+.app-logo {
+  height: 100%;
+  width: auto;
+  max-height: 42px;
+}
+
+// Buttons
+
+// Primary rounded corners
+.ant-btn.ant-btn-primary {
+  color: white !important;
+  border: none;
+  font-weight: 500;
+  &:not(:disabled) {
+    background-color: @color-primary !important;
+    &:hover {
+      background-color: @color-primary-highlight !important;
+    }
+  }
+  &:disabled,
+  &:disabled:hover,
+  &:disabled:focus,
+  &:disabled:active {
+    background-color: @color-gray_normal;
+  }
+  &.ant-btn-round {
+    border-radius: @custom-border-radius;
+  }
+}
+
+// Text button shaded with rounded corners
+.ant-btn.ant-btn-text.ant-btn-shaded {
+  background-color: @color-black-10;
+  border: none;
+  padding: 10px 12px;
+  font-weight: 500;
+  height: 40px;
+  &:hover {
+    border: none;
+    background-color: @color-black-15;
+  }
+  &.ant-btn-round {
+    border-radius: @custom-border-radius;
+  }
+}
+.ant-btn.ant-btn-text.ant-btn-flat {
+  background-color: transparent;
+  border: none;
+  padding: 10px 12px;
+  font-weight: 500;
+  height: 40px;
+  &:hover {
+    border: none;
+    background-color: rgba(128, 128, 128, 0.1);
+  }
+  &.ant-btn-round {
+    border: none;
+    border-radius: @custom-border-radius;
+  }
+}
+
+// Stroked
+.ant-btn.ant-btn-ghost:hover,
+.ant-btn.ant-btn-ghost:focus {
+  color: inherit;
+  border-color: @color-primary-highlight;
+}
+.ant-btn.ant-btn-ghost:active {
+  color: inherit;
+  border-color: @color-primary;
+}
+.ant-btn.ant-btn-circle {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border: none !important;
+  &:hover,
+  &:focus,
+  &:active {
+    color: initial;
+    border: none !important;
+  }
+}
+.ant-btn:not(.ant-btn-ghost):not(.ant-btn-circle) {
+  &:hover,
+  &:focus,
+  &:active {
+    color: initial;
+    border-color: @color-primary-highlight;
+  }
+}
+
+button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
+  border-radius: @custom-border-radius;
+  padding: 10px 10px;
+  height: auto;
+  margin: 0 !important;
+  > img {
+    background-color: rgba(128,128,128,0.2);
+    padding: 4px;
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+    margin-top: -2px;
+    border-radius: 5px;
+  }
+}
+
+.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-sm.mean-icon-button {
+  padding: 2px 5px;
+  display: inline-flex;
+  border-radius: @custom-border-radius;
+  .mean-svg-icons {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    line-height: 20px;
+    margin-right: 4px;
+    align-self: center;
+  }
+  .icon-button-text {
+    align-self: center;
+    font-size: 90%;
+  }
+}
+
+// Select
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: @color-primary-highlight !important;
+}
+.ant-select.ant-select-focused:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  border-color: @color-primary;
+  box-shadow: 0 0 0 2px rgba(183, 0, 27, 0.2);
+}
+.ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  color: @color-black-85;
+  font-weight: 600;
+  background-color: @color-selection;
+}
+
+body {
+  --row-highlight: @background-color-base;
+}
+
+.app-title {
+  font-family: "FF Oxide Solid";
+  font-style: normal;
+  font-weight: 300;
+  letter-spacing: 0px;
+
+  h2 {
+    font-size: 20px;
+    margin: 0px;
+  }
+}
+
+.App-Bar {
+  height: 52px;
+  align-self: center;
+  justify-content: space-between;
+  -webkit-box-pack: justify;
+  -webkit-box-align: center;
+  flex-wrap: wrap;
+  position: fixed;
+  top: 0px;
+  padding: 0 1rem;
+  background-color: transparent;
+  line-height: 1;
+  z-index: 2;
+  .ant-menu-horizontal {
+    border-bottom-color: transparent;
+    background-color: transparent;
+    line-height: inherit;
+    font-size: 16px;
+    margin: 0 10px;
+
+    .ant-menu-item {
+      margin: 0 10px;
+      color: lightgrey;
+      height: 35px;
+      line-height: 35px;
+      border-width: 0px !important;
+    }
+
+    .ant-menu-item:hover {
+      color: white;
+      border-width: 0px !important;
+    }
+
+    .ant-menu-item-selected {
+      font-weight: bold;
+    }
+  }
+}
+
+footer.ant-layout-footer {
+  padding: 2px 0;
+  font-size: 10px;
+  color: #727272;
+  background: transparent;
+}
+
+.App-Bar-left {
+  box-sizing: border-box;
+  margin: 0px;
+  min-width: 0px;
+  display: flex;
+  padding: 0px;
+  -webkit-box-align: center;
+  align-items: center;
+  width: fit-content;
+}
+
+.App-Bar-right {
+  display: flex;
+  flex-direction: row;
+  -webkit-box-align: center;
+  align-items: center;
+  justify-self: flex-end;
+}
+.App-Bar-right > .ant-btn-primary.ant-btn-round {
+  margin-right: 8px;
+}
+
+// Dropdown menus
+.ant-dropdown-menu-item .mean-svg-icons {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.3rem;
+  width: 20px;
+  height: 20px;
+}
+.ant-dropdown-menu-item .mean-svg-icons ~ .menu-item-text {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+// Account / Connection info
+.connection-and-account-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background-color: @color-black-10;
+  border-radius: @custom-border-radius;
+  margin-right: 8px;
+  height: 40px;
+  padding: 2px 4px;
+  .connected-network {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    margin-right: 8px;
+    margin-left: 4px;
+    .chain-logo {
+      align-items: center;
+      justify-content: center;
+      display: inline-flex;
+      margin-right: 4px;
+      > img {
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+      }
+    }
+    .chain-name {
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+  }
+  .wallet-wrapper {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    background-color: @color-black-85;
+    color: #FFFFFF;
+    border-radius: @custom-border-radius;
+    height: 100%;
+    .wallet-key {
+      font-size: 1rem;
+      font-weight: 600;
+      background-color: @color-primary;
+      border-radius: @custom-border-radius;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 6px;
+      margin-left: -1px;
+      cursor: pointer;
+    }
+    .wallet-balance {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0 6px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      .effective-amount {
+        margin-right: 4px;
+      }
+      .transaction-legend {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 4px;
+        &.incoming {
+          color: @color-incoming-transaction;
+        }
+        &.outgoing {
+          color: @color-outgoing-transaction;
+        }
+      }
+    }
+  }
+}
+
+.ant-tabs-nav-scroll {
+  display: flex;
+  justify-content: center;
+}
+
+em {
+  font-weight: bold;
+  font-style: normal;
+  text-decoration: none;
+}
+
+.ant-notification {
+  a {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.card-fill {
+  height: 100%;
+}
+
+.card-row {
+  box-sizing: border-box;
+  margin: 5px 0px;
+  min-width: 0px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  padding: 0px;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+
+  .card-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    box-sizing: border-box;
+    text-align: left;
+    margin: 0px;
+    min-width: 0px;
+    font-size: 14px;
+  }
+
+  .left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .small {
+    font-size: 11px;
+  }
+}
+
+.token-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid grey;
+  padding: 0px 10px;
+  margin: 5px 0px;
+}
+
+.token-balance {
+  margin-left: auto;
+  margin-right: 5px;
+  color: @text-color-secondary;
+}
+
+[class="ant-layout-header"] {
+  height: 16px !important;
+}
+
+@media only screen and (max-width: 600px) {
+  .exchange-card {
+    width: 360px;
+  }
+}
+
+// Content
+.interaction-area {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-top: 120px;
+  -webkit-box-align: center;
+  align-items: center;
+  flex: 1 1 0%;
+  z-index: 1;
+  .place-transaction-box {
+    position: relative;
+    max-width: 480px;
+    width: 100%;
+    background: #FFFFFF;
+    border-radius: @custom-border-radius;
+    border: 2px solid @color-black-10;
+    padding: 1rem;
+    > .ant-btn-primary.ant-btn-round {
+      padding: 14px;
+      height: auto;
+    }
+  }
+}
+
+.transaction-field {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.25rem 0.5rem;
+  border-style: solid;
+  border-width: 2px;
+  border-color: @color-black-10;
+  border-radius: @custom-border-radius;
+  margin-bottom: 20px;
+  &:hover {
+    background-color: @color-black-02;
+    border-color: @color-black-20;
+  }
+  .transaction-field-row {
+    display: flex;
+    position: relative;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    &:first-child {
+      position: absolute;
+      top: 4px;
+      width: calc(100% - 1rem);
+    }
+    &:last-child {
+      position: absolute;
+      bottom: 4px;
+      width: calc(100% - 1rem);
+    }
+    &.main-row {
+      height: 38px;
+    }
+    .input-left {
+      flex: 1 1 auto;
+    }
+    .field-label-left,
+    .field-label-right {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: gray;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .field-select-left {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    .token-amount-input {
+      width: 100%;
+      position: relative;
+      color: rgb(0, 0, 0);
+      font-weight: 500;
+      outline: none;
+      border: none;
+      background-color: transparent;
+      font-size: 24px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0px;
+      appearance: textfield;
+    }
+    .token-right {
+      flex: 0 0 auto;
+      margin-left: 0.5rem;
+      .token-group {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        .token-max {
+          margin-right: 8px;
+          min-width: 30px;
+          padding: 3px 6px;
+          color: #fff;
+          font-weight: 800;
+          font-size: 10px;
+          line-height: 11px;
+          white-space: nowrap;
+          text-align: center;
+          background: @color-primary;
+          border-radius: @custom-border-radius;
+        }
+        .token-selector {
+          display: flex;
+          flex-direction: row;
+          justify-content: flex-start;
+          align-items: center;
+          padding-right: 24px;
+          .token-icon {
+            border-radius: 50%;
+            overflow: hidden;
+            width: 20px;
+            height: 20px;
+            justify-content: center;
+            align-items: center;
+            display: inline-flex;
+            margin-right: 8px;
+          }
+          .token-symbol {
+            font-size: 24px;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+    .field-caret-down {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      right: 0;
+      z-index: 1;
+    }
+  }
+}
+
+.token-list {
+  display: flex;
+  flex-direction: column;
+  .token-item {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 8px 16px;
+    &.selected {
+      background-color: @color-dimmed;
+    }
+    &:hover {
+      background-color: @color-smoke;
+    }
+    .token-icon {
+      border-radius: 50%;
+      overflow: hidden;
+      width: 24px;
+      height: 24px;
+      justify-content: center;
+      align-items: center;
+      display: inline-flex;
+    }
+    .token-description {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-left: 12px;
+      .token-symbol {
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.2rem;
+      }
+      .token-name {
+        font-size: 12px;
+        color: gray;
+        line-height: 15px;
+      }
+    }
+  }
+}
+
+// Modals
+.ant-modal-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  .ant-modal.mean-modal {
+    max-height: calc(100vh - 200px);
+    position: fixed;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    &.unpadded-content {
+      .ant-modal-body {
+        padding: 6px 0;
+        max-height: calc(100% - 54px);
+        &:extend(.vertical-scroll);
+      }
+    }
+    .ant-modal-content {
+      width: 100%;
+      border-radius: @custom-border-radius;
+      .ant-modal-header {
+        border-top-left-radius: @custom-border-radius;
+        border-top-right-radius: @custom-border-radius;
+      }
+      .ant-modal-body {
+        &:extend(.vertical-scroll);
+      }
+    }
+    .ant-modal-footer > .ant-btn {
+      border-radius: @custom-border-radius;
+    }
+  }
+}
+
+// Account
+.account-settings-group {
+  font-size: 1rem;
+  padding: 1rem;
+  border: 1px solid #dadada;
+  border-radius: @custom-border-radius;
+  position: relative;
+  display: grid;
+  grid-row-gap: 16px;
+  row-gap: 16px;
+  .account-settings-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+  }
+}
+
+// Utilities
+.mean-svg-icons.link {
+  font-size: 0.8rem;
+  width: 0.92rem;
+  height: 0.92rem;
+  vertical-align: -2px;
+  margin-right: 0.25rem;
+}
+
+.simplelink {
+  color: inherit;
+  text-decoration: none;
+  &:hover {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  &:focus {
+    outline: none;
+  }
+}
+.primary-link {
+  color: @color-primary !important;
+  text-decoration: none !important;
+  &.underlined {
+    text-decoration: underline !important;
+  }
+  &:hover {
+    color: @color-primary-highlight !important;
+    text-decoration: underline !important;
+    cursor: pointer;
+  }
+  &:focus {
+    outline: none;
+  }
+  &.disabled {
+    color: @color-lightgray !important;
+    pointer-events: none;
+  }
+}
+.secondary-link {
+  color: @color_secondary !important;
+  text-decoration: none !important;
+  &.underlined {
+    text-decoration: underline !important;
+  }
+  &:hover {
+    cursor: pointer;
+    text-decoration: underline !important;
+  }
+  &:focus {
+    outline: none;
+  }
+  &.disabled {
+    color: @color-lightgray !important;
+    pointer-events: none;
+  }
+}
+.vertical-scroll {
+  overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 0;
+  }
+  &::-webkit-scrollbar-track-piece {
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: rgba(128, 128, 128, 0.1);
+  }
+  &::-webkit-scrollbar-track {
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: rgba(128, 128, 128, 0.1);
+  }
+  &::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    background: #e8e8e8;
+    background-color: rgba(64, 64, 64, 0.2);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    background-color: #bebebe;
+  }
+}
+
+// Text alignment
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-center {
+  text-align: center;
+}
+
+// Margins
+.ml-1 {
+  margin-left: 0.5rem;
+}
+.ml-2 {
+  margin-left: 1rem;
+}
+.ml-3 {
+  margin-left: 1.5rem;
+}
+.ml-4 {
+  margin-left: 2rem;
+}
+.mr-1 {
+  margin-right: 0.5rem;
+}
+.mr-2 {
+  margin-right: 1rem;
+}
+.mr-3 {
+  margin-right: 1.5rem;
+}
+.mr-4 {
+  margin-right: 2rem;
+}
+
+// Font weight
+.font-extrathin {
+  font-weight: 100;
+}
+.font-thin {
+  font-weight: 200;
+}
+.font-light {
+  font-weight: 300;
+}
+.font-regular {
+  font-weight: 400;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-bold {
+  font-weight: 600;
+}
+.font-bolder {
+  font-weight: 700;
+}
+.font-extrabold {
+  font-weight: 900;
+}
+
+// Font sizes
+.font-size-60 {
+  font-size: 0.6rem !important;
+}
+.font-size-70 {
+  font-size: 0.7rem !important;
+}
+.font-size-75 {
+  font-size: 0.75rem !important;
+}
+.font-size-80 {
+  font-size: 0.8rem !important;
+}
+.font-size-85 {
+  font-size: 0.85rem !important;
+}
+.font-size-90 {
+  font-size: 0.9rem !important;
+  vertical-align: 1px;
+}
+.font-size-95 {
+  font-size: 0.95rem !important;
+}
+.font-size-100 {
+  font-size: 1rem !important;
+}
+.font-size-110 {
+  font-size: 1.1rem !important;
+}
+.font-size-120 {
+  font-size: 1.2rem !important;
+}
+.font-size-130 {
+  font-size: 1.3rem !important;
+}
+.font-size-140 {
+  font-size: 1.4rem !important;
+}
+.font-size-150 {
+  font-size: 1.5rem !important;
+}
+.font-size-200 {
+  font-size: 2rem !important;
+}
+
+// Padding
+.p-0 {
+  padding: 0!important
+}
+.p-1 {
+  padding: .25rem!important
+}
+.p-2 {
+  padding: .5rem!important
+}
+.p-3 {
+  padding: .75rem!important
+}
+.p-4 {
+  padding: 1rem!important
+}
+.p-5 {
+  padding: 1.25rem!important
+}
+.p-6 {
+  padding: 1.5rem!important
+}
+.py-0 {
+  padding-top: 0!important;
+  padding-bottom: 0!important
+}
+.px-0 {
+  padding-left: 0!important;
+  padding-right: 0!important
+}
+.py-1 {
+  padding-top: .25rem!important;
+  padding-bottom: .25rem!important
+}
+.px-1 {
+  padding-left: .25rem!important;
+  padding-right: .25rem!important
+}
+.py-2 {
+  padding-top: .5rem!important;
+  padding-bottom: .5rem!important
+}
+.px-2 {
+  padding-left: .5rem!important;
+  padding-right: .5rem!important
+}
+.py-3 {
+  padding-top: .75rem!important;
+  padding-bottom: .75rem!important
+}
+.px-3 {
+  padding-left: .75rem!important;
+  padding-right: .75rem!important
+}
+.py-4 {
+  padding-top: 1rem!important;
+  padding-bottom: 1rem!important
+}
+.px-4 {
+  padding-left: 1rem!important;
+  padding-right: 1rem!important
+}
+.py-5 {
+  padding-top: 1.25rem!important;
+  padding-bottom: 1.25rem!important
+}
+.px-5 {
+  padding-left: 1.25rem!important;
+  padding-right: 1.25rem!important
+}
+.py-6 {
+  padding-top: 1.5rem!important;
+  padding-bottom: 1.5rem!important
+}
+.px-6 {
+  padding-left: 1.5rem!important;
+  padding-right: 1.5rem!important
+}
+.pt-0 {
+  padding-top: 0!important
+}
+.pr-0 {
+  padding-right: 0!important
+}
+.pb-0 {
+  padding-bottom: 0!important
+}
+.pl-0 {
+  padding-left: 0!important
+}
+.pt-1 {
+  padding-top: .25rem!important
+}
+.pr-1 {
+  padding-right: .25rem!important
+}
+.pb-1 {
+  padding-bottom: .25rem!important
+}
+.pl-1 {
+  padding-left: .25rem!important
+}
+.pt-2 {
+  padding-top: .5rem!important
+}
+.pr-2 {
+  padding-right: .5rem!important
+}
+.pb-2 {
+  padding-bottom: .5rem!important
+}
+.pl-2 {
+  padding-left: .5rem!important
+}
+.pt-3 {
+  padding-top: .75rem!important
+}
+.pr-3 {
+  padding-right: .75rem!important
+}
+.pb-3 {
+  padding-bottom: .75rem!important
+}
+.pl-3 {
+  padding-left: .75rem!important
+}
+.pt-4 {
+  padding-top: 1rem!important
+}
+.pr-4 {
+  padding-right: 1rem!important
+}
+.pb-4 {
+  padding-bottom: 1rem!important
+}
+.pl-4 {
+  padding-left: 1rem!important
+}
+.pt-5 {
+  padding-top: 1.25rem!important
+}
+.pr-5 {
+  padding-right: 1.25rem!important
+}
+.pb-5 {
+  padding-bottom: 1.25rem!important
+}
+.pl-5 {
+  padding-left: 1.25rem!important
+}
+.pt-6 {
+  padding-top: 1.5rem!important
+}
+.pr-6 {
+  padding-right: 1.5rem!important
+}
+.pb-6 {
+  padding-bottom: 1.5rem!important
+}
+.pl-6 {
+  padding-left: 1.5rem!important
+}
+
+
+// Shadows
+.box-shadow-6 {
+  box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0, 0.12);
+}
