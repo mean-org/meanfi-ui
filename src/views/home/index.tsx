@@ -9,6 +9,7 @@ import { Identicon } from "../../components/Identicon";
 import { useNativeAccount } from "../../contexts/accounts";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getPrices } from "../../utils/api";
+import { PRICE_REFRESH_TIMEOUT } from "../../constants";
 // import { WRAPPED_SOL_MINT } from "../../utils/ids";
 // import { useUserBalance, useUserTotalBalance } from "../../hooks";
 
@@ -62,8 +63,11 @@ export const HomeView = () => {
     console.log('You clicked on start transaction');
   }
 
+  // Set to reload prices every 30 seconds
   const setPriceTimer = () => {
-    //
+    setTimeout(() => {
+      setShouldLoadCoinPrices(true);
+    }, PRICE_REFRESH_TIMEOUT);
   }
 
   // Effect to load token list

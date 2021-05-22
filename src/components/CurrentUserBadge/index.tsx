@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
 import { formatNumber, shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
@@ -9,11 +9,13 @@ import { WALLET_PROVIDERS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
+import { useHistory } from "react-router-dom";
 
 const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
 
 export const CurrentUserBadge = (props: {}) => {
 
+  const history = useHistory();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
@@ -47,6 +49,10 @@ export const CurrentUserBadge = (props: {}) => {
     }
   }
 
+  const onGoToStreamsClick = () => {
+    history.push("/streams");
+  }
+
   if (!wallet?.publicKey) {
     return null;
   }
@@ -57,7 +63,7 @@ export const CurrentUserBadge = (props: {}) => {
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <div className="wallet-balance">
+        <div className="wallet-balance simplelink" onClick={onGoToStreamsClick}>
           <span className="effective-amount">
             {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
           </span>

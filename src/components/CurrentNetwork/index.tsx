@@ -1,4 +1,3 @@
-import React from "react";
 import { useConnectionConfig } from "../../contexts/connection";
 import { Popover } from "antd";
 import { Settings } from "../Settings";

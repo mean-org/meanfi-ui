@@ -1,9 +1,8 @@
+import BN from "bn.js";
 import { useCallback, useState } from "react";
 import { MintInfo } from "@solana/spl-token";
-
 import { TokenAccount } from "./../models";
 import { PublicKey } from "@solana/web3.js";
-import BN from "bn.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 
