@@ -22,7 +22,9 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
           allowWalletChange={true}
         />
       )}
-      <AppContextMenu />
+      <div className="app-context-menu">
+        <AppContextMenu />
+      </div>
       {props.right}
     </div>
   );

@@ -285,6 +285,72 @@ footer.ant-layout-footer {
   font-size: 10px;
   color: #727272;
   background: transparent;
+  .footer-bar {
+    @media (max-width: 575.98px) {
+      display: flex;
+    }
+    @media (min-width: 576px) {
+      display: none;
+    }
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    .footer-account-bar {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      border-radius: @custom-border-radius;
+      height: 40px;
+      padding: 2px 0;
+      margin: 4px 0;
+      .wallet-wrapper {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        background-color: @color-black-85;
+        color: #FFFFFF;
+        border-radius: @custom-border-radius;
+        height: 100%;
+        .wallet-key {
+          font-size: 1rem;
+          font-weight: 600;
+          background-color: @color-primary;
+          border-radius: @custom-border-radius;
+          height: 100%;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 6px;
+          margin-left: -1px;
+          cursor: pointer;
+        }
+        .wallet-balance {
+          font-size: 1rem;
+          font-weight: 600;
+          padding: 0 6px;
+          border-radius: 0.5rem;
+          display: flex;
+          align-items: center;
+          .effective-amount {
+            margin-right: 4px;
+          }
+          .transaction-legend {
+            @media (max-width: 767.98px) {
+              display: none;
+            }
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+            &.incoming {
+              color: @color-incoming-transaction;
+            }
+            &.outgoing {
+              color: @color-outgoing-transaction;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 .App-Bar-left {
@@ -324,7 +390,12 @@ footer.ant-layout-footer {
 
 // Account / Connection info
 .connection-and-account-bar {
-  display: flex;
+  @media (max-width: 575.98px) {
+    display: none;
+  }
+  @media (min-width: 576px) {
+    display: flex;
+  }
   flex-direction: row;
   align-items: center;
   background-color: @color-black-10;
@@ -333,6 +404,9 @@ footer.ant-layout-footer {
   height: 40px;
   padding: 2px 4px;
   .connected-network {
+    @media (max-width: 767.98px) {
+      display: none;
+    }
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -388,6 +462,9 @@ footer.ant-layout-footer {
         margin-right: 4px;
       }
       .transaction-legend {
+        @media (max-width: 767.98px) {
+          display: none;
+        }
         display: inline-flex;
         align-items: center;
         margin-left: 4px;
