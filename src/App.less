@@ -242,7 +242,6 @@ body {
 }
 
 .App-Bar {
-  height: 52px;
   align-self: center;
   justify-content: space-between;
   -webkit-box-pack: justify;
@@ -281,17 +280,49 @@ body {
 }
 
 footer.ant-layout-footer {
-  padding: 2px 0;
+  padding: 0;
   font-size: 10px;
-  color: #727272;
+  color: @color-lightgray;
   background: transparent;
-  .footer-bar {
+  .pre-footer-notice {
+    display: flex;
+    padding: 0.5rem 0;
     @media (max-width: 575.98px) {
-      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0;
+      line-height: 1.3;
+      margin: 0 -1rem 0.5rem;
+      .footer-left,
+      .footer-right {
+        text-align: center;
+      }
+    }
+    @media (min-width: 576px) {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
+      .footer-left {
+        text-align: left;
+      }
+      .footer-right {
+        text-align: right;
+      }
+    }
+  }
+  .app-footer {
+    @media (max-width: 575.98px) {
+      display: block;
     }
     @media (min-width: 576px) {
       display: none;
     }
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 8px 0;
+  }
+  .footer-bar {
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
@@ -372,7 +403,13 @@ footer.ant-layout-footer {
   justify-self: flex-end;
 }
 .App-Bar-right > .ant-btn-primary.ant-btn-round {
-  margin-right: 8px;
+  @media (max-width: 575.98px) {
+    display: none;
+  }
+  @media (min-width: 576px) {
+    display: block;
+    margin-right: 8px;
+  }
 }
 
 // Dropdown menus
@@ -571,12 +608,20 @@ em {
 .interaction-area {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  padding-top: 120px;
-  -webkit-box-align: center;
+  flex: 1 1;
+  padding-bottom: 1rem;
   align-items: center;
-  flex: 1 1 0%;
-  z-index: 1;
+  @media (max-width: 575.98px) {
+    width: calc(100% - 2rem);
+    padding-top: 12vh;
+    position: absolute;
+    z-index: 1;
+  }
+  @media (min-width: 576px) {
+    width: 100%;
+    padding-top: 120px;
+    position: relative;
+  }
   .place-transaction-box {
     position: relative;
     max-width: 480px;
