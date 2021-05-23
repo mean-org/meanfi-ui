@@ -10,6 +10,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getPrices } from "../../utils/api";
 import { PRICE_REFRESH_TIMEOUT } from "../../constants";
+import { PaymentOptionsModal } from "../../components/PaymentOptionsModal";
 // import { WRAPPED_SOL_MINT } from "../../utils/ids";
 // import { useUserBalance, useUserTotalBalance } from "../../hooks";
 
@@ -27,7 +28,6 @@ export const HomeView = () => {
 
   const [fromCoinAmount, setFromCoinAmount] = useState('');
 
-  // const [getCoinPrices, coinPrices] = useCoinPrices();
   const [coinPrices, setCoinPrices] = useState<any>(null);
 
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
@@ -41,6 +41,11 @@ export const HomeView = () => {
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
+
+  // Schedule Payment modal
+  const [isSchedulePaymentModalVisible, setSchedulePaymentModalVisibility] = useState(false);
+  const showSchedulePayment = useCallback(() => setSchedulePaymentModalVisibility(true), []);
+  const onCloseSchedulePayment = useCallback(() => setSchedulePaymentModalVisibility(false), []);
 
   const onSendTabSelected = () => {
     setCurrentTab('send');
@@ -68,6 +73,10 @@ export const HomeView = () => {
     setTimeout(() => {
       setShouldLoadCoinPrices(true);
     }, PRICE_REFRESH_TIMEOUT);
+  }
+
+  const onAcceptSchedulePayment = () => {
+    onCloseSchedulePayment();
   }
 
   // Effect to load token list
@@ -224,43 +233,6 @@ export const HomeView = () => {
               <span className="field-caret-down">
                 <IconCaretDown className="mean-svg-icons"/>
               </span>
-              {/* Token selection modal */}
-              <Modal className="mean-modal unpadded-content"
-                      visible={isTokenSelectorModalVisible}
-                      title="Select a token"
-                      onCancel={onCloseTokenSelector}
-                      width={450}
-                      footer={null}>
-                <div className="token-list">
-                  {/* Loop through the tokens */}
-                  {selectedToken && simpleTokenList ? simpleTokenList.map((token, index) => {
-                    const onClick = function () {
-                      setSelectedToken(token);
-                      console.log('token selected:', token.symbol);
-                      setEffectiveRate(coinPrices && coinPrices[token.symbol] ? coinPrices[token.symbol] : 0);
-                      onCloseTokenSelector();
-                    };
-                    return (
-                      <div key={index} onClick={onClick}
-                          className={`token-item ${selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}`}>
-                        <div className="token-icon">
-                          {token.logoURI ? (
-                            <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                          ) : (
-                            <Identicon
-                                address={token.address}
-                                style={{ width: "24", display: "inline-flex" }} />
-                          )}
-                        </div>
-                        <div className="token-description">
-                          <div className="token-symbol">{token.symbol}</div>
-                          <div className="token-name">{token.name}</div>
-                        </div>
-                      </div>
-                    );
-                  }) : (<p>Loading...</p>)}
-                </div>
-              </Modal>
             </div>
             <div className="transaction-field-row">
               <span className="field-label-left">
@@ -271,13 +243,50 @@ export const HomeView = () => {
               </span>
             </div>
           </div>
+          {/* Token selection modal */}
+          <Modal className="mean-modal unpadded-content"
+                  visible={isTokenSelectorModalVisible}
+                  title="Select a token"
+                  onCancel={onCloseTokenSelector}
+                  width={450}
+                  footer={null}>
+            <div className="token-list">
+              {/* Loop through the tokens */}
+              {selectedToken && simpleTokenList ? simpleTokenList.map((token, index) => {
+                const onClick = function () {
+                  setSelectedToken(token);
+                  console.log('token selected:', token.symbol);
+                  setEffectiveRate(coinPrices && coinPrices[token.symbol] ? coinPrices[token.symbol] : 0);
+                  onCloseTokenSelector();
+                };
+                return (
+                  <div key={index} onClick={onClick}
+                      className={`token-item ${selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}`}>
+                    <div className="token-icon">
+                      {token.logoURI ? (
+                        <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                      ) : (
+                        <Identicon
+                            address={token.address}
+                            style={{ width: "24", display: "inline-flex" }} />
+                      )}
+                    </div>
+                    <div className="token-description">
+                      <div className="token-symbol">{token.symbol}</div>
+                      <div className="token-name">{token.name}</div>
+                    </div>
+                  </div>
+                );
+              }) : (<p>Loading...</p>)}
+            </div>
+          </Modal>
           {/* Payment scheme */}
           <div id="send-payment-field" className="transaction-field">
             <div className="transaction-field-row">
               <span className="field-label-left">Send payment</span>
               <span className="field-label-right">&nbsp;</span>
             </div>
-            <div className="transaction-field-row main-row simplelink">
+            <div className="transaction-field-row main-row simplelink" onClick={showSchedulePayment}>
               <span className="field-select-left">Now (one time)</span>
               <span className="field-caret-down">
                 <IconCaretDown className="mean-svg-icons"/>
@@ -287,6 +296,13 @@ export const HomeView = () => {
               <span className="field-label-left">&nbsp;</span>
             </div>
           </div>
+          {/* Schedule Payment modal */}
+          <PaymentOptionsModal
+            isVisible={isSchedulePaymentModalVisible}
+            handleOk={onAcceptSchedulePayment}
+            handleClose={onCloseSchedulePayment}>
+            <p>Testing</p>
+          </PaymentOptionsModal>
           {/* Recipient */}
           <div id="payment-recipient-field" className="transaction-field">
             <div className="transaction-field-row">
