@@ -7,14 +7,22 @@ import {
   IconChat,
   IconCodeBlock,
   IconInfoCircle,
+  IconLogout,
   IconMoon,
   IconSettings,
   IconUniversity,
 } from "../../Icons";
 import { useConnectionConfig } from "../../contexts/connection";
+import { useWallet } from "../../contexts/wallet";
 
 export const AppContextMenu = () => {
+
   const connection = useConnectionConfig();
+  const { connected, disconnect } = useWallet();
+
+  const onDisconnectWallet = () => {
+    disconnect();
+  }
 
   const menu = (
     <Menu>
@@ -61,13 +69,20 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">Discord</span>
         </a>
       </Menu.Item>
-      {(connection.env === 'devnet' || connection.env === 'testnet') && (
-        <Menu.Item key="8">
-          <Link to="/faucet">
-            <IconAdd className="mean-svg-icons" />
-            <span className="menu-item-text">Faucet</span>
-          </Link>
-        </Menu.Item>
+      {(connected && (connection.env === 'devnet' || connection.env === 'testnet')) && (
+        <>
+          <Menu.Divider />
+          <Menu.Item key="8">
+            <Link to="/faucet">
+              <IconAdd className="mean-svg-icons" />
+              <span className="menu-item-text">Faucet</span>
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="9" onClick={onDisconnectWallet}>
+            <IconLogout className="mean-svg-icons" />
+            <span className="menu-item-text">Disconnect wallet</span>
+          </Menu.Item>
+        </>
       )}
     </Menu>
   );
