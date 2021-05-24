@@ -1,3 +1,4 @@
+export { IconAdd } from "./IconAdd";
 export { IconBookOpen } from "./IconBookOpen";
 export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";

@@ -7,12 +7,13 @@ import { IconCaretDown } from "../../Icons";
 import {
   formatAmount,
   formatNumber,
+  fromLamports,
   isValidNumber,
   useLocalStorageState,
 } from "../../utils/utils";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { Identicon } from "../../components/Identicon";
-import { useNativeAccount } from "../../contexts/accounts";
+import { cache, useNativeAccount } from "../../contexts/accounts";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getPrices } from "../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../constants";
@@ -25,6 +26,7 @@ import {
 import { getPaymentStartPlanOptionLabel, timeConvert } from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
+import { useUserAccounts } from "../../hooks";
 // import { WRAPPED_SOL_MINT } from "../../utils/ids";
 // import { useUserBalance, useUserTotalBalance } from "../../hooks";
 
@@ -34,6 +36,8 @@ export const HomeView = () => {
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { account } = useNativeAccount();
+  const { userAccounts } = useUserAccounts();
+
   // const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
   // const SRM = useUserBalance(SRM_ADDRESS);
   // const SOL = useUserBalance(WRAPPED_SOL_MINT);
@@ -41,6 +45,7 @@ export const HomeView = () => {
 
   const [currentTab, setCurrentTab] = useState("send");
   const [previousChain, setChain] = useState("");
+  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
   const [fromCoinAmount, setFromCoinAmount] = useState("");
   const [paymentRateAmount, setPaymentRateAmount] = useState("");
@@ -172,31 +177,61 @@ export const HomeView = () => {
   // Effect to load token list
   useEffect(() => {
     const filterTokenList = () => {
+      // Immediately signal the state to avoid this again
+      setShouldLoadTokens(false);
+      const tokensWithBalance: TokenInfo[] = [];
       new TokenListProvider().resolve().then((tokens) => {
         const filteredTokens = tokens
           .filterByClusterSlug(connectionConfig.env)
           .getList();
-        setSimpleTokenList(filteredTokens);
-        setShouldLoadTokens(false);
-        console.log("tokens", filteredTokens);
-        // Preset a token
-        if (!selectedToken && filteredTokens) {
-          setSelectedToken(filteredTokens[0]);
-          console.log("Preset token:", filteredTokens[0]);
+        // List loaded, now reflect it as it is if no wallet connected
+        // If a wallet gets connected then filter by tokens the user own
+        if (connected && userAccounts && userAccounts.length > 0) {
+          for (let i = 0; i < userAccounts.length; i++) {
+            const account = userAccounts[i];
+            const mintAddress = account.info.mint.toBase58();
+            const mint = cache.get(mintAddress);
+            const tokenInfoItem = simpleTokenList.find(t => t.address === mintAddress);
+            if (mint && tokenInfoItem) {
+              const balance = fromLamports(account.info.amount.toNumber(), mint.info);
+              tokensWithBalance.push(Object.assign({}, tokenInfoItem, {
+                balance
+              }));
+            }
+          }
+          setSimpleTokenList(tokensWithBalance);
+          console.log('tokensWithBalance:', tokensWithBalance);
+          // Preset a token
+          if (!selectedToken && tokensWithBalance) {
+            setSelectedToken(tokensWithBalance[0]);
+            console.log("Preset token:", tokensWithBalance[0]);
+          }
+        } else {
+          setSimpleTokenList(filteredTokens);
+          console.log("tokens", filteredTokens);
+          // Preset a token
+          if (!selectedToken && filteredTokens) {
+            setSelectedToken(filteredTokens[0]);
+            console.log("Preset token:", filteredTokens[0]);
+          }
         }
       });
     };
+
     if (shouldLoadTokens) {
       filterTokenList();
     }
   }, [
+    connected,
     coinPrices,
-    setSimpleTokenList,
-    connectionConfig.env,
+    userAccounts,
     selectedToken,
+    simpleTokenList,
+    connectionConfig,
     shouldLoadTokens,
     setSelectedToken,
-    setEffectiveRate,
+    setSimpleTokenList,
+    setEffectiveRate
   ]);
 
   // Effect to load coin prices
@@ -254,6 +289,28 @@ export const HomeView = () => {
       dispose();
     };
   }, [marketEmitter, midPriceInUSD, connectionConfig.tokenMap]);
+
+  // Effect signal token list reload on wallet connected status change
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected) {
+        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
+        setTimeout(() => {
+          setShouldLoadTokens(true);
+        }, 500);
+      } else {
+        setShouldLoadTokens(true);
+      }
+      setPreviousWalletConnectState(connected);
+    }
+  }, [
+    connected,
+    shouldLoadTokens,
+    previousWalletConnectState,
+    setShouldLoadTokens,
+    setPreviousWalletConnectState,
+  ]);
 
   // const balances = (
   //   <Row gutter={[16, 16]} align="middle">

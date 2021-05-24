@@ -415,8 +415,8 @@ export function AccountsProvider({ children = null as any }) {
       value={{
         userAccounts,
         nativeAccount,
-      }}
-    >
+        tokenAccounts
+      }}>
       {children}
     </AccountsContext.Provider>
   );

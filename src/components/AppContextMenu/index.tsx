@@ -1,9 +1,20 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import { Button, Dropdown, Menu } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
-import { IconBookOpen, IconChat, IconCodeBlock, IconInfoCircle, IconMoon, IconSettings, IconUniversity } from "../../Icons";
+import {
+  IconAdd,
+  IconBookOpen,
+  IconChat,
+  IconCodeBlock,
+  IconInfoCircle,
+  IconMoon,
+  IconSettings,
+  IconUniversity,
+} from "../../Icons";
+import { useConnectionConfig } from "../../contexts/connection";
 
 export const AppContextMenu = () => {
+  const connection = useConnectionConfig();
 
   const menu = (
     <Menu>
@@ -50,19 +61,27 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">Discord</span>
         </a>
       </Menu.Item>
+      {(connection.env === 'devnet' || connection.env === 'testnet') && (
+        <Menu.Item key="8">
+          <Link to="/faucet">
+            <IconAdd className="mean-svg-icons" />
+            <span className="menu-item-text">Faucet</span>
+          </Link>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
   return (
-    <Dropdown overlay={menu} trigger={['click']}>
-    <Button
+    <Dropdown overlay={menu} trigger={["click"]}>
+      <Button
         shape="round"
         type="text"
         size="middle"
         className="ant-btn-shaded"
-        onClick={e => e.preventDefault()}
-        icon={<EllipsisOutlined/>}>
-    </Button>
+        onClick={(e) => e.preventDefault()}
+        icon={<EllipsisOutlined />}
+      ></Button>
     </Dropdown>
   );
 };

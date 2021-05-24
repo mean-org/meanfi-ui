@@ -1,10 +1,10 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { notify } from "../../utils/notifications";
-import { ConnectButton } from "./../../components/ConnectButton";
 import { LABELS } from "../../constants";
+import { Button } from "antd";
 
 export const FaucetView = () => {
   const connection = useConnection();
@@ -24,14 +24,14 @@ export const FaucetView = () => {
   }, [publicKey, connection]);
 
   return (
-    <div className="flexColumn" style={{ flex: 1 }}>
-      <div>
+    <div className="container">
+      <div className="interaction-area">
         <div className="deposit-input-title" style={{ margin: 10 }}>
           {LABELS.FAUCET_INFO}
         </div>
-        <ConnectButton type="primary" onClick={airdrop}>
+        <Button type="primary" shape="round" size="large" onClick={airdrop}>
           {LABELS.GIVE_SOL}
-        </ConnectButton>
+        </Button>
       </div>
     </div>
   );
