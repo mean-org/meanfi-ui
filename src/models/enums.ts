@@ -9,17 +9,11 @@ export enum PaymentScheme {
 }
 
 export enum PaymentRateType {
-    PerHour = 3600,
-    PerDay = 86400,
-    PerWeek = 604800,
-    PerMonth = 2629750,
-    PerYear = 31557000,
-    Other = 60
+    PerHour = 0,    // 3600s
+    PerDay = 1,     // 86400s
+    PerWeek = 2,    // 604800s,
+    PerMonth = 3,   // 2629750s,
+                    // 15552000s
+    PerYear = 4,    // 31557000s,
+    Other = 5,      // >= 60 seconds
 }
-
-// per hour
-// per day
-// per week
-// per month
-// per year
-// Other (defined in seconds)

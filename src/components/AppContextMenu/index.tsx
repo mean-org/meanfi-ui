@@ -7,44 +7,44 @@ export const AppContextMenu = () => {
 
   const menu = (
     <Menu>
-      <Menu.Item key="10">
+      <Menu.Item key="1">
         <a href="https://www.someplace.com">
           <IconMoon className="mean-svg-icons" />
           <span className="menu-item-text">Switch to Dark Mode</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="11">
+      <Menu.Item key="2">
         <a href="https://www.someplace.com">
           <IconSettings className="mean-svg-icons" />
           <span className="menu-item-text">Language: English</span>
         </a>
       </Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="12">
+      <Menu.Item key="3">
         <a href="https://www.someplace.com">
           <IconInfoCircle className="mean-svg-icons" />
           <span className="menu-item-text">About</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="13">
+      <Menu.Item key="4">
         <a href="https://www.someplace.com">
           <IconUniversity className="mean-svg-icons" />
           <span className="menu-item-text">How to use</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="14">
+      <Menu.Item key="5">
         <a href="https://www.someplace.com">
           <IconBookOpen className="mean-svg-icons" />
           <span className="menu-item-text">Developers</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="15">
+      <Menu.Item key="6">
         <a href="https://www.someplace.com">
           <IconCodeBlock className="mean-svg-icons" />
           <span className="menu-item-text">Code</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="16">
+      <Menu.Item key="7">
         <a href="https://www.someplace.com">
           <IconChat className="mean-svg-icons" />
           <span className="menu-item-text">Discord</span>

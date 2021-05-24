@@ -1,12 +1,16 @@
 import { Modal } from "antd";
 
-export const PaymentOptionsModal = (props: { handleClose: any, handleOk: any, isVisible: boolean, children: any }) => {
-
+export const PaymentOptionsModal = (props: {
+  handleClose: any;
+  handleOk: any;
+  isVisible: boolean;
+  children: any;
+}) => {
   return (
     <Modal
       className="mean-modal"
-      title="Schedule Payment"
-      okText="Next"
+      title={<div className="modal-title">Schedule Payment</div>}
+      footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
