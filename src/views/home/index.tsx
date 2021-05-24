@@ -516,7 +516,7 @@ export const HomeView = () => {
               <Row gutter={[24, 24]}>
                 <Col span={12}>
                   <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
-                    <Button size="large" className="w-100">
+                    <Button size="large" className="w-100 gray-stroke">
                       {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
                       <DownOutlined />
                     </Button>
@@ -525,7 +525,7 @@ export const HomeView = () => {
                 <Col span={12}>
                   <DatePicker
                     size="large"
-                    className="w-100"
+                    className="w-100 gray-stroke"
                     onChange={(value, date) =>
                       setPaymentStartScheduleValue(date)
                     }
@@ -556,60 +556,62 @@ export const HomeView = () => {
                   <span className="font-size-80 font-medium text-center">Repeating<br />payment</span>
                 </div>
               </div>
-              <h4>What is the payment rate? (less than or equals to {getAmountWithTokenSymbol(fromCoinAmount, selectedToken)})</h4>
-              <div className="font-size-75 fg-black-25">This is the agreed upon payment rate between you and the recepient.</div>
-              <Row gutter={[24, 24]}>
-                <Col span={12}>
-                  <div className="transaction-field medium">
-                    <div className="transaction-field-row main-row">
-                      <span className="input-left">
-                        <input
-                          className="token-amount-input"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          autoCorrect="off"
-                          type="text"
-                          onChange={handlePaymentRateAmountChange}
-                          pattern="^[0-9]*[.,]?[0-9]*$"
-                          placeholder="0.0"
-                          minLength={1}
-                          maxLength={79}
-                          spellCheck="false"
-                          min={0}
-                          max={fromCoinAmount}
-                          value={paymentRateAmount}/>
-                      </span>
-                      {selectedToken && (
-                        <div className="token-right">
-                          <div className="token-group">
-                            <div className="token-selector">
-                              <div className="token-icon">
-                                {selectedToken.logoURI ? (
-                                  <img
-                                    alt={`${selectedToken.name}`}
-                                    width={20}
-                                    height={20}
-                                    src={selectedToken.logoURI}
-                                  />
-                                ) : (
-                                  <Identicon
-                                    address={selectedToken.address}
-                                    style={{ width: "24", display: "inline-flex" }}
-                                  />
-                                )}
+              <div className={paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}>
+                <h4>What is the payment rate? (less than or equals to {getAmountWithTokenSymbol(fromCoinAmount, selectedToken)})</h4>
+                <div className="font-size-75 fg-black-25">This is the agreed upon payment rate between you and the recepient.</div>
+                <Row gutter={[24, 24]}>
+                  <Col span={12}>
+                    <div className="transaction-field medium">
+                      <div className="transaction-field-row main-row">
+                        <span className="input-left">
+                          <input
+                            className="token-amount-input"
+                            inputMode="decimal"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            type="text"
+                            onChange={handlePaymentRateAmountChange}
+                            pattern="^[0-9]*[.,]?[0-9]*$"
+                            placeholder="0.0"
+                            minLength={1}
+                            maxLength={79}
+                            spellCheck="false"
+                            min={0}
+                            max={fromCoinAmount}
+                            value={paymentRateAmount}/>
+                        </span>
+                        {selectedToken && (
+                          <div className="token-right">
+                            <div className="token-group">
+                              <div className="token-selector">
+                                <div className="token-icon">
+                                  {selectedToken.logoURI ? (
+                                    <img
+                                      alt={`${selectedToken.name}`}
+                                      width={20}
+                                      height={20}
+                                      src={selectedToken.logoURI}
+                                    />
+                                  ) : (
+                                    <Identicon
+                                      address={selectedToken.address}
+                                      style={{ width: "24", display: "inline-flex" }}
+                                    />
+                                  )}
+                                </div>
+                                <div className="token-symbol">{selectedToken.symbol}</div>
                               </div>
-                              <div className="token-symbol">{selectedToken.symbol}</div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Col>
-                <Col span={12}>
-                  <p>The amount</p>
-                </Col>
-              </Row>
+                  </Col>
+                  <Col span={12}>
+                    <p>The amount</p>
+                  </Col>
+                </Row>
+              </div>
               <Button
                 className="main-cta"
                 block
