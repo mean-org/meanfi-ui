@@ -1,4 +1,4 @@
-import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input } from "antd";
+import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input, Tooltip } from "antd";
 import { DownOutlined, CheckOutlined, SwapOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../contexts/connection";
@@ -449,8 +449,10 @@ export const HomeView = () => {
           <div className="position-relative mb-2">
             <h2 className="screen-title">Simple Payment</h2>
             <p>For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.</p>
-            <span className="position absolute right-top">
-              <SwapOutlined className="fg-red" />
+            <span className="contract-switch-button">
+              <Tooltip title="Change money streming contract">
+                <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} />
+              </Tooltip>
             </span>
           </div>
           {/* Send amount */}

@@ -712,6 +712,16 @@ em {
     border-radius: @custom-border-radius;
     border: 2px solid @color-black-10;
     padding: 1rem;
+    .contract-switch-button {
+      display: inline-block;
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      z-index: 1;
+      .ant-btn.ant-btn-circle.ant-btn-icon-only {
+        background: none;
+      }
+    }
     p {
       line-height: 1.3;
     }
