@@ -659,7 +659,7 @@ export const HomeView = () => {
                     <span className="position absolute right-top">
                       <CheckOutlined />
                     </span>
-                    <span className="font-size-80 font-medium text-center">
+                    <span className="option-grid-item-text">
                       One time
                       <br />
                       payment
@@ -677,7 +677,7 @@ export const HomeView = () => {
                     <span className="position absolute right-top">
                       <CheckOutlined />
                     </span>
-                    <span className="font-size-80 font-medium text-center">
+                    <span className="option-grid-item-text">
                       Repeating
                       <br />
                       payment

@@ -51,13 +51,17 @@ export function timeConvert(n: number, decimals = 0, abbr = false): string {
     let returnString = '';
     if (num === 1) {
         returnString = `${num} minute.`;
+    } else if (num === 60) {
+        returnString = '1 hour.';
     } else if (num > 60) {
-        returnString = `${formatAmount(num, decimals, abbr)} minutes = ${formatAmount(rhours, decimals, abbr)} hour(s) and ${rminutes} minutes.`;
+        returnString = `${formatAmount(num, decimals, abbr)} minutes`;
+        if (rdays > 1) {
+            returnString += `. ~${rdays} days.`;
+        } else {
+            returnString = ` = ${formatAmount(rhours, decimals, abbr)} hour(s) and ${rminutes} minutes.`;
+        }
     } else {
         returnString = `${rminutes} minutes.`;
-    }
-    if (rhours > 24) {
-        returnString += ` (${rdays} days)`;
     }
     return returnString;
 }
