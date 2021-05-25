@@ -1,5 +1,5 @@
 import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input } from "antd";
-import { DownOutlined, CheckOutlined } from "@ant-design/icons";
+import { DownOutlined, CheckOutlined, SwapOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useMarkets } from "../../contexts/market";
@@ -41,7 +41,7 @@ export const HomeView = () => {
   // const { account } = useNativeAccount();
   const { userAccounts } = useUserAccounts();
 
-  const [currentTab, setCurrentTab] = useState("send");
+  // const [currentTab, setCurrentTab] = useState("send");
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
@@ -73,13 +73,13 @@ export const HomeView = () => {
   const [paymentSchemeValue, setPaymentSchemeValue] = useState<PaymentScheme>(PaymentScheme.OneTimePayment);
   const [paymentRateValue, setPaymentRateValue] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
-  const onSendTabSelected = () => {
-    setCurrentTab("send");
-  };
+  // const onSendTabSelected = () => {
+  //   setCurrentTab("send");
+  // };
 
-  const onReceiveTabSelected = () => {
-    setCurrentTab("receive");
-  };
+  // const onReceiveTabSelected = () => {
+  //   setCurrentTab("receive");
+  // };
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -417,7 +417,7 @@ export const HomeView = () => {
       <div className="interaction-area">
         <div className="place-transaction-box">
           {/* Tab selection */}
-          <Row gutter={[24, 24]}>
+          {/* <Row gutter={[24, 24]}>
             <Col span={12}>
               <Button
                 block
@@ -441,12 +441,18 @@ export const HomeView = () => {
                 className={`${
                   currentTab === "receive" ? "ant-btn-shaded" : "ant-btn-flat"
                 }`}
-                onClick={onReceiveTabSelected}
-              >
+                onClick={onReceiveTabSelected}>
                 Receive
               </Button>
             </Col>
-          </Row>
+          </Row> */}
+          <div className="position-relative mb-2">
+            <h2 className="screen-title">Simple Payment</h2>
+            <p>For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.</p>
+            <span className="position absolute right-top">
+              <SwapOutlined className="fg-red" />
+            </span>
+          </div>
           {/* Send amount */}
           <div id="send-transaction-field" className="transaction-field">
             <div className="transaction-field-row">
@@ -636,180 +642,177 @@ export const HomeView = () => {
             handleOk={onAcceptSchedulePayment}
             handleClose={onCloseSchedulePayment}>
             <div className="mean-modal-form">
-              <h4>When do you want to send this payment?</h4>
-              <Row gutter={[24, 0]} className="mb-2">
-                <Col span={12}>
-                  <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
-                    <Button size="large" className="w-100 gray-stroke">
-                      {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
-                      <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                </Col>
-                <Col span={12}>
-                  {paymentStartPlanValue === PaymentStartPlan.Now ? (
-                    <Button
-                      block
-                      className="gray-stroke"
-                      type="primary"
-                      shape="round"
-                      size="large"
-                      disabled={true}
-                    >
-                      Will send right away
-                    </Button>
-                  ) : (
-                    <DatePicker
-                      size="large"
-                      className="w-100 gray-stroke"
-                      aria-required={paymentStartPlanValue === PaymentStartPlan.Schedle}
-                      allowClear={false}
-                      onChange={(value, date) =>
-                        setPaymentStartScheduleValue(date)
-                      }
-                      defaultValue={moment(
-                        paymentStartScheduleValue,
-                        DATEPICKER_FORMAT
-                      )}
-                      format={DATEPICKER_FORMAT}
-                    />
-                  )}
-                </Col>
-              </Row>
-              <h4>What kind of payment is this?</h4>
-              <div className="item-selector-grid w-100 mb-3">
-                <div
-                  className={`option-grid-item position-relative ${
-                    paymentSchemeValue === PaymentScheme.OneTimePayment
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    setPaymentSchemeValue(PaymentScheme.OneTimePayment)
-                  }>
-                  <span className="position absolute right-top">
-                    <CheckOutlined />
-                  </span>
-                  <span className="font-size-80 font-medium text-center">
-                    One time
-                    <br />
-                    payment
-                  </span>
+              <div className="mb-4">
+                <h4 className="modal-form-heading">What kind of payment is this?</h4>
+                <div className="item-selector-grid w-100 mb-3">
+                  <div
+                    className={`option-grid-item position-relative ${
+                      paymentSchemeValue === PaymentScheme.OneTimePayment
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setPaymentSchemeValue(PaymentScheme.OneTimePayment)
+                    }>
+                    <span className="position absolute right-top">
+                      <CheckOutlined />
+                    </span>
+                    <span className="font-size-80 font-medium text-center">
+                      One time
+                      <br />
+                      payment
+                    </span>
+                  </div>
+                  <div
+                    className={`option-grid-item position-relative ${
+                      paymentSchemeValue === PaymentScheme.RepeatingPayment
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setPaymentSchemeValue(PaymentScheme.RepeatingPayment)
+                    }>
+                    <span className="position absolute right-top">
+                      <CheckOutlined />
+                    </span>
+                    <span className="font-size-80 font-medium text-center">
+                      Repeating
+                      <br />
+                      payment
+                    </span>
+                  </div>
                 </div>
-                <div
-                  className={`option-grid-item position-relative ${
-                    paymentSchemeValue === PaymentScheme.RepeatingPayment
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    setPaymentSchemeValue(PaymentScheme.RepeatingPayment)
-                  }>
-                  <span className="position absolute right-top">
-                    <CheckOutlined />
-                  </span>
-                  <span className="font-size-80 font-medium text-center">
-                    Repeating
-                    <br />
-                    payment
-                  </span>
-                </div>
-              </div>
-              <div className={`mb-4 ${paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}`}>
-                <h4>
-                  What is the payment rate? (less than or equals to &nbsp;
-                  <span className="font-extrabold compress-1px">{formatAmount(parseFloat(fromCoinAmount), 2)}</span>
-                  {selectedToken && (
-                    <span>&nbsp;{selectedToken.symbol}</span>
-                  )})
-                </h4>
-                <div className="font-size-75 fg-black-25 mb-1">This is the agreed upon payment rate between you and the recepient.</div>
-                <Row gutter={[24, 0]} className="mb-2">
-                  <Col span={12}>
-                    <div className="transaction-field medium my-0">
-                      <div className="transaction-field-row main-row">
-                        <span className="input-left">
-                          <input
-                            className="token-amount-input"
-                            inputMode="decimal"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            type="text"
-                            onChange={handlePaymentRateAmountChange}
-                            pattern="^[0-9]*[.,]?[0-9]*$"
-                            placeholder="0.0"
-                            minLength={1}
-                            maxLength={79}
-                            spellCheck="false"
-                            min={0}
-                            max={fromCoinAmount}
-                            value={paymentRateAmount}
-                          />
-                        </span>
-                        {selectedToken && (
-                          <div className="token-right">
-                            <div className="token-group">
-                              <div className="token-selector">
-                                <div className="token-icon">
-                                  {selectedToken.logoURI ? (
-                                    <img
-                                      alt={`${selectedToken.name}`}
-                                      width={20}
-                                      height={20}
-                                      src={selectedToken.logoURI}
-                                    />
-                                  ) : (
-                                    <Identicon
-                                      address={selectedToken.address}
-                                      style={{
-                                        width: "24",
-                                        display: "inline-flex",
-                                      }}
-                                    />
-                                  )}
-                                </div>
-                                <div className="token-symbol">
-                                  {selectedToken.symbol}
+                <div className={`${paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}`}>
+                  <h4 className="modal-form-heading">What is the payment rate?</h4>
+                  <div className="font-size-85 font-regular fg-black-25 mb-1">This is the agreed upon payment rate between you and the recepient.</div>
+                  <Row gutter={[24, 0]} className="mb-2">
+                    <Col span={12}>
+                      <div className="transaction-field medium my-0">
+                        <div className="transaction-field-row main-row">
+                          <span className="input-left">
+                            <input
+                              className="token-amount-input"
+                              inputMode="decimal"
+                              autoComplete="off"
+                              autoCorrect="off"
+                              type="text"
+                              onChange={handlePaymentRateAmountChange}
+                              pattern="^[0-9]*[.,]?[0-9]*$"
+                              placeholder="0.0"
+                              minLength={1}
+                              maxLength={79}
+                              spellCheck="false"
+                              min={0}
+                              max={fromCoinAmount}
+                              value={paymentRateAmount}
+                            />
+                          </span>
+                          {selectedToken && (
+                            <div className="token-right">
+                              <div className="token-group">
+                                <div className="token-selector">
+                                  <div className="token-icon">
+                                    {selectedToken.logoURI ? (
+                                      <img
+                                        alt={`${selectedToken.name}`}
+                                        width={20}
+                                        height={20}
+                                        src={selectedToken.logoURI}
+                                      />
+                                    ) : (
+                                      <Identicon
+                                        address={selectedToken.address}
+                                        style={{
+                                          width: "24",
+                                          display: "inline-flex",
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                  <div className="token-symbol">
+                                    {selectedToken.symbol}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Col>
+                      <span className="font-size-75 font-regular fg-black-25 pl-1">Select up to {getAmountWithTokenSymbol(parseFloat(fromCoinAmount),selectedToken)}</span>
+                    </Col>
+                    <Col span={12}>
+                      <Dropdown
+                        overlay={paymentRateOptionsMenu}
+                        trigger={["click"]}
+                      >
+                        <Button size="large" className="w-100 gray-stroke">
+                          {getPaymentRateOptionLabel(paymentRateValue)}{" "}
+                          <DownOutlined />
+                        </Button>
+                      </Dropdown>
+                    </Col>
+                  </Row>
+                  <Row gutter={[24, 0]} className={paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"}>
+                    <Col span={12} offset={12}>
+                      {/* Only for integer input greater than 0 */}
+                      <Input
+                        className="w-100 gray-stroke"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        type="text"
+                        suffix="minutes"
+                        onChange={handlePaymentRateIntervalChange}
+                        disabled={paymentRateValue !== PaymentRateType.Other}
+                        pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
+                        placeholder="0"
+                        minLength={1}
+                        maxLength={79}
+                        spellCheck="false"
+                        value={paymentRateInterval}
+                        defaultValue={paymentRateInterval}
+                      />
+                    </Col>
+                  </Row>
+                </div>
+                <h4 className="modal-form-heading">When do you want to send this payment?</h4>
+                <Row gutter={[24, 0]} className="mb-2">
                   <Col span={12}>
-                    <Dropdown
-                      overlay={paymentRateOptionsMenu}
-                      trigger={["click"]}
-                    >
+                    <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
                       <Button size="large" className="w-100 gray-stroke">
-                        {getPaymentRateOptionLabel(paymentRateValue)}{" "}
+                        {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
                         <DownOutlined />
                       </Button>
                     </Dropdown>
                   </Col>
-                </Row>
-                <Row gutter={[24, 0]} className={paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"}>
-                  <Col span={12} offset={12}>
-                    {/* Only for integer input greater than 0 */}
-                    <Input
-                      className="w-100 gray-stroke"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      type="text"
-                      suffix="minutes"
-                      onChange={handlePaymentRateIntervalChange}
-                      disabled={paymentRateValue !== PaymentRateType.Other}
-                      pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
-                      placeholder="0"
-                      minLength={1}
-                      maxLength={79}
-                      spellCheck="false"
-                      value={paymentRateInterval}
-                      defaultValue={paymentRateInterval}
-                    />
+                  <Col span={12}>
+                    {paymentStartPlanValue === PaymentStartPlan.Now ? (
+                      <Button
+                        block
+                        className="gray-stroke"
+                        type="primary"
+                        shape="round"
+                        size="large"
+                        disabled={true}
+                      >
+                        Will send right away
+                      </Button>
+                    ) : (
+                      <DatePicker
+                        size="large"
+                        className="w-100 gray-stroke"
+                        aria-required={paymentStartPlanValue === PaymentStartPlan.Schedle}
+                        allowClear={false}
+                        onChange={(value, date) =>
+                          setPaymentStartScheduleValue(date)
+                        }
+                        defaultValue={moment(
+                          paymentStartScheduleValue,
+                          DATEPICKER_FORMAT
+                        )}
+                        format={DATEPICKER_FORMAT}
+                      />
+                    )}
                   </Col>
                 </Row>
               </div>

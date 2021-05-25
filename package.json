@@ -7,6 +7,7 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
+    "postbuild": "node iisConfig/copyIISConfig.js",
     "program:build": "cd program && cargo build-bpf",
     "program:test": "cd program && cargo test-bpf",
     "localnet:up": "solana-test-validator --bpf-program BpfProgram1111111111111111111111111111111111 program/target/deploy/bpf_program_template.so --reset",
