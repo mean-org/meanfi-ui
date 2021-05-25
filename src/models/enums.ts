@@ -8,12 +8,12 @@ export enum PaymentScheme {
     RepeatingPayment = 1
 }
 
+// In seconds for the API
 export enum PaymentRateType {
-    PerHour = 0,    // 3600s
-    PerDay = 1,     // 86400s
-    PerWeek = 2,    // 604800s,
-    PerMonth = 3,   // 2629750s,
-                    // 15552000s
-    PerYear = 4,    // 31557000s,
+    PerHour = 0,    // 3600
+    PerDay = 1,     // 86400
+    PerWeek = 2,    // 604800
+    PerMonth = 3,   // 2629750
+    PerYear = 4,    // 31557000
     Other = 5,      // >= 60 seconds
 }

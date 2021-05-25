@@ -222,13 +222,64 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
   }
 }
 
+.ant-input-affix-wrapper.gray-stroke {
+  height: 40px;
+  border-width: 2px !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  border-radius: @custom-border-radius;
+  &:focus,
+  &.ant-input-affix-wrapper-focused {
+    transition: none;
+    box-shadow: none;
+  }
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+.ant-picker.ant-picker-large.gray-stroke {
+  height: 40px;
+  border-width: 2px !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  &:focus,
+  &.ant-picker-focused {
+    transition: none;
+    box-shadow: none;
+  }
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+.ant-btn.ant-dropdown-trigger.gray-stroke {
+  height: 40px;
+  border-width: 2px !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  > :first-child {
+    display: block;
+    flex: 1 1 calc(100% - 1rem);
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
 // Select
 .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
   border-color: @color-primary-highlight !important;
 }
 .ant-select.ant-select-focused:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  border-color: @color-primary;
-  box-shadow: 0 0 0 2px rgba(183, 0, 27, 0.2);
+  transition: none;
+  box-shadow: none;
 }
 .ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
   color: @color-black-85;
@@ -270,7 +321,6 @@ body {
     line-height: inherit;
     font-size: 16px;
     margin: 0 10px;
-
     .ant-menu-item {
       margin: 0 10px;
       color: lightgrey;
@@ -657,9 +707,9 @@ em {
   border-color: @color-black-10;
   border-radius: @custom-border-radius;
   margin-bottom: 20px;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   &.medium {
     height: 40px;
-    margin: 4px 0 20px;
     .transaction-field-row.main-row {
       height: auto !important;
       line-height: 1;
@@ -855,6 +905,7 @@ em {
     .mean-modal-form {
       h4 {
         line-height: 1;
+        margin-bottom: 12px;
       }
       .ant-btn.ant-btn-lg.ant-dropdown-trigger,
       .ant-picker.ant-picker-large {
@@ -1067,6 +1118,10 @@ em {
   margin-right: 2rem;
 }
 
+.my-0 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
 .mt-1 {
   margin-top: 0.5rem;
 }
@@ -1161,6 +1216,23 @@ em {
 }
 .font-size-200 {
   font-size: 2rem !important;
+}
+
+// Letter spacing (tracking)
+.reset-tracking {
+  letter-spacing: normal;
+}
+.compress-05px {
+  letter-spacing: -0.5px;
+}
+.compress-1px {
+  letter-spacing: -1px;
+}
+.expand-05px {
+  letter-spacing: 0.5px;
+}
+.expand-1px {
+  letter-spacing: 1px;
 }
 
 // Padding

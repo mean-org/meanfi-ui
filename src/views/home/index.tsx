@@ -1,4 +1,4 @@
-import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker } from "antd";
+import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input } from "antd";
 import { DownOutlined, CheckOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../contexts/connection";
@@ -6,15 +6,13 @@ import { useMarkets } from "../../contexts/market";
 import { IconCaretDown } from "../../Icons";
 import {
   formatAmount,
-  formatNumber,
   fromLamports,
+  isPositiveNumber,
   isValidNumber,
-  useLocalStorageState,
 } from "../../utils/utils";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { Identicon } from "../../components/Identicon";
-import { cache, useNativeAccount } from "../../contexts/accounts";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { cache } from "../../contexts/accounts";
 import { getPrices } from "../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../constants";
 import { PaymentOptionsModal } from "../../components/PaymentOptionsModal";
@@ -23,25 +21,25 @@ import {
   PaymentScheme,
   PaymentStartPlan,
 } from "../../models/enums";
-import { getPaymentStartPlanOptionLabel, timeConvert } from "../../utils/ui";
+import {
+  getAmountWithTokenSymbol,
+  getOptionsFromEnum,
+  getPaymentRateIntervalByRateType,
+  getPaymentRateOptionLabel,
+  getPaymentStartPlanOptionLabel,
+  timeConvert
+} from "../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { useUserAccounts } from "../../hooks";
-// import { WRAPPED_SOL_MINT } from "../../utils/ids";
-// import { useUserBalance, useUserTotalBalance } from "../../hooks";
 
 export const HomeView = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
-  const { account } = useNativeAccount();
+  // const { account } = useNativeAccount();
   const { userAccounts } = useUserAccounts();
-
-  // const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
-  // const SRM = useUserBalance(SRM_ADDRESS);
-  // const SOL = useUserBalance(WRAPPED_SOL_MINT);
-  // const { hasBalance, balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
 
   const [currentTab, setCurrentTab] = useState("send");
   const [previousChain, setChain] = useState("");
@@ -49,6 +47,7 @@ export const HomeView = () => {
 
   const [fromCoinAmount, setFromCoinAmount] = useState("");
   const [paymentRateAmount, setPaymentRateAmount] = useState("");
+  const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
 
   const [coinPrices, setCoinPrices] = useState<any>(null);
 
@@ -57,7 +56,8 @@ export const HomeView = () => {
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
   const [simpleTokenList, setSimpleTokenList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
+  const [selectedToken, setSelectedToken] = useState<any>(null);
+  // const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -68,9 +68,10 @@ export const HomeView = () => {
   const [isSchedulePaymentModalVisible, setSchedulePaymentModalVisibility] = useState(false);
   const showSchedulePayment = useCallback(() => setSchedulePaymentModalVisibility(true), []);
   const onCloseSchedulePayment = useCallback(() => setSchedulePaymentModalVisibility(false), []);
-  const [paymentStartPlanValue, setPaymentStartPlanValue] = useState<PaymentStartPlan>(PaymentStartPlan.Now);
   const [paymentStartScheduleValue, setPaymentStartScheduleValue] = useState(today);
+  const [paymentStartPlanValue, setPaymentStartPlanValue] = useState<PaymentStartPlan>(PaymentStartPlan.Now);
   const [paymentSchemeValue, setPaymentSchemeValue] = useState<PaymentScheme>(PaymentScheme.OneTimePayment);
+  const [paymentRateValue, setPaymentRateValue] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
   const onSendTabSelected = () => {
     setCurrentTab("send");
@@ -98,9 +99,19 @@ export const HomeView = () => {
     }
   };
 
-  const onTransactionStart = () => {
-    console.log("You clicked on start transaction");
+  const handlePaymentRateIntervalChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setPaymentRateInterval("");
+    } else if (isPositiveNumber(newValue)) {
+      setPaymentRateInterval(newValue);
+    }
   };
+
+  const handlePaymentRateOptionChange = (val: PaymentRateType) => {
+    setPaymentRateValue(val);
+    setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
+  }
 
   // Set to reload prices every 30 seconds
   const setPriceTimer = () => {
@@ -130,11 +141,13 @@ export const HomeView = () => {
   const getPaymentRateLabel = (
     scheme: PaymentScheme,
     rate: PaymentRateType,
-    amount: string
+    amount: string,
+    interval: string
   ): string => {
     let label = "";
+    // console.log(`scheme: ${PaymentScheme[scheme]}\nRate: ${PaymentRateType[rate]}\nAmount: ${amount}\nInterval: ${interval}`);
     if (scheme === PaymentScheme.RepeatingPayment) {
-      label += `${amount} `;
+      label += `${getAmountWithTokenSymbol(amount, selectedToken)} `;
       switch (rate) {
         case PaymentRateType.PerHour:
           label += "per hour";
@@ -152,23 +165,13 @@ export const HomeView = () => {
           label += "per year";
           break;
         case PaymentRateType.Other:
-          label += `every ## seconds = ${timeConvert(15552000)}`;
+          const intervalNumber = parseInt(interval, 10);
+          label += `every ${timeConvert(intervalNumber)}`;
           break;
       }
     }
     return label;
   };
-
-  const getAmountWithTokenSymbol = (
-    amount: any,
-    token: TokenInfo,
-    decimals = 2
-  ): string => {
-    if (!amount || !token) { return '--'; }
-    const converted = amount.toString();
-    const parsed = parseFloat(converted);
-    return `${formatAmount(parsed, decimals)} ${token.symbol}`;
-  }
 
   const onAcceptSchedulePayment = () => {
     onCloseSchedulePayment();
@@ -202,7 +205,7 @@ export const HomeView = () => {
           setSimpleTokenList(tokensWithBalance);
           console.log('tokensWithBalance:', tokensWithBalance);
           // Preset a token
-          if (!selectedToken && tokensWithBalance) {
+          if (tokensWithBalance?.length) {
             setSelectedToken(tokensWithBalance[0]);
             console.log("Preset token:", tokensWithBalance[0]);
           }
@@ -237,6 +240,7 @@ export const HomeView = () => {
   // Effect to load coin prices
   useEffect(() => {
     const getCoinPrices = async () => {
+      setShouldLoadCoinPrices(false);
       try {
         await getPrices()
           .then((prices) => {
@@ -252,9 +256,8 @@ export const HomeView = () => {
       }
     };
 
-    if (shouldLoadCoinPrices) {
+    if (shouldLoadCoinPrices && selectedToken) {
       getCoinPrices();
-      setShouldLoadCoinPrices(false);
       setPriceTimer();
     }
   }, [coinPrices, shouldLoadCoinPrices, selectedToken, setEffectiveRate]);
@@ -298,8 +301,9 @@ export const HomeView = () => {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setShouldLoadTokens(true);
-        }, 500);
+        }, 1000);
       } else {
+        setSelectedToken(null);
         setShouldLoadTokens(true);
       }
       setPreviousWalletConnectState(connected);
@@ -312,15 +316,67 @@ export const HomeView = () => {
     setPreviousWalletConnectState,
   ]);
 
-  // const balances = (
-  //   <Row gutter={[16, 16]} align="middle">
-  //     <Col span={24}>
-  //       <h2>Your balances ({formatUSD.format(totalBalanceInUSD)}):</h2>
-  //       <h2>SOL: {SOL.balance} ({formatUSD.format(SOL.balanceInUSD)})</h2>
-  //       <h2>SRM: {SRM?.balance} ({formatUSD.format(SRM?.balanceInUSD)})</h2>
-  //     </Col>
-  //   </Row>
-  // );
+  // Validation
+  const areSendAmountSettingsValid = (): boolean => {
+    return connected &&
+           selectedToken &&
+           selectedToken.balance &&
+           fromCoinAmount &&
+           parseFloat(fromCoinAmount) <= selectedToken.balance &&
+           arePaymentSettingsValid();
+  }
+
+  const arePaymentSettingsValid = (): boolean => {
+    let result = true;
+    if (paymentStartPlanValue === PaymentStartPlan.Schedle && !paymentStartScheduleValue) {
+      return false;
+    }
+    const rateAmount = parseFloat(paymentRateAmount);
+    if (paymentSchemeValue === PaymentScheme.RepeatingPayment) {
+      if (!rateAmount) {
+        result = false;
+      } else if (rateAmount > parseFloat(fromCoinAmount)) {
+        result = false;
+      } else if (paymentRateValue === PaymentRateType.Other && !paymentRateInterval) {
+        result = false;
+      }
+    }
+
+    return result;
+  }
+
+  const getTransactionStartButtonLabel = (): string => {
+    return !connected
+           ? "Connect your wallet"
+           : !selectedToken.balance
+           ? "No balance"
+           : !fromCoinAmount
+           ? "Enter an amount"
+           : parseFloat(fromCoinAmount) > selectedToken.balance
+           ? "Amount exceeds your balance"
+           : !arePaymentSettingsValid()
+           ? "Review Send payment settings"
+           : "Start payment";
+  }
+
+  const getPaymentSettingsModalButtonLabel = (): string => {
+    const rateAmount = parseFloat(paymentRateAmount);
+    return !rateAmount && paymentSchemeValue === PaymentScheme.RepeatingPayment
+           ? "Add payment rate"
+           : rateAmount > parseFloat(fromCoinAmount) 
+           ? "Review payment rate"
+           : (paymentSchemeValue === PaymentScheme.RepeatingPayment &&
+             paymentRateValue === PaymentRateType.Other &&
+             !paymentRateInterval)
+           ? 'Select a valid interval'
+           : 'Next';
+  }
+
+  // Main action
+
+  const onTransactionStart = () => {
+    console.log("You clicked on start transaction");
+  };
 
   // Prefabrics
   const paymentStartPlanMenu = (
@@ -329,18 +385,30 @@ export const HomeView = () => {
         key="10"
         onClick={() => {
           setPaymentStartPlanValue(PaymentStartPlan.Now);
-        }}
-      >
+        }}>
         {getPaymentStartPlanOptionLabel(PaymentStartPlan.Now)}
       </Menu.Item>
       <Menu.Item
         key="11"
         onClick={() => {
           setPaymentStartPlanValue(PaymentStartPlan.Schedle);
-        }}
-      >
+        }}>
         {getPaymentStartPlanOptionLabel(PaymentStartPlan.Schedle)}
       </Menu.Item>
+    </Menu>
+  );
+
+  const paymentRateOptionsMenu = (
+    <Menu>
+      {getOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
     </Menu>
   );
 
@@ -349,7 +417,7 @@ export const HomeView = () => {
       <div className="interaction-area">
         <div className="place-transaction-box">
           {/* Tab selection */}
-          <Row gutter={[16, 16]}>
+          <Row gutter={[24, 24]}>
             <Col span={12}>
               <Button
                 block
@@ -384,11 +452,11 @@ export const HomeView = () => {
             <div className="transaction-field-row">
               <span className="field-label-left">Send</span>
               <span className="field-label-right">
-                Balance:{" "}
-                {`${
-                  account && account.lamports
-                    ? formatNumber.format(
-                        (account?.lamports || 0) / LAMPORTS_PER_SOL
+                <span className="mr-1">Balance:</span>{`${
+                  selectedToken?.balance
+                    ? formatAmount(
+                      selectedToken.balance,
+                      selectedToken.decimals
                       )
                     : "Unknown"
                 }`}
@@ -414,22 +482,24 @@ export const HomeView = () => {
               {selectedToken && (
                 <div className="token-right">
                   <div className="token-group">
-                    {account && account.lamports && (
+                    {selectedToken?.balance && (
                       <div
                         className="token-max simplelink"
                         onClick={() =>
                           setFromCoinAmount(
                             formatAmount(
-                              (account?.lamports || 0) / LAMPORTS_PER_SOL,
+                              selectedToken.balance,
                               selectedToken.decimals
                             )
                           )
-                        }
-                      >
+                        }>
                         MAX
                       </div>
                     )}
-                    <div className="token-selector simplelink" onClick={showTokenSelector}>
+                    <div
+                      className="token-selector simplelink"
+                      onClick={showTokenSelector}
+                    >
                       <div className="token-icon">
                         {selectedToken.logoURI ? (
                           <img
@@ -463,13 +533,11 @@ export const HomeView = () => {
               </span>
               <span className="field-label-right">
                 ~$
-                {account && account.lamports && effectiveRate
-                  ? formatAmount(
-                      ((account?.lamports || 0) / LAMPORTS_PER_SOL) *
-                        effectiveRate,
-                      2
-                    )
-                  : "0.00"}
+                {
+                  selectedToken?.balance && effectiveRate
+                  ? formatAmount(selectedToken.balance * effectiveRate, 2)
+                  : "0.00"
+                }
               </span>
             </div>
           </div>
@@ -480,7 +548,8 @@ export const HomeView = () => {
             title={<div className="modal-title">Select a token</div>}
             onCancel={onCloseTokenSelector}
             width={450}
-            footer={null}>
+            footer={null}
+          >
             <div className="token-list">
               {/* Loop through the tokens */}
               {selectedToken && simpleTokenList ? (
@@ -533,9 +602,7 @@ export const HomeView = () => {
             </div>
           </Modal>
           {/* Payment scheme */}
-          <div id="send-payment-field" className={`transaction-field ${
-              !fromCoinAmount ? "disabled" : ""
-            }`}>
+          <div id="send-payment-field" className={`transaction-field ${!fromCoinAmount ? "disabled" : ""}`}>
             <div className="transaction-field-row">
               <span className="field-label-left">Send payment</span>
               <span className="field-label-right">&nbsp;</span>
@@ -544,10 +611,7 @@ export const HomeView = () => {
               className="transaction-field-row main-row simplelink"
               onClick={showSchedulePayment}>
               <span className="field-select-left text-truncate">
-                {getSendPaymentLabel(
-                  paymentStartPlanValue,
-                  paymentSchemeValue
-                )}
+                {getSendPaymentLabel(paymentStartPlanValue, paymentSchemeValue)}
               </span>
               <span className="field-caret-down">
                 <IconCaretDown className="mean-svg-icons" />
@@ -555,11 +619,14 @@ export const HomeView = () => {
             </div>
             <div className="transaction-field-row">
               <span className="field-label-left">
-                {paymentSchemeValue === PaymentScheme.RepeatingPayment ? getPaymentRateLabel(
-                  PaymentScheme.RepeatingPayment,
-                  PaymentRateType.PerMonth,
-                  "5.55555"
-                ) : ''}
+                {paymentSchemeValue === PaymentScheme.RepeatingPayment
+                  ? getPaymentRateLabel(
+                      paymentSchemeValue,
+                      paymentRateValue,
+                      paymentRateAmount,
+                      paymentRateInterval
+                    )
+                  : ""}
               </span>
             </div>
           </div>
@@ -570,7 +637,7 @@ export const HomeView = () => {
             handleClose={onCloseSchedulePayment}>
             <div className="mean-modal-form">
               <h4>When do you want to send this payment?</h4>
-              <Row gutter={[24, 24]}>
+              <Row gutter={[24, 0]} className="mb-2">
                 <Col span={12}>
                   <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
                     <Button size="large" className="w-100 gray-stroke">
@@ -580,45 +647,86 @@ export const HomeView = () => {
                   </Dropdown>
                 </Col>
                 <Col span={12}>
-                  <DatePicker
-                    size="large"
-                    className="w-100 gray-stroke"
-                    onChange={(value, date) =>
-                      setPaymentStartScheduleValue(date)
-                    }
-                    defaultValue={moment(
-                      paymentStartScheduleValue,
-                      DATEPICKER_FORMAT
-                    )}
-                    format={DATEPICKER_FORMAT}
-                  />
+                  {paymentStartPlanValue === PaymentStartPlan.Now ? (
+                    <Button
+                      block
+                      className="gray-stroke"
+                      type="primary"
+                      shape="round"
+                      size="large"
+                      disabled={true}
+                    >
+                      Will send right away
+                    </Button>
+                  ) : (
+                    <DatePicker
+                      size="large"
+                      className="w-100 gray-stroke"
+                      aria-required={paymentStartPlanValue === PaymentStartPlan.Schedle}
+                      allowClear={false}
+                      onChange={(value, date) =>
+                        setPaymentStartScheduleValue(date)
+                      }
+                      defaultValue={moment(
+                        paymentStartScheduleValue,
+                        DATEPICKER_FORMAT
+                      )}
+                      format={DATEPICKER_FORMAT}
+                    />
+                  )}
                 </Col>
               </Row>
               <h4>What kind of payment is this?</h4>
-              <div className="item-selector-grid w-100 mb-2">
-                <div className={`option-grid-item position-relative ${
+              <div className="item-selector-grid w-100 mb-3">
+                <div
+                  className={`option-grid-item position-relative ${
                     paymentSchemeValue === PaymentScheme.OneTimePayment
                       ? "selected"
                       : ""
-                  }`} onClick={() => setPaymentSchemeValue(PaymentScheme.OneTimePayment)}>
-                  <span className="position absolute right-top"><CheckOutlined /></span>
-                  <span className="font-size-80 font-medium text-center">One time<br />payment</span>
+                  }`}
+                  onClick={() =>
+                    setPaymentSchemeValue(PaymentScheme.OneTimePayment)
+                  }>
+                  <span className="position absolute right-top">
+                    <CheckOutlined />
+                  </span>
+                  <span className="font-size-80 font-medium text-center">
+                    One time
+                    <br />
+                    payment
+                  </span>
                 </div>
-                <div className={`option-grid-item position-relative ${
+                <div
+                  className={`option-grid-item position-relative ${
                     paymentSchemeValue === PaymentScheme.RepeatingPayment
                       ? "selected"
                       : ""
-                  }`} onClick={() => setPaymentSchemeValue(PaymentScheme.RepeatingPayment)}>
-                  <span className="position absolute right-top"><CheckOutlined /></span>
-                  <span className="font-size-80 font-medium text-center">Repeating<br />payment</span>
+                  }`}
+                  onClick={() =>
+                    setPaymentSchemeValue(PaymentScheme.RepeatingPayment)
+                  }>
+                  <span className="position absolute right-top">
+                    <CheckOutlined />
+                  </span>
+                  <span className="font-size-80 font-medium text-center">
+                    Repeating
+                    <br />
+                    payment
+                  </span>
                 </div>
               </div>
-              <div className={paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}>
-                <h4>What is the payment rate? (less than or equals to {getAmountWithTokenSymbol(fromCoinAmount, selectedToken)})</h4>
-                <div className="font-size-75 fg-black-25">This is the agreed upon payment rate between you and the recepient.</div>
-                <Row gutter={[24, 24]}>
+              <div className={`mb-4 ${paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}`}>
+                <h4>
+                  What is the payment rate? (less than or equals to &nbsp;
+                  <span className="font-extrabold compress-1px">{formatAmount(parseFloat(fromCoinAmount), 2)}</span>
+                  {selectedToken && (
+                    <span>&nbsp;{selectedToken.symbol}</span>
+                  )})
+                </h4>
+                <div className="font-size-75 fg-black-25 mb-1">This is the agreed upon payment rate between you and the recepient.</div>
+                <Row gutter={[24, 0]} className="mb-2">
                   <Col span={12}>
-                    <div className="transaction-field medium">
+                    <div className="transaction-field medium my-0">
                       <div className="transaction-field-row main-row">
                         <span className="input-left">
                           <input
@@ -635,7 +743,8 @@ export const HomeView = () => {
                             spellCheck="false"
                             min={0}
                             max={fromCoinAmount}
-                            value={paymentRateAmount}/>
+                            value={paymentRateAmount}
+                          />
                         </span>
                         {selectedToken && (
                           <div className="token-right">
@@ -652,11 +761,16 @@ export const HomeView = () => {
                                   ) : (
                                     <Identicon
                                       address={selectedToken.address}
-                                      style={{ width: "24", display: "inline-flex" }}
+                                      style={{
+                                        width: "24",
+                                        display: "inline-flex",
+                                      }}
                                     />
                                   )}
                                 </div>
-                                <div className="token-symbol">{selectedToken.symbol}</div>
+                                <div className="token-symbol">
+                                  {selectedToken.symbol}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -665,7 +779,37 @@ export const HomeView = () => {
                     </div>
                   </Col>
                   <Col span={12}>
-                    <p>The amount</p>
+                    <Dropdown
+                      overlay={paymentRateOptionsMenu}
+                      trigger={["click"]}
+                    >
+                      <Button size="large" className="w-100 gray-stroke">
+                        {getPaymentRateOptionLabel(paymentRateValue)}{" "}
+                        <DownOutlined />
+                      </Button>
+                    </Dropdown>
+                  </Col>
+                </Row>
+                <Row gutter={[24, 0]} className={paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"}>
+                  <Col span={12} offset={12}>
+                    {/* Only for integer input greater than 0 */}
+                    <Input
+                      className="w-100 gray-stroke"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      suffix="minutes"
+                      onChange={handlePaymentRateIntervalChange}
+                      disabled={paymentRateValue !== PaymentRateType.Other}
+                      pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
+                      placeholder="0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      value={paymentRateInterval}
+                      defaultValue={paymentRateInterval}
+                    />
                   </Col>
                 </Row>
               </div>
@@ -676,8 +820,8 @@ export const HomeView = () => {
                 shape="round"
                 size="large"
                 onClick={onAcceptSchedulePayment}
-                disabled={paymentRateAmount > fromCoinAmount}>
-                {paymentRateAmount <= fromCoinAmount ? 'Next' : 'Review payment rate'}
+                disabled={!arePaymentSettingsValid()}>
+                {getPaymentSettingsModalButtonLabel()}
               </Button>
             </div>
           </PaymentOptionsModal>
@@ -713,11 +857,10 @@ export const HomeView = () => {
             shape="round"
             size="large"
             onClick={onTransactionStart}
-            disabled={!connected || !fromCoinAmount}>
-            {!connected ? 'Connect your wallet' : !fromCoinAmount ? 'Enter an amount' : 'Start payment'}
+            disabled={!areSendAmountSettingsValid()}>
+            {getTransactionStartButtonLabel()}
           </Button>
         </div>
-        {/* {balances} */}
       </div>
     </div>
   );

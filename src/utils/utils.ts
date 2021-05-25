@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { MintInfo } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { PublicKey } from "@solana/web3.js";
-import { NON_NEGATIVE_AMOUNT_PATTERN, WAD, ZERO } from "../constants";
+import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
@@ -248,4 +248,9 @@ export function convert(
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return NON_NEGATIVE_AMOUNT_PATTERN.test(str);
+}
+
+export function isPositiveNumber(str: string): boolean {
+  if (str === null || str === undefined ) { return false; }
+  return POSITIVE_NUMBER_PATTERN.test(str);
 }
