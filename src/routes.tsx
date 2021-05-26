@@ -4,7 +4,6 @@ import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { MarketProvider } from "./contexts/market";
 import { AppLayout } from "./components/Layout";
-
 import { FaucetView, HomeView, StreamsView } from "./views";
 
 export function Routes() {

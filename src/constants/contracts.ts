@@ -1,0 +1,54 @@
+import { ContractDefinition } from "../models/contract-definition";
+
+export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
+    {
+        name: 'Simple Payment',
+        description: 'For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.',
+        category: 'Individuals',
+    },
+    {
+        name: 'Family Allowance or Remmitance',
+        description: 'Setup an allowance for your child or family member anywhere in the world to send them money regularly, in two simple steps.',
+        category: 'Individuals',
+    },
+    {
+        name: 'Payroll',
+        description: 'Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.',
+        category: 'Business',
+    },
+    {
+        name: 'Subscription',
+        description: 'Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.',
+        category: 'Business',
+    },
+    {
+        name: 'Fundraising',
+        description: 'Looking to raise funds  your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.',
+        category: 'Business',
+    },
+    {
+        name: 'Real Estate Sale (Escrow)',
+        description: 'Setup the escrow account for a Real Estate transaction. Seller and buyer get direct access and full auditing for free.',
+        category: 'Real Estate',
+    },
+    {
+        name: 'Rent Collection',
+        description: 'Setup rent collection for your tenants. They pay into the stream, and you receive the money for every second they occupy your property.',
+        category: 'Real Estate',
+    },
+    {
+        name: 'Pension Fund',
+        description: 'For employers setting up pension plans that pay employees upon qualifying events, such as reaching retirement age.',
+        category: 'Other',
+    },
+    {
+        name: 'Setup everything (Advanced)',
+        description: 'Recommended for professionals that want to setup a contract with unique terms, not commonly used.',
+        category: 'Other',
+    },
+    {
+        name: 'Donation Fund',
+        description: 'Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.',
+        category: 'Other',
+    },
+];

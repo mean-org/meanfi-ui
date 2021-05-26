@@ -348,7 +348,7 @@ export const HomeView = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
            ? "Connect your wallet"
-           : !selectedToken.balance
+           : !selectedToken || !selectedToken.balance
            ? "No balance"
            : !fromCoinAmount
            ? "Enter an amount"
