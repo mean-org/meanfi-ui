@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
 import { formatNumber, shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
@@ -9,17 +9,17 @@ import { WALLET_PROVIDERS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
-import { useHistory } from "react-router-dom";
+import { AppStateContext } from "../../contexts/contract";
 
 const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
 
 export const CurrentUserBadge = (props: {}) => {
 
-  const history = useHistory();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
+  const { setCurrentTab } = useContext(AppStateContext);
 
   const { wallet, select } = useWallet();
   const { account } = useNativeAccount();
@@ -50,8 +50,8 @@ export const CurrentUserBadge = (props: {}) => {
   }
 
   const onGoToStreamsClick = () => {
-    history.push("/streams");
-  }
+    setCurrentTab("streams");
+  };
 
   if (!wallet?.publicKey) {
     return null;
@@ -83,8 +83,7 @@ export const CurrentUserBadge = (props: {}) => {
         title="Account"
         onCancel={close}
         width={450}
-        footer={null}
-      >
+        footer={null}>
         <div className="account-settings-group">
           {/* Wallet */}
           <Row>

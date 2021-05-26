@@ -1,6 +1,6 @@
 import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input, Tooltip } from "antd";
 import { DownOutlined, CheckOutlined, SwapOutlined } from "@ant-design/icons";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useMarkets } from "../../contexts/market";
 import { IconCaretDown } from "../../Icons";
@@ -9,6 +9,7 @@ import {
   fromLamports,
   isPositiveNumber,
   isValidNumber,
+  useLocalStorageState,
 } from "../../utils/utils";
 import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { Identicon } from "../../components/Identicon";
@@ -32,6 +33,7 @@ import {
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { useUserAccounts } from "../../hooks";
+import { AppStateContext } from "../../contexts/contract";
 
 export const HomeView = () => {
   const today = new Date().toLocaleDateString();
@@ -41,7 +43,6 @@ export const HomeView = () => {
   // const { account } = useNativeAccount();
   const { userAccounts } = useUserAccounts();
 
-  // const [currentTab, setCurrentTab] = useState("send");
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
@@ -56,8 +57,7 @@ export const HomeView = () => {
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
   const [simpleTokenList, setSimpleTokenList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useState<any>(null);
-  // const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
+  const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -73,13 +73,11 @@ export const HomeView = () => {
   const [paymentSchemeValue, setPaymentSchemeValue] = useState<PaymentScheme>(PaymentScheme.OneTimePayment);
   const [paymentRateValue, setPaymentRateValue] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
-  // const onSendTabSelected = () => {
-  //   setCurrentTab("send");
-  // };
+  const { currentTab, setCurrentTab } = useContext(AppStateContext);
 
-  // const onReceiveTabSelected = () => {
-  //   setCurrentTab("receive");
-  // };
+  const onGoToStreamsClick = () => {
+    setCurrentTab("streams");
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -180,9 +178,8 @@ export const HomeView = () => {
   // Effect to load token list
   useEffect(() => {
     const filterTokenList = () => {
-      // Immediately signal the state to avoid this again
-      setShouldLoadTokens(false);
       const tokensWithBalance: TokenInfo[] = [];
+      setShouldLoadTokens(false);
       new TokenListProvider().resolve().then((tokens) => {
         const filteredTokens = tokens
           .filterByClusterSlug(connectionConfig.env)
@@ -273,7 +270,7 @@ export const HomeView = () => {
     }
   }, [
     previousChain,
-    connectionConfig.env,
+    connectionConfig,
     shouldLoadTokens,
     setShouldLoadTokens,
   ]);
@@ -312,9 +309,23 @@ export const HomeView = () => {
     connected,
     shouldLoadTokens,
     previousWalletConnectState,
+    setSelectedToken,
     setShouldLoadTokens,
     setPreviousWalletConnectState,
   ]);
+
+  // Effect to set a default tab if none selected already
+  useEffect(() => {
+    const setDefaultTab = () => {
+      // TODO: Condition this to go to streams in case we have streams
+      // otherwise go to create contract.
+      setCurrentTab('contract');
+    }
+
+    if (!currentTab) {
+      setDefaultTab();
+    }
+  }, [currentTab, setCurrentTab]);
 
   // Validation
   const areSendAmountSettingsValid = (): boolean => {
@@ -412,461 +423,453 @@ export const HomeView = () => {
     </Menu>
   );
 
-  return (
-    <div className="container">
-      <div className="interaction-area">
-        <div className="place-transaction-box">
-          {/* Tab selection */}
-          {/* <Row gutter={[24, 24]}>
-            <Col span={12}>
-              <Button
-                block
-                shape="round"
-                type="text"
-                size="large"
-                className={`${
-                  currentTab === "send" ? "ant-btn-shaded" : "ant-btn-flat"
-                }`}
-                onClick={onSendTabSelected}
-              >
-                Send
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                block
-                shape="round"
-                type="text"
-                size="large"
-                className={`${
-                  currentTab === "receive" ? "ant-btn-shaded" : "ant-btn-flat"
-                }`}
-                onClick={onReceiveTabSelected}>
-                Receive
-              </Button>
-            </Col>
-          </Row> */}
-          <div className="position-relative mb-2">
-            <h2 className="screen-title">Simple Payment</h2>
-            <p>For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.</p>
-            <span className="contract-switch-button">
-              <Tooltip title="Change money streming contract">
-                <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} />
-              </Tooltip>
-            </span>
-          </div>
-          {/* Send amount */}
-          <div id="send-transaction-field" className="transaction-field">
-            <div className="transaction-field-row">
-              <span className="field-label-left">Send</span>
-              <span className="field-label-right">
-                <span className="mr-1">Balance:</span>{`${
-                  selectedToken?.balance
-                    ? formatAmount(
-                      selectedToken.balance,
-                      selectedToken.decimals
-                      )
-                    : "Unknown"
-                }`}
+  if (currentTab === 'contract') {
+    // CONTRACT SETUP SCREEN
+    return (
+      <div className="container">
+        <div className="interaction-area">
+          <div className="place-transaction-box">
+            <div className="position-relative mb-2">
+              <h2 className="screen-title">Simple Payment</h2>
+              <p>For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.</p>
+              <span className="contract-switch-button">
+                <Tooltip title="Change money streming contract">
+                  <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} onClick={onGoToStreamsClick}/>
+                </Tooltip>
               </span>
             </div>
-            <div className="transaction-field-row main-row">
-              <span className="input-left">
-                <input
-                  className="token-amount-input"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  type="text"
-                  onChange={handleFromCoinAmountChange}
-                  pattern="^[0-9]*[.,]?[0-9]*$"
-                  placeholder="0.0"
-                  minLength={1}
-                  maxLength={79}
-                  spellCheck="false"
-                  value={fromCoinAmount}
-                />
-              </span>
-              {selectedToken && (
-                <div className="token-right">
-                  <div className="token-group">
-                    {selectedToken?.balance && (
-                      <div
-                        className="token-max simplelink"
-                        onClick={() =>
-                          setFromCoinAmount(
-                            formatAmount(
-                              selectedToken.balance,
-                              selectedToken.decimals
+            {/* Send amount */}
+            <div id="send-transaction-field" className="transaction-field">
+              <div className="transaction-field-row">
+                <span className="field-label-left">Send</span>
+                <span className="field-label-right">
+                  <span className="mr-1">Balance:</span>{`${
+                    selectedToken?.balance
+                      ? formatAmount(
+                        selectedToken.balance,
+                        selectedToken.decimals
+                        )
+                      : "Unknown"
+                  }`}
+                </span>
+              </div>
+              <div className="transaction-field-row main-row">
+                <span className="input-left">
+                  <input
+                    className="token-amount-input"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={handleFromCoinAmountChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    value={fromCoinAmount}
+                  />
+                </span>
+                {selectedToken && (
+                  <div className="token-right">
+                    <div className="token-group">
+                      {selectedToken?.balance && (
+                        <div
+                          className="token-max simplelink"
+                          onClick={() =>
+                            setFromCoinAmount(
+                              formatAmount(
+                                selectedToken.balance,
+                                selectedToken.decimals
+                              )
                             )
-                          )
-                        }>
-                        MAX
-                      </div>
-                    )}
-                    <div
-                      className="token-selector simplelink"
-                      onClick={showTokenSelector}
-                    >
-                      <div className="token-icon">
-                        {selectedToken.logoURI ? (
-                          <img
-                            alt={`${selectedToken.name}`}
-                            width={20}
-                            height={20}
-                            src={selectedToken.logoURI}
-                          />
-                        ) : (
-                          <Identicon
-                            address={selectedToken.address}
-                            style={{ width: "24", display: "inline-flex" }}
-                          />
-                        )}
-                      </div>
-                      <div className="token-symbol">{selectedToken.symbol}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <span className="field-caret-down">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-            <div className="transaction-field-row">
-              <span className="field-label-left">
-                ~$
-                {fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                  : "0.00"}
-              </span>
-              <span className="field-label-right">
-                ~$
-                {
-                  selectedToken?.balance && effectiveRate
-                  ? formatAmount(selectedToken.balance * effectiveRate, 2)
-                  : "0.00"
-                }
-              </span>
-            </div>
-          </div>
-          {/* Token selection modal */}
-          <Modal
-            className="mean-modal unpadded-content"
-            visible={isTokenSelectorModalVisible}
-            title={<div className="modal-title">Select a token</div>}
-            onCancel={onCloseTokenSelector}
-            width={450}
-            footer={null}
-          >
-            <div className="token-list">
-              {/* Loop through the tokens */}
-              {selectedToken && simpleTokenList ? (
-                simpleTokenList.map((token, index) => {
-                  const onClick = function () {
-                    setSelectedToken(token);
-                    console.log("token selected:", token.symbol);
-                    setEffectiveRate(
-                      coinPrices && coinPrices[token.symbol]
-                        ? coinPrices[token.symbol]
-                        : 0
-                    );
-                    onCloseTokenSelector();
-                  };
-                  return (
-                    <div
-                      key={index + 100}
-                      onClick={onClick}
-                      className={`token-item ${
-                        selectedToken && selectedToken.address === token.address
-                          ? "selected"
-                          : "simplelink"
-                      }`}
-                    >
-                      <div className="token-icon">
-                        {token.logoURI ? (
-                          <img
-                            alt={`${token.name}`}
-                            width={24}
-                            height={24}
-                            src={token.logoURI}
-                          />
-                        ) : (
-                          <Identicon
-                            address={token.address}
-                            style={{ width: "24", display: "inline-flex" }}
-                          />
-                        )}
-                      </div>
-                      <div className="token-description">
-                        <div className="token-symbol">{token.symbol}</div>
-                        <div className="token-name">{token.name}</div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p>Loading...</p>
-              )}
-            </div>
-          </Modal>
-          {/* Payment scheme */}
-          <div id="send-payment-field" className={`transaction-field ${!fromCoinAmount ? "disabled" : ""}`}>
-            <div className="transaction-field-row">
-              <span className="field-label-left">Send payment</span>
-              <span className="field-label-right">&nbsp;</span>
-            </div>
-            <div
-              className="transaction-field-row main-row simplelink"
-              onClick={showSchedulePayment}>
-              <span className="field-select-left text-truncate">
-                {getSendPaymentLabel(paymentStartPlanValue, paymentSchemeValue)}
-              </span>
-              <span className="field-caret-down">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-            <div className="transaction-field-row">
-              <span className="field-label-left">
-                {paymentSchemeValue === PaymentScheme.RepeatingPayment
-                  ? getPaymentRateLabel(
-                      paymentSchemeValue,
-                      paymentRateValue,
-                      paymentRateAmount,
-                      paymentRateInterval
-                    )
-                  : ""}
-              </span>
-            </div>
-          </div>
-          {/* Schedule Payment modal */}
-          <PaymentOptionsModal
-            isVisible={isSchedulePaymentModalVisible}
-            handleOk={onAcceptSchedulePayment}
-            handleClose={onCloseSchedulePayment}>
-            <div className="mean-modal-form">
-              <div className="mb-4">
-                <h4 className="modal-form-heading">What kind of payment is this?</h4>
-                <div className="item-selector-grid w-100 mb-3">
-                  <div
-                    className={`option-grid-item position-relative ${
-                      paymentSchemeValue === PaymentScheme.OneTimePayment
-                        ? "selected"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setPaymentSchemeValue(PaymentScheme.OneTimePayment)
-                    }>
-                    <span className="position absolute right-top">
-                      <CheckOutlined />
-                    </span>
-                    <span className="option-grid-item-text">
-                      One time
-                      <br />
-                      payment
-                    </span>
-                  </div>
-                  <div
-                    className={`option-grid-item position-relative ${
-                      paymentSchemeValue === PaymentScheme.RepeatingPayment
-                        ? "selected"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      setPaymentSchemeValue(PaymentScheme.RepeatingPayment)
-                    }>
-                    <span className="position absolute right-top">
-                      <CheckOutlined />
-                    </span>
-                    <span className="option-grid-item-text">
-                      Repeating
-                      <br />
-                      payment
-                    </span>
-                  </div>
-                </div>
-                <div className={`${paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}`}>
-                  <h4 className="modal-form-heading">What is the payment rate?</h4>
-                  <div className="font-size-85 font-regular fg-black-25 mb-1">This is the agreed upon payment rate between you and the recepient.</div>
-                  <Row gutter={[24, 0]} className="mb-2">
-                    <Col span={12}>
-                      <div className="transaction-field medium my-0">
-                        <div className="transaction-field-row main-row">
-                          <span className="input-left">
-                            <input
-                              className="token-amount-input"
-                              inputMode="decimal"
-                              autoComplete="off"
-                              autoCorrect="off"
-                              type="text"
-                              onChange={handlePaymentRateAmountChange}
-                              pattern="^[0-9]*[.,]?[0-9]*$"
-                              placeholder="0.0"
-                              minLength={1}
-                              maxLength={79}
-                              spellCheck="false"
-                              min={0}
-                              max={fromCoinAmount}
-                              value={paymentRateAmount}
+                          }>
+                          MAX
+                        </div>
+                      )}
+                      <div
+                        className="token-selector simplelink"
+                        onClick={showTokenSelector}
+                      >
+                        <div className="token-icon">
+                          {selectedToken.logoURI ? (
+                            <img
+                              alt={`${selectedToken.name}`}
+                              width={20}
+                              height={20}
+                              src={selectedToken.logoURI}
                             />
-                          </span>
-                          {selectedToken && (
-                            <div className="token-right">
-                              <div className="token-group">
-                                <div className="token-selector">
-                                  <div className="token-icon">
-                                    {selectedToken.logoURI ? (
-                                      <img
-                                        alt={`${selectedToken.name}`}
-                                        width={20}
-                                        height={20}
-                                        src={selectedToken.logoURI}
-                                      />
-                                    ) : (
-                                      <Identicon
-                                        address={selectedToken.address}
-                                        style={{
-                                          width: "24",
-                                          display: "inline-flex",
-                                        }}
-                                      />
-                                    )}
-                                  </div>
-                                  <div className="token-symbol">
-                                    {selectedToken.symbol}
+                          ) : (
+                            <Identicon
+                              address={selectedToken.address}
+                              style={{ width: "24", display: "inline-flex" }}
+                            />
+                          )}
+                        </div>
+                        <div className="token-symbol">{selectedToken.symbol}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <span className="field-caret-down">
+                  <IconCaretDown className="mean-svg-icons" />
+                </span>
+              </div>
+              <div className="transaction-field-row">
+                <span className="field-label-left">
+                  ~$
+                  {fromCoinAmount && effectiveRate
+                    ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                    : "0.00"}
+                </span>
+                <span className="field-label-right">
+                  ~$
+                  {
+                    selectedToken?.balance && effectiveRate
+                    ? formatAmount(selectedToken.balance * effectiveRate, 2)
+                    : "0.00"
+                  }
+                </span>
+              </div>
+            </div>
+            {/* Token selection modal */}
+            <Modal
+              className="mean-modal unpadded-content"
+              visible={isTokenSelectorModalVisible}
+              title={<div className="modal-title">Select a token</div>}
+              onCancel={onCloseTokenSelector}
+              width={450}
+              footer={null}
+            >
+              <div className="token-list">
+                {/* Loop through the tokens */}
+                {selectedToken && simpleTokenList ? (
+                  simpleTokenList.map((token, index) => {
+                    const onClick = function () {
+                      setSelectedToken(token);
+                      console.log("token selected:", token.symbol);
+                      setEffectiveRate(
+                        coinPrices && coinPrices[token.symbol]
+                          ? coinPrices[token.symbol]
+                          : 0
+                      );
+                      onCloseTokenSelector();
+                    };
+                    return (
+                      <div
+                        key={index + 100}
+                        onClick={onClick}
+                        className={`token-item ${
+                          selectedToken && selectedToken.address === token.address
+                            ? "selected"
+                            : "simplelink"
+                        }`}
+                      >
+                        <div className="token-icon">
+                          {token.logoURI ? (
+                            <img
+                              alt={`${token.name}`}
+                              width={24}
+                              height={24}
+                              src={token.logoURI}
+                            />
+                          ) : (
+                            <Identicon
+                              address={token.address}
+                              style={{ width: "24", display: "inline-flex" }}
+                            />
+                          )}
+                        </div>
+                        <div className="token-description">
+                          <div className="token-symbol">{token.symbol}</div>
+                          <div className="token-name">{token.name}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p>Loading...</p>
+                )}
+              </div>
+            </Modal>
+            {/* Payment scheme */}
+            <div id="send-payment-field" className={`transaction-field ${!fromCoinAmount ? "disabled" : ""}`}>
+              <div className="transaction-field-row">
+                <span className="field-label-left">Send payment</span>
+                <span className="field-label-right">&nbsp;</span>
+              </div>
+              <div
+                className="transaction-field-row main-row simplelink"
+                onClick={showSchedulePayment}>
+                <span className="field-select-left text-truncate">
+                  {getSendPaymentLabel(paymentStartPlanValue, paymentSchemeValue)}
+                </span>
+                <span className="field-caret-down">
+                  <IconCaretDown className="mean-svg-icons" />
+                </span>
+              </div>
+              <div className="transaction-field-row">
+                <span className="field-label-left">
+                  {paymentSchemeValue === PaymentScheme.RepeatingPayment
+                    ? getPaymentRateLabel(
+                        paymentSchemeValue,
+                        paymentRateValue,
+                        paymentRateAmount,
+                        paymentRateInterval
+                      )
+                    : ""}
+                </span>
+              </div>
+            </div>
+            {/* Schedule Payment modal */}
+            <PaymentOptionsModal
+              isVisible={isSchedulePaymentModalVisible}
+              handleOk={onAcceptSchedulePayment}
+              handleClose={onCloseSchedulePayment}>
+              <div className="mean-modal-form">
+                <div className="mb-4">
+                  <h4 className="modal-form-heading">What kind of payment is this?</h4>
+                  <div className="item-selector-grid w-100 mb-3">
+                    <div
+                      className={`option-grid-item position-relative ${
+                        paymentSchemeValue === PaymentScheme.OneTimePayment
+                          ? "selected"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setPaymentSchemeValue(PaymentScheme.OneTimePayment)
+                      }>
+                      <span className="position absolute right-top">
+                        <CheckOutlined />
+                      </span>
+                      <span className="option-grid-item-text">
+                        One time
+                        <br />
+                        payment
+                      </span>
+                    </div>
+                    <div
+                      className={`option-grid-item position-relative ${
+                        paymentSchemeValue === PaymentScheme.RepeatingPayment
+                          ? "selected"
+                          : ""
+                      }`}
+                      onClick={() =>
+                        setPaymentSchemeValue(PaymentScheme.RepeatingPayment)
+                      }>
+                      <span className="position absolute right-top">
+                        <CheckOutlined />
+                      </span>
+                      <span className="option-grid-item-text">
+                        Repeating
+                        <br />
+                        payment
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`${paymentSchemeValue === PaymentScheme.OneTimePayment ? 'd-none' : ''}`}>
+                    <h4 className="modal-form-heading">What is the payment rate?</h4>
+                    <div className="font-size-85 font-regular fg-black-25 mb-1">This is the agreed upon payment rate between you and the recepient.</div>
+                    <Row gutter={[24, 0]} className="mb-2">
+                      <Col span={12}>
+                        <div className="transaction-field medium my-0">
+                          <div className="transaction-field-row main-row">
+                            <span className="input-left">
+                              <input
+                                className="token-amount-input"
+                                inputMode="decimal"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                type="text"
+                                onChange={handlePaymentRateAmountChange}
+                                pattern="^[0-9]*[.,]?[0-9]*$"
+                                placeholder="0.0"
+                                minLength={1}
+                                maxLength={79}
+                                spellCheck="false"
+                                min={0}
+                                max={fromCoinAmount}
+                                value={paymentRateAmount}
+                              />
+                            </span>
+                            {selectedToken && (
+                              <div className="token-right">
+                                <div className="token-group">
+                                  <div className="token-selector">
+                                    <div className="token-icon">
+                                      {selectedToken.logoURI ? (
+                                        <img
+                                          alt={`${selectedToken.name}`}
+                                          width={20}
+                                          height={20}
+                                          src={selectedToken.logoURI}
+                                        />
+                                      ) : (
+                                        <Identicon
+                                          address={selectedToken.address}
+                                          style={{
+                                            width: "24",
+                                            display: "inline-flex",
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="token-symbol">
+                                      {selectedToken.symbol}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <span className="font-size-75 font-regular fg-black-25 pl-1">Select up to {getAmountWithTokenSymbol(parseFloat(fromCoinAmount),selectedToken)}</span>
-                    </Col>
+                        <span className="font-size-75 font-regular fg-black-25 pl-1">Select up to {getAmountWithTokenSymbol(parseFloat(fromCoinAmount),selectedToken)}</span>
+                      </Col>
+                      <Col span={12}>
+                        <Dropdown
+                          overlay={paymentRateOptionsMenu}
+                          trigger={["click"]}
+                        >
+                          <Button size="large" className="w-100 gray-stroke">
+                            {getPaymentRateOptionLabel(paymentRateValue)}{" "}
+                            <DownOutlined />
+                          </Button>
+                        </Dropdown>
+                      </Col>
+                    </Row>
+                    <Row gutter={[24, 0]} className={paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"}>
+                      <Col span={12} offset={12}>
+                        {/* Only for integer input greater than 0 */}
+                        <Input
+                          className="w-100 gray-stroke"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          type="text"
+                          suffix="minutes"
+                          onChange={handlePaymentRateIntervalChange}
+                          disabled={paymentRateValue !== PaymentRateType.Other}
+                          pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
+                          placeholder="0"
+                          minLength={1}
+                          maxLength={79}
+                          spellCheck="false"
+                          value={paymentRateInterval}
+                          defaultValue={paymentRateInterval}
+                        />
+                      </Col>
+                    </Row>
+                  </div>
+                  <h4 className="modal-form-heading">When do you want to send this payment?</h4>
+                  <Row gutter={[24, 0]} className="mb-2">
                     <Col span={12}>
-                      <Dropdown
-                        overlay={paymentRateOptionsMenu}
-                        trigger={["click"]}
-                      >
+                      <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
                         <Button size="large" className="w-100 gray-stroke">
-                          {getPaymentRateOptionLabel(paymentRateValue)}{" "}
+                          {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
                           <DownOutlined />
                         </Button>
                       </Dropdown>
                     </Col>
-                  </Row>
-                  <Row gutter={[24, 0]} className={paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"}>
-                    <Col span={12} offset={12}>
-                      {/* Only for integer input greater than 0 */}
-                      <Input
-                        className="w-100 gray-stroke"
-                        inputMode="decimal"
-                        autoComplete="off"
-                        autoCorrect="off"
-                        type="text"
-                        suffix="minutes"
-                        onChange={handlePaymentRateIntervalChange}
-                        disabled={paymentRateValue !== PaymentRateType.Other}
-                        pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
-                        placeholder="0"
-                        minLength={1}
-                        maxLength={79}
-                        spellCheck="false"
-                        value={paymentRateInterval}
-                        defaultValue={paymentRateInterval}
-                      />
+                    <Col span={12}>
+                      {paymentStartPlanValue === PaymentStartPlan.Now ? (
+                        <Button
+                          block
+                          className="gray-stroke"
+                          type="primary"
+                          shape="round"
+                          size="large"
+                          disabled={true}
+                        >
+                          Will send right away
+                        </Button>
+                      ) : (
+                        <DatePicker
+                          size="large"
+                          className="w-100 gray-stroke"
+                          aria-required={paymentStartPlanValue === PaymentStartPlan.Schedle}
+                          allowClear={false}
+                          onChange={(value, date) =>
+                            setPaymentStartScheduleValue(date)
+                          }
+                          defaultValue={moment(
+                            paymentStartScheduleValue,
+                            DATEPICKER_FORMAT
+                          )}
+                          format={DATEPICKER_FORMAT}
+                        />
+                      )}
                     </Col>
                   </Row>
                 </div>
-                <h4 className="modal-form-heading">When do you want to send this payment?</h4>
-                <Row gutter={[24, 0]} className="mb-2">
-                  <Col span={12}>
-                    <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
-                      <Button size="large" className="w-100 gray-stroke">
-                        {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
-                        <DownOutlined />
-                      </Button>
-                    </Dropdown>
-                  </Col>
-                  <Col span={12}>
-                    {paymentStartPlanValue === PaymentStartPlan.Now ? (
-                      <Button
-                        block
-                        className="gray-stroke"
-                        type="primary"
-                        shape="round"
-                        size="large"
-                        disabled={true}
-                      >
-                        Will send right away
-                      </Button>
-                    ) : (
-                      <DatePicker
-                        size="large"
-                        className="w-100 gray-stroke"
-                        aria-required={paymentStartPlanValue === PaymentStartPlan.Schedle}
-                        allowClear={false}
-                        onChange={(value, date) =>
-                          setPaymentStartScheduleValue(date)
-                        }
-                        defaultValue={moment(
-                          paymentStartScheduleValue,
-                          DATEPICKER_FORMAT
-                        )}
-                        format={DATEPICKER_FORMAT}
-                      />
-                    )}
-                  </Col>
-                </Row>
+                <Button
+                  className="main-cta"
+                  block
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  onClick={onAcceptSchedulePayment}
+                  disabled={!arePaymentSettingsValid()}>
+                  {getPaymentSettingsModalButtonLabel()}
+                </Button>
               </div>
-              <Button
-                className="main-cta"
-                block
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={onAcceptSchedulePayment}
-                disabled={!arePaymentSettingsValid()}>
-                {getPaymentSettingsModalButtonLabel()}
-              </Button>
+            </PaymentOptionsModal>
+            {/* Recipient */}
+            <div id="payment-recipient-field" className="transaction-field">
+              <div className="transaction-field-row">
+                <span className="field-label-left">Recipient</span>
+                <span className="field-label-right">&nbsp;</span>
+              </div>
+              <div className="transaction-field-row main-row simplelink">
+                <span className="field-select-left">Select</span>
+                <span className="field-caret-down">
+                  <IconCaretDown className="mean-svg-icons" />
+                </span>
+              </div>
+              <div className="transaction-field-row">
+                <span className="field-label-left">&nbsp;</span>
+              </div>
             </div>
-          </PaymentOptionsModal>
-          {/* Recipient */}
-          <div id="payment-recipient-field" className="transaction-field">
-            <div className="transaction-field-row">
-              <span className="field-label-left">Recipient</span>
-              <span className="field-label-right">&nbsp;</span>
+            {/* Info */}
+            <div className="text-center p-2">
+              {selectedToken && effectiveRate
+                ? `1 ${selectedToken.symbol} = ${formatAmount(
+                    effectiveRate
+                  )} USDC`
+                : "--"}
             </div>
-            <div className="transaction-field-row main-row simplelink">
-              <span className="field-select-left">Select</span>
-              <span className="field-caret-down">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-            <div className="transaction-field-row">
-              <span className="field-label-left">&nbsp;</span>
-            </div>
+            {/* Action button */}
+            <Button
+              className="main-cta"
+              block
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={onTransactionStart}
+              disabled={!areSendAmountSettingsValid()}>
+              {getTransactionStartButtonLabel()}
+            </Button>
           </div>
-          {/* Info */}
-          <div className="text-center p-2">
-            {selectedToken && effectiveRate
-              ? `1 ${selectedToken.symbol} = ${formatAmount(
-                  effectiveRate
-                )} USDC`
-              : "--"}
-          </div>
-          {/* Action button */}
-          <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onTransactionStart}
-            disabled={!areSendAmountSettingsValid()}>
-            {getTransactionStartButtonLabel()}
-          </Button>
         </div>
       </div>
-    </div>
-  );
+    );
+  } else if (currentTab === 'streams') {
+    // STREAMS SCREEN
+    return (
+      <div className="container">
+        <div className="interaction-area px-4 py-4 text-center">
+          <p>On the streaming screen</p>
+        </div>
+      </div>
+    );
+  } else {
+    // LOADING SCREEN
+    return (
+      <div className="container">
+        <div className="interaction-area px-4 py-4 text-center">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
 };

@@ -3,20 +3,29 @@ import { useLocalStorageState } from "../utils/utils";
 import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 
-interface ContractConfig {
+interface AppStateConfig {
+  currentTab: string | undefined;
   contract: ContractDefinition | undefined;
+  setCurrentTab: (name: string) => void;
   setContract: (name: string) => void;
 }
 
-const contextDefaultValues: ContractConfig = {
+const contextDefaultValues: AppStateConfig = {
+  currentTab: undefined,
   contract: undefined,
+  setCurrentTab: () => {},
   setContract: () => {}
 };
 
-const ContractContext = React.createContext<ContractConfig>(contextDefaultValues);
+export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
-const ContractProvider: React.FC = ({ children }) => {
+const AppStateProvider: React.FC = ({ children }) => {
+  const [currentTab, setSelectedTab] = useState<string | undefined>();
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
+
+  const setCurrentTab = (name: string) => {
+    setSelectedTab(name);
+  }
 
   const setContract = (name: string) => {
     const items = STREAMING_PAYMENT_CONTRACTS.filter(c => c.name === name);
@@ -27,13 +36,11 @@ const ContractProvider: React.FC = ({ children }) => {
   }
 
   const [contractName, setContractName] = useLocalStorageState("contractName");
-  console.log('contractName:', contractName);
 
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
     [contractName]
   );
-  console.log('contractFromCache:', contractFromCache);
 
   useEffect(() => {
 
@@ -59,66 +66,16 @@ const ContractProvider: React.FC = ({ children }) => {
   }, [contractName, contractFromCache, setSelectedContract, setContractName]);
 
   return (
-    <ContractContext.Provider
+    <AppStateContext.Provider
       value={{
+        currentTab,
         contract,
+        setCurrentTab,
         setContract
       }}>
       {children}
-    </ContractContext.Provider>
+    </AppStateContext.Provider>
   );
 };
 
-export default ContractProvider;
-
-/*
-export function ContractSwitcherProvider({ children = undefined as any }) {
-  const [selectedContract, setSelectedContract] = useState<ContractDefinition>(new ContractDefinition());
-
-  const [contractName, setContractName] = useLocalStorageState("contractName");
-
-  const contract = useMemo(
-    () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
-    [contractName]
-  );
-
-  useEffect(() => {
-    if (contract) {
-        setSelectedContract(contract);
-    }
-
-    return () => {};
-  }, [contract]);
-
-  return (
-    <ContractSwitcherContext.Provider
-      value={{
-        contract: selectedContract,
-        select,
-      }}>
-      {children}
-      <Modal
-        className="mean-modal"
-        title="Select Wallet"
-        okText="Connect"
-        visible={isModalVisible}
-        okButtonProps={{ style: { display: "none" } }}
-        onCancel={close}
-        width={600}>
-        <div className="contract-selector-container">
-          <p>Contract selector ready</p>
-        </div>
-      </Modal>
-    </ContractSwitcherContext.Provider>
-  );
-}
-
-export function useContractSelectionModal() {
-  const { contract: selectedContract, select } = useContext(ContractSwitcherContext);
-
-  return {
-    selectedContract,
-    select,
-  };
-}
-*/
+export default AppStateProvider;
