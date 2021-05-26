@@ -17,6 +17,7 @@ import { cache } from "../../contexts/accounts";
 import { getPrices } from "../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../constants";
 import { PaymentOptionsModal } from "../../components/PaymentOptionsModal";
+import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import {
   PaymentRateType,
   PaymentScheme,
@@ -73,11 +74,16 @@ export const HomeView = () => {
   const [paymentSchemeValue, setPaymentSchemeValue] = useState<PaymentScheme>(PaymentScheme.OneTimePayment);
   const [paymentRateValue, setPaymentRateValue] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
-  const { currentTab, setCurrentTab } = useContext(AppStateContext);
-
-  const onGoToStreamsClick = () => {
-    setCurrentTab("streams");
+  // Contract switcher modal
+  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
+  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
+  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
+  const onAcceptContractSelector = () => {
+    // Do something and close the modal
+    closeContractSelectorModal();
   };
+
+  const { currentScreen, setCurrentScreen } = useContext(AppStateContext);
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -319,13 +325,13 @@ export const HomeView = () => {
     const setDefaultTab = () => {
       // TODO: Condition this to go to streams in case we have streams
       // otherwise go to create contract.
-      setCurrentTab('contract');
+      setCurrentScreen('contract');
     }
 
-    if (!currentTab) {
+    if (!currentScreen) {
       setDefaultTab();
     }
-  }, [currentTab, setCurrentTab]);
+  }, [currentScreen, setCurrentScreen]);
 
   // Validation
   const areSendAmountSettingsValid = (): boolean => {
@@ -423,7 +429,8 @@ export const HomeView = () => {
     </Menu>
   );
 
-  if (currentTab === 'contract') {
+  if (currentScreen === 'contract') {
+
     // CONTRACT SETUP SCREEN
     return (
       <div className="container">
@@ -434,10 +441,14 @@ export const HomeView = () => {
               <p>For one time payments, or to setup a gift over time. This also works great to pay for a service received, for example: handyman work.</p>
               <span className="contract-switch-button">
                 <Tooltip title="Change money streming contract">
-                  <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} onClick={onGoToStreamsClick}/>
+                  <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} onClick={showContractSelectorModal}/>
                 </Tooltip>
               </span>
             </div>
+            <ContractSelectorModal
+              isVisible={isContractSelectorModalVisible}
+              handleOk={onAcceptContractSelector}
+              handleClose={closeContractSelectorModal}/>
             {/* Send amount */}
             <div id="send-transaction-field" className="transaction-field">
               <div className="transaction-field-row">
@@ -539,8 +550,7 @@ export const HomeView = () => {
               title={<div className="modal-title">Select a token</div>}
               onCancel={onCloseTokenSelector}
               width={450}
-              footer={null}
-            >
+              footer={null}>
               <div className="token-list">
                 {/* Loop through the tokens */}
                 {selectedToken && simpleTokenList ? (
@@ -563,8 +573,7 @@ export const HomeView = () => {
                           selectedToken && selectedToken.address === token.address
                             ? "selected"
                             : "simplelink"
-                        }`}
-                      >
+                        }`}>
                         <div className="token-icon">
                           {token.logoURI ? (
                             <img
@@ -593,7 +602,7 @@ export const HomeView = () => {
               </div>
             </Modal>
             {/* Payment scheme */}
-            <div id="send-payment-field" className={`transaction-field ${!fromCoinAmount ? "disabled" : ""}`}>
+            <div id="send-payment-field" className={`transaction-field ${!fromCoinAmount || !connected ? "disabled" : ""}`}>
               <div className="transaction-field-row">
                 <span className="field-label-left">Send payment</span>
                 <span className="field-label-right">&nbsp;</span>
@@ -852,7 +861,8 @@ export const HomeView = () => {
         </div>
       </div>
     );
-  } else if (currentTab === 'streams') {
+  } else if (currentScreen === 'streams') {
+
     // STREAMS SCREEN
     return (
       <div className="container">
@@ -862,6 +872,7 @@ export const HomeView = () => {
       </div>
     );
   } else {
+
     // LOADING SCREEN
     return (
       <div className="container">

@@ -15,11 +15,7 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
           <CurrentUserBadge />
         </div>
       ) : (
-        <ConnectButton
-          type="text"
-          size="large"
-          allowWalletChange={true}
-        />
+        <ConnectButton />
       )}
       <div className="app-context-menu">
         <AppContextMenu />

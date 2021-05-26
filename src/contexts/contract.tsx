@@ -4,26 +4,26 @@ import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 
 interface AppStateConfig {
-  currentTab: string | undefined;
+  currentScreen: string | undefined;
   contract: ContractDefinition | undefined;
-  setCurrentTab: (name: string) => void;
+  setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
-  currentTab: undefined,
+  currentScreen: undefined,
   contract: undefined,
-  setCurrentTab: () => {},
+  setCurrentScreen: () => {},
   setContract: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
-  const [currentTab, setSelectedTab] = useState<string | undefined>();
+  const [currentScreen, setSelectedTab] = useState<string | undefined>();
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
 
-  const setCurrentTab = (name: string) => {
+  const setCurrentScreen = (name: string) => {
     setSelectedTab(name);
   }
 
@@ -68,9 +68,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   return (
     <AppStateContext.Provider
       value={{
-        currentTab,
+        currentScreen,
         contract,
-        setCurrentTab,
+        setCurrentScreen,
         setContract
       }}>
       {children}

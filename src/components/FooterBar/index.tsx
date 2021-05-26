@@ -14,7 +14,7 @@ export const FooterBar = () => {
               <CurrentUserBadge />
             </div>
           ) : (
-            <ConnectButton type="text" size="large" allowWalletChange={true} />
+            <ConnectButton />
           )}
         </div>
       </div>

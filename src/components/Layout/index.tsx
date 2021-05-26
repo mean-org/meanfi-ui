@@ -9,10 +9,10 @@ import { AppStateContext } from "../../contexts/contract";
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
-  const { setCurrentTab } = useContext(AppStateContext);
+  const { setCurrentScreen } = useContext(AppStateContext);
 
   const onGoToHomeClick = () => {
-    setCurrentTab("contract");
+    setCurrentScreen("contract");
   };
 
   return (

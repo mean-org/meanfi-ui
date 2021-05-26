@@ -19,7 +19,7 @@ export const CurrentUserBadge = (props: {}) => {
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
-  const { setCurrentTab } = useContext(AppStateContext);
+  const { setCurrentScreen } = useContext(AppStateContext);
 
   const { wallet, select } = useWallet();
   const { account } = useNativeAccount();
@@ -50,7 +50,7 @@ export const CurrentUserBadge = (props: {}) => {
   }
 
   const onGoToStreamsClick = () => {
-    setCurrentTab("streams");
+    setCurrentScreen("streams");
   };
 
   if (!wallet?.publicKey) {

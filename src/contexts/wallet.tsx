@@ -27,17 +27,20 @@ const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
   connected: boolean;
   select: () => void;
+  lastWalletProviderSuccess: string | undefined;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
 }>({
   wallet: undefined,
   connected: false,
   select() {},
+  lastWalletProviderSuccess: undefined,
   provider: undefined,
 });
 
 export function WalletProvider({ children = null as any }) {
   const { endpoint } = useConnectionConfig();
 
+  const [lastWalletProviderSuccess, setWalletSuccess] = useLocalStorageState("lastWalletProviderSuccess");
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
 
@@ -59,11 +62,17 @@ export function WalletProvider({ children = null as any }) {
   );
 
   const [connected, setConnected] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const select = useCallback(() => setIsModalVisible(true), []);
+  const close = useCallback(() => setIsModalVisible(false), []);
 
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", () => {
         if (wallet.publicKey) {
+          // Save lastWalletProviderSuccess (The last successful connected attempt)
+          setWalletSuccess(provider?.url);
           setConnected(true);
           const walletPublicKey = wallet.publicKey.toBase58();
           const keyToDisplay =
@@ -76,7 +85,6 @@ export function WalletProvider({ children = null as any }) {
                   walletPublicKey.length
                 )}`
               : walletPublicKey;
-
           notify({
             message: "Wallet update",
             description: "Connected to wallet " + keyToDisplay,
@@ -99,21 +107,20 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [wallet]);
+  }, [wallet, provider, setWalletSuccess]);
 
   useEffect(() => {
     if (wallet && autoConnect) {
-      wallet.connect();
-      setAutoConnect(false);
+      try {
+        wallet.connect();
+        setAutoConnect(false);
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     return () => {};
   }, [wallet, autoConnect]);
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const select = useCallback(() => setIsModalVisible(true), []);
-  const close = useCallback(() => setIsModalVisible(false), []);
 
   return (
     <WalletContext.Provider
@@ -122,8 +129,8 @@ export function WalletProvider({ children = null as any }) {
         connected,
         select,
         provider,
-      }}
-    >
+        lastWalletProviderSuccess
+      }}>
       {children}
       <Modal
         className="mean-modal"
@@ -132,8 +139,7 @@ export function WalletProvider({ children = null as any }) {
         visible={isModalVisible}
         okButtonProps={{ style: { display: "none" } }}
         onCancel={close}
-        width={400}
-      >
+        width={400}>
         <div className="account-settings-group">
           {WALLET_PROVIDERS.map((provider, index) => {
             const onClick = function () {
@@ -164,8 +170,7 @@ export function WalletProvider({ children = null as any }) {
                   width: "100%",
                   textAlign: "left",
                   marginBottom: 8,
-                }}
-              >
+                }}>
                 {provider.name}
               </Button>
             );
@@ -177,15 +182,16 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, select } = useContext(WalletContext);
+  const { wallet, connected, provider, lastWalletProviderSuccess, select } = useContext(WalletContext);
   return {
     wallet,
     connected,
-    provider,
     select,
+    lastWalletProviderSuccess,
+    provider,
     publicKey: wallet?.publicKey,
     connect() {
-      wallet ? wallet.connect() : select();
+      wallet && lastWalletProviderSuccess === provider?.url ? wallet.connect() : select();
     },
     disconnect() {
       wallet?.disconnect();
