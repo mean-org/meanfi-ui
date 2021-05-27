@@ -34,7 +34,7 @@
 @color-almost_white: #FCFCFC;
 
 @color-black-02: rgba(0,0,0,0.02);
-@color-black-05: rgba(0,0,0,0.05);
+@color-black-5: rgba(0,0,0,0.5);
 @color-black-10: rgba(0,0,0,0.10);
 @color-black-15: rgba(0,0,0,0.15);
 @color-black-20: rgba(0,0,0,0.20);
@@ -739,8 +739,8 @@ em {
   padding: 0.25rem 0.5rem;
   border-style: solid;
   border-width: 2px;
-  border-color: @color-black-10;
   border-radius: @custom-border-radius;
+  border-color: @color-black-10;
   margin-bottom: 20px;
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   &.medium {
@@ -993,6 +993,69 @@ em {
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
+  }
+}
+
+.contract-card-list {
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  .contract-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-style: solid;
+    padding: 6px;
+    border-width: 2px;
+    border-radius: 5px;
+    border-color: @color-black-10;
+    margin-bottom: 20px;
+    &.selected {
+      border-color: @color-item-selector-selected !important;
+      &:hover {
+        border-color: @color-item-selector-selected !important;
+      }
+      .checkmark {
+        .anticon {
+          color: @color-item-selector-selected;
+        }
+      }
+    }
+    &.disabled {
+      pointer-events: none;
+      opacity: 0.7;
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    &:not(.disabled) {
+      cursor: pointer;
+      &:not(.selected):hover {
+        background-color: @color-black-02;
+        border-color: @color-black-20;
+      }
+    }
+    .checkmark {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 30px;
+    }
+    .contract-meta {
+      display: flex;
+      flex-direction: column;
+      flex: auto;
+      padding-left: 4px;
+      .contract-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: @color-black-85;
+      }
+      .contract-description {
+        font-size: 12px;
+        font-weight: 400;
+        color: @color-dark_active;
+      }
+    }
   }
 }
 
@@ -1624,7 +1687,7 @@ em {
   font-size: 12px;
   padding: 5px 15px;
   border-radius: 12px;
-  color: @color-black-05;
+  color: @color-black-5;
   font-weight: 400;
 }
 

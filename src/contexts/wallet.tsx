@@ -44,10 +44,12 @@ export function WalletProvider({ children = null as any }) {
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
 
-  const provider = useMemo(
-    () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
-    [providerUrl]
-  );
+  const provider = WALLET_PROVIDERS.find(({ url }) => url === providerUrl);
+
+  // const provider = useMemo(
+  //   () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
+  //   [providerUrl]
+  // );
 
   const wallet = useMemo(
     function () {
