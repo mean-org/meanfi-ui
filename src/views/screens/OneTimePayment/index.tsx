@@ -57,7 +57,7 @@ export const OneTimePayment = () => {
   const showRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(true), []);
   const closeRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(false), []);
   const onAcceptRecipientSelector = () => {
-    // Do something and close the modal
+    triggerWindowResize();
     closeRecipientSelectorModal();
   };
 
@@ -78,6 +78,10 @@ export const OneTimePayment = () => {
       setShouldLoadCoinPrices(true);
     }, PRICE_REFRESH_TIMEOUT);
   };
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
 
   // Effect to load token list
   useEffect(() => {
@@ -231,6 +235,32 @@ export const OneTimePayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  useEffect(() => {
+    const resizeListener = () => {
+      var NUM_CHARS = 4;
+      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      console.log('ellipsisElements:', ellipsisElements.length);
+      for (var i = 0; i < ellipsisElements.length; ++i){
+        var e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          var text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
+
   // Validation
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
@@ -292,17 +322,51 @@ export const OneTimePayment = () => {
 
   return (
     <>
+      {/* Recipient */}
+      <div id="payment-recipient-field" className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Recipient</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row simplelink" onClick={showRecipientSelectorModal}>
+          <span className="field-select-left">{recipientAddress ? (
+            <span className="overflow-ellipsis-middle">{recipientAddress}</span>
+          ) : 'Select'}</span>
+          <span className="field-caret-down">
+            <IconCaretDown className="mean-svg-icons" />
+          </span>
+        </div>
+      </div>
+      {/* Recipient Selector modal */}
+      <RecipientSelectorModal
+        isVisible={isRecipientSelectorModalVisible}
+        handleOk={onAcceptRecipientSelector}
+        handleClose={closeRecipientSelectorModal}
+      />
+
       {/* Send amount */}
       <div id="send-transaction-field" className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Send</span>
+          <span className="field-label-left">
+            Send ~${fromCoinAmount && effectiveRate
+              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              : "0.00"}
+          </span>
           <span className="field-label-right">
             <span className="mr-1">Balance:</span>
-            {`${
-              selectedToken?.balance
-                ? formatAmount(selectedToken.balance, selectedToken.decimals)
-                : "Unknown"
-            }`}
+            <span>
+              {`${
+                selectedToken?.balance
+                  ? formatAmount(selectedToken.balance, selectedToken.decimals)
+                  : "Unknown"
+              }`}
+            </span>
+            <span className="ml-1">
+              (~$
+              {selectedToken?.balance && effectiveRate
+                ? formatAmount(selectedToken.balance * effectiveRate, 2)
+                : "0.00"})
+            </span>
           </span>
         </div>
         <div className="transaction-field-row main-row">
@@ -367,20 +431,6 @@ export const OneTimePayment = () => {
             <IconCaretDown className="mean-svg-icons" />
           </span>
         </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">
-            ~$
-            {fromCoinAmount && effectiveRate
-              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-              : "0.00"}
-          </span>
-          <span className="field-label-right">
-            ~$
-            {selectedToken?.balance && effectiveRate
-              ? formatAmount(selectedToken.balance * effectiveRate, 2)
-              : "0.00"}
-          </span>
-        </div>
       </div>
 
       {/* Token selection modal */}
@@ -441,33 +491,6 @@ export const OneTimePayment = () => {
           )}
         </div>
       </Modal>
-
-      {/* Recipient */}
-      <div
-        id="payment-recipient-field"
-        className={`transaction-field ${!areSendAmountSettingsValid() ? "disabled" : ""}`}>
-        <div className="transaction-field-row">
-          <span className="field-label-left">Recipient</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div
-          className="transaction-field-row main-row simplelink"
-          onClick={showRecipientSelectorModal}>
-          <span className="field-select-left">{recipientAddress ? 'Recipient address selected' : 'Select'}</span>
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">{recipientAddress}</span>
-        </div>
-      </div>
-      {/* Recipient Selector modal */}
-      <RecipientSelectorModal
-        isVisible={isRecipientSelectorModalVisible}
-        handleOk={onAcceptRecipientSelector}
-        handleClose={closeRecipientSelectorModal}
-      />
 
       {/* Payment scheme */}
       <div className="mb-4">

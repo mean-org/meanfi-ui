@@ -68,7 +68,7 @@ export const RepeatingPayment = () => {
   const showRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(true), []);
   const closeRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(false), []);
   const onAcceptRecipientSelector = () => {
-    // Do something and close the modal
+    triggerWindowResize();
     closeRecipientSelectorModal();
   };
 
@@ -112,6 +112,10 @@ export const RepeatingPayment = () => {
       setShouldLoadCoinPrices(true);
     }, PRICE_REFRESH_TIMEOUT);
   };
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
 
   // Effect to load token list
   useEffect(() => {
@@ -265,6 +269,32 @@ export const RepeatingPayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  useEffect(() => {
+    const resizeListener = () => {
+      var NUM_CHARS = 4;
+      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      console.log('ellipsisElements:', ellipsisElements.length);
+      for (var i = 0; i < ellipsisElements.length; ++i){
+        var e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          var text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
+
   // Validation
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
@@ -415,8 +445,117 @@ export const RepeatingPayment = () => {
 
   return (
     <>
+      {/* Recipient */}
+      <div id="payment-recipient-field" className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Recipient</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row simplelink" onClick={showRecipientSelectorModal}>
+          <span className="field-select-left">{recipientAddress ? (
+            <span className="overflow-ellipsis-middle">{recipientAddress}</span>
+          ) : 'Select'}</span>
+          <span className="field-caret-down">
+            <IconCaretDown className="mean-svg-icons" />
+          </span>
+        </div>
+      </div>
+      {/* Recipient Selector modal */}
+      <RecipientSelectorModal
+        isVisible={isRecipientSelectorModalVisible}
+        handleOk={onAcceptRecipientSelector}
+        handleClose={closeRecipientSelectorModal}
+      />
+
       {/* Send amount */}
       <div id="send-transaction-field" className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">
+            Send ~${fromCoinAmount && effectiveRate
+              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              : "0.00"}
+          </span>
+          <span className="field-label-right">
+            <span className="mr-1">Balance:</span>
+            <span>
+              {`${
+                selectedToken?.balance
+                  ? formatAmount(selectedToken.balance, selectedToken.decimals)
+                  : "Unknown"
+              }`}
+            </span>
+            <span className="ml-1">
+              (~$
+              {selectedToken?.balance && effectiveRate
+                ? formatAmount(selectedToken.balance * effectiveRate, 2)
+                : "0.00"})
+            </span>
+          </span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="input-left">
+            <input
+              className="token-amount-input"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              onChange={handleFromCoinAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.0"
+              minLength={1}
+              maxLength={79}
+              spellCheck="false"
+              value={fromCoinAmount}
+            />
+          </span>
+          {selectedToken && (
+            <div className="token-right">
+              <div className="token-group">
+                {selectedToken?.balance && (
+                  <div
+                    className="token-max simplelink"
+                    onClick={() =>
+                      setFromCoinAmount(
+                        formatAmount(
+                          selectedToken.balance,
+                          selectedToken.decimals
+                        )
+                      )
+                    }>
+                    MAX
+                  </div>
+                )}
+                <div
+                  className="token-selector simplelink"
+                  onClick={showTokenSelector}>
+                  <div className="token-icon">
+                    {selectedToken.logoURI ? (
+                      <img
+                        alt={`${selectedToken.name}`}
+                        width={20}
+                        height={20}
+                        src={selectedToken.logoURI}
+                      />
+                    ) : (
+                      <Identicon
+                        address={selectedToken.address}
+                        style={{ width: "24", display: "inline-flex" }}
+                      />
+                    )}
+                  </div>
+                  <div className="token-symbol">{selectedToken.symbol}</div>
+                </div>
+              </div>
+            </div>
+          )}
+          <span className="field-caret-down">
+            <IconCaretDown className="mean-svg-icons" />
+          </span>
+        </div>
+      </div>
+
+      {/* <div id="send-transaction-field" className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left">Send</span>
           <span className="field-label-right">
@@ -504,7 +643,7 @@ export const RepeatingPayment = () => {
               : "0.00"}
           </span>
         </div>
-      </div>
+      </div> */}
 
       {/* Token selection modal */}
       <Modal
@@ -564,33 +703,6 @@ export const RepeatingPayment = () => {
           )}
         </div>
       </Modal>
-
-      {/* Recipient */}
-      <div
-        id="payment-recipient-field"
-        className={`transaction-field ${!areSendAmountSettingsValid() ? "disabled" : ""}`}>
-        <div className="transaction-field-row">
-          <span className="field-label-left">Recipient</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div
-          className="transaction-field-row main-row simplelink"
-          onClick={showRecipientSelectorModal}>
-          <span className="field-select-left">{recipientAddress ? 'Recipient address selected' : 'Select'}</span>
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">{recipientAddress}</span>
-        </div>
-      </div>
-      {/* Recipient Selector modal */}
-      <RecipientSelectorModal
-        isVisible={isRecipientSelectorModalVisible}
-        handleOk={onAcceptRecipientSelector}
-        handleClose={closeRecipientSelectorModal}
-      />
 
       {/* Payment scheme */}
       <div className="mb-4">

@@ -1,8 +1,8 @@
-import { Button, Tooltip } from "antd";
-import { SwapOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
+import { IconCaretDown } from "../../Icons";
 import { OneTimePayment, RepeatingPayment } from "../screens";
 
 export const HomeView = () => {
@@ -46,15 +46,12 @@ export const HomeView = () => {
             <div className="position-relative mb-2">
               {contract && (
                 <>
-                  <h2 className="contract-heading">{contract.name}</h2>
+                  <Tooltip title="Change money streming contract">
+                    <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{contract.name}<IconCaretDown className="mean-svg-icons" /></h2>
+                  </Tooltip>
                   <p>{contract.description}</p>
                 </>
               )}
-              <span className="contract-switch-button">
-                <Tooltip title="Change money streming contract">
-                  <Button shape="circle" icon={<SwapOutlined className="fg-red"/>} onClick={showContractSelectorModal}/>
-                </Tooltip>
-              </span>
             </div>
             <ContractSelectorModal
               isVisible={isContractSelectorModalVisible}
