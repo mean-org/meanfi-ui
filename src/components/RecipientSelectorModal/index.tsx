@@ -72,7 +72,7 @@ export const RecipientSelectorModal = (props: {
         size="large"
         disabled={!recipientAddress}
         onClick={props.handleOk}>
-        {!recipientAddress ? 'Missing Recipient address' : 'Next'}
+        {!recipientAddress ? 'Missing recipient address' : 'Next'}
       </Button>
     </Modal>
   );

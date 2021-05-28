@@ -3,7 +3,7 @@ import { SwapOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
-import { OneTimePayment } from "../screens";
+import { OneTimePayment, RepeatingPayment } from "../screens";
 
 export const HomeView = () => {
   const { currentScreen, contract, setCurrentScreen } = useContext(AppStateContext);
@@ -30,6 +30,14 @@ export const HomeView = () => {
 
   if (currentScreen === 'contract') {
 
+    const renderContract = () => {
+      switch(contract?.id) {
+        case 1:   return <OneTimePayment />;
+        case 2:   return <RepeatingPayment />;
+        default:  return <h4>Not implemented</h4>
+      }
+    }
+
     // CONTRACT SETUP SCREEN
     return (
       <div className="container">
@@ -53,11 +61,7 @@ export const HomeView = () => {
               handleOk={onAcceptContractSelector}
               handleClose={closeContractSelectorModal}/>
             {/* Display apropriate contract setup screen */}
-            {contract?.id === 1 ? (
-              <OneTimePayment />
-            ) : (
-              <p>Not implemented</p>
-            )}
+            {renderContract()}
           </div>
         </div>
       </div>

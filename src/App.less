@@ -109,6 +109,7 @@ main.ant-layout-content {
     background-color: @color-gray_normal;
   }
   &.ant-btn-round {
+    height: @custom-control-height;
     border-radius: @custom-border-radius;
   }
 }
@@ -230,6 +231,8 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
 }
 
 .ant-picker.ant-picker-large.gray-stroke {
+  text-align: left;
+  border-radius: @custom-border-radius;
   height: @custom-control-height;
   border-width: 2px !important;
   border-color: rgba(0, 0, 0, 0.1) !important;
@@ -245,6 +248,8 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
 }
 
 .ant-btn.ant-dropdown-trigger.gray-stroke {
+  text-align: left;
+  border-radius: @custom-border-radius;
   height: @custom-control-height;
   border-width: 2px !important;
   border-color: rgba(0, 0, 0, 0.1) !important;
@@ -334,7 +339,7 @@ body {
   position: fixed;
   top: 0px;
   padding: 0 1rem;
-  background-color: transparent;
+  background-color: #FFFFFF;
   line-height: 1;
   z-index: 2;
   .ant-menu-horizontal {
@@ -944,11 +949,6 @@ em {
         font-size: 1rem;
         line-height: 1;
         margin-bottom: 12px;
-      }
-      .ant-btn.ant-btn-lg.ant-dropdown-trigger,
-      .ant-picker.ant-picker-large {
-        text-align: left;
-        border-radius: 10px;
       }
     }
     &.unpadded-content {
