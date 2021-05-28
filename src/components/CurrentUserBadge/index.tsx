@@ -9,7 +9,7 @@ import { WALLET_PROVIDERS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
-import { AppStateContext } from "../../contexts/contract";
+import { AppStateContext } from "../../contexts/appstate";
 
 const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
 

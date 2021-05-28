@@ -1,7 +1,7 @@
 import { Modal, Tabs, Button } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
 import { useContext } from "react";
-import { AppStateContext } from "../../contexts/contract";
+import { AppStateContext } from "../../contexts/appstate";
 import { STREAMING_PAYMENT_CONTRACTS } from "../../constants";
 import { ContractDefinition } from "../../models/contract-definition";
 
@@ -39,7 +39,7 @@ export const ContractSelectorModal = (props: {
             <div className="contract-card-list vertical-scroll">
               {getContractListByCategory(tab.categoryId).map(cntrct => {
                 return (
-                  <div key={cntrct.id} className={`contract-card ${cntrct.name === contract?.name
+                  <div key={`${cntrct.id}`} className={`contract-card ${cntrct.name === contract?.name
                     ? "selected"
                     : cntrct.disabled
                     ? "disabled"

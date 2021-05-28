@@ -1,12 +1,12 @@
 export class ContractDefinition {
-    id: string;
+    id: number;
     name: string;
     category: string;
     categoryId: string;
     description: string;
     disabled: boolean;
     constructor() {
-        this.id = '';
+        this.id = 0;
         this.name = '';
         this.category = '';
         this.description = '';

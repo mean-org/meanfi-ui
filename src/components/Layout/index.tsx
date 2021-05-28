@@ -4,7 +4,7 @@ import { Layout } from "antd";
 import { Link } from "react-router-dom";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
-import { AppStateContext } from "../../contexts/contract";
+import { AppStateContext } from "../../contexts/appstate";
 
 const { Header, Content, Footer } = Layout;
 

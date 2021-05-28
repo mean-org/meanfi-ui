@@ -5,7 +5,7 @@ import { AccountsProvider } from "./contexts/accounts";
 import { MarketProvider } from "./contexts/market";
 import { AppLayout } from "./components/Layout";
 import { FaucetView, HomeView } from "./views";
-import AppStateProvider from "./contexts/contract";
+import AppStateProvider from "./contexts/appstate";
 
 export function Routes() {
   return (
