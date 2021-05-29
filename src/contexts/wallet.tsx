@@ -41,15 +41,15 @@ export function WalletProvider({ children = null as any }) {
   const { endpoint } = useConnectionConfig();
 
   const [lastWalletProviderSuccess, setWalletSuccess] = useLocalStorageState("lastWalletProviderSuccess");
-  const [autoConnect, setAutoConnect] = useState(true);
+  const [autoConnect, setAutoConnect] = useState(false);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
 
-  const provider = WALLET_PROVIDERS.find(({ url }) => url === providerUrl);
+  // const provider = WALLET_PROVIDERS.find(({ url }) => url === providerUrl);
 
-  // const provider = useMemo(
-  //   () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
-  //   [providerUrl]
-  // );
+  const provider = useMemo(
+    () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
+    [providerUrl]
+  );
 
   const wallet = useMemo(
     function () {

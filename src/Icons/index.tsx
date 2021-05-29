@@ -12,6 +12,7 @@ export { IconInfoTriangle } from "./IconInfoTriangle";
 export { IconLogout } from "./IconLogout";
 export { IconMoon } from "./IconMoon";
 export { IconSettings } from "./IconSettings";
+export { IconSort } from "./IconSort";
 export { IconSun } from "./IconSun";
 export { IconUniversity } from "./IconUniversity";
 export { IconUpload } from "./IconUpload";

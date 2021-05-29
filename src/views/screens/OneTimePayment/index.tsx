@@ -1,9 +1,9 @@
 import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { DownOutlined, QrcodeOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
-import { IconCaretDown } from "../../../Icons";
+import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
   fromLamports,
@@ -15,13 +15,14 @@ import { Identicon } from "../../../components/Identicon";
 import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
-import { RecipientSelectorModal } from "../../../components/RecipientSelectorModal";
+import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentStartPlan } from "../../../models/enums";
 import { getPaymentStartPlanOptionLabel } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
+import React from "react";
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
@@ -29,7 +30,7 @@ export const OneTimePayment = () => {
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { userAccounts } = useUserAccounts();
-  const { contract, recipientAddress } = useContext(AppStateContext);
+  const { contract, recipientAddress, recipientNote, setRecipientAddress, setRecipientNote } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
@@ -53,15 +54,23 @@ export const OneTimePayment = () => {
   const [paymentStartPlanValue, setPaymentStartPlanValue] = useState<PaymentStartPlan>(PaymentStartPlan.Now);
 
   // Recipient Selector modal
-  const [isRecipientSelectorModalVisible, setIsRecipientSelectorModalVisibility] = useState(false);
-  const showRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(true), []);
-  const closeRecipientSelectorModal = useCallback(() => setIsRecipientSelectorModalVisibility(false), []);
-  const onAcceptRecipientSelector = () => {
+  const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
+  const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
+  const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
+  const onAcceptQrScannerModal = () => {
     triggerWindowResize();
-    closeRecipientSelectorModal();
+    closeQrScannerModal();
   };
 
+  // Recipient address UX
+  const [recipientAddressInputVisible, setRecipientAddressInputVisible] = useState(false);
+  const ref: React.RefObject<any> = React.createRef();
+
   // Event handling
+
+  const showRecipientInput = () => {
+    setRecipientAddressInputVisible(true);
+  }
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -81,6 +90,18 @@ export const OneTimePayment = () => {
 
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
+  }
+
+  const handleRecipientAddressChange = (e: any) => {
+    setRecipientAddress(e.target.value);
+  }
+
+  const handleRecipientNoteChange = (e: any) => {
+    setRecipientNote(e.target.value);
+  }
+
+  const handleRecipientAddressFocusOut = (e: any) => {
+    setRecipientAddressInputVisible(false);
   }
 
   // Effect to load token list
@@ -239,7 +260,6 @@ export const OneTimePayment = () => {
     const resizeListener = () => {
       var NUM_CHARS = 4;
       var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      console.log('ellipsisElements:', ellipsisElements.length);
       for (var i = 0; i < ellipsisElements.length; ++i){
         var e = ellipsisElements[i] as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
@@ -291,7 +311,7 @@ export const OneTimePayment = () => {
       ? "Select recipient"
       : !arePaymentSettingsValid()
       ? "Set a valid date"
-      : "Start payment";
+      : "Approve on your wallet";
   }
 
   // Prefabrics
@@ -325,43 +345,70 @@ export const OneTimePayment = () => {
       {/* Recipient */}
       <div id="payment-recipient-field" className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Recipient</span>
+          <span className="field-label-left">Recipient Address or ENS</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
-        <div className="transaction-field-row main-row simplelink" onClick={showRecipientSelectorModal}>
-          <span className="field-select-left">{recipientAddress ? (
-            <span className="overflow-ellipsis-middle">{recipientAddress}</span>
-          ) : 'Select'}</span>
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
+        <div className="transaction-field-row main-row">
+          {recipientAddressInputVisible ? (
+            <span className="input-left">
+              <input
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                ref={ref}
+                onChange={handleRecipientAddressChange}
+                onBlur={handleRecipientAddressFocusOut}
+                placeholder="Recepient wallet account address"
+                required={true}
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                accept="capture"
+                value={recipientAddress}/>
+            </span>
+          ) : (
+            <span className="field-select-left simplelink" onClick={() => showRecipientInput()}>
+              {recipientAddress ? (
+                <span className="overflow-ellipsis-middle">{recipientAddress}</span>
+              ) : (
+                <span>Select</span>
+              )}
+            </span>
+          )}
+          <div className="token-right simplelink" onClick={showQrScannerModal}>
+            <QrcodeOutlined />
+          </div>
         </div>
       </div>
       {/* Recipient Selector modal */}
-      <RecipientSelectorModal
-        isVisible={isRecipientSelectorModalVisible}
-        handleOk={onAcceptRecipientSelector}
-        handleClose={closeRecipientSelectorModal}
-      />
+      {isQrScannerModalVisible && (
+        <QrScannerModal
+          isVisible={isQrScannerModalVisible}
+          handleOk={onAcceptQrScannerModal}
+          handleClose={closeQrScannerModal}/>
+      )}
 
       {/* Send amount */}
       <div id="send-transaction-field" className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">
+          <span className="field-label-left" style={{marginBottom: '-6px'}}>
             Send ~${fromCoinAmount && effectiveRate
               ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
               : "0.00"}
+            <IconSort className="mean-svg-icons usd-switcher fg-red" />
+            <span className="fg-red">USD</span>
           </span>
           <span className="field-label-right">
-            <span className="mr-1">Balance:</span>
-            <span>
+            <span>Balance:</span>
+            <span className="balance-amount">
               {`${
                 selectedToken?.balance
                   ? formatAmount(selectedToken.balance, selectedToken.decimals)
                   : "Unknown"
               }`}
             </span>
-            <span className="ml-1">
+            <span>
               (~$
               {selectedToken?.balance && effectiveRate
                 ? formatAmount(selectedToken.balance * effectiveRate, 2)
@@ -372,7 +419,7 @@ export const OneTimePayment = () => {
         <div className="transaction-field-row main-row">
           <span className="input-left">
             <input
-              className="token-amount-input"
+              className="general-text-input"
               inputMode="decimal"
               autoComplete="off"
               autoCorrect="off"
