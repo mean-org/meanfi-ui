@@ -1,5 +1,5 @@
-import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker, Input } from "antd";
-import { DownOutlined, QrcodeOutlined } from "@ant-design/icons";
+import { Button, Modal, Menu, Dropdown, DatePicker, Divider } from "antd";
+import { QrcodeOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
@@ -7,7 +7,6 @@ import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
   fromLamports,
-  isPositiveNumber,
   isValidNumber,
   useLocalStorageState,
 } from "../../../utils/utils";
@@ -17,19 +16,15 @@ import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentRateType, PaymentStartPlan } from "../../../models/enums";
+import { PaymentRateType } from "../../../models/enums";
 import {
-  getAmountWithTokenSymbol,
   getOptionsFromEnum,
-  getPaymentRateIntervalByRateType,
-  getPaymentRateOptionLabel,
-  getPaymentStartPlanOptionLabel
+  getPaymentRateOptionLabel
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
-import React from "react";
 
 export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
@@ -37,14 +32,26 @@ export const RepeatingPayment = () => {
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { userAccounts } = useUserAccounts();
-  const { contract, recipientAddress, recipientNote, setRecipientAddress, setRecipientNote } = useContext(AppStateContext);
+  const {
+    contract,
+    recipientAddress,
+    recipientNote,
+    paymentStartDate,
+    fromCoinAmount,
+    paymentRateAmount,
+    paymentRateFrequency,
+    setRecipientAddress,
+    setRecipientNote,
+    setPaymentStartDate,
+    setFromCoinAmount,
+    setPaymentRateAmount,
+    setPaymentRateFrequency
+  } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
-  const [fromCoinAmount, setFromCoinAmount] = useState("");
-  const [paymentRateAmount, setPaymentRateAmount] = useState("");
-  const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
+  // const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
 
   const [coinPrices, setCoinPrices] = useState<any>(null);
 
@@ -52,17 +59,16 @@ export const RepeatingPayment = () => {
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
-  const [simpleTokenList, setSimpleTokenList] = useState<TokenInfo[]>([]);
+  const [availableTokenList, setAvailableTokenList] = useState<TokenInfo[]>([]);
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
+  const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
-
-  const [paymentStartScheduleValue, setPaymentStartScheduleValue] = useState(today);
-  const [paymentStartPlanValue, setPaymentStartPlanValue] = useState<PaymentStartPlan>(PaymentStartPlan.Now);
-  const [paymentRateValue, setPaymentRateValue] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [subjectTokenSelection, setSubjectTokenSelection] = useState('payer');
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -99,29 +105,6 @@ export const RepeatingPayment = () => {
     setRecipientAddress(e.target.value);
   }
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setPaymentRateAmount("");
-    } else if (isValidNumber(newValue)) {
-      setPaymentRateAmount(newValue);
-    }
-  };
-
-  const handlePaymentRateIntervalChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setPaymentRateInterval("");
-    } else if (isPositiveNumber(newValue)) {
-      setPaymentRateInterval(newValue);
-    }
-  };
-
-  const handlePaymentRateOptionChange = (val: PaymentRateType) => {
-    setPaymentRateValue(val);
-    setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
-  }
-
   const handleRecipientNoteChange = (e: any) => {
     setRecipientNote(e.target.value);
   }
@@ -138,6 +121,29 @@ export const RepeatingPayment = () => {
     }, 100);
   }
 
+  const handlePaymentRateAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setPaymentRateAmount("");
+    } else if (isValidNumber(newValue)) {
+      setPaymentRateAmount(newValue);
+    }
+  };
+
+  // const handlePaymentRateIntervalChange = (e: any) => {
+  //   const newValue = e.target.value;
+  //   if (newValue === null || newValue === undefined || newValue === "") {
+  //     setPaymentRateInterval("");
+  //   } else if (isPositiveNumber(newValue)) {
+  //     setPaymentRateInterval(newValue);
+  //   }
+  // };
+
+  const handlePaymentRateOptionChange = (val: PaymentRateType) => {
+    setPaymentRateFrequency(val);
+    // setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
+  }
+
   // Effect to load token list
   useEffect(() => {
     if (shouldLoadTokens) {
@@ -146,6 +152,12 @@ export const RepeatingPayment = () => {
         const filteredTokens = tokens
           .filterByClusterSlug(connectionConfig.env)
           .getList();
+        // Save a copy of available tokens for the destination account
+        setAvailableTokenList(filteredTokens);
+        // Preset a token for the destination account
+        if (!destinationToken) {
+          setDestinationToken(filteredTokens[0]);
+        }
         // List loaded, now reflect it as it is if no wallet connected
         // If a wallet gets connected then filter by tokens the user own
         if (connected && userAccounts && userAccounts.length > 0) {
@@ -162,7 +174,7 @@ export const RepeatingPayment = () => {
               }));
             }
           }
-          setSimpleTokenList(tokensWithBalance);
+          setFilteredTokenList(tokensWithBalance);
           console.log('tokensWithBalance:', tokensWithBalance);
           // Preset a token
           if (tokensWithBalance?.length) {
@@ -170,7 +182,7 @@ export const RepeatingPayment = () => {
             console.log("Preset token:", tokensWithBalance[0]);
           }
         } else {
-          setSimpleTokenList(filteredTokens);
+          setFilteredTokenList(filteredTokens);
           console.log("tokens", filteredTokens);
           // Preset a token
           if (!selectedToken && filteredTokens) {
@@ -187,11 +199,12 @@ export const RepeatingPayment = () => {
     coinPrices,
     userAccounts,
     selectedToken,
-    simpleTokenList,
+    filteredTokenList,
     connectionConfig,
     shouldLoadTokens,
     setSelectedToken,
-    setSimpleTokenList,
+    destinationToken,
+    setFilteredTokenList,
     setEffectiveRate
   ]);
 
@@ -292,7 +305,7 @@ export const RepeatingPayment = () => {
 
   useEffect(() => {
     const resizeListener = () => {
-      var NUM_CHARS = 4;
+      var NUM_CHARS = 6;
       var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
       for (var i = 0; i < ellipsisElements.length; ++i){
         var e = ellipsisElements[i] as HTMLElement;
@@ -322,22 +335,20 @@ export const RepeatingPayment = () => {
            selectedToken.balance &&
            fromCoinAmount &&
            parseFloat(fromCoinAmount) <= selectedToken.balance;
-          //  recipientAddress &&
-          //  arePaymentSettingsValid();
   }
 
   const arePaymentSettingsValid = (): boolean => {
     let result = true;
-    if (paymentStartPlanValue === PaymentStartPlan.Schedle && !paymentStartScheduleValue) {
+    if (!paymentStartDate) {
       return false;
     }
-    const rateAmount = parseFloat(paymentRateAmount);
+    const rateAmount = parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       result = false;
-    } else if (rateAmount > parseFloat(fromCoinAmount)) {
+    } else if (rateAmount > parseFloat(fromCoinAmount || '0')) {
       result = false;
-    } else if (paymentRateValue === PaymentRateType.Other && !paymentRateInterval) {
-      result = false;
+    // } else if (paymentRateFrequency === PaymentRateType.Other && !paymentRateInterval) {
+    //   result = false;
     }
 
     return result;
@@ -355,94 +366,59 @@ export const RepeatingPayment = () => {
       ? "Enter an amount"
       : parseFloat(fromCoinAmount) > selectedToken.balance
       ? "Amount exceeds your balance"
+      : !paymentStartDate
+      ? "Set a valid date"
       : !arePaymentSettingsValid()
       ? getPaymentSettingsModalButtonLabel()
       : "Approve on your wallet";
   }
 
   const getPaymentSettingsModalButtonLabel = (): string => {
-    const rateAmount = parseFloat(paymentRateAmount);
+    const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? "Add payment rate"
-      : rateAmount > parseFloat(fromCoinAmount) 
+      : rateAmount > parseFloat(fromCoinAmount || '0')
       ? "Review payment rate"
-      : paymentRateValue === PaymentRateType.Other && !paymentRateInterval
-      ? 'Select a valid interval'
+      // : paymentRateFrequency === PaymentRateType.Other && !paymentRateInterval
+      // ? 'Select a valid interval'
       : '';
   }
 
-  // const getSendPaymentLabel = (
-  //   plan: PaymentStartPlan,
-  //   scheme: PaymentScheme
-  // ): string => {
-  //   let label = "";
-  //   if (plan === PaymentStartPlan.Now) {
-  //     label = "Now";
-  //   } else {
-  //     label = `On ${paymentStartScheduleValue}`;
-  //   }
-  //   if (scheme === PaymentScheme.OneTimePayment) {
-  //     label += " (one time)";
-  //   } else {
-  //     label += " (repeating)";
-  //   }
-  //   return label;
-  // };
-
-  // const getPaymentRateLabel = (
-  //   scheme: PaymentScheme,
-  //   rate: PaymentRateType,
-  //   amount: string,
-  //   interval: string
-  // ): string => {
-  //   let label = "";
-  //   if (scheme === PaymentScheme.RepeatingPayment) {
-  //     label += `${getAmountWithTokenSymbol(amount, selectedToken)} `;
-  //     switch (rate) {
-  //       case PaymentRateType.PerHour:
-  //         label += "per hour";
-  //         break;
-  //       case PaymentRateType.PerDay:
-  //         label += "per day";
-  //         break;
-  //       case PaymentRateType.PerWeek:
-  //         label += "per week";
-  //         break;
-  //       case PaymentRateType.PerMonth:
-  //         label += "per month";
-  //         break;
-  //       case PaymentRateType.PerYear:
-  //         label += "per year";
-  //         break;
-  //       case PaymentRateType.Other:
-  //         const intervalNumber = parseInt(interval, 10);
-  //         label += `every ${timeConvert(intervalNumber)}`;
-  //         break;
-  //     }
-  //   }
-  //   return label;
-  // };
+  /*
+  const getPaymentRateLabel = (
+    rate: PaymentRateType,
+    amount: string,
+    interval: string
+  ): string => {
+    let label: string;
+    label = `${getAmountWithTokenSymbol(amount, selectedToken)} `;
+    switch (rate) {
+      case PaymentRateType.PerHour:
+        label += "per hour";
+        break;
+      case PaymentRateType.PerDay:
+        label += "per day";
+        break;
+      case PaymentRateType.PerWeek:
+        label += "per week";
+        break;
+      case PaymentRateType.PerMonth:
+        label += "per month";
+        break;
+      case PaymentRateType.PerYear:
+        label += "per year";
+        break;
+      // case PaymentRateType.Other:
+      // const intervalNumber = parseInt(interval, 10);
+      // label += `every ${timeConvert(intervalNumber)}`;
+      default:
+        break;
+    }
+    return label;
+  };
+  */
   
   // Prefabrics
-
-  const paymentStartPlanMenu = (
-    <Menu>
-      <Menu.Item
-        key="10"
-        onClick={() => {
-          setPaymentStartPlanValue(PaymentStartPlan.Now);
-        }}>
-        {getPaymentStartPlanOptionLabel(PaymentStartPlan.Now)}
-      </Menu.Item>
-      <Menu.Item
-        key="11"
-        onClick={() => {
-          setPaymentStartPlanValue(PaymentStartPlan.Schedle);
-        }}>
-        {getPaymentStartPlanOptionLabel(PaymentStartPlan.Schedle)}
-      </Menu.Item>
-    </Menu>
-  );
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -456,6 +432,81 @@ export const RepeatingPayment = () => {
         );
       })}
     </Menu>
+  );
+
+  const renderAvailableTokenList = (
+    <>
+      {destinationToken && availableTokenList ? (
+        availableTokenList.map((token, index) => {
+          const onClick = function () {
+            setDestinationToken(token);
+            console.log("destination token selected:", token.symbol);
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                destinationToken && destinationToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <p>Loading...</p>
+      )}
+    </>
+  );
+
+  const renderUserTokenList = (
+    <>
+      {selectedToken && filteredTokenList ? (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
+            setSelectedToken(token);
+            console.log("token selected:", token.symbol);
+            setEffectiveRate(
+              coinPrices && coinPrices[token.symbol]
+                ? coinPrices[token.symbol]
+                : 0
+            );
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                selectedToken && selectedToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <p>Loading...</p>
+      )}
+    </>
   );
 
   // Main action
@@ -491,7 +542,7 @@ export const RepeatingPayment = () => {
               {recipientAddress || 'Recepient wallet account address'}
             </span>
           </span>
-          <div className="token-right simplelink" onClick={showQrScannerModal}>
+          <div className="addon-right simplelink" onClick={showQrScannerModal}>
             <QrcodeOutlined />
           </div>
         </div>
@@ -525,8 +576,103 @@ export const RepeatingPayment = () => {
         </div>
       </div>
 
+      {/* Receive rate and frequency */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left cell-1">Recipient receives</span>
+          <span className="field-label-left cell-2 flex-center">&nbsp;</span>
+          <span className="field-label-left cell-3">Rate and frequency</span>
+          <span className="field-label-left cell-4">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="addon-left cell-1">
+            <div className="token-selector simplelink" onClick={() => {
+              setSubjectTokenSelection('beneficiary');
+              showTokenSelector();
+            }}>
+              <div className="token-icon">
+                {destinationToken?.logoURI ? (
+                  <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
+                ) : (
+                  <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-symbol">{destinationToken?.symbol}</div>
+              <span className="flex-center">
+                <IconCaretDown className="mean-svg-icons" />
+              </span>
+            </div>
+          </span>
+          <span className="static-field-text cell-2 flex-center">
+            <span className="symbol-at">@</span>
+          </span>
+          <span className="static-field-text cell-3">
+            <input
+              className="general-text-input"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              required={true}
+              onChange={handlePaymentRateAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.0"
+              minLength={1}
+              maxLength={79}
+              spellCheck="false"
+              value={paymentRateAmount}
+            />
+          </span>
+          <span className="static-field-text cell-4">
+            <Dropdown
+              overlay={paymentRateOptionsMenu}
+              trigger={["click"]}>
+              <span className="dropdown-trigger no-decoration flex-center">
+                {getPaymentRateOptionLabel(paymentRateFrequency)}{" "}
+                <IconCaretDown className="mean-svg-icons" />
+              </span>
+            </Dropdown>
+          </span>
+        </div>
+      </div>
+
+      {/* Send date */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Send on</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="field-select-left">
+            {paymentStartDate === today ? `${paymentStartDate} (today)` : `${paymentStartDate}`}
+          </span>
+          <div className="addon-right">
+            <DatePicker
+              size="middle"
+              bordered={false}
+              className="addon-date-picker"
+              aria-required={true}
+              allowClear={false}
+              onChange={(value, date) => setPaymentStartDate(date)}
+              value={moment(
+                paymentStartDate,
+                DATEPICKER_FORMAT
+              )}
+              format={DATEPICKER_FORMAT}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Divider plain></Divider>
+
+      <div className="mb-3 text-center">
+        <div>You must add funds to start the repeating payment.</div>
+        <div>Recommended minimum amount: <span className="fg-red">0.21 SOL (10%)</span>.</div>
+      </div>
+
       {/* Send amount */}
-      <div id="send-transaction-field" className="transaction-field">
+      <div className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left" style={{marginBottom: '-6px'}}>
             Send ~${fromCoinAmount && effectiveRate
@@ -570,7 +716,7 @@ export const RepeatingPayment = () => {
             />
           </span>
           {selectedToken && (
-            <div className="token-right">
+            <div className="addon-right">
               <div className="token-group">
                 {selectedToken?.balance && (
                   <div
@@ -586,9 +732,10 @@ export const RepeatingPayment = () => {
                     MAX
                   </div>
                 )}
-                <div
-                  className="token-selector simplelink"
-                  onClick={showTokenSelector}>
+                <div className="token-selector simplelink" onClick={() => {
+                    setSubjectTokenSelection('payer');
+                    showTokenSelector();
+                  }}>
                   <div className="token-icon">
                     {selectedToken.logoURI ? (
                       <img
@@ -624,202 +771,9 @@ export const RepeatingPayment = () => {
         width={450}
         footer={null}>
         <div className="token-list">
-          {/* Loop through the tokens */}
-          {selectedToken && simpleTokenList ? (
-            simpleTokenList.map((token, index) => {
-              const onClick = function () {
-                setSelectedToken(token);
-                console.log("token selected:", token.symbol);
-                setEffectiveRate(
-                  coinPrices && coinPrices[token.symbol]
-                    ? coinPrices[token.symbol]
-                    : 0
-                );
-                onCloseTokenSelector();
-              };
-              return (
-                <div
-                  key={index + 100}
-                  onClick={onClick}
-                  className={`token-item ${
-                    selectedToken && selectedToken.address === token.address
-                      ? "selected"
-                      : "simplelink"
-                  }`}>
-                  <div className="token-icon">
-                    {token.logoURI ? (
-                      <img
-                        alt={`${token.name}`}
-                        width={24}
-                        height={24}
-                        src={token.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={token.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-description">
-                    <div className="token-symbol">{token.symbol}</div>
-                    <div className="token-name">{token.name}</div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <p>Loading...</p>
-          )}
+          {subjectTokenSelection === 'payer' ? renderUserTokenList : renderAvailableTokenList}
         </div>
       </Modal>
-
-      {/* Payment scheme */}
-      <div className="mb-4">
-        <h4 className="modal-form-heading">What is the payment rate?</h4>
-        <div className="font-size-85 font-regular fg-black-25 mb-1">
-          This is the agreed upon payment rate between you and the recipient.
-        </div>
-        <Row gutter={[24, 0]} className="mb-2">
-          <Col span={12}>
-            <div className="transaction-field medium my-0">
-              <div className="transaction-field-row main-row">
-                <span className="input-left">
-                  <input
-                    className="general-text-input"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
-                    onChange={handlePaymentRateAmountChange}
-                    pattern="^[0-9]*[.,]?[0-9]*$"
-                    placeholder="0.0"
-                    minLength={1}
-                    maxLength={79}
-                    spellCheck="false"
-                    min={0}
-                    max={fromCoinAmount}
-                    value={paymentRateAmount}
-                  />
-                </span>
-                {selectedToken && (
-                  <div className="token-right">
-                    <div className="token-group">
-                      <div className="token-selector">
-                        <div className="token-icon">
-                          {selectedToken.logoURI ? (
-                            <img
-                              alt={`${selectedToken.name}`}
-                              width={20}
-                              height={20}
-                              src={selectedToken.logoURI}
-                            />
-                          ) : (
-                            <Identicon
-                              address={selectedToken.address}
-                              style={{
-                                width: "24",
-                                display: "inline-flex",
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="token-symbol">
-                          {selectedToken.symbol}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <span className="font-size-75 font-regular fg-black-25 pl-1">
-              Select up to{" "}
-              {getAmountWithTokenSymbol(
-                parseFloat(fromCoinAmount),
-                selectedToken
-              )}
-            </span>
-          </Col>
-          <Col span={12}>
-            <Dropdown
-              overlay={paymentRateOptionsMenu}
-              trigger={["click"]}>
-              <Button size="large" className="w-100 gray-stroke">
-                {getPaymentRateOptionLabel(paymentRateValue)}{" "}
-                <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
-        <Row
-          gutter={[24, 0]}
-          className={
-            paymentRateValue !== PaymentRateType.Other ? "d-none" : "mb-3"
-          }>
-          <Col span={12} offset={12}>
-            <Input
-              className="w-100 gray-stroke"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              suffix="minutes"
-              onChange={handlePaymentRateIntervalChange}
-              disabled={paymentRateValue !== PaymentRateType.Other}
-              pattern="^([0]*?([1-9]\d*)(\.0{1,2})?)$"
-              placeholder="0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={paymentRateInterval}
-            />
-          </Col>
-        </Row>
-        <h4 className="modal-form-heading">
-          When do you want to send this payment?
-        </h4>
-        <Row gutter={[24, 0]} className="mb-2">
-          <Col span={12}>
-            <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
-              <Button size="large" className="w-100 gray-stroke">
-                {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
-                <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Col>
-          <Col span={12}>
-            {paymentStartPlanValue === PaymentStartPlan.Now ? (
-              <Button
-                block
-                className="gray-stroke"
-                type="primary"
-                shape="round"
-                size="large"
-                disabled={true}>
-                Will send right away
-              </Button>
-            ) : (
-              <DatePicker
-                size="large"
-                className="w-100 gray-stroke"
-                aria-required={
-                  paymentStartPlanValue === PaymentStartPlan.Schedle
-                }
-                allowClear={false}
-                onChange={(value, date) =>
-                  setPaymentStartScheduleValue(date)
-                }
-                value={moment(
-                  paymentStartScheduleValue,
-                  DATEPICKER_FORMAT
-                )}
-                format={DATEPICKER_FORMAT}
-              />
-            )}
-          </Col>
-        </Row>
-      </div>
 
       {/* Info */}
       <div className="text-center p-2">
@@ -827,6 +781,7 @@ export const RepeatingPayment = () => {
           ? `1 ${selectedToken.symbol} = ${formatAmount(effectiveRate)} USDC`
           : "--"}
       </div>
+
       {/* Action button */}
       <Button
         className="main-cta"

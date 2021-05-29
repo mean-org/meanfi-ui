@@ -15,5 +15,5 @@ export enum PaymentRateType {
     PerWeek = 2,    // 604800
     PerMonth = 3,   // 2629750
     PerYear = 4,    // 31557000
-    Other = 5,      // >= 60 seconds
+    // Other = 5,      // >= 60 seconds
 }

@@ -1,5 +1,5 @@
-import { Button, Col, Modal, Row, Menu, Dropdown, DatePicker } from "antd";
-import { DownOutlined, QrcodeOutlined } from "@ant-design/icons";
+import { Button, Modal, DatePicker } from "antd";
+import { QrcodeOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
@@ -16,13 +16,10 @@ import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentStartPlan } from "../../../models/enums";
-import { getPaymentStartPlanOptionLabel } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
-import React from "react";
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
@@ -30,12 +27,21 @@ export const OneTimePayment = () => {
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const { userAccounts } = useUserAccounts();
-  const { contract, recipientAddress, recipientNote, setRecipientAddress, setRecipientNote } = useContext(AppStateContext);
+  const {
+    contract,
+    recipientAddress,
+    recipientNote,
+    paymentStartDate,
+    fromCoinAmount,
+    setRecipientAddress,
+    setRecipientNote,
+    setPaymentStartDate,
+    setFromCoinAmount
+  } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
-  const [fromCoinAmount, setFromCoinAmount] = useState("");
   const [coinPrices, setCoinPrices] = useState<any>(null);
 
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
@@ -49,9 +55,6 @@ export const OneTimePayment = () => {
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
-
-  const [paymentStartScheduleValue, setPaymentStartScheduleValue] = useState(today);
-  const [paymentStartPlanValue, setPaymentStartPlanValue] = useState<PaymentStartPlan>(PaymentStartPlan.Now);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -233,7 +236,7 @@ export const OneTimePayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
+        // TODO: Find how to wait for the accounts' list to be populated to avoid setTimeout
         setTimeout(() => {
           setShouldLoadTokens(true);
         }, 1000);
@@ -290,13 +293,6 @@ export const OneTimePayment = () => {
            parseFloat(fromCoinAmount) <= selectedToken.balance;
   }
 
-  const arePaymentSettingsValid = (): boolean => {
-    if (paymentStartPlanValue === PaymentStartPlan.Schedle && !paymentStartScheduleValue) {
-      return false;
-    }
-    return true;
-  }
-
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
     return !connected
@@ -309,30 +305,10 @@ export const OneTimePayment = () => {
       ? "Enter an amount"
       : parseFloat(fromCoinAmount) > selectedToken.balance
       ? "Amount exceeds your balance"
-      : !arePaymentSettingsValid()
+      : !paymentStartDate
       ? "Set a valid date"
       : "Approve on your wallet";
   }
-
-  // Prefabrics
-  const paymentStartPlanMenu = (
-    <Menu>
-      <Menu.Item
-        key="10"
-        onClick={() => {
-          setPaymentStartPlanValue(PaymentStartPlan.Now);
-        }}>
-        {getPaymentStartPlanOptionLabel(PaymentStartPlan.Now)}
-      </Menu.Item>
-      <Menu.Item
-        key="11"
-        onClick={() => {
-          setPaymentStartPlanValue(PaymentStartPlan.Schedle);
-        }}>
-        {getPaymentStartPlanOptionLabel(PaymentStartPlan.Schedle)}
-      </Menu.Item>
-    </Menu>
-  );
 
   // Main action
 
@@ -367,7 +343,7 @@ export const OneTimePayment = () => {
               {recipientAddress || 'Recepient wallet account address'}
             </span>
           </span>
-          <div className="token-right simplelink" onClick={showQrScannerModal}>
+          <div className="addon-right simplelink" onClick={showQrScannerModal}>
             <QrcodeOutlined />
           </div>
         </div>
@@ -381,7 +357,7 @@ export const OneTimePayment = () => {
       )}
 
       {/* Send amount */}
-      <div id="send-transaction-field" className="transaction-field">
+      <div className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left" style={{marginBottom: '-6px'}}>
             Send ~${fromCoinAmount && effectiveRate
@@ -425,7 +401,7 @@ export const OneTimePayment = () => {
             />
           </span>
           {selectedToken && (
-            <div className="token-right">
+            <div className="addon-right">
               <div className="token-group">
                 {selectedToken?.balance && (
                   <div
@@ -437,8 +413,7 @@ export const OneTimePayment = () => {
                           selectedToken.decimals
                         )
                       )
-                    }
-                  >
+                    }>
                     MAX
                   </div>
                 )}
@@ -551,51 +526,32 @@ export const OneTimePayment = () => {
         </div>
       </div>
 
-      {/* Payment scheme */}
-      <div className="mb-4">
-        <h4 className="modal-form-heading">
-          When do you want to send this payment?
-        </h4>
-        <Row gutter={[24, 0]} className="mb-2">
-          <Col span={12}>
-            <Dropdown overlay={paymentStartPlanMenu} trigger={["click"]}>
-              <Button size="large" className="w-100 gray-stroke">
-                {getPaymentStartPlanOptionLabel(paymentStartPlanValue)}{" "}
-                <DownOutlined />
-              </Button>
-            </Dropdown>
-          </Col>
-          <Col span={12}>
-            {paymentStartPlanValue === PaymentStartPlan.Now ? (
-              <Button
-                block
-                className="gray-stroke"
-                type="primary"
-                shape="round"
-                size="large"
-                disabled={true}>
-                Will send right away
-              </Button>
-            ) : (
-              <DatePicker
-                size="large"
-                className="w-100 gray-stroke"
-                aria-required={
-                  paymentStartPlanValue === PaymentStartPlan.Schedle
-                }
-                allowClear={false}
-                onChange={(value, date) =>
-                  setPaymentStartScheduleValue(date)
-                }
-                value={moment(
-                  paymentStartScheduleValue,
-                  DATEPICKER_FORMAT
-                )}
-                format={DATEPICKER_FORMAT}
-              />
-            )}
-          </Col>
-        </Row>
+      {/* Send date */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Send on</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="field-select-left">
+            {paymentStartDate === today ? `${paymentStartDate} (today)` : `${paymentStartDate}`}
+          </span>
+          <div className="addon-right">
+            <DatePicker
+              size="middle"
+              bordered={false}
+              className="addon-date-picker"
+              aria-required={true}
+              allowClear={false}
+              onChange={(value, date) => setPaymentStartDate(date)}
+              value={moment(
+                paymentStartDate,
+                DATEPICKER_FORMAT
+              )}
+              format={DATEPICKER_FORMAT}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Info */}
@@ -612,7 +568,7 @@ export const OneTimePayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+        disabled={!recipientAddress || !paymentStartDate || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
     </>

@@ -78,23 +78,23 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType): string => {
     let result = '';
     switch (val) {
         case PaymentRateType.PerHour:
-            result = 'Per hour';
+            result = 'per hour';
             break;
         case PaymentRateType.PerDay:
-            result = 'Per day';
+            result = 'per day';
             break;
         case PaymentRateType.PerWeek:
-            result = 'Per week';
+            result = 'per week';
             break;
         case PaymentRateType.PerMonth:
-            result = 'Per month';
+            result = 'per month';
             break;
         case PaymentRateType.PerYear:
-            result = 'Per year';
+            result = 'per year';
             break;
-        case PaymentRateType.Other:
+        // case PaymentRateType.Other:
         default:
-            result = 'Other (defined in minutes)';
+            // result = 'Other (defined in minutes)';
             break;
     }
     return result;
@@ -131,7 +131,7 @@ export const getPaymentRateIntervalByRateType = (rateType: PaymentRateType): str
             return '43800';
         case PaymentRateType.PerYear:
             return '525600';
-        case PaymentRateType.Other:
+        // case PaymentRateType.Other:
         default:
             return '1';
     }

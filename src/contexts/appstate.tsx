@@ -2,16 +2,25 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "../utils/utils";
 import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
+import { PaymentRateType } from "../models/enums";
 
 interface AppStateConfig {
   currentScreen: string | undefined;
   contract: ContractDefinition | undefined;
   recipientAddress: string | undefined;
   recipientNote: string | undefined;
+  paymentStartDate: string | undefined;
+  fromCoinAmount: string | undefined;
+  paymentRateAmount: string | undefined;
+  paymentRateFrequency: PaymentRateType;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
+  setPaymentStartDate: (date: string) => void;
+  setFromCoinAmount: (data: string) => void;
+  setPaymentRateAmount: (data: string) => void;
+  setPaymentRateFrequency: (freq: PaymentRateType) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -19,20 +28,34 @@ const contextDefaultValues: AppStateConfig = {
   contract: undefined,
   recipientAddress: undefined,
   recipientNote: undefined,
+  paymentStartDate: undefined,
+  fromCoinAmount: undefined,
+  paymentRateAmount: undefined,
+  paymentRateFrequency: PaymentRateType.PerMonth,
   setCurrentScreen: () => {},
   setContract: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
+  setPaymentStartDate: () => {},
+  setFromCoinAmount: () => {},
+  setPaymentRateAmount: () => {},
+  setPaymentRateFrequency: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
+  const today = new Date().toLocaleDateString();
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
 
   const [recipientAddress, updateRecipientAddress] = useState<string | undefined>();
   const [recipientNote, updateRecipientNote] = useState<string | undefined>();
+  const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
+
+  const [fromCoinAmount, updateFromCoinAmount] = useState<string | undefined>();
+  const [paymentRateAmount, updatePaymentRateAmount] = useState<string | undefined>();
+  const [paymentRateValue, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
 
   const setCurrentScreen = (name: string) => {
     setSelectedTab(name);
@@ -54,6 +77,22 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateRecipientNote(note);
   }
 
+  const setPaymentStartDate = (date: string) => {
+    updatePaymentStartDate(date);
+  }
+
+  const setFromCoinAmount = (data: string) => {
+    updateFromCoinAmount(data);
+  }
+
+  const setPaymentRateAmount = (data: string) => {
+    updatePaymentRateAmount(data);
+  }
+
+  const setPaymentRateValue = (freq: PaymentRateType) => {
+    updatePaymentRateFrequency(freq);
+  }
+
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const contractFromCache = useMemo(
@@ -68,12 +107,12 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (contractFromCache) {
           setSelectedContract(contractFromCache);
         } else {
-          const item = STREAMING_PAYMENT_CONTRACTS[0];
+          const item = STREAMING_PAYMENT_CONTRACTS.filter(c => !c.disabled)[0];
           setSelectedContract(item);
           setContractName(item.name);
         }
       } else {
-        const item = STREAMING_PAYMENT_CONTRACTS[0];
+        const item = STREAMING_PAYMENT_CONTRACTS.filter(c => !c.disabled)[0];
         setSelectedContract(item);
         setContractName(item.name);
       }
@@ -95,10 +134,18 @@ const AppStateProvider: React.FC = ({ children }) => {
         contract,
         recipientAddress,
         recipientNote,
+        paymentStartDate,
+        fromCoinAmount,
+        paymentRateAmount,
+        paymentRateFrequency: paymentRateValue,
         setCurrentScreen,
         setContract,
         setRecipientAddress,
-        setRecipientNote
+        setRecipientNote,
+        setPaymentStartDate,
+        setFromCoinAmount,
+        setPaymentRateAmount,
+        setPaymentRateFrequency: setPaymentRateValue
       }}>
       {children}
     </AppStateContext.Provider>
