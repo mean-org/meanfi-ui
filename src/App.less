@@ -49,6 +49,16 @@
   color: #fff;
   background: @color-primary-highlight;
 }
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: @color-black-25;
+  opacity: 1; /* Firefox */
+}
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: @color-black-25;
+}
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: @color-black-25;
+}
 
 .fg-black-25 {
   color: @color-black-25;
@@ -792,6 +802,13 @@ em {
     }
     .input-left {
       flex: 1 1 auto;
+      &.recipient-field-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100%;
+      }
     }
     .field-label-left {
       .mean-svg-icons.usd-switcher {
@@ -819,7 +836,7 @@ em {
     .field-select-left {
       font-size: 24px;
       font-weight: 500;
-      width: calc(100% - 26px);
+      width: calc(100% - 36px);
       line-height: 1;
     }
     .general-text-input {
@@ -1198,6 +1215,39 @@ em {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#payment-recipient-field {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  z-index: 2;
+  line-height: 1.3;
+  &:focus {
+    opacity: 1;
+    & ~ #payment-recipient-static-field {
+      opacity: 0;
+    }
+  }
+  &:not(:focus) {
+    opacity: 0;
+    & ~ #payment-recipient-static-field {
+      opacity: 1;
+    }
+  }
+}
+#payment-recipient-static-field {
+  font-size: 24px;
+  font-weight: 500;
+  width: 100%;
+  line-height: 1.3;
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  left: 0;
+  &.placeholder-text {
+    color: @color-black-25;
+  }
 }
 
 .overflow-ellipsis-middle {

@@ -73,15 +73,7 @@ export const RepeatingPayment = () => {
     closeQrScannerModal();
   };
 
-  // Recipient address UX
-  const [recipientAddressInputVisible, setRecipientAddressInputVisible] = useState(false);
-  const ref: React.RefObject<any> = React.createRef();
-
   // Event handling
-
-  const showRecipientInput = () => {
-    setRecipientAddressInputVisible(true);
-  }
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -130,8 +122,20 @@ export const RepeatingPayment = () => {
     setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
   }
 
+  const handleRecipientNoteChange = (e: any) => {
+    setRecipientNote(e.target.value);
+  }
+
+  const handleRecipientAddressFocusIn = (e: any) => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 100);
+  }
+
   const handleRecipientAddressFocusOut = (e: any) => {
-    setRecipientAddressInputVisible(false);
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 100);
   }
 
   // Effect to load token list
@@ -345,12 +349,12 @@ export const RepeatingPayment = () => {
       ? "Connect your wallet"
       : !selectedToken || !selectedToken.balance
       ? "No balance"
+      : !recipientAddress
+      ? "Select recipient"
       : !fromCoinAmount
       ? "Enter an amount"
       : parseFloat(fromCoinAmount) > selectedToken.balance
       ? "Amount exceeds your balance"
-      : !recipientAddress
-      ? "Select recipient"
       : !arePaymentSettingsValid()
       ? getPaymentSettingsModalButtonLabel()
       : "Approve on your wallet";
@@ -463,51 +467,63 @@ export const RepeatingPayment = () => {
   return (
     <>
       {/* Recipient */}
-      <div id="payment-recipient-field" className="transaction-field">
+      <div className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left">Recipient Address or ENS</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
-          {recipientAddressInputVisible ? (
-            <span className="input-left">
-              <input
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                ref={ref}
-                onChange={handleRecipientAddressChange}
-                onBlur={handleRecipientAddressFocusOut}
-                placeholder="Recepient wallet account address"
-                required={true}
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                accept="capture"
-                value={recipientAddress}/>
+          <span className="input-left recipient-field-wrapper">
+            <input id="payment-recipient-field"
+              className="w-100 general-text-input"
+              autoComplete="on"
+              autoCorrect="off"
+              type="text"
+              onFocus={handleRecipientAddressFocusIn}
+              onChange={handleRecipientAddressChange}
+              onBlur={handleRecipientAddressFocusOut}
+              placeholder="Recepient wallet account address"
+              required={true}
+              spellCheck="false"
+              value={recipientAddress}/>
+            <span id="payment-recipient-static-field"
+                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+              {recipientAddress || 'Recepient wallet account address'}
             </span>
-          ) : (
-            <span className="field-select-left simplelink" onClick={() => showRecipientInput()}>
-              {recipientAddress ? (
-                <span className="overflow-ellipsis-middle">{recipientAddress}</span>
-              ) : (
-                <span>Select</span>
-              )}
-            </span>
-          )}
+          </span>
           <div className="token-right simplelink" onClick={showQrScannerModal}>
             <QrcodeOutlined />
           </div>
         </div>
       </div>
-      {/* Recipient Selector modal */}
+      {/* QR scan modal */}
       {isQrScannerModalVisible && (
         <QrScannerModal
           isVisible={isQrScannerModalVisible}
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
+
+      {/* Memo */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Memo / Subject</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="input-left">
+            <input
+              className="w-100 general-text-input"
+              autoComplete="on"
+              autoCorrect="off"
+              type="text"
+              onChange={handleRecipientNoteChange}
+              placeholder="What is this payment for?"
+              spellCheck="false"
+              value={recipientNote} />
+          </span>
+        </div>
+      </div>
 
       {/* Send amount */}
       <div id="send-transaction-field" className="transaction-field">
@@ -598,96 +614,6 @@ export const RepeatingPayment = () => {
           </span>
         </div>
       </div>
-
-      {/* <div id="send-transaction-field" className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">Send</span>
-          <span className="field-label-right">
-            <span className="mr-1">Balance:</span>
-            {`${
-              selectedToken?.balance
-                ? formatAmount(selectedToken.balance, selectedToken.decimals)
-                : "Unknown"
-            }`}
-          </span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </span>
-          {selectedToken && (
-            <div className="token-right">
-              <div className="token-group">
-                {selectedToken?.balance && (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        formatAmount(
-                          selectedToken.balance,
-                          selectedToken.decimals
-                        )
-                      )
-                    }
-                  >
-                    MAX
-                  </div>
-                )}
-                <div
-                  className="token-selector simplelink"
-                  onClick={showTokenSelector}>
-                  <div className="token-icon">
-                    {selectedToken.logoURI ? (
-                      <img
-                        alt={`${selectedToken.name}`}
-                        width={20}
-                        height={20}
-                        src={selectedToken.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={selectedToken.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken.symbol}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">
-            ~$
-            {fromCoinAmount && effectiveRate
-              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-              : "0.00"}
-          </span>
-          <span className="field-label-right">
-            ~$
-            {selectedToken?.balance && effectiveRate
-              ? formatAmount(selectedToken.balance * effectiveRate, 2)
-              : "0.00"}
-          </span>
-        </div>
-      </div> */}
 
       {/* Token selection modal */}
       <Modal
@@ -847,7 +773,6 @@ export const RepeatingPayment = () => {
               maxLength={79}
               spellCheck="false"
               value={paymentRateInterval}
-              defaultValue={paymentRateInterval}
             />
           </Col>
         </Row>
@@ -885,7 +810,7 @@ export const RepeatingPayment = () => {
                 onChange={(value, date) =>
                   setPaymentStartScheduleValue(date)
                 }
-                defaultValue={moment(
+                value={moment(
                   paymentStartScheduleValue,
                   DATEPICKER_FORMAT
                 )}

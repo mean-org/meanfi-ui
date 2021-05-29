@@ -42,8 +42,7 @@ export const RecipientSelectorModal = (props: {
             minLength={1}
             maxLength={79}
             spellCheck="false"
-            value={recipientAddress}
-            defaultValue=""/>
+            value={recipientAddress}/>
         </span>
       </div>
       <div className="mb-4">
@@ -60,8 +59,7 @@ export const RecipientSelectorModal = (props: {
             minLength={1}
             maxLength={79}
             spellCheck="false"
-            value={recipientNote}
-            defaultValue=""/>
+            value={recipientNote}/>
         </span>
       </div>
       <Button
