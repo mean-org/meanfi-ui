@@ -480,6 +480,9 @@ body {
   background-color: #FFFFFF;
   line-height: 1;
   z-index: 2;
+  @media (max-width: 575.98px) {
+    justify-content: center;
+  }
   .ant-menu-horizontal {
     border-bottom-color: transparent;
     background-color: transparent;
@@ -522,11 +525,11 @@ body {
   -webkit-box-align: center;
   align-items: center;
   justify-self: flex-end;
-}
-.App-Bar-right > .ant-btn-primary.ant-btn-round {
   @media (max-width: 575.98px) {
     display: none;
   }
+}
+.App-Bar-right > .ant-btn-primary.ant-btn-round {
   @media (min-width: 576px) {
     display: block;
     margin-right: 8px;
@@ -656,6 +659,17 @@ em {
   }
 }
 
+.ant-tabs-tab {
+  margin: 0 20px 0 0;
+}
+
+.ant-tabs-top > .ant-tabs-nav::before,
+.ant-tabs-bottom > .ant-tabs-nav::before,
+.ant-tabs-top > div > .ant-tabs-nav::before,
+.ant-tabs-bottom > div > .ant-tabs-nav::before {
+  border: none;
+}
+
 .flexColumn {
   display: flex;
   flex-direction: column;
@@ -713,10 +727,6 @@ em {
   margin-left: auto;
   margin-right: 5px;
   color: @text-color-secondary;
-}
-
-[class="ant-layout-header"] {
-  height: 16px !important;
 }
 
 @media only screen and (max-width: 600px) {
@@ -1081,7 +1091,19 @@ em {
   align-items: center;
   flex-direction: column;
   .ant-modal.mean-modal {
-    max-height: calc(100vh - 200px);
+    @media (max-width: 575.98px) {
+      height: 100% !important;
+      width: 100% !important;
+      top: 0;
+      left: 0;
+      padding: 0;
+      margin: 0;
+      max-height: 100vh !important;
+      max-width: 100vw !important;
+    }
+    @media (min-width: 576px) {
+      max-height: calc(100vh - 200px);
+    }
     position: fixed;
     display: block;
     height: auto;
@@ -1104,7 +1126,15 @@ em {
       width: 100%;
       height: 100%;
       border-radius: @custom-border-radius;
+      @media (max-width: 575.98px) {
+        border-radius: 0;
+      }
       .ant-modal-header {
+        height: 54px;
+        padding: 8px 50px 8px 17px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         border-top-left-radius: @custom-border-radius;
         border-top-right-radius: @custom-border-radius;
         .modal-title {

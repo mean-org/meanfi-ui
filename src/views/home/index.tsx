@@ -1,4 +1,3 @@
-import { Tooltip } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
@@ -39,7 +38,6 @@ export const HomeView = () => {
     </div>
   );
 
-
   if (currentScreen === 'contract') {
 
     const renderContract = () => {
@@ -60,9 +58,7 @@ export const HomeView = () => {
             <div className="position-relative mb-2">
               {contract && (
                 <>
-                  <Tooltip title="Change money streming contract">
-                    <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{contract.name}<IconCaretDown className="mean-svg-icons" /></h2>
-                  </Tooltip>
+                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{contract.name}<IconCaretDown className="mean-svg-icons" /></h2>
                   <p>{contract.description}</p>
                 </>
               )}
