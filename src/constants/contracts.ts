@@ -12,7 +12,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
     {
        id: 2,
         name: 'Repeating Payment ',
-        description: 'Send money to someone over time, based on a pre-arranged rate between you and them.',
+        description: 'Send money to anyone at a fixed flow rate over time. Great for family remmitances, child allowances and more.',
         categoryId: 'cat1',
         category: 'Individuals',
         disabled: false,
@@ -52,7 +52,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
     {
        id: 7,
         name: 'Rent Collection',
-        description: 'Setup rent collection for your tenants. They pay into the stream, and you receive the money for every second they occupy your property.',
+        description: 'Setup rent collection for your tenants. Get paid in real time for every minute they occupy your property.',
         categoryId: 'cat3',
         category: 'Real Estate',
         disabled: true,
