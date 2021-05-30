@@ -19,14 +19,6 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
     },
     {
        id: 3,
-        name: 'Family Allowance or Remmitance',
-        description: 'Setup an allowance for your child or family member anywhere in the world to send them money regularly, in two simple steps.',
-        categoryId: 'cat1',
-        category: 'Individuals',
-        disabled: true,
-    },
-    {
-       id: 4,
         name: 'Payroll',
         description: 'Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.',
         categoryId: 'cat2',
@@ -34,7 +26,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: false,
     },
     {
-       id: 5,
+       id: 4,
         name: 'Subscription',
         description: 'Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.',
         categoryId: 'cat2',
@@ -42,7 +34,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 6,
+       id: 5,
         name: 'Fundraising',
         description: 'Looking to raise funds  your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.',
         categoryId: 'cat2',
@@ -50,7 +42,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 7,
+       id: 6,
         name: 'Real Estate Sale (Escrow)',
         description: 'Setup the escrow account for a Real Estate transaction. Seller and buyer get direct access and full auditing for free.',
         categoryId: 'cat3',
@@ -58,7 +50,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 8,
+       id: 7,
         name: 'Rent Collection',
         description: 'Setup rent collection for your tenants. They pay into the stream, and you receive the money for every second they occupy your property.',
         categoryId: 'cat3',
@@ -66,7 +58,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 9,
+       id: 8,
         name: 'Pension Fund',
         description: 'For employers setting up pension plans that pay employees upon qualifying events, such as reaching retirement age.',
         categoryId: 'cat4',
@@ -74,7 +66,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 10,
+       id: 9,
         name: 'Setup everything (Advanced)',
         description: 'Recommended for professionals that want to setup a contract with unique terms, not commonly used.',
         categoryId: 'cat4',
@@ -82,7 +74,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         disabled: true,
     },
     {
-       id: 11,
+       id: 10,
         name: 'Donation Fund',
         description: 'Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.',
         categoryId: 'cat4',

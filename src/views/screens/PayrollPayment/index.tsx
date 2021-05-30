@@ -16,17 +16,18 @@ import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentRateType } from "../../../models/enums";
+import { PaymentRateType, TimesheetRequirementOption } from "../../../models/enums";
 import {
   getOptionsFromEnum,
-  getPaymentRateOptionLabel
+  getPaymentRateOptionLabel,
+  getTimesheetRequirementOptionLabel
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
 
-export const RepeatingPayment = () => {
+export const PayrollPayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
@@ -40,12 +41,14 @@ export const RepeatingPayment = () => {
     fromCoinAmount,
     paymentRateAmount,
     paymentRateFrequency,
+    timeSheetRequirement,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
     setFromCoinAmount,
     setPaymentRateAmount,
-    setPaymentRateFrequency
+    setPaymentRateFrequency,
+    setTimeSheetRequirement
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -434,6 +437,26 @@ export const RepeatingPayment = () => {
     </Menu>
   );
 
+  const timeSheetRequirementOptionsMenu = (
+    <Menu>
+      <Menu.Item
+        key={TimesheetRequirementOption[0]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[1]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[2]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout)}
+      </Menu.Item>
+    </Menu>
+  );
+
   const renderAvailableTokenList = (
     <>
       {destinationToken && availableTokenList ? (
@@ -520,7 +543,7 @@ export const RepeatingPayment = () => {
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Recipient Address or ENS</span>
+          <span className="field-label-left">Recipient wallet address</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -636,10 +659,30 @@ export const RepeatingPayment = () => {
         </div>
       </div>
 
+      {/* Timesheet requirement */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Timesheet requirement</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <Dropdown
+          overlay={timeSheetRequirementOptionsMenu}
+          trigger={["click"]}>
+          <div className="transaction-field-row main-row simplelink">
+            <span className="field-select-left">
+              {getTimesheetRequirementOptionLabel(timeSheetRequirement)}
+            </span>
+            <span className="field-caret-down">
+              <IconCaretDown className="mean-svg-icons" />
+            </span>
+          </div>
+        </Dropdown>
+      </div>
+
       {/* Send date */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Send on</span>
+          <span className="field-label-left">Starting on</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -671,11 +714,11 @@ export const RepeatingPayment = () => {
         <div>Recommended minimum amount: <span className="fg-red">0.21 SOL (10%)</span>.</div>
       </div>
 
-      {/* Send amount */}
+      {/* Add funds (amount) */}
       <div className="transaction-field mb-1">
         <div className="transaction-field-row">
           <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            Send ~${fromCoinAmount && effectiveRate
+            Add funds ~${fromCoinAmount && effectiveRate
               ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
               : "0.00"}
             <IconSort className="mean-svg-icons usd-switcher fg-red" />

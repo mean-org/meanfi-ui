@@ -1,4 +1,4 @@
-import { PaymentRateType, PaymentStartPlan } from "../models/enums";
+import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption } from "../models/enums";
 import { TokenInfo } from "./tokens";
 import { formatAmount } from "./utils";
 
@@ -146,4 +146,22 @@ export const getAmountWithTokenSymbol = (
     const converted = amount.toString();
     const parsed = parseFloat(converted);
     return `${formatAmount(parsed, decimals)} ${token.symbol}`;
+}
+
+export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption): string => {
+    let result = '';
+    switch (val) {
+        case TimesheetRequirementOption.NotRequired:
+            result = 'Not required (streams 24/7)';
+            break;
+        case TimesheetRequirementOption.SubmitTimesheets:
+            result = 'Submit timesheets';
+            break;
+        case TimesheetRequirementOption.ClockinClockout:
+            result = 'Clock-in / Clock-out';
+            break;
+        default:
+            break;
+    }
+    return result;
 }

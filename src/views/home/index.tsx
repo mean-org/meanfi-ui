@@ -3,7 +3,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown } from "../../Icons";
-import { OneTimePayment, RepeatingPayment } from "../screens";
+import { OneTimePayment, RepeatingPayment, PayrollPayment } from "../screens";
 
 export const HomeView = () => {
   const { currentScreen, contract, setCurrentScreen } = useContext(AppStateContext);
@@ -28,18 +28,32 @@ export const HomeView = () => {
     return () => {};
   }, [currentScreen, setCurrentScreen]);
 
+  const renderPreFooter = (
+    <div className="pre-footer-notice">
+      <div className="footer-left">
+        This product is in beta. Do not deposit or swap large amounts of funds.
+      </div>
+      <div className="footer-right">
+        Powered by the Solana Network
+      </div>
+    </div>
+  );
+
+
   if (currentScreen === 'contract') {
 
     const renderContract = () => {
       switch(contract?.id) {
         case 1:   return <OneTimePayment />;
         case 2:   return <RepeatingPayment />;
+        case 3:   return <PayrollPayment />;
         default:  return <h4>Not implemented</h4>
       }
     }
 
     // CONTRACT SETUP SCREEN
     return (
+      <>
       <div className="container">
         <div className="interaction-area">
           <div className="place-transaction-box">
@@ -62,11 +76,14 @@ export const HomeView = () => {
           </div>
         </div>
       </div>
+      {renderPreFooter}
+      </>
     );
   } else if (currentScreen === 'streams') {
 
     // STREAMS SCREEN
     return (
+      <>
       <div className="container">
         <div className="interaction-area">
           <div className="streams-heading">My Money Streams</div>
@@ -90,16 +107,21 @@ export const HomeView = () => {
           </div>
         </div>
       </div>
+      {renderPreFooter}
+      </>
     );
   } else {
 
     // LOADING SCREEN
     return (
+      <>
       <div className="container">
         <div className="interaction-area px-4 py-4 text-center">
           <p>Loading...</p>
         </div>
       </div>
+      {renderPreFooter}
+      </>
     );
   }
 

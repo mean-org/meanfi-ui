@@ -28,16 +28,6 @@ export const AppLayout = React.memo((props: any) => {
         </Header>
         <Content>{props.children}</Content>
         <Footer>
-          <div className="container">
-            <div className="pre-footer-notice">
-              <div className="footer-left">
-                This product is in beta. Do not deposit or swap large amounts of funds.
-              </div>
-              <div className="footer-right">
-                Powered by the Solana Network
-              </div>
-            </div>
-          </div>
           <FooterBar/>
         </Footer>
       </Layout>

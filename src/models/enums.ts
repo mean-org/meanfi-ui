@@ -17,3 +17,9 @@ export enum PaymentRateType {
     PerYear = 4,    // 31557000
     // Other = 5,      // >= 60 seconds
 }
+
+export enum TimesheetRequirementOption {
+    NotRequired = 0,
+    SubmitTimesheets = 1,
+    ClockinClockout = 2
+}

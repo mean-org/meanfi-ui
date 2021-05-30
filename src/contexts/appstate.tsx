@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "../utils/utils";
 import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
-import { PaymentRateType } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption } from "../models/enums";
 
 interface AppStateConfig {
   currentScreen: string | undefined;
@@ -13,6 +13,7 @@ interface AppStateConfig {
   fromCoinAmount: string | undefined;
   paymentRateAmount: string | undefined;
   paymentRateFrequency: PaymentRateType;
+  timeSheetRequirement: TimesheetRequirementOption;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
@@ -21,6 +22,7 @@ interface AppStateConfig {
   setFromCoinAmount: (data: string) => void;
   setPaymentRateAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
+  setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -32,6 +34,7 @@ const contextDefaultValues: AppStateConfig = {
   fromCoinAmount: undefined,
   paymentRateAmount: undefined,
   paymentRateFrequency: PaymentRateType.PerMonth,
+  timeSheetRequirement: TimesheetRequirementOption.NotRequired,
   setCurrentScreen: () => {},
   setContract: () => {},
   setRecipientAddress: () => {},
@@ -40,6 +43,7 @@ const contextDefaultValues: AppStateConfig = {
   setFromCoinAmount: () => {},
   setPaymentRateAmount: () => {},
   setPaymentRateFrequency: () => {},
+  setTimeSheetRequirement: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -48,14 +52,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString();
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
-
   const [recipientAddress, updateRecipientAddress] = useState<string | undefined>();
   const [recipientNote, updateRecipientNote] = useState<string | undefined>();
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
-
   const [fromCoinAmount, updateFromCoinAmount] = useState<string | undefined>();
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string | undefined>();
-  const [paymentRateValue, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
+  const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
 
   const setCurrentScreen = (name: string) => {
     setSelectedTab(name);
@@ -89,8 +92,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     updatePaymentRateAmount(data);
   }
 
-  const setPaymentRateValue = (freq: PaymentRateType) => {
+  const setPaymentRateFrequency = (freq: PaymentRateType) => {
     updatePaymentRateFrequency(freq);
+  }
+
+  const setTimeSheetRequirement = (req: TimesheetRequirementOption) => {
+    updateTimeSheetRequirement(req);
   }
 
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -137,7 +144,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentStartDate,
         fromCoinAmount,
         paymentRateAmount,
-        paymentRateFrequency: paymentRateValue,
+        paymentRateFrequency,
+        timeSheetRequirement,
         setCurrentScreen,
         setContract,
         setRecipientAddress,
@@ -145,7 +153,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentStartDate,
         setFromCoinAmount,
         setPaymentRateAmount,
-        setPaymentRateFrequency: setPaymentRateValue
+        setPaymentRateFrequency,
+        setTimeSheetRequirement
       }}>
       {children}
     </AppStateContext.Provider>
