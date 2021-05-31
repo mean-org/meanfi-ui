@@ -20,12 +20,14 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
+import { MoneyTransfer } from "../../../money-streaming/transfer";
+import { PublicKey } from "@solana/web3.js";
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
-  const { connected } = useWallet();
+  const { connected, wallet } = useWallet();
   const { userAccounts } = useUserAccounts();
   const {
     contract,
@@ -314,6 +316,18 @@ export const OneTimePayment = () => {
 
   const onTransactionStart = () => {
     console.log("Start transaction for contract type:", contract?.name);
+    const senderPubkey = wallet?.publicKey;
+    console.log('Wallet address:', wallet?.publicKey?.toBase58());
+    console.log('Wallet public key:', senderPubkey);
+    console.log('Wallet account balance:', senderPubkey);
+    const destPubkey = new PublicKey(recipientAddress as string);
+    console.log('Beneficiary address:', recipientAddress);
+    console.log('Beneficiary public key:', destPubkey);
+    const tokenBalance = selectedToken?.balance
+      ? formatAmount(selectedToken.balance, selectedToken.decimals)
+      : "Unknown";
+    console.log(`Token account balance: ${tokenBalance} ${selectedToken.symbol}`);
+    // const transfer = new MoneyTransfer(sd fsdf sdfb);
   };
 
   return (
