@@ -395,10 +395,10 @@ footer.ant-layout-footer {
     border-radius: 5px;
   }
   &.ant-btn-primary {
-    border-color: var(--color-secondary-alpha-85) !important;
+    border-color: var(--color-white) !important;
     border-style: solid;
     border-width: 1px;
-    color: var(--color-secondary-alpha-85);
+    color: var(--color-white);
   }
 }
 
@@ -560,11 +560,14 @@ footer.ant-layout-footer {
   position: fixed;
   top: 0px;
   padding: 0 1rem;
-  background-color: transparent;
   line-height: 1;
   z-index: 2;
   @media (max-width: 575.98px) {
+    background-color: var(--bg-color);
     justify-content: center;
+  }
+  @media (min-width: 576px) {
+    background-color: transparent;
   }
   .ant-menu-horizontal {
     border-bottom-color: transparent;
