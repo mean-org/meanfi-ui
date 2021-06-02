@@ -1,0 +1,40 @@
+:root {
+  /* Main colors */
+  --color-primary: #b7001c;
+  --color-primary-highlight: #ff0017;
+  --color-secondary: #212121;
+  --color-selection: #f0f0f0;
+  --color-item-selector-selected: #73c700;
+  --color-incoming-transaction: #4e9800;
+  --color-outgoing-transaction: #e02020;
+  --color-notify-info: rgb(23, 125, 220);
+  --color-notify-success: rgb(73, 170, 25);
+  --color-notify-warning: rgb(216, 150, 20);
+  --color-notify-error: rgb(166, 29, 36);
+  --bg-color: #fff;
+
+  /* Grays */
+  --color-dark: #313131;
+  --color-dark-active: #474747;
+  --color-gray-normal: #afafaf;
+  --color-lightgray: #c2c2c2;
+  --color-dimmed: #c9c9c9;
+  --color-blue-gray: #eceff1;
+  --color-smoke: #eeeeee;
+  --color-whitesmoke: #f8f8f8;
+  --color-almost-white: #fcfcfc;
+
+  /* Black with alpha */
+  --color-black-02: rgba(0, 0, 0, 0.02);
+  --color-black-10: rgba(0, 0, 0, 0.1);
+  --color-black-15: rgba(0, 0, 0, 0.15);
+  --color-black-20: rgba(0, 0, 0, 0.2);
+  --color-black-25: rgba(0, 0, 0, 0.25);
+  --color-black-40: rgba(0, 0, 0, 0.4);
+  --color-black-50: rgba(0, 0, 0, 0.5);
+  --color-black-85: rgba(0, 0, 0, 0.85);
+
+  /* Properties */
+  --custom-border-radius: 10px;
+  --custom-control-height: 46px;
+}

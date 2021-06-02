@@ -1,38 +1,29 @@
-@import '~antd/lib/style/themes/default.less';
+// @import '~antd/lib/style/themes/default.less';
 @import '~antd/dist/antd.less'; // Import Ant Design styles by less entry
 
-// Main colors
+/* Main colors */
 @color-primary: #B7001C;
 @color-primary-highlight: #FF0017;
-@color_secondary: #212121;
-
+@color-secondary: #212121;
 @color-selection: #F0F0F0;
 @color-item-selector-selected: #73C700;
 @color-incoming-transaction: #4E9800;
 @color-outgoing-transaction: #E02020;
-
 @color-notify-info: rgb(23, 125, 220);
 @color-notify-success: rgb(73, 170, 25);
 @color-notify-warning: rgb(216, 150, 20);
 @color-notify-error: rgb(166, 29, 36);
-
-// GRAY TO WHITE SCALE
+/* Grays */
 @color-dark: #313131;
-@color-fgdefault: #373A3C;
-@color-gray_dark: #373A3C;
-@color-dark_active: #474747;
-@color-skin_gray_text: #727272;
-@color-gray_normal: #AFAFAF;
+@color-dark-active: #474747;
+@color-gray-normal: #AFAFAF;
 @color-lightgray: #C2C2C2;
 @color-dimmed: #C9C9C9;
-@color-borders: #DEDEDE;
 @color-blue-gray: #ECEFF1;
 @color-smoke: #EEEEEE;
-@color-item-hover: #F4F4F4;
-@color-card-header: #F7F7F7;
-@color-white_smoke: #F8F8F8;
-@color-almost_white: #FCFCFC;
-
+@color-whitesmoke: #F8F8F8;
+@color-almost-white: #FCFCFC;
+/* Black with alpha */
 @color-black-02: rgba(0,0,0,0.02);
 @color-black-10: rgba(0,0,0,0.10);
 @color-black-15: rgba(0,0,0,0.15);
@@ -41,8 +32,7 @@
 @color-black-40: rgba(0,0,0,0.40);
 @color-black-50: rgba(0,0,0,0.50);
 @color-black-85: rgba(0,0,0,0.85);
-
-// Properties
+/* Properties */
 @custom-border-radius: 10px;
 @custom-control-height: 46px;
 
@@ -226,7 +216,7 @@ footer.ant-layout-footer {
   &:disabled:hover,
   &:disabled:focus,
   &:disabled:active {
-    background-color: @color-gray_normal;
+    background-color: @color-gray-normal;
   }
   &.ant-btn-round {
     height: @custom-control-height;
@@ -1231,7 +1221,7 @@ em {
       .contract-description {
         font-size: 12px;
         font-weight: 400;
-        color: @color-dark_active;
+        color: @color-dark-active;
       }
     }
   }
@@ -1297,7 +1287,7 @@ em {
   }
 }
 .secondary-link {
-  color: @color_secondary !important;
+  color: @color-secondary !important;
   text-decoration: none !important;
   &.underlined {
     text-decoration: underline !important;
@@ -2796,7 +2786,7 @@ em {
   margin-bottom: 24px;
   .option-grid-item {
     cursor: pointer;
-    background-color: @color-almost_white;
+    background-color: @color-almost-white;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -2807,14 +2797,14 @@ em {
     border-radius: 5px;
     width: 100%;
     height: 72px;
-    border-color: @color-white_smoke;
+    border-color: @color-whitesmoke;
     &:not(.selected) {
       > .position.absolute {
         display: none;
       }
       &:hover {
         border-color: @color-smoke;
-        background-color: @color-white_smoke;
+        background-color: @color-whitesmoke;
       }
     }
     &.selected {
@@ -2831,14 +2821,14 @@ em {
       font-size: 14px;
       font-weight: 400;
       line-height: 1.4;
-      color: @color-dark_active;
+      color: @color-dark-active;
     }
   }
 }
 
 // qr-code reader
 #qr-reader {
-  border: 1px solid rgba(0,0,0,0.1) !important;
+  border: 1px solid @color-black-10 !important;
   border-radius: 10px;
   #qr-reader__status_span {
     border-radius: 5px;

@@ -43,14 +43,6 @@ export class MoneyTransfer {
                 const senderPubkey = wallet.publicKey;
                 const destPubkey = new PublicKey(beneficiaryAddress);
 
-                // Sender account info
-                const walletAccountInfo = await this.connection.getAccountInfo(wallet!.publicKey!);
-                console.log("wallet data size", walletAccountInfo?.data.length);
-
-                // Beneficiary account info
-                const receiverAccountInfo = await this.connection.getAccountInfo(destPubkey);
-                console.log("receiver data size", receiverAccountInfo?.data.length);
-
                 // Prepare the transfer instruction
                 const instruction = this.setTransferInstruction(senderPubkey, destPubkey, lamports);
 
