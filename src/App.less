@@ -28,6 +28,7 @@
   --color-whitesmoke: #f8f8f8;
   --color-almost-white: #fcfcfc;
   --color-white: #ffffff;
+  --color-black: #000000;
 
   /* Black with alpha */
   --color-secondary-alpha-02: rgba(0, 0, 0, 0.02);
@@ -41,8 +42,8 @@
   --color-secondary-alpha-85: rgba(0, 0, 0, 0.85);
 
   /* Background Gradient */
-  --gradDark: #d2d2d2;
-  --gradLight: #ffffff;
+  --gradDark: #ffffff;
+  --gradLight: #d2d2d2;
 
   /* Properties */
   --custom-border-radius: 10px;
@@ -50,6 +51,9 @@
 
   --color-flat-btn: var(--color-secondary-alpha-20);
   --color-flat-btn-hover: var(--color-secondary-alpha-10);
+  --color-network-bar: var(--color-secondary-alpha-10);
+  --wallet-wrapper-color: var(--color-white);
+  --wallet-wrapper-bg: var(--color-black);
 }
 
 // Inverted / Dark theme
@@ -80,6 +84,7 @@
   --color-whitesmoke: #afafaf;
   --color-almost-white: #474747;
   --color-white: #ffffff;
+  --color-black: #000000;
 
   /* Black with alpha */
   --color-secondary-alpha-02: rgba(255, 255, 255, 0.02);
@@ -102,6 +107,9 @@
 
   --color-flat-btn: var(--color-secondary-alpha-40);
   --color-flat-btn-hover: var(--color-secondary-alpha-50);
+  --color-network-bar: var(--color-secondary-alpha-40);
+  --wallet-wrapper-color: var(--color-white);
+  --wallet-wrapper-bg: var(--color-black);
 }
 
 body {
@@ -194,8 +202,8 @@ footer.ant-layout-footer {
         display: flex;
         align-items: center;
         white-space: nowrap;
-        background-color: var(--color-secondary-alpha-85);
-        color: var(--bg-color);
+        background-color: var(--wallet-wrapper-bg);
+        color: var(--wallet-wrapper-color);
         border-radius: var(--custom-border-radius);
         height: 100%;
         .wallet-key {
@@ -243,7 +251,7 @@ footer.ant-layout-footer {
   display: flex;
   padding: 0.5rem;
   font-size: 10px;
-  color: var(--color-lightgray);
+  color: var(--color-secondary-alpha-40);
   @media (max-width: 575.98px) {
     flex-direction: column;
     justify-content: flex-end;
@@ -286,6 +294,7 @@ footer.ant-layout-footer {
   &:not(:disabled) {
     background-color: var(--color-primary) !important;
     &:hover {
+      color: var(--color-white) !important;
       background-color: var(--color-primary-highlight) !important;
     }
   }
@@ -294,7 +303,7 @@ footer.ant-layout-footer {
   &:disabled:focus,
   &:disabled:active {
     color: var(--color-secondary) !important;
-    background-color: var(--color-gray-normal);
+    background-color: var(--color-secondary-alpha-10);
   }
   &.ant-btn-round {
     height: var(--custom-control-height);
@@ -341,8 +350,8 @@ footer.ant-layout-footer {
 // Stroked
 .ant-btn.ant-btn-ghost:hover,
 .ant-btn.ant-btn-ghost:focus {
-  color: inherit;
-  border-color: var(--color-primary-highlight);
+  color: var(--color-secondary-alpha-85) !important;
+  border-color: var(--color-secondary-alpha-85) !important;
 }
 .ant-btn.ant-btn-ghost:active {
   color: inherit;
@@ -369,7 +378,9 @@ footer.ant-layout-footer {
   }
 }
 
-button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
+.ant-btn.ant-btn-round.wallet-provider {
+  color: var(--color-secondary-alpha-40);
+  border-color: var(--color-secondary-alpha-25);
   border-radius: var(--custom-border-radius);
   padding: 10px 10px;
   height: auto;
@@ -383,12 +394,20 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
     margin-top: -2px;
     border-radius: 5px;
   }
+  &.ant-btn-primary {
+    border-color: var(--color-secondary-alpha-85) !important;
+    border-style: solid;
+    border-width: 1px;
+    color: var(--color-secondary-alpha-85);
+  }
 }
 
 .ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-sm.mean-icon-button {
   padding: 2px 5px;
   display: inline-flex;
   border-radius: var(--custom-border-radius);
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
   .mean-svg-icons {
     width: 18px;
     height: 18px;
@@ -615,19 +634,19 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
 
 // Account / Connection info
 .connection-and-account-bar {
+  flex-direction: row;
+  align-items: center;
+  background-color: var(--color-network-bar);
+  border-radius: var(--custom-border-radius);
+  margin-right: 8px;
+  height: 40px;
+  padding: 2px 4px;
   @media (max-width: 575.98px) {
     display: none;
   }
   @media (min-width: 576px) {
     display: flex;
   }
-  flex-direction: row;
-  align-items: center;
-  background-color: var(--color-secondary-alpha-10);
-  border-radius: var(--custom-border-radius);
-  margin-right: 8px;
-  height: 40px;
-  padding: 2px 4px;
   .connected-network {
     @media (max-width: 767.98px) {
       display: none;
@@ -660,8 +679,8 @@ button.ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-lg.wallet-provider {
     display: flex;
     align-items: center;
     white-space: nowrap;
-    background-color: var(--color-secondary-alpha-85);
-    color: var(--bg-color);
+    background-color: var(--wallet-wrapper-bg);
+    color: var(--wallet-wrapper-color);
     border-radius: var(--custom-border-radius);
     height: 100%;
     .wallet-key {
@@ -1130,10 +1149,10 @@ em {
     align-items: center;
     padding: 8px 16px;
     &.selected {
-      background-color: var(--color-dimmed);
+      background-color: var(--color-secondary-alpha-10);
     }
-    &:hover {
-      background-color: var(--color-smoke);
+    &:not(.selected):hover {
+      background-color: var(--color-secondary-alpha-20);
     }
     .token-icon {
       border-radius: 50%;
@@ -1221,7 +1240,7 @@ em {
         border-color: var(--color-secondary-alpha-20);
         border-top-left-radius: var(--custom-border-radius);
         border-top-right-radius: var(--custom-border-radius);
-        .modal-title {
+        .ant-modal-title {
           color: var(--color-secondary-alpha-85);
           font-size: 20px;
           font-weight: 700;
@@ -1241,6 +1260,10 @@ em {
     }
     .ant-modal-footer > .ant-btn {
       border-radius: var(--custom-border-radius);
+      &:not(.ant-btn-primary) {
+        background-color: transparent;
+        color: inherit;
+      }
     }
   }
 }
@@ -1249,7 +1272,7 @@ em {
 .account-settings-group {
   font-size: 1rem;
   padding: 1rem;
-  border: 1px solid #dadada;
+  border: 1px solid var(--color-secondary-alpha-25);
   border-radius: var(--custom-border-radius);
   position: relative;
   display: grid;
