@@ -14,23 +14,34 @@ import {
 } from "../../Icons";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
+import { useContext } from "react";
+import { AppStateContext } from "../../contexts/appstate";
 
 export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
   const { connected, disconnect } = useWallet();
+  const { theme, setTheme } = useContext(AppStateContext);
 
   const onDisconnectWallet = () => {
     disconnect();
   }
 
+  const onSwitchTheme = () => {
+    if (theme === 'light') {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+  }
+
   const menu = (
     <Menu>
-      <Menu.Item key="1">
-        <a href="https://www.someplace.com">
-          <IconMoon className="mean-svg-icons" />
-          <span className="menu-item-text">Switch to Dark Mode</span>
-        </a>
+      <Menu.Item key="1" onClick={onSwitchTheme}>
+        <IconMoon className="mean-svg-icons" />
+        <span className="menu-item-text">{
+          theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'
+        }</span>
       </Menu.Item>
       <Menu.Item key="2">
         <a href="https://www.someplace.com">

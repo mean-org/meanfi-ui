@@ -5,6 +5,7 @@ import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption } from "../models/enums";
 
 interface AppStateConfig {
+  theme: string | undefined;
   currentScreen: string | undefined;
   contract: ContractDefinition | undefined;
   recipientAddress: string | undefined;
@@ -14,6 +15,7 @@ interface AppStateConfig {
   paymentRateAmount: string | undefined;
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
+  setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
@@ -26,6 +28,7 @@ interface AppStateConfig {
 }
 
 const contextDefaultValues: AppStateConfig = {
+  theme: undefined,
   currentScreen: undefined,
   contract: undefined,
   recipientAddress: undefined,
@@ -35,6 +38,7 @@ const contextDefaultValues: AppStateConfig = {
   paymentRateAmount: undefined,
   paymentRateFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
+  setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
   setRecipientAddress: () => {},
@@ -50,6 +54,7 @@ export const AppStateContext = React.createContext<AppStateConfig>(contextDefaul
 
 const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString();
+  const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [recipientAddress, updateRecipientAddress] = useState<string | undefined>();
@@ -59,6 +64,21 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string | undefined>();
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
+
+  const setTheme = (name: string) => {
+    updateTheme(name);
+  }
+
+  useEffect(() => {
+    const applyTheme = (name?: string) => {
+      const theme = name || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      updateTheme(theme);
+    }
+
+    applyTheme(theme);
+    return () => {};
+  }, [theme, updateTheme]);
 
   const setCurrentScreen = (name: string) => {
     setSelectedTab(name);
@@ -137,6 +157,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   return (
     <AppStateContext.Provider
       value={{
+        theme,
         currentScreen,
         contract,
         recipientAddress,
@@ -146,6 +167,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentRateAmount,
         paymentRateFrequency,
         timeSheetRequirement,
+        setTheme,
         setCurrentScreen,
         setContract,
         setRecipientAddress,

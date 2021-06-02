@@ -9,7 +9,7 @@ import { AppStateContext } from "../../contexts/appstate";
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
-  const { setCurrentScreen } = useContext(AppStateContext);
+  const { theme, setCurrentScreen } = useContext(AppStateContext);
 
   const onGoToHomeClick = () => {
     setCurrentScreen("contract");
@@ -18,10 +18,10 @@ export const AppLayout = React.memo((props: any) => {
   return (
     <div className="App wormhole-bg">
       <Layout>
-        <Header className="App-Bar container">
+        <Header className="App-Bar">
           <Link to="/">
             <div className="app-title simplelink" onClick={onGoToHomeClick}>
-              <img className="app-logo" src="mean-pay-logo-color-dark.svg" alt="Mean Pay" />
+              <img className="app-logo" src={theme === 'dark' ? 'mean-pay-logo-color-light.svg' : 'mean-pay-logo-color-dark.svg'} alt="Mean Pay" />
             </div>
           </Link>
           <AppBar />
