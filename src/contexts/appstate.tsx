@@ -4,7 +4,7 @@ import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 
-interface TransactionStatusInfo {
+export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
   currentOperation?: TransactionStatus | undefined;
 }

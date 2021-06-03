@@ -18,6 +18,7 @@ import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
+  getCurrentTransactionOperationText,
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds
@@ -55,6 +56,7 @@ export const RepeatingPayment = () => {
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
+  const [isBusy, setIsBusy] = useState(false);
 
   // const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
 
@@ -361,6 +363,9 @@ export const RepeatingPayment = () => {
 
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
+    if (isBusy) {
+      return getCurrentTransactionOperationText(transactionStatus);
+    }
     return !connected
       ? "Connect your wallet"
       : !selectedToken || !selectedToken.balance
@@ -529,8 +534,9 @@ export const RepeatingPayment = () => {
       console.log('associatedToken:', destinationToken?.address);
       const associatedToken = new PublicKey(destinationToken?.address as string);
 
+      console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
       let utcDate = new Date();
-      utcDate.setDate(Date.parse(paymentStartDate as string));
+      utcDate.setTime(Date.parse(paymentStartDate as string));
       console.log('utcDate:', utcDate);
 
       // Init a streaming operation
@@ -539,7 +545,21 @@ export const RepeatingPayment = () => {
         lastOperation: TransactionStatus.Iddle,
         currentOperation: TransactionStatus.CreateTransaction
       });
+      setIsBusy(false);
       // Create a transaction
+      const data = {
+        treasurer: senderPubkey,                                     // treasurer
+        beneficiary: destPubkey,                                       // beneficiary
+        treasury: null,                                             // treasury
+        associatedToken: associatedToken,                                  // associatedToken
+        rateAmount: parseFloat(paymentRateAmount as string),          // rateAmount
+        rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+        startUtc: utcDate,                                          // startUtc
+        streamName: contract?.name.trim(),                                   // streamName
+        fundingAmount: parseFloat(fromCoinAmount as string)              // fundingAmount
+      };
+      data.streamName = 'aaa';
+      console.log('La puta data:', data);
       transfer.getCreateStreamTransaction(
         senderPubkey,                                     // treasurer
         destPubkey,                                       // beneficiary
@@ -548,7 +568,7 @@ export const RepeatingPayment = () => {
         parseFloat(paymentRateAmount as string),          // rateAmount
         getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
         utcDate,                                          // startUtc
-        contract?.name,                                   // streamName
+        contract?.name.trim(),                            // streamName
         parseFloat(fromCoinAmount as string)              // fundingAmount
       )
       .then(value => {
@@ -583,35 +603,42 @@ export const RepeatingPayment = () => {
                       currentOperation: TransactionStatus.Iddle
                     });
                     // Reset form (All contract values)
-                    resetContractValues();
+                    setTimeout(() => {
+                      setIsBusy(false);
+                      resetContractValues();
+                    }, 3000);
                   })
                   .catch(error => {
                     setTransactionStatus({
-                      lastOperation: transactionStatus?.lastOperation,
+                      lastOperation: transactionStatus.currentOperation,
                       currentOperation: TransactionStatus.ConfirmTransactionFailure
                     });
                   });
+                  setIsBusy(false);
               })
               .catch(error => {
                 setTransactionStatus({
-                  lastOperation: transactionStatus?.lastOperation,
+                  lastOperation: transactionStatus.currentOperation,
                   currentOperation: TransactionStatus.SendTransactionFailure
                 });
               });
+              setIsBusy(false);
           })
           .catch(error => {
             setTransactionStatus({
-              lastOperation: transactionStatus?.lastOperation,
+              lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.SignTransactionFailure
             });
+            setIsBusy(false);
           });
       })
       .catch(error => {
         console.log('getCreateStreamTransaction error:', error);
         setTransactionStatus({
-          lastOperation: transactionStatus?.lastOperation,
+          lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.CreateTransactionFailure
         });
+        setIsBusy(false);
       });
     }
   };
@@ -901,7 +928,7 @@ export const RepeatingPayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || isBusy}>
         {getTransactionStartButtonLabel()}
       </Button>
     </>

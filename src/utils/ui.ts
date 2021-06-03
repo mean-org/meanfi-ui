@@ -1,4 +1,5 @@
-import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption } from "../models/enums";
+import { TransactionStatusInfo } from "../contexts/appstate";
+import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { TokenInfo } from "./tokens";
 import { formatAmount } from "./utils";
 
@@ -188,4 +189,21 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
             break;
     }
     return value;
+}
+
+export const getCurrentTransactionOperationText = (status: TransactionStatusInfo): string => {
+    switch (status.currentOperation) {
+        case TransactionStatus.CreateTransaction:
+            return 'Init transaction';
+        case TransactionStatus.SignTransaction:
+            return 'Waiting wallet approval';
+        case TransactionStatus.SendTransaction:
+            return 'Sending transaction';
+        case TransactionStatus.ConfirmTransaction:
+            return 'Confirming transaction';
+        case TransactionStatus.Iddle:
+            return 'Operation completed';
+        default:
+            return '';
+    }
 }
