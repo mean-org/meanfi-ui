@@ -366,7 +366,7 @@ export const PayrollPayment = () => {
       : !recipientAddress
       ? "Select recipient"
       : !fromCoinAmount
-      ? "Enter an amount"
+      ? "Enter amount"
       : parseFloat(fromCoinAmount) > selectedToken.balance
       ? "Amount exceeds your balance"
       : !paymentStartDate
@@ -543,7 +543,7 @@ export const PayrollPayment = () => {
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Recipient wallet address</span>
+          <span className="field-label-left">Recipient</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -556,13 +556,13 @@ export const PayrollPayment = () => {
               onFocus={handleRecipientAddressFocusIn}
               onChange={handleRecipientAddressChange}
               onBlur={handleRecipientAddressFocusOut}
-              placeholder="Recepient wallet account address"
+              placeholder="Public address or ENS"
               required={true}
               spellCheck="false"
               value={recipientAddress}/>
             <span id="payment-recipient-static-field"
                   className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-              {recipientAddress || 'Recepient wallet account address'}
+              {recipientAddress || 'Public address or ENS'}
             </span>
           </span>
           <div className="addon-right simplelink" onClick={showQrScannerModal}>

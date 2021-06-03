@@ -78,7 +78,7 @@ export class Streaming {
         //     connection,
         //     programId
         // });
-        this.connection = new Connection(cluster);
+        this.connection = new Connection(cluster, 'confirmed');
         this.programId = new PublicKey(Constants.STREAM_PROGRAM_ID);
         this.feePayer = new PublicKey(Constants.STREAM_PROGRAM_PAYER_ID);
     }
@@ -256,10 +256,12 @@ export class Streaming {
         transaction: Transaction
     ): Promise<Transaction> {
         try {
+            console.log("Sending transaction to wallet for approval...");
             let signedTrans = await wallet.signTransaction(transaction);
-            console.log("sign transaction");
             return signedTrans;
         } catch (error) {
+            console.log("signTransaction failed!");
+            console.log(error);
             throw error;
         }
     }
@@ -276,7 +278,7 @@ export class Streaming {
 
     public async confirmTransaction(signature: any): Promise<any> {
         try {
-            const result = await this.connection.confirmTransaction(signature, "singleGossip");
+            const result = await this.connection.confirmTransaction(signature, 'confirmed');
             console.log("send raw transaction");
             return result;
         } catch (error) {
@@ -310,9 +312,11 @@ export class Streaming {
 
         let data = Buffer.alloc(Layout.createStreamLayout.span)
         {
+            let nameBuffer = Buffer.alloc(32, streamName as string);
+
             const decodedData = {
                 tag: 0,
-                stream_name: streamName,
+                stream_name: nameBuffer,
                 treasurer_address: Buffer.from(treasurer.toBuffer()),
                 treasury_address: Buffer.from(treasury.toBuffer()),
                 beneficiary_withdrawal_address: Buffer.from(beneficiary.toBuffer()),

@@ -28,7 +28,7 @@ import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
 import { Streaming } from "../../../money-streaming/stream";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 
 export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
@@ -373,7 +373,7 @@ export const RepeatingPayment = () => {
       : !recipientAddress
       ? "Select recipient"
       : !fromCoinAmount
-      ? "Enter an amount"
+      ? "Enter amount"
       : parseFloat(fromCoinAmount) > selectedToken.balance
       ? "Amount exceeds your balance"
       : !paymentStartDate
@@ -521,144 +521,201 @@ export const RepeatingPayment = () => {
 
   // Main action
 
-  const onTransactionStart = () => {
+  const onTransactionStart = async () => {
     console.log("Start transaction for contract type:", contract?.name);
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
 
-    if (wallet) {
-      console.log('Wallet address:', wallet?.publicKey?.toBase58());
-      const senderPubkey = wallet.publicKey as PublicKey;
+    // Init a streaming operation
+    const transfer = new Streaming(connectionConfig.endpoint);
 
-      console.log('Beneficiary address:', recipientAddress);
-      const destPubkey = new PublicKey(recipientAddress as string);
-
-      console.log('associatedToken:', destinationToken?.address);
-      const associatedToken = new PublicKey(destinationToken?.address as string);
-
-      console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
-      let utcDate = new Date();
-      utcDate.setTime(Date.parse(paymentStartDate as string));
-      console.log('utcDate:', utcDate);
-
-      // Init a streaming operation
-      const transfer = new Streaming(connectionConfig.endpoint);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.CreateTransaction
-      });
-      setIsBusy(false);
-      // Create a transaction
-      const data = {
-        treasurer: senderPubkey,                                     // treasurer
-        beneficiary: destPubkey,                                       // beneficiary
-        treasury: null,                                             // treasury
-        associatedToken: associatedToken,                                  // associatedToken
-        rateAmount: parseFloat(paymentRateAmount as string),          // rateAmount
-        rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-        startUtc: utcDate,                                          // startUtc
-        streamName: contract?.name.trim(),                                   // streamName
-        fundingAmount: parseFloat(fromCoinAmount as string)              // fundingAmount
-      };
-      data.streamName = 'aaa';
-      console.log('La puta data:', data);
-      transfer.getCreateStreamTransaction(
-        senderPubkey,                                     // treasurer
-        destPubkey,                                       // beneficiary
-        null,                                             // treasury
-        associatedToken,                                  // associatedToken
-        parseFloat(paymentRateAmount as string),          // rateAmount
-        getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-        utcDate,                                          // startUtc
-        contract?.name.trim(),                            // streamName
-        parseFloat(fromCoinAmount as string)              // fundingAmount
-      )
-      .then(value => {
-        console.log('getCreateStreamTransaction returned transaction:', value);
-        // Stage 1 completed - The transaction is created and returned
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Wallet address:', wallet?.publicKey?.toBase58());
+        const senderPubkey = wallet.publicKey as PublicKey;
+    
+        console.log('Beneficiary address:', recipientAddress);
+        const destPubkey = new PublicKey(recipientAddress as string);
+    
+        console.log('associatedToken:', destinationToken?.address);
+        const associatedToken = new PublicKey(destinationToken?.address as string);
+    
+        console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
+        let utcDate = new Date();
+        utcDate.setTime(Date.parse(paymentStartDate as string));
+        console.log('utcDate:', utcDate);
+    
         setTransactionStatus({
-          lastOperation: TransactionStatus.CreateTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.CreateTransaction
         });
-        transfer.signTransaction(wallet, value)
-          .then(signed => {
-            console.log('signTransaction returned a signed transaction:', signed);
-            // Stage 2 completed - The transaction was signed
+        setIsBusy(true);
+        // Create a transaction
+        const data = {
+          treasurer: senderPubkey,                                        // treasurer
+          beneficiary: destPubkey,                                        // beneficiary
+          treasury: null,                                                 // treasury
+          associatedToken: associatedToken,                               // associatedToken
+          rateAmount: parseFloat(paymentRateAmount as string),            // rateAmount
+          rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+          startUtc: utcDate,                                              // startUtc
+          streamName: contract?.name.trim(),                              // streamName
+          fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
+        };
+        data.streamName = 'aaa';
+        console.log('La puta data:', data);
+        return await transfer.getCreateStreamTransaction(
+          senderPubkey,                                     // treasurer
+          destPubkey,                                       // beneficiary
+          null,                                             // treasury
+          associatedToken,                                  // associatedToken
+          parseFloat(paymentRateAmount as string),          // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+          utcDate,                                          // startUtc
+          contract?.name.trim(),                            // streamName
+          parseFloat(fromCoinAmount as string)              // fundingAmount
+        )
+        .then(value => {
+          console.log('getCreateStreamTransaction returned transaction:', value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.log('getCreateStreamTransaction error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.CreateTransactionFailure
+          });
+          setIsBusy(false);
+          return false;
+        });
+      }
+      return false;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Signing transaction...');
+        return await transfer.signTransaction(wallet, transaction)
+        .then(signed => {
+          console.log('signTransaction returned a signed transaction:', signed);
+          // Stage 2 completed - The transaction was signed
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          signedTransaction = signed;
+          return true;
+        })
+        .catch(error => {
+          console.log('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          setIsBusy(false);
+          return false;
+        });
+      } else {
+        console.log('Cannot sign transaction! Wallet not found!');
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return transfer.sendSignedTransaction(signedTransaction)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
             });
-            transfer.sendSignedTransaction(signed)
-              .then(signature => {
-                console.log('sendSignedTransaction returned a signature:', signature);
-                // Stage 3 completed - The transaction was sent and a signature was returned
-                setTransactionStatus({
-                  lastOperation: TransactionStatus.SendTransactionSuccess,
-                  currentOperation: TransactionStatus.ConfirmTransaction
-                });
-                transfer.confirmTransaction(signature)
-                  .then(result => {
-                    console.log('confirmTransaction result:', result);
-                    // Stage 4 completed - The transaction was confirmed!
-                    setTransactionStatus({
-                      lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-                      currentOperation: TransactionStatus.Iddle
-                    });
-                    // Reset form (All contract values)
-                    setTimeout(() => {
-                      setIsBusy(false);
-                      resetContractValues();
-                    }, 3000);
-                  })
-                  .catch(error => {
-                    setTransactionStatus({
-                      lastOperation: transactionStatus.currentOperation,
-                      currentOperation: TransactionStatus.ConfirmTransactionFailure
-                    });
-                  });
-                  setIsBusy(false);
-              })
-              .catch(error => {
-                setTransactionStatus({
-                  lastOperation: transactionStatus.currentOperation,
-                  currentOperation: TransactionStatus.SendTransactionFailure
-                });
-              });
-              setIsBusy(false);
+            signature = sig;
+            return true;
           })
           .catch(error => {
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SignTransactionFailure
+              currentOperation: TransactionStatus.SendTransactionFailure
             });
             setIsBusy(false);
+            return false;
           });
-      })
-      .catch(error => {
-        console.log('getCreateStreamTransaction error:', error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.CreateTransactionFailure
-        });
-        setIsBusy(false);
-      });
+      }
+      return false;
     }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await transfer.confirmTransaction(signature)
+        .then(result => {
+          console.log('confirmTransaction result:', result);
+          // Stage 4 completed - The transaction was confirmed!
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          // Reset form (All contract values)
+          setTimeout(() => {
+            setIsBusy(false);
+            resetContractValues();
+          }, 3000);
+          return true;
+        })
+        .catch(error => {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          setIsBusy(false);
+          return false;
+        });
+    }
+
+    const resetContractValues = () => {
+      const today = new Date().toLocaleDateString();
+      setFromCoinAmount('');
+      setRecipientAddress('');
+      setRecipientNote('');
+      setPaymentStartDate(today);
+      setPaymentRateAmount('');
+      setPaymentRateFrequency(PaymentRateType.PerMonth);
+    }
+
+    // Lets hit it
+    if (wallet) {
+      const create = await createTx();
+      console.log('create:', create);
+      if (create) {
+        const sign = await signTx();
+        console.log('sign:', sign);
+        if (sign) {
+          const sent = await sendTx();
+          console.log('sent:', sent);
+          if (sent) {
+            const confirmed = await confirmTx();
+            console.log('confirmed:', confirmed);
+          }
+        }
+      }
+    }
+
   };
 
-  const resetContractValues = () => {
-    const today = new Date().toLocaleDateString();
-    setFromCoinAmount('');
-    setRecipientAddress('');
-    setRecipientNote('');
-    setPaymentStartDate(today);
-    setPaymentRateAmount('');
-    setPaymentRateFrequency(PaymentRateType.PerMonth);
-  }
 
   return (
     <>
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Recipient Address or ENS</span>
+          <span className="field-label-left">Recipient</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -671,13 +728,13 @@ export const RepeatingPayment = () => {
               onFocus={handleRecipientAddressFocusIn}
               onChange={handleRecipientAddressChange}
               onBlur={handleRecipientAddressFocusOut}
-              placeholder="Recepient wallet account address"
+              placeholder="Public address or ENS"
               required={true}
               spellCheck="false"
               value={recipientAddress}/>
             <span id="payment-recipient-static-field"
                   className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-              {recipientAddress || 'Recepient wallet account address'}
+              {recipientAddress || 'Public address or ENS'}
             </span>
           </span>
           <div className="addon-right simplelink" onClick={showQrScannerModal}>

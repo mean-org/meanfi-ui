@@ -26,16 +26,18 @@ export enum TimesheetRequirementOption {
 
 export enum TransactionStatus {
     Iddle = 0,
-    CreateTransaction = 1,
-    CreateTransactionSuccess = 2,
-    CreateTransactionFailure = 3,
-    SignTransaction = 4,
-    SignTransactionSuccess = 5,
-    SignTransactionFailure = 6,
-    SendTransaction = 7,
-    SendTransactionSuccess = 8,
-    SendTransactionFailure = 9,
-    ConfirmTransaction = 10,
-    ConfirmTransactionSuccess = 11,
-    ConfirmTransactionFailure = 12
+    TransactionStart = 1,
+    CreateTransaction = 2,
+    CreateTransactionSuccess = 3,
+    CreateTransactionFailure = 4,
+    SignTransaction = 5,
+    SignTransactionSuccess = 6,
+    SignTransactionFailure = 7,
+    SendTransaction = 8,
+    SendTransactionSuccess = 9,
+    SendTransactionFailure = 10,
+    ConfirmTransaction = 11,
+    ConfirmTransactionSuccess = 12,
+    ConfirmTransactionFailure = 13,
+    TransactionFinished = 14
 }
