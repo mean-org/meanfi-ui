@@ -165,3 +165,27 @@ export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOpti
     }
     return result;
 }
+
+export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => {
+    let value = 3600;   // 1h = 3600 seconds
+    switch (frequency) {
+        case PaymentRateType.PerHour:
+            value = 3600;
+            break;
+        case PaymentRateType.PerDay:
+            value = 86400;
+            break;
+        case PaymentRateType.PerWeek:
+            value = 604800;
+            break;
+        case PaymentRateType.PerMonth:
+            value = 2629750;
+            break;
+        case PaymentRateType.PerYear:
+            value = 31557000;
+            break;
+        default:
+            break;
+    }
+    return value;
+}

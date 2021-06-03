@@ -12,7 +12,7 @@ export class MoneyTransfer {
     private connection: Connection;
 
     constructor(public currentCluster: string) {
-        this.connection = new Connection(currentCluster, "confirmed");
+        this.connection = new Connection(currentCluster);
     }
 
     /**
@@ -82,7 +82,7 @@ export class MoneyTransfer {
             const transaction = new Transaction();
             transaction.add(instruction);
             transaction.feePayer = wallet!.publicKey!;
-            let hash = await this.connection.getRecentBlockhash('confirmed');
+            let hash = await this.connection.getRecentBlockhash();
             console.log("blockhash", hash);
             transaction.recentBlockhash = hash.blockhash;
             return transaction;

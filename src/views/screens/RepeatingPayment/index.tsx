@@ -19,18 +19,21 @@ import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType } from "../../../models/enums";
 import {
   getOptionsFromEnum,
-  getPaymentRateOptionLabel
+  getPaymentRateOptionLabel,
+  getRateIntervalInSeconds
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
+import { Streaming } from "../../../money-streaming/stream";
+import { PublicKey } from "@solana/web3.js";
 
 export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
-  const { connected } = useWallet();
+  const { connected, wallet } = useWallet();
   const { userAccounts } = useUserAccounts();
   const {
     contract,
@@ -513,6 +516,74 @@ export const RepeatingPayment = () => {
 
   const onTransactionStart = () => {
     console.log("Start transaction for contract type:", contract?.name);
+
+    if (wallet) {
+      console.log('Wallet address:', wallet?.publicKey?.toBase58());
+      const senderPubkey = wallet.publicKey as PublicKey;
+
+      console.log('Beneficiary address:', recipientAddress);
+      const destPubkey = new PublicKey(recipientAddress as string);
+
+      console.log('associatedToken:', destinationToken?.address);
+      const associatedToken = new PublicKey(destinationToken?.address as string);
+
+      let utcDate = new Date();
+      utcDate.setDate(Date.parse(paymentStartDate as string));
+
+      // Init a streaming operation
+      const transfer = new Streaming(connectionConfig.endpoint);
+      // Create a transaction
+      transfer.getCreateStreamTransaction(
+        senderPubkey,                                     // treasurer
+        destPubkey,                                       // beneficiary
+        null,                                             // treasury
+        associatedToken,                                  // associatedToken
+        parseFloat(paymentRateAmount as string),          // rateAmount
+        getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+        utcDate,                                          // startUtc
+        contract?.name,                                   // streamName
+        parseFloat(fromCoinAmount as string),             // fundingAmount
+        0,                                                // rateCliffInSeconds
+        0,                                                // cliffVestAmount,
+        0,                                                // cliffVestPercent
+      )
+      .then(value => {
+        console.log('getCreateStreamTransaction returned transaction:', value);
+        // Stage 1 completed - The transaction is created and returned
+        // TODO: Set state var to indicate stage success
+        transfer.signTransaction(wallet, value)
+          .then(signed => {
+            console.log('signTransaction returned a signed transaction:', signed);
+            // Stage 2 completed - The transaction was signed
+            // TODO: Set state var to indicate stage success
+            transfer.sendSignedTransaction(signed)
+              .then(signature => {
+                console.log('sendSignedTransaction returned a signature:', signature);
+                // Stage 3 completed - The transaction was sent and a signature was returned
+                // TODO: Set state var to indicate stage success
+                transfer.confirmTransaction(signature)
+                  .then(result => {
+                    console.log('confirmTransaction result:', result);
+                    // Stage 4 completed - The transaction was confirmed!
+                    // TODO: Set state var to indicate stage success
+                  })
+                  .catch(error => {
+                    // TODO: Set state var to indicate stage failure
+                  });
+              })
+              .catch(error => {
+                // TODO: Set state var to indicate stage failure
+              });
+          })
+          .catch(error => {
+            // TODO: Set state var to indicate stage failure
+          });
+      })
+      .catch(error => {
+        // TODO: Set state var to indicate stage failure
+        console.log('getCreateStreamTransaction error:', error);
+      });
+    }
   };
 
   return (
