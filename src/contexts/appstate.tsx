@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "../utils/utils";
 import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
-import { PaymentRateType, TimesheetRequirementOption } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+
+interface TransactionStatusInfo {
+  lastOperation?: TransactionStatus | undefined;
+  currentOperation?: TransactionStatus | undefined;
+}
 
 interface AppStateConfig {
   theme: string | undefined;
@@ -15,6 +20,7 @@ interface AppStateConfig {
   paymentRateAmount: string | undefined;
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
+  transactionStatus: TransactionStatusInfo;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
@@ -25,6 +31,7 @@ interface AppStateConfig {
   setPaymentRateAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
+  setTransactionStatus: (status: TransactionStatusInfo) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -38,6 +45,10 @@ const contextDefaultValues: AppStateConfig = {
   paymentRateAmount: undefined,
   paymentRateFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
+  transactionStatus: {
+    lastOperation: TransactionStatus.Iddle,
+    currentOperation: TransactionStatus.Iddle
+  },
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
@@ -48,6 +59,7 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentRateAmount: () => {},
   setPaymentRateFrequency: () => {},
   setTimeSheetRequirement: () => {},
+  setTransactionStatus: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -64,6 +76,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string | undefined>();
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
+  const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -120,6 +133,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTimeSheetRequirement(req);
   }
 
+  const setTransactionStatus = (status: TransactionStatusInfo) => {
+    updateTransactionStatus(status);
+  }
+
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const contractFromCache = useMemo(
@@ -167,6 +184,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentRateAmount,
         paymentRateFrequency,
         timeSheetRequirement,
+        transactionStatus,
         setTheme,
         setCurrentScreen,
         setContract,
@@ -176,7 +194,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setFromCoinAmount,
         setPaymentRateAmount,
         setPaymentRateFrequency,
-        setTimeSheetRequirement
+        setTimeSheetRequirement,
+        setTransactionStatus
       }}>
       {children}
     </AppStateContext.Provider>

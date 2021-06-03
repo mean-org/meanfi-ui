@@ -44,6 +44,7 @@ export class Streaming {
     private connection: Connection;
 
     private programId: PublicKey;
+    private feePayer: PublicKey;
 
     private defaultStream: StreamInfo = {
         id: undefined,
@@ -79,6 +80,7 @@ export class Streaming {
         // });
         this.connection = new Connection(cluster);
         this.programId = new PublicKey(Constants.STREAM_PROGRAM_ID);
+        this.feePayer = new PublicKey(Constants.STREAM_PROGRAM_PAYER_ID);
     }
 
     public async getStream(

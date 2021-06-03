@@ -16,7 +16,7 @@ import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentRateType } from "../../../models/enums";
+import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
@@ -43,12 +43,14 @@ export const RepeatingPayment = () => {
     fromCoinAmount,
     paymentRateAmount,
     paymentRateFrequency,
+    transactionStatus,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
     setFromCoinAmount,
     setPaymentRateAmount,
-    setPaymentRateFrequency
+    setPaymentRateFrequency,
+    setTransactionStatus
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -529,9 +531,14 @@ export const RepeatingPayment = () => {
 
       let utcDate = new Date();
       utcDate.setDate(Date.parse(paymentStartDate as string));
+      console.log('utcDate:', utcDate);
 
       // Init a streaming operation
       const transfer = new Streaming(connectionConfig.endpoint);
+      setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.CreateTransaction
+      });
       // Create a transaction
       transfer.getCreateStreamTransaction(
         senderPubkey,                                     // treasurer
@@ -542,49 +549,82 @@ export const RepeatingPayment = () => {
         getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
         utcDate,                                          // startUtc
         contract?.name,                                   // streamName
-        parseFloat(fromCoinAmount as string),             // fundingAmount
-        0,                                                // rateCliffInSeconds
-        0,                                                // cliffVestAmount,
-        0,                                                // cliffVestPercent
+        parseFloat(fromCoinAmount as string)              // fundingAmount
       )
       .then(value => {
         console.log('getCreateStreamTransaction returned transaction:', value);
         // Stage 1 completed - The transaction is created and returned
-        // TODO: Set state var to indicate stage success
+        setTransactionStatus({
+          lastOperation: TransactionStatus.CreateTransactionSuccess,
+          currentOperation: TransactionStatus.SignTransaction
+        });
         transfer.signTransaction(wallet, value)
           .then(signed => {
             console.log('signTransaction returned a signed transaction:', signed);
             // Stage 2 completed - The transaction was signed
-            // TODO: Set state var to indicate stage success
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
             transfer.sendSignedTransaction(signed)
               .then(signature => {
                 console.log('sendSignedTransaction returned a signature:', signature);
                 // Stage 3 completed - The transaction was sent and a signature was returned
-                // TODO: Set state var to indicate stage success
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SendTransactionSuccess,
+                  currentOperation: TransactionStatus.ConfirmTransaction
+                });
                 transfer.confirmTransaction(signature)
                   .then(result => {
                     console.log('confirmTransaction result:', result);
                     // Stage 4 completed - The transaction was confirmed!
-                    // TODO: Set state var to indicate stage success
+                    setTransactionStatus({
+                      lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+                      currentOperation: TransactionStatus.Iddle
+                    });
+                    // Reset form (All contract values)
+                    resetContractValues();
                   })
                   .catch(error => {
-                    // TODO: Set state var to indicate stage failure
+                    setTransactionStatus({
+                      lastOperation: transactionStatus?.lastOperation,
+                      currentOperation: TransactionStatus.ConfirmTransactionFailure
+                    });
                   });
               })
               .catch(error => {
-                // TODO: Set state var to indicate stage failure
+                setTransactionStatus({
+                  lastOperation: transactionStatus?.lastOperation,
+                  currentOperation: TransactionStatus.SendTransactionFailure
+                });
               });
           })
           .catch(error => {
-            // TODO: Set state var to indicate stage failure
+            setTransactionStatus({
+              lastOperation: transactionStatus?.lastOperation,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
           });
       })
       .catch(error => {
-        // TODO: Set state var to indicate stage failure
         console.log('getCreateStreamTransaction error:', error);
+        setTransactionStatus({
+          lastOperation: transactionStatus?.lastOperation,
+          currentOperation: TransactionStatus.CreateTransactionFailure
+        });
       });
     }
   };
+
+  const resetContractValues = () => {
+    const today = new Date().toLocaleDateString();
+    setFromCoinAmount('');
+    setRecipientAddress('');
+    setRecipientNote('');
+    setPaymentStartDate(today);
+    setPaymentRateAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
+  }
 
   return (
     <>

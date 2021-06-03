@@ -23,3 +23,19 @@ export enum TimesheetRequirementOption {
     SubmitTimesheets = 1,
     ClockinClockout = 2
 }
+
+export enum TransactionStatus {
+    Iddle = 0,
+    CreateTransaction = 1,
+    CreateTransactionSuccess = 2,
+    CreateTransactionFailure = 3,
+    SignTransaction = 4,
+    SignTransactionSuccess = 5,
+    SignTransactionFailure = 6,
+    SendTransaction = 7,
+    SendTransactionSuccess = 8,
+    SendTransactionFailure = 9,
+    ConfirmTransaction = 10,
+    ConfirmTransactionSuccess = 11,
+    ConfirmTransactionFailure = 12
+}
