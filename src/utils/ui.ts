@@ -193,15 +193,22 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
 
 export const getCurrentTransactionOperationText = (status: TransactionStatusInfo): string => {
     switch (status.currentOperation) {
-        case TransactionStatus.CreateTransaction:
+        case TransactionStatus.TransactionStart:
             return 'Init transaction';
+        case TransactionStatus.CreateTransaction:
+            return 'Create transaction';
         case TransactionStatus.SignTransaction:
-            return 'Waiting wallet approval';
+            return 'Waiting for wallet approval';
         case TransactionStatus.SendTransaction:
             return 'Sending transaction';
         case TransactionStatus.ConfirmTransaction:
             return 'Confirming transaction';
-        case TransactionStatus.Iddle:
+        case TransactionStatus.CreateTransactionFailure:
+        case TransactionStatus.SignTransactionFailure:
+        case TransactionStatus.SendTransactionFailure:
+        case TransactionStatus.ConfirmTransactionFailure:
+            return 'Operation failed';
+        case TransactionStatus.TransactionFinished:
             return 'Operation completed';
         default:
             return '';

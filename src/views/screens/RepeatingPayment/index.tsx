@@ -58,10 +58,7 @@ export const RepeatingPayment = () => {
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
 
-  // const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
-
   const [coinPrices, setCoinPrices] = useState<any>(null);
-
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
@@ -363,9 +360,9 @@ export const RepeatingPayment = () => {
 
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
-    if (isBusy) {
-      return getCurrentTransactionOperationText(transactionStatus);
-    }
+    // if (isBusy) {
+    //   return getCurrentTransactionOperationText(transactionStatus);
+    // }
     return !connected
       ? "Connect your wallet"
       : !selectedToken || !selectedToken.balance
@@ -380,6 +377,8 @@ export const RepeatingPayment = () => {
       ? "Set a valid date"
       : !arePaymentSettingsValid()
       ? getPaymentSettingsModalButtonLabel()
+      : transactionStatus?.lastOperation !== TransactionStatus.Iddle && transactionStatus?.currentOperation !== TransactionStatus.Iddle
+      ? getCurrentTransactionOperationText(transactionStatus)
       : "Approve on your wallet";
   }
 
@@ -550,7 +549,6 @@ export const RepeatingPayment = () => {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.CreateTransaction
         });
-        setIsBusy(true);
         // Create a transaction
         const data = {
           treasurer: senderPubkey,                                        // treasurer
@@ -592,7 +590,6 @@ export const RepeatingPayment = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.CreateTransactionFailure
           });
-          setIsBusy(false);
           return false;
         });
       }
@@ -616,14 +613,17 @@ export const RepeatingPayment = () => {
         .catch(error => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
+            lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
           });
-          setIsBusy(false);
           return false;
         });
       } else {
         console.log('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
         return false;
       }
     }
@@ -642,15 +642,20 @@ export const RepeatingPayment = () => {
             return true;
           })
           .catch(error => {
+            console.log(error);
             setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
+              lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
             });
-            setIsBusy(false);
             return false;
           });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
       }
-      return false;
     }
 
     const confirmTx = async (): Promise<boolean> => {
@@ -662,19 +667,13 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
           });
-          // Reset form (All contract values)
-          setTimeout(() => {
-            setIsBusy(false);
-            resetContractValues();
-          }, 3000);
           return true;
         })
         .catch(error => {
           setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
+            lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
           });
-          setIsBusy(false);
           return false;
         });
     }
@@ -687,10 +686,15 @@ export const RepeatingPayment = () => {
       setPaymentStartDate(today);
       setPaymentRateAmount('');
       setPaymentRateFrequency(PaymentRateType.PerMonth);
+      setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+      });
     }
 
     // Lets hit it
     if (wallet) {
+      setIsBusy(true);
       const create = await createTx();
       console.log('create:', create);
       if (create) {
@@ -702,9 +706,14 @@ export const RepeatingPayment = () => {
           if (sent) {
             const confirmed = await confirmTx();
             console.log('confirmed:', confirmed);
-          }
-        }
-      }
+            // Reset form (All contract values) after 3 seconds
+            setTimeout(() => {
+              setIsBusy(false);
+              resetContractValues();
+            }, 3000);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
     }
 
   };
