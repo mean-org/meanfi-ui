@@ -37,7 +37,7 @@ export type StreamInfo = {
 /**
  * API class with functions to interact with the Money Streaming Program using Solana Web3 JS API 
  */
-export class Streaming {
+export class MoneyStreaming {
 
     private connection: Connection;
 
@@ -89,7 +89,7 @@ export class Streaming {
         let accountInfo = await this.connection.getAccountInfo(id);
 
         if (accountInfo?.data !== undefined && accountInfo?.data.length > 0) {
-            stream = Streaming.parseStreamData(id, accountInfo?.data);
+            stream = MoneyStreaming.parseStreamData(id, accountInfo?.data);
         }
 
         return stream;
@@ -111,7 +111,7 @@ export class Streaming {
         for (var item of accounts) {
 
             if (item.account.data !== undefined && item.account.data.length === Layout.streamLayout.span) {
-                var info = Streaming.parseStreamData(
+                var info = MoneyStreaming.parseStreamData(
                     item.pubkey,
                     item.account.data
                 );
@@ -192,7 +192,7 @@ export class Streaming {
         );
 
         transaction.add(
-            Streaming.createStreamInstruction(
+            MoneyStreaming.createStreamInstruction(
                 this.programId,
                 treasurer,
                 beneficiary,
@@ -231,7 +231,7 @@ export class Streaming {
 
         transaction.add(
             transaction.add(
-                Streaming.addFundsInstruction(
+                MoneyStreaming.addFundsInstruction(
                     this.programId,
                     treasury,
                     stream,

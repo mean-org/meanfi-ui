@@ -27,7 +27,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
-import { Streaming } from "../../../money-streaming/stream";
+import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 
 export const RepeatingPayment = () => {
@@ -528,7 +528,7 @@ export const RepeatingPayment = () => {
     let signature: any;
 
     // Init a streaming operation
-    const transfer = new Streaming(connectionConfig.endpoint);
+    const transfer = new MoneyStreaming(connectionConfig.endpoint);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
