@@ -72,11 +72,10 @@ export module Layout {
     /**
      * Stream layout
      */
-    export const StreamLayout: typeof BufferLayout.Structure = BufferLayout.struct([
+    export const streamLayout: typeof BufferLayout.Structure = BufferLayout.struct([
         BufferLayout.u8('initialized'),
         string('stream_name'),
         publicKey('treasurer_address'),
-        uint64('funding_amount'),
         uint64('rate_amount'),
         uint64('rate_interval_in_seconds'),
         uint64('start_utc'),
@@ -85,8 +84,6 @@ export module Layout {
         uint64('cliff_vest_percent'),
         publicKey('beneficiary_withdrawal_address'),
         publicKey('escrow_token_address'),
-        uint64('escrow_vested_amount'),
-        uint64('escrow_unvested_amount'),
         publicKey('treasury_address'),
         uint64('escrow_estimated_depletion_utc'),
         uint64('total_deposits'),
