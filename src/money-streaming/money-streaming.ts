@@ -265,7 +265,10 @@ export class MoneyStreaming {
         transaction: Transaction
     ): Promise<Transaction> {
         try {
-
+            // const message = "Test frendly message for wallet";
+            // const data = new TextEncoder().encode(message);
+            // let { signature } = await wallet.sign(data, 'utf8');
+        
             console.log("Sending transaction to wallet for approval...");
             let signedTrans = await wallet.signTransaction(transaction);
             return signedTrans;

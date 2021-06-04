@@ -542,7 +542,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const transfer = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -574,12 +574,13 @@ export const RepeatingPayment = () => {
           rateAmount: parseFloat(paymentRateAmount as string),            // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
           startUtc: utcDate,                                              // startUtc
-          streamName: contract?.name.trim(),                              // streamName
+          streamName: recipientNote
+            ? recipientNote.trim()
+            : contract?.name.trim(),                                      // streamName
           fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
         };
-        data.streamName = 'aaa';
-        console.log('La puta data:', data);
-        return await transfer.getCreateStreamTransaction(
+        console.log('data:', data);
+        return await moneyStream.getCreateStreamTransaction(
           senderPubkey,                                     // treasurer
           destPubkey,                                       // beneficiary
           null,                                             // treasury
@@ -587,7 +588,9 @@ export const RepeatingPayment = () => {
           parseFloat(paymentRateAmount as string),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
           utcDate,                                          // startUtc
-          contract?.name.trim(),                            // streamName
+          recipientNote
+            ? recipientNote.trim()
+            : contract?.name.trim(),                        // streamName
           parseFloat(fromCoinAmount as string)              // fundingAmount
         )
         .then(value => {
@@ -615,7 +618,7 @@ export const RepeatingPayment = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await transfer.signTransaction(wallet, transaction)
+        return await moneyStream.signTransaction(wallet, transaction)
         .then(signed => {
           console.log('signTransaction returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
@@ -646,7 +649,7 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return transfer.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendSignedTransaction(signedTransaction)
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -675,7 +678,7 @@ export const RepeatingPayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await transfer.confirmTransaction(signature)
+      return await moneyStream.confirmTransaction(signature)
         .then(result => {
           console.log('confirmTransaction result:', result);
           // Stage 4 completed - The transaction was confirmed!
@@ -1053,30 +1056,21 @@ export const RepeatingPayment = () => {
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">Created Money Stream to pay {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
-              <div>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">Your money stream for {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} was started successfully.</p>
               <Button
-                className="mr-3"
-                type="default"
-                shape="round"
-                size="middle"
-                onClick={closeTransactionModal}>
-                Dismiss
-              </Button>
-              <Button
+                block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={handleGoToStreamsClick}>
                 View Stream
               </Button>
-              </div>
             </>
           ) : (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
               <Button
                 block
                 type="primary"

@@ -1,5 +1,5 @@
-import { Button, Modal, DatePicker } from "antd";
-import { QrcodeOutlined } from "@ant-design/icons";
+import { Button, Modal, DatePicker, Spin } from "antd";
+import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
@@ -16,12 +16,19 @@ import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
+import { TransactionStatus } from "../../../models/enums";
+import {
+  getAmountWithTokenSymbol,
+  getTransactionOperationDescription
+} from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyTransfer } from "../../../money-streaming/money-transfer";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { MoneyStreaming } from "../../../money-streaming/money-streaming";
+import { PublicKey, Transaction } from "@solana/web3.js";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
@@ -35,17 +42,21 @@ export const OneTimePayment = () => {
     recipientNote,
     paymentStartDate,
     fromCoinAmount,
+    transactionStatus,
+    setCurrentScreen,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
-    setFromCoinAmount
+    setFromCoinAmount,
+    setTransactionStatus,
+    setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
+  const [isBusy, setIsBusy] = useState(false);
 
   const [coinPrices, setCoinPrices] = useState<any>(null);
-
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
@@ -67,7 +78,26 @@ export const OneTimePayment = () => {
     closeQrScannerModal();
   };
 
+  // Transaction execution modal
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
   // Event handling
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      resetContractValues();
+    }
+  }
+
+  const handleGoToStreamsClick = () => {
+    setCurrentScreen("streams");
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -314,38 +344,227 @@ export const OneTimePayment = () => {
 
   // Main action
 
-  const onTransactionStart = () => {
-    console.log("Start transaction for contract type:", contract?.name);
+  const onTransactionStart = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
 
-    const destPubkey = new PublicKey(recipientAddress as string);
-    console.log('Beneficiary address:', recipientAddress);
-    console.log('Beneficiary public key:', destPubkey);
+    setTransactionCancelled(false);
+    setIsBusy(true);
 
-    const senderPubkey = wallet?.publicKey;
-    console.log('Wallet address:', wallet?.publicKey?.toBase58());
-    console.log('Wallet public key:', senderPubkey);
-    const tokenBalance = selectedToken?.balance
-      ? formatAmount(selectedToken.balance, selectedToken.decimals)
-      : "Unknown";
-    console.log(`Token account balance: ${tokenBalance} ${selectedToken.symbol}`);
+    // Init a streaming operation
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
 
-    console.log(`Amount to transfer: ${fromCoinAmount} ${selectedToken.symbol}`);
-    const amount = fromCoinAmount ? parseFloat(fromCoinAmount) * LAMPORTS_PER_SOL : 0;
-    console.log('Amount in lamports:', amount);
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log("Start transaction for contract type:", contract?.name);
+        console.log('Wallet address:', wallet?.publicKey?.toBase58());
+        const senderPubkey = wallet.publicKey as PublicKey;
+    
+        console.log('Beneficiary address:', recipientAddress);
+        const destPubkey = new PublicKey(recipientAddress as string);
+    
+        console.log('associatedToken:', selectedToken?.address);
+        const associatedToken = new PublicKey(selectedToken?.address as string);
+    
+        console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
+        let utcDate = new Date();
+        utcDate.setTime(Date.parse(paymentStartDate as string));
+        console.log('utcDate:', utcDate);
 
-    // if (recipientNote) {
-    //   console.log('Adding memo to the transaction instruction:', recipientNote);
-    // }
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.CreateTransaction
+        });
+        // Create a transaction
+        const data = {
+          treasurer: senderPubkey,                                        // treasurer
+          beneficiary: destPubkey,                                        // beneficiary
+          treasury: null,                                                 // treasury
+          associatedToken: associatedToken,                               // associatedToken
+          rateAmount: parseFloat(fromCoinAmount as string),               // rateAmount
+          rateIntervalInSeconds: 0,                                       // rateIntervalInSeconds
+          startUtc: utcDate,                                              // startUtc
+          streamName: recipientNote
+            ? recipientNote.trim()
+            : contract?.name.trim(),                                      // streamName
+          fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
+        };
+        console.log('data:', data);
+        return await moneyStream.getCreateStreamTransaction(
+          senderPubkey,                                     // treasurer
+          destPubkey,                                       // beneficiary
+          null,                                             // treasury
+          associatedToken,                                  // associatedToken
+          parseFloat(fromCoinAmount as string),             // rateAmount
+          0,                                                // rateIntervalInSeconds
+          utcDate,                                          // startUtc
+          recipientNote
+            ? recipientNote.trim()
+            : contract?.name.trim(),                        // streamName
+          parseFloat(fromCoinAmount as string)              // fundingAmount
+        )
+        .then(value => {
+          console.log('getCreateStreamTransaction returned transaction:', value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.log('getCreateStreamTransaction error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.CreateTransactionFailure
+          });
+          return false;
+        });
+      }
+      return false;
+    }
 
-    const transfer = new MoneyTransfer(connectionConfig.endpoint);
-    transfer.sendMoney(wallet, recipientAddress as string, amount)
-      .then(value => {
-        console.log('sendMoney returned:', value);
-      })
-      .catch(error => {
-        console.log('sendMoney error:', error);
-      });
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Signing transaction...');
+        return await moneyStream.signTransaction(wallet, transaction)
+        .then(signed => {
+          console.log('signTransaction returned a signed transaction:', signed);
+          // Stage 2 completed - The transaction was signed
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          signedTransaction = signed;
+          return true;
+        })
+        .catch(error => {
+          console.log('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          return false;
+        });
+      } else {
+        console.log('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return moneyStream.sendSignedTransaction(signedTransaction)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            // Stage 3 completed - The transaction was sent and a signature was returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await moneyStream.confirmTransaction(signature)
+        .then(result => {
+          console.log('confirmTransaction result:', result);
+          // Stage 4 completed - The transaction was confirmed!
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          // Save transaction
+          return true;
+        })
+        .catch(error => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
+        });
+    }
+
+    // Lets hit it
+    if (wallet) {
+      showTransactionModal();
+      const create = await createTx();
+      console.log('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        console.log('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log('sent:', sent);
+          // Save signature to the state
+          setLastCreatedTransactionSignature(signature);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log('confirmed:', confirmed);
+            setIsBusy(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
   };
+
+  const resetContractValues = () => {
+    const today = new Date().toLocaleDateString();
+    setFromCoinAmount('');
+    setRecipientAddress('');
+    setRecipientNote('');
+    setPaymentStartDate(today);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const getTransactionModalTitle = () => {
+    let title: any;
+    if (isBusy) {
+      title = 'Executing transaction';
+    } else {
+      if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
+          transactionStatus.currentOperation === TransactionStatus.Iddle) {
+        title = null;
+      } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
+        title = 'Transaction completed'
+      } else {
+        title = null;
+      }
+    }
+    return title;
+  }
+
+  const isSuccess = () => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
 
   return (
     <>
@@ -602,6 +821,54 @@ export const OneTimePayment = () => {
         disabled={!recipientAddress || !paymentStartDate || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal"
+        maskClosable={false}
+        afterClose={onAfterTransactionModalClosed}
+        visible={isTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={closeTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">Sending {getAmountWithTokenSymbol(fromCoinAmount, selectedToken)}...</p>
+              <div className="indication">Confirm this transaction in your wallet</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken)} was sent successfully.</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={handleGoToStreamsClick}>
+                View Stream
+              </Button>
+            </>
+          ) : (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={closeTransactionModal}>
+                Dismiss
+              </Button>
+            </>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };
