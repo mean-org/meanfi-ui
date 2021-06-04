@@ -20,53 +20,7 @@ export module Layout {
      * String layout
      */
     export const string = (property: string = 'string'): Object => {
-        // const layout = BufferLayout.blob(16, property);
-
-        // layout.decode = (buffer: Buffer) => {
-        //     let str = "";
-        //     for (var i = 0; i < buffer.length; i++) {
-        //         str += String.fromCharCode(buffer[i]);
-        //     }
-
-        //     return str;
-        // };
-
-        // layout.encode = (str: String) => {
-        //     var buf = new ArrayBuffer(str.length * 2);
-        //     var bufView = new Uint16Array(buf);
-        //     for (var i = 0, strLen = str.length; i < strLen; i++) {
-        //         bufView[i] = str.charCodeAt(i);
-        //     }
-        //     return buf;
-        // };
-
-        // return layout;
         return BufferLayout.blob(32, property);
-
-        // const rsl = BufferLayout.struct(
-        //     [
-        //         BufferLayout.u32('length'),
-        //         BufferLayout.u32('lengthPadding'),
-        //         BufferLayout.blob(BufferLayout.offset(BufferLayout.u32(), -8), 'chars'),
-        //     ],
-        //     property,
-        // );
-        // const _decode = rsl.decode.bind(rsl);
-        // const _encode = rsl.encode.bind(rsl);
-
-        // rsl.decode = (buffer: Buffer, offset: number) => {
-        //     const data = _decode(buffer, offset);
-        //     return data.chars.toString('utf8');
-        // };
-
-        // rsl.encode = (str: string, buffer: Buffer, offset: number) => {
-        //     const data = {
-        //         chars: Buffer.from(str, 'utf8'),
-        //     };
-        //     return _encode(data, buffer, offset);
-        // };
-
-        // return rsl;
     };
 
     /**

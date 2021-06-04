@@ -532,14 +532,6 @@ footer.ant-layout-footer {
     margin-left: 4px;
   }
 }
-.streams-heading {
-  font-size: 34px;
-  font-weight: 500;
-  width: 100%;
-  padding: 0 1rem;
-  text-transform: uppercase;
-  letter-spacing: -0.4px;
-}
 
 .app-title {
   font-family: "Roboto";
@@ -2077,26 +2069,75 @@ em {
   flex-direction: row;
   flex-wrap: wrap;
   width: 100%;
-  @media (max-width: 575.98px) {
+  .streams-heading {
+    font-size: 24px;
+    font-weight: 700;
+    width: 100%;
+    padding: 0 2.4rem 0 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: -0.2px;
+    text-align: center;
+  }
+  .inner-container {
+    border-style: solid;
+    border-width: 2px;
+    border-color: var(--color-secondary-alpha-25);
+    background-color: var(--bg-color);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    @media (max-width: 575.98px) {
+      padding: 0;
+      border: none;
+    }
+  }
+  @media (max-width: 767.98px) {
     flex-direction: column;
     .streams-container,
     .stream-details-container {
       flex: 0 0 100%;
       max-width: 100%;
+      .streams-heading {
+        padding: 0;
+        font-size: 20px;
+        letter-spacing: normal;
+      }
     }
   }
-  @media (min-width: 576px) {
+  @media (min-width: 768px) {
+    min-height: 72vh;
     .streams-container,
     .stream-details-container {
       flex: 0 0 50%;
       max-width: 50%;
+      display: flex;
+      position: relative;
+      flex-direction: column;
     }
   }
   .streams-container {
-    background-color: aquamarine;
+    .inner-container {
+      @media (min-width: 768px) {
+        height: 100%;
+        z-index: 1;
+        transform: translateX(1rem);
+        // background-color: var(--bg-color);
+      }
+    }
   }
   .stream-details-container {
-    background-color: bisque;
+    @media (min-width: 768px) {
+      .ant-divider.ant-divider-horizontal,
+      .streams-heading {
+        display: none;
+      }
+      .inner-container {
+        height: 100%;
+        z-index: 2;
+        transform: translateX(-1rem) translateY(1rem);
+        // background-color: var(--bg-color);
+      }
+    }
   }
 }
 
