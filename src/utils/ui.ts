@@ -191,26 +191,29 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
-export const getCurrentTransactionOperationText = (status: TransactionStatusInfo): string => {
+export const getTransactionOperationDescription = (status: TransactionStatusInfo): string => {
     switch (status.currentOperation) {
         case TransactionStatus.TransactionStart:
             return 'Init transaction';
         case TransactionStatus.CreateTransaction:
             return 'Create transaction';
         case TransactionStatus.SignTransaction:
-            return 'Waiting for wallet approval';
+            return 'Waiting for confirmation';
         case TransactionStatus.SendTransaction:
             return 'Sending transaction';
         case TransactionStatus.ConfirmTransaction:
             return 'Confirming transaction';
         case TransactionStatus.CreateTransactionFailure:
+            return 'Could not create transaction';
         case TransactionStatus.SignTransactionFailure:
+            return 'Transaction rejected';
         case TransactionStatus.SendTransactionFailure:
+            return 'Failure submitting transaction';
         case TransactionStatus.ConfirmTransactionFailure:
-            return 'Operation failed';
+            return 'The transaction could not be confirmed';
         case TransactionStatus.TransactionFinished:
             return 'Operation completed';
         default:
-            return '';
+            return 'Idle';
     }
 }

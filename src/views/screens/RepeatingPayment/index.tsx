@@ -1,5 +1,5 @@
-import { Button, Modal, Menu, Dropdown, DatePicker, Divider } from "antd";
-import { QrcodeOutlined } from "@ant-design/icons";
+import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin } from "antd";
+import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
@@ -18,10 +18,11 @@ import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
-  getCurrentTransactionOperationText,
+  getAmountWithTokenSymbol,
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
-  getRateIntervalInSeconds
+  getRateIntervalInSeconds,
+  getTransactionOperationDescription
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -29,6 +30,8 @@ import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
@@ -45,13 +48,15 @@ export const RepeatingPayment = () => {
     paymentRateAmount,
     paymentRateFrequency,
     transactionStatus,
+    setCurrentScreen,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
     setFromCoinAmount,
     setPaymentRateAmount,
     setPaymentRateFrequency,
-    setTransactionStatus
+    setTransactionStatus,
+    setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -83,7 +88,26 @@ export const RepeatingPayment = () => {
     closeQrScannerModal();
   };
 
+  // Transaction execution modal
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
   // Event handling
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      resetContractValues();
+    }
+  }
+
+  const handleGoToStreamsClick = () => {
+    setCurrentScreen("streams");
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -360,9 +384,6 @@ export const RepeatingPayment = () => {
 
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
-    // if (isBusy) {
-    //   return getCurrentTransactionOperationText(transactionStatus);
-    // }
     return !connected
       ? "Connect your wallet"
       : !selectedToken || !selectedToken.balance
@@ -377,8 +398,6 @@ export const RepeatingPayment = () => {
       ? "Set a valid date"
       : !arePaymentSettingsValid()
       ? getPaymentSettingsModalButtonLabel()
-      : transactionStatus?.lastOperation !== TransactionStatus.Iddle && transactionStatus?.currentOperation !== TransactionStatus.Iddle
-      ? getCurrentTransactionOperationText(transactionStatus)
       : "Approve on your wallet";
   }
 
@@ -393,11 +412,9 @@ export const RepeatingPayment = () => {
       : '';
   }
 
-  /*
   const getPaymentRateLabel = (
     rate: PaymentRateType,
-    amount: string,
-    interval: string
+    amount: string | undefined
   ): string => {
     let label: string;
     label = `${getAmountWithTokenSymbol(amount, selectedToken)} `;
@@ -417,16 +434,12 @@ export const RepeatingPayment = () => {
       case PaymentRateType.PerYear:
         label += "per year";
         break;
-      // case PaymentRateType.Other:
-      // const intervalNumber = parseInt(interval, 10);
-      // label += `every ${timeConvert(intervalNumber)}`;
       default:
         break;
     }
     return label;
   };
-  */
-  
+
   // Prefabrics
 
   const paymentRateOptionsMenu = (
@@ -521,16 +534,19 @@ export const RepeatingPayment = () => {
   // Main action
 
   const onTransactionStart = async () => {
-    console.log("Start transaction for contract type:", contract?.name);
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
 
     // Init a streaming operation
     const transfer = new MoneyStreaming(connectionConfig.endpoint);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
+        console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
         const senderPubkey = wallet.publicKey as PublicKey;
     
@@ -667,6 +683,7 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
           });
+          // Save transaction
           return true;
         })
         .catch(error => {
@@ -678,39 +695,23 @@ export const RepeatingPayment = () => {
         });
     }
 
-    const resetContractValues = () => {
-      const today = new Date().toLocaleDateString();
-      setFromCoinAmount('');
-      setRecipientAddress('');
-      setRecipientNote('');
-      setPaymentStartDate(today);
-      setPaymentRateAmount('');
-      setPaymentRateFrequency(PaymentRateType.PerMonth);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.Iddle
-      });
-    }
-
     // Lets hit it
     if (wallet) {
-      setIsBusy(true);
+      showTransactionModal();
       const create = await createTx();
       console.log('create:', create);
-      if (create) {
+      if (create && !transactionCancelled) {
         const sign = await signTx();
         console.log('sign:', sign);
-        if (sign) {
+        if (sign && !transactionCancelled) {
           const sent = await sendTx();
           console.log('sent:', sent);
-          if (sent) {
+          // Save signature to the state
+          setLastCreatedTransactionSignature(signature);
+          if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             console.log('confirmed:', confirmed);
-            // Reset form (All contract values) after 3 seconds
-            setTimeout(() => {
-              setIsBusy(false);
-              resetContractValues();
-            }, 3000);
+            setIsBusy(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -718,6 +719,40 @@ export const RepeatingPayment = () => {
 
   };
 
+  const resetContractValues = () => {
+    const today = new Date().toLocaleDateString();
+    setFromCoinAmount('');
+    setRecipientAddress('');
+    setRecipientNote('');
+    setPaymentStartDate(today);
+    setPaymentRateAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const getTransactionModalTitle = () => {
+    let title: any;
+    if (isBusy) {
+      title = 'Executing transaction';
+    } else {
+      if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
+          transactionStatus.currentOperation === TransactionStatus.Iddle) {
+        title = null;
+      } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
+        title = 'Transaction completed'
+      } else {
+        title = null;
+      }
+    }
+    return title;
+  }
+
+  const isSuccess = () => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
 
   return (
     <>
@@ -994,9 +1029,66 @@ export const RepeatingPayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || isBusy}>
+        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal"
+        maskClosable={false}
+        afterClose={onAfterTransactionModalClosed}
+        visible={isTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={closeTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
+              <div className="indication">Confirm this transaction in your wallet</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">Created Money Stream to pay {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
+              <div>
+              <Button
+                className="mr-3"
+                type="default"
+                shape="round"
+                size="middle"
+                onClick={closeTransactionModal}>
+                Dismiss
+              </Button>
+              <Button
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={handleGoToStreamsClick}>
+                View Stream
+              </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-4">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={closeTransactionModal}>
+                Dismiss
+              </Button>
+            </>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };

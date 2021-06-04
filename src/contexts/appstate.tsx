@@ -21,6 +21,7 @@ interface AppStateConfig {
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
   transactionStatus: TransactionStatusInfo;
+  lastCreatedTransactionSignature: string | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
@@ -32,6 +33,7 @@ interface AppStateConfig {
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
+  setLastCreatedTransactionSignature: (signature: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -49,6 +51,7 @@ const contextDefaultValues: AppStateConfig = {
     lastOperation: TransactionStatus.Iddle,
     currentOperation: TransactionStatus.Iddle
   },
+  lastCreatedTransactionSignature: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
@@ -60,6 +63,7 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentRateFrequency: () => {},
   setTimeSheetRequirement: () => {},
   setTransactionStatus: () => {},
+  setLastCreatedTransactionSignature: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -77,6 +81,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
+  const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -137,6 +142,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
+  const setLastCreatedTransactionSignature = (signature: string) => {
+    updateTxCreatedSignature(signature || undefined);
+  }
+
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const contractFromCache = useMemo(
@@ -185,6 +194,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentRateFrequency,
         timeSheetRequirement,
         transactionStatus,
+        lastCreatedTransactionSignature,
         setTheme,
         setCurrentScreen,
         setContract,
@@ -195,7 +205,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentRateAmount,
         setPaymentRateFrequency,
         setTimeSheetRequirement,
-        setTransactionStatus
+        setTransactionStatus,
+        setLastCreatedTransactionSignature
       }}>
       {children}
     </AppStateContext.Provider>
