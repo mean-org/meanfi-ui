@@ -2,8 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown } from "../../Icons";
-import { Divider } from "antd";
-import { OneTimePayment, RepeatingPayment, PayrollPayment } from "../screens";
+import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
 export const HomeView = () => {
   const { currentScreen, contract, setCurrentScreen } = useContext(AppStateContext);
@@ -83,23 +82,11 @@ export const HomeView = () => {
       <>
       <div className="container">
         <div className="interaction-area">
-          <div className="streams-layout">
-            {/* Left / top panel*/}
-            <div className="streams-container">
-              <div className="streams-heading">My Money Streams</div>
-              <div className="inner-container">
-                Left view, list of money streams
-              </div>
-            </div>
-            {/* Right / down panel */}
-            <div className="stream-details-container">
-              <Divider plain></Divider>
-              <div className="streams-heading">Stream details</div>
-              <div className="inner-container">
-                Right view, details of the money stream
-              </div>
-            </div>
-          </div>
+          <Streams />
+          <ContractSelectorModal
+              isVisible={isContractSelectorModalVisible}
+              handleOk={onAcceptContractSelector}
+              handleClose={closeContractSelectorModal}/>
         </div>
       </div>
       {renderPreFooter}

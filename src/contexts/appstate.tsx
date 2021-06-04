@@ -1,8 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalStorageState } from "../utils/utils";
-import { STREAMING_PAYMENT_CONTRACTS } from "../constants";
+import { STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { getStream, listStreams } from "../money-streaming/utils";
+import { useWallet } from "./wallet";
+import { useConnection } from "./connection";
+import { Constants } from "../money-streaming/constants";
+import { PublicKey } from "@solana/web3.js";
+import { StreamInfo } from "../money-streaming/money-streaming";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -22,6 +28,7 @@ interface AppStateConfig {
   timeSheetRequirement: TimesheetRequirementOption;
   transactionStatus: TransactionStatusInfo;
   lastCreatedTransactionSignature: string | undefined;
+  streamList: StreamInfo[] | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
@@ -34,6 +41,7 @@ interface AppStateConfig {
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setLastCreatedTransactionSignature: (signature: string) => void;
+  setStreamList: (list: StreamInfo[]) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -52,6 +60,7 @@ const contextDefaultValues: AppStateConfig = {
     currentOperation: TransactionStatus.Iddle
   },
   lastCreatedTransactionSignature: undefined,
+  streamList: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
@@ -64,11 +73,16 @@ const contextDefaultValues: AppStateConfig = {
   setTimeSheetRequirement: () => {},
   setTransactionStatus: () => {},
   setLastCreatedTransactionSignature: () => {},
+  setStreamList: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
+  // Parent contexts
+  const connection = useConnection();
+  const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
+
   const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
@@ -180,6 +194,33 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
+  const { publicKey } = useWallet();
+  const refreshStreamsList = useCallback(async () => {
+    if (!publicKey) {
+      return [];
+    }
+    console.log('Getting my streams...');
+    const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
+
+    return await listStreams(connection, programId);
+  }, [publicKey, connection]);
+
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      const streams = await refreshStreamsList().then(s => s);
+      setStreamList(streams);
+      console.log('My streams:', streams);
+    }, STREAMS_REFRESH_TIMEOUT);
+
+    // Call it 1st time
+    refreshStreamsList();
+
+    // Return callback to run on unmount.
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [refreshStreamsList]);
+
   return (
     <AppStateContext.Provider
       value={{
@@ -195,6 +236,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         timeSheetRequirement,
         transactionStatus,
         lastCreatedTransactionSignature,
+        streamList,
         setTheme,
         setCurrentScreen,
         setContract,
@@ -206,7 +248,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentRateFrequency,
         setTimeSheetRequirement,
         setTransactionStatus,
-        setLastCreatedTransactionSignature
+        setLastCreatedTransactionSignature,
+        setStreamList
       }}>
       {children}
     </AppStateContext.Provider>

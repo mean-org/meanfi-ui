@@ -1,16 +1,20 @@
 import { Buffer } from 'buffer';
 import { Layout } from './layout';
 import { u64Number } from './u64Number';
+import * as Utils from './utils';
 
 import {
+    Commitment,
     Connection,
+    GetProgramAccountsConfig,
     Keypair,
     PublicKey,
     Signer,
     SystemProgram,
     Transaction,
-    TransactionInstruction,
+    TransactionInstruction
 } from '@solana/web3.js';
+
 import { Constants } from './constants';
 import { WalletAdapter } from '../contexts/wallet';
 
@@ -77,67 +81,39 @@ export class MoneyStreaming {
         //     programId
         // });
         this.connection = new Connection(cluster, 'confirmed');
-        this.programId = new PublicKey(Constants.STREAM_PROGRAM_ID);
-        this.feePayer = new PublicKey(Constants.STREAM_PROGRAM_PAYER_ID);
+        this.programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
+        this.feePayer = new PublicKey(Constants.STREAM_PROGRAM_PAYER_ACCOUNT);
     }
 
     public async getStream(
-        id: PublicKey
+        id: PublicKey,
+        commitment?: Commitment | undefined
 
     ): Promise<StreamInfo> {
 
-        let stream: StreamInfo = this.defaultStream;
-        let accountInfo = await this.connection.getAccountInfo(id);
-
-        if (accountInfo?.data !== undefined && accountInfo?.data.length > 0) {
-            stream = MoneyStreaming.parseStreamData(id, accountInfo?.data);
-        }
-
-        return stream;
+        return Utils.getStream(
+            this.connection,
+            id,
+            commitment
+        )
     }
 
     public async listStreams(
-        treasurer?: undefined | PublicKey,
-        beneficiary?: undefined | PublicKey
+        treasurer?: PublicKey | undefined,
+        beneficiary?: PublicKey | undefined,
+        treasury?: PublicKey | undefined,
+        commitment?: GetProgramAccountsConfig | Commitment | undefined
 
     ): Promise<StreamInfo[]> {
 
-        let streams: StreamInfo[] = [];
-        const accounts = await this.connection.getProgramAccounts(this.programId, 'singleGossip');
-
-        if (accounts === null || !accounts.length) {
-            return streams;
-        }
-
-        for (var item of accounts) {
-
-            if (item.account.data !== undefined && item.account.data.length === Layout.streamLayout.span) {
-                var info = MoneyStreaming.parseStreamData(
-                    item.pubkey,
-                    item.account.data
-                );
-
-                if (info !== null) {
-                    streams.push(info);
-                }
-            }
-        }
-
-        if (!streams.length) return streams;
-
-        if (treasurer !== undefined) {
-            streams = streams.filter(function (s, index) {
-                return s.treasurerAddress === treasurer;
-            });
-        }
-
-        if (beneficiary !== undefined) {
-            streams = streams.filter(function (s, index) {
-                return s.beneficiaryWithdrawalAddress === beneficiary;
-            });
-        }
-
-        return streams;
+        return Utils.listStreams(
+            this.connection,
+            this.programId,
+            treasurer,
+            beneficiary,
+            treasury,
+            commitment
+        );
     }
 
     public async getCreateStreamTransaction(
@@ -315,10 +291,10 @@ export class MoneyStreaming {
     ): TransactionInstruction {
         const keys = [
             { pubkey: treasurer, isSigner: true, isWritable: false },
-            { pubkey: beneficiary, isSigner: false, isWritable: false },
             { pubkey: treasury, isSigner: false, isWritable: false },
             { pubkey: stream, isSigner: false, isWritable: true },
-            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            { pubkey: new PublicKey(Constants.MEAN_FI_ACCOUNT), isSigner: false, isWritable: true }
         ];
 
         let data = Buffer.alloc(Layout.createStreamLayout.span)
