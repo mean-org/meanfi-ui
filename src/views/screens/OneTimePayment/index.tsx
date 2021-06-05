@@ -18,6 +18,7 @@ import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
+  convertLocalDateToUTCIgnoringTimezone,
   getAmountWithTokenSymbol,
   getTransactionOperationDescription
 } from "../../../utils/ui";
@@ -107,6 +108,23 @@ export const OneTimePayment = () => {
       setFromCoinAmount(newValue);
     }
   };
+
+  const handleDateChange = (date: string) => {
+    setPaymentStartDate(date);
+    const parsedDate = Date.parse(date);
+    console.log('Parsed date:', parsedDate);
+    let utcDate = new Date(parsedDate);
+
+    const utcDateWithoutTz = convertLocalDateToUTCIgnoringTimezone(utcDate);
+    console.log('utcDate from parsed date:', utcDate.toLocaleDateString());
+    console.log('convertLocalDateToUTCIgnoringTimezone =>');
+    console.log('utcDateWithoutTz.toString()', utcDateWithoutTz.toString());
+    console.log('utcDateWithoutTz.toISOString()', utcDateWithoutTz.toISOString());
+    console.log('utcDateWithoutTz.toUTCString()', utcDateWithoutTz.toUTCString());
+    console.log('utcDateWithoutTz.toDateString()', utcDateWithoutTz.toDateString());
+    console.log('utcDateWithoutTz.toLocaleString()', utcDateWithoutTz.toLocaleString());
+    console.log('utcDateWithoutTz.toLocaleDateString()', utcDateWithoutTz.toLocaleDateString());
+  }
 
   // Set to reload prices every 30 seconds
   const setPriceTimer = () => {
@@ -360,17 +378,19 @@ export const OneTimePayment = () => {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
         const senderPubkey = wallet.publicKey as PublicKey;
-    
+
         console.log('Beneficiary address:', recipientAddress);
         const destPubkey = new PublicKey(recipientAddress as string);
-    
+
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
-    
-        console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
-        let utcDate = new Date();
-        utcDate.setTime(Date.parse(paymentStartDate as string));
-        console.log('utcDate:', utcDate);
+
+        const parsedDate = Date.parse(paymentStartDate as string);
+        console.log('parsed paymentStartDate:', parsedDate);
+        let fromParsedDate = new Date(parsedDate);
+        console.log('UTC date input (local):', fromParsedDate.toUTCString());
+        const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
+        console.log('UTC date (without timezone):', fromParsedDate.toUTCString());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -793,7 +813,7 @@ export const OneTimePayment = () => {
               className="addon-date-picker"
               aria-required={true}
               allowClear={false}
-              onChange={(value, date) => setPaymentStartDate(date)}
+              onChange={(value, date) => handleDateChange(date)}
               value={moment(
                 paymentStartDate,
                 DATEPICKER_FORMAT

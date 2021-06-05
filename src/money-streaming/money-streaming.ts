@@ -20,21 +20,21 @@ import { Constants } from './constants';
 import { WalletAdapter } from '../contexts/wallet';
 
 export type StreamInfo = {
-    id: PublicKey | undefined,
+    id: PublicKey | string | undefined,
     initialized: boolean,
     memo: String,
-    treasurerAddress: PublicKey | undefined,
+    treasurerAddress: PublicKey | string | undefined,
     rateAmount: number,
     rateIntervalInSeconds: number,
     startUtc: Date | null,
     rateCliffInSeconds: number,
     cliffVestAmount: number,
     cliffVestPercent: number,
-    beneficiaryWithdrawalAddress: PublicKey | undefined,
-    escrowTokenAddress: PublicKey | undefined | string,
+    beneficiaryWithdrawalAddress: PublicKey | string | undefined,
+    escrowTokenAddress: PublicKey | string | undefined,
     escrowVestedAmount: number,
     escrowUnvestedAmount: number,
-    treasuryAddress: PublicKey | undefined,
+    treasuryAddress: PublicKey | string | undefined,
     escrowEstimatedDepletionUtc: Date | null,
     totalDeposits: number,
     totalWithdrawals: number,
@@ -318,13 +318,13 @@ export class MoneyStreaming {
                 stream_name: nameBuffer,
                 beneficiary_withdrawal_address: Buffer.from(beneficiary.toBuffer()),
                 escrow_token_address: Buffer.from(associatedToken.toBuffer()),
-                funding_amount: new u64Number(fundingAmount || 0).toBuffer(),
-                rate_amount: new u64Number(rateAmount).toBuffer(),
+                funding_amount: fundingAmount,
+                rate_amount: rateAmount,
                 rate_interval_in_seconds: new u64Number(rateIntervalInSeconds).toBuffer(), // default = MIN
                 start_utc: new u64Number(startUtcNow).toBuffer(),
                 rate_cliff_in_seconds: new u64Number(rateCliffInSeconds || 0).toBuffer(),
-                cliff_vest_amount: new u64Number(cliffVestAmount || 0).toBuffer(),
-                cliff_vest_percent: new u64Number(cliffVestPercent || 100).toBuffer(),
+                cliff_vest_amount: cliffVestAmount,
+                cliff_vest_percent: cliffVestPercent || 100,
             };
 
             const encodeLength = Layout.createStreamLayout.encode(decodedData, data);

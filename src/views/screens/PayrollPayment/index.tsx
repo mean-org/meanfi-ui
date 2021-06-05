@@ -18,6 +18,7 @@ import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption } from "../../../models/enums";
 import {
+  convertLocalDateToUTCIgnoringTimezone,
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
   getTimesheetRequirementOptionLabel
@@ -92,6 +93,23 @@ export const PayrollPayment = () => {
       setFromCoinAmount(newValue);
     }
   };
+
+  const handleDateChange = (date: string) => {
+    setPaymentStartDate(date);
+    const parsedDate = Date.parse(date);
+    console.log('Parsed date:', parsedDate);
+    let utcDate = new Date(parsedDate);
+
+    const utcDateWithoutTz = convertLocalDateToUTCIgnoringTimezone(utcDate);
+    console.log('utcDate from parsed date:', utcDate.toLocaleDateString());
+    console.log('convertLocalDateToUTCIgnoringTimezone =>');
+    console.log('utcDateWithoutTz.toString()', utcDateWithoutTz.toString());
+    console.log('utcDateWithoutTz.toISOString()', utcDateWithoutTz.toISOString());
+    console.log('utcDateWithoutTz.toUTCString()', utcDateWithoutTz.toUTCString());
+    console.log('utcDateWithoutTz.toDateString()', utcDateWithoutTz.toDateString());
+    console.log('utcDateWithoutTz.toLocaleString()', utcDateWithoutTz.toLocaleString());
+    console.log('utcDateWithoutTz.toLocaleDateString()', utcDateWithoutTz.toLocaleDateString());
+  }
 
   // Set to reload prices every 30 seconds
   const setPriceTimer = () => {
@@ -696,7 +714,7 @@ export const PayrollPayment = () => {
               className="addon-date-picker"
               aria-required={true}
               allowClear={false}
-              onChange={(value, date) => setPaymentStartDate(date)}
+              onChange={(value, date) => handleDateChange(date)}
               value={moment(
                 paymentStartDate,
                 DATEPICKER_FORMAT

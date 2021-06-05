@@ -1,4 +1,4 @@
-import { Commitment, Connection, GetProgramAccountsConfig, PublicKey } from "@solana/web3.js";
+import { Commitment, Connection, GetProgramAccountsConfig, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { Layout } from "./layout";
 import { StreamInfo } from "./money-streaming";
 import { u64Number } from "./u64Number";
@@ -35,16 +35,25 @@ function parseStreamData(
 
     let stream: StreamInfo = defaultStreamInfo;
     let decodedData = Layout.streamLayout.decode(streamData);
-    let totalDeposits = parseFloat(u64Number.fromBuffer(decodedData.total_deposits).toString());
-    let totalWithdrawals = parseFloat(u64Number.fromBuffer(decodedData.total_withdrawals).toString());
+    let totalDeposits = decodedData.total_deposits;
+    let totalWithdrawals = decodedData.total_withdrawals;
     let startUtc = parseInt(u64Number.fromBuffer(decodedData.start_utc).toString());
     let startDateUtc = new Date();
 
     startDateUtc.setTime(startUtc);
 
-    let rateAmount = parseFloat(u64Number.fromBuffer(decodedData.rate_amount).toString());
+    let rateAmount = decodedData.rate_amount;
     let rateIntervalInSeconds = parseFloat(u64Number.fromBuffer(decodedData.rate_interval_in_seconds).toString());
-    let escrowVestedAmount = (rateAmount / rateIntervalInSeconds) * (Date.now() - startUtc).valueOf();
+    let escrowVestedAmount = 0
+
+    if (Date.now() >= startDateUtc.getTime()) {
+        escrowVestedAmount = ((rateAmount * LAMPORTS_PER_SOL) / rateIntervalInSeconds) * (Date.now() - startUtc).valueOf();
+
+        if (escrowVestedAmount >= totalDeposits) {
+            escrowVestedAmount = totalDeposits;
+        }
+    }
+
     let escrowEstimatedDepletionUtc = u64Number.fromBuffer(decodedData.escrow_estimated_depletion_utc).toNumber();
     let escrowEstimatedDepletionDateUtc = new Date();
 
@@ -70,8 +79,8 @@ function parseStreamData(
         rateIntervalInSeconds: rateIntervalInSeconds,
         startUtc: startDateUtc,
         rateCliffInSeconds: parseFloat(u64Number.fromBuffer(decodedData.rate_cliff_in_seconds).toString()),
-        cliffVestAmount: parseFloat(u64Number.fromBuffer(decodedData.cliff_vest_amount).toString()),
-        cliffVestPercent: parseFloat(u64Number.fromBuffer(decodedData.cliff_vest_percent).toString()),
+        cliffVestAmount: decodedData.cliff_vest_amount,
+        cliffVestPercent: decodedData.cliff_vest_percent,
         beneficiaryWithdrawalAddress: friendly !== undefined ? beneficiaryAddress.toBase58() : beneficiaryAddress,
         escrowTokenAddress: friendly !== undefined ? escrowTokenAddress.toBase58() : escrowTokenAddress,
         escrowVestedAmount: escrowVestedAmount,
@@ -99,11 +108,11 @@ export async function getStream(
     let accountInfo = await connection.getAccountInfo(id, commitment);
 
     if (accountInfo?.data !== undefined && accountInfo?.data.length > 0) {
-        stream = parseStreamData(
+        stream = Object.assign({}, parseStreamData(
             id,
             accountInfo?.data,
             friendly as Boolean
-        );
+        ));
     }
 
     return stream as StreamInfo;

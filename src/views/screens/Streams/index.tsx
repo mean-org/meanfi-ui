@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { Divider } from "antd";
-import { IconPause, IconDownload, IconDocument, IconUpload } from "../../../Icons";
+import { Divider, Row, Col, Button } from "antd";
+import { IconPause, IconDownload, IconDocument, IconUpload, IconExternalLink } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
@@ -11,20 +11,12 @@ import { getIntervalFromSeconds } from "../../../utils/ui";
 
 export const Streams = () => {
   const { publicKey } = useWallet();
-  const { streamList, selectedStream, setSelectedStream } = useContext(AppStateContext);
-  /*
-    Stream display title composition: Status + address
-
-    'Sending to ' + address
-    'Receiving from' + address
-    'Paused stream to ' + address
-    'Paused stream from ' + address
-    'Pending execution to' + address
-    'Pending execution from' + address
-
-    For all outgoing streams use the treasurer address
-    For all incoming streams use the beneficiary address
-  */
+  const {
+    streamList,
+    selectedStream,
+    streamDetail,
+    setSelectedStream
+  } = useContext(AppStateContext);
 
   const isInboundStream = (item: StreamInfo): boolean => {
     return item.beneficiaryWithdrawalAddress === publicKey?.toBase58();
@@ -128,34 +120,49 @@ export const Streams = () => {
         <div className="streams-heading">My Money Streams</div>
         <div className="inner-container">
           {/* item block */}
-          {streamList && streamList.length ? (
-            streamList.map((item, index) => {
-              const onStreamClick = function () {
-                console.log("stream selected:", item);
-                setSelectedStream(item)
-              };
-              return (
-                <div key={`${index + 50}`} onClick={onStreamClick}
-                  className={`transaction-row ${selectedStream?.id === item.id ? 'selected' : ''}`}>
-                  <div className="icon-cell">
-                    {getStreamIcon(item)}
+          <div className="item-block">
+            {streamList && streamList.length ? (
+              streamList.map((item, index) => {
+                const onStreamClick = function () {
+                  console.log("stream selected:", item);
+                  setSelectedStream(item)
+                };
+                return (
+                  <div key={`${index + 50}`} onClick={onStreamClick}
+                    className={`transaction-row ${selectedStream?.id === item.id ? 'selected' : ''}`}>
+                    <div className="icon-cell">
+                      {getStreamIcon(item)}
+                    </div>
+                    <div className="description-cell">
+                      <div className="title">{item.memo || getTransactionTitle(item)}</div>
+                      <div className="subtitle">{getTransactionSubTitle(item)}</div>
+                    </div>
+                    <div className="rate-cell">
+                      <div className="rate-amount">{`${item.rateAmount ? formatAmount(item.rateAmount, 2) : '--'} ${getEscrowTokenSymbol(item)}`}</div>
+                      <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
+                    </div>
                   </div>
-                  <div className="description-cell">
-                    <div className="title">{item.memo || getTransactionTitle(item)}</div>
-                    <div className="subtitle">{getTransactionSubTitle(item)}</div>
-                  </div>
-                  <div className="rate-cell">
-                    <div className="rate-amount">{`${item.rateAmount ? formatAmount(item.rateAmount, 2) : '--'} ${getEscrowTokenSymbol(item)}`}</div>
-                    <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <>
-            <p>No streams available</p>
-            </>
-          )}
+                );
+              })
+            ) : (
+              <>
+              <p>No streams available</p>
+              </>
+            )}
+          </div>
+          {/* Bottom CTA */}
+          <Row className="bottom-cta">
+            <Col span={12} offset={5}>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="small"
+                onClick={() => {}}>
+                Create new money stream
+              </Button>
+            </Col>
+          </Row>
         </div>
       </div>
       {/* Right / down panel */}
@@ -163,7 +170,34 @@ export const Streams = () => {
         <Divider plain></Divider>
         <div className="streams-heading">Stream details</div>
         <div className="inner-container">
-          Right view, details of the money stream
+          {selectedStream ? (
+            <>
+            <Row>
+              <Col span={12}>
+                <div className="info-label">Recipient</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconExternalLink className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data">
+                    {shortenAddress(`${streamDetail?.beneficiaryWithdrawalAddress}`)}
+                  </span>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="info-label">Payment Rate</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconExternalLink className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data"></span>
+                </div>
+              </Col>
+            </Row>
+            </>
+          ) : (
+            <p>Please select a stream to view details</p>
+          )}
         </div>
       </div>
     </div>
