@@ -821,7 +821,7 @@ export const PayrollPayment = () => {
       {/* Info */}
       <div className="text-center mb-1">
         {selectedToken && effectiveRate
-          ? `1 ${selectedToken.symbol} = ${formatAmount(effectiveRate)} USDC`
+          ? `1 ${selectedToken.symbol} = $${formatAmount(effectiveRate, 2)}`
           : "--"}
       </div>
 

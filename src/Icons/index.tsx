@@ -4,6 +4,7 @@ export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";
 export { IconCodeBlock } from "./IconCodeBlock";
 export { IconCopy } from "./IconCopy";
+export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";
 export { IconEllipsis } from "./IconEllipsis";
 export { IconExternalLink } from "./IconExternalLink";

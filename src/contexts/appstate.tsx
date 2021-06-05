@@ -29,6 +29,7 @@ interface AppStateConfig {
   transactionStatus: TransactionStatusInfo;
   lastCreatedTransactionSignature: string | undefined;
   streamList: StreamInfo[] | undefined;
+  selectedStream: StreamInfo | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
@@ -42,6 +43,7 @@ interface AppStateConfig {
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setLastCreatedTransactionSignature: (signature: string) => void;
   setStreamList: (list: StreamInfo[]) => void;
+  setSelectedStream: (stream: StreamInfo) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -61,6 +63,7 @@ const contextDefaultValues: AppStateConfig = {
   },
   lastCreatedTransactionSignature: undefined,
   streamList: undefined,
+  selectedStream: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
@@ -74,6 +77,7 @@ const contextDefaultValues: AppStateConfig = {
   setTransactionStatus: () => {},
   setLastCreatedTransactionSignature: () => {},
   setStreamList: () => {},
+  setSelectedStream: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -96,6 +100,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
+  const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -160,6 +165,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTxCreatedSignature(signature || undefined);
   }
 
+  const setSelectedStream = (stream: StreamInfo) => {
+    updateSelectedStream(stream);
+  }
+
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const contractFromCache = useMemo(
@@ -202,24 +211,29 @@ const AppStateProvider: React.FC = ({ children }) => {
     console.log('Getting my streams...');
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
 
-    return await listStreams(connection, programId);
+    const streams = await listStreams(connection, programId, publicKey, undefined, connection.commitment, true);
+    console.log('streams:', streams);
+    setStreamList(streams);
   }, [publicKey, connection]);
 
   useEffect(() => {
-    const timer = window.setInterval(async () => {
-      const streams = await refreshStreamsList().then(s => s);
-      setStreamList(streams);
-      console.log('My streams:', streams);
-    }, STREAMS_REFRESH_TIMEOUT);
-
+    let timer: any;
+    
     // Call it 1st time
-    refreshStreamsList();
+    if (publicKey) {
+      timer = window.setInterval(async () => {
+        refreshStreamsList();
+      }, STREAMS_REFRESH_TIMEOUT);
+      refreshStreamsList();
+    }
 
     // Return callback to run on unmount.
     return () => {
-      window.clearInterval(timer);
+      if (timer) {
+        window.clearInterval(timer);
+      }
     };
-  }, [refreshStreamsList]);
+  }, [refreshStreamsList, publicKey]);
 
   return (
     <AppStateContext.Provider
@@ -237,6 +251,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         transactionStatus,
         lastCreatedTransactionSignature,
         streamList,
+        selectedStream,
         setTheme,
         setCurrentScreen,
         setContract,
@@ -249,7 +264,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setTimeSheetRequirement,
         setTransactionStatus,
         setLastCreatedTransactionSignature,
-        setStreamList
+        setStreamList,
+        setSelectedStream
       }}>
       {children}
     </AppStateContext.Provider>

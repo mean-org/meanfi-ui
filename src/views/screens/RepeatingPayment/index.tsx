@@ -558,7 +558,7 @@ export const RepeatingPayment = () => {
     
         console.log('paymentStartDate:', Date.parse(paymentStartDate as string));
         let utcDate = new Date();
-        utcDate.setTime(Date.parse(paymentStartDate as string));
+        utcDate.setUTCDate(Date.parse(paymentStartDate as string));
         console.log('utcDate:', utcDate);
     
         setTransactionStatus({
@@ -1020,7 +1020,7 @@ export const RepeatingPayment = () => {
       {/* Info */}
       <div className="text-center mb-1">
         {selectedToken && effectiveRate
-          ? `1 ${selectedToken.symbol} = ${formatAmount(effectiveRate)} USDC`
+          ? `1 ${selectedToken.symbol} = $${formatAmount(effectiveRate, 2)}`
           : "--"}
       </div>
 

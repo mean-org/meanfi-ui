@@ -807,7 +807,7 @@ export const OneTimePayment = () => {
       {/* Info */}
       <div className="text-center p-2">
         {selectedToken && effectiveRate
-          ? `1 ${selectedToken.symbol} = ${formatAmount(effectiveRate)} USDC`
+          ? `1 ${selectedToken.symbol} = $${formatAmount(effectiveRate, 2)}`
           : "--"}
       </div>
       {/* Action button */}
