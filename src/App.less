@@ -10,6 +10,9 @@
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
   --color-outgoing-transaction: #e02020;
+  --color-pending-transaction: #e64d11;
+  --color-paused-transaction: #1698e4;
+
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
@@ -67,6 +70,9 @@
   --color-item-selector-selected: #73c700;
   --color-incoming-transaction: #4e9800;
   --color-outgoing-transaction: #e02020;
+  --color-pending-transaction: #e64d11;
+  --color-paused-transaction: #1698e4;
+
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
@@ -555,13 +561,10 @@ footer.ant-layout-footer {
   top: 0px;
   padding: 0 1rem;
   line-height: 1;
-  z-index: 2;
+  z-index: 100;
+  background-color: var(--bg-color);
   @media (max-width: 575.98px) {
-    background-color: var(--bg-color);
     justify-content: center;
-  }
-  @media (min-width: 576px) {
-    background-color: transparent;
   }
   .ant-menu-horizontal {
     border-bottom-color: transparent;
@@ -1455,10 +1458,17 @@ em {
       &.outgoing {
         color: var(--color-outgoing-transaction);
       }
+      &.pending {
+        color: var(--color-pending-transaction);
+      }
+      &.paused {
+        color: var(--color-paused-transaction);
+      }
     }
   }
   .description-cell {
     flex: 1 1 auto;
+    padding-left: 4px;
     .title {
       font-size: 16px;
       line-height: 1.2;

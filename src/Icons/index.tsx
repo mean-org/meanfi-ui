@@ -12,6 +12,7 @@ export { IconInfoCircle } from "./IconInfoCircle";
 export { IconInfoTriangle } from "./IconInfoTriangle";
 export { IconLogout } from "./IconLogout";
 export { IconMoon } from "./IconMoon";
+export { IconPause } from "./IconPause";
 export { IconSettings } from "./IconSettings";
 export { IconSort } from "./IconSort";
 export { IconSun } from "./IconSun";

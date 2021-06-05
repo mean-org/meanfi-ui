@@ -31,7 +31,7 @@ export type StreamInfo = {
     cliffVestAmount: number,
     cliffVestPercent: number,
     beneficiaryWithdrawalAddress: PublicKey | undefined,
-    escrowTokenAddress: PublicKey | undefined,
+    escrowTokenAddress: PublicKey | undefined | string,
     escrowVestedAmount: number,
     escrowUnvestedAmount: number,
     treasuryAddress: PublicKey | undefined,
@@ -92,7 +92,8 @@ export class MoneyStreaming {
 
     public async getStream(
         id: PublicKey,
-        commitment?: Commitment | undefined
+        commitment?: Commitment | undefined,
+        friendly?: boolean
 
     ): Promise<StreamInfo> {
 
@@ -100,14 +101,15 @@ export class MoneyStreaming {
             this.connection,
             id,
             commitment,
-            true
+            friendly as boolean
         )
     }
 
     public async listStreams(
         treasurer?: PublicKey | undefined,
         beneficiary?: PublicKey | undefined,
-        commitment?: GetProgramAccountsConfig | Commitment | undefined
+        commitment?: GetProgramAccountsConfig | Commitment | undefined,
+        friendly?: boolean
 
     ): Promise<StreamInfo[]> {
 
@@ -117,7 +119,7 @@ export class MoneyStreaming {
             treasurer,
             beneficiary,
             commitment,
-            false
+            friendly as boolean
         );
     }
 
@@ -174,7 +176,8 @@ export class MoneyStreaming {
         );
 
         transaction.add(
-            MoneyStreaming.createStreamInstruction(
+            await MoneyStreaming.createStreamInstruction(
+                this.connection,
                 this.programId,
                 treasurer,
                 beneficiary,
@@ -277,7 +280,8 @@ export class MoneyStreaming {
         }
     }
 
-    static createStreamInstruction(
+    static async createStreamInstruction(
+        connection: Connection,
         programId: PublicKey,
         treasurer: PublicKey,
         beneficiary: PublicKey,
@@ -293,24 +297,25 @@ export class MoneyStreaming {
         cliffVestAmount?: number,
         cliffVestPercent?: number
 
-    ): TransactionInstruction {
+    ): Promise<TransactionInstruction> {
+
+        const treasurerInfo = await connection.getAccountInfo(treasurer);
         const keys = [
             { pubkey: treasurer, isSigner: true, isWritable: false },
             { pubkey: treasury, isSigner: false, isWritable: false },
             { pubkey: stream, isSigner: false, isWritable: true },
+            { pubkey: treasurerInfo?.owner as PublicKey, isSigner: false, isWritable: false },
+            { pubkey: new PublicKey(Constants.MEAN_FI_ACCOUNT), isSigner: false, isWritable: true },
             { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-            { pubkey: new PublicKey(Constants.MEAN_FI_ACCOUNT), isSigner: false, isWritable: true }
         ];
 
         let data = Buffer.alloc(Layout.createStreamLayout.span)
         {
-            let nameBuffer = Buffer.alloc(32, streamName as string, 'utf-8');
+            let nameBuffer = Buffer.alloc(32).fill((streamName as string), 0, (streamName as string).length);
 
             const decodedData = {
                 tag: 0,
                 stream_name: nameBuffer,
-                treasurer_address: Buffer.from(treasurer.toBuffer()),
-                treasury_address: Buffer.from(treasury.toBuffer()),
                 beneficiary_withdrawal_address: Buffer.from(beneficiary.toBuffer()),
                 escrow_token_address: Buffer.from(associatedToken.toBuffer()),
                 funding_amount: new u64Number(fundingAmount || 0).toBuffer(),

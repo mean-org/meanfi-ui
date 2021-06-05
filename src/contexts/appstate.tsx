@@ -30,6 +30,7 @@ interface AppStateConfig {
   lastCreatedTransactionSignature: string | undefined;
   streamList: StreamInfo[] | undefined;
   selectedStream: StreamInfo | undefined;
+  streamDetail: StreamInfo | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setContract: (name: string) => void;
@@ -44,6 +45,7 @@ interface AppStateConfig {
   setLastCreatedTransactionSignature: (signature: string) => void;
   setStreamList: (list: StreamInfo[]) => void;
   setSelectedStream: (stream: StreamInfo) => void;
+  setStreamDetail: (stream: StreamInfo) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -64,6 +66,7 @@ const contextDefaultValues: AppStateConfig = {
   lastCreatedTransactionSignature: undefined,
   streamList: undefined,
   selectedStream: undefined,
+  streamDetail: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
@@ -78,6 +81,7 @@ const contextDefaultValues: AppStateConfig = {
   setLastCreatedTransactionSignature: () => {},
   setStreamList: () => {},
   setSelectedStream: () => {},
+  setStreamDetail: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -101,6 +105,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
+  const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -165,9 +170,19 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTxCreatedSignature(signature || undefined);
   }
 
-  const setSelectedStream = (stream: StreamInfo) => {
+  const setSelectedStream = async (stream: StreamInfo) => {
     updateSelectedStream(stream);
+    if (stream?.id) {
+      const streamPublicKey = new PublicKey(stream.id);
+      const detail = await getStream(connection, streamPublicKey, connection.commitment);
+      console.log('streamDetail:', detail);
+      updateStreamDetail(detail);
+    }
   }
+
+  const setStreamDetail = (stream: StreamInfo) => {
+    updateStreamDetail(stream);
+  } 
 
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
@@ -211,10 +226,19 @@ const AppStateProvider: React.FC = ({ children }) => {
     console.log('Getting my streams...');
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
 
-    const streams = await listStreams(connection, programId, publicKey, undefined, connection.commitment, true);
+    const streams = await listStreams(connection, programId, publicKey, publicKey, connection.commitment, true);
     console.log('streams:', streams);
     setStreamList(streams);
-  }, [publicKey, connection]);
+    if (!selectedStream && streams?.length) {
+      updateSelectedStream(streams[0]);
+      if (streams[0]?.id) {
+        const streamPublicKey = new PublicKey(streams[0].id);
+        const detail = await getStream(connection, streamPublicKey, connection.commitment);
+        console.log('streamDetail:', detail);
+        updateStreamDetail(detail);
+      }
+    }
+  }, [publicKey, connection, selectedStream]);
 
   useEffect(() => {
     let timer: any;
@@ -233,7 +257,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         window.clearInterval(timer);
       }
     };
-  }, [refreshStreamsList, publicKey]);
+  }, [refreshStreamsList, publicKey, currentScreen]);
 
   return (
     <AppStateContext.Provider
@@ -252,6 +276,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastCreatedTransactionSignature,
         streamList,
         selectedStream,
+        streamDetail,
         setTheme,
         setCurrentScreen,
         setContract,
@@ -265,7 +290,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setTransactionStatus,
         setLastCreatedTransactionSignature,
         setStreamList,
-        setSelectedStream
+        setSelectedStream,
+        setStreamDetail
       }}>
       {children}
     </AppStateContext.Provider>

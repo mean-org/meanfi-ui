@@ -419,6 +419,9 @@ export const RepeatingPayment = () => {
     let label: string;
     label = `${getAmountWithTokenSymbol(amount, selectedToken)} `;
     switch (rate) {
+      case PaymentRateType.PerMinute:
+        label += "per minute";
+        break;
       case PaymentRateType.PerHour:
         label += "per hour";
         break;
@@ -576,7 +579,7 @@ export const RepeatingPayment = () => {
           startUtc: utcDate,                                              // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                                      // streamName
+            : undefined,                                                  // streamName
           fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
         };
         console.log('data:', data);
@@ -590,7 +593,7 @@ export const RepeatingPayment = () => {
           utcDate,                                          // startUtc
           recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                        // streamName
+            : undefined,                                    // streamName
           parseFloat(fromCoinAmount as string)              // fundingAmount
         )
         .then(value => {

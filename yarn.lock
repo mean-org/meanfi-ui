@@ -1613,7 +1613,7 @@
     "schema-utils" "^2.6.5"
     "source-map" "^0.7.3"
 
-"@project-serum/anchor@^0.6.0-beta.2", "@project-serum/anchor@^0.6.0-beta.3":
+"@project-serum/anchor@^0.6.0-beta.2":
   "integrity" "sha512-nQ8GegtgyejhI/CRey8gorhdcbryEo2p76EMApxLoI4qhdeNws4rUcR7L5lRzQNaOPBuVXVrG8mEiw+qLzFsjw=="
   "resolved" "https://registry.npmjs.org/@project-serum/anchor/-/anchor-0.6.0-beta.3.tgz"
   "version" "0.6.0-beta.3"
@@ -8572,7 +8572,14 @@
   dependencies:
     "minimist" "^1.2.5"
 
-"moment@^2.24.0", "moment@^2.25.3":
+"moment-timezone@^0.5.33":
+  "integrity" "sha512-PTc2vcT8K9J5/9rDEPe5czSIKgLoGsH8UNpA4qZTVw0Vd/Uz19geE9abbIOQKaAQFcnQ3v5YEXrbSc5BpshH+w=="
+  "resolved" "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.5.33.tgz"
+  "version" "0.5.33"
+  dependencies:
+    "moment" ">= 2.9.0"
+
+"moment@^2.24.0", "moment@^2.25.3", "moment@^2.29.1", "moment@>= 2.9.0":
   "integrity" "sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ=="
   "resolved" "https://registry.npmjs.org/moment/-/moment-2.29.1.tgz"
   "version" "2.29.1"

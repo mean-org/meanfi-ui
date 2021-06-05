@@ -78,6 +78,9 @@ export const getPaymentStartPlanOptionLabel = (val: PaymentStartPlan): string =>
 export const getPaymentRateOptionLabel = (val: PaymentRateType): string => {
     let result = '';
     switch (val) {
+        case PaymentRateType.PerMinute:
+            result = 'per minute';
+            break;
         case PaymentRateType.PerHour:
             result = 'per hour';
             break;
@@ -93,9 +96,7 @@ export const getPaymentRateOptionLabel = (val: PaymentRateType): string => {
         case PaymentRateType.PerYear:
             result = 'per year';
             break;
-        // case PaymentRateType.Other:
         default:
-            // result = 'Other (defined in minutes)';
             break;
     }
     return result;
@@ -122,6 +123,8 @@ export function getOptionsFromEnum(value: any): PaymentRateTypeOption[] {
 // In minutes for UI kindness
 export const getPaymentRateIntervalByRateType = (rateType: PaymentRateType): string => {
     switch (rateType) {
+        case PaymentRateType.PerMinute:
+            return '1';
         case PaymentRateType.PerHour:
             return '60';
         case PaymentRateType.PerDay:
@@ -132,7 +135,6 @@ export const getPaymentRateIntervalByRateType = (rateType: PaymentRateType): str
             return '43800';
         case PaymentRateType.PerYear:
             return '525600';
-        // case PaymentRateType.Other:
         default:
             return '1';
     }
@@ -168,8 +170,11 @@ export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOpti
 }
 
 export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => {
-    let value = 3600;   // 1h = 3600 seconds
+    let value = 60;
     switch (frequency) {
+        case PaymentRateType.PerMinute:
+            value = 60;
+            break;
         case PaymentRateType.PerHour:
             value = 3600;
             break;
@@ -215,5 +220,24 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
             return 'Operation completed';
         default:
             return 'Idle';
+    }
+}
+
+export const getIntervalFromSeconds = (seconds: number): string => {
+    switch (seconds) {
+        case 60:
+            return 'per minute';
+        case 3600:
+            return 'per hour';
+        case 86400:
+            return 'per day';
+        case 604800:
+            return 'per week';
+        case 2629750:
+            return 'per month';
+        case 31557000:
+            return 'per year';
+        default:
+            return '--';
     }
 }

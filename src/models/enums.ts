@@ -10,12 +10,12 @@ export enum PaymentScheme {
 
 // In seconds for the API
 export enum PaymentRateType {
-    PerHour = 0,    // 3600
-    PerDay = 1,     // 86400
-    PerWeek = 2,    // 604800
-    PerMonth = 3,   // 2629750
-    PerYear = 4,    // 31557000
-    // Other = 5,      // >= 60 seconds
+    PerMinute = 0,  // 60
+    PerHour = 1,    // 3600
+    PerDay = 2,     // 86400
+    PerWeek = 3,    // 604800
+    PerMonth = 4,   // 2629750
+    PerYear = 5,    // 31557000
 }
 
 export enum TimesheetRequirementOption {
