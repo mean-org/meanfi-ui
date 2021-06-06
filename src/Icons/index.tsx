@@ -1,7 +1,9 @@
 export { IconAdd } from "./IconAdd";
+export { IconBank } from "./IconBank";
 export { IconBookOpen } from "./IconBookOpen";
 export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";
+export { IconClock } from "./IconClock";
 export { IconCodeBlock } from "./IconCodeBlock";
 export { IconCopy } from "./IconCopy";
 export { IconDocument } from "./IconDocument";
@@ -14,6 +16,7 @@ export { IconLogout } from "./IconLogout";
 export { IconMoon } from "./IconMoon";
 export { IconPause } from "./IconPause";
 export { IconSettings } from "./IconSettings";
+export { IconShare } from "./IconShare";
 export { IconSort } from "./IconSort";
 export { IconSun } from "./IconSun";
 export { IconUniversity } from "./IconUniversity";

@@ -223,20 +223,20 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
     }
 }
 
-export const getIntervalFromSeconds = (seconds: number): string => {
+export const getIntervalFromSeconds = (seconds: number, slash = false): string => {
     switch (seconds) {
         case 60:
-            return 'per minute';
+            return slash ? '/ minute' : 'per minute';
         case 3600:
-            return 'per hour';
+            return slash ? '/ hour' : 'per hour';
         case 86400:
-            return 'per day';
+            return slash ? '/ day' : 'per day';
         case 604800:
-            return 'per week';
+            return slash ? '/ week' : 'per week';
         case 2629750:
-            return 'per month';
+            return slash ? '/ month' : 'per month';
         case 31557000:
-            return 'per year';
+            return slash ? '/ year' : 'per year';
         default:
             return '--';
     }

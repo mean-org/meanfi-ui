@@ -5,13 +5,11 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
 import { Button, Col, Modal, Row } from "antd";
-import { WALLET_PROVIDERS } from "../../constants";
+import { SOLANA_EXPLORER_URI, WALLET_PROVIDERS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
-
-const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
 
 export const CurrentUserBadge = (props: {}) => {
 
