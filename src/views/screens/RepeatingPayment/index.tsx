@@ -16,6 +16,7 @@ import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
   convertLocalDateToUTCIgnoringTimezone,
   getAmountWithTokenSymbol,
+  getFairPercentForInterval,
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
@@ -401,6 +402,16 @@ export const RepeatingPayment = () => {
     }
     return label;
   };
+
+  const getRecommendedFundingAmount = () => {
+    const rateAmount = parseFloat(paymentRateAmount as string);
+    const percent = getFairPercentForInterval(paymentRateFrequency);
+    const recommendedMinAmount = percent * rateAmount || 0;
+    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
+
+    // String to obtain: 0.21 SOL (10%).
+    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}.`;
+  }
 
   // Prefabrics
 
@@ -874,7 +885,7 @@ export const RepeatingPayment = () => {
 
       <div className="mb-3 text-center">
         <div>You must add funds to start the repeating payment.</div>
-        <div>Recommended minimum amount: <span className="fg-red">0.21 SOL (10%)</span>.</div>
+        <div>Recommended minimum amount: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
       </div>
 
       {/* Send amount */}

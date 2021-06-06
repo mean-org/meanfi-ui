@@ -5,7 +5,11 @@ import { IconCaretDown } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
 export const HomeView = () => {
-  const { currentScreen, contract, setCurrentScreen } = useContext(AppStateContext);
+  const {
+    currentScreen,
+    contract,
+    setCurrentScreen
+  } = useContext(AppStateContext);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -19,9 +23,7 @@ export const HomeView = () => {
   // Effect to set a default tab if none selected already
   useEffect(() => {
     if (!currentScreen) {
-      // TODO: Condition this to go to streams in case we have streams
-      // otherwise go to create contract.
-      setCurrentScreen('contract');
+      setCurrentScreen('streams');
     }
 
     return () => {};
@@ -38,7 +40,21 @@ export const HomeView = () => {
     </div>
   );
 
-  if (currentScreen === 'contract') {
+  if (currentScreen === 'streams') {
+
+    // STREAMS SCREEN
+    return (
+      <>
+      <div className="container">
+        <div className="interaction-area">
+          <Streams />
+        </div>
+      </div>
+      {renderPreFooter}
+      </>
+    );
+
+  } else if (currentScreen === 'contract') {
 
     const renderContract = () => {
       switch(contract?.id) {
@@ -75,23 +91,7 @@ export const HomeView = () => {
       {renderPreFooter}
       </>
     );
-  } else if (currentScreen === 'streams') {
 
-    // STREAMS SCREEN
-    return (
-      <>
-      <div className="container">
-        <div className="interaction-area">
-          <Streams />
-          <ContractSelectorModal
-              isVisible={isContractSelectorModalVisible}
-              handleOk={onAcceptContractSelector}
-              handleClose={closeContractSelectorModal}/>
-        </div>
-      </div>
-      {renderPreFooter}
-      </>
-    );
   } else {
 
     // LOADING SCREEN

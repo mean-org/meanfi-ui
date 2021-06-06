@@ -12,7 +12,7 @@ export const AppLayout = React.memo((props: any) => {
   const { theme, setCurrentScreen } = useContext(AppStateContext);
 
   const onGoToHomeClick = () => {
-    setCurrentScreen("contract");
+    setCurrentScreen("streams");
   };
 
   return (

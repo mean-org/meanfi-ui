@@ -139,10 +139,10 @@ export function WalletProvider({ children = null as any }) {
         title="Select Wallet"
         okText="Connect"
         visible={isModalVisible}
-        okButtonProps={{ style: { display: "none" } }}
+        footer={null}
         onCancel={close}
         width={400}>
-        <div className="account-settings-group">
+        <div className="wallet-providers">
           {WALLET_PROVIDERS.map((provider, index) => {
             const onClick = function () {
               setProviderUrl(provider.url);
@@ -155,7 +155,7 @@ export function WalletProvider({ children = null as any }) {
                 size="large"
                 className="wallet-provider"
                 shape="round"
-                type={providerUrl === provider.url ? "primary" : "ghost"}
+                type="ghost"
                 onClick={onClick}
                 key={index}
                 icon={

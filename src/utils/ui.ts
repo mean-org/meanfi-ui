@@ -255,3 +255,31 @@ export function convertLocalDateToUTCIgnoringTimezone(date: Date) {
 
     return new Date(timestamp);
 }
+
+export const getFairPercentForInterval = (frequency: PaymentRateType): number => {
+    let value = 10;
+    switch (frequency) {
+        case PaymentRateType.PerMinute:
+            value = 500;
+            break;
+        case PaymentRateType.PerHour:
+            value = 100;
+            break;
+        case PaymentRateType.PerDay:
+            value = 50;
+            break;
+        default:
+            break;
+    }
+    return value / 100;
+}
+
+// Get a percentual value that partialValue represents in total
+export const percentual = (partialValue: number, total: number): number => {
+return (100 * partialValue) / total;
+}
+
+// Get the given percent of total
+export const percentage = (percent: number, total: number): number => {
+return ((percent/ 100) * total);
+}

@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button } from "antd";
 import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock, IconShare } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
@@ -10,15 +10,36 @@ import { getIntervalFromSeconds } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI, STREAM_LONG_DATE_FORMAT, STREAM_MINIMUM_DATE_FORMAT, STREAM_SHORT_DATE_FORMAT } from "../../../constants";
 import moment from "moment-timezone";
 import { PublicKey } from "@solana/web3.js";
+import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 
 export const Streams = () => {
-  const { publicKey } = useWallet();
+  const { connected, publicKey } = useWallet();
   const {
     streamList,
     selectedStream,
     streamDetail,
+    setCurrentScreen,
     setSelectedStream
   } = useContext(AppStateContext);
+
+  useEffect(() => {
+    if (!connected) {
+      setCurrentScreen("contract");
+    } else {
+      if (streamList && streamList.length === 0) {
+        setCurrentScreen("contract");
+      }
+    }
+  });
+
+  // Contract switcher modal
+  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
+  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
+  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
+  const onAcceptContractSelector = () => {
+    setCurrentScreen("contract");
+    closeContractSelectorModal();
+  };
 
   const isInboundStream = (item: StreamInfo): boolean => {
     return item.beneficiaryWithdrawalAddress === publicKey?.toBase58();
@@ -155,9 +176,11 @@ export const Streams = () => {
               <IconShare className="mean-svg-icons" />
             </span>
             <span className="info-data">
-              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${(streamDetail?.treasurerAddress as PublicKey).toBase58()}`} target="_blank" rel="noopener noreferrer">
-                {shortenAddress(`${(streamDetail?.treasurerAddress as PublicKey).toBase58()}`)}
-              </a>
+              {streamDetail && (
+                <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${(streamDetail.treasurerAddress as PublicKey).toBase58()}`} target="_blank" rel="noopener noreferrer">
+                  {shortenAddress(`${(streamDetail.treasurerAddress as PublicKey).toBase58()}`)}
+                </a>
+              )}
             </span>
           </div>
         </Col>
@@ -198,17 +221,21 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-            ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
-            : '0'}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          &nbsp;
-          {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-          ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-          : ''}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+              {streamDetail.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
+                ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
+                : '0'}
+              &nbsp;
+              {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+              &nbsp;
+              {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
+              ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
+              : ''}
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )}
         </div>
       </div>
 
@@ -219,13 +246,17 @@ export const Streams = () => {
           <span className="info-icon">
             <IconDownload className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-            ? formatAmount(streamDetail.totalDeposits, 6)
-            : ''}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+            {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
+              ? formatAmount(streamDetail.totalDeposits, 6)
+              : ''}
+            &nbsp;
+            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )}
         </div>
       </div>
       {/* Funds sent (Total Vested) */}
@@ -235,13 +266,17 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-            ? formatAmount(streamDetail.escrowVestedAmount, 6)
-            : ''}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+            {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
+              ? formatAmount(streamDetail.escrowVestedAmount, 6)
+              : ''}
+            &nbsp;
+            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )}
         </div>
       </div>
     </div>
@@ -304,13 +339,17 @@ export const Streams = () => {
           <span className="info-icon">
             <IconDownload className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-            ? formatAmount(streamDetail.totalDeposits, 6)
-            : ''}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+            {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
+              ? formatAmount(streamDetail.totalDeposits, 6)
+              : ''}
+            &nbsp;
+            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            </span>
+            ) : (
+              <span className="info-data">&nbsp;</span>
+            )}
         </div>
       </div>
       {/* Funds sent (Total Vested) */}
@@ -320,13 +359,17 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-            ? formatAmount(streamDetail.escrowVestedAmount, 6)
-            : ''}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+            {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
+              ? formatAmount(streamDetail.escrowVestedAmount, 6)
+              : ''}
+            &nbsp;
+            {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )}
         </div>
       </div>
       {/* Funds left (Total Unvested) */}
@@ -341,13 +384,17 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
-          <span className="info-data">
-          {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-            ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
-            : '0'}
-          &nbsp;
-          {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
-          </span>
+          {streamDetail ? (
+            <span className="info-data">
+            {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
+              ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
+              : '0'}
+            &nbsp;
+            {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )}
         </div>
       </div>
     </div>
@@ -400,7 +447,7 @@ export const Streams = () => {
                 type="primary"
                 shape="round"
                 size="small"
-                onClick={() => {}}>
+                onClick={showContractSelectorModal}>
                 Create new money stream
               </Button>
             </Col>
@@ -412,15 +459,19 @@ export const Streams = () => {
         <Divider plain></Divider>
         <div className="streams-heading">Stream details</div>
         <div className="inner-container">
-          {selectedStream ? (
+          {connected && streamDetail ? (
             <>
-            {isInboundStream(selectedStream) ? renderInboundStream : renderOutboundStream}
+            {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
             </>
           ) : (
             <p>Please select a stream to view details</p>
           )}
         </div>
       </div>
+      <ContractSelectorModal
+        isVisible={isContractSelectorModalVisible}
+        handleOk={onAcceptContractSelector}
+        handleClose={closeContractSelectorModal}/>
     </div>
   );
 };

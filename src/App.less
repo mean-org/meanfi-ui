@@ -59,6 +59,7 @@
   --color-network-bar: var(--color-secondary-alpha-10);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
+  --wallet-provider-background: var(--color-secondary-alpha-85);
 }
 
 // Inverted / Dark theme
@@ -120,6 +121,7 @@
   --color-network-bar: var(--color-secondary-alpha-40);
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
+  --wallet-provider-background: var(--color-secondary-alpha-10);
 }
 
 body {
@@ -389,14 +391,13 @@ footer.ant-layout-footer {
 }
 
 .ant-btn.ant-btn-round.wallet-provider {
-  color: var(--color-secondary-alpha-40);
-  border-color: var(--color-secondary-alpha-25);
+  color: var(--color-secondary-alpha-60);
+  border-color: var(--color-secondary-alpha-40);
   border-radius: var(--custom-border-radius);
   padding: 10px 10px;
   height: auto;
-  margin: 0 !important;
   > img {
-    background-color: var(--color-secondary-alpha-10);
+    background-color: var(--wallet-provider-background);
     padding: 4px;
     width: 30px;
     height: 30px;
@@ -409,6 +410,10 @@ footer.ant-layout-footer {
     border-style: solid;
     border-width: 1px;
     color: var(--color-white);
+  }
+  &:hover {
+    background-color: var(--color-secondary-alpha-05);
+    border-color: var(--color-secondary-alpha-40);
   }
 }
 
@@ -1271,6 +1276,11 @@ em {
 }
 
 // Account
+.wallet-providers {
+  .wallet-provider {
+    margin-bottom: 1rem !important;
+  }
+}
 .account-settings-group {
   font-size: 1rem;
   padding: 1rem;
@@ -1287,6 +1297,8 @@ em {
     align-items: center;
   }
 }
+
+
 
 .contract-card-list {
   max-height: 400px;
