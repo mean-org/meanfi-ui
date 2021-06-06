@@ -1,14 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocalStorageState } from "../utils/utils";
+import { convert, useLocalStorageState } from "../utils/utils";
 import { STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { getStream, listStreams } from "../money-streaming/utils";
 import { useWallet } from "./wallet";
-import { useConnection } from "./connection";
+import { useConnection, useConnectionConfig } from "./connection";
 import { Constants } from "../money-streaming/constants";
 import { PublicKey } from "@solana/web3.js";
 import { StreamInfo } from "../money-streaming/money-streaming";
+import { deserializeMint, useAccountsContext } from "./accounts";
+import { TokenAccount } from "../models";
+import { MintInfo } from "@solana/spl-token";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -18,6 +22,8 @@ export interface TransactionStatusInfo {
 interface AppStateConfig {
   theme: string | undefined;
   currentScreen: string | undefined;
+  tokenList: TokenInfo[];
+  selectedToken: TokenInfo | undefined;
   contract: ContractDefinition | undefined;
   recipientAddress: string | undefined;
   recipientNote: string | undefined;
@@ -33,6 +39,7 @@ interface AppStateConfig {
   streamDetail: StreamInfo | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
+  setSelectedToken: (token: TokenInfo | undefined) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -51,6 +58,8 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   currentScreen: undefined,
+  tokenList: [],
+  selectedToken: undefined,
   contract: undefined,
   recipientAddress: undefined,
   recipientNote: undefined,
@@ -70,6 +79,7 @@ const contextDefaultValues: AppStateConfig = {
   setTheme: () => {},
   setCurrentScreen: () => {},
   setContract: () => {},
+  setSelectedToken: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
@@ -88,7 +98,10 @@ export const AppStateContext = React.createContext<AppStateConfig>(contextDefaul
 
 const AppStateProvider: React.FC = ({ children }) => {
   // Parent contexts
+  const connected = useWallet();
   const connection = useConnection();
+  const connectionConfig = useConnectionConfig();
+  const accounts = useAccountsContext();
   const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
 
   const today = new Date().toLocaleDateString();
@@ -106,6 +119,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
+  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -175,7 +189,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (stream?.id) {
       const streamPublicKey = new PublicKey(stream.id);
       const detail = await getStream(connection, streamPublicKey, connection.commitment);
-      console.log('streamDetail:', detail);
       updateStreamDetail(detail);
     }
   }
@@ -184,7 +197,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateStreamDetail(stream);
   } 
 
+  const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
+  const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
+
+  const setSelectedToken = (token: TokenInfo | undefined) => {
+    updateSelectedToken(token);
+    setShouldUpdateToken(true);
+  }
 
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
@@ -223,18 +243,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!publicKey) {
       return [];
     }
-    console.log('Getting my streams...');
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
 
     const streams = await listStreams(connection, programId, publicKey, publicKey, connection.commitment, true);
-    console.log('streams:', streams);
     setStreamList(streams);
     if (!selectedStream && streams?.length) {
       updateSelectedStream(streams[0]);
       if (streams[0]?.id) {
         const streamPublicKey = new PublicKey(streams[0].id);
         const detail = await getStream(connection, streamPublicKey, connection.commitment);
-        console.log('streamDetail:', detail);
         updateStreamDetail(detail);
       }
     }
@@ -259,11 +276,66 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
   }, [refreshStreamsList, publicKey, currentScreen]);
 
+  useEffect(() => {
+
+    if (connectionConfig && connectionConfig.tokens && connectionConfig.tokens.length) {
+      updateTokenlist(connectionConfig.tokens);
+      if (!selectedToken) {
+        setSelectedToken(connectionConfig.tokens[0]);
+      }
+    }
+
+    return () => {};
+  }, [connectionConfig, selectedToken]);
+
+  useEffect(() => {
+    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
+      if (address) {
+        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
+        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === address) as TokenAccount;
+        if (tokenAccount) {
+          const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
+          const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+          return convert(tokenAccount as TokenAccount, mintInfoDecoded as MintInfo);
+        }
+      }
+      return 0;
+    }
+
+    const updateToken = async () => {
+      if (connection && accounts?.tokenAccounts?.length) {
+        if (selectedToken) {
+          const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
+          const modifiedBalance = Object.assign({}, selectedToken, {
+            balance: balance
+          });
+          updateSelectedToken(modifiedBalance);
+        }
+      }
+    }
+
+    if (shouldUpdateToken) {
+      setShouldUpdateToken(false);
+      updateToken();
+    }
+
+    return () => {};
+  }, [
+    connected,
+    shouldUpdateToken,
+    connection,
+    accounts,
+    selectedToken,
+    updateSelectedToken
+  ]);
+
   return (
     <AppStateContext.Provider
       value={{
         theme,
         currentScreen,
+        tokenList,
+        selectedToken,
         contract,
         recipientAddress,
         recipientNote,
@@ -279,6 +351,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamDetail,
         setTheme,
         setCurrentScreen,
+        setSelectedToken,
         setContract,
         setRecipientAddress,
         setRecipientNote,

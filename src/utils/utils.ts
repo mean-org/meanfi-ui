@@ -164,8 +164,17 @@ const abbreviateNumber = (number: number, precision: number) => {
 export const formatAmount = (
   val: number,
   precision: number = 6,
-  abbr: boolean = true
-) => (abbr ? abbreviateNumber(val, precision) : val.toFixed(precision));
+  abbr: boolean = false
+) => {
+  if (val) {
+    if (abbr) {
+      return abbreviateNumber(val, precision);
+    } else {
+      return val.toFixed(precision);
+    }
+  }
+  return '0';
+};
 
 export function formatTokenAmount(
   account?: TokenAccount,

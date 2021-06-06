@@ -13,7 +13,8 @@ import { ExplorerLink } from "../components/ExplorerLink";
 import { setProgramIds } from "../utils/ids";
 import { WalletAdapter } from "./wallet";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
-import { TokenListProvider, ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
+import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
 
 export type ENV =
   | "mainnet-beta"
@@ -99,11 +100,13 @@ export function ConnectionProvider({ children = undefined as any }) {
     cache.clear();
     // fetch token files
     (async () => {
-      const res = await new TokenListProvider().resolve();
-      const list = res
-        .filterByChainId(chain.chainID)
-        .excludeByTag("nft")
-        .getList();
+      // const res = await new TokenListProvider().resolve();
+      // const list = res
+      //   .filterByChainId(chain.chainID)
+      //   .excludeByTag("nft")
+      //   .getList();
+      //
+      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;

@@ -6,13 +6,9 @@ import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
-  fromLamports,
   isValidNumber,
-  useLocalStorageState,
 } from "../../../utils/utils";
-import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { Identicon } from "../../../components/Identicon";
-import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
@@ -27,10 +23,10 @@ import {
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
-import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -39,9 +35,10 @@ export const RepeatingPayment = () => {
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
-  const { userAccounts } = useUserAccounts();
   const {
     contract,
+    tokenList,
+    selectedToken,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -50,6 +47,7 @@ export const RepeatingPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     setCurrentScreen,
+    setSelectedToken,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -69,9 +67,6 @@ export const RepeatingPayment = () => {
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
-  const [availableTokenList, setAvailableTokenList] = useState<TokenInfo[]>([]);
-  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
   // Token selection modal
@@ -176,83 +171,23 @@ export const RepeatingPayment = () => {
     }
   };
 
-  // const handlePaymentRateIntervalChange = (e: any) => {
-  //   const newValue = e.target.value;
-  //   if (newValue === null || newValue === undefined || newValue === "") {
-  //     setPaymentRateInterval("");
-  //   } else if (isPositiveNumber(newValue)) {
-  //     setPaymentRateInterval(newValue);
-  //   }
-  // };
-
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
     // setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
   }
 
-  // Effect to load token list
+  // Effect to set a default beneficiary token
   useEffect(() => {
-    if (shouldLoadTokens) {
-      setShouldLoadTokens(false);
-      new TokenListProvider().resolve().then((tokens) => {
-        const filteredTokens = tokens
-          .filterByClusterSlug(connectionConfig.env)
-          .getList();
-        // Save a copy of available tokens for the destination account
-        setAvailableTokenList(filteredTokens);
-        // Preset a token for the destination account
-        if (!destinationToken) {
-          setDestinationToken(filteredTokens[0]);
-        }
-        // List loaded, now reflect it as it is if no wallet connected
-        // If a wallet gets connected then filter by tokens the user own
-        if (connected && userAccounts && userAccounts.length > 0) {
-          const tokensWithBalance: TokenInfo[] = [];
-          for (let i = 0; i < userAccounts.length; i++) {
-            const account = userAccounts[i];
-            const mintAddress = account.info.mint.toBase58();
-            const mint = cache.get(mintAddress);
-            const tokenInfoItem = filteredTokens.find(t => t.address === mintAddress);
-            if (mint && tokenInfoItem) {
-              const balance = fromLamports(account.info.amount.toNumber(), mint.info);
-              tokensWithBalance.push(Object.assign({}, tokenInfoItem, {
-                balance
-              }));
-            }
-          }
-          setFilteredTokenList(tokensWithBalance);
-          console.log('tokensWithBalance:', tokensWithBalance);
-          // Preset a token
-          if (tokensWithBalance?.length) {
-            setSelectedToken(tokensWithBalance[0]);
-            console.log("Preset token:", tokensWithBalance[0]);
-          }
-        } else {
-          setFilteredTokenList(filteredTokens);
-          console.log("tokens", filteredTokens);
-          // Preset a token
-          if (!selectedToken && filteredTokens) {
-            setSelectedToken(filteredTokens[0]);
-            console.log("Preset token:", filteredTokens[0]);
-          }
-        }
-      });
-    };
+
+    if (tokenList) {
+      // Preset a token for the beneficiary account
+      if (!destinationToken) {
+        setDestinationToken(tokenList[0] as TokenInfo);
+      }
+    }
 
     return () => {};
-  }, [
-    connected,
-    coinPrices,
-    userAccounts,
-    selectedToken,
-    filteredTokenList,
-    connectionConfig,
-    shouldLoadTokens,
-    setSelectedToken,
-    destinationToken,
-    setFilteredTokenList,
-    setEffectiveRate
-  ]);
+  }, [tokenList, destinationToken]);
 
   // Effect to load coin prices
   useEffect(() => {
@@ -263,9 +198,11 @@ export const RepeatingPayment = () => {
           .then((prices) => {
             console.log("Coin prices:", prices);
             setCoinPrices(prices);
-            setEffectiveRate(
-              prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
-            );
+            if (selectedToken) {
+              setEffectiveRate(
+                prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
+              );
+            }
           })
           .catch(() => setCoinPrices(null));
       } catch (error) {
@@ -329,9 +266,10 @@ export const RepeatingPayment = () => {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setShouldLoadTokens(true);
+          setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(null);
+        setSelectedToken(undefined);
         setShouldLoadTokens(true);
       }
       setPreviousWalletConnectState(connected);
@@ -344,6 +282,7 @@ export const RepeatingPayment = () => {
     connected,
     shouldLoadTokens,
     previousWalletConnectState,
+    tokenList,
     setSelectedToken,
     setShouldLoadTokens,
     setPreviousWalletConnectState,
@@ -378,9 +317,11 @@ export const RepeatingPayment = () => {
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
-           selectedToken.balance &&
+           selectedToken?.balance &&
            fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= selectedToken.balance;
+           parseFloat(fromCoinAmount) <= selectedToken?.balance
+            ? true
+            : false;
   }
 
   const arePaymentSettingsValid = (): boolean => {
@@ -435,7 +376,7 @@ export const RepeatingPayment = () => {
     amount: string | undefined
   ): string => {
     let label: string;
-    label = `${getAmountWithTokenSymbol(amount, selectedToken)} `;
+    label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
     switch (rate) {
       case PaymentRateType.PerMinute:
         label += "per minute";
@@ -479,11 +420,11 @@ export const RepeatingPayment = () => {
 
   const renderAvailableTokenList = (
     <>
-      {destinationToken && availableTokenList ? (
-        availableTokenList.map((token, index) => {
-          const onClick = function () {
+      {destinationToken && tokenList ? (
+        tokenList.map((token, index) => {
+          const onClick = () => {
             setDestinationToken(token);
-            console.log("destination token selected:", token.symbol);
+            console.log("token selected:", token);
             onCloseTokenSelector();
           };
           return (
@@ -514,11 +455,11 @@ export const RepeatingPayment = () => {
 
   const renderUserTokenList = (
     <>
-      {selectedToken && filteredTokenList ? (
-        filteredTokenList.map((token, index) => {
-          const onClick = function () {
+      {selectedToken && tokenList ? (
+        tokenList.map((token, index) => {
+          const onClick = () => {
             setSelectedToken(token);
-            console.log("token selected:", token.symbol);
+            console.log("token selected:", token);
             setEffectiveRate(
               coinPrices && coinPrices[token.symbol]
                 ? coinPrices[token.symbol]
@@ -951,7 +892,7 @@ export const RepeatingPayment = () => {
             <span className="balance-amount">
               {`${
                 selectedToken?.balance
-                  ? formatAmount(selectedToken.balance, selectedToken.decimals)
+                  ? formatAmount(selectedToken.balance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
                   : "Unknown"
               }`}
             </span>
@@ -983,13 +924,13 @@ export const RepeatingPayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {selectedToken?.balance && (
+                {selectedToken.balance && (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          selectedToken.balance,
+                          selectedToken.balance as number,
                           selectedToken.decimals
                         )
                       )

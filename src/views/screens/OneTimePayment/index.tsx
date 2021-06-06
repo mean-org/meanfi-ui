@@ -4,15 +4,8 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
-import {
-  formatAmount,
-  fromLamports,
-  isValidNumber,
-  useLocalStorageState,
-} from "../../../utils/utils";
-import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
+import { formatAmount, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
@@ -24,10 +17,10 @@ import {
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
-import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -36,15 +29,17 @@ export const OneTimePayment = () => {
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
-  const { userAccounts } = useUserAccounts();
   const {
     contract,
+    tokenList,
+    selectedToken,
     recipientAddress,
     recipientNote,
     paymentStartDate,
     fromCoinAmount,
     transactionStatus,
     setCurrentScreen,
+    setSelectedToken,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -62,8 +57,6 @@ export const OneTimePayment = () => {
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
-  const [simpleTokenList, setSimpleTokenList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -157,63 +150,6 @@ export const OneTimePayment = () => {
     }, 100);
   }
 
-  // Effect to load token list
-  useEffect(() => {
-    if (shouldLoadTokens) {
-      setShouldLoadTokens(false);
-      new TokenListProvider().resolve().then((tokens) => {
-        const filteredTokens = tokens
-          .filterByClusterSlug(connectionConfig.env)
-          .getList();
-        // List loaded, now reflect it as it is if no wallet connected
-        // If a wallet gets connected then filter by tokens the user own
-        if (connected && userAccounts && userAccounts.length > 0) {
-          const tokensWithBalance: TokenInfo[] = [];
-          for (let i = 0; i < userAccounts.length; i++) {
-            const account = userAccounts[i];
-            const mintAddress = account.info.mint.toBase58();
-            const mint = cache.get(mintAddress);
-            const tokenInfoItem = filteredTokens.find(t => t.address === mintAddress);
-            if (mint && tokenInfoItem) {
-              const balance = fromLamports(account.info.amount.toNumber(), mint.info);
-              tokensWithBalance.push(Object.assign({}, tokenInfoItem, {
-                balance
-              }));
-            }
-          }
-          setSimpleTokenList(tokensWithBalance);
-          console.log('tokensWithBalance:', tokensWithBalance);
-          // Preset a token
-          if (tokensWithBalance?.length) {
-            setSelectedToken(tokensWithBalance[0]);
-            console.log("Preset token:", tokensWithBalance[0]);
-          }
-        } else {
-          setSimpleTokenList(filteredTokens);
-          console.log("tokens", filteredTokens);
-          // Preset a token
-          if (!selectedToken && filteredTokens) {
-            setSelectedToken(filteredTokens[0]);
-            console.log("Preset token:", filteredTokens[0]);
-          }
-        }
-      });
-    };
-
-    return () => {};
-  }, [
-    connected,
-    coinPrices,
-    userAccounts,
-    selectedToken,
-    simpleTokenList,
-    connectionConfig,
-    shouldLoadTokens,
-    setSelectedToken,
-    setSimpleTokenList,
-    setEffectiveRate
-  ]);
-
   // Effect to load coin prices
   useEffect(() => {
     const getCoinPrices = async () => {
@@ -224,7 +160,7 @@ export const OneTimePayment = () => {
             console.log("Coin prices:", prices);
             setCoinPrices(prices);
             setEffectiveRate(
-              prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
+              prices[(selectedToken as TokenInfo).symbol] ? prices[(selectedToken as TokenInfo).symbol] : 0
             );
           })
           .catch(() => setCoinPrices(null));
@@ -286,12 +222,13 @@ export const OneTimePayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoid setTimeout
+        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setShouldLoadTokens(true);
+          setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(null);
+        setSelectedToken(undefined);
         setShouldLoadTokens(true);
       }
       setPreviousWalletConnectState(connected);
@@ -304,6 +241,7 @@ export const OneTimePayment = () => {
     connected,
     shouldLoadTokens,
     previousWalletConnectState,
+    tokenList,
     setSelectedToken,
     setShouldLoadTokens,
     setPreviousWalletConnectState,
@@ -338,9 +276,11 @@ export const OneTimePayment = () => {
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
-           selectedToken.balance &&
+           selectedToken?.balance &&
            fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= selectedToken.balance;
+           parseFloat(fromCoinAmount) <= selectedToken?.balance
+            ? true
+            : false;
   }
 
   // Ui helpers
@@ -641,9 +581,9 @@ export const OneTimePayment = () => {
             <span className="balance-amount">
               {`${
                 selectedToken?.balance
-                  ? formatAmount(selectedToken.balance, selectedToken.decimals)
+                  ? formatAmount(selectedToken.balance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
                   : "Unknown"
-              }`}
+            }`}
             </span>
             <span>
               (~$
@@ -673,13 +613,13 @@ export const OneTimePayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {selectedToken?.balance && (
+                {selectedToken.balance && (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          selectedToken.balance,
+                          selectedToken.balance as number,
                           selectedToken.decimals
                         )
                       )
@@ -726,8 +666,8 @@ export const OneTimePayment = () => {
         footer={null}>
         <div className="token-list">
           {/* Loop through the tokens */}
-          {selectedToken && simpleTokenList ? (
-            simpleTokenList.map((token, index) => {
+          {selectedToken && tokenList ? (
+            tokenList.map((token, index) => {
               const onClick = function () {
                 setSelectedToken(token);
                 console.log("token selected:", token.symbol);
@@ -856,14 +796,14 @@ export const OneTimePayment = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Sending {getAmountWithTokenSymbol(fromCoinAmount, selectedToken)}...</p>
+              <p className="operation">Sending {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
               <div className="indication">Confirm this transaction in your wallet</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken)} was sent successfully.</p>
+              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} was sent successfully.</p>
               <Button
                 block
                 type="primary"

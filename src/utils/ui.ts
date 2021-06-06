@@ -1,6 +1,6 @@
+import { TokenInfo } from "@solana/spl-token-registry";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { TokenInfo } from "./tokens";
 import { formatAmount } from "./utils";
 
 export class PaymentRateTypeOption {
