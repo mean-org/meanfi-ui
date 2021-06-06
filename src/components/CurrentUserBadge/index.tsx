@@ -1,4 +1,4 @@
-import { useCallback, useContext, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
 import { formatNumber, shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
@@ -10,6 +10,17 @@ import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
+import { StreamInfo } from "../../money-streaming/money-streaming";
+
+interface StreamStats {
+  incoming: number;
+  outgoing: number;
+}
+
+const defaultStreamStats = {
+  incoming: 0,
+  outgoing: 0
+};
 
 export const CurrentUserBadge = (props: {}) => {
 
@@ -17,14 +28,36 @@ export const CurrentUserBadge = (props: {}) => {
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
-  const { setCurrentScreen } = useContext(AppStateContext);
-
-  const { wallet, select } = useWallet();
+  const { streamList, setCurrentScreen } = useContext(AppStateContext);
+  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
+  const { wallet, publicKey, select } = useWallet();
   const { account } = useNativeAccount();
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
   );
+
+  useEffect(() => {
+
+    const isInboundStream = (item: StreamInfo): boolean => {
+      return item.beneficiaryWithdrawalAddress === publicKey?.toBase58();
+    }
+
+    const updateStats = () => {
+      if (streamList && streamList.length) {
+        const incoming = streamList.filter(s => isInboundStream(s));
+        const outgoing = streamList.filter(s => !isInboundStream(s));
+        const stats: StreamStats = {
+          incoming: incoming.length,
+          outgoing: outgoing.length
+        }
+        setStreamStats(stats);
+      }
+    }
+
+    updateStats();
+    return () => {};
+  }, [publicKey, streamList]);
 
   const switchWallet = () => {
     setTimeout(() => {
@@ -67,11 +100,11 @@ export const CurrentUserBadge = (props: {}) => {
           </span>
           <span className="transaction-legend incoming">
             <IconDownload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">0</span>
+            <span className="incoming-transactions-amout">{streamStats.incoming}</span>
           </span>
           <span className="transaction-legend outgoing">
             <IconUpload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">0</span>
+            <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
           </span>
         </div>
       </div>

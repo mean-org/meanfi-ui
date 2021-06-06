@@ -9,7 +9,7 @@ import { getTokenByMintAddress } from "../../../utils/tokens";
 import { getIntervalFromSeconds } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI, STREAM_LONG_DATE_FORMAT, STREAM_MINIMUM_DATE_FORMAT, STREAM_SHORT_DATE_FORMAT } from "../../../constants";
 import moment from "moment-timezone";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 
 export const Streams = () => {
   const { publicKey } = useWallet();
@@ -200,7 +200,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-            ? formatAmount((streamDetail.escrowUnvestedAmount as number) / LAMPORTS_PER_SOL, 6)
+            ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
             : '0'}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
@@ -221,7 +221,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-            ? formatAmount((streamDetail.totalDeposits as number) / LAMPORTS_PER_SOL, 6, false)
+            ? formatAmount(streamDetail.totalDeposits, 6)
             : ''}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
@@ -237,7 +237,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-            ? formatAmount((streamDetail.escrowVestedAmount as number) / LAMPORTS_PER_SOL, 6)
+            ? formatAmount(streamDetail.escrowVestedAmount, 6)
             : ''}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
@@ -306,7 +306,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-            ? formatAmount((streamDetail.totalDeposits as number) / LAMPORTS_PER_SOL, 6, false)
+            ? formatAmount(streamDetail.totalDeposits, 6)
             : ''}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
@@ -322,7 +322,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-            ? formatAmount((streamDetail.escrowVestedAmount as number) / LAMPORTS_PER_SOL, 6)
+            ? formatAmount(streamDetail.escrowVestedAmount, 6)
             : ''}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
@@ -343,7 +343,7 @@ export const Streams = () => {
           </span>
           <span className="info-data">
           {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-            ? formatAmount((streamDetail.escrowUnvestedAmount as number) / LAMPORTS_PER_SOL, 6)
+            ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
             : '0'}
           &nbsp;
           {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}

@@ -189,6 +189,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (stream?.id) {
       const streamPublicKey = new PublicKey(stream.id);
       const detail = await getStream(connection, streamPublicKey, connection.commitment);
+      console.log('streamDetail', detail);
       updateStreamDetail(detail);
     }
   }
