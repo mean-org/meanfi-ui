@@ -32,7 +32,7 @@ export type StreamInfo = {
     cliffVestAmount: number,
     cliffVestPercent: number,
     beneficiaryAddress: PublicKey | string | undefined,
-    beneficiaryTokenAddress: PublicKey | string | undefined,
+    associatedToken: PublicKey | string | undefined,
     escrowVestedAmount: number,
     escrowUnvestedAmount: number,
     treasuryAddress: PublicKey | string | undefined,
@@ -196,6 +196,7 @@ export class MoneyStreaming {
                 treasuryATokenAddress,
                 streamAccount.publicKey,
                 beneficiary,
+                associatedToken,
                 rateAmount,
                 rateIntervalInSeconds || 60,
                 startUtc.valueOf() || Date.now(),
@@ -380,6 +381,5 @@ export class MoneyStreaming {
             data,
         });
     }
-
 
 }

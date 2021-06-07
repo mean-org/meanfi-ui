@@ -38,7 +38,7 @@ let defaultStreamInfo: StreamInfo = {
     cliffVestAmount: 0,
     cliffVestPercent: 0,
     beneficiaryAddress: undefined,
-    beneficiaryTokenAddress: undefined,
+    associatedToken: undefined,
     escrowVestedAmount: 0,
     escrowUnvestedAmount: 0,
     treasuryAddress: undefined,
@@ -69,13 +69,13 @@ function parseStreamData(
     startDateUtc = convertLocalDateToUTCIgnoringTimezone(startDateUtc);
 
     let rateAmount = Math.fround(decodedData.rate_amount);
-    let rateIntervalInSeconds = Math.fround(decodedData.rate_interval_in_seconds);
+    let rateIntervalInSeconds = parseFloat(u64Number.fromBuffer(decodedData.rate_interval_in_seconds).toString());
     let escrowVestedAmount = 0;
     let today = new Date();
     let utcNow = convertLocalDateToUTCIgnoringTimezone(today);
 
     if (utcNow.getTime() >= startDateUtc.getTime()) {
-        escrowVestedAmount = Math.fround(rateAmount * Constants.DECIMALS / rateIntervalInSeconds * (utcNow.getTime() - startDateUtc.getTime()));
+        escrowVestedAmount = Math.fround((rateAmount / rateIntervalInSeconds) * (utcNow.getTime() - startDateUtc.getTime()));
 
         if (escrowVestedAmount >= totalDeposits) {
             escrowVestedAmount = totalDeposits;
@@ -96,11 +96,11 @@ function parseStreamData(
     const id = friendly !== undefined ? streamId.toBase58() : streamId;
     const treasurerAddress = new PublicKey(decodedData.treasurer_address);
     const beneficiaryAddress = new PublicKey(decodedData.beneficiary_address);
-    const beneficiaryTokenAddress = new PublicKey(decodedData.beneficiary_token_address);
+    const beneficiaryAssociatedToken = new PublicKey(decodedData.stream_associated_token);
     const treasuryAddress = new PublicKey(decodedData.treasury_address);
-    const beneficiaryATokenAddressString = beneficiaryTokenAddress.toBase58() != Constants.DEFAULT_PUBLICKEY
-        ? beneficiaryTokenAddress.toBase58()
-        : (friendly ? beneficiaryTokenAddress.toBase58() : beneficiaryAddress);
+    const associatedToken = beneficiaryAssociatedToken.toBase58() != Constants.DEFAULT_PUBLICKEY
+        ? beneficiaryAssociatedToken.toBase58()
+        : (friendly ? beneficiaryAssociatedToken.toBase58() : beneficiaryAssociatedToken);
 
     Object.assign(stream, { id: id }, {
         initialized: decodedData.initialized,
@@ -109,11 +109,11 @@ function parseStreamData(
         rateAmount: rateAmount,
         rateIntervalInSeconds: rateIntervalInSeconds,
         startUtc: startDateUtc.toUTCString(),
-        rateCliffInSeconds: decodedData.rate_cliff_in_seconds,
+        rateCliffInSeconds: parseFloat(u64Number.fromBuffer(decodedData.rate_cliff_in_seconds).toString()),
         cliffVestAmount: decodedData.cliff_vest_amount,
         cliffVestPercent: decodedData.cliff_vest_percent,
         beneficiaryAddress: friendly !== undefined ? beneficiaryAddress.toBase58() : beneficiaryAddress,
-        beneficiaryTokenAddress: beneficiaryATokenAddressString,
+        associatedToken: associatedToken,
         escrowVestedAmount: escrowVestedAmount,
         escrowUnvestedAmount: Math.fround(totalDeposits - totalWithdrawals - escrowVestedAmount),
         treasuryAddress: friendly !== undefined ? treasuryAddress.toBase58() : treasuryAddress,
@@ -145,15 +145,15 @@ export async function getStream(
         let signatures = await connection.getConfirmedSignaturesForAddress2(id, {}, commitment);
 
         if (signatures.length > 0) {
-            stream = Object.assign({
-                transactionSignature: signatures[0].signature,
-                blockTime: signatures[0].blockTime as number
 
-            }, parseStreamData(
+            stream = Object.assign({}, parseStreamData(
                 id,
                 accountInfo?.data,
                 friendly
             ));
+
+            stream.transactionSignature = signatures[0].signature;
+            stream.blockTime = signatures[0].blockTime as number;
         }
     }
 
@@ -187,7 +187,7 @@ export async function listStreams(
                 friendly
             ));
 
-            if ((treasurer && treasurer.toBase58() === info.treasurerAddress) || !treasurer ) {
+            if ((treasurer && treasurer.toBase58() === info.treasurerAddress) || !treasurer) {
                 included = true;
             } else if ((beneficiary && beneficiary.toBase58() === info.beneficiaryAddress) || !beneficiary) {
                 included = true;

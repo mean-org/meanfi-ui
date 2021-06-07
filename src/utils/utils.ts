@@ -7,6 +7,7 @@ import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from 
 import { TokenInfo } from "@solana/spl-token-registry";
 import { deserializeMint } from "../contexts/accounts";
 import { getTokenByMintAddress } from "./tokens";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -267,11 +268,13 @@ export function isPositiveNumber(str: string): boolean {
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string): string => {
-  const tokenFromTokenList = getTokenByMintAddress(address);
+  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  const inputAmount = parseFloat(amount.toString());
   if (tokenFromTokenList) {
-    const inputAmount = parseFloat(amount.toString());
-    const convertedToTokenUnit = (inputAmount / (10 ** 6));
-    return `${formatAmount(convertedToTokenUnit, 6) || 0} ${tokenFromTokenList.symbol}`;
+    const convertedToTokenUnit = (inputAmount / (10 ** tokenFromTokenList.decimals));
+    return `${formatAmount(convertedToTokenUnit, tokenFromTokenList.decimals) || 0} ${tokenFromTokenList.symbol}`;
+  } else if (amount) {
+    return `${formatAmount(inputAmount, 2)}`;
   }
   return '';
 }

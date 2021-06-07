@@ -242,13 +242,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
               {/* {streamDetail.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
                 ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
                 : '0'}
               &nbsp;
-              {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+              {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
               &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
@@ -270,13 +270,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
               : '--'}
             {/* {streamDetail.totalWithdrawals && isValidNumber(streamDetail.totalWithdrawals.toString())
               ? formatAmount(streamDetail.totalWithdrawals, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -294,13 +294,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data large">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
               : '--'}
             {/* {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -393,13 +393,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
               : '--'}
             {/* {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
               ? formatAmount(streamDetail.totalDeposits, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
             ) : (
               <span className="info-data">&nbsp;</span>
@@ -417,13 +417,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
               : '--'}
             {/* {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -446,13 +446,13 @@ export const Streams = () => {
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
             {/* {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
+            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -488,7 +488,7 @@ export const Streams = () => {
                       <div className="rate-amount">
                         {item && item.rateAmount && isValidNumber(item.rateAmount.toString()) ? formatAmount(item.rateAmount, 2) : '--'}
                         &nbsp;
-                        {item && item.beneficiaryTokenAddress ? getEscrowTokenSymbol(item.beneficiaryTokenAddress as string) : ''}
+                        {item && item.associatedToken ? getEscrowTokenSymbol(item.associatedToken as string) : ''}
                       </div>
                       <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
                     </div>
