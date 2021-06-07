@@ -541,7 +541,7 @@ export const RepeatingPayment = () => {
         let fromParsedDate = new Date(parsedDate);
         console.log('UTC date input (local):', fromParsedDate.toUTCString());
         const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
-        console.log('UTC date (without timezone):', fromParsedDate.toUTCString());
+        console.log('UTC date (without timezone):', utcDate.toUTCString());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,

@@ -192,7 +192,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const openStreamById = async (streamId: string) => {
     const streamPublicKey = new PublicKey(streamId);
-    const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
+    const detail = await getStream(connection, streamPublicKey, 'finalized', true);
     // if (detail) {
     //   console.log('stream ID', (detail.id as PublicKey).toBase58());
     // }
@@ -204,10 +204,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedStream(stream);
     if (stream?.id) {
       const streamPublicKey = new PublicKey(stream.id);
-      const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
-      if (detail) {
-        console.log('stream ID', (detail.id as PublicKey).toBase58());
-      }
+      const detail = await getStream(connection, streamPublicKey, 'finalized', true);
       console.log('streamDetail', detail);
       updateStreamDetail(detail);
     }
@@ -266,15 +263,13 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
 
-    console.log('Calling listStreams...');
-    const streams = await listStreams(connection, programId, publicKey, publicKey, 'confirmed', true);
-    console.log('streams', streams);
+    const streams = await listStreams(connection, programId, publicKey, publicKey, 'finalized', true);
     setStreamList(streams);
     if (!selectedStream && streams?.length) {
       updateSelectedStream(streams[0]);
       if (streams[0]?.id) {
         const streamPublicKey = new PublicKey(streams[0].id);
-        const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
+        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
         updateStreamDetail(detail);
       }
     }

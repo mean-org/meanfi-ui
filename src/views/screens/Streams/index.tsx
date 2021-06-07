@@ -5,7 +5,7 @@ import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock,
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, isValidNumber, shortenAddress } from "../../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../../utils/utils";
 import { getTokenByMintAddress } from "../../../utils/tokens";
 import { getIntervalFromSeconds } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI, STREAM_LONG_DATE_FORMAT, STREAM_MINIMUM_DATE_FORMAT, STREAM_SHORT_DATE_FORMAT } from "../../../constants";
@@ -13,6 +13,7 @@ import moment from "moment-timezone";
 import { PublicKey } from "@solana/web3.js";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
+import { useConnection } from "../../../contexts/connection";
 
 export const Streams = () => {
   const { connected, publicKey } = useWallet();
@@ -31,9 +32,6 @@ export const Streams = () => {
       if (streamList && streamList.length === 0) {
         setCurrentScreen("contract");
       }
-    }
-    if (streamList?.length) {
-      console.log('streamList', streamList);
     }
   });
 
@@ -59,6 +57,10 @@ export const Streams = () => {
 
   const isInboundStream = (item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
+  }
+
+  const getAmountWithSymbol = (amount: any, address: string) => {
+    return getTokenAmountAndSymbolByTokenAddress(amount, address);
   }
 
   const getStreamIcon = (item: StreamInfo) => {
@@ -193,8 +195,8 @@ export const Streams = () => {
             </span>
             <span className="info-data">
               {streamDetail && (
-                <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${(streamDetail.treasurerAddress as PublicKey).toBase58()}`} target="_blank" rel="noopener noreferrer">
-                  {shortenAddress(`${(streamDetail.treasurerAddress as PublicKey).toBase58()}`)}
+                <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${streamDetail.treasurerAddress}`} target="_blank" rel="noopener noreferrer">
+                  {shortenAddress(`${streamDetail.treasurerAddress}`)}
                 </a>
               )}
             </span>
@@ -239,15 +241,18 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data">
-              {streamDetail.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+              {/* {streamDetail.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
                 ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
                 : '0'}
               &nbsp;
-              {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
+              {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
               &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-              : '0'}
+              : ''}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -264,11 +269,14 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data">
-            {streamDetail.totalWithdrawals && isValidNumber(streamDetail.totalWithdrawals.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+            {/* {streamDetail.totalWithdrawals && isValidNumber(streamDetail.totalWithdrawals.toString())
               ? formatAmount(streamDetail.totalWithdrawals, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -285,11 +293,14 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data large">
-            {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+            {/* {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -302,7 +313,7 @@ export const Streams = () => {
         <Button
           block
           className="withdraw-cta"
-          type="ghost"
+          type="text"
           shape="round"
           size="small"
           onClick={() => {}} >
@@ -313,7 +324,7 @@ export const Streams = () => {
           type="text"
           size="small"
           className="ant-btn-shaded"
-          onClick={showOpenStreamModal}
+          onClick={() => {}}
           icon={<EllipsisOutlined />}>
         </Button>
       </div>
@@ -358,6 +369,7 @@ export const Streams = () => {
           </div>
         </Col>
       </Row>
+
       {/* Started date */}
       <div className="mb-12px">
         <div className="info-label">Started</div>
@@ -370,6 +382,7 @@ export const Streams = () => {
           </span>
         </div>
       </div>
+
       {/* Total deposit */}
       <div className="mb-12px">
         <div className="info-label">Total amount you have deposited since stream started</div>
@@ -379,17 +392,21 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data">
-            {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+            {/* {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
               ? formatAmount(streamDetail.totalDeposits, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
             </span>
             ) : (
               <span className="info-data">&nbsp;</span>
             )}
         </div>
       </div>
+
       {/* Funds sent (Total Vested) */}
       <div className="mb-12px">
         <div className="info-label">Funds sent to recepient</div>
@@ -399,17 +416,21 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data">
-            {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+            {/* {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail?.beneficiaryTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
           )}
         </div>
       </div>
+
       {/* Funds left (Total Unvested) */}
       <div className="mb-12px">
         <div className="info-label">{streamDetail && !streamDetail?.escrowUnvestedAmount
@@ -424,11 +445,14 @@ export const Streams = () => {
           </span>
           {streamDetail ? (
             <span className="info-data">
-            {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
+            {streamDetail
+              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.beneficiaryTokenAddress as string)
+              : '--'}
+            {/* {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail?.beneficiaryTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol(streamDetail.beneficiaryTokenAddress as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -452,7 +476,7 @@ export const Streams = () => {
                 const onStreamClick = () => setSelectedStream(item);
                 return (
                   <div key={`${index + 50}`} onClick={onStreamClick}
-                    className={`transaction-list-row ${streamDetail && (streamDetail.id as PublicKey).toBase58() === item.id ? 'selected' : ''}`}>
+                    className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
                     <div className="icon-cell">
                       {getStreamIcon(item)}
                     </div>

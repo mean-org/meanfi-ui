@@ -2,9 +2,11 @@ import BN from "bn.js";
 import { useCallback, useState } from "react";
 import { MintInfo } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { deserializeMint } from "../contexts/accounts";
+import { getTokenByMintAddress } from "./tokens";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -262,4 +264,14 @@ export function isValidNumber(str: string): boolean {
 export function isPositiveNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
   return POSITIVE_NUMBER_PATTERN.test(str);
+}
+
+export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string): string => {
+  const tokenFromTokenList = getTokenByMintAddress(address);
+  if (tokenFromTokenList) {
+    const inputAmount = parseFloat(amount.toString());
+    const convertedToTokenUnit = (inputAmount / (10 ** 6));
+    return `${formatAmount(convertedToTokenUnit, 6) || 0} ${tokenFromTokenList.symbol}`;
+  }
+  return '';
 }
