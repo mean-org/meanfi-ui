@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button } from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined, EllipsisOutlined } from "@ant-design/icons";
 import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock, IconShare } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
@@ -255,17 +255,17 @@ export const Streams = () => {
         </div>
       </div>
 
-      {/* Total deposit */}
+      {/* Amount withdrawn */}
       <div className="mb-12px">
-        <div className="info-label">Total amount you have deposited since stream started</div>
+        <div className="info-label">Total amount you have withdrawn since stream started</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconDownload className="mean-svg-icons" />
           </span>
           {streamDetail ? (
             <span className="info-data">
-            {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-              ? formatAmount(streamDetail.totalDeposits, 6)
+            {streamDetail.totalWithdrawals && isValidNumber(streamDetail.totalWithdrawals.toString())
+              ? formatAmount(streamDetail.totalWithdrawals, 6)
               : '0'}
             &nbsp;
             {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
@@ -275,15 +275,16 @@ export const Streams = () => {
           )}
         </div>
       </div>
-      {/* Funds sent (Total Vested) */}
+
+      {/* Funds available to withdraw now (Total Vested) */}
       <div className="mb-12px">
-        <div className="info-label">Funds sent to recepient</div>
+        <div className="info-label">Funds available to withdraw now</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
           {streamDetail ? (
-            <span className="info-data">
+            <span className="info-data large">
             {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
@@ -294,6 +295,27 @@ export const Streams = () => {
             <span className="info-data">&nbsp;</span>
           )}
         </div>
+      </div>
+
+      {/* Withdraw button */}
+      <div className="mb-12px withdraw-container">
+        <Button
+          block
+          className="withdraw-cta"
+          type="ghost"
+          shape="round"
+          size="small"
+          onClick={() => {}} >
+          Withdraw funds
+        </Button>
+        <Button
+          shape="round"
+          type="text"
+          size="small"
+          className="ant-btn-shaded"
+          onClick={showOpenStreamModal}
+          icon={<EllipsisOutlined />}>
+        </Button>
       </div>
     </div>
   </>
@@ -430,7 +452,7 @@ export const Streams = () => {
                 const onStreamClick = () => setSelectedStream(item);
                 return (
                   <div key={`${index + 50}`} onClick={onStreamClick}
-                    className={`transaction-row ${streamDetail && (streamDetail.id as PublicKey).toBase58() === item.id ? 'selected' : ''}`}>
+                    className={`transaction-list-row ${streamDetail && (streamDetail.id as PublicKey).toBase58() === item.id ? 'selected' : ''}`}>
                     <div className="icon-cell">
                       {getStreamIcon(item)}
                     </div>

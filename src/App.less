@@ -1312,8 +1312,6 @@ em {
   }
 }
 
-
-
 .contract-card-list {
   max-height: 400px;
   display: flex;
@@ -1529,9 +1527,33 @@ em {
       }
     }
   }
+  .withdraw-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    .withdraw-cta {
+      flex: 0 1 60%;
+      width: 60%;
+      margin-right: 10px;
+    }
+    .leave-stream-cta {
+      flex: 0 0 auto;
+      button.ant-btn-icon-only.ant-btn-shaded {
+        padding: 8px;
+        .anticon.anticon-search {
+          width: 30px;
+          height: 30px;
+          font-size: 24px;
+          margin-top: 2px;
+        }
+      }
+    }
+  }
 }
 
-.transaction-row {
+.transaction-list-row {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
