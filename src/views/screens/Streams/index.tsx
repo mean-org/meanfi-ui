@@ -309,13 +309,14 @@ export const Streams = () => {
       </div>
 
       {/* Withdraw button */}
-      <div className="mb-12px withdraw-container">
+      <div className="mt-4 mb-12px withdraw-container">
         <Button
           block
           className="withdraw-cta"
           type="text"
           shape="round"
           size="small"
+          disabled={!streamDetail || !streamDetail.escrowVestedAmount}
           onClick={() => {}} >
           Withdraw funds
         </Button>
@@ -459,6 +460,28 @@ export const Streams = () => {
           )}
         </div>
       </div>
+
+      {/* Top up (add funds) */}
+      <div className="mt-4 mb-12px withdraw-container">
+        <Button
+          block
+          className="withdraw-cta"
+          type="text"
+          shape="round"
+          size="small"
+          onClick={() => {}} >
+          Top up (add funds)
+        </Button>
+        <Button
+          shape="round"
+          type="text"
+          size="small"
+          className="ant-btn-shaded"
+          onClick={() => {}}
+          icon={<EllipsisOutlined />}>
+        </Button>
+      </div>
+
     </div>
   </>
   );
