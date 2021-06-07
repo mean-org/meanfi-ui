@@ -1,6 +1,8 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
+import { useUserBalance } from "../../hooks";
 import { IconCaretDown } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
@@ -8,8 +10,13 @@ export const HomeView = () => {
   const {
     currentScreen,
     contract,
+    streamList,
     setCurrentScreen
   } = useContext(AppStateContext);
+
+  // const {  } = useUserBalance();
+  const { connected } = useWallet();
+  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -28,6 +35,26 @@ export const HomeView = () => {
 
     return () => {};
   }, [currentScreen, setCurrentScreen]);
+
+  // Effect signal token balance refresh on wallet connected status change
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected) {
+        if (streamList && streamList.length > 0) {
+          setCurrentScreen("streams");
+          setPreviousWalletConnectState(connected);
+        }
+      }
+    }
+
+    return () => {};
+  }, [
+    connected,
+    streamList,
+    previousWalletConnectState,
+    setCurrentScreen
+  ]);
 
   const renderPreFooter = (
     <div className="pre-footer-notice">
