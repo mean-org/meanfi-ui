@@ -43,8 +43,10 @@ export const HomeView = () => {
       if (!previousWalletConnectState && connected) {
         if (streamList && streamList.length > 0) {
           setCurrentScreen("streams");
-          setPreviousWalletConnectState(connected);
+          setPreviousWalletConnectState(true);
         }
+      } else if (previousWalletConnectState && !connected) {
+        setPreviousWalletConnectState(false);
       }
     }
 

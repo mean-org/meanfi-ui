@@ -60,6 +60,7 @@
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
   --wallet-provider-background: var(--color-secondary-alpha-85);
+  --bottom-shadow-up-05: 1px -2px 6px rgba(64,64,64, 0.05);
 }
 
 // Inverted / Dark theme
@@ -122,6 +123,7 @@
   --wallet-wrapper-color: var(--color-white);
   --wallet-wrapper-bg: var(--color-black);
   --wallet-provider-background: var(--color-secondary-alpha-10);
+  --bottom-shadow-up-05: 1px -2px 6px rgba(92,92,92, 0.05);
 }
 
 body {
@@ -1407,11 +1409,12 @@ em {
   }
   @media (min-width: 768px) {
     min-height: 60vh;
-    max-height: 90vh;
+    max-height: 82vh;
     .streams-container,
     .stream-details-container {
       flex: 0 0 50%;
       max-width: 50%;
+      height: 84vh;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -1450,11 +1453,12 @@ em {
       @media (min-width: 768px) {
         display: flex;
         flex-direction: column;
-        height: 100%;
+        height: calc(100% - 4.5vh);
         z-index: 1;
         transform: translateX(1rem);
         .item-block {
-          flex: 1 1 auto;
+          width: 100%;
+          height: calc(100% - 5.4vh);
         }
         .bottom-ctas {
           flex: 0 0 auto;
@@ -1462,7 +1466,10 @@ em {
           flex-direction: row;
           justify-content: center;
           align-items: center;
-          padding-right: 1.8rem;
+          padding: 12px 1.8rem 0 0;
+          border-top: 1px solid var(--color-whitesmoke);
+          margin-left: -2.6%;
+          box-shadow: var(--bottom-shadow-up-05);
         }
       }
     }

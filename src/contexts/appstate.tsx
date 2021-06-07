@@ -261,7 +261,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
 
-    const streams = await listStreams(connection, programId, publicKey, publicKey, connection.commitment, true);
+    const streams = await listStreams(connection, programId, undefined, undefined, connection.commitment, true);
     setStreamList(streams);
     if (!selectedStream && streams?.length) {
       updateSelectedStream(streams[0]);

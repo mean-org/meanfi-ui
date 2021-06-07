@@ -421,7 +421,7 @@ export const Streams = () => {
         <div className="streams-heading">My Money Streams</div>
         <div className="inner-container">
           {/* item block */}
-          <div className="item-block">
+          <div className="item-block vertical-scroll">
             {streamList && streamList.length ? (
               streamList.map((item, index) => {
                 const onStreamClick = () => setSelectedStream(item);
