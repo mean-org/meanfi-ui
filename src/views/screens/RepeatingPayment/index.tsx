@@ -1,7 +1,7 @@
 import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin } from "antd";
 import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnectionConfig } from "../../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
@@ -28,6 +28,8 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenAccount } from "../../../models";
+import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -35,11 +37,14 @@ export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
+  const accounts = useAccountsContext();
   const { connected, wallet } = useWallet();
   const {
     contract,
     tokenList,
     selectedToken,
+    tokenBalance,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -318,9 +323,9 @@ export const RepeatingPayment = () => {
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
-           selectedToken?.balance &&
+           tokenBalance &&
            fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= selectedToken?.balance
+           parseFloat(fromCoinAmount) <= tokenBalance
             ? true
             : false;
   }
@@ -342,13 +347,13 @@ export const RepeatingPayment = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? "Connect your wallet"
-      : !selectedToken || !selectedToken.balance
+      : !selectedToken || !tokenBalance
       ? "No balance"
       : !recipientAddress
       ? "Select recipient"
       : !fromCoinAmount
       ? "Enter amount"
-      : parseFloat(fromCoinAmount) > selectedToken.balance
+      : parseFloat(fromCoinAmount) > tokenBalance
       ? "Amount exceeds your balance"
       : !paymentStartDate
       ? "Set a valid date"
@@ -376,22 +381,22 @@ export const RepeatingPayment = () => {
     label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
     switch (rate) {
       case PaymentRateType.PerMinute:
-        label += "per minute";
+        label += " per minute";
         break;
       case PaymentRateType.PerHour:
-        label += "per hour";
+        label += " per hour";
         break;
       case PaymentRateType.PerDay:
-        label += "per day";
+        label += " per day";
         break;
       case PaymentRateType.PerWeek:
-        label += "per week";
+        label += " per week";
         break;
       case PaymentRateType.PerMonth:
-        label += "per month";
+        label += " per month";
         break;
       case PaymentRateType.PerYear:
-        label += "per year";
+        label += " per year";
         break;
       default:
         break;
@@ -522,8 +527,14 @@ export const RepeatingPayment = () => {
         console.log('Beneficiary address:', recipientAddress);
         const destPubkey = new PublicKey(recipientAddress as string);
 
-        console.log('associatedToken:', destinationToken?.address);
-        const associatedToken = new PublicKey(destinationToken?.address as string);
+        console.log('associatedToken:', selectedToken?.address);
+        const associatedToken = new PublicKey(selectedToken?.address as string);
+        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
+        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === selectedToken?.address) as TokenAccount;
+        const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
+        const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+        const amount = parseFloat(fromCoinAmount as string);
+        const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('parsed paymentStartDate:', parsedDate);
@@ -548,7 +559,7 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                                  // streamName
-          fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
+          fundingAmount: convertedToTokenUnit                             // fundingAmount
         };
         console.log('data:', data);
         return await moneyStream.getCreateStreamTransaction(
@@ -562,7 +573,7 @@ export const RepeatingPayment = () => {
           recipientNote
             ? recipientNote.trim()
             : undefined,                                    // streamName
-          parseFloat(fromCoinAmount as string)              // fundingAmount
+          convertedToTokenUnit                              // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);
@@ -705,6 +716,7 @@ export const RepeatingPayment = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+    setSelectedToken(undefined);
   }
 
   const getTransactionModalTitle = () => {
@@ -897,16 +909,15 @@ export const RepeatingPayment = () => {
           <span className="field-label-right">
             <span>Balance:</span>
             <span className="balance-amount">
-              {`${
-                selectedToken?.balance
-                  ? formatAmount(selectedToken.balance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+              {`${selectedToken && tokenBalance
+                  ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
                   : "Unknown"
               }`}
             </span>
             <span>
               (~$
-              {selectedToken?.balance && effectiveRate
-                ? formatAmount(selectedToken.balance * effectiveRate, 2)
+              {tokenBalance && effectiveRate
+                ? formatAmount(tokenBalance as number * effectiveRate, 2)
                 : "0.00"})
             </span>
           </span>
@@ -931,13 +942,13 @@ export const RepeatingPayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {selectedToken.balance && (
+                {selectedToken && (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          selectedToken.balance as number,
+                          tokenBalance as number,
                           selectedToken.decimals
                         )
                       )

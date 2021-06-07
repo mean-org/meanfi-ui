@@ -244,7 +244,7 @@ export const Streams = () => {
               &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-              : ''}
+              : '0'}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -263,7 +263,7 @@ export const Streams = () => {
             <span className="info-data">
             {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
               ? formatAmount(streamDetail.totalDeposits, 6)
-              : ''}
+              : '0'}
             &nbsp;
             {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
             </span>
@@ -283,7 +283,7 @@ export const Streams = () => {
             <span className="info-data">
             {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
-              : ''}
+              : '0'}
             &nbsp;
             {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
             </span>
@@ -327,7 +327,7 @@ export const Streams = () => {
               &nbsp;
               {streamDetail && streamDetail.beneficiaryWithdrawalAddress
                 ? getEscrowTokenSymbol(streamDetail.beneficiaryWithdrawalAddress as string)
-                : ''}
+                : '0'}
               {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
             </span>
           </div>
@@ -356,7 +356,7 @@ export const Streams = () => {
             <span className="info-data">
             {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
               ? formatAmount(streamDetail.totalDeposits, 6)
-              : ''}
+              : '0'}
             &nbsp;
             {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
             </span>
@@ -376,7 +376,7 @@ export const Streams = () => {
             <span className="info-data">
             {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
-              : ''}
+              : '0'}
             &nbsp;
             {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
             </span>

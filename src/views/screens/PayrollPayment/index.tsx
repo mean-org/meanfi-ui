@@ -1,71 +1,81 @@
-import { Button, Modal, Menu, Dropdown, DatePicker, Divider } from "antd";
-import { QrcodeOutlined } from "@ant-design/icons";
+import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin } from "antd";
+import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnectionConfig } from "../../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
-  fromLamports,
   isValidNumber,
-  useLocalStorageState,
 } from "../../../utils/utils";
-import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { Identicon } from "../../../components/Identicon";
-import { cache } from "../../../contexts/accounts";
 import { getPrices } from "../../../utils/api";
 import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentRateType, TimesheetRequirementOption } from "../../../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../../models/enums";
 import {
   convertLocalDateToUTCIgnoringTimezone,
+  getAmountWithTokenSymbol,
+  getFairPercentForInterval,
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
-  getTimesheetRequirementOptionLabel
+  getRateIntervalInSeconds,
+  getTimesheetRequirementOptionLabel,
+  getTransactionOperationDescription
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
-import { useUserAccounts } from "../../../hooks";
 import { AppStateContext } from "../../../contexts/appstate";
+import { MoneyStreaming } from "../../../money-streaming/money-streaming";
+import { PublicKey, Transaction } from "@solana/web3.js";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
+import { TokenAccount } from "../../../models";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const PayrollPayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
-  const { connected } = useWallet();
-  const { userAccounts } = useUserAccounts();
+  const connection = useConnection();
+  const accounts = useAccountsContext();
+  const { connected, wallet } = useWallet();
   const {
     contract,
+    tokenList,
+    selectedToken,
+    tokenBalance,
     recipientAddress,
     recipientNote,
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
     paymentRateFrequency,
+    transactionStatus,
     timeSheetRequirement,
+    setCurrentScreen,
+    setSelectedToken,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
     setFromCoinAmount,
     setPaymentRateAmount,
     setPaymentRateFrequency,
-    setTimeSheetRequirement
+    setTransactionStatus,
+    setTimeSheetRequirement,
+    setLastCreatedTransactionSignature,
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
-
-  // const [paymentRateInterval, setPaymentRateInterval] = useState(getPaymentRateIntervalByRateType(PaymentRateType.PerMonth));
+  const [isBusy, setIsBusy] = useState(false);
 
   const [coinPrices, setCoinPrices] = useState<any>(null);
-
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [effectiveRate, setEffectiveRate] = useState<number>(0);
 
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
-  const [availableTokenList, setAvailableTokenList] = useState<TokenInfo[]>([]);
-  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
-  const [selectedToken, setSelectedToken] = useLocalStorageState("userSelectedToken");
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
   // Token selection modal
@@ -83,7 +93,26 @@ export const PayrollPayment = () => {
     closeQrScannerModal();
   };
 
+  // Transaction execution modal
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
   // Event handling
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      resetContractValues();
+    }
+  }
+
+  const handleGoToStreamsClick = () => {
+    setCurrentScreen("streams");
+  };
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -151,83 +180,23 @@ export const PayrollPayment = () => {
     }
   };
 
-  // const handlePaymentRateIntervalChange = (e: any) => {
-  //   const newValue = e.target.value;
-  //   if (newValue === null || newValue === undefined || newValue === "") {
-  //     setPaymentRateInterval("");
-  //   } else if (isPositiveNumber(newValue)) {
-  //     setPaymentRateInterval(newValue);
-  //   }
-  // };
-
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
     // setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
   }
 
-  // Effect to load token list
+  // Effect to set a default beneficiary token
   useEffect(() => {
-    if (shouldLoadTokens) {
-      setShouldLoadTokens(false);
-      new TokenListProvider().resolve().then((tokens) => {
-        const filteredTokens = tokens
-          .filterByClusterSlug(connectionConfig.env)
-          .getList();
-        // Save a copy of available tokens for the destination account
-        setAvailableTokenList(filteredTokens);
-        // Preset a token for the destination account
-        if (!destinationToken) {
-          setDestinationToken(filteredTokens[0]);
-        }
-        // List loaded, now reflect it as it is if no wallet connected
-        // If a wallet gets connected then filter by tokens the user own
-        if (connected && userAccounts && userAccounts.length > 0) {
-          const tokensWithBalance: TokenInfo[] = [];
-          for (let i = 0; i < userAccounts.length; i++) {
-            const account = userAccounts[i];
-            const mintAddress = account.info.mint.toBase58();
-            const mint = cache.get(mintAddress);
-            const tokenInfoItem = filteredTokens.find(t => t.address === mintAddress);
-            if (mint && tokenInfoItem) {
-              const balance = fromLamports(account.info.amount.toNumber(), mint.info);
-              tokensWithBalance.push(Object.assign({}, tokenInfoItem, {
-                balance
-              }));
-            }
-          }
-          setFilteredTokenList(tokensWithBalance);
-          console.log('tokensWithBalance:', tokensWithBalance);
-          // Preset a token
-          if (tokensWithBalance?.length) {
-            setSelectedToken(tokensWithBalance[0]);
-            console.log("Preset token:", tokensWithBalance[0]);
-          }
-        } else {
-          setFilteredTokenList(filteredTokens);
-          console.log("tokens", filteredTokens);
-          // Preset a token
-          if (!selectedToken && filteredTokens) {
-            setSelectedToken(filteredTokens[0]);
-            console.log("Preset token:", filteredTokens[0]);
-          }
-        }
-      });
-    };
+
+    if (tokenList) {
+      // Preset a token for the beneficiary account
+      if (!destinationToken) {
+        setDestinationToken(tokenList[0] as TokenInfo);
+      }
+    }
 
     return () => {};
-  }, [
-    connected,
-    coinPrices,
-    userAccounts,
-    selectedToken,
-    filteredTokenList,
-    connectionConfig,
-    shouldLoadTokens,
-    setSelectedToken,
-    destinationToken,
-    setFilteredTokenList,
-    setEffectiveRate
-  ]);
+  }, [tokenList, destinationToken]);
 
   // Effect to load coin prices
   useEffect(() => {
@@ -238,9 +207,11 @@ export const PayrollPayment = () => {
           .then((prices) => {
             console.log("Coin prices:", prices);
             setCoinPrices(prices);
-            setEffectiveRate(
-              prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
-            );
+            if (selectedToken) {
+              setEffectiveRate(
+                prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
+              );
+            }
           })
           .catch(() => setCoinPrices(null));
       } catch (error) {
@@ -304,9 +275,10 @@ export const PayrollPayment = () => {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setShouldLoadTokens(true);
+          setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(null);
+        setSelectedToken(undefined);
         setShouldLoadTokens(true);
       }
       setPreviousWalletConnectState(connected);
@@ -319,6 +291,7 @@ export const PayrollPayment = () => {
     connected,
     shouldLoadTokens,
     previousWalletConnectState,
+    tokenList,
     setSelectedToken,
     setShouldLoadTokens,
     setPreviousWalletConnectState,
@@ -353,9 +326,11 @@ export const PayrollPayment = () => {
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
-           selectedToken.balance &&
+           tokenBalance &&
            fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= selectedToken.balance;
+           parseFloat(fromCoinAmount) <= tokenBalance
+            ? true
+            : false;
   }
 
   const arePaymentSettingsValid = (): boolean => {
@@ -366,10 +341,6 @@ export const PayrollPayment = () => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       result = false;
-    } else if (rateAmount > parseFloat(fromCoinAmount || '0')) {
-      result = false;
-    // } else if (paymentRateFrequency === PaymentRateType.Other && !paymentRateInterval) {
-    //   result = false;
     }
 
     return result;
@@ -379,13 +350,13 @@ export const PayrollPayment = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? "Connect your wallet"
-      : !selectedToken || !selectedToken.balance
+      : !selectedToken || !tokenBalance
       ? "No balance"
       : !recipientAddress
       ? "Select recipient"
       : !fromCoinAmount
       ? "Enter amount"
-      : parseFloat(fromCoinAmount) > selectedToken.balance
+      : parseFloat(fromCoinAmount) > tokenBalance
       ? "Amount exceeds your balance"
       : !paymentStartDate
       ? "Set a valid date"
@@ -405,40 +376,46 @@ export const PayrollPayment = () => {
       : '';
   }
 
-  /*
   const getPaymentRateLabel = (
     rate: PaymentRateType,
-    amount: string,
-    interval: string
+    amount: string | undefined
   ): string => {
     let label: string;
-    label = `${getAmountWithTokenSymbol(amount, selectedToken)} `;
+    label = `${selectedToken ? getAmountWithTokenSymbol(amount, selectedToken) : '--'}`;
     switch (rate) {
+      case PaymentRateType.PerMinute:
+        label += " per minute";
+        break;
       case PaymentRateType.PerHour:
-        label += "per hour";
+        label += " per hour";
         break;
       case PaymentRateType.PerDay:
-        label += "per day";
+        label += " per day";
         break;
       case PaymentRateType.PerWeek:
-        label += "per week";
+        label += " per week";
         break;
       case PaymentRateType.PerMonth:
-        label += "per month";
+        label += " per month";
         break;
       case PaymentRateType.PerYear:
-        label += "per year";
+        label += " per year";
         break;
-      // case PaymentRateType.Other:
-      // const intervalNumber = parseInt(interval, 10);
-      // label += `every ${timeConvert(intervalNumber)}`;
       default:
         break;
     }
     return label;
   };
-  */
-  
+
+  const getRecommendedFundingAmount = () => {
+    const rateAmount = parseFloat(paymentRateAmount as string);
+    const percent = getFairPercentForInterval(paymentRateFrequency);
+    const recommendedMinAmount = percent * rateAmount || 0;
+    const formatted = formatAmount(recommendedMinAmount, selectedToken?.decimals, true);
+
+    // String to obtain: 0.21 SOL (10%).
+    return `${parseFloat(formatted).toString()} ${selectedToken?.symbol}.`;
+  }
   // Prefabrics
 
   const paymentRateOptionsMenu = (
@@ -455,33 +432,13 @@ export const PayrollPayment = () => {
     </Menu>
   );
 
-  const timeSheetRequirementOptionsMenu = (
-    <Menu>
-      <Menu.Item
-        key={TimesheetRequirementOption[0]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired)}
-      </Menu.Item>
-      <Menu.Item
-        key={TimesheetRequirementOption[1]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets)}
-      </Menu.Item>
-      <Menu.Item
-        key={TimesheetRequirementOption[2]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout)}
-      </Menu.Item>
-    </Menu>
-  );
-
   const renderAvailableTokenList = (
     <>
-      {destinationToken && availableTokenList ? (
-        availableTokenList.map((token, index) => {
-          const onClick = function () {
+      {destinationToken && tokenList ? (
+        tokenList.map((token, index) => {
+          const onClick = () => {
             setDestinationToken(token);
-            console.log("destination token selected:", token.symbol);
+            console.log("token selected:", token);
             onCloseTokenSelector();
           };
           return (
@@ -512,11 +469,11 @@ export const PayrollPayment = () => {
 
   const renderUserTokenList = (
     <>
-      {selectedToken && filteredTokenList ? (
-        filteredTokenList.map((token, index) => {
-          const onClick = function () {
+      {selectedToken && tokenList ? (
+        tokenList.map((token, index) => {
+          const onClick = () => {
             setSelectedToken(token);
-            console.log("token selected:", token.symbol);
+            console.log("token selected:", token);
             setEffectiveRate(
               coinPrices && coinPrices[token.symbol]
                 ? coinPrices[token.symbol]
@@ -550,11 +507,260 @@ export const PayrollPayment = () => {
     </>
   );
 
+  const timeSheetRequirementOptionsMenu = (
+    <Menu>
+      <Menu.Item
+        key={TimesheetRequirementOption[0]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[1]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[2]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout)}
+      </Menu.Item>
+    </Menu>
+  );
+
   // Main action
 
-  const onTransactionStart = () => {
-    console.log("Start transaction for contract type:", contract?.name);
+  const onTransactionStart = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    // Init a streaming operation
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log("Start transaction for contract type:", contract?.name);
+        console.log('Wallet address:', wallet?.publicKey?.toBase58());
+        const senderPubkey = wallet.publicKey as PublicKey;
+
+        console.log('Beneficiary address:', recipientAddress);
+        const destPubkey = new PublicKey(recipientAddress as string);
+
+        console.log('associatedToken:', selectedToken?.address);
+        const associatedToken = new PublicKey(selectedToken?.address as string);
+        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
+        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === selectedToken?.address) as TokenAccount;
+        const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
+        const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+        const amount = parseFloat(fromCoinAmount as string);
+        const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
+
+        const parsedDate = Date.parse(paymentStartDate as string);
+        console.log('parsed paymentStartDate:', parsedDate);
+        let fromParsedDate = new Date(parsedDate);
+        console.log('UTC date input (local):', fromParsedDate.toUTCString());
+        const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
+        console.log('UTC date (without timezone):', fromParsedDate.toUTCString());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.CreateTransaction
+        });
+        // Create a transaction
+        const data = {
+          treasurer: senderPubkey,                                        // treasurer
+          beneficiary: destPubkey,                                        // beneficiary
+          treasury: null,                                                 // treasury
+          associatedToken: associatedToken,                               // associatedToken
+          rateAmount: parseFloat(paymentRateAmount as string),            // rateAmount
+          rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+          startUtc: utcDate,                                              // startUtc
+          streamName: recipientNote
+            ? recipientNote.trim()
+            : undefined,                                                  // streamName
+          fundingAmount: convertedToTokenUnit                             // fundingAmount
+        };
+        console.log('data:', data);
+        return await moneyStream.getCreateStreamTransaction(
+          senderPubkey,                                     // treasurer
+          destPubkey,                                       // beneficiary
+          null,                                             // treasury
+          associatedToken,                                  // associatedToken
+          parseFloat(paymentRateAmount as string),          // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
+          utcDate,                                          // startUtc
+          recipientNote
+            ? recipientNote.trim()
+            : undefined,                                    // streamName
+          convertedToTokenUnit                              // fundingAmount
+        )
+        .then(value => {
+          console.log('getCreateStreamTransaction returned transaction:', value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.log('getCreateStreamTransaction error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.CreateTransactionFailure
+          });
+          return false;
+        });
+      }
+      return false;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Signing transaction...');
+        return await moneyStream.signTransaction(wallet, transaction)
+        .then(signed => {
+          console.log('signTransaction returned a signed transaction:', signed);
+          // Stage 2 completed - The transaction was signed
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          signedTransaction = signed;
+          return true;
+        })
+        .catch(error => {
+          console.log('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          return false;
+        });
+      } else {
+        console.log('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return moneyStream.sendSignedTransaction(signedTransaction)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            // Stage 3 completed - The transaction was sent and a signature was returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await moneyStream.confirmTransaction(signature)
+        .then(result => {
+          console.log('confirmTransaction result:', result);
+          // Stage 4 completed - The transaction was confirmed!
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          // Save transaction
+          return true;
+        })
+        .catch(error => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
+        });
+    }
+
+    // Lets hit it
+    if (wallet) {
+      showTransactionModal();
+      const create = await createTx();
+      console.log('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        console.log('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log('sent:', sent);
+          // Save signature to the state
+          setLastCreatedTransactionSignature(signature);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log('confirmed:', confirmed);
+            setIsBusy(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
   };
+
+  const resetContractValues = () => {
+    const today = new Date().toLocaleDateString();
+    setFromCoinAmount('');
+    setRecipientAddress('');
+    setRecipientNote('');
+    setPaymentStartDate(today);
+    setPaymentRateAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+    setSelectedToken(undefined);
+  }
+
+  const getTransactionModalTitle = () => {
+    let title: any;
+    if (isBusy) {
+      title = 'Executing transaction';
+    } else {
+      if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
+          transactionStatus.currentOperation === TransactionStatus.Iddle) {
+        title = null;
+      } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
+        title = 'Transaction completed'
+      } else {
+        title = null;
+      }
+    }
+    return title;
+  }
+
+  const isSuccess = () => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
 
   return (
     <>
@@ -700,7 +906,7 @@ export const PayrollPayment = () => {
       {/* Send date */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Starting on</span>
+          <span className="field-label-left">Send on</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -729,14 +935,14 @@ export const PayrollPayment = () => {
 
       <div className="mb-3 text-center">
         <div>You must add funds to start the repeating payment.</div>
-        <div>Recommended minimum amount: <span className="fg-red">0.21 SOL (10%)</span>.</div>
+        <div>Recommended minimum amount: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
       </div>
 
-      {/* Add funds (amount) */}
+      {/* Send amount */}
       <div className="transaction-field mb-1">
         <div className="transaction-field-row">
           <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            Add funds ~${fromCoinAmount && effectiveRate
+            Send ~${fromCoinAmount && effectiveRate
               ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
               : "0.00"}
             <IconSort className="mean-svg-icons usd-switcher fg-red" />
@@ -745,16 +951,15 @@ export const PayrollPayment = () => {
           <span className="field-label-right">
             <span>Balance:</span>
             <span className="balance-amount">
-              {`${
-                selectedToken?.balance
-                  ? formatAmount(selectedToken.balance, selectedToken.decimals)
+              {`${selectedToken && tokenBalance
+                  ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
                   : "Unknown"
               }`}
             </span>
             <span>
               (~$
-              {selectedToken?.balance && effectiveRate
-                ? formatAmount(selectedToken.balance * effectiveRate, 2)
+              {tokenBalance && effectiveRate
+                ? formatAmount(tokenBalance as number * effectiveRate, 2)
                 : "0.00"})
             </span>
           </span>
@@ -779,13 +984,13 @@ export const PayrollPayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {selectedToken?.balance && (
+                {selectedToken && (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          selectedToken.balance,
+                          tokenBalance as number,
                           selectedToken.decimals
                         )
                       )
@@ -854,6 +1059,54 @@ export const PayrollPayment = () => {
         disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal"
+        maskClosable={false}
+        afterClose={onAfterTransactionModalClosed}
+        visible={isTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={closeTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
+              <div className="indication">Confirm this transaction in your wallet</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">Your money stream for {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} was started successfully.</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={handleGoToStreamsClick}>
+                View Stream
+              </Button>
+            </>
+          ) : (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={closeTransactionModal}>
+                Dismiss
+              </Button>
+            </>
+          )}
+        </div>
+      </Modal>
     </>
   );
 };

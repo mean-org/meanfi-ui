@@ -1,7 +1,7 @@
 import { Button, Modal, DatePicker, Spin } from "antd";
 import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnectionConfig } from "../../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, isValidNumber } from "../../../utils/utils";
@@ -21,6 +21,8 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenAccount } from "../../../models";
+import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -28,11 +30,14 @@ export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
   const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
+  const accounts = useAccountsContext();
   const { connected, wallet } = useWallet();
   const {
     contract,
     tokenList,
     selectedToken,
+    tokenBalance,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -276,9 +281,9 @@ export const OneTimePayment = () => {
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
-           selectedToken?.balance &&
+           tokenBalance &&
            fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= selectedToken?.balance
+           parseFloat(fromCoinAmount) <= tokenBalance
             ? true
             : false;
   }
@@ -287,13 +292,13 @@ export const OneTimePayment = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? "Connect your wallet"
-      : !selectedToken || !selectedToken.balance
+      : !selectedToken || !tokenBalance
       ? "No balance"
       : !recipientAddress
       ? "Select recipient"
       : !fromCoinAmount
       ? "Enter amount"
-      : parseFloat(fromCoinAmount) > selectedToken.balance
+      : parseFloat(fromCoinAmount) > tokenBalance
       ? "Amount exceeds your balance"
       : !paymentStartDate
       ? "Set a valid date"
@@ -324,6 +329,12 @@ export const OneTimePayment = () => {
 
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
+        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
+        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === selectedToken?.address) as TokenAccount;
+        const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
+        const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+        const amount = parseFloat(fromCoinAmount as string);
+        const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('parsed paymentStartDate:', parsedDate);
@@ -348,7 +359,7 @@ export const OneTimePayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                                      // streamName
-          fundingAmount: parseFloat(fromCoinAmount as string)             // fundingAmount
+          fundingAmount: convertedToTokenUnit                             // fundingAmount
         };
         console.log('data:', data);
         return await moneyStream.getCreateStreamTransaction(
@@ -362,7 +373,7 @@ export const OneTimePayment = () => {
           recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                        // streamName
-          parseFloat(fromCoinAmount as string)              // fundingAmount
+          convertedToTokenUnit                              // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);
@@ -503,6 +514,7 @@ export const OneTimePayment = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+    setSelectedToken(undefined);
   }
 
   const getTransactionModalTitle = () => {
@@ -579,16 +591,15 @@ export const OneTimePayment = () => {
           <span className="field-label-right">
             <span>Balance:</span>
             <span className="balance-amount">
-              {`${
-                selectedToken?.balance
-                  ? formatAmount(selectedToken.balance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+              {`${tokenBalance && selectedToken
+                  ? formatAmount(tokenBalance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
                   : "Unknown"
             }`}
             </span>
             <span>
               (~$
-              {selectedToken?.balance && effectiveRate
-                ? formatAmount(selectedToken.balance * effectiveRate, 2)
+              {tokenBalance && effectiveRate
+                ? formatAmount(tokenBalance * effectiveRate, 2)
                 : "0.00"})
             </span>
           </span>
@@ -613,13 +624,13 @@ export const OneTimePayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {selectedToken.balance && (
+                {tokenBalance && (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          selectedToken.balance as number,
+                          tokenBalance as number,
                           selectedToken.decimals
                         )
                       )

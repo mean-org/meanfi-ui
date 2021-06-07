@@ -17,6 +17,7 @@ import {
 } from '@solana/web3.js';
 
 import { Constants } from './constants';
+import { Instructions } from './instructions';
 import { WalletAdapter } from '../contexts/wallet';
 
 export type StreamInfo = {
@@ -86,8 +87,8 @@ export class MoneyStreaming {
         //     programId
         // });
         this.connection = new Connection(cluster, 'confirmed');
-        this.programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
-        this.feePayer = new PublicKey(Constants.STREAM_PROGRAM_PAYER_ACCOUNT);
+        this.programId = Constants.STREAM_PROGRAM_ADDRESS.toPublicKey();
+        this.feePayer = Constants.STREAM_PROGRAM_PAYER_ADRESS.toPublicKey();
     }
 
     public async getStream(
@@ -136,33 +137,40 @@ export class MoneyStreaming {
         rateCliffInSeconds?: number,
         cliffVestAmount?: number,
         cliffVestPercent?: number
+
     ): Promise<Transaction> {
 
         const transaction = new Transaction();
 
-        let treasuryKey = treasury;
+        let treasuryAddress = treasury;
         let treasuryAccount;
 
-        if (treasuryKey === null) {
-            const minBalanceForTreasury = await this.connection.getMinimumBalanceForRentExemption(0);
+        // Create treasury account
+        if (treasuryAddress === null) {
             treasuryAccount = Keypair.generate();
-            treasuryKey = treasuryAccount.publicKey;
+            treasuryAddress = treasuryAccount.publicKey;
+
+            const mintInfo = await this.connection.getAccountInfo(associatedToken);
+
+            if (mintInfo == null) {
+                throw Error('Invalid mint account');
+            }
+
+            const minBalanceForATokenAcount = await this.connection.getMinimumBalanceForRentExemption(mintInfo.data.length);
 
             transaction.add(
                 SystemProgram.createAccount({
                     fromPubkey: treasurer,
-                    newAccountPubkey: treasuryKey,
-                    lamports: minBalanceForTreasury,
+                    newAccountPubkey: treasuryAddress,
+                    lamports: minBalanceForATokenAcount,
                     space: 0,
                     programId: this.programId,
                 }),
             );
         }
 
-        const minBalanceForStream = await this.connection.getMinimumBalanceForRentExemption(
-            Layout.streamLayout.span
-        );
-
+        // Create stream account
+        const minBalanceForStream = await this.connection.getMinimumBalanceForRentExemption(Layout.streamLayout.span);
         const streamAccount = Keypair.generate();
 
         transaction.add(
@@ -172,18 +180,43 @@ export class MoneyStreaming {
                 lamports: minBalanceForStream,
                 space: Layout.streamLayout.span,
                 programId: this.programId,
-            }),
+            })
         );
 
+        const treasuryATokenAddress = await Utils.findATokenAddress(
+            treasuryAddress,
+            associatedToken
+        );
+
+        let treasuryATokenAccountInfo = await this.connection.getAccountInfo(treasuryATokenAddress);
+
+        if (treasuryATokenAccountInfo == null) { // Create treasury associated token address            
+            transaction.add(
+                await Instructions.createATokenAccountInstruction(
+                    treasuryATokenAddress,
+                    treasurer,
+                    treasuryAddress,
+                    associatedToken
+                )
+            );
+        }
+
+        let treasurerATokenAddress = await Utils.findATokenAddress(
+            treasurer,
+            associatedToken
+        );
+
+        // Create stream contract
         transaction.add(
-            await MoneyStreaming.createStreamInstruction(
+            await Instructions.createStreamInstruction(
                 this.connection,
                 this.programId,
                 treasurer,
-                beneficiary,
-                treasuryKey,
+                treasurerATokenAddress,
+                treasuryAddress,
+                treasuryATokenAddress,
                 streamAccount.publicKey,
-                associatedToken,
+                beneficiary,
                 rateAmount,
                 rateIntervalInSeconds || 60,
                 startUtc.valueOf() || Date.now(),
@@ -203,7 +236,6 @@ export class MoneyStreaming {
         if (treasuryAccount !== undefined) {
             signers.push(treasuryAccount);
         }
-
         transaction.partialSign(...signers);
 
         return transaction;
@@ -221,27 +253,60 @@ export class MoneyStreaming {
         const transaction = new Transaction();
 
         transaction.add(
-            transaction.add(
-                MoneyStreaming.addFundsInstruction(
-                    this.programId,
-                    treasury,
-                    stream,
-                    contributor,
-                    contributorToken,
-                    amount
-                )
+            MoneyStreaming.addFundsInstruction(
+                this.programId,
+                treasury,
+                stream,
+                contributor,
+                contributorToken,
+                amount
             )
         );
 
         return transaction;
     }
 
-    public static async withdraw(
-        from: PublicKey,
+    public async getWithdrawTransaction(
+        stream_id: PublicKey,
+        beneficiary: PublicKey,
         amount: number
 
-    ): Promise<boolean> {
-        return false;
+    ): Promise<Transaction | undefined> {
+
+        let streamInfo = await Utils.getStream(
+            this.connection,
+            stream_id
+        );
+
+        if (streamInfo.beneficiaryWithdrawalAddress !== beneficiary) {
+            throw Error('Unauthorized');
+        }
+
+        const transaction = new Transaction();
+        const keys = [
+            { pubkey: beneficiary, isSigner: false, isWritable: false },
+            { pubkey: stream_id, isSigner: false, isWritable: true },
+            { pubkey: streamInfo.treasuryAddress as PublicKey, isSigner: false, isWritable: false }
+        ];
+
+        let data = Buffer.alloc(Layout.withdrawLayout.span)
+        {
+            const decodedData = {
+                tag: 2,
+                withdrawal_amount: amount
+            };
+
+            const encodeLength = Layout.withdrawLayout.encode(decodedData, data);
+            data = data.slice(0, encodeLength);
+        };
+
+        let programId = Constants.STREAM_PROGRAM_ADDRESS.toPublicKey();
+
+        return transaction.add(new TransactionInstruction({
+            keys,
+            programId,
+            data,
+        }));
     }
 
     public async signTransaction(
@@ -280,64 +345,6 @@ export class MoneyStreaming {
         }
     }
 
-    static async createStreamInstruction(
-        connection: Connection,
-        programId: PublicKey,
-        treasurer: PublicKey,
-        beneficiary: PublicKey,
-        treasury: PublicKey,
-        stream: PublicKey,
-        associatedToken: PublicKey,
-        rateAmount: number,
-        rateIntervalInSeconds: number,
-        startUtcNow: number,
-        streamName?: String,
-        fundingAmount?: number,
-        rateCliffInSeconds?: number,
-        cliffVestAmount?: number,
-        cliffVestPercent?: number
-
-    ): Promise<TransactionInstruction> {
-
-        const treasurerInfo = await connection.getAccountInfo(treasurer);
-        const keys = [
-            { pubkey: treasurer, isSigner: true, isWritable: false },
-            { pubkey: treasury, isSigner: false, isWritable: false },
-            { pubkey: stream, isSigner: false, isWritable: true },
-            { pubkey: treasurerInfo?.owner as PublicKey, isSigner: false, isWritable: false },
-            { pubkey: new PublicKey(Constants.MEAN_FI_ACCOUNT), isSigner: false, isWritable: true },
-            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-        ];
-
-        let data = Buffer.alloc(Layout.createStreamLayout.span)
-        {
-            let nameBuffer = Buffer.alloc(32).fill((streamName as string), 0, (streamName as string).length);
-
-            const decodedData = {
-                tag: 0,
-                stream_name: nameBuffer,
-                beneficiary_withdrawal_address: Buffer.from(beneficiary.toBuffer()),
-                escrow_token_address: Buffer.from(associatedToken.toBuffer()),
-                funding_amount: fundingAmount,
-                rate_amount: rateAmount,
-                rate_interval_in_seconds: new u64Number(rateIntervalInSeconds).toBuffer(), // default = MIN
-                start_utc: new u64Number(startUtcNow).toBuffer(),
-                rate_cliff_in_seconds: new u64Number(rateCliffInSeconds || 0).toBuffer(),
-                cliff_vest_amount: cliffVestAmount,
-                cliff_vest_percent: cliffVestPercent || 100,
-            };
-
-            const encodeLength = Layout.createStreamLayout.encode(decodedData, data);
-            data = data.slice(0, encodeLength);
-        };
-
-        return new TransactionInstruction({
-            keys,
-            programId,
-            data,
-        });
-    }
-
     static addFundsInstruction(
         programId: PublicKey,
         treasury: PublicKey,
@@ -372,4 +379,6 @@ export class MoneyStreaming {
             data,
         });
     }
+
+
 }

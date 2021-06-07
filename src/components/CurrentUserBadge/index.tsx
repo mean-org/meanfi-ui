@@ -1,8 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
-import { formatNumber, shortenAddress, useLocalStorageState } from "../../utils/utils";
-import { useNativeAccount } from "../../contexts/accounts";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
 import { Button, Col, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI, WALLET_PROVIDERS } from "../../constants";
@@ -31,7 +29,6 @@ export const CurrentUserBadge = (props: {}) => {
   const { streamList, setCurrentScreen } = useContext(AppStateContext);
   const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
   const { wallet, publicKey, select } = useWallet();
-  const { account } = useNativeAccount();
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
@@ -95,9 +92,9 @@ export const CurrentUserBadge = (props: {}) => {
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
         <div className="wallet-balance simplelink" onClick={onGoToStreamsClick}>
-          <span className="effective-amount">
+          {/* <span className="effective-amount">
             {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
-          </span>
+          </span> */}
           <span className="transaction-legend incoming">
             <IconDownload className="mean-svg-icons"/>
             <span className="incoming-transactions-amout">{streamStats.incoming}</span>

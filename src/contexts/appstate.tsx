@@ -24,6 +24,7 @@ interface AppStateConfig {
   currentScreen: string | undefined;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
+  tokenBalance: number | undefined;
   contract: ContractDefinition | undefined;
   recipientAddress: string | undefined;
   recipientNote: string | undefined;
@@ -61,6 +62,7 @@ const contextDefaultValues: AppStateConfig = {
   currentScreen: undefined,
   tokenList: [],
   selectedToken: undefined,
+  tokenBalance: undefined,
   contract: undefined,
   recipientAddress: undefined,
   recipientNote: undefined,
@@ -214,6 +216,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   } 
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
+  const [tokenBalance, updateTokenBalance] = useState<number | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
 
@@ -259,9 +262,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!publicKey) {
       return [];
     }
-    const programId = new PublicKey(Constants.STREAM_PROGRAM_ACCOUNT);
+    const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
 
-    const streams = await listStreams(connection, programId, undefined, undefined, connection.commitment, true);
+    const streams = await listStreams(connection, programId, publicKey, publicKey, connection.commitment, false);
     setStreamList(streams);
     if (!selectedStream && streams?.length) {
       updateSelectedStream(streams[0]);
@@ -322,10 +325,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       if (connection && accounts?.tokenAccounts?.length) {
         if (selectedToken) {
           const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
-          const modifiedBalance = Object.assign({}, selectedToken, {
-            balance: balance
-          });
-          updateSelectedToken(modifiedBalance);
+          updateTokenBalance(balance);
+        } else {
+          setSelectedToken(tokenList[0]);
+          const balance = await getTokenAccountBalanceByAddress(tokenList[0].address);
+          updateTokenBalance(balance);
         }
       }
     }
@@ -337,6 +341,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {};
   }, [
+    tokenList,
     connected,
     shouldUpdateToken,
     connection,
@@ -352,6 +357,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         currentScreen,
         tokenList,
         selectedToken,
+        tokenBalance,
         contract,
         recipientAddress,
         recipientNote,
