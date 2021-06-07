@@ -37,7 +37,7 @@ export const CurrentUserBadge = (props: {}) => {
   useEffect(() => {
 
     const isInboundStream = (item: StreamInfo): boolean => {
-      return item.beneficiaryWithdrawalAddress === publicKey?.toBase58();
+      return item.beneficiaryAddress === publicKey?.toBase58();
     }
 
     const updateStats = () => {

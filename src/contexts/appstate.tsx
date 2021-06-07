@@ -55,6 +55,7 @@ interface AppStateConfig {
   setSelectedStream: (stream: StreamInfo) => void;
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
+  refreshTokenBalance: () => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -96,6 +97,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   openStreamById: () => {},
+  refreshTokenBalance: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -190,7 +192,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const openStreamById = async (streamId: string) => {
     const streamPublicKey = new PublicKey(streamId);
-    const detail = await getStream(connection, streamPublicKey, connection.commitment);
+    const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
     // if (detail) {
     //   console.log('stream ID', (detail.id as PublicKey).toBase58());
     // }
@@ -202,7 +204,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedStream(stream);
     if (stream?.id) {
       const streamPublicKey = new PublicKey(stream.id);
-      const detail = await getStream(connection, streamPublicKey, connection.commitment);
+      const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
       if (detail) {
         console.log('stream ID', (detail.id as PublicKey).toBase58());
       }
@@ -213,7 +215,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setStreamDetail = (stream: StreamInfo) => {
     updateStreamDetail(stream);
-  } 
+  }
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number | undefined>();
@@ -264,13 +266,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
     const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
 
-    const streams = await listStreams(connection, programId, publicKey, publicKey, connection.commitment, false);
+    console.log('Calling listStreams...');
+    const streams = await listStreams(connection, programId, publicKey, publicKey, 'confirmed', true);
+    console.log('streams', streams);
     setStreamList(streams);
     if (!selectedStream && streams?.length) {
       updateSelectedStream(streams[0]);
       if (streams[0]?.id) {
         const streamPublicKey = new PublicKey(streams[0].id);
-        const detail = await getStream(connection, streamPublicKey, connection.commitment);
+        const detail = await getStream(connection, streamPublicKey, 'confirmed', true);
         updateStreamDetail(detail);
       }
     }
@@ -350,6 +354,30 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedToken
   ]);
 
+  const refreshTokenBalance = useCallback(async () => {
+    if (!selectedToken) {
+      return 0;
+    }
+    const getTokenBalanceByAddress = async (address: string): Promise<number> => {
+      if (address) {
+        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
+        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === address) as TokenAccount;
+        if (tokenAccount) {
+          const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
+          const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+          return convert(tokenAccount as TokenAccount, mintInfoDecoded as MintInfo);
+        }
+      }
+      return 0;
+    }
+
+    if (connection && accounts?.tokenAccounts?.length) {
+      const balance = await getTokenBalanceByAddress(selectedToken.address);
+      updateTokenBalance(balance);
+    }
+  
+  }, [selectedToken, accounts, connection]);
+
   return (
     <AppStateContext.Provider
       value={{
@@ -387,7 +415,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStreamList,
         setSelectedStream,
         setStreamDetail,
-        openStreamById
+        openStreamById,
+        refreshTokenBalance
       }}>
       {children}
     </AppStateContext.Provider>

@@ -31,8 +31,8 @@ export type StreamInfo = {
     rateCliffInSeconds: number,
     cliffVestAmount: number,
     cliffVestPercent: number,
-    beneficiaryWithdrawalAddress: PublicKey | string | undefined,
-    escrowTokenAddress: PublicKey | string | undefined,
+    beneficiaryAddress: PublicKey | string | undefined,
+    beneficiaryTokenAddress: PublicKey | string | undefined,
     escrowVestedAmount: number,
     escrowUnvestedAmount: number,
     treasuryAddress: PublicKey | string | undefined,
@@ -41,6 +41,8 @@ export type StreamInfo = {
     totalWithdrawals: number,
     isStreaming: boolean,
     isUpdatePending: boolean
+    transactionSignature: string | undefined,
+    blockTime: number,
 }
 
 /**
@@ -52,29 +54,6 @@ export class MoneyStreaming {
 
     private programId: PublicKey;
     private feePayer: PublicKey;
-
-    private defaultStream: StreamInfo = {
-        id: undefined,
-        initialized: false,
-        memo: "",
-        treasurerAddress: undefined,
-        rateAmount: 0,
-        rateIntervalInSeconds: 0,
-        startUtc: null,
-        rateCliffInSeconds: 0,
-        cliffVestAmount: 0,
-        cliffVestPercent: 0,
-        beneficiaryWithdrawalAddress: undefined,
-        escrowTokenAddress: undefined,
-        escrowVestedAmount: 0,
-        escrowUnvestedAmount: 0,
-        treasuryAddress: undefined,
-        escrowEstimatedDepletionUtc: null,
-        totalDeposits: 0,
-        totalWithdrawals: 0,
-        isStreaming: false,
-        isUpdatePending: false
-    };
 
     /**
      * Create a Streaming API object
@@ -94,7 +73,7 @@ export class MoneyStreaming {
     public async getStream(
         id: PublicKey,
         commitment?: Commitment | undefined,
-        friendly?: boolean
+        friendly: boolean = true
 
     ): Promise<StreamInfo> {
 
@@ -102,15 +81,15 @@ export class MoneyStreaming {
             this.connection,
             id,
             commitment,
-            friendly as boolean
-        )
+            friendly
+        );
     }
 
     public async listStreams(
         treasurer?: PublicKey | undefined,
         beneficiary?: PublicKey | undefined,
         commitment?: GetProgramAccountsConfig | Commitment | undefined,
-        friendly?: boolean
+        friendly: boolean = true
 
     ): Promise<StreamInfo[]> {
 
@@ -120,7 +99,7 @@ export class MoneyStreaming {
             treasurer,
             beneficiary,
             commitment,
-            friendly as boolean
+            friendly
         );
     }
 
@@ -129,8 +108,8 @@ export class MoneyStreaming {
         beneficiary: PublicKey,
         treasury: PublicKey | null,
         associatedToken: PublicKey,
-        rateAmount: number,
-        rateIntervalInSeconds: number,
+        rateAmount: number = 1,
+        rateIntervalInSeconds: number = 60,
         startUtc: Date,
         streamName?: String,
         fundingAmount?: number,
@@ -236,6 +215,7 @@ export class MoneyStreaming {
         if (treasuryAccount !== undefined) {
             signers.push(treasuryAccount);
         }
+
         transaction.partialSign(...signers);
 
         return transaction;
@@ -269,20 +249,41 @@ export class MoneyStreaming {
     public async getWithdrawTransaction(
         stream_id: PublicKey,
         beneficiary: PublicKey,
+        associatedToken: PublicKey,
         amount: number
 
-    ): Promise<Transaction | undefined> {
+    ): Promise<Transaction> {
 
         let streamInfo = await Utils.getStream(
             this.connection,
             stream_id
         );
 
-        if (streamInfo.beneficiaryWithdrawalAddress !== beneficiary) {
+        if (streamInfo.beneficiaryAddress !== beneficiary) {
             throw Error('Unauthorized');
         }
 
         const transaction = new Transaction();
+
+        // Check for the beneficiary associated token account
+        const beneficiaryATokenAddress = await Utils.findATokenAddress(
+            beneficiary,
+            associatedToken
+        );
+
+        let beneficiaryATokenAccountInfo = await this.connection.getAccountInfo(beneficiaryATokenAddress);
+
+        if (beneficiaryATokenAccountInfo == null) { // Create beneficiary associated token address
+            transaction.add(
+                await Instructions.createATokenAccountInstruction(
+                    beneficiaryATokenAddress,
+                    beneficiary,
+                    beneficiary,
+                    associatedToken
+                )
+            );
+        }
+
         const keys = [
             { pubkey: beneficiary, isSigner: false, isWritable: false },
             { pubkey: stream_id, isSigner: false, isWritable: true },

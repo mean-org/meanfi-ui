@@ -32,6 +32,9 @@ export const Streams = () => {
         setCurrentScreen("contract");
       }
     }
+    if (streamList?.length) {
+      console.log('streamList', streamList);
+    }
   });
 
   // Contract switcher modal
@@ -55,7 +58,7 @@ export const Streams = () => {
   };
 
   const isInboundStream = (item: StreamInfo): boolean => {
-    return item.beneficiaryWithdrawalAddress === publicKey?.toBase58();
+    return item.beneficiaryAddress === publicKey?.toBase58();
   }
 
   const getStreamIcon = (item: StreamInfo) => {
@@ -135,11 +138,11 @@ export const Streams = () => {
       }
     } else {
       if (item.isUpdatePending) {
-        title = `Pending execution to (${shortenAddress(`${item.beneficiaryWithdrawalAddress}`)})`;
+        title = `Pending execution to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else if (!item.isStreaming) {
-        title = `Paused stream to (${shortenAddress(`${item.beneficiaryWithdrawalAddress}`)})`;
+        title = `Paused stream to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
-        title = `Sending to (${shortenAddress(`${item.beneficiaryWithdrawalAddress}`)})`;
+        title = `Sending to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       }
     }
     return title;
@@ -205,8 +208,8 @@ export const Streams = () => {
                 ? formatAmount(streamDetail.rateAmount as number, 2)
                 : '--'}
               &nbsp;
-              {streamDetail && streamDetail.beneficiaryWithdrawalAddress
-                ? getEscrowTokenSymbol(streamDetail.beneficiaryWithdrawalAddress as string)
+              {streamDetail && streamDetail.beneficiaryAddress
+                ? getEscrowTokenSymbol(streamDetail.beneficiaryAddress as string)
                 : ''}
               {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
             </span>
@@ -240,7 +243,7 @@ export const Streams = () => {
                 ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
                 : '0'}
               &nbsp;
-              {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+              {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
               &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
@@ -265,7 +268,7 @@ export const Streams = () => {
               ? formatAmount(streamDetail.totalDeposits, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -285,7 +288,7 @@ export const Streams = () => {
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -311,8 +314,8 @@ export const Streams = () => {
               <IconShare className="mean-svg-icons" />
             </span>
             <span className="info-data">
-              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${streamDetail?.beneficiaryWithdrawalAddress}`} target="_blank" rel="noopener noreferrer">
-                {shortenAddress(`${streamDetail?.beneficiaryWithdrawalAddress}`)}
+              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${streamDetail?.beneficiaryAddress}`} target="_blank" rel="noopener noreferrer">
+                {shortenAddress(`${streamDetail?.beneficiaryAddress}`)}
               </a>
             </span>
           </div>
@@ -325,8 +328,8 @@ export const Streams = () => {
                 ? formatAmount(streamDetail.rateAmount as number, 2)
                 : '--'}
               &nbsp;
-              {streamDetail && streamDetail.beneficiaryWithdrawalAddress
-                ? getEscrowTokenSymbol(streamDetail.beneficiaryWithdrawalAddress as string)
+              {streamDetail && streamDetail.beneficiaryAddress
+                ? getEscrowTokenSymbol(streamDetail.beneficiaryAddress as string)
                 : '0'}
               {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
             </span>
@@ -358,7 +361,7 @@ export const Streams = () => {
               ? formatAmount(streamDetail.totalDeposits, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail.escrowTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol((streamDetail.beneficiaryTokenAddress as PublicKey).toBase58())}
             </span>
             ) : (
               <span className="info-data">&nbsp;</span>
@@ -378,7 +381,7 @@ export const Streams = () => {
               ? formatAmount(streamDetail.escrowVestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol((streamDetail?.beneficiaryTokenAddress as PublicKey).toBase58())}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -403,7 +406,7 @@ export const Streams = () => {
               ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
               : '0'}
             &nbsp;
-            {getEscrowTokenSymbol((streamDetail?.escrowTokenAddress as PublicKey).toBase58())}
+            {getEscrowTokenSymbol((streamDetail?.beneficiaryTokenAddress as PublicKey).toBase58())}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -439,7 +442,7 @@ export const Streams = () => {
                       <div className="rate-amount">
                         {item && item.rateAmount && isValidNumber(item.rateAmount.toString()) ? formatAmount(item.rateAmount, 2) : '--'}
                         &nbsp;
-                        {item && item.escrowTokenAddress ? getEscrowTokenSymbol(item.escrowTokenAddress as string) : ''}
+                        {item && item.beneficiaryTokenAddress ? getEscrowTokenSymbol(item.beneficiaryTokenAddress as string) : ''}
                       </div>
                       <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
                     </div>
