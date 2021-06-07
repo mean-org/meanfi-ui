@@ -53,6 +53,7 @@ interface AppStateConfig {
   setStreamList: (list: StreamInfo[]) => void;
   setSelectedStream: (stream: StreamInfo) => void;
   setStreamDetail: (stream: StreamInfo) => void;
+  openStreamById: (streamId: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -92,6 +93,7 @@ const contextDefaultValues: AppStateConfig = {
   setStreamList: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
+  openStreamById: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -184,11 +186,24 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTxCreatedSignature(signature || undefined);
   }
 
+  const openStreamById = async (streamId: string) => {
+    const streamPublicKey = new PublicKey(streamId);
+    const detail = await getStream(connection, streamPublicKey, connection.commitment);
+    // if (detail) {
+    //   console.log('stream ID', (detail.id as PublicKey).toBase58());
+    // }
+    console.log('streamDetail', detail);
+    updateStreamDetail(detail);
+  }
+
   const setSelectedStream = async (stream: StreamInfo) => {
     updateSelectedStream(stream);
     if (stream?.id) {
       const streamPublicKey = new PublicKey(stream.id);
       const detail = await getStream(connection, streamPublicKey, connection.commitment);
+      if (detail) {
+        console.log('stream ID', (detail.id as PublicKey).toBase58());
+      }
       console.log('streamDetail', detail);
       updateStreamDetail(detail);
     }
@@ -365,7 +380,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLastCreatedTransactionSignature,
         setStreamList,
         setSelectedStream,
-        setStreamDetail
+        setStreamDetail,
+        openStreamById
       }}>
       {children}
     </AppStateContext.Provider>

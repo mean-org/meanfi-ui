@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock, IconShare } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
@@ -11,15 +12,16 @@ import { SOLANA_EXPLORER_URI, STREAM_LONG_DATE_FORMAT, STREAM_MINIMUM_DATE_FORMA
 import moment from "moment-timezone";
 import { PublicKey } from "@solana/web3.js";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
+import { OpenStreamModal } from '../../../components/OpenStreamModal';
 
 export const Streams = () => {
   const { connected, publicKey } = useWallet();
   const {
     streamList,
-    selectedStream,
     streamDetail,
     setCurrentScreen,
-    setSelectedStream
+    setSelectedStream,
+    openStreamById
   } = useContext(AppStateContext);
 
   useEffect(() => {
@@ -39,6 +41,17 @@ export const Streams = () => {
   const onAcceptContractSelector = () => {
     setCurrentScreen("contract");
     closeContractSelectorModal();
+  };
+
+  // Open stream modal
+  const [isOpenStreamModalVisible, setIsOpenStreamModalVisibility] = useState(false);
+  const showOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(true), []);
+  const closeOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(false), []);
+  const onAcceptOpenStream = (e: any) => {
+    // Do some shit and close the modal
+    console.log('onAcceptOpenStream:', e);
+    openStreamById(e);
+    closeOpenStreamModal();
   };
 
   const isInboundStream = (item: StreamInfo): boolean => {
@@ -414,7 +427,7 @@ export const Streams = () => {
                 const onStreamClick = () => setSelectedStream(item);
                 return (
                   <div key={`${index + 50}`} onClick={onStreamClick}
-                    className={`transaction-row ${selectedStream?.id === item.id ? 'selected' : ''}`}>
+                    className={`transaction-row ${streamDetail && (streamDetail.id as PublicKey).toBase58() === item.id ? 'selected' : ''}`}>
                     <div className="icon-cell">
                       {getStreamIcon(item)}
                     </div>
@@ -440,8 +453,8 @@ export const Streams = () => {
             )}
           </div>
           {/* Bottom CTA */}
-          <Row className="bottom-cta">
-            <Col span={12} offset={5}>
+          <div className="bottom-ctas">
+            <div className="create-stream">
               <Button
                 block
                 type="primary"
@@ -450,8 +463,18 @@ export const Streams = () => {
                 onClick={showContractSelectorModal}>
                 Create new money stream
               </Button>
-            </Col>
-          </Row>
+            </div>
+            <div className="open-stream">
+              <Button
+                shape="round"
+                type="text"
+                size="small"
+                className="ant-btn-shaded"
+                onClick={showOpenStreamModal}
+                icon={<SearchOutlined />}>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
       {/* Right / down panel */}
@@ -472,6 +495,10 @@ export const Streams = () => {
         isVisible={isContractSelectorModalVisible}
         handleOk={onAcceptContractSelector}
         handleClose={closeContractSelectorModal}/>
+      <OpenStreamModal
+        isVisible={isOpenStreamModalVisible}
+        handleOk={onAcceptOpenStream}
+        handleClose={closeOpenStreamModal} />
     </div>
   );
 };

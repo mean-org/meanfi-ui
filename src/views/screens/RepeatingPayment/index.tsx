@@ -333,10 +333,6 @@ export const RepeatingPayment = () => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     if (!rateAmount) {
       result = false;
-    } else if (rateAmount > parseFloat(fromCoinAmount || '0')) {
-      result = false;
-    // } else if (paymentRateFrequency === PaymentRateType.Other && !paymentRateInterval) {
-    //   result = false;
     }
 
     return result;
