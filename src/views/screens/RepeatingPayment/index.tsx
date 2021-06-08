@@ -30,6 +30,8 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TokenAccount } from "../../../models";
 import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
+import { Constants } from "../../../money-streaming/constants";
+import { listStreams } from '../../../money-streaming/utils';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -39,10 +41,11 @@ export const RepeatingPayment = () => {
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
   const accounts = useAccountsContext();
-  const { connected, wallet } = useWallet();
+  const { connected, wallet, publicKey } = useWallet();
   const {
     contract,
     tokenList,
+    streamList,
     selectedToken,
     tokenBalance,
     recipientAddress,
@@ -61,6 +64,9 @@ export const RepeatingPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
+    setStreamList,
+    setStreamDetail,
+    setSelectedStream,
     setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
@@ -96,6 +102,24 @@ export const RepeatingPayment = () => {
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
   const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
+  const refreshStreamList = () => {
+    if (publicKey) {
+      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+  
+      listStreams(connection, programId, publicKey, publicKey, 'finalized', true)
+        .then(async streams => {
+          setStreamList(streams);
+          setTimeout(() => {
+            console.log('streamList:', streamList);
+            setSelectedStream(streams[0]);
+            setStreamDetail(streams[0]);
+            closeTransactionModal();
+            setCurrentScreen("streams");
+          }, 1000);
+        });
+    }
+  };
+
   // Event handling
 
   const onAfterTransactionModalClosed = () => {
@@ -105,11 +129,8 @@ export const RepeatingPayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
-    if (isSuccess()) {
-      resetContractValues();
-    }
-    closeTransactionModal();
-    setCurrentScreen("streams");
+    resetContractValues();
+    refreshStreamList();
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -1060,7 +1081,9 @@ export const RepeatingPayment = () => {
             </>
           ) : (
             <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">Loading data, please wait...</h4>
+              {/* <WarningOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
               <Button
                 block
@@ -1069,7 +1092,7 @@ export const RepeatingPayment = () => {
                 size="middle"
                 onClick={closeTransactionModal}>
                 Dismiss
-              </Button>
+              </Button> */}
             </>
           )}
         </div>

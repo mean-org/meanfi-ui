@@ -409,7 +409,7 @@ export const Streams = () => {
             <IconBank className="mean-svg-icons" />
           </span>
           {streamDetail ? (
-            <span className="info-data">
+            <span className="info-data large">
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}

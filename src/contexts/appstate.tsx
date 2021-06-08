@@ -123,9 +123,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
+  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
-  const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
+  const [loadingStreams, setLoadingStreams] = useState(false);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -193,21 +194,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   const openStreamById = async (streamId: string) => {
     const streamPublicKey = new PublicKey(streamId);
     const detail = await getStream(connection, streamPublicKey, 'finalized', true);
-    // if (detail) {
-    //   console.log('stream ID', (detail.id as PublicKey).toBase58());
-    // }
     console.log('streamDetail', detail);
     updateStreamDetail(detail);
   }
 
   const setSelectedStream = async (stream: StreamInfo) => {
     updateSelectedStream(stream);
-    if (stream?.id) {
-      const streamPublicKey = new PublicKey(stream.id);
-      const detail = await getStream(connection, streamPublicKey, 'finalized', true);
-      console.log('streamDetail', detail);
-      updateStreamDetail(detail);
-    }
+    updateStreamDetail(stream);
   }
 
   const setStreamDetail = (stream: StreamInfo) => {
@@ -231,7 +224,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
 
-    const setOrAutoSelectFirst = (name?: string) => {
+    const setContractOrAutoSelectFirst = (name?: string) => {
       if (name) {
         if (contractFromCache) {
           setSelectedContract(contractFromCache);
@@ -247,7 +240,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       }
     }
 
-    setOrAutoSelectFirst(contractName);
+    setContractOrAutoSelectFirst(contractName);
     return () => {};
   }, [
     contractName,
@@ -257,34 +250,48 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const { publicKey } = useWallet();
-  const refreshStreamsList = useCallback(async () => {
+  const refreshStreamsList = useCallback(() => {
     if (!publicKey) {
       return [];
     }
-    const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
 
-    const streams = await listStreams(connection, programId, publicKey, publicKey, 'finalized', true);
-    setStreamList(streams);
-    if (!selectedStream && streams?.length) {
-      updateSelectedStream(streams[0]);
-      if (streams[0]?.id) {
-        const streamPublicKey = new PublicKey(streams[0].id);
-        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
-        updateStreamDetail(detail);
-      }
+    if (!loadingStreams) {
+      setLoadingStreams(true);
+      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+  
+      listStreams(connection, programId, publicKey, publicKey, 'finalized', true)
+        .then(streams => {
+          updateTxCreatedSignature(undefined);
+          if (streams.length) {
+            updateSelectedStream(selectedStream || streams[0]);
+            updateStreamDetail(selectedStream || streams[0]);
+          }
+          setStreamList(streams);
+          console.log('Streams:', streams);
+          setLoadingStreams(false);
+        });
     }
-  }, [publicKey, connection, selectedStream]);
+  }, [
+    loadingStreams,
+    publicKey,
+    connection,
+    selectedStream
+  ]);
 
   useEffect(() => {
     let timer: any;
-    
+
     // Call it 1st time
-    if (publicKey) {
-      timer = window.setInterval(async () => {
-        refreshStreamsList();
-      }, STREAMS_REFRESH_TIMEOUT);
+    if (publicKey && !streamList) {
       refreshStreamsList();
+      console.log('Running on wallet connect...');
     }
+
+    // Install the timer
+    timer = window.setInterval(() => {
+      console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      refreshStreamsList();
+    }, STREAMS_REFRESH_TIMEOUT);
 
     // Return callback to run on unmount.
     return () => {
@@ -292,7 +299,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         window.clearInterval(timer);
       }
     };
-  }, [refreshStreamsList, publicKey, currentScreen]);
+  }, [publicKey, streamList, refreshStreamsList]);
 
   useEffect(() => {
 
@@ -321,7 +328,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     const updateToken = async () => {
-      if (connection && accounts?.tokenAccounts?.length) {
+      if (connection && tokenList && accounts?.tokenAccounts?.length) {
         if (selectedToken) {
           const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
           updateTokenBalance(balance);
@@ -411,7 +418,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedStream,
         setStreamDetail,
         openStreamById,
-        refreshTokenBalance
+        refreshTokenBalance,
       }}>
       {children}
     </AppStateContext.Provider>

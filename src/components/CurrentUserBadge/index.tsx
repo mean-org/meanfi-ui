@@ -9,6 +9,10 @@ import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { StreamInfo } from "../../money-streaming/money-streaming";
+import { PublicKey } from "@solana/web3.js";
+import { Constants } from "../../money-streaming/constants";
+import { listStreams } from "../../money-streaming/utils";
+import { useConnection } from "../../contexts/connection";
 
 interface StreamStats {
   incoming: number;
@@ -26,13 +30,37 @@ export const CurrentUserBadge = (props: {}) => {
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
-  const { streamList, setCurrentScreen } = useContext(AppStateContext);
+  const {
+    streamList,
+    setCurrentScreen,
+    setStreamList,
+    setSelectedStream,
+    setStreamDetail,
+  } = useContext(AppStateContext);
   const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
+  const connection = useConnection();
   const { wallet, publicKey, select } = useWallet();
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
   );
+
+  const refreshStreamList = () => {
+    if (publicKey) {
+      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+  
+      listStreams(connection, programId, publicKey, publicKey, 'finalized', true)
+        .then(async streams => {
+          setStreamList(streams);
+          setTimeout(() => {
+            console.log('streamList:', streamList);
+            setSelectedStream(streams[0]);
+            setStreamDetail(streams[0]);
+            setCurrentScreen("streams");
+          }, 500);
+        });
+    }
+  };
 
   useEffect(() => {
 
@@ -78,7 +106,7 @@ export const CurrentUserBadge = (props: {}) => {
   }
 
   const onGoToStreamsClick = () => {
-    setCurrentScreen("streams");
+    refreshStreamList();
   };
 
   if (!wallet?.publicKey) {
