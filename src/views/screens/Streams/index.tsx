@@ -41,28 +41,24 @@ export const Streams = () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
 
-        let totalDeposits = Math.round(clonedDetail.totalDeposits);
-        let totalWithdrawals = Math.round(clonedDetail.totalWithdrawals);
-        let startDateUtc = new Date();
-    
-        startDateUtc.setTime(Date.parse(clonedDetail.startUtc as string));
-        startDateUtc = convertLocalDateToUTCIgnoringTimezone(startDateUtc);
-
-        let rateAmount = Math.fround(clonedDetail.rateAmount);
+        const tokenDecimals = 10 ** getTokenDecimals(clonedDetail.associatedToken as string);
+        let startDateUtc = new Date(clonedDetail.startUtc as string);
         let escrowVestedAmount = 0;
         let today = new Date();
         let utcNow = convertLocalDateToUTCIgnoringTimezone(today);
-    
-        if (utcNow.getTime() >= startDateUtc.getTime()) {
-            escrowVestedAmount = Math.fround((rateAmount / clonedDetail.rateIntervalInSeconds) * (utcNow.getTime() - startDateUtc.getTime()));
+        const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
+        const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
 
-            if (escrowVestedAmount >= totalDeposits) {
-                escrowVestedAmount = totalDeposits;
+        if (utcNow.getTime() >= startDateUtc.getTime()) {
+            escrowVestedAmount = rate * elapsedTime * tokenDecimals;
+
+            if (escrowVestedAmount >= clonedDetail.totalDeposits) {
+                escrowVestedAmount = clonedDetail.totalDeposits;
             }
         }
 
-        clonedDetail.escrowVestedAmount = escrowVestedAmount;
-        clonedDetail.escrowUnvestedAmount = Math.fround(totalDeposits - totalWithdrawals - escrowVestedAmount);
+        clonedDetail.escrowVestedAmount = Math.fround(escrowVestedAmount);
+        clonedDetail.escrowUnvestedAmount = Math.fround(clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount);
         setStreamDetail(clonedDetail);
       }
     }
@@ -70,7 +66,7 @@ export const Streams = () => {
     // Install the timer
     updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 500);
+    }, 1000);
 
     // Return callback to run on unmount.
     return () => {
