@@ -267,11 +267,22 @@ export function isPositiveNumber(str: string): boolean {
   return POSITIVE_NUMBER_PATTERN.test(str);
 }
 
-export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string): string => {
+export const getTokenDecimals = (address: string): number => {
+  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList.decimals;
+  }
+  return 0;
+}
+
+export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string, onlyValue = false): string => {
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   const inputAmount = parseFloat(amount.toString());
   if (tokenFromTokenList) {
     const convertedToTokenUnit = (inputAmount / (10 ** tokenFromTokenList.decimals));
+    if (onlyValue) {
+      return `${formatAmount(convertedToTokenUnit, tokenFromTokenList.decimals) || 0}`;
+    }
     return `${formatAmount(convertedToTokenUnit, tokenFromTokenList.decimals) || 0} ${tokenFromTokenList.symbol}`;
   } else if (amount) {
     return `${formatAmount(inputAmount, 2)}`;

@@ -106,7 +106,7 @@ export const RepeatingPayment = () => {
     if (publicKey) {
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
   
-      listStreams(connection, programId, publicKey, publicKey, 'finalized', true)
+      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(async streams => {
           setStreamList(streams);
           setTimeout(() => {

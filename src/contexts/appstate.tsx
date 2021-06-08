@@ -259,12 +259,20 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreams(true);
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
   
-      listStreams(connection, programId, publicKey, publicKey, 'finalized', true)
+      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
           updateTxCreatedSignature(undefined);
           if (streams.length) {
-            updateSelectedStream(selectedStream || streams[0]);
-            updateStreamDetail(selectedStream || streams[0]);
+            if (selectedStream) {
+              const item = streams.find(s => s.id === selectedStream.id);
+              if (item) {
+                updateSelectedStream(item);
+                updateStreamDetail(item);
+              }
+            } else {
+              updateSelectedStream(streams[0]);
+              updateStreamDetail(streams[0]);
+            }
           }
           setStreamList(streams);
           console.log('Streams:', streams);

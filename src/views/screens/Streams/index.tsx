@@ -5,12 +5,13 @@ import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock,
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenDecimals, isValidNumber, shortenAddress } from "../../../utils/utils";
 import { getTokenByMintAddress } from "../../../utils/tokens";
-import { getIntervalFromSeconds } from "../../../utils/ui";
+import { convertLocalDateToUTCIgnoringTimezone, getIntervalFromSeconds } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
+import _ from "lodash";
 
 export const Streams = () => {
   const { connected, publicKey } = useWallet();
@@ -18,6 +19,7 @@ export const Streams = () => {
     streamList,
     streamDetail,
     setCurrentScreen,
+    setStreamDetail,
     setSelectedStream,
     openStreamById
   } = useContext(AppStateContext);
@@ -31,6 +33,52 @@ export const Streams = () => {
       }
     }
   });
+
+  useEffect(() => {
+    let updateDateTimer: any;
+
+    const updateData = () => {
+      if (streamDetail) {
+        const clonedDetail = _.cloneDeep(streamDetail);
+
+        let totalDeposits = Math.round(clonedDetail.totalDeposits);
+        let totalWithdrawals = Math.round(clonedDetail.totalWithdrawals);
+        let startDateUtc = new Date();
+    
+        startDateUtc.setTime(Date.parse(clonedDetail.startUtc as string));
+        startDateUtc = convertLocalDateToUTCIgnoringTimezone(startDateUtc);
+
+        let rateAmount = Math.fround(clonedDetail.rateAmount);
+        let escrowVestedAmount = 0;
+        let today = new Date();
+        let utcNow = convertLocalDateToUTCIgnoringTimezone(today);
+    
+        if (utcNow.getTime() >= startDateUtc.getTime()) {
+            escrowVestedAmount = Math.fround((rateAmount / clonedDetail.rateIntervalInSeconds) * (utcNow.getTime() - startDateUtc.getTime()));
+
+            if (escrowVestedAmount >= totalDeposits) {
+                escrowVestedAmount = totalDeposits;
+            }
+        }
+
+        clonedDetail.escrowVestedAmount = escrowVestedAmount;
+        clonedDetail.escrowUnvestedAmount = Math.fround(totalDeposits - totalWithdrawals - escrowVestedAmount);
+        setStreamDetail(clonedDetail);
+      }
+    }
+
+    // Install the timer
+    updateDateTimer = window.setInterval(() => {
+      updateData();
+    }, 500);
+
+    // Return callback to run on unmount.
+    return () => {
+      if (updateDateTimer) {
+        window.clearInterval(updateDateTimer);
+      }
+    };
+  }, [streamDetail, setStreamDetail]);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -104,7 +152,7 @@ export const Streams = () => {
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
     const today = new Date();
     const miniDate = streamDetail && streamDetail.escrowEstimatedDepletionUtc
-      ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString()) // TODO: OJO
+      ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())
       : '';
 
     if (date > today) {
@@ -223,7 +271,10 @@ export const Streams = () => {
 
       {/* Funds left (Total Unvested) */}
       <div className="mb-3">
-        <div className="info-label">Funds left in account</div>
+        <div className="info-label text-truncate">Funds left in account {streamDetail
+          ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
+          : ''}
+        </div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
@@ -233,10 +284,10 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
-              &nbsp;
+              {/* &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-              : ''}
+              : ''} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -399,7 +450,7 @@ export const Streams = () => {
 
       {/* Funds left (Total Unvested) */}
       <div className="mb-3">
-        <div className="info-label">{streamDetail && !streamDetail?.escrowUnvestedAmount
+        <div className="info-label text-truncate">{streamDetail && !streamDetail?.escrowUnvestedAmount
           ? `Funds left in account`
           : `Funds left in account (will run out by ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
             ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())  // TODO: OJO
@@ -456,7 +507,10 @@ export const Streams = () => {
           <div className="item-block vertical-scroll">
             {streamList && streamList.length ? (
               streamList.map((item, index) => {
-                const onStreamClick = () => setSelectedStream(item);
+                const onStreamClick = () => {
+                  console.log('selected stream:', item);
+                  setSelectedStream(item);
+                };
                 return (
                   <div key={`${index + 50}`} onClick={onStreamClick}
                     className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
