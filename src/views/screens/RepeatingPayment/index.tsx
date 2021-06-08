@@ -102,12 +102,13 @@ export const RepeatingPayment = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    if (isSuccess()) {
-      resetContractValues();
-    }
   }
 
   const handleGoToStreamsClick = () => {
+    if (isSuccess()) {
+      resetContractValues();
+    }
+    closeTransactionModal();
     setCurrentScreen("streams");
   };
 
@@ -536,12 +537,19 @@ export const RepeatingPayment = () => {
         const amount = parseFloat(fromCoinAmount as string);
         const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
+        const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        console.log('parsed paymentStartDate:', parsedDate);
+        console.log('Parsed paymentStartDate:', parsedDate);
         let fromParsedDate = new Date(parsedDate);
-        console.log('UTC date input (local):', fromParsedDate.toUTCString());
-        const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
-        console.log('UTC date (without timezone):', utcDate.toUTCString());
+        fromParsedDate.setHours(now.getHours());
+        fromParsedDate.setMinutes(now.getMinutes());
+        console.log('Local time added to parsed date!');
+        console.log('fromParsedDate.toString()', fromParsedDate.toString());
+        console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+        // const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
+        // console.log('converted with Date.UTC()');
+        // console.log('utcDate.toString()', utcDate.toString());
+        // console.log('utcDate.toUTCString()', utcDate.toUTCString());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -555,7 +563,7 @@ export const RepeatingPayment = () => {
           associatedToken: associatedToken,                               // associatedToken
           rateAmount: parseFloat(paymentRateAmount as string),            // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          startUtc: utcDate,                                              // startUtc
+          startUtc: fromParsedDate,                                              // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                                  // streamName
@@ -569,7 +577,7 @@ export const RepeatingPayment = () => {
           associatedToken,                                  // associatedToken
           parseFloat(paymentRateAmount as string),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          utcDate,                                          // startUtc
+          fromParsedDate,                                          // startUtc
           recipientNote
             ? recipientNote.trim()
             : undefined,                                    // streamName
@@ -668,7 +676,6 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
           });
-          // Save transaction
           return true;
         })
         .catch(error => {
@@ -691,12 +698,14 @@ export const RepeatingPayment = () => {
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           console.log('sent:', sent);
-          // Save signature to the state
-          setLastCreatedTransactionSignature(signature);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             console.log('confirmed:', confirmed);
-            setIsBusy(false);
+            if (confirmed) {
+              // Save signature to the state
+              setLastCreatedTransactionSignature(signature);
+              setIsBusy(false);
+            } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

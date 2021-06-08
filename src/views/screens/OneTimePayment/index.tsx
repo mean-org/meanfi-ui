@@ -89,12 +89,13 @@ export const OneTimePayment = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    if (isSuccess()) {
-      resetContractValues();
-    }
   }
 
   const handleGoToStreamsClick = () => {
+    if (isSuccess()) {
+      resetContractValues();
+    }
+    closeTransactionModal();
     setCurrentScreen("streams");
   };
 
@@ -336,13 +337,16 @@ export const OneTimePayment = () => {
         const amount = parseFloat(fromCoinAmount as string);
         const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
+        const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        console.log('parsed paymentStartDate:', parsedDate);
+        console.log('Parsed paymentStartDate:', parsedDate);
         let fromParsedDate = new Date(parsedDate);
-        console.log('UTC date input (local):', fromParsedDate.toUTCString());
-        const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
-        console.log('UTC date (without timezone):', fromParsedDate.toUTCString());
-
+        fromParsedDate.setHours(now.getHours());
+        fromParsedDate.setMinutes(now.getMinutes());
+        console.log('Local time added to parsed date!');
+        console.log('fromParsedDate.toString()', fromParsedDate.toString());
+        console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+  
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.CreateTransaction
@@ -355,7 +359,7 @@ export const OneTimePayment = () => {
           associatedToken: associatedToken,                               // associatedToken
           rateAmount: parseFloat(fromCoinAmount as string),               // rateAmount
           rateIntervalInSeconds: 0,                                       // rateIntervalInSeconds
-          startUtc: utcDate,                                              // startUtc
+          startUtc: fromParsedDate,                                              // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                                      // streamName
@@ -369,7 +373,7 @@ export const OneTimePayment = () => {
           associatedToken,                                  // associatedToken
           parseFloat(fromCoinAmount as string),             // rateAmount
           0,                                                // rateIntervalInSeconds
-          utcDate,                                          // startUtc
+          fromParsedDate,                                          // startUtc
           recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                        // streamName
@@ -468,7 +472,6 @@ export const OneTimePayment = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
           });
-          // Save transaction
           return true;
         })
         .catch(error => {
@@ -491,12 +494,14 @@ export const OneTimePayment = () => {
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           console.log('sent:', sent);
-          // Save signature to the state
-          setLastCreatedTransactionSignature(signature);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             console.log('confirmed:', confirmed);
-            setIsBusy(false);
+            if (confirmed) {
+              // Save signature to the state
+              setLastCreatedTransactionSignature(signature);
+              setIsBusy(false);
+            } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

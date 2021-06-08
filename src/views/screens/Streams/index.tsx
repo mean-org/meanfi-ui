@@ -8,12 +8,9 @@ import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../../utils/utils";
 import { getTokenByMintAddress } from "../../../utils/tokens";
 import { getIntervalFromSeconds } from "../../../utils/ui";
-import { SOLANA_EXPLORER_URI, STREAM_LONG_DATE_FORMAT, STREAM_MINIMUM_DATE_FORMAT, STREAM_SHORT_DATE_FORMAT } from "../../../constants";
-import moment from "moment-timezone";
-import { PublicKey } from "@solana/web3.js";
+import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
-import { useConnection } from "../../../contexts/connection";
 
 export const Streams = () => {
   const { connected, publicKey } = useWallet();
@@ -97,25 +94,17 @@ export const Streams = () => {
     }
   }
 
-  const getShortReadableDate = (date: Date): string => {
+  const getReadableDate = (date: string): string => {
     if (!date) { return ''; }
-    return moment(date).format(STREAM_SHORT_DATE_FORMAT);
-  }
-
-  const getReadableDate = (date: Date): string => {
-    if (!date) { return ''; }
-    return moment(date).format(STREAM_LONG_DATE_FORMAT);
-  }
-
-  const getMinimumDate = (date: Date): string => {
-    if (!date) { return ''; }
-    return moment(date).format(STREAM_MINIMUM_DATE_FORMAT);
+    const converted = Date.parse(date);
+    const localDate = new Date(converted);
+    return localDate.toUTCString();
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
     const today = new Date();
     const miniDate = streamDetail && streamDetail.escrowEstimatedDepletionUtc
-      ? getMinimumDate(streamDetail.escrowEstimatedDepletionUtc)
+      ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString()) // TODO: OJO
       : '';
 
     if (date > today) {
@@ -159,7 +148,7 @@ export const Streams = () => {
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Receiving money since ${getShortReadableDate(item.startUtc as Date)}`;
+        title = `Receiving money since ${getReadableDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
@@ -167,7 +156,7 @@ export const Streams = () => {
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Sending money since ${getShortReadableDate(item.startUtc as Date)}`;
+        title = `Sending money since ${getReadableDate(item.startUtc as string)}`;
       }
     }
     return title;
@@ -186,7 +175,7 @@ export const Streams = () => {
     <div className="stream-details-data-wrapper">
 
       {/* Sender */}
-      <Row className="mb-12px">
+      <Row className="mb-3">
         <Col span={12}>
           <div className="info-label">Sender</div>
           <div className="transaction-detail-row">
@@ -220,20 +209,20 @@ export const Streams = () => {
       </Row>
 
       {/* Started date */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Started</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconClock className="mean-svg-icons" />
           </span>
           <span className="info-data">
-            {getReadableDate(streamDetail?.startUtc as Date)}
+            {getReadableDate(streamDetail?.startUtc as string)}
           </span>
         </div>
       </div>
 
       {/* Funds left (Total Unvested) */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Funds left in account</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
@@ -244,11 +233,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
-              {/* {streamDetail.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-                ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
-                : '0'}
-              &nbsp;
-              {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
               &nbsp;
               {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
               ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
@@ -261,7 +245,7 @@ export const Streams = () => {
       </div>
 
       {/* Amount withdrawn */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Total amount you have withdrawn since stream started</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
@@ -272,11 +256,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
               : '--'}
-            {/* {streamDetail.totalWithdrawals && isValidNumber(streamDetail.totalWithdrawals.toString())
-              ? formatAmount(streamDetail.totalWithdrawals, 6)
-              : '0'}
-            &nbsp;
-            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -285,7 +264,7 @@ export const Streams = () => {
       </div>
 
       {/* Funds available to withdraw now (Total Vested) */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Funds available to withdraw now</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
@@ -296,11 +275,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
               : '--'}
-            {/* {streamDetail.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-              ? formatAmount(streamDetail.escrowVestedAmount, 6)
-              : '0'}
-            &nbsp;
-            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -309,7 +283,7 @@ export const Streams = () => {
       </div>
 
       {/* Withdraw button */}
-      <div className="mt-4 mb-12px withdraw-container">
+      <div className="mt-4 mb-3 withdraw-container">
         <Button
           block
           className="withdraw-cta"
@@ -340,7 +314,7 @@ export const Streams = () => {
     </div>
     <div className="stream-details-data-wrapper">
       {/* Beneficiary */}
-      <Row className="mb-12px">
+      <Row className="mb-3">
         <Col span={12}>
           <div className="info-label">Recipient</div>
           <div className="transaction-detail-row">
@@ -372,20 +346,20 @@ export const Streams = () => {
       </Row>
 
       {/* Started date */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Started</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconClock className="mean-svg-icons" />
           </span>
           <span className="info-data">
-            {getReadableDate(streamDetail?.startUtc as Date)}
+            {getReadableDate(streamDetail?.startUtc as string)}
           </span>
         </div>
       </div>
 
       {/* Total deposit */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Total amount you have deposited since stream started</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
@@ -396,11 +370,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
               : '--'}
-            {/* {streamDetail.totalDeposits && isValidNumber(streamDetail.totalDeposits.toString())
-              ? formatAmount(streamDetail.totalDeposits, 6)
-              : '0'}
-            &nbsp;
-            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
             ) : (
               <span className="info-data">&nbsp;</span>
@@ -409,7 +378,7 @@ export const Streams = () => {
       </div>
 
       {/* Funds sent (Total Vested) */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">Funds sent to recepient</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
@@ -420,11 +389,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
               : '--'}
-            {/* {streamDetail?.escrowVestedAmount && isValidNumber(streamDetail.escrowVestedAmount.toString())
-              ? formatAmount(streamDetail.escrowVestedAmount, 6)
-              : '0'}
-            &nbsp;
-            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -433,11 +397,11 @@ export const Streams = () => {
       </div>
 
       {/* Funds left (Total Unvested) */}
-      <div className="mb-12px">
+      <div className="mb-3">
         <div className="info-label">{streamDetail && !streamDetail?.escrowUnvestedAmount
           ? `Funds left in account`
           : `Funds left in account (will run out by ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
-            ? getMinimumDate(streamDetail.escrowEstimatedDepletionUtc)
+            ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())  // TODO: OJO
             : ''})`}
         </div>
         <div className="transaction-detail-row">
@@ -449,11 +413,6 @@ export const Streams = () => {
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
-            {/* {streamDetail?.escrowUnvestedAmount && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-              ? formatAmount(streamDetail.escrowUnvestedAmount, 6)
-              : '0'}
-            &nbsp;
-            {getEscrowTokenSymbol(streamDetail.associatedToken as string)} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -462,7 +421,7 @@ export const Streams = () => {
       </div>
 
       {/* Top up (add funds) */}
-      <div className="mt-4 mb-12px withdraw-container">
+      <div className="mt-4 mb-3 withdraw-container">
         <Button
           block
           className="withdraw-cta"
