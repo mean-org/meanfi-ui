@@ -11,6 +11,7 @@ import { convertLocalDateToUTCIgnoringTimezone, getIntervalFromSeconds } from ".
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
+import { WithdrawModal } from '../../../components/WithdrawModal';
 import _ from "lodash";
 
 export const Streams = () => {
@@ -96,12 +97,22 @@ export const Streams = () => {
     closeOpenStreamModal();
   };
 
+  // Open stream modal
+  const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
+  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
+  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+  const onAcceptWithdraw = (e: any) => {
+    // Do some shit and close the modal
+    console.log('onAcceptWithdraw:', e);
+    closeWithdrawModal();
+  };
+
   const isInboundStream = (item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
   }
 
-  const getAmountWithSymbol = (amount: any, address: string) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address);
+  const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
+    return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
   }
 
   const getStreamIcon = (item: StreamInfo) => {
@@ -338,7 +349,7 @@ export const Streams = () => {
           shape="round"
           size="small"
           disabled={!streamDetail || !streamDetail.escrowVestedAmount}
-          onClick={() => {}} >
+          onClick={showWithdrawModal} >
           Withdraw funds
         </Button>
         <Button
@@ -350,6 +361,10 @@ export const Streams = () => {
           icon={<EllipsisOutlined />}>
         </Button>
       </div>
+
+      <Divider className="activity-divider" plain></Divider>
+      <div className="activity-title">Activity</div>
+      <p>No activity so far.</p>
 
     </div>
   </>
@@ -489,6 +504,10 @@ export const Streams = () => {
         </Button>
       </div>
 
+      <Divider className="activity-divider" plain></Divider>
+      <div className="activity-title">Activity</div>
+      <p>No activity so far.</p>
+
     </div>
   </>
   );
@@ -571,9 +590,6 @@ export const Streams = () => {
           ) : (
             <p>Please select a stream to view details</p>
           )}
-          <Divider className="activity-divider" plain></Divider>
-          <div className="activity-title">Activity</div>
-          <p>No activity so far.</p>
         </div>
       </div>
       <ContractSelectorModal
@@ -584,6 +600,10 @@ export const Streams = () => {
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}
         handleClose={closeOpenStreamModal} />
+      <WithdrawModal
+        isVisible={isWithdrawModalVisible}
+        handleOk={onAcceptWithdraw}
+        handleClose={closeWithdrawModal} />
     </div>
   );
 };
