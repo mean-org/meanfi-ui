@@ -303,6 +303,7 @@ export const Streams = () => {
           icon={<EllipsisOutlined />}>
         </Button>
       </div>
+
     </div>
   </>
   );
@@ -510,7 +511,7 @@ export const Streams = () => {
       </div>
       {/* Right / down panel */}
       <div className="stream-details-container">
-        <Divider plain></Divider>
+        <Divider className="streams-divider" plain></Divider>
         <div className="streams-heading">Stream details</div>
         <div className="inner-container">
           {connected && streamDetail ? (
@@ -520,6 +521,9 @@ export const Streams = () => {
           ) : (
             <p>Please select a stream to view details</p>
           )}
+          <Divider className="activity-divider" plain></Divider>
+          <div className="activity-title">Activity</div>
+          <p>No activity so far.</p>
         </div>
       </div>
       <ContractSelectorModal
