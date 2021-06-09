@@ -71,8 +71,7 @@ export const Streams = () => {
 
         const tokenDecimals = 10 ** getTokenDecimals(clonedDetail.associatedToken as string);
         let startDateUtc = new Date(clonedDetail.startUtc as string);
-        let today = new Date();
-        let utcNow = convertLocalDateToUTCIgnoringTimezone(today);
+        let utcNow = new Date();
         const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
         const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
 
@@ -177,9 +176,8 @@ export const Streams = () => {
 
   const getReadableDate = (date: string): string => {
     if (!date) { return ''; }
-    const converted = Date.parse(date);
-    const localDate = new Date(converted);
-    return localDate.toUTCString();
+    const localDate = new Date(date);
+    return localDate.toLocaleString();
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {

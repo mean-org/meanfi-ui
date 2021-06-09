@@ -295,11 +295,13 @@ const AppStateProvider: React.FC = ({ children }) => {
       console.log('Running on wallet connect...');
     }
 
-    // Install the timer
-    timer = window.setInterval(() => {
-      console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-      refreshStreamsList();
-    }, STREAMS_REFRESH_TIMEOUT);
+    // Install the timer only in the streams screen
+    if (currentScreen === 'streams') {
+      timer = window.setInterval(() => {
+        console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshStreamsList();
+      }, STREAMS_REFRESH_TIMEOUT);
+    }
 
     // Return callback to run on unmount.
     return () => {
@@ -307,7 +309,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         window.clearInterval(timer);
       }
     };
-  }, [publicKey, streamList, refreshStreamsList]);
+  }, [publicKey, streamList, currentScreen, refreshStreamsList]);
 
   useEffect(() => {
 

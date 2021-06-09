@@ -1,8 +1,13 @@
 import { Button, Modal, DatePicker, Spin } from "antd";
-import { QrcodeOutlined, LoadingOutlined, CheckOutlined } from "@ant-design/icons";
+import {
+  CheckOutlined,
+  LoadingOutlined,
+  QrcodeOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { useMarkets } from "../../../contexts/market";
+// import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
@@ -29,7 +34,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
-  const { marketEmitter, midPriceInUSD } = useMarkets();
+  // const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
   const accounts = useAccountsContext();
@@ -216,19 +221,19 @@ export const OneTimePayment = () => {
   ]);
 
   // Effect to handle onMarket event
-  useEffect(() => {
-    const refreshTotal = () => {};
+  // useEffect(() => {
+  //   const refreshTotal = () => {};
 
-    const dispose = marketEmitter.onMarket(() => {
-      refreshTotal();
-    });
+  //   const dispose = marketEmitter.onMarket(() => {
+  //     refreshTotal();
+  //   });
 
-    refreshTotal();
+  //   refreshTotal();
 
-    return () => {
-      dispose();
-    };
-  }, [marketEmitter, midPriceInUSD, connectionConfig.tokenMap]);
+  //   return () => {
+  //     dispose();
+  //   };
+  // }, [marketEmitter, midPriceInUSD, connectionConfig.tokenMap]);
 
   // Effect signal token list reload on wallet connected status change
   useEffect(() => {
@@ -550,6 +555,15 @@ export const OneTimePayment = () => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
+  const isError = () => {
+    return transactionStatus.currentOperation === TransactionStatus.CreateTransactionFailure ||
+           transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+           transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+           transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+           ? true
+           : false;
+  }
+
   return (
     <>
       {/* Recipient */}
@@ -836,10 +850,23 @@ export const OneTimePayment = () => {
                 View Stream
               </Button>
             </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={closeTransactionModal}>
+                Dismiss
+              </Button>
+            </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Loading data, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
             </>
           )}
         </div>
