@@ -44,25 +44,28 @@ export const Streams = () => {
 
         const tokenDecimals = 10 ** getTokenDecimals(clonedDetail.associatedToken as string);
         let startDateUtc = new Date(clonedDetail.startUtc as string);
-        let escrowVestedAmount = 0;
         let today = new Date();
         let utcNow = convertLocalDateToUTCIgnoringTimezone(today);
         const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
         const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
 
-        if (utcNow.getTime() >= startDateUtc.getTime()) {
-            escrowVestedAmount = rate * elapsedTime * tokenDecimals;
+        let escrowVestedAmount = 0;
 
-            if (escrowVestedAmount >= clonedDetail.totalDeposits) {
-                escrowVestedAmount = clonedDetail.totalDeposits;
-            }
+        if (utcNow.getTime() >= startDateUtc.getTime()) {
+          escrowVestedAmount = rate * elapsedTime * tokenDecimals;
+
+          if (escrowVestedAmount >= clonedDetail.totalDeposits) {
+            escrowVestedAmount = clonedDetail.totalDeposits;
+          }
         }
 
         clonedDetail.escrowVestedAmount = Math.fround(escrowVestedAmount);
-        clonedDetail.escrowUnvestedAmount = Math.fround(clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount);
+        clonedDetail.escrowUnvestedAmount = Math.fround(
+          clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount
+        );
         setStreamDetail(clonedDetail);
       }
-    }
+    };
 
     // Install the timer
     updateDateTimer = window.setInterval(() => {
@@ -97,7 +100,7 @@ export const Streams = () => {
     closeOpenStreamModal();
   };
 
-  // Open stream modal
+  // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
   const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
@@ -349,7 +352,9 @@ export const Streams = () => {
           shape="round"
           size="small"
           disabled={!streamDetail || !streamDetail.escrowVestedAmount}
-          onClick={showWithdrawModal} >
+          onClick={() => {}}
+          // onClick={showWithdrawModal}
+        >
           Withdraw funds
         </Button>
         <Button
