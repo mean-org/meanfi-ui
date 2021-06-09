@@ -265,6 +265,14 @@ export function isPositiveNumber(str: string): boolean {
   return POSITIVE_NUMBER_PATTERN.test(str);
 }
 
+export const getTokenSymbol = (address: string): string => {
+  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList.symbol;
+  }
+  return '';
+}
+
 export const getTokenDecimals = (address: string): number => {
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   if (tokenFromTokenList) {

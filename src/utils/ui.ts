@@ -276,10 +276,10 @@ export const getFairPercentForInterval = (frequency: PaymentRateType): number =>
 
 // Get a percentual value that partialValue represents in total
 export const percentual = (partialValue: number, total: number): number => {
-return (100 * partialValue) / total;
+    return (100 * partialValue) / total;
 }
 
 // Get the given percent of total
 export const percentage = (percent: number, total: number): number => {
-return ((percent/ 100) * total);
+    return ((percent / 100) * total);
 }
