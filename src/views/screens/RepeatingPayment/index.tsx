@@ -1,5 +1,5 @@
 import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin } from "antd";
-import { QrcodeOutlined, LoadingOutlined, CheckOutlined, WarningOutlined } from "@ant-design/icons";
+import { QrcodeOutlined, LoadingOutlined, CheckOutlined } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { useMarkets } from "../../../contexts/market";
@@ -14,7 +14,6 @@ import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
-  convertLocalDateToUTCIgnoringTimezone,
   getAmountWithTokenSymbol,
   getFairPercentForInterval,
   getOptionsFromEnum,

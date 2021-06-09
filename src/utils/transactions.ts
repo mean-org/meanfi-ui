@@ -1,4 +1,5 @@
-import { Connection, PublicKey, ConfirmedTransaction } from "@solana/web3.js";
+import { Connection, PublicKey, ConfirmedTransaction, TransactionInstruction } from "@solana/web3.js";
+import { MEMO_PROGRAM_ID } from "./ids";
 
 export class TransactionWithSignature {
     constructor(
@@ -28,4 +29,12 @@ export async function getTransactions(
         }
     }
     return transactions;
+}
+
+export function memoInstruction(memo: string) {
+return new TransactionInstruction({
+    keys: [],
+    data: Buffer.from(memo, 'utf-8'),
+    programId: MEMO_PROGRAM_ID
+})
 }

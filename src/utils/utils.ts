@@ -2,11 +2,9 @@ import BN from "bn.js";
 import { useCallback, useState } from "react";
 import { MintInfo } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { deserializeMint } from "../contexts/accounts";
-import { getTokenByMintAddress } from "./tokens";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 
 export type KnownTokenMap = Map<string, TokenInfo>;

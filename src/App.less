@@ -1208,10 +1208,6 @@ em {
 
 // Modals
 .ant-modal-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
   .ant-modal.mean-modal {
     @media (max-width: 575.98px) {
       height: 100% !important;
@@ -1226,9 +1222,6 @@ em {
     @media (min-width: 576px) {
       max-height: calc(100vh - 200px);
     }
-    position: fixed;
-    display: block;
-    height: auto;
     .mean-modal-form {
       .modal-form-heading {
         font-size: 1rem;
@@ -1239,8 +1232,6 @@ em {
     &.unpadded-content {
       .ant-modal-body {
         padding: 6px 0;
-        max-height: calc(100% - 54px);
-        &:extend(.vertical-scroll);
       }
     }
     .ant-modal-content {
@@ -1270,9 +1261,6 @@ em {
           font-weight: 700;
           text-align: center;
         }
-      }
-      .ant-modal-body {
-        &:extend(.vertical-scroll);
       }
       .ant-modal-close {
         color: var(--color-secondary-alpha-50);

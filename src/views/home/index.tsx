@@ -1,9 +1,8 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { useUserBalance } from "../../hooks";
 import { IconCaretDown } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
@@ -16,7 +15,6 @@ export const HomeView = () => {
     refreshTokenBalance
   } = useContext(AppStateContext);
 
-  // const {  } = useUserBalance();
   const { connected } = useWallet();
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const { account } = useNativeAccount();
