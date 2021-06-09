@@ -9,6 +9,7 @@ export { IconCopy } from "./IconCopy";
 export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";
 export { IconEllipsis } from "./IconEllipsis";
+export { IconExit } from "./IconExit";
 export { IconExternalLink } from "./IconExternalLink";
 export { IconInfoCircle } from "./IconInfoCircle";
 export { IconInfoTriangle } from "./IconInfoTriangle";

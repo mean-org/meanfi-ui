@@ -32,9 +32,9 @@ export async function getTransactions(
 }
 
 export function memoInstruction(memo: string) {
-return new TransactionInstruction({
-    keys: [],
-    data: Buffer.from(memo, 'utf-8'),
-    programId: MEMO_PROGRAM_ID
-})
+    return new TransactionInstruction({
+        keys: [],
+        data: Buffer.from(memo, 'utf-8'),
+        programId: MEMO_PROGRAM_ID
+    })
 }

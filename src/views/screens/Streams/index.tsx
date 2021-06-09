@@ -1,7 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Divider, Row, Col, Button } from "antd";
-import { SearchOutlined, EllipsisOutlined } from "@ant-design/icons";
-import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock, IconShare } from "../../../Icons";
+import { Divider, Row, Col, Button, Modal } from "antd";
+import { SearchOutlined, EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { IconPause, IconDownload, IconDocument, IconUpload, IconBank, IconClock, IconShare, IconExit } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
 import { StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
@@ -24,6 +24,7 @@ export const Streams = () => {
     setSelectedStream,
     openStreamById
   } = useContext(AppStateContext);
+  const { confirm } = Modal;
 
   useEffect(() => {
     if (!connected) {
@@ -221,6 +222,27 @@ export const Streams = () => {
     return escrowToken ? escrowToken.symbol : '';
   }
 
+  const showLeaveStreamConfirm = () => {
+    confirm({
+      title: 'Close stream',
+      icon: <ExclamationCircleOutlined />,
+      content: `You are about to leave this stream, as a consequence the stream will be closed and any pending funds for withdrawal will be transferred to your wallet account.`,
+      okText: 'LEAVE STREAM',
+      okType: 'danger',
+      cancelText: 'CANCEL',
+      async onOk() {
+        try {
+          return new Promise((resolve, reject) => {
+            setTimeout(Math.random() > 0.5 ? resolve : reject, 1000);
+          });
+        } catch (e) {
+          return console.log('Oops errors!');
+        }
+      },
+      onCancel() {},
+    });
+  }
+
   const renderInboundStream = (
     <>
     <div className="stream-type-indicator">
@@ -348,8 +370,7 @@ export const Streams = () => {
           shape="round"
           size="small"
           disabled={!streamDetail || !streamDetail.escrowVestedAmount}
-          onClick={() => {}}
-          // onClick={showWithdrawModal}
+          onClick={showWithdrawModal}
         >
           Withdraw funds
         </Button>
@@ -358,8 +379,9 @@ export const Streams = () => {
           type="text"
           size="small"
           className="ant-btn-shaded"
-          onClick={() => {}}
-          icon={<EllipsisOutlined />}>
+          onClick={showLeaveStreamConfirm}
+        >
+          <IconShare className="mean-svg-icons" />
         </Button>
       </div>
 
@@ -492,7 +514,8 @@ export const Streams = () => {
           type="text"
           shape="round"
           size="small"
-          onClick={() => {}} >
+          onClick={() => {}}
+        >
           Top up (add funds)
         </Button>
         <Button
@@ -500,8 +523,9 @@ export const Streams = () => {
           type="text"
           size="small"
           className="ant-btn-shaded"
-          onClick={() => {}}
-          icon={<EllipsisOutlined />}>
+          onClick={showLeaveStreamConfirm}
+        >
+          <IconShare className="mean-svg-icons" />
         </Button>
       </div>
 
