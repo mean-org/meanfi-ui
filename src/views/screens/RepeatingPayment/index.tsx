@@ -144,19 +144,6 @@ export const RepeatingPayment = () => {
 
   const handleDateChange = (date: string) => {
     setPaymentStartDate(date);
-    const parsedDate = Date.parse(date);
-    console.log('Parsed date:', parsedDate);
-    let utcDate = new Date(parsedDate);
-
-    const utcDateWithoutTz = convertLocalDateToUTCIgnoringTimezone(utcDate);
-    console.log('utcDate from parsed date:', utcDate.toLocaleDateString());
-    console.log('convertLocalDateToUTCIgnoringTimezone =>');
-    console.log('utcDateWithoutTz.toString()', utcDateWithoutTz.toString());
-    console.log('utcDateWithoutTz.toISOString()', utcDateWithoutTz.toISOString());
-    console.log('utcDateWithoutTz.toUTCString()', utcDateWithoutTz.toUTCString());
-    console.log('utcDateWithoutTz.toDateString()', utcDateWithoutTz.toDateString());
-    console.log('utcDateWithoutTz.toLocaleString()', utcDateWithoutTz.toLocaleString());
-    console.log('utcDateWithoutTz.toLocaleDateString()', utcDateWithoutTz.toLocaleDateString());
   }
 
   // Set to reload prices every 30 seconds
@@ -567,10 +554,6 @@ export const RepeatingPayment = () => {
         console.log('Local time added to parsed date!');
         console.log('fromParsedDate.toString()', fromParsedDate.toString());
         console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
-        // const utcDate = convertLocalDateToUTCIgnoringTimezone(fromParsedDate);
-        // console.log('converted with Date.UTC()');
-        // console.log('utcDate.toString()', utcDate.toString());
-        // console.log('utcDate.toUTCString()', utcDate.toUTCString());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,

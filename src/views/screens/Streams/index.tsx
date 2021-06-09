@@ -94,8 +94,6 @@ export const Streams = () => {
   const showOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(true), []);
   const closeOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(false), []);
   const onAcceptOpenStream = (e: any) => {
-    // Do some shit and close the modal
-    console.log('onAcceptOpenStream:', e);
     openStreamById(e);
     closeOpenStreamModal();
   };
@@ -105,8 +103,6 @@ export const Streams = () => {
   const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const onAcceptWithdraw = (e: any) => {
-    // Do some shit and close the modal
-    console.log('onAcceptWithdraw:', e);
     closeWithdrawModal();
   };
 
