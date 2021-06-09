@@ -21,7 +21,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenDecimals, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
-import { convertLocalDateToUTCIgnoringTimezone, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
+import { getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
@@ -299,7 +299,7 @@ export const Streams = () => {
            : false;
   }
 
-  // Leave stream (Close stream) Transaction execution modal
+  // Close stream Transaction execution modal
   const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
   const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
   const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
@@ -466,12 +466,55 @@ export const Streams = () => {
 
   };
 
+  const getStreamClosureMessage = (): string => {
+    let message = '';
+
+    if (publicKey && streamDetail && streamList) {
+
+      const me = publicKey.toBase58();
+      const treasury = streamDetail.treasuryAddress;
+      const treasurer = streamDetail.treasurerAddress;
+      const beneficiary = streamDetail.beneficiaryAddress;
+      const withdrawAmount = getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string);
+      // TODO: Account for multiple beneficiaries funded by the same treasury (only 1 right now)
+      const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
+
+      if (treasurer === me) {  // If I am the treasurer
+        if (numTreasuryBeneficiaries > 1) {
+          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amounts back to the original treasury (${shortenAddress(treasury as string)}).\nAre you sure you want to do this?`
+        } else {
+          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amount back to the contributor.\nAre you sure you want to do this?`
+        }
+      } else if (beneficiary === me)  {  // If I am the beneficiary
+        message = `Closing a stream will send ~${withdrawAmount} to your account (${shortenAddress(beneficiary)}) and stop the flow of money immediately.\nAre you sure you want to do this?`;
+      }
+
+    }
+    // If ( I am the treasurer )
+    // {
+    //   If ( Number of Beneficiaries benefiting from Treasury > 1 )
+    //   {
+    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amounts back to the original treasury (TR3…SU81). Are you sure you want to do this?`
+    //   }
+    //   else
+    //   {
+    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amount back to the contributor (HnH…B4CF). Are you sure you want to do this?`
+    //   }
+    // }
+    // Else if ( I am the beneficiary )
+    // {
+    //   message = Closing a stream will send ~$66.98 to your account (AC4…UIUI8) and stop the flow of money immediately. Are you sure you want to do this?
+    // }
+
+    return message;
+  }
+
   const showCloseStreamConfirm = () => {
     confirm({
       title: 'Close stream',
       icon: <ExclamationCircleOutlined />,
-      content: `You are about to leave this stream, as a consequence the stream will be closed and any pending funds for withdrawal will be transferred to your wallet account.`,
-      okText: 'LEAVE STREAM',
+      content: getStreamClosureMessage(),
+      okText: 'CLOSE STREAM',
       okType: 'danger',
       cancelText: 'CANCEL',
       onOk() {

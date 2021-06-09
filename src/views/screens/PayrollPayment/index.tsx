@@ -7,7 +7,6 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
-// import { useMarkets } from "../../../contexts/market";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
@@ -42,7 +41,6 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const PayrollPayment = () => {
   const today = new Date().toLocaleDateString();
-  // const { marketEmitter, midPriceInUSD } = useMarkets();
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
   const accounts = useAccountsContext();
@@ -264,21 +262,6 @@ export const PayrollPayment = () => {
     shouldLoadTokens,
     setShouldLoadTokens,
   ]);
-
-  // Effect to handle onMarket event
-  // useEffect(() => {
-  //   const refreshTotal = () => {};
-
-  //   const dispose = marketEmitter.onMarket(() => {
-  //     refreshTotal();
-  //   });
-
-  //   refreshTotal();
-
-  //   return () => {
-  //     dispose();
-  //   };
-  // }, [marketEmitter, midPriceInUSD, connectionConfig.tokenMap]);
 
   // Effect signal token list reload on wallet connected status change
   useEffect(() => {
