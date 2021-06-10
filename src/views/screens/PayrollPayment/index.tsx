@@ -61,6 +61,7 @@ export const PayrollPayment = () => {
     timeSheetRequirement,
     setCurrentScreen,
     setSelectedToken,
+    setSelectedTokenBalance,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -277,10 +278,11 @@ export const PayrollPayment = () => {
           setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(undefined);
-        setShouldLoadTokens(true);
+        setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
+    } else if (!connected) {
+      setSelectedTokenBalance(0);
     }
 
     return () => {
@@ -293,6 +295,7 @@ export const PayrollPayment = () => {
     tokenList,
     setSelectedToken,
     setShouldLoadTokens,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState,
   ]);
 

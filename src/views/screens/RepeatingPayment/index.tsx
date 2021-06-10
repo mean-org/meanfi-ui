@@ -59,6 +59,7 @@ export const RepeatingPayment = () => {
     transactionStatus,
     setCurrentScreen,
     setSelectedToken,
+    setSelectedTokenBalance,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -274,10 +275,11 @@ export const RepeatingPayment = () => {
           setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(undefined);
-        setShouldLoadTokens(true);
+        setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
+    } else if (!connected) {
+      setSelectedTokenBalance(0);
     }
 
     return () => {
@@ -290,6 +292,7 @@ export const RepeatingPayment = () => {
     tokenList,
     setSelectedToken,
     setShouldLoadTokens,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState,
   ]);
 

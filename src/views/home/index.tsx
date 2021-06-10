@@ -58,6 +58,7 @@ export const HomeView = () => {
         }
       } else if (previousWalletConnectState && !connected) {
         setPreviousWalletConnectState(false);
+        refreshTokenBalance();
       }
     }
 
@@ -66,7 +67,8 @@ export const HomeView = () => {
     connected,
     streamList,
     previousWalletConnectState,
-    setCurrentScreen
+    setCurrentScreen,
+    refreshTokenBalance
   ]);
 
   const renderPreFooter = (

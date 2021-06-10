@@ -42,6 +42,8 @@ interface AppStateConfig {
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
+  setSelectedTokenBalance: (balance: number) => void;
+  refreshTokenBalance: () => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -57,7 +59,6 @@ interface AppStateConfig {
   setSelectedStream: (stream: StreamInfo) => void;
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
-  refreshTokenBalance: () => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -87,6 +88,8 @@ const contextDefaultValues: AppStateConfig = {
   setCurrentScreen: () => {},
   setContract: () => {},
   setSelectedToken: () => {},
+  setSelectedTokenBalance: () => {},
+  refreshTokenBalance: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
@@ -101,7 +104,6 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   openStreamById: () => {},
-  refreshTokenBalance: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -225,6 +227,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     setShouldUpdateToken(true);
   }
 
+  const setSelectedTokenBalance = (balance: number) => {
+    updateTokenBalance(balance);
+  }
+
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
     [contractName]
@@ -346,7 +352,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     const updateToken = async () => {
-      if (connection && tokenList && accounts?.tokenAccounts?.length) {
+      if (connection && connected && tokenList && accounts?.tokenAccounts?.length) {
         if (selectedToken) {
           const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
           updateTokenBalance(balance);
@@ -355,6 +361,8 @@ const AppStateProvider: React.FC = ({ children }) => {
           const balance = await getTokenAccountBalanceByAddress(tokenList[0].address);
           updateTokenBalance(balance);
         }
+      } else {
+        updateTokenBalance(0);
       }
     }
 
@@ -375,9 +383,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshTokenBalance = useCallback(async () => {
-    if (!selectedToken) {
-      return 0;
-    }
+
     const getTokenBalanceByAddress = async (address: string): Promise<number> => {
       if (address) {
         const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
@@ -391,9 +397,11 @@ const AppStateProvider: React.FC = ({ children }) => {
       return 0;
     }
 
-    if (connection && accounts?.tokenAccounts?.length) {
+    if (connection && accounts?.tokenAccounts?.length && selectedToken) {
       const balance = await getTokenBalanceByAddress(selectedToken.address);
       updateTokenBalance(balance);
+    } else {
+      updateTokenBalance(0);
     }
   
   }, [selectedToken, accounts, connection]);
@@ -423,6 +431,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setTheme,
         setCurrentScreen,
         setSelectedToken,
+        setSelectedTokenBalance,
+        refreshTokenBalance,
         setContract,
         setRecipientAddress,
         setRecipientNote,
@@ -438,7 +448,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedStream,
         setStreamDetail,
         openStreamById,
-        refreshTokenBalance,
       }}>
       {children}
     </AppStateContext.Provider>

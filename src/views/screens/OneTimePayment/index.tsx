@@ -50,6 +50,7 @@ export const OneTimePayment = () => {
     transactionStatus,
     setCurrentScreen,
     setSelectedToken,
+    setSelectedTokenBalance,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -232,10 +233,11 @@ export const OneTimePayment = () => {
           setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
-        setSelectedToken(undefined);
-        setShouldLoadTokens(true);
+        setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
+    } else if (!connected) {
+      setSelectedTokenBalance(0);
     }
 
     return () => {
@@ -248,6 +250,7 @@ export const OneTimePayment = () => {
     tokenList,
     setSelectedToken,
     setShouldLoadTokens,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState,
   ]);
 
