@@ -44,6 +44,7 @@ export const Streams = () => {
     streamDetail,
     transactionStatus,
     setCurrentScreen,
+    setLoadingStreams,
     setStreamList,
     setStreamDetail,
     setSelectedStream,
@@ -128,8 +129,10 @@ export const Streams = () => {
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
   const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
-  const onAcceptWithdraw = (e: any) => {
+  const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
+    console.log('Withdraw amout:', parseFloat(amount));
+    onExecuteWithdrawFundsTransaction(amount);
   };
 
   const isInboundStream = (item: StreamInfo): boolean => {
@@ -248,13 +251,17 @@ export const Streams = () => {
   const refreshStreamList = () => {
     if (publicKey) {
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+
       setTimeout(() => {
+        setLoadingStreams(true);
         listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
           .then(async streams => {
             setStreamList(streams);
+            setLoadingStreams(false);
             console.log('streamList:', streamList);
             setSelectedStream(streams[0]);
             setStreamDetail(streams[0]);
+            hideWithdrawFundsTransactionModal();
             hideCloseStreamTransactionModal();
             setCurrentScreen("streams");
           });
@@ -298,6 +305,181 @@ export const Streams = () => {
            ? true
            : false;
   }
+
+  // Withdraw funds Transaction execution modal
+  const [isWithdrawFundsTransactionModalVisible, setWithdrawFundsTransactionModalVisibility] = useState(false);
+  const showWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(true), []);
+  const hideWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(false), []);
+
+  const onWithdrawFundsTransactionFinished = () => {
+    resetTransactionStatus();
+    refreshStreamList();
+  };
+
+  const onAfterWithdrawFundsTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+  }
+
+  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    // Init a streaming operation
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && streamDetail) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.CreateTransaction
+        });
+        const stream = new PublicKey(streamDetail.id as string);
+        const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
+        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
+        const decimals = getTokenDecimals(streamDetail.associatedToken as string);
+        const amount = parseFloat(withdrawAmount);
+        const convertedToTokenUnit = (amount as number * 10 ** decimals) || 0;
+
+        // Create a transaction
+        return await moneyStream.getWithdrawTransaction(
+          stream,
+          beneficiary,
+          associatedToken,
+          convertedToTokenUnit
+        )
+        .then(value => {
+          console.log('getWithdrawTransaction returned transaction:', value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.log('closeStreamTransaction error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.CreateTransactionFailure
+          });
+          return false;
+        });
+      }
+      return false;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Signing transaction...');
+        return await moneyStream.signTransaction(wallet, transaction)
+        .then(signed => {
+          console.log('signTransaction returned a signed transaction:', signed);
+          // Stage 2 completed - The transaction was signed
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          signedTransaction = signed;
+          return true;
+        })
+        .catch(error => {
+          console.log('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          return false;
+        });
+      } else {
+        console.log('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return moneyStream.sendSignedTransaction(signedTransaction)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            // Stage 3 completed - The transaction was sent and a signature was returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await moneyStream.confirmTransaction(signature)
+        .then(result => {
+          console.log('confirmTransaction result:', result);
+          // Stage 4 completed - The transaction was confirmed!
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          return true;
+        })
+        .catch(error => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
+        });
+    }
+
+    if (wallet) {
+      showWithdrawFundsTransactionModal();
+      const create = await createTx();
+      console.log('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        console.log('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log('confirmed:', confirmed);
+            if (confirmed) {
+              // Save signature to the state
+              setIsBusy(false);
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
 
   // Close stream Transaction execution modal
   const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
@@ -650,7 +832,9 @@ export const Streams = () => {
           type="text"
           shape="round"
           size="small"
-          disabled={!streamDetail || !streamDetail.escrowVestedAmount}
+          disabled={!streamDetail ||
+                    !streamDetail.escrowVestedAmount ||
+                    publicKey?.toBase58() !== streamDetail.beneficiaryAddress}
           onClick={showWithdrawModal}
         >
           Withdraw funds
@@ -910,6 +1094,59 @@ export const Streams = () => {
         isVisible={isWithdrawModalVisible}
         handleOk={onAcceptWithdraw}
         handleClose={closeWithdrawModal} />
+      {/* Withdraw funds transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterWithdrawFundsTransactionModalClosed}
+        visible={isWithdrawFundsTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideWithdrawFundsTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{`Withdraw ${streamDetail && getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)}`}</h5>
+              <div className="indication">Confirm this transaction in your wallet</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">Funds withdrawn successfuly!</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onWithdrawFundsTransactionFinished}>
+                Finish
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideWithdrawFundsTransactionModal}>
+                Dismiss
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
       {/* Close stream transaction execution modal */}
       <Modal
         className="mean-modal no-full-screen"

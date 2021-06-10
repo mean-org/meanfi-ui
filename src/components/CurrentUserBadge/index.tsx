@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useWallet } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
-import { Button, Col, Modal, Row } from "antd";
+import { Button, Col, Modal, Row, Spin } from "antd";
 import { SOLANA_EXPLORER_URI, WALLET_PROVIDERS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
@@ -32,7 +32,9 @@ export const CurrentUserBadge = (props: {}) => {
   const [providerUrl] = useLocalStorageState("walletProvider");
   const {
     streamList,
+    loadingStreams,
     setCurrentScreen,
+    setLoadingStreams,
     setStreamList,
     setSelectedStream,
     setStreamDetail,
@@ -49,15 +51,15 @@ export const CurrentUserBadge = (props: {}) => {
     if (publicKey) {
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
   
+      setLoadingStreams(true);
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(async streams => {
           setStreamList(streams);
-          setTimeout(() => {
-            console.log('streamList:', streamList);
-            setSelectedStream(streams[0]);
-            setStreamDetail(streams[0]);
-            setCurrentScreen("streams");
-          }, 500);
+          setLoadingStreams(false);
+          console.log('streamList:', streamList);
+          setSelectedStream(streams[0]);
+          setStreamDetail(streams[0]);
+          setCurrentScreen("streams");
         });
     }
   };
@@ -119,10 +121,11 @@ export const CurrentUserBadge = (props: {}) => {
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <div className="wallet-balance simplelink" onClick={onGoToStreamsClick}>
+        <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
           {/* <span className="effective-amount">
             {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
           </span> */}
+          <Spin size="small" />
           <span className="transaction-legend incoming">
             <IconDownload className="mean-svg-icons"/>
             <span className="incoming-transactions-amout">{streamStats.incoming}</span>

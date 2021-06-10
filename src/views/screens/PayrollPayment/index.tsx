@@ -69,6 +69,7 @@ export const PayrollPayment = () => {
     setPaymentRateFrequency,
     setTransactionStatus,
     setTimeSheetRequirement,
+    setLoadingStreams,
     setStreamList,
     setStreamDetail,
     setSelectedStream,
@@ -111,17 +112,19 @@ export const PayrollPayment = () => {
     if (publicKey) {
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
   
-      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-        .then(async streams => {
-          setStreamList(streams);
-          setTimeout(() => {
+      setTimeout(() => {
+        setLoadingStreams(true);
+        listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+          .then(async streams => {
+            setStreamList(streams);
+            setLoadingStreams(false);
             console.log('streamList:', streamList);
             setSelectedStream(streams[0]);
             setStreamDetail(streams[0]);
             closeTransactionModal();
             setCurrentScreen("streams");
-          }, 1000);
-        });
+          });
+      }, 1000);
     }
   };
 

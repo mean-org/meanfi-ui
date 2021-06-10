@@ -238,6 +238,7 @@ footer.ant-layout-footer {
           cursor: pointer;
         }
         .wallet-balance {
+          position: relative;
           font-size: 1rem;
           font-weight: 600;
           padding: 0 6px;
@@ -247,18 +248,40 @@ footer.ant-layout-footer {
           .effective-amount {
             margin-right: 4px;
           }
-          .transaction-legend {
-            @media (max-width: 767.98px) {
-              display: none;
+          .ant-spin.ant-spin-sm.ant-spin-spinning {
+            position: absolute;
+            right: 13%;
+            line-height: 2;
+            width: 24px;
+            height: 24px;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+            .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
+              background-color: var(--color-primary-highlight);
             }
+          }
+          .transaction-legend {
+            // @media (max-width: 767.98px) {
+            //   display: none;
+            // }
             display: inline-flex;
             align-items: center;
             margin-left: 4px;
+            opacity: 1;
+            transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
             &.incoming {
               color: var(--color-incoming-transaction);
             }
             &.outgoing {
               color: var(--color-outgoing-transaction);
+            }
+          }
+          &.click-disabled {
+            .ant-spin.ant-spin-sm.ant-spin-spinning {
+              opacity: 1;
+            }
+            .transaction-legend {
+              opacity: 0;
             }
           }
         }
@@ -720,6 +743,7 @@ footer.ant-layout-footer {
       cursor: pointer;
     }
     .wallet-balance {
+      position: relative;
       font-size: 1rem;
       font-weight: 600;
       padding: 0 6px;
@@ -729,18 +753,40 @@ footer.ant-layout-footer {
       .effective-amount {
         margin-right: 4px;
       }
-      .transaction-legend {
-        @media (max-width: 767.98px) {
-          display: none;
+      .ant-spin.ant-spin-sm.ant-spin-spinning {
+        position: absolute;
+        right: 13%;
+        line-height: 2;
+        width: 24px;
+        height: 24px;
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
+          background-color: var(--color-primary-highlight);
         }
+      }
+      .transaction-legend {
+        // @media (max-width: 767.98px) {
+        //   display: none;
+        // }
         display: inline-flex;
         align-items: center;
         margin-left: 4px;
+        opacity: 1;
+        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
         &.incoming {
           color: var(--color-incoming-transaction);
         }
         &.outgoing {
           color: var(--color-outgoing-transaction);
+        }
+      }
+      &.click-disabled {
+        .ant-spin.ant-spin-sm.ant-spin-spinning {
+          opacity: 1;
+        }
+        .transaction-legend {
+          opacity: 0;
         }
       }
     }
@@ -1673,6 +1719,9 @@ em {
 }
 
 // Utilities
+.click-disabled {
+  pointer-events: none;
+}
 .flex-center {
   display: flex;
   justify-content: center;

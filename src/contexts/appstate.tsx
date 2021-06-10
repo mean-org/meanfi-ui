@@ -35,6 +35,7 @@ interface AppStateConfig {
   timeSheetRequirement: TimesheetRequirementOption;
   transactionStatus: TransactionStatusInfo;
   lastCreatedTransactionSignature: string | undefined;
+  loadingStreams: boolean;
   streamList: StreamInfo[] | undefined;
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
@@ -51,6 +52,7 @@ interface AppStateConfig {
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setLastCreatedTransactionSignature: (signature: string) => void;
+  setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: StreamInfo[]) => void;
   setSelectedStream: (stream: StreamInfo) => void;
   setStreamDetail: (stream: StreamInfo) => void;
@@ -77,6 +79,7 @@ const contextDefaultValues: AppStateConfig = {
     currentOperation: TransactionStatus.Iddle
   },
   lastCreatedTransactionSignature: undefined,
+  loadingStreams: false,
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
@@ -93,6 +96,7 @@ const contextDefaultValues: AppStateConfig = {
   setTimeSheetRequirement: () => {},
   setTransactionStatus: () => {},
   setLastCreatedTransactionSignature: () => {},
+  setLoadingStreams: () => {},
   setStreamList: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
@@ -126,7 +130,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
-  const [loadingStreams, setLoadingStreams] = useState(false);
+  const [loadingStreams, updateLoadingStreams] = useState(false);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -145,6 +149,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setCurrentScreen = (name: string) => {
     setSelectedTab(name);
+  }
+
+  const setLoadingStreams = (state: boolean) => {
+    updateLoadingStreams(state);
   }
 
   const setContract = (name: string) => {
@@ -256,9 +264,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     if (!loadingStreams) {
-      setLoadingStreams(true);
+      updateLoadingStreams(true);
       const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
-  
+
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
           updateTxCreatedSignature(undefined);
@@ -276,7 +284,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           }
           setStreamList(streams);
           console.log('Streams:', streams);
-          setLoadingStreams(false);
+          updateLoadingStreams(false);
         });
     }
   }, [
@@ -408,6 +416,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         timeSheetRequirement,
         transactionStatus,
         lastCreatedTransactionSignature,
+        loadingStreams,
         streamList,
         selectedStream,
         streamDetail,
@@ -424,6 +433,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setTimeSheetRequirement,
         setTransactionStatus,
         setLastCreatedTransactionSignature,
+        setLoadingStreams,
         setStreamList,
         setSelectedStream,
         setStreamDetail,
