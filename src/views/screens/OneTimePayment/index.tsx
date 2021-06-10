@@ -24,8 +24,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { TokenAccount } from "../../../models";
-import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
 import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from '../../../money-streaming/utils';
 
@@ -35,7 +33,6 @@ export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
-  const accounts = useAccountsContext();
   const { connected, wallet, publicKey } = useWallet();
   const {
     contract,
@@ -331,12 +328,7 @@ export const OneTimePayment = () => {
 
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
-        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
-        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === selectedToken?.address) as TokenAccount;
-        const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
-        const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
         const amount = parseFloat(fromCoinAmount as string);
-        const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
@@ -360,11 +352,11 @@ export const OneTimePayment = () => {
           associatedToken: associatedToken,                               // associatedToken
           rateAmount: parseFloat(fromCoinAmount as string),               // rateAmount
           rateIntervalInSeconds: 0,                                       // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                              // startUtc
+          startUtc: fromParsedDate,                                       // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                                      // streamName
-          fundingAmount: convertedToTokenUnit                             // fundingAmount
+          fundingAmount: amount                                           // fundingAmount
         };
         console.log('data:', data);
         return await moneyStream.getCreateStreamTransaction(
@@ -374,11 +366,11 @@ export const OneTimePayment = () => {
           associatedToken,                                  // associatedToken
           parseFloat(fromCoinAmount as string),             // rateAmount
           0,                                                // rateIntervalInSeconds
-          fromParsedDate,                                          // startUtc
+          fromParsedDate,                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                        // streamName
-          convertedToTokenUnit                              // fundingAmount
+          amount                                            // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);

@@ -31,8 +31,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { TokenAccount } from "../../../models";
-import { deserializeMint, useAccountsContext } from "../../../contexts/accounts";
 import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from '../../../money-streaming/utils';
 
@@ -42,7 +40,6 @@ export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
-  const accounts = useAccountsContext();
   const { connected, wallet, publicKey } = useWallet();
   const {
     contract,
@@ -531,12 +528,7 @@ export const RepeatingPayment = () => {
 
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
-        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
-        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === selectedToken?.address) as TokenAccount;
-        const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
-        const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
         const amount = parseFloat(fromCoinAmount as string);
-        const convertedToTokenUnit = (amount as number * 10 ** mintInfoDecoded.decimals) || 0;
 
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
@@ -564,7 +556,7 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                                  // streamName
-          fundingAmount: convertedToTokenUnit                             // fundingAmount
+          fundingAmount: amount                                           // fundingAmount
         };
         console.log('data:', data);
         return await moneyStream.getCreateStreamTransaction(
@@ -574,11 +566,11 @@ export const RepeatingPayment = () => {
           associatedToken,                                  // associatedToken
           parseFloat(paymentRateAmount as string),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          fromParsedDate,                                          // startUtc
+          fromParsedDate,                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : undefined,                                    // streamName
-          convertedToTokenUnit                              // fundingAmount
+          amount                                            // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);

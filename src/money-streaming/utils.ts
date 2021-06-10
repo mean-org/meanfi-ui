@@ -9,9 +9,7 @@ import {
     MintInfo,
     MintLayout,
     u64
-
 } from '@solana/spl-token';
-import { getTokenDecimals } from "./token-list";
 
 declare global {
     export interface String {
@@ -65,7 +63,6 @@ function parseStreamData(
         ? beneficiaryAssociatedToken.toBase58()
         : (friendly ? beneficiaryAssociatedToken.toBase58() : beneficiaryAssociatedToken);
 
-    const tokenDecimals = 10 ** getTokenDecimals(associatedToken as string);
     let startDateUtc = new Date(decodedData.start_utc as string);
     let utcNow = new Date();
 
@@ -77,7 +74,7 @@ function parseStreamData(
     let escrowVestedAmount = 0;
 
     if (utcNow.getTime() >= startDateUtc.getTime()) {
-        escrowVestedAmount = rate * elapsedTime * tokenDecimals;
+        escrowVestedAmount = rate * elapsedTime;
 
         if (escrowVestedAmount >= totalDeposits) {
             escrowVestedAmount = totalDeposits;
@@ -118,7 +115,7 @@ function parseStreamData(
         escrowEstimatedDepletionUtc: escrowEstimatedDepletionDateUtc.toUTCString(),
         totalDeposits: totalDeposits,
         totalWithdrawals: totalWithdrawals,
-        isStreaming: totalDeposits !== totalWithdrawals && rateAmount > 0,
+        isStreaming: totalDeposits !== Math.fround(escrowVestedAmount) && rateAmount > 0,
         isUpdatePending: false,
         transactionSignature: '',
         blockTime: 0

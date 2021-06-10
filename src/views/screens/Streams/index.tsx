@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin } from "antd";
 import {
+  ArrowLeftOutlined,
   CheckOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
@@ -20,7 +21,7 @@ import {
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenDecimals, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
 import { getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
@@ -42,6 +43,7 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
+    detailsPanelOpen,
     transactionStatus,
     setCurrentScreen,
     setLoadingStreams,
@@ -49,7 +51,8 @@ export const Streams = () => {
     setStreamDetail,
     setSelectedStream,
     setTransactionStatus,
-    openStreamById
+    openStreamById,
+    setDtailsPanelOpen
   } = useContext(AppStateContext);
   const { confirm } = Modal;
 
@@ -70,7 +73,6 @@ export const Streams = () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
 
-        const tokenDecimals = 10 ** getTokenDecimals(clonedDetail.associatedToken as string);
         let startDateUtc = new Date(clonedDetail.startUtc as string);
         let utcNow = new Date();
         const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
@@ -79,7 +81,7 @@ export const Streams = () => {
         let escrowVestedAmount = 0;
 
         if (utcNow.getTime() >= startDateUtc.getTime()) {
-          escrowVestedAmount = rate * elapsedTime * tokenDecimals;
+          escrowVestedAmount = rate * elapsedTime;;
 
           if (escrowVestedAmount >= clonedDetail.totalDeposits) {
             escrowVestedAmount = clonedDetail.totalDeposits;
@@ -342,16 +344,14 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
         const associatedToken = new PublicKey(streamDetail.associatedToken as string);
-        const decimals = getTokenDecimals(streamDetail.associatedToken as string);
         const amount = parseFloat(withdrawAmount);
-        const convertedToTokenUnit = (amount as number * 10 ** decimals) || 0;
 
         // Create a transaction
         return await moneyStream.getWithdrawTransaction(
           stream,
           beneficiary,
           associatedToken,
-          convertedToTokenUnit
+          amount
         )
         .then(value => {
           console.log('getWithdrawTransaction returned transaction:', value);
@@ -825,7 +825,7 @@ export const Streams = () => {
       </div>
 
       {/* Withdraw button */}
-      <div className="mt-4 mb-3 withdraw-container">
+      <div className="mt-3 mb-3 withdraw-container">
         <Button
           block
           className="withdraw-cta"
@@ -972,7 +972,7 @@ export const Streams = () => {
       </div>
 
       {/* Top up (add funds) */}
-      <div className="mt-4 mb-3 withdraw-container">
+      <div className="mt-3 mb-3 withdraw-container">
         <Button
           block
           className="withdraw-cta"
@@ -1003,7 +1003,7 @@ export const Streams = () => {
   );
 
   return (
-    <div className="streams-layout">
+    <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
       {/* Left / top panel*/}
       <div className="streams-container">
         <div className="streams-heading">My Money Streams</div>
@@ -1015,6 +1015,7 @@ export const Streams = () => {
                 const onStreamClick = () => {
                   console.log('selected stream:', item);
                   setSelectedStream(item);
+                  setDtailsPanelOpen(true);
                 };
                 return (
                   <div key={`${index + 50}`} onClick={onStreamClick}

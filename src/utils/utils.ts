@@ -285,11 +285,10 @@ export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: stri
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   const inputAmount = parseFloat(amount.toString());
   if (tokenFromTokenList) {
-    const convertedToTokenUnit = (inputAmount / (10 ** tokenFromTokenList.decimals));
     if (onlyValue) {
-      return `${formatAmount(convertedToTokenUnit, tokenFromTokenList.decimals) || 0}`;
+      return `${formatAmount(inputAmount, tokenFromTokenList.decimals) || 0}`;
     }
-    return `${formatAmount(convertedToTokenUnit, tokenFromTokenList.decimals) || 0} ${tokenFromTokenList.symbol}`;
+    return `${formatAmount(inputAmount, tokenFromTokenList.decimals) || 0} ${tokenFromTokenList.symbol}`;
   } else if (amount) {
     return `${formatAmount(inputAmount, 2)}`;
   }

@@ -87,7 +87,7 @@ export const HomeView = () => {
     // STREAMS SCREEN
     return (
       <>
-      <div className="container">
+      <div className="container main-container mb-3">
         <div className="interaction-area">
           <Streams />
         </div>
@@ -110,7 +110,7 @@ export const HomeView = () => {
     // CONTRACT SETUP SCREEN
     return (
       <>
-      <div className="container">
+      <div className="container main-container mb-3">
         <div className="interaction-area">
           <div className="place-transaction-box">
             <div className="position-relative mb-2">
@@ -139,7 +139,7 @@ export const HomeView = () => {
     // LOADING SCREEN
     return (
       <>
-      <div className="container">
+      <div className="container main-container mb-3">
         <div className="interaction-area px-4 py-4 text-center">
           <p>Loading...</p>
         </div>

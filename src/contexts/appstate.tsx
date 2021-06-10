@@ -22,6 +22,7 @@ export interface TransactionStatusInfo {
 interface AppStateConfig {
   theme: string | undefined;
   currentScreen: string | undefined;
+  detailsPanelOpen: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number | undefined;
@@ -41,6 +42,7 @@ interface AppStateConfig {
   streamDetail: StreamInfo | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
+  setDtailsPanelOpen: (state: boolean) => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   refreshTokenBalance: () => void;
@@ -64,6 +66,7 @@ interface AppStateConfig {
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   currentScreen: undefined,
+  detailsPanelOpen: false,
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: undefined,
@@ -86,6 +89,7 @@ const contextDefaultValues: AppStateConfig = {
   streamDetail: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
+  setDtailsPanelOpen: () => {},
   setContract: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
@@ -119,6 +123,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
+  const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [recipientAddress, updateRecipientAddress] = useState<string | undefined>();
   const [recipientNote, updateRecipientNote] = useState<string | undefined>();
@@ -133,6 +138,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
+
+  const setDtailsPanelOpen = (state: boolean) => {
+    updateDetailsPanelOpen(state);
+  }
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -411,6 +420,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       value={{
         theme,
         currentScreen,
+        detailsPanelOpen,
         tokenList,
         selectedToken,
         tokenBalance,
@@ -430,6 +440,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamDetail,
         setTheme,
         setCurrentScreen,
+        setDtailsPanelOpen,
         setSelectedToken,
         setSelectedTokenBalance,
         refreshTokenBalance,
