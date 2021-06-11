@@ -863,9 +863,12 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
-    <div className="stream-background">
-      <img className="inbound" src="bleeding.svg" alt="" />
-    </div>
+    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
+      <div className="stream-background">
+        <img className="inbound" src="bleeding.svg" alt="" />
+      </div>
+      ) : null
+    }
     <div className="stream-details-data-wrapper">
       {/* Beneficiary */}
       <Row className="mb-3">
