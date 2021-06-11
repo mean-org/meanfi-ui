@@ -863,6 +863,9 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
+    <div className="stream-background">
+      <img className="inbound" src="bleeding.svg" alt="" />
+    </div>
     <div className="stream-details-data-wrapper">
       {/* Beneficiary */}
       <Row className="mb-3">

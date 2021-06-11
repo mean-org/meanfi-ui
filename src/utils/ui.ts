@@ -283,3 +283,35 @@ export const percentual = (partialValue: number, total: number): number => {
 export const percentage = (percent: number, total: number): number => {
     return ((percent / 100) * total);
 }
+
+export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
+    let trailingZeroes = 0;
+    const trailingChar = '0';
+    const numericString = original.toString();
+    const dec = numericString.split('.')[1];
+
+    const isFloat = dec && dec.length > zeroes ? true : false;
+    if (isFloat) {
+        // Count zeroes from the end
+        for (let i = numericString.length - 1; i >= 0; i--) {
+            if (numericString[i] !== '0') {
+                break;
+            }
+            trailingZeroes++;
+        }
+        // If more zeroes than the wanted amount
+        if (trailingZeroes > zeroes) {
+            const plainNumber = parseFloat(numericString);
+            let result = plainNumber.toString();
+            // Add the needed amount of zeroes after parsing
+            result += trailingChar.repeat(zeroes);
+            return result;
+        } else {
+            return original; // Otherwise return the numeric string intact
+        }
+    } else {
+        // As it is not a decimal (integer) just add the needed amount of zeroes
+        const plainNumber = parseFloat(original);
+        return plainNumber.toFixed(zeroes);
+    }
+}

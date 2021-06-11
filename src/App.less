@@ -1604,13 +1604,26 @@ em {
     width: 100%;
     .inner-container {
       .stream-details-data-wrapper {
-        z-index: 2;
+        z-index: 3;
+      }
+      .stream-background {
+        position: absolute;
+        top: 3rem;
+        width: calc(100% - 2rem);
+        height: 23rem;
+        z-index: 1;
+        left: 1rem;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0.3;
       }
       .stream-type-indicator {
         position: absolute;
         top: 3rem;
         right: 6%;
-        z-index: 1;
+        z-index: 2;
         .mean-svg-icons {
           width: 7.5rem;
           height: 7.5rem;
