@@ -631,7 +631,7 @@ export const OneTimePayment = () => {
           {selectedToken && (
             <div className="addon-right">
               <div className="token-group">
-                {tokenBalance && (
+                {tokenBalance ? (
                   <div
                     className="token-max simplelink"
                     onClick={() =>
@@ -644,7 +644,7 @@ export const OneTimePayment = () => {
                     }>
                     MAX
                   </div>
-                )}
+                ) : null}
                 <div
                   className="token-selector simplelink"
                   onClick={showTokenSelector}>

@@ -66,6 +66,7 @@ export const Streams = () => {
     }
   });
 
+  // Data live calculation
   useEffect(() => {
     let updateDateTimer: any;
 

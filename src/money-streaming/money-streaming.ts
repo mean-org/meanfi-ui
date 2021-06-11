@@ -155,7 +155,7 @@ export class MoneyStreaming {
                 await Instructions.createATokenAccountInstruction(
                     treasuryTokenAddress,
                     treasurer,
-                    this.programId,
+                    treasuryAddress,
                     associatedToken
                 )
             );
