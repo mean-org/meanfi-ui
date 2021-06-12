@@ -59,7 +59,7 @@ interface AppStateConfig {
   setLastCreatedTransactionSignature: (signature: string) => void;
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: StreamInfo[]) => void;
-  setSelectedStream: (stream: StreamInfo) => void;
+  setSelectedStream: (stream: StreamInfo | undefined) => void;
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
 }
@@ -225,7 +225,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateStreamDetail(detail);
   }
 
-  const setSelectedStream = async (stream: StreamInfo) => {
+  const setSelectedStream = async (stream: StreamInfo | undefined) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
   }

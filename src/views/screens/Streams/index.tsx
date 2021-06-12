@@ -711,6 +711,12 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
+    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
+      <div className="stream-background">
+        <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
+      </div>
+      ) : null
+    }
     <div className="stream-details-data-wrapper">
 
       {/* Sender */}
@@ -865,7 +871,7 @@ export const Streams = () => {
     </div>
     {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
       <div className="stream-background">
-        <img className="inbound" src="bleeding.svg" alt="" />
+        <img className="inbound" src="assets/bleeding.svg" alt="" />
       </div>
       ) : null
     }
