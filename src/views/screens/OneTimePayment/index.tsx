@@ -24,7 +24,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from '../../../money-streaming/utils';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -45,6 +44,7 @@ export const OneTimePayment = () => {
     paymentStartDate,
     fromCoinAmount,
     transactionStatus,
+    streamProgramAddress,
     setCurrentScreen,
     setSelectedToken,
     setSelectedTokenBalance,
@@ -92,7 +92,7 @@ export const OneTimePayment = () => {
 
   const refreshStreamList = () => {
     if (publicKey) {
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
   
       setTimeout(() => {
         setLoadingStreams(true);

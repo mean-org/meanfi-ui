@@ -6,13 +6,13 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { getStream, listStreams } from "../money-streaming/utils";
 import { useWallet } from "./wallet";
 import { useConnection, useConnectionConfig } from "./connection";
-import { Constants } from "../money-streaming/constants";
 import { PublicKey } from "@solana/web3.js";
 import { StreamInfo } from "../money-streaming/money-streaming";
 import { deserializeMint, useAccountsContext } from "./accounts";
 import { TokenAccount } from "../models";
 import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { AppConfigService } from "../environments/environment";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -40,6 +40,7 @@ interface AppStateConfig {
   streamList: StreamInfo[] | undefined;
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
+  streamProgramAddress: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -87,6 +88,7 @@ const contextDefaultValues: AppStateConfig = {
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  streamProgramAddress: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -118,6 +120,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
 
   const today = new Date().toLocaleDateString();
@@ -138,6 +141,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
+
+  if (!streamProgramAddress) {
+    const config = new AppConfigService();
+    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+  }
 
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
@@ -280,7 +288,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     if (!loadingStreams) {
       updateLoadingStreams(true);
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
 
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
@@ -303,6 +311,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
     }
   }, [
+    streamProgramAddress,
     loadingStreams,
     publicKey,
     connection,
@@ -438,6 +447,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamList,
         selectedStream,
         streamDetail,
+        streamProgramAddress,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,

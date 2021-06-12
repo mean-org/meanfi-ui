@@ -1,16 +1,15 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useWallet } from "../../contexts/wallet";
+import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { SOLANA_EXPLORER_URI, WALLET_PROVIDERS } from "../../constants";
+import { SOLANA_EXPLORER_URI } from "../../constants";
 import { Identicon } from "../Identicon";
 import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { StreamInfo } from "../../money-streaming/money-streaming";
 import { PublicKey } from "@solana/web3.js";
-import { Constants } from "../../money-streaming/constants";
 import { listStreams } from "../../money-streaming/utils";
 import { useConnection } from "../../contexts/connection";
 
@@ -33,6 +32,7 @@ export const CurrentUserBadge = (props: {}) => {
   const {
     streamList,
     loadingStreams,
+    streamProgramAddress,
     setCurrentScreen,
     setLoadingStreams,
     setStreamList,
@@ -49,7 +49,7 @@ export const CurrentUserBadge = (props: {}) => {
 
   const refreshStreamList = () => {
     if (publicKey) {
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
   
       setLoadingStreams(true);
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)

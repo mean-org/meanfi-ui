@@ -3,6 +3,17 @@ import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
+export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
+    // if (process.env.REACT_APP_ENV === 'production') { return; }
+    if (msg) {
+        if (value === 'NOT_SPECIFIED') {
+            console.log(`%c${msg}`, `color: ${color}`);
+        } else {
+            console.log(`%c${msg}`, `color: ${color}`, value);
+        }
+    }
+}
+
 export class PaymentRateTypeOption {
     key: number;
     value: PaymentRateType;

@@ -1,7 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin } from "antd";
 import {
-  ArrowLeftOutlined,
   CheckOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
@@ -30,7 +29,6 @@ import { WithdrawModal } from '../../../components/WithdrawModal';
 import _ from "lodash";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { PublicKey, Transaction } from "@solana/web3.js";
-import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
 
@@ -45,6 +43,7 @@ export const Streams = () => {
     streamDetail,
     detailsPanelOpen,
     transactionStatus,
+    streamProgramAddress,
     setCurrentScreen,
     setLoadingStreams,
     setStreamList,
@@ -253,7 +252,7 @@ export const Streams = () => {
 
   const refreshStreamList = () => {
     if (publicKey) {
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
 
       setTimeout(() => {
         setLoadingStreams(true);
