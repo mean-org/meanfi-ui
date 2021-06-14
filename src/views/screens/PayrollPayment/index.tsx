@@ -584,7 +584,7 @@ export const PayrollPayment = () => {
         return await moneyStream.getCreateStreamTransaction(
           senderPubkey,                                     // treasurer
           destPubkey,                                       // beneficiary
-          null,                                             // treasury
+          // null,                                             // treasury
           associatedToken,                                  // associatedToken
           parseFloat(paymentRateAmount as string),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds

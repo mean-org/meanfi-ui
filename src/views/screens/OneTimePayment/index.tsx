@@ -362,7 +362,7 @@ export const OneTimePayment = () => {
         return await moneyStream.getCreateStreamTransaction(
           senderPubkey,                                     // treasurer
           destPubkey,                                       // beneficiary
-          null,                                             // treasury
+          // null,                                             // treasury
           associatedToken,                                  // associatedToken
           parseFloat(fromCoinAmount as string),             // rateAmount
           0,                                                // rateIntervalInSeconds

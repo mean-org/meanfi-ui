@@ -83,8 +83,8 @@ export const Streams = () => {
         if (utcNow.getTime() >= startDateUtc.getTime()) {
           escrowVestedAmount = rate * elapsedTime;;
 
-          if (escrowVestedAmount >= clonedDetail.totalDeposits) {
-            escrowVestedAmount = clonedDetail.totalDeposits;
+          if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
+            escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
           }
         }
 
@@ -343,14 +343,12 @@ export const Streams = () => {
         });
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
-        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(withdrawAmount);
 
         // Create a transaction
         return await moneyStream.getWithdrawTransaction(
           stream,
           beneficiary,
-          associatedToken,
           amount
         )
         .then(value => {
