@@ -324,7 +324,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     // Call it 1st time
     if (publicKey && !streamList) {
       refreshStreamsList();
-      console.log('Running on wallet connect...');
     }
 
     // Install the timer only in the streams screen

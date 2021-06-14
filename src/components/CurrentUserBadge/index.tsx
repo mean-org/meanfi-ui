@@ -48,7 +48,7 @@ export const CurrentUserBadge = (props: {}) => {
   );
 
   const refreshStreamList = () => {
-    if (publicKey) {
+    if (publicKey && !loadingStreams) {
       const programId = new PublicKey(streamProgramAddress);
   
       setLoadingStreams(true);

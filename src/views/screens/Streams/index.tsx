@@ -320,6 +320,9 @@ export const Streams = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
+    if (isSuccess()) {
+      refreshStreamList();
+    }
   }
 
   const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
@@ -490,6 +493,9 @@ export const Streams = () => {
   const onAfterCloseStreamTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      refreshStreamList();
     }
   }
 
