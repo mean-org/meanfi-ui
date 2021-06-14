@@ -88,10 +88,8 @@ export const Streams = () => {
           }
         }
 
-        clonedDetail.escrowVestedAmount = Math.fround(escrowVestedAmount);
-        clonedDetail.escrowUnvestedAmount = Math.fround(
-          clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount
-        );
+        clonedDetail.escrowVestedAmount = escrowVestedAmount;
+        clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
         setStreamDetail(clonedDetail);
       }
     };
@@ -869,7 +867,7 @@ export const Streams = () => {
     </div>
     {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
       <div className="stream-background">
-        <img className="inbound" src="assets/bleeding.svg" alt="" />
+        <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
       </div>
       ) : null
     }

@@ -1,5 +1,5 @@
 import { BN } from "@project-serum/anchor";
-import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { Constants } from "./constants";
 import { Layout } from "./layout";
 import { StreamInfo } from "./money-streaming";
@@ -11,7 +11,6 @@ import {
     u64
 
 } from '@solana/spl-token';
-import { getTokenDecimals } from "./token-list";
 
 declare global {
     export interface String {
@@ -57,9 +56,6 @@ function parseStreamData(
 
     let stream: StreamInfo = defaultStreamInfo;
     let decodedData = Layout.streamLayout.decode(streamData);
-    let totalDeposits = Math.round(decodedData.total_deposits);
-    let totalWithdrawals = Math.round(decodedData.total_withdrawals);
-
     const beneficiaryAssociatedToken = new PublicKey(decodedData.stream_associated_token);
     const associatedToken = beneficiaryAssociatedToken.toBase58() !== Constants.DEFAULT_PUBLICKEY
         ? beneficiaryAssociatedToken.toBase58()
@@ -67,9 +63,8 @@ function parseStreamData(
 
     let startDateUtc = new Date(decodedData.start_utc as string);
     let utcNow = new Date();
-    let rateAmount = Math.fround(decodedData.rate_amount);
     let rateIntervalInSeconds = parseFloat(u64Number.fromBuffer(decodedData.rate_interval_in_seconds).toString());
-    const rate = rateAmount / rateIntervalInSeconds;
+    const rate = decodedData.rate_amount / rateIntervalInSeconds;
     const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
 
     let escrowVestedAmount = 0;
@@ -77,8 +72,8 @@ function parseStreamData(
     if (utcNow.getTime() >= startDateUtc.getTime()) {
         escrowVestedAmount = rate * elapsedTime;
 
-        if (escrowVestedAmount >= totalDeposits - totalWithdrawals) {
-            escrowVestedAmount = totalDeposits - totalWithdrawals;
+        if (escrowVestedAmount >= decodedData.total_deposits - decodedData.total_withdrawals) {
+            escrowVestedAmount = decodedData.total_deposits - decodedData.total_withdrawals;
         }
     }
 
@@ -102,7 +97,7 @@ function parseStreamData(
         initialized: decodedData.initialized,
         memo: new TextDecoder().decode(nameBuffer),
         treasurerAddress: friendly !== undefined ? treasurerAddress.toBase58() : treasurerAddress,
-        rateAmount: rateAmount,
+        rateAmount: decodedData.rate_amount,
         rateIntervalInSeconds: rateIntervalInSeconds,
         startUtc: startDateUtc.toUTCString(),
         rateCliffInSeconds: parseFloat(u64Number.fromBuffer(decodedData.rate_cliff_in_seconds).toString()),
@@ -110,13 +105,13 @@ function parseStreamData(
         cliffVestPercent: decodedData.cliff_vest_percent,
         beneficiaryAddress: friendly !== undefined ? beneficiaryAddress.toBase58() : beneficiaryAddress,
         associatedToken: associatedToken,
-        escrowVestedAmount: Math.fround(escrowVestedAmount),
-        escrowUnvestedAmount: Math.fround(totalDeposits - totalWithdrawals - escrowVestedAmount),
+        escrowVestedAmount: escrowVestedAmount,
+        escrowUnvestedAmount: decodedData.total_deposits - decodedData.total_withdrawals - escrowVestedAmount,
         treasuryAddress: friendly !== undefined ? treasuryAddress.toBase58() : treasuryAddress,
         escrowEstimatedDepletionUtc: escrowEstimatedDepletionDateUtc.toUTCString(),
-        totalDeposits: totalDeposits,
-        totalWithdrawals: totalWithdrawals,
-        isStreaming: totalDeposits !== Math.fround(escrowVestedAmount) && rateAmount > 0,
+        totalDeposits: decodedData.total_deposits,
+        totalWithdrawals: decodedData.total_withdrawals,
+        isStreaming: escrowVestedAmount < decodedData.total_deposits && decodedData.rate_amount > 0,
         isUpdatePending: false,
         transactionSignature: '',
         blockTime: 0
