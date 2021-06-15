@@ -332,3 +332,9 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
     return result;
 }
+
+export const getFormattedNumberToLocale = (value: any) => {
+    const converted = parseFloat(value.toString());
+    const formatted = new Intl.NumberFormat().format(converted);
+    return formatted || '';
+}

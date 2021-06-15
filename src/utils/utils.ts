@@ -6,7 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { maxTrailingZeroes } from "./ui";
+import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -286,12 +286,12 @@ export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: stri
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   const inputAmount = amount ? parseFloat(amount.toString()) : 0;
   if (tokenFromTokenList) {
-    const formatted = `${formatAmount(inputAmount, tokenFromTokenList.decimals) || 0}`;
+    const formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals)) || 0}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
   } else {
-    return `${maxTrailingZeroes(inputAmount.toString(), 2)}`;
+    return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
   }
 }

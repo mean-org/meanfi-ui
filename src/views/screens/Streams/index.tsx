@@ -21,7 +21,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
-import { getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
+import { getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
@@ -67,7 +67,7 @@ export const Streams = () => {
     }
   });
 
-  // Data live calculation
+  // Live data calculation
   useEffect(() => {
     let updateDateTimer: any;
 
@@ -784,13 +784,10 @@ export const Streams = () => {
           <div className="info-label">Payment Rate</div>
           <div className="transaction-detail-row">
             <span className="info-data">
-              {streamDetail && streamDetail.rateAmount && isValidNumber(streamDetail.rateAmount.toString())
-                ? formatAmount(streamDetail.rateAmount as number, 2)
-                : '--'}
-              &nbsp;
-              {streamDetail && streamDetail.associatedToken
-                ? getTokenSymbol(streamDetail.associatedToken as string)
-                : ''}
+              {streamDetail
+                ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
+                : '--'
+              }
               {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
             </span>
           </div>
@@ -975,13 +972,10 @@ export const Streams = () => {
           <div className="info-label">Payment Rate</div>
           <div className="transaction-detail-row">
             <span className="info-data">
-              {streamDetail && streamDetail.rateAmount && isValidNumber(streamDetail.rateAmount.toString())
-                ? formatAmount(streamDetail.rateAmount as number, 2)
-                : '--'}
-              &nbsp;
-              {streamDetail && streamDetail.associatedToken
-                ? getTokenSymbol(streamDetail.associatedToken as string)
-                : '0'}
+              {streamDetail
+                ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
+                : '--'
+              }
               {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
             </span>
           </div>
@@ -1161,7 +1155,9 @@ export const Streams = () => {
                     </div>
                     <div className="rate-cell">
                       <div className="rate-amount">
-                        {item && item.rateAmount && isValidNumber(item.rateAmount.toString()) ? formatAmount(item.rateAmount, 2) : '--'}
+                        {item && item.rateAmount && isValidNumber(item.rateAmount.toString())
+                          ? getFormattedNumberToLocale(formatAmount(item.rateAmount, 2))
+                          : '--'}
                         &nbsp;
                         {item && item.associatedToken ? getTokenSymbol(item.associatedToken as string) : ''}
                       </div>
