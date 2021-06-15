@@ -6,13 +6,13 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { getStream, listStreams } from "../money-streaming/utils";
 import { useWallet } from "./wallet";
 import { useConnection, useConnectionConfig } from "./connection";
-import { Constants } from "../money-streaming/constants";
 import { PublicKey } from "@solana/web3.js";
 import { StreamInfo } from "../money-streaming/money-streaming";
 import { deserializeMint, useAccountsContext } from "./accounts";
 import { TokenAccount } from "../models";
 import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { AppConfigService } from "../environments/environment";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -35,17 +35,19 @@ interface AppStateConfig {
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
   transactionStatus: TransactionStatusInfo;
-  lastCreatedTransactionSignature: string | undefined;
+  previousWalletConnectState: boolean;
   loadingStreams: boolean;
   streamList: StreamInfo[] | undefined;
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
+  streamProgramAddress: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   refreshTokenBalance: () => void;
+  refreshStreamList: () => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -55,10 +57,10 @@ interface AppStateConfig {
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
-  setLastCreatedTransactionSignature: (signature: string) => void;
+  setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
-  setStreamList: (list: StreamInfo[]) => void;
-  setSelectedStream: (stream: StreamInfo) => void;
+  setStreamList: (list: StreamInfo[] | undefined) => void;
+  setSelectedStream: (stream: StreamInfo | undefined) => void;
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
 }
@@ -82,11 +84,12 @@ const contextDefaultValues: AppStateConfig = {
     lastOperation: TransactionStatus.Iddle,
     currentOperation: TransactionStatus.Iddle
   },
-  lastCreatedTransactionSignature: undefined,
+  previousWalletConnectState: false,
   loadingStreams: false,
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  streamProgramAddress: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -94,6 +97,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   refreshTokenBalance: () => {},
+  refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
   setPaymentStartDate: () => {},
@@ -102,7 +106,7 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentRateFrequency: () => {},
   setTimeSheetRequirement: () => {},
   setTransactionStatus: () => {},
-  setLastCreatedTransactionSignature: () => {},
+  setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
   setStreamList: () => {},
   setSelectedStream: () => {},
@@ -118,6 +122,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
 
   const today = new Date().toLocaleDateString();
@@ -133,11 +138,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
-  const [lastCreatedTransactionSignature, updateTxCreatedSignature] = useState<string | undefined>();
+  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(contextDefaultValues.previousWalletConnectState);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
+
+  if (!streamProgramAddress) {
+    const config = new AppConfigService();
+    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+  }
 
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
@@ -206,8 +216,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
-  const setLastCreatedTransactionSignature = (signature: string) => {
-    updateTxCreatedSignature(signature || undefined);
+  const setPreviousWalletConnectState = (state: boolean) => {
+    updatePreviousWalletConnectState(state);
   }
 
   const openStreamById = async (streamId: string) => {
@@ -217,7 +227,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateStreamDetail(detail);
   }
 
-  const setSelectedStream = async (stream: StreamInfo) => {
+  const setSelectedStream = async (stream: StreamInfo | undefined) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
   }
@@ -273,18 +283,17 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const { publicKey } = useWallet();
-  const refreshStreamsList = useCallback(() => {
+  const refreshStreamList = useCallback(() => {
     if (!publicKey) {
       return [];
     }
 
     if (!loadingStreams) {
       updateLoadingStreams(true);
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
 
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
-          updateTxCreatedSignature(undefined);
           if (streams.length) {
             if (selectedStream) {
               const item = streams.find(s => s.id === selectedStream.id);
@@ -296,6 +305,9 @@ const AppStateProvider: React.FC = ({ children }) => {
               updateSelectedStream(streams[0]);
               updateStreamDetail(streams[0]);
             }
+            if (!previousWalletConnectState && connected) {
+              setSelectedTab('streams');
+            }
           }
           setStreamList(streams);
           console.log('Streams:', streams);
@@ -303,6 +315,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
     }
   }, [
+    connected,
+    previousWalletConnectState,
+    streamProgramAddress,
     loadingStreams,
     publicKey,
     connection,
@@ -314,15 +329,14 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     // Call it 1st time
     if (publicKey && !streamList) {
-      refreshStreamsList();
-      console.log('Running on wallet connect...');
+      refreshStreamList();
     }
 
     // Install the timer only in the streams screen
     if (currentScreen === 'streams') {
       timer = window.setInterval(() => {
         console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshStreamsList();
+        refreshStreamList();
       }, STREAMS_REFRESH_TIMEOUT);
     }
 
@@ -332,7 +346,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         window.clearInterval(timer);
       }
     };
-  }, [publicKey, streamList, currentScreen, refreshStreamsList]);
+  }, [publicKey, streamList, currentScreen, refreshStreamList]);
 
   useEffect(() => {
 
@@ -361,7 +375,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     const updateToken = async () => {
-      if (connection && connected && tokenList && accounts?.tokenAccounts?.length) {
+      if (connection && connected && tokenList?.length && accounts?.tokenAccounts?.length) {
         if (selectedToken) {
           const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
           updateTokenBalance(balance);
@@ -433,17 +447,19 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentRateFrequency,
         timeSheetRequirement,
         transactionStatus,
-        lastCreatedTransactionSignature,
+        previousWalletConnectState,
         loadingStreams,
         streamList,
         selectedStream,
         streamDetail,
+        streamProgramAddress,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
         setSelectedToken,
         setSelectedTokenBalance,
         refreshTokenBalance,
+        refreshStreamList,
         setContract,
         setRecipientAddress,
         setRecipientNote,
@@ -453,7 +469,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentRateFrequency,
         setTimeSheetRequirement,
         setTransactionStatus,
-        setLastCreatedTransactionSignature,
+        setPreviousWalletConnectState,
         setLoadingStreams,
         setStreamList,
         setSelectedStream,

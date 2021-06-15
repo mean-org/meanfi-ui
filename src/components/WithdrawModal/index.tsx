@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenDecimals, isValidNumber } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { percentage } from '../../utils/ui';
 
 export const WithdrawModal = (props: {
@@ -10,18 +10,24 @@ export const WithdrawModal = (props: {
   isVisible: boolean;
 }) => {
   const { streamDetail } = useContext(AppStateContext);
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+  const [withdrawAmountRaw, setWithdrawAmountRaw] = useState<string>('');
+  const [withdrawAmountFormatted, setWithdrawAmountFormatted] = useState<string>('');
 
   const onAcceptWithdrawal = () => {
-    props.handleOk(withdrawAmount);
+    props.handleOk(withdrawAmountRaw);
+  }
+
+  const setValue = (value: string) => {
+    setWithdrawAmountRaw(value);
+    setWithdrawAmountFormatted(value);
   }
 
   const handleWithdrawAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
-      setWithdrawAmount("");
+      setValue("");
     } else if (isValidNumber(newValue)) {
-      setWithdrawAmount(newValue);
+      setValue(newValue);
     }
   };
 
@@ -30,9 +36,9 @@ export const WithdrawModal = (props: {
   }
 
   const isValidInput = () => {
-    return withdrawAmount &&
-           parseFloat(withdrawAmount) &&
-           parseFloat(withdrawAmount) <= parseFloat(getAmountWithSymbol(streamDetail?.escrowVestedAmount, streamDetail?.associatedToken as string, true))
+    return withdrawAmountRaw &&
+           parseFloat(withdrawAmountRaw) &&
+           parseFloat(withdrawAmountRaw) <= parseFloat(getAmountWithSymbol(streamDetail?.escrowVestedAmount, streamDetail?.associatedToken as string, true))
       ? true
       : false;
   }
@@ -45,6 +51,7 @@ export const WithdrawModal = (props: {
       visible={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={props.handleClose}
+      afterClose={() => setValue('')}
       width={480}>
       <div className="mb-3">
         <div className="transaction-field disabled">
@@ -80,53 +87,52 @@ export const WithdrawModal = (props: {
                 minLength={1}
                 maxLength={79}
                 spellCheck="false"
-                value={withdrawAmount}
+                value={withdrawAmountFormatted}
               />
             </span>
             <div className="addon-right">
               <div className="token-group">
-                <div className="token-max simplelink" onClick={() =>
-                    setWithdrawAmount(streamDetail
-                      ? formatAmount(
-                          parseFloat(getAmountWithSymbol(percentage(25, streamDetail.escrowVestedAmount as number), streamDetail.associatedToken as string, true)),
-                          getTokenDecimals(streamDetail.associatedToken as string)
-                        )
-                      : '0'
-                    )
-                  }>
+                <div className="token-max simplelink" onClick={() => {
+                    if (streamDetail) {
+                      const partialAmount = percentage(25, streamDetail.escrowVestedAmount as number);
+                      setWithdrawAmountRaw(`${partialAmount}`);
+                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                    } else {
+                      setValue('0');
+                    }
+                  }}>
                   25%
                 </div>
-                <div className="token-max simplelink" onClick={() =>
-                    setWithdrawAmount(streamDetail
-                      ? formatAmount(
-                          parseFloat(getAmountWithSymbol(percentage(50, streamDetail.escrowVestedAmount as number), streamDetail.associatedToken as string, true)),
-                          getTokenDecimals(streamDetail.associatedToken as string)
-                        )
-                      : '0'
-                    )
-                  }>
+                <div className="token-max simplelink" onClick={() => {
+                    if (streamDetail) {
+                      const partialAmount = percentage(50, streamDetail.escrowVestedAmount as number);
+                      setWithdrawAmountRaw(`${partialAmount}`);
+                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                    } else {
+                      setValue('0');
+                    }
+                  }}>
                   50%
                 </div>
-                <div className="token-max simplelink" onClick={() =>
-                    setWithdrawAmount(streamDetail
-                      ? formatAmount(
-                          parseFloat(getAmountWithSymbol(percentage(75, streamDetail.escrowVestedAmount as number), streamDetail.associatedToken as string, true)),
-                          getTokenDecimals(streamDetail.associatedToken as string)
-                        )
-                      : '0'
-                    )
-                  }>
+                <div className="token-max simplelink" onClick={() => {
+                    if (streamDetail) {
+                      const partialAmount = percentage(75, streamDetail.escrowVestedAmount as number);
+                      setWithdrawAmountRaw(`${partialAmount}`);
+                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                    } else {
+                      setValue('0');
+                    }
+                  }}>
                   75%
                 </div>
-                <div className="token-max simplelink" onClick={() =>
-                    setWithdrawAmount(streamDetail
-                      ? formatAmount(
-                          parseFloat(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string, true)),
-                          getTokenDecimals(streamDetail.associatedToken as string)
-                        )
-                      : '0'
-                    )
-                  }>
+                <div className="token-max simplelink" onClick={() => {
+                    if (streamDetail) {
+                      setWithdrawAmountRaw(`${streamDetail.escrowVestedAmount}`);
+                      setWithdrawAmountFormatted(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string, true));
+                    } else {
+                      setValue('0');
+                    }
+                  }}>
                   100%
                 </div>
               </div>
@@ -134,7 +140,7 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">{
-              streamDetail && parseFloat(withdrawAmount) > parseFloat(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail?.associatedToken as string, true))
+              streamDetail && parseFloat(withdrawAmountFormatted) > parseFloat(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail?.associatedToken as string, true))
                 ? (<span className="fg-red">Amount is greater than the available funds</span>)
                 : (<span>&nbsp;</span>)
             }</span>

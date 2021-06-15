@@ -70,7 +70,7 @@ export const ContractSelectorModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Create a New Money Streaming Contract</div>}
+      title={<div className="modal-title">New Money Stream</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}

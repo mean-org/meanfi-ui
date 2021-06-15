@@ -813,10 +813,6 @@ em {
   }
 }
 
-.ant-tabs-tab {
-  margin: 0 20px 0 0;
-}
-
 .ant-tabs-top > .ant-tabs-nav::before,
 .ant-tabs-bottom > .ant-tabs-nav::before,
 .ant-tabs-top > div > .ant-tabs-nav::before,
@@ -1745,8 +1741,8 @@ em {
     }
   }
   .description-cell {
-    flex: 0 0 calc(100% - 104px);
-    max-width: calc(100% - 104px);
+    flex: 1 1 12rem;
+    min-width: 12rem;
     padding-left: 4px;
     .title {
       display: block;
@@ -1762,7 +1758,7 @@ em {
     }
   }
   .rate-cell {
-    flex: 0 0 74px;
+    flex: auto;
     padding: 0 4px;
     text-align: right;
     .rate-amount,

@@ -3,6 +3,13 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
+import { AppConfigService } from "./environments/environment";
+import { consoleOut } from "./utils/ui";
+
+const env = new AppConfigService(process.env.REACT_APP_ENV);
+consoleOut('Environment:', process.env.REACT_APP_ENV, 'brown');
+consoleOut('ProgramId:', env.getConfig().streamProgramAddress, 'brown');
+
 ReactDOM.render(
   <React.StrictMode>
     <App />

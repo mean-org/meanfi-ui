@@ -3,6 +3,17 @@ import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
+export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
+    // if (process.env.REACT_APP_ENV === 'production') { return; }
+    if (msg) {
+        if (value === 'NOT_SPECIFIED') {
+            console.log(`%c${msg}`, `color: ${color}`);
+        } else {
+            console.log(`%c${msg}`, `color: ${color}`, value);
+        }
+    }
+}
+
 export class PaymentRateTypeOption {
     key: number;
     value: PaymentRateType;
@@ -226,17 +237,17 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
 export const getIntervalFromSeconds = (seconds: number, slash = false): string => {
     switch (seconds) {
         case 60:
-            return slash ? '/ minute' : 'per minute';
+            return slash ? ' / minute' : 'per minute';
         case 3600:
-            return slash ? '/ hour' : 'per hour';
+            return slash ? ' / hour' : 'per hour';
         case 86400:
-            return slash ? '/ day' : 'per day';
+            return slash ? ' / day' : 'per day';
         case 604800:
-            return slash ? '/ week' : 'per week';
+            return slash ? ' / week' : 'per week';
         case 2629750:
-            return slash ? '/ month' : 'per month';
+            return slash ? ' / month' : 'per month';
         case 31557000:
-            return slash ? '/ year' : 'per year';
+            return slash ? ' / year' : 'per year';
         default:
             return '--';
     }
@@ -294,6 +305,7 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
     if (isInteger) {
         result = original;
+        // result += '.' + trailingChar.repeat(zeroes);
     } else {
         const isFloat = dec && dec.length > zeroes ? true : false;
         if (isFloat) {

@@ -14,7 +14,47 @@ import React, {
 import { notify } from "./../utils/notifications";
 import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
-import { WALLET_PROVIDERS } from "../constants";
+import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
+import { SolongWalletAdapter } from "../wallet-adapters/solong";
+import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
+
+const ASSETS_URL =
+  "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
+export const WALLET_PROVIDERS = [
+  {
+    name: "Sollet",
+    url: "https://www.sollet.io",
+    icon: `${ASSETS_URL}sollet.svg`,
+  },
+  {
+    name: "Solong",
+    url: "https://solongwallet.com",
+    icon: `${ASSETS_URL}solong.png`,
+    adapter: SolongWalletAdapter,
+  },
+  {
+    name: "Solflare",
+    url: "https://solflare.com/access-wallet",
+    icon: `${ASSETS_URL}solflare.svg`,
+  },
+  {
+    name: "MathWallet",
+    url: "https://mathwallet.org",
+    icon: `${ASSETS_URL}mathwallet.svg`,
+  },
+  {
+    name: "Ledger",
+    url: "https://www.ledger.com",
+    icon: `${ASSETS_URL}ledger.svg`,
+    adapter: LedgerWalletAdapter,
+  },
+  {
+    name: "Phantom",
+    url: "https://phantom.app/",
+    icon: `https://raydium.io/_nuxt/img/phantom.d9e3c61.png`,
+    adapter: PhantomWalletAdapter,
+  },
+];
 
 export interface WalletAdapter extends EventEmitter {
   publicKey: PublicKey | null;
@@ -27,24 +67,19 @@ const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
   connected: boolean;
   select: () => void;
-  lastWalletProviderSuccess: string | undefined;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
 }>({
   wallet: undefined,
   connected: false,
   select() {},
-  lastWalletProviderSuccess: undefined,
   provider: undefined,
 });
 
 export function WalletProvider({ children = null as any }) {
   const { endpoint } = useConnectionConfig();
 
-  const [lastWalletProviderSuccess, setWalletSuccess] = useLocalStorageState("lastWalletProviderSuccess");
   const [autoConnect, setAutoConnect] = useState(false);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
-
-  // const provider = WALLET_PROVIDERS.find(({ url }) => url === providerUrl);
 
   const provider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
@@ -64,17 +99,11 @@ export function WalletProvider({ children = null as any }) {
   );
 
   const [connected, setConnected] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-
-  const select = useCallback(() => setIsModalVisible(true), []);
-  const close = useCallback(() => setIsModalVisible(false), []);
 
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", () => {
         if (wallet.publicKey) {
-          // Save lastWalletProviderSuccess (The last successful connected attempt)
-          setWalletSuccess(provider?.url);
           setConnected(true);
           const walletPublicKey = wallet.publicKey.toBase58();
           const keyToDisplay =
@@ -87,6 +116,7 @@ export function WalletProvider({ children = null as any }) {
                   walletPublicKey.length
                 )}`
               : walletPublicKey;
+
           notify({
             message: "Wallet update",
             description: "Connected to wallet " + keyToDisplay,
@@ -109,20 +139,21 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [wallet, provider, setWalletSuccess]);
+  }, [wallet]);
 
   useEffect(() => {
     if (wallet && autoConnect) {
-      try {
-        wallet.connect();
-        setAutoConnect(false);
-      } catch (error) {
-        console.log(error);
-      }
+      wallet.connect();
+      setAutoConnect(false);
     }
 
     return () => {};
   }, [wallet, autoConnect]);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const select = useCallback(() => setIsModalVisible(true), []);
+  const close = useCallback(() => setIsModalVisible(false), []);
 
   return (
     <WalletContext.Provider
@@ -131,8 +162,8 @@ export function WalletProvider({ children = null as any }) {
         connected,
         select,
         provider,
-        lastWalletProviderSuccess
-      }}>
+      }}
+    >
       {children}
       <Modal
         className="mean-modal"
@@ -184,16 +215,15 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, lastWalletProviderSuccess, select } = useContext(WalletContext);
+  const { wallet, connected, provider, select } = useContext(WalletContext);
   return {
     wallet,
     connected,
-    select,
-    lastWalletProviderSuccess,
     provider,
+    select,
     publicKey: wallet?.publicKey,
     connect() {
-      wallet && lastWalletProviderSuccess === provider?.url ? wallet.connect() : select();
+      wallet ? wallet.connect() : select();
     },
     disconnect() {
       wallet?.disconnect();

@@ -1,5 +1,5 @@
 {
-  "name": "dapp-scaffold",
+  "name": "mean-pay-webapp",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,14 +7,12 @@
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
+    "start:production": "REACT_APP_ENV=production npm start",
+    "start:staging": "REACT_APP_ENV=staging npm start",
+    "build:dev": "REACT_APP_ENV=development npm run build",
+    "build:staging": "REACT_APP_ENV=staging npm run build",
+    "build:prod": "REACT_APP_ENV=production npm run build",
     "postbuild": "node iisConfig/copyIISConfig.js",
-    "program:build": "cd program && cargo build-bpf",
-    "program:test": "cd program && cargo test-bpf",
-    "localnet:up": "solana-test-validator --bpf-program BpfProgram1111111111111111111111111111111111 program/target/deploy/bpf_program_template.so --reset",
-    "localnet:logs": "solana logs",
-    "predeploy": "git pull --ff-only && yarn && yarn build",
-    "deploy": "gh-pages -d build",
-    "deploy:ar": "arweave deploy-dir build --key-file ",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
   "eslintConfig": {
@@ -34,7 +32,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/solana-labs/dapp-scaffold"
+    "url": "https://github.com/mean-code/mean-pay-webapp"
   },
   "homepage": ".",
   "dependencies": {
