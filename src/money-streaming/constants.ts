@@ -16,3 +16,9 @@ export class Constants {
     static DEVNET_CLUSTER = 'https://api.devnet.solana.com';
     static DECIMALS = 6
 }
+
+export class ErrorConstants {
+    static Unauthorized = 'Unauthorized';
+    static AccountNotCredited = 'AccountNotCredited';
+    static AccountNotFound = 'AccountNotFound';
+}

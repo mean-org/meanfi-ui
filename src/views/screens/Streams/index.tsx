@@ -1,7 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Divider, Row, Col, Button, Modal, Spin } from "antd";
+import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu } from "antd";
 import {
   CheckOutlined,
+  EllipsisOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
   SearchOutlined,
@@ -131,7 +132,7 @@ export const Streams = () => {
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
-    console.log('Withdraw amout:', parseFloat(amount));
+    console.log('Withdraw amount:', parseFloat(amount));
     onExecuteWithdrawFundsTransaction(amount);
   };
 
@@ -334,7 +335,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -508,7 +509,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -708,6 +709,14 @@ export const Streams = () => {
     });
   }
 
+  const menu = (
+    <Menu>
+      <Menu.Item key="1" onClick={showCloseStreamConfirm}>
+        <span className="menu-item-text">Close money stream</span>
+      </Menu.Item>
+    </Menu>
+  );
+
   const renderInboundStream = (
     <>
     <div className="stream-type-indicator">
@@ -879,19 +888,19 @@ export const Streams = () => {
           disabled={!streamDetail ||
                     !streamDetail.escrowVestedAmount ||
                     publicKey?.toBase58() !== streamDetail.beneficiaryAddress}
-          onClick={showWithdrawModal}
-        >
+          onClick={showWithdrawModal}>
           Withdraw funds
         </Button>
-        <Button
-          shape="round"
-          type="text"
-          size="small"
-          className="ant-btn-shaded"
-          onClick={showCloseStreamConfirm}
-        >
-          <IconExit className="mean-svg-icons" />
-        </Button>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button
+            shape="round"
+            type="text"
+            size="small"
+            className="ant-btn-shaded"
+            onClick={(e) => e.preventDefault()}
+            icon={<EllipsisOutlined />}>
+          </Button>
+        </Dropdown>
       </div>
 
       <Divider className="activity-divider" plain></Divider>
@@ -1069,19 +1078,19 @@ export const Streams = () => {
           type="text"
           shape="round"
           size="small"
-          onClick={() => {}}
-        >
+          onClick={() => {}}>
           Top up (add funds)
         </Button>
-        <Button
-          shape="round"
-          type="text"
-          size="small"
-          className="ant-btn-shaded"
-          onClick={showCloseStreamConfirm}
-        >
-          <IconExit className="mean-svg-icons" />
-        </Button>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button
+            shape="round"
+            type="text"
+            size="small"
+            className="ant-btn-shaded"
+            onClick={(e) => e.preventDefault()}
+            icon={<EllipsisOutlined />}>
+          </Button>
+        </Dropdown>
       </div>
 
       <Divider className="activity-divider" plain></Divider>

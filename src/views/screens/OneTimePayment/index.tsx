@@ -314,7 +314,7 @@ export const OneTimePayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {

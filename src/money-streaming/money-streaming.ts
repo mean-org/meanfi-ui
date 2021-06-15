@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import { Layout } from './layout';
 import { u64Number } from './u64Number';
 import * as Utils from './utils';
+import * as Errors from './errors';
 
 import {
     Commitment,
@@ -10,14 +11,13 @@ import {
     GetProgramAccountsConfig,
     Keypair,
     PublicKey,
-    Signer,
     SystemProgram,
     Transaction,
     TransactionInstruction
 
 } from '@solana/web3.js';
 
-import { Constants } from './constants';
+import { Constants, ErrorConstants } from './constants';
 import { Instructions } from './instructions';
 import { WalletAdapter } from '../contexts/wallet';
 
@@ -53,7 +53,6 @@ export class MoneyStreaming {
 
     private connection: Connection;
     private programId: PublicKey;
-    private feePayer: PublicKey;
     private commitment: Commitment | ConnectionConfig | undefined;
 
     /**
@@ -63,11 +62,16 @@ export class MoneyStreaming {
      */
     constructor(
         cluster: string,
+        programId: PublicKey | string,
         commitment: Commitment | ConnectionConfig | string = 'finalized'
     ) {
         this.connection = new Connection(cluster, commitment as Commitment);
-        this.programId = Constants.STREAM_PROGRAM_ADDRESS.toPublicKey();
-        this.feePayer = Constants.STREAM_PROGRAM_PAYER_ADRESS.toPublicKey();
+
+        if (typeof programId === 'string') {
+            this.programId = programId.toPublicKey();
+        } else {
+            this.programId = programId;
+        }
     }
 
     public async getStream(
@@ -189,7 +193,7 @@ export class MoneyStreaming {
     }
 
     public async getAddFundsTransaction(
-        treasury: PublicKey,
+        // treasury: PublicKey,
         stream: PublicKey,
         contributor: PublicKey,
         contributorToken: PublicKey,
@@ -197,16 +201,45 @@ export class MoneyStreaming {
 
     ): Promise<Transaction> {
 
+        let streamInfo = await Utils.getStream(
+            this.connection,
+            stream
+        );
+
+        if (streamInfo === null) {
+            throw Errors.MSPError(ErrorConstants.AccountNotFound, `Stream with id = ${stream} not found`);
+        }
+
+        const contributorTokenAccountKey = await Utils.findATokenAddress(
+            contributor,
+            contributorToken
+        );
+
+        const beneficiaryAssociatedToken = new PublicKey(streamInfo.associatedToken as PublicKey);
+        let contributionAmount = amount;
+
+        if (beneficiaryAssociatedToken.toBase58() !== contributorToken.toBase58()) {
+            // Swap (amount to contributionAmount in beneficiaryAssociatedToken)
+        }
+
+        const treasuryAccountKey = new PublicKey(streamInfo.treasurerAddress as PublicKey);
+        const treasuryTokenAccountKey = await Utils.findATokenAddress(
+            treasuryAccountKey,
+            beneficiaryAssociatedToken
+        );
+
         const transaction = new Transaction();
 
         transaction.add(
-            MoneyStreaming.addFundsInstruction(
+            await Instructions.addFundsInstruction(
                 this.programId,
-                treasury,
                 stream,
                 contributor,
-                contributorToken,
-                amount
+                contributorTokenAccountKey,
+                treasuryAccountKey,
+                treasuryTokenAccountKey,
+                beneficiaryAssociatedToken,
+                contributionAmount
             )
         );
 
@@ -218,7 +251,7 @@ export class MoneyStreaming {
     }
 
     public async getWithdrawTransaction(
-        streamId: PublicKey,
+        stream: PublicKey,
         beneficiary: PublicKey,
         amount: number
 
@@ -226,11 +259,11 @@ export class MoneyStreaming {
 
         let streamInfo = await Utils.getStream(
             this.connection,
-            streamId
+            stream
         );
 
         if (beneficiary.toBase58() !== streamInfo.beneficiaryAddress as string) {
-            throw Error('Unauthorized');
+            throw Errors.MSPError(ErrorConstants.AccountNotCredited, 'Not authorized to withdraw from this stream');
         }
 
         const transaction = new Transaction();
@@ -241,9 +274,15 @@ export class MoneyStreaming {
             mintTokenAccountKey
         );
 
+        let beneficiaryAccountInfo = await this.connection.getAccountInfo(beneficiary);
+
+        if (beneficiaryAccountInfo === null) {
+            throw Errors.MSPError(ErrorConstants.AccountNotCredited, `Beneficiary wallet account ${beneficiary} not credited`);
+        }
+
         let beneficiaryTokenAccountInfo = await this.connection.getAccountInfo(beneficiaryTokenAccountKey);
 
-        if (beneficiaryTokenAccountInfo == null) { // Create beneficiary associated token address
+        if (beneficiaryTokenAccountInfo === null) { // Create beneficiary associated token address
             transaction.add(
                 await Instructions.createATokenAccountInstruction(
                     beneficiaryTokenAccountKey,
@@ -268,7 +307,7 @@ export class MoneyStreaming {
                 mintTokenAccountKey,
                 treasuryAccountKey,
                 treasuryTokenAccountKey,
-                streamId,
+                stream,
                 amount
             )
         );
@@ -316,50 +355,15 @@ export class MoneyStreaming {
         }
     }
 
-    static addFundsInstruction(
-        programId: PublicKey,
-        treasury: PublicKey,
-        stream: PublicKey,
-        contributor: PublicKey,
-        contributionToken: PublicKey,
-        amount: number
-
-    ): TransactionInstruction {
-
-        const keys = [
-            { pubkey: contributor, isSigner: true, isWritable: false },
-            { pubkey: stream, isSigner: false, isWritable: false },
-            { pubkey: treasury, isSigner: false, isWritable: false }
-        ];
-
-        let data = Buffer.alloc(Layout.addFundsLayout.span)
-        {
-            const decodedData = {
-                tag: 1,
-                contributor_token_address: Buffer.from(contributionToken.toBuffer()),
-                contribution_amount: new u64Number(amount).toBuffer()
-            };
-
-            const encodeLength = Layout.createStreamLayout.encode(decodedData, data);
-            data = data.slice(0, encodeLength);
-        };
-
-        return new TransactionInstruction({
-            keys,
-            programId,
-            data,
-        });
-    }
-
     public async closeStreamTransaction(
-        streamId: PublicKey,
+        stream: PublicKey,
         initializer: PublicKey
 
     ): Promise<Transaction> {
 
         let streamInfo = await Utils.getStream(
             this.connection,
-            streamId
+            stream
         );
 
         let counterparty: PublicKey;
