@@ -71,7 +71,6 @@ export const PayrollPayment = () => {
     setStreamList,
     setStreamDetail,
     setSelectedStream,
-    setLastCreatedTransactionSignature,
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -714,7 +713,6 @@ export const PayrollPayment = () => {
             console.log('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
-              setLastCreatedTransactionSignature(signature);
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

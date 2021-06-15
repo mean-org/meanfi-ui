@@ -26,7 +26,7 @@ export const AppContextMenu = () => {
   const onDisconnectWallet = () => {
     disconnect();
     setSelectedStream(undefined);
-    setStreamList([]);
+    setStreamList(undefined);
   }
 
   const onSwitchTheme = () => {

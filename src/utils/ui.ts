@@ -305,6 +305,7 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
     if (isInteger) {
         result = original;
+        // result += '.' + trailingChar.repeat(zeroes);
     } else {
         const isFloat = dec && dec.length > zeroes ? true : false;
         if (isFloat) {

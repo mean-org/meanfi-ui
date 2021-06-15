@@ -68,7 +68,6 @@ export const RepeatingPayment = () => {
     setStreamList,
     setStreamDetail,
     setSelectedStream,
-    setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -692,7 +691,6 @@ export const RepeatingPayment = () => {
             console.log('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
-              setLastCreatedTransactionSignature(signature);
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

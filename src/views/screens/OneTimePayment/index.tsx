@@ -57,7 +57,6 @@ export const OneTimePayment = () => {
     setStreamList,
     setStreamDetail,
     setSelectedStream,
-    setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -492,7 +491,6 @@ export const OneTimePayment = () => {
             console.log('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
-              setLastCreatedTransactionSignature(signature);
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

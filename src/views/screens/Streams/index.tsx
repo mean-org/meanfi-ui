@@ -97,7 +97,7 @@ export const Streams = () => {
     // Install the timer
     updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 1000);
+    }, 150);
 
     // Return callback to run on unmount.
     return () => {
@@ -778,15 +778,31 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
+                  end={streamDetail?.escrowUnvestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
-              {/* &nbsp;
-              {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-              ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-              : ''} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -820,6 +836,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data large">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowVestedAmount || 0}
+                  end={streamDetail?.escrowVestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data large">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data large">
             {streamDetail
@@ -827,7 +863,7 @@ export const Streams = () => {
               : '--'}
             </span>
           ) : (
-            <span className="info-data">&nbsp;</span>
+            <span className="info-data large">&nbsp;</span>
           )}
         </div>
       </div>
@@ -949,6 +985,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowVestedAmount || 0}
+                  end={streamDetail?.escrowVestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
@@ -973,6 +1029,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data large">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
+                  end={streamDetail?.escrowUnvestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data large">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data large">
             {streamDetail
@@ -980,7 +1056,7 @@ export const Streams = () => {
               : '--'}
             </span>
           ) : (
-            <span className="info-data">&nbsp;</span>
+            <span className="info-data large">&nbsp;</span>
           )}
         </div>
       </div>

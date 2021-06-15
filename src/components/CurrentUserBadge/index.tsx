@@ -5,13 +5,13 @@ import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { SOLANA_EXPLORER_URI } from "../../constants";
 import { Identicon } from "../Identicon";
-import { copyText } from "../../utils/ui";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { StreamInfo } from "../../money-streaming/money-streaming";
 import { PublicKey } from "@solana/web3.js";
 import { listStreams } from "../../money-streaming/utils";
 import { useConnection } from "../../contexts/connection";
+import { copyText } from "../../utils/ui";
 
 interface StreamStats {
   incoming: number;
