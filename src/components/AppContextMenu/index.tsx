@@ -21,10 +21,12 @@ export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
   const { connected, disconnect } = useWallet();
-  const { theme, setTheme } = useContext(AppStateContext);
+  const { theme, setTheme, setSelectedStream, setStreamList } = useContext(AppStateContext);
 
   const onDisconnectWallet = () => {
     disconnect();
+    setSelectedStream(undefined);
+    setStreamList(undefined);
   }
 
   const onSwitchTheme = () => {

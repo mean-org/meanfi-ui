@@ -284,15 +284,14 @@ export const getTokenDecimals = (address: string): number => {
 
 export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string, onlyValue = false): string => {
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
-  const inputAmount = parseFloat(amount.toString());
+  const inputAmount = amount ? parseFloat(amount.toString()) : 0;
   if (tokenFromTokenList) {
     const formatted = `${formatAmount(inputAmount, tokenFromTokenList.decimals) || 0}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
-  } else if (amount) {
+  } else {
     return `${maxTrailingZeroes(inputAmount.toString(), 2)}`;
   }
-  return '';
 }

@@ -1,8 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Divider, Row, Col, Button, Modal, Spin } from "antd";
+import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu } from "antd";
 import {
-  ArrowLeftOutlined,
   CheckOutlined,
+  EllipsisOutlined,
   ExclamationCircleOutlined,
   LoadingOutlined,
   SearchOutlined,
@@ -30,7 +30,6 @@ import { WithdrawModal } from '../../../components/WithdrawModal';
 import _ from "lodash";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { PublicKey, Transaction } from "@solana/web3.js";
-import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
 
@@ -45,6 +44,7 @@ export const Streams = () => {
     streamDetail,
     detailsPanelOpen,
     transactionStatus,
+    streamProgramAddress,
     setCurrentScreen,
     setLoadingStreams,
     setStreamList,
@@ -84,15 +84,13 @@ export const Streams = () => {
         if (utcNow.getTime() >= startDateUtc.getTime()) {
           escrowVestedAmount = rate * elapsedTime;;
 
-          if (escrowVestedAmount >= clonedDetail.totalDeposits) {
-            escrowVestedAmount = clonedDetail.totalDeposits;
+          if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
+            escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
           }
         }
 
-        clonedDetail.escrowVestedAmount = Math.fround(escrowVestedAmount);
-        clonedDetail.escrowUnvestedAmount = Math.fround(
-          clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount
-        );
+        clonedDetail.escrowVestedAmount = escrowVestedAmount;
+        clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
         setStreamDetail(clonedDetail);
       }
     };
@@ -100,7 +98,7 @@ export const Streams = () => {
     // Install the timer
     updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 1000);
+    }, 150);
 
     // Return callback to run on unmount.
     return () => {
@@ -134,7 +132,7 @@ export const Streams = () => {
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
-    console.log('Withdraw amout:', parseFloat(amount));
+    console.log('Withdraw amount:', parseFloat(amount));
     onExecuteWithdrawFundsTransaction(amount);
   };
 
@@ -253,7 +251,7 @@ export const Streams = () => {
 
   const refreshStreamList = () => {
     if (publicKey) {
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
 
       setTimeout(() => {
         setLoadingStreams(true);
@@ -323,6 +321,9 @@ export const Streams = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
+    if (isSuccess()) {
+      refreshStreamList();
+    }
   }
 
   const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
@@ -334,7 +335,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -344,14 +345,12 @@ export const Streams = () => {
         });
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
-        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(withdrawAmount);
 
         // Create a transaction
         return await moneyStream.getWithdrawTransaction(
           stream,
           beneficiary,
-          associatedToken,
           amount
         )
         .then(value => {
@@ -496,6 +495,9 @@ export const Streams = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
+    if (isSuccess()) {
+      refreshStreamList();
+    }
   }
 
   const onExecuteCloseStreamTransaction = async () => {
@@ -507,7 +509,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -707,11 +709,25 @@ export const Streams = () => {
     });
   }
 
+  const menu = (
+    <Menu>
+      <Menu.Item key="1" onClick={showCloseStreamConfirm}>
+        <span className="menu-item-text">Close money stream</span>
+      </Menu.Item>
+    </Menu>
+  );
+
   const renderInboundStream = (
     <>
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
+    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
+      <div className="stream-background">
+        <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
+      </div>
+      ) : null
+    }
     <div className="stream-details-data-wrapper">
 
       {/* Sender */}
@@ -771,15 +787,31 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
+                  end={streamDetail?.escrowUnvestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
               ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
               : '--'}
-              {/* &nbsp;
-              {streamDetail && isValidNumber(streamDetail.escrowUnvestedAmount.toString())
-              ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-              : ''} */}
             </span>
           ) : (
             <span className="info-data">&nbsp;</span>
@@ -813,6 +845,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data large">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowVestedAmount || 0}
+                  end={streamDetail?.escrowVestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data large">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data large">
             {streamDetail
@@ -820,7 +872,7 @@ export const Streams = () => {
               : '--'}
             </span>
           ) : (
-            <span className="info-data">&nbsp;</span>
+            <span className="info-data large">&nbsp;</span>
           )}
         </div>
       </div>
@@ -836,19 +888,19 @@ export const Streams = () => {
           disabled={!streamDetail ||
                     !streamDetail.escrowVestedAmount ||
                     publicKey?.toBase58() !== streamDetail.beneficiaryAddress}
-          onClick={showWithdrawModal}
-        >
+          onClick={showWithdrawModal}>
           Withdraw funds
         </Button>
-        <Button
-          shape="round"
-          type="text"
-          size="small"
-          className="ant-btn-shaded"
-          onClick={showCloseStreamConfirm}
-        >
-          <IconExit className="mean-svg-icons" />
-        </Button>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button
+            shape="round"
+            type="text"
+            size="small"
+            className="ant-btn-shaded"
+            onClick={(e) => e.preventDefault()}
+            icon={<EllipsisOutlined />}>
+          </Button>
+        </Dropdown>
       </div>
 
       <Divider className="activity-divider" plain></Divider>
@@ -866,7 +918,7 @@ export const Streams = () => {
     </div>
     {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
       <div className="stream-background">
-        <img className="inbound" src="bleeding.svg" alt="" />
+        <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
       </div>
       ) : null
     }
@@ -942,6 +994,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconUpload className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowVestedAmount || 0}
+                  end={streamDetail?.escrowVestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data">
             {streamDetail
@@ -966,6 +1038,26 @@ export const Streams = () => {
           <span className="info-icon">
             <IconBank className="mean-svg-icons" />
           </span>
+          {/* {streamDetail ? (
+            <span className="info-data large">
+              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+              ? (
+                <>
+                <CountUp
+                  delay={0}
+                  duration={500}
+                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
+                  end={streamDetail?.escrowUnvestedAmount || 0} />
+                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                </>
+              )
+              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+              }
+            </span>
+          ) : (
+            <span className="info-data large">&nbsp;</span>
+          )} */}
           {streamDetail ? (
             <span className="info-data large">
             {streamDetail
@@ -973,7 +1065,7 @@ export const Streams = () => {
               : '--'}
             </span>
           ) : (
-            <span className="info-data">&nbsp;</span>
+            <span className="info-data large">&nbsp;</span>
           )}
         </div>
       </div>
@@ -986,19 +1078,19 @@ export const Streams = () => {
           type="text"
           shape="round"
           size="small"
-          onClick={() => {}}
-        >
+          onClick={() => {}}>
           Top up (add funds)
         </Button>
-        <Button
-          shape="round"
-          type="text"
-          size="small"
-          className="ant-btn-shaded"
-          onClick={showCloseStreamConfirm}
-        >
-          <IconExit className="mean-svg-icons" />
-        </Button>
+        <Dropdown overlay={menu} trigger={["click"]}>
+          <Button
+            shape="round"
+            type="text"
+            size="small"
+            className="ant-btn-shaded"
+            onClick={(e) => e.preventDefault()}
+            icon={<EllipsisOutlined />}>
+          </Button>
+        </Dropdown>
       </div>
 
       <Divider className="activity-divider" plain></Divider>

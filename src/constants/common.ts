@@ -6,5 +6,4 @@ export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const STREAM_MINIMUM_DATE_FORMAT = 'MMM Do';
 export const STREAM_SHORT_DATE_FORMAT = 'MMM d, hh:mm A z';
 export const STREAM_LONG_DATE_FORMAT = 'MMM Do, YYYY [at] HH:mm A z';
-export const STREAMING_PAYMENT_PROGRAM_ID = 'F2XJx58pW5D2CzLMYx4zsbNXmECwSE3CiYokJDnKPYCe';
 export const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';

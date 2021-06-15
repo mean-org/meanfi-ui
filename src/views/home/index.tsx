@@ -4,6 +4,7 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
+import { consoleOut } from "../../utils/ui";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
 export const HomeView = () => {
@@ -11,12 +12,13 @@ export const HomeView = () => {
     currentScreen,
     contract,
     streamList,
+    previousWalletConnectState,
     setCurrentScreen,
-    refreshTokenBalance
+    refreshTokenBalance,
+    setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
   const { connected } = useWallet();
-  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
@@ -52,11 +54,14 @@ export const HomeView = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
+        consoleOut('User is connecting...', '', 'blue');
         if (streamList && streamList.length > 0) {
+          consoleOut('streamList is available, opening streams...', '', 'blue');
           setCurrentScreen("streams");
-          setPreviousWalletConnectState(true);
         }
+        setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         refreshTokenBalance();
       }
@@ -68,7 +73,8 @@ export const HomeView = () => {
     streamList,
     previousWalletConnectState,
     setCurrentScreen,
-    refreshTokenBalance
+    refreshTokenBalance,
+    setPreviousWalletConnectState
   ]);
 
   const renderPreFooter = (

@@ -31,7 +31,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Constants } from "../../../money-streaming/constants";
 import { listStreams } from '../../../money-streaming/utils';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -54,6 +53,7 @@ export const RepeatingPayment = () => {
     paymentRateAmount,
     paymentRateFrequency,
     transactionStatus,
+    streamProgramAddress,
     setCurrentScreen,
     setSelectedToken,
     setSelectedTokenBalance,
@@ -68,7 +68,6 @@ export const RepeatingPayment = () => {
     setStreamList,
     setStreamDetail,
     setSelectedStream,
-    setLastCreatedTransactionSignature
   } = useContext(AppStateContext);
 
   const [previousChain, setChain] = useState("");
@@ -105,7 +104,7 @@ export const RepeatingPayment = () => {
 
   const refreshStreamList = () => {
     if (publicKey) {
-      const programId = new PublicKey(Constants.STREAM_PROGRAM_ADDRESS);
+      const programId = new PublicKey(streamProgramAddress);
   
       setTimeout(() => {
         setLoadingStreams(true);
@@ -515,7 +514,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint);
+    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -562,7 +561,7 @@ export const RepeatingPayment = () => {
         return await moneyStream.getCreateStreamTransaction(
           senderPubkey,                                     // treasurer
           destPubkey,                                       // beneficiary
-          null,                                             // treasury
+          // null,                                             // treasury
           associatedToken,                                  // associatedToken
           parseFloat(paymentRateAmount as string),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
@@ -692,7 +691,6 @@ export const RepeatingPayment = () => {
             console.log('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
-              setLastCreatedTransactionSignature(signature);
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }
