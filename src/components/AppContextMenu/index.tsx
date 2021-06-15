@@ -91,12 +91,12 @@ export const AppContextMenu = () => {
               <span className="menu-item-text">Faucet</span>
             </Link>
           </Menu.Item>
-          <Menu.Item key="9" onClick={onDisconnectWallet}>
-            <IconLogout className="mean-svg-icons" />
-            <span className="menu-item-text">Disconnect wallet</span>
-          </Menu.Item>
         </>
       )}
+      <Menu.Item key="9" onClick={onDisconnectWallet}>
+        <IconLogout className="mean-svg-icons" />
+        <span className="menu-item-text">Disconnect wallet</span>
+      </Menu.Item>
     </Menu>
   );
 

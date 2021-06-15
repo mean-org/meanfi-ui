@@ -13,7 +13,6 @@ import {
   IconClock,
   IconDocument,
   IconDownload,
-  IconExit,
   IconPause,
   IconShare,
   IconUpload,
@@ -32,6 +31,8 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
+
+var dateFormat = require("dateformat");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -178,10 +179,17 @@ export const Streams = () => {
     }
   }
 
+  const getShortDate = (date: string): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(localDate, "mmm d, yyyy, h:MM Z");
+  }
+
   const getReadableDate = (date: string): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return localDate.toLocaleString();
+    return dateFormat(localDate, "mmmm DDD d, yyyy 'at' h:MM Z");
+    // return localDate.toLocaleString();
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
@@ -231,7 +239,7 @@ export const Streams = () => {
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Receiving money since ${getReadableDate(item.startUtc as string)}`;
+        title = `Receiving money since ${getShortDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
@@ -239,7 +247,7 @@ export const Streams = () => {
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Sending money since ${getReadableDate(item.startUtc as string)}`;
+        title = `Sending money since ${getShortDate(item.startUtc as string)}`;
       }
     }
     return title;
