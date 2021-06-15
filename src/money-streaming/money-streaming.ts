@@ -72,6 +72,7 @@ export class MoneyStreaming {
         } else {
             this.programId = programId;
         }
+        console.log('programId:', this.programId.toBase58());
     }
 
     public async getStream(

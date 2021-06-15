@@ -8,13 +8,13 @@ export class AppConfigService {
 
     private readonly CONFIG: { [env: string]: AppConfig } = {
         production: {
-            streamProgramAddress: '7GsGvccB8LMbVhbhB1Zo8erVC82xDpoEgrm4EBbxBWcj'
-        },
-        development: {
-            streamProgramAddress: '7GsGvccB8LMbVhbhB1Zo8erVC82xDpoEgrm4EBbxBWcj'
+            streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb'
         },
         staging: {
             streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb'
+        },
+        development: {
+            streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k'
         },
     };
 

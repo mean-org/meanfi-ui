@@ -182,14 +182,13 @@ export const Streams = () => {
   const getShortDate = (date: string): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return dateFormat(localDate, "mmm d, yyyy, h:MM Z");
+    return dateFormat(localDate, "mm/dd/yyyy HH:MM TT");
   }
 
   const getReadableDate = (date: string): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return dateFormat(localDate, "mmmm DDD d, yyyy 'at' h:MM Z");
-    // return localDate.toLocaleString();
+    return dateFormat(localDate, "ddd mmm dd yyyy HH:MM TT");
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
@@ -233,13 +232,20 @@ export const Streams = () => {
   const getTransactionSubTitle = (item: StreamInfo): string => {
     let title = '';
     const isInbound = isInboundStream(item);
+    const now = new Date();
+    const streamStartDate = new Date(item.startUtc as string);
     if (isInbound) {
       if (item.isUpdatePending) {
         title = `This contract is pending your approval`;
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Receiving money since ${getShortDate(item.startUtc as string)}`;
+        if (streamStartDate > now) {
+          title = `Set to receive money on`;
+        } else {
+          title = `Receiving money since`;
+        }
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
@@ -247,10 +253,29 @@ export const Streams = () => {
       } else if (!item.isStreaming) {
         title = `This stream is paused due to the lack of funds`;
       } else {
-        title = `Sending money since ${getShortDate(item.startUtc as string)}`;
+        if (streamStartDate > now) {
+          title = `Set to start on`;
+        } else {
+          title = `Sending money since`;
+        }
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     }
     return title;
+  }
+
+  const getStartDateLabel = (): string => {
+    let label = 'Start Date';
+    if (streamDetail) {
+      const now = new Date();
+      const streamStartDate = new Date(streamDetail?.startUtc as string);
+      if (streamStartDate > now) {
+        label = 'Scheduled';
+      } else {
+        label = 'Started'
+      }
+    }
+    return label;
   }
 
   // Transaction execution (Applies to all transactions)
@@ -963,9 +988,9 @@ export const Streams = () => {
         </Col>
       </Row>
 
-      {/* Started date */}
+      {/* Start date */}
       <div className="mb-3">
-        <div className="info-label">Started</div>
+        <div className="info-label">{getStartDateLabel()}</div>
         <div className="transaction-detail-row">
           <span className="info-icon">
             <IconClock className="mean-svg-icons" />
