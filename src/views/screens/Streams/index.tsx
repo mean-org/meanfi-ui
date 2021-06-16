@@ -799,14 +799,6 @@ export const Streams = () => {
 
   const renderInboundStream = (
     <>
-    {/* {streamDetail && (
-      <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
-        <a className="explorer-cta" href={`${SOLANA_EXPLORER_URI}${streamDetail.id}`} target="_blank" rel="noopener noreferrer">
-          <IconExternalLink className="mean-svg-icons" />
-        </a>
-      </div>
-    )} */}
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
@@ -993,19 +985,19 @@ export const Streams = () => {
       <p>No activity so far.</p>
 
     </div>
-  </>
-  );
-
-  const renderOutboundStream = (
-    <>
-    {/* {streamDetail && (
+    {streamDetail && (
       <div className="stream-share-ctas">
         <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
         <a className="explorer-cta" href={`${SOLANA_EXPLORER_URI}${streamDetail.id}`} target="_blank" rel="noopener noreferrer">
           <IconExternalLink className="mean-svg-icons" />
         </a>
       </div>
-    )} */}
+    )}
+  </>
+  );
+
+  const renderOutboundStream = (
+    <>
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
@@ -1188,6 +1180,14 @@ export const Streams = () => {
       <p>No activity so far.</p>
 
     </div>
+    {streamDetail && (
+      <div className="stream-share-ctas">
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
+        <a className="explorer-cta" href={`${SOLANA_EXPLORER_URI}${streamDetail.id}`} target="_blank" rel="noopener noreferrer">
+          <IconExternalLink className="mean-svg-icons" />
+        </a>
+      </div>
+    )}
   </>
   );
 

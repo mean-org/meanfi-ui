@@ -1603,21 +1603,42 @@ em {
         z-index: 3;
       }
       .stream-share-ctas {
-        position: absolute;
-        bottom: 5px;
-        width: 88%;
-        z-index: 4;
-        display: block;
-        text-align: center;
+        @media (max-width: 767.98px) {
+          position: relative;
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        @media (min-width: 768px) {
+          position: absolute;
+          bottom: 5px;
+          width: 88%;
+          z-index: 4;
+        }
+        display: flex;
+        justify-content: center;
+        align-items: center;
         .copy-cta {
           cursor: pointer;
-          font-size: 0.8rem;
+          font-size: 0.7rem;
+          font-weight: 400;
+          color: var(--color-secondary-alpha-50);
+          &:hover {
+            color: var(--color-secondary-alpha-85);
+          }
         }
         .explorer-cta {
           cursor: pointer;
           margin-left: 0.5rem;
+          line-height: 1;
+          color: var(--color-secondary-alpha-50);
+          &:hover {
+            color: var(--color-secondary-alpha-85);
+          }
           .mean-svg-icons {
-            font-size: 0.8rem;
+            width: 16px;
+            height: 16px;
           }
         }
       }
