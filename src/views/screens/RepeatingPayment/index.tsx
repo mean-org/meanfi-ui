@@ -13,8 +13,7 @@ import {
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { getPrices } from "../../../utils/api";
-import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
+import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
@@ -46,6 +45,8 @@ export const RepeatingPayment = () => {
     streamList,
     selectedToken,
     tokenBalance,
+    effectiveRate,
+    coinPrices,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -57,6 +58,7 @@ export const RepeatingPayment = () => {
     setCurrentScreen,
     setSelectedToken,
     setSelectedTokenBalance,
+    setEffectiveRate,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -73,11 +75,6 @@ export const RepeatingPayment = () => {
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
-
-  const [coinPrices, setCoinPrices] = useState<any>(null);
-  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
-  const [effectiveRate, setEffectiveRate] = useState<number>(0);
-
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
@@ -148,13 +145,6 @@ export const RepeatingPayment = () => {
     setPaymentStartDate(date);
   }
 
-  // Set to reload prices every 30 seconds
-  const setPriceTimer = () => {
-    setTimeout(() => {
-      setShouldLoadCoinPrices(true);
-    }, PRICE_REFRESH_TIMEOUT);
-  };
-
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
   }
@@ -190,7 +180,6 @@ export const RepeatingPayment = () => {
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
-    // setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
   }
 
   // Effect to set a default beneficiary token
@@ -206,41 +195,6 @@ export const RepeatingPayment = () => {
     return () => {};
   }, [tokenList, destinationToken]);
 
-  // Effect to load coin prices
-  useEffect(() => {
-    const getCoinPrices = async () => {
-      setShouldLoadCoinPrices(false);
-      try {
-        await getPrices()
-          .then((prices) => {
-            console.log("Coin prices:", prices);
-            setCoinPrices(prices);
-            if (selectedToken) {
-              setEffectiveRate(
-                prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
-              );
-            }
-          })
-          .catch(() => setCoinPrices(null));
-      } catch (error) {
-        setCoinPrices(null);
-      }
-    };
-
-    if (shouldLoadCoinPrices && selectedToken) {
-      getCoinPrices();
-      setPriceTimer();
-    }
-
-    return () => {
-      clearTimeout();
-    };
-  }, [
-    coinPrices,
-    shouldLoadCoinPrices,
-    selectedToken,
-    setEffectiveRate
-  ]);
 
   // Effect signal token list reload on network change
   useEffect(() => {

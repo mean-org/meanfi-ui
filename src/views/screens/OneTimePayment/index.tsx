@@ -10,8 +10,7 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { getPrices } from "../../../utils/api";
-import { DATEPICKER_FORMAT, PRICE_REFRESH_TIMEOUT } from "../../../constants";
+import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
@@ -39,6 +38,8 @@ export const OneTimePayment = () => {
     streamList,
     selectedToken,
     tokenBalance,
+    effectiveRate,
+    coinPrices,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -48,6 +49,7 @@ export const OneTimePayment = () => {
     setCurrentScreen,
     setSelectedToken,
     setSelectedTokenBalance,
+    setEffectiveRate,
     setRecipientAddress,
     setRecipientNote,
     setPaymentStartDate,
@@ -62,11 +64,6 @@ export const OneTimePayment = () => {
   const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
-
-  const [coinPrices, setCoinPrices] = useState<any>(null);
-  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
-  const [effectiveRate, setEffectiveRate] = useState<number>(0);
-
   const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
 
   // Token selection modal
@@ -135,13 +132,6 @@ export const OneTimePayment = () => {
     setPaymentStartDate(date);
   }
 
-  // Set to reload prices every 30 seconds
-  const setPriceTimer = () => {
-    setTimeout(() => {
-      setShouldLoadCoinPrices(true);
-    }, PRICE_REFRESH_TIMEOUT);
-  };
-
   const triggerWindowResize = () => {
     window.dispatchEvent(new Event('resize'));
   }
@@ -165,40 +155,6 @@ export const OneTimePayment = () => {
       triggerWindowResize();
     }, 100);
   }
-
-  // Effect to load coin prices
-  useEffect(() => {
-    const getCoinPrices = async () => {
-      setShouldLoadCoinPrices(false);
-      try {
-        await getPrices()
-          .then((prices) => {
-            console.log("Coin prices:", prices);
-            setCoinPrices(prices);
-            setEffectiveRate(
-              prices[(selectedToken as TokenInfo).symbol] ? prices[(selectedToken as TokenInfo).symbol] : 0
-            );
-          })
-          .catch(() => setCoinPrices(null));
-      } catch (error) {
-        setCoinPrices(null);
-      }
-    };
-
-    if (shouldLoadCoinPrices && selectedToken) {
-      getCoinPrices();
-      setPriceTimer();
-    }
-
-    return () => {
-      clearTimeout();
-    };
-  }, [
-    coinPrices,
-    shouldLoadCoinPrices,
-    selectedToken,
-    setEffectiveRate
-  ]);
 
   // Effect signal token list reload on network change
   useEffect(() => {

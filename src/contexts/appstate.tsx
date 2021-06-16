@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { convert, useLocalStorageState } from "../utils/utils";
-import { STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
+import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { getStream, listStreams } from "../money-streaming/utils";
@@ -13,6 +13,7 @@ import { TokenAccount } from "../models";
 import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
+import { getPrices } from "../utils/api";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -26,6 +27,8 @@ interface AppStateConfig {
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number | undefined;
+  effectiveRate: number;
+  coinPrices: any | null;
   contract: ContractDefinition | undefined;
   recipientAddress: string;
   recipientNote: string;
@@ -46,6 +49,8 @@ interface AppStateConfig {
   setDtailsPanelOpen: (state: boolean) => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
+  setEffectiveRate: (rate: number) => void;
+  setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
   refreshStreamList: () => void;
   setContract: (name: string) => void;
@@ -72,6 +77,8 @@ const contextDefaultValues: AppStateConfig = {
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: undefined,
+  effectiveRate: 0,
+  coinPrices: null,
   contract: undefined,
   recipientAddress: '',
   recipientNote: '',
@@ -96,6 +103,8 @@ const contextDefaultValues: AppStateConfig = {
   setContract: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
+  setEffectiveRate: () => {},
+  setCoinPrices: () => {},
   refreshTokenBalance: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
@@ -123,7 +132,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
-  const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
+
+  if (!streamProgramAddress) {
+    const config = new AppConfigService();
+    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+  }
 
   const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
@@ -140,21 +153,17 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(contextDefaultValues.previousWalletConnectState);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
+  const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
 
-  if (!streamProgramAddress) {
-    const config = new AppConfigService();
-    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+  const setTheme = (name: string) => {
+    updateTheme(name);
   }
 
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
-  }
-
-  const setTheme = (name: string) => {
-    updateTheme(name);
   }
 
   useEffect(() => {
@@ -238,6 +247,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number | undefined>();
+  const [coinPrices, setCoinPrices] = useState<any>(null);
+  const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
+  const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
 
@@ -249,6 +261,54 @@ const AppStateProvider: React.FC = ({ children }) => {
   const setSelectedTokenBalance = (balance: number) => {
     updateTokenBalance(balance);
   }
+
+  const setEffectiveRate = (rate: number) => {
+    updateEffectiveRate(rate);
+  }
+
+  // Effect to load coin prices
+  useEffect(() => {
+    let coinTimer: any;
+
+    const getCoinPrices = async () => {
+      try {
+        await getPrices()
+          .then((prices) => {
+            console.log("Coin prices:", prices);
+            setCoinPrices(prices);
+            if (selectedToken) {
+              updateEffectiveRate(
+                prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
+              );
+            }
+          })
+          .catch(() => setCoinPrices(null));
+      } catch (error) {
+        setCoinPrices(null);
+      }
+    };
+
+    if (shouldLoadCoinPrices && selectedToken) {
+      setShouldLoadCoinPrices(false);
+      getCoinPrices();
+    }
+
+    coinTimer = window.setInterval(() => {
+      console.log(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      getCoinPrices();
+    }, PRICE_REFRESH_TIMEOUT);
+
+    // Return callback to run on unmount.
+    return () => {
+      if (coinTimer) {
+        window.clearInterval(coinTimer);
+      }
+    };
+  }, [
+    coinPrices,
+    shouldLoadCoinPrices,
+    selectedToken
+  ]);
 
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
@@ -438,6 +498,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         tokenList,
         selectedToken,
         tokenBalance,
+        effectiveRate,
+        coinPrices,
         contract,
         recipientAddress,
         recipientNote,
@@ -458,6 +520,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setDtailsPanelOpen,
         setSelectedToken,
         setSelectedTokenBalance,
+        setEffectiveRate,
+        setCoinPrices,
         refreshTokenBalance,
         refreshStreamList,
         setContract,

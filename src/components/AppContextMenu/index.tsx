@@ -14,7 +14,7 @@ import {
 } from "../../Icons";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { MEANPAY_WEBSITE_URL } from "../../constants";
 
@@ -22,7 +22,6 @@ export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
   const { connected, disconnect } = useWallet();
-  const [websiteUrl, setWebsiteUrl] = useState();
   const {
     theme,
     setTheme,
