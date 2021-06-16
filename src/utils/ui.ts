@@ -335,6 +335,6 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
 export const getFormattedNumberToLocale = (value: any) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat().format(converted);
+    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9 }).format(converted);
     return formatted || '';
 }

@@ -740,6 +740,7 @@ export const OneTimePayment = () => {
         <div className="transaction-field-row main-row">
           <span className="input-left">
             <input
+              id="payment-memo-field"
               className="w-100 general-text-input"
               autoComplete="on"
               autoCorrect="off"

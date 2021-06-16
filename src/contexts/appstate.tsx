@@ -27,11 +27,11 @@ interface AppStateConfig {
   selectedToken: TokenInfo | undefined;
   tokenBalance: number | undefined;
   contract: ContractDefinition | undefined;
-  recipientAddress: string | undefined;
-  recipientNote: string | undefined;
+  recipientAddress: string;
+  recipientNote: string;
   paymentStartDate: string | undefined;
-  fromCoinAmount: string | undefined;
-  paymentRateAmount: string | undefined;
+  fromCoinAmount: string;
+  paymentRateAmount: string;
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
   transactionStatus: TransactionStatusInfo;
@@ -73,11 +73,11 @@ const contextDefaultValues: AppStateConfig = {
   selectedToken: undefined,
   tokenBalance: undefined,
   contract: undefined,
-  recipientAddress: undefined,
-  recipientNote: undefined,
+  recipientAddress: '',
+  recipientNote: '',
   paymentStartDate: undefined,
-  fromCoinAmount: undefined,
-  paymentRateAmount: undefined,
+  fromCoinAmount: '',
+  paymentRateAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
   transactionStatus: {
@@ -130,11 +130,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [currentScreen, setSelectedTab] = useState<string | undefined>();
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
-  const [recipientAddress, updateRecipientAddress] = useState<string | undefined>();
-  const [recipientNote, updateRecipientNote] = useState<string | undefined>();
+  const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
+  const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
-  const [fromCoinAmount, updateFromCoinAmount] = useState<string | undefined>();
-  const [paymentRateAmount, updatePaymentRateAmount] = useState<string | undefined>();
+  const [fromCoinAmount, updateFromCoinAmount] = useState<string>(contextDefaultValues.fromCoinAmount);
+  const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);

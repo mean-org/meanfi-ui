@@ -13,6 +13,7 @@ import {
   IconClock,
   IconDocument,
   IconDownload,
+  IconExternalLink,
   IconPause,
   IconShare,
   IconUpload,
@@ -21,7 +22,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
-import { getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
+import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { SOLANA_EXPLORER_URI } from "../../../constants";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
@@ -31,6 +32,7 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
+import { notify } from "../../../utils/notifications";
 
 var dateFormat = require("dateformat");
 
@@ -109,6 +111,31 @@ export const Streams = () => {
     };
   }, [streamDetail, setStreamDetail]);
 
+  useEffect(() => {
+    const resizeListener = () => {
+      var NUM_CHARS = 4;
+      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (var i = 0; i < ellipsisElements.length; ++i){
+        var e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          var text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
+
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
   const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
@@ -139,6 +166,12 @@ export const Streams = () => {
 
   const isInboundStream = (item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
+  }
+
+  const isStreaming = (item: StreamInfo): boolean => {
+    return item && item.escrowUnvestedAmount > 0 && item.escrowVestedAmount > 0
+            ? true
+            : false;
   }
 
   const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
@@ -742,6 +775,20 @@ export const Streams = () => {
     });
   }
 
+  const onCopyStreamAddress = (data: any) => {
+    if (copyText(data.toString())) {
+      notify({
+        message: "Copy to Clipboard",
+        description: "Stream address successfully copied",
+      });
+    } else {
+      notify({
+        message: "Copy to Clipboard",
+        description: "Could not copy stream Address",
+      });
+    }
+  }
+
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={showCloseStreamConfirm}>
@@ -752,10 +799,18 @@ export const Streams = () => {
 
   const renderInboundStream = (
     <>
+    {/* {streamDetail && (
+      <div className="stream-share-ctas">
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
+        <a className="explorer-cta" href={`${SOLANA_EXPLORER_URI}${streamDetail.id}`} target="_blank" rel="noopener noreferrer">
+          <IconExternalLink className="mean-svg-icons" />
+        </a>
+      </div>
+    )} */}
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
-    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
+    {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
       <div className="stream-background">
         <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
       </div>
@@ -943,10 +998,18 @@ export const Streams = () => {
 
   const renderOutboundStream = (
     <>
+    {/* {streamDetail && (
+      <div className="stream-share-ctas">
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
+        <a className="explorer-cta" href={`${SOLANA_EXPLORER_URI}${streamDetail.id}`} target="_blank" rel="noopener noreferrer">
+          <IconExternalLink className="mean-svg-icons" />
+        </a>
+      </div>
+    )} */}
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
-    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
+    {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
       <div className="stream-background">
         <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
       </div>

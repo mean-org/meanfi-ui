@@ -14,14 +14,21 @@ import {
 } from "../../Icons";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
+import { MEANPAY_WEBSITE_URL } from "../../constants";
 
 export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
   const { connected, disconnect } = useWallet();
-  const { theme, setTheme, setSelectedStream, setStreamList } = useContext(AppStateContext);
+  const [websiteUrl, setWebsiteUrl] = useState();
+  const {
+    theme,
+    setTheme,
+    setSelectedStream,
+    setStreamList
+  } = useContext(AppStateContext);
 
   const onDisconnectWallet = () => {
     disconnect();
@@ -53,7 +60,7 @@ export const AppContextMenu = () => {
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
-        <a href="https://www.someplace.com">
+        <a href={MEANPAY_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
           <IconInfoCircle className="mean-svg-icons" />
           <span className="menu-item-text">About</span>
         </a>
