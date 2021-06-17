@@ -33,6 +33,7 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
+import { AddFundsModal } from "../../../components/AddFundsModal";
 
 var dateFormat = require("dateformat");
 
@@ -152,6 +153,16 @@ export const Streams = () => {
   const onAcceptOpenStream = (e: any) => {
     openStreamById(e);
     closeOpenStreamModal();
+  };
+
+  // Add funds modal
+  const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
+  const showAddFundsModal = useCallback(() => setIsAddFundsModalVisibility(true), []);
+  const closeAddFundsModal = useCallback(() => setIsAddFundsModalVisibility(false), []);
+  const onAcceptAddFunds = (amount: any) => {
+    closeAddFundsModal();
+    console.log('AddFunds amount:', parseFloat(amount));
+    // onExecuteAddFundsFundsTransaction(amount);
   };
 
   // Withdraw funds modal
@@ -1160,7 +1171,7 @@ export const Streams = () => {
           type="text"
           shape="round"
           size="small"
-          onClick={() => {}}>
+          onClick={showAddFundsModal}>
           Top up (add funds)
         </Button>
         <Dropdown overlay={menu} trigger={["click"]}>
@@ -1282,6 +1293,10 @@ export const Streams = () => {
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}
         handleClose={closeOpenStreamModal} />
+      <AddFundsModal
+        isVisible={isAddFundsModalVisible}
+        handleOk={onAcceptAddFunds}
+        handleClose={closeAddFundsModal} />
       <WithdrawModal
         isVisible={isWithdrawModalVisible}
         handleOk={onAcceptWithdraw}

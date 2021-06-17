@@ -1,28 +1,32 @@
 import { useContext, useState } from 'react';
 import { Modal, Button } from 'antd';
+import { IconSort } from "../../Icons";
+
 import { AppStateContext } from '../../contexts/appstate';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { percentage } from '../../utils/ui';
+import { formatAmount, isValidNumber } from '../../utils/utils';
+import { Identicon } from '../Identicon';
 
 export const AddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
 }) => {
-  const { streamDetail } = useContext(AppStateContext);
-  const [withdrawAmountRaw, setWithdrawAmountRaw] = useState<string>('');
-  const [withdrawAmountFormatted, setWithdrawAmountFormatted] = useState<string>('');
+  const {
+    selectedToken,
+    tokenBalance,
+    effectiveRate
+  } = useContext(AppStateContext);
+  const [topupAmount, setTopupAmount] = useState<string>('');
 
-  const onAcceptWithdrawal = () => {
-    props.handleOk(withdrawAmountRaw);
+  const onAcceptTopup = () => {
+    props.handleOk(topupAmount);
   }
 
   const setValue = (value: string) => {
-    setWithdrawAmountRaw(value);
-    setWithdrawAmountFormatted(value);
+    setTopupAmount(value);
   }
 
-  const handleWithdrawAmountChange = (e: any) => {
+  const handleAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
@@ -31,31 +35,29 @@ export const AddFundsModal = (props: {
     }
   };
 
-  const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
-  }
-
-  const isValidInput = () => {
-    return withdrawAmountRaw &&
-           parseFloat(withdrawAmountRaw) &&
-           parseFloat(withdrawAmountRaw) <= parseFloat(getAmountWithSymbol(streamDetail?.escrowVestedAmount, streamDetail?.associatedToken as string, true))
-      ? true
-      : false;
+  const isValidInput = (): boolean => {
+    return selectedToken &&
+           tokenBalance &&
+           topupAmount &&
+           parseFloat(topupAmount) > 0 &&
+           parseFloat(topupAmount) <= tokenBalance
+            ? true
+            : false;
   }
 
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Withdraw funds</div>}
+      title={<div className="modal-title">Add funds</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={onAcceptWithdrawal}
+      onOk={onAcceptTopup}
       onCancel={props.handleClose}
       afterClose={() => setValue('')}
       width={480}>
       <div className="mb-3">
 
-        <div className="transaction-field disabled">
+        {/* <div className="transaction-field disabled">
           <div className="transaction-field-row">
             <span className="field-label-left">Funds available to withdraw now</span>
             <span className="field-label-right">&nbsp;</span>
@@ -67,9 +69,9 @@ export const AddFundsModal = (props: {
               : '--'}
             </span>
           </div>
-        </div>
+        </div> */}
 
-        <div className="transaction-field mb-1">
+        {/* <div className="transaction-field mb-1">
           <div className="transaction-field-row">
             <span className="field-label-left">Enter amount to withdraw</span>
             <span className="field-label-right">By percentual preset</span>
@@ -82,7 +84,7 @@ export const AddFundsModal = (props: {
                 autoComplete="off"
                 autoCorrect="off"
                 type="text"
-                onChange={handleWithdrawAmountChange}
+                onChange={handleAmountChange}
                 pattern="^[0-9]*[.,]?[0-9]*$"
                 placeholder="0.0"
                 minLength={1}
@@ -114,14 +116,14 @@ export const AddFundsModal = (props: {
             }</span>
             <span className="field-label-right">&nbsp;</span>
           </div>
-        </div>
+        </div> */}
 
-        {/* Send amount */}
-        {/* <div className="transaction-field mb-1">
+        {/* Top up amount */}
+        <div className="transaction-field mb-1">
           <div className="transaction-field-row">
             <span className="field-label-left" style={{marginBottom: '-6px'}}>
-              Send ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+              Amount ~${topupAmount && effectiveRate
+                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
                 : "0.00"}
               <IconSort className="mean-svg-icons usd-switcher fg-red" />
               <span className="fg-red">USD</span>
@@ -145,18 +147,19 @@ export const AddFundsModal = (props: {
           <div className="transaction-field-row main-row">
             <span className="input-left">
               <input
+                id="topup-amount-field"
                 className="general-text-input"
                 inputMode="decimal"
                 autoComplete="off"
                 autoCorrect="off"
                 type="text"
-                onChange={handleFromCoinAmountChange}
+                onChange={handleAmountChange}
                 pattern="^[0-9]*[.,]?[0-9]*$"
                 placeholder="0.0"
                 minLength={1}
                 maxLength={79}
                 spellCheck="false"
-                value={fromCoinAmount}
+                value={topupAmount}
               />
             </span>
             {selectedToken && (
@@ -166,7 +169,7 @@ export const AddFundsModal = (props: {
                     <div
                       className="token-max simplelink"
                       onClick={() =>
-                        setFromCoinAmount(
+                        setValue(
                           formatAmount(
                             tokenBalance as number,
                             selectedToken.decimals
@@ -176,10 +179,7 @@ export const AddFundsModal = (props: {
                       MAX
                     </div>
                   )}
-                  <div className="token-selector simplelink" onClick={() => {
-                      setSubjectTokenSelection('payer');
-                      showTokenSelector();
-                    }}>
+                  <div className="token-selector">
                     <div className="token-icon">
                       {selectedToken.logoURI ? (
                         <img
@@ -200,11 +200,16 @@ export const AddFundsModal = (props: {
                 </div>
               </div>
             )}
-            <span className="field-caret-down">
-              <IconCaretDown className="mean-svg-icons" />
-            </span>
           </div>
-        </div> */}
+          <div className="transaction-field-row">
+            <span className="field-label-left">{
+              parseFloat(topupAmount) > tokenBalance
+                ? (<span className="fg-red">Amount exceeds your balance</span>)
+                : (<span>&nbsp;</span>)
+            }</span>
+            <span className="field-label-right">&nbsp;</span>
+          </div>
+        </div>
 
       </div>
       <Button
@@ -214,8 +219,8 @@ export const AddFundsModal = (props: {
         shape="round"
         size="large"
         disabled={!isValidInput()}
-        onClick={onAcceptWithdrawal}>
-        {isValidInput() ? 'Start withdrawal' : 'Invalid amount'}
+        onClick={onAcceptTopup}>
+        {isValidInput() ? 'Start funding' : 'Invalid amount'}
       </Button>
     </Modal>
   );

@@ -26,7 +26,7 @@ interface AppStateConfig {
   detailsPanelOpen: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
-  tokenBalance: number | undefined;
+  tokenBalance: number;
   effectiveRate: number;
   coinPrices: any | null;
   contract: ContractDefinition | undefined;
@@ -76,7 +76,7 @@ const contextDefaultValues: AppStateConfig = {
   detailsPanelOpen: false,
   tokenList: [],
   selectedToken: undefined,
-  tokenBalance: undefined,
+  tokenBalance: 0,
   effectiveRate: 0,
   coinPrices: null,
   contract: undefined,
@@ -246,7 +246,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
-  const [tokenBalance, updateTokenBalance] = useState<number | undefined>();
+  const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
