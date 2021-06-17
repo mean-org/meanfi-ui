@@ -4,7 +4,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { percentage } from '../../utils/ui';
 
-export const WithdrawModal = (props: {
+export const AddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
@@ -54,6 +54,7 @@ export const WithdrawModal = (props: {
       afterClose={() => setValue('')}
       width={480}>
       <div className="mb-3">
+
         <div className="transaction-field disabled">
           <div className="transaction-field-row">
             <span className="field-label-left">Funds available to withdraw now</span>
@@ -94,46 +95,13 @@ export const WithdrawModal = (props: {
               <div className="token-group">
                 <div className="token-max simplelink" onClick={() => {
                     if (streamDetail) {
-                      const partialAmount = percentage(25, streamDetail.escrowVestedAmount as number);
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
-                    } else {
-                      setValue('0');
-                    }
-                  }}>
-                  25%
-                </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      const partialAmount = percentage(50, streamDetail.escrowVestedAmount as number);
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
-                    } else {
-                      setValue('0');
-                    }
-                  }}>
-                  50%
-                </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      const partialAmount = percentage(75, streamDetail.escrowVestedAmount as number);
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
-                    } else {
-                      setValue('0');
-                    }
-                  }}>
-                  75%
-                </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
                       setWithdrawAmountRaw(`${streamDetail.escrowVestedAmount}`);
                       setWithdrawAmountFormatted(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string, true));
                     } else {
                       setValue('0');
                     }
                   }}>
-                  100%
+                  MAX
                 </div>
               </div>
             </div>
@@ -147,6 +115,97 @@ export const WithdrawModal = (props: {
             <span className="field-label-right">&nbsp;</span>
           </div>
         </div>
+
+        {/* Send amount */}
+        {/* <div className="transaction-field mb-1">
+          <div className="transaction-field-row">
+            <span className="field-label-left" style={{marginBottom: '-6px'}}>
+              Send ~${fromCoinAmount && effectiveRate
+                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                : "0.00"}
+              <IconSort className="mean-svg-icons usd-switcher fg-red" />
+              <span className="fg-red">USD</span>
+            </span>
+            <span className="field-label-right">
+              <span>Balance:</span>
+              <span className="balance-amount">
+                {`${selectedToken && tokenBalance
+                    ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+                    : "Unknown"
+                }`}
+              </span>
+              <span>
+                (~$
+                {tokenBalance && effectiveRate
+                  ? formatAmount(tokenBalance as number * effectiveRate, 2)
+                  : "0.00"})
+              </span>
+            </span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="input-left">
+              <input
+                className="general-text-input"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleFromCoinAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={fromCoinAmount}
+              />
+            </span>
+            {selectedToken && (
+              <div className="addon-right">
+                <div className="token-group">
+                  {selectedToken && (
+                    <div
+                      className="token-max simplelink"
+                      onClick={() =>
+                        setFromCoinAmount(
+                          formatAmount(
+                            tokenBalance as number,
+                            selectedToken.decimals
+                          )
+                        )
+                      }>
+                      MAX
+                    </div>
+                  )}
+                  <div className="token-selector simplelink" onClick={() => {
+                      setSubjectTokenSelection('payer');
+                      showTokenSelector();
+                    }}>
+                    <div className="token-icon">
+                      {selectedToken.logoURI ? (
+                        <img
+                          alt={`${selectedToken.name}`}
+                          width={20}
+                          height={20}
+                          src={selectedToken.logoURI}
+                        />
+                      ) : (
+                        <Identicon
+                          address={selectedToken.address}
+                          style={{ width: "24", display: "inline-flex" }}
+                        />
+                      )}
+                    </div>
+                    <div className="token-symbol">{selectedToken.symbol}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <span className="field-caret-down">
+              <IconCaretDown className="mean-svg-icons" />
+            </span>
+          </div>
+        </div> */}
+
       </div>
       <Button
         className="main-cta"

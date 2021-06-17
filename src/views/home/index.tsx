@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
+import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
 import { consoleOut } from "../../utils/ui";
@@ -19,7 +20,9 @@ export const HomeView = () => {
   } = useContext(AppStateContext);
 
   const { connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
   const { account } = useNativeAccount();
+  const [previousChain, setChain] = useState("");
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   // Contract switcher modal
@@ -30,6 +33,19 @@ export const HomeView = () => {
     // Do something and close the modal
     closeContractSelectorModal();
   };
+
+  // Effect Network change
+  useEffect(() => {
+    if (previousChain !== connectionConfig.env) {
+      setChain(connectionConfig.env);
+      console.log(`cluster:`, connectionConfig.env);
+    }
+
+    return () => {};
+  }, [
+    previousChain,
+    connectionConfig
+  ]);
 
   useEffect(() => {
     if (account?.lamports !== previousBalance) {
@@ -49,7 +65,7 @@ export const HomeView = () => {
     return () => {};
   }, [currentScreen, setCurrentScreen]);
 
-  // Effect to go to streams on wallet connected if there are streams available
+  // Effect to go to streams on wallet connect if there are streams available
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
       // User is connecting

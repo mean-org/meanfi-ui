@@ -75,10 +75,8 @@ export const PayrollPayment = () => {
     setSelectedStream,
   } = useContext(AppStateContext);
 
-  const [previousChain, setChain] = useState("");
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
-  const [shouldLoadTokens, setShouldLoadTokens] = useState(true);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
   // Token selection modal
@@ -183,7 +181,6 @@ export const PayrollPayment = () => {
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
-    // setPaymentRateInterval(getPaymentRateIntervalByRateType(val));
   }
 
   // Effect to set a default beneficiary token
@@ -199,32 +196,13 @@ export const PayrollPayment = () => {
     return () => {};
   }, [tokenList, destinationToken]);
 
-  // Effect signal token list reload on network change
-  useEffect(() => {
-    if (previousChain !== connectionConfig.env) {
-      setChain(connectionConfig.env);
-      console.log(`cluster:`, connectionConfig.env);
-      if (!shouldLoadTokens) {
-        setShouldLoadTokens(true);
-      }
-    }
-
-    return () => {};
-  }, [
-    previousChain,
-    connectionConfig,
-    shouldLoadTokens,
-    setShouldLoadTokens,
-  ]);
-
-  // Effect signal token list reload on wallet connected status change
+  // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
-          setShouldLoadTokens(true);
           setSelectedToken(tokenList[0]);
         }, 1000);
       } else {
@@ -240,11 +218,9 @@ export const PayrollPayment = () => {
     };
   }, [
     connected,
-    shouldLoadTokens,
     previousWalletConnectState,
     tokenList,
     setSelectedToken,
-    setShouldLoadTokens,
     setSelectedTokenBalance,
     setPreviousWalletConnectState,
   ]);
