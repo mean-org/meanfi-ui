@@ -436,9 +436,9 @@ export const RepeatingPayment = () => {
   // Main action
 
   const onTransactionStart = async () => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
+    let transactions: Transaction[];
+    let signedTransactions: Transaction[];
+    let signatures: any[];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -450,15 +450,18 @@ export const RepeatingPayment = () => {
       if (wallet) {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
-        const senderPubkey = wallet.publicKey as PublicKey;
+
+        console.log('treasurerAssociatedToken:', selectedToken?.address);
+        const treasurerAssociatedToken = new PublicKey(selectedToken?.address as string);
 
         console.log('Beneficiary address:', recipientAddress);
         const destPubkey = new PublicKey(recipientAddress as string);
 
-        console.log('associatedToken:', selectedToken?.address);
-        const associatedToken = new PublicKey(selectedToken?.address as string);
-        const amount = parseFloat(fromCoinAmount as string);
+        console.log('beneficiaryAssociatedToken:', destinationToken?.address);
+        const beneficiaryAssociatedToken = new PublicKey(destinationToken?.address as string);
 
+        const amount = parseFloat(fromCoinAmount as string);
+        const rateAmount = parseFloat(paymentRateAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
@@ -475,25 +478,26 @@ export const RepeatingPayment = () => {
         });
         // Create a transaction
         const data = {
-          treasurer: senderPubkey,                                        // treasurer
-          beneficiary: destPubkey,                                        // beneficiary
-          treasury: null,                                                 // treasury
-          associatedToken: associatedToken,                               // associatedToken
-          rateAmount: parseFloat(paymentRateAmount as string),            // rateAmount
-          rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                              // startUtc
+          wallet: wallet,                                             // wallet
+          beneficiary: destPubkey,                                    // beneficiary
+          treasurerAssociatedToken: treasurerAssociatedToken,         // treasurerAssociatedToken
+          beneficiaryAssociatedToken: beneficiaryAssociatedToken,     // beneficiaryAssociatedToken
+          rateAmount: rateAmount,                                     // rateAmount
+          rateIntervalInSeconds:
+            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
+          startUtc: fromParsedDate,                                   // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
-            : undefined,                                                  // streamName
-          fundingAmount: amount                                           // fundingAmount
+            : undefined,                                              // streamName
+            fundingAmount: amount                                     // fundingAmount
         };
         console.log('data:', data);
-        return await moneyStream.getCreateStreamTransaction(
-          senderPubkey,                                     // treasurer
+        return await moneyStream.createStreamTransactions(
+          wallet,                                           // wallet
           destPubkey,                                       // beneficiary
-          // null,                                             // treasury
-          associatedToken,                                  // associatedToken
-          parseFloat(paymentRateAmount as string),          // rateAmount
+          treasurerAssociatedToken,                         // treasurerAssociatedToken
+          beneficiaryAssociatedToken,                       // beneficiaryAssociatedToken
+          rateAmount,                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
           fromParsedDate,                                   // startUtc
           recipientNote
@@ -508,7 +512,7 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.CreateTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transactions = value;
           return true;
         })
         .catch(error => {
@@ -526,15 +530,15 @@ export const RepeatingPayment = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signAllTransactions(wallet, ...transactions)
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signAllTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransactions = signed;
           return true;
         })
         .catch(error => {
@@ -557,15 +561,15 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendAllSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            console.log('sendAllSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signatures = sig;
             return true;
           })
           .catch(error => {
@@ -586,9 +590,9 @@ export const RepeatingPayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransaction(signature)
+      return await moneyStream.confirmAllTransactions(signatures)
         .then(result => {
-          console.log('confirmTransaction result:', result);
+          console.log('confirmAllTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,

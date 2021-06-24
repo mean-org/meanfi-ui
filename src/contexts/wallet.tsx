@@ -1,9 +1,5 @@
-import type { PublicKey } from "@solana/web3.js";
-
 import Wallet from "@project-serum/sol-wallet-adapter";
-import { Transaction } from "@solana/web3.js";
 import { Button, Modal } from "antd";
-import EventEmitter from "eventemitter3";
 import React, {
   useCallback,
   useContext,
@@ -17,6 +13,7 @@ import { useLocalStorageState } from "./../utils/utils";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
+import { WalletAdapter } from "../money-streaming/wallet-adapter";
 
 const ASSETS_URL =
   "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
@@ -56,12 +53,12 @@ export const WALLET_PROVIDERS = [
   },
 ];
 
-export interface WalletAdapter extends EventEmitter {
-  publicKey: PublicKey | null;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  connect: () => any;
-  disconnect: () => any;
-}
+// export interface WalletAdapter extends EventEmitter {
+//   publicKey: PublicKey | null;
+//   signTransaction: (transaction: Transaction) => Promise<Transaction>;
+//   connect: () => any;
+//   disconnect: () => any;
+// }
 
 const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;

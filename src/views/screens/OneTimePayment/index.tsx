@@ -239,9 +239,9 @@ export const OneTimePayment = () => {
   // Main action
 
   const onTransactionStart = async () => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
+    let transactions: Transaction[];
+    let signedTransactions: Transaction[];
+    let signatures: any[];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -280,42 +280,36 @@ export const OneTimePayment = () => {
         const data = {
           treasurer: senderPubkey,                                        // treasurer
           beneficiary: destPubkey,                                        // beneficiary
-          treasury: null,                                                 // treasury
           associatedToken: associatedToken,                               // associatedToken
-          rateAmount: parseFloat(fromCoinAmount as string),               // rateAmount
-          rateIntervalInSeconds: 0,                                       // rateIntervalInSeconds
+          fundingAmount: amount,                                          // fundingAmount
           startUtc: fromParsedDate,                                       // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                                      // streamName
-          fundingAmount: amount                                           // fundingAmount
         };
         console.log('data:', data);
-        return await moneyStream.getCreateStreamTransaction(
+        return await moneyStream.oneTimePaymentTransactions(
           senderPubkey,                                     // treasurer
           destPubkey,                                       // beneficiary
-          // null,                                             // treasury
           associatedToken,                                  // associatedToken
-          parseFloat(fromCoinAmount as string),             // rateAmount
-          0,                                                // rateIntervalInSeconds
+          amount,                                           // fundingAmount
           fromParsedDate,                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : contract?.name.trim(),                        // streamName
-          amount                                            // fundingAmount
         )
         .then(value => {
-          console.log('getCreateStreamTransaction returned transaction:', value);
+          console.log('oneTimePaymentTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.CreateTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transactions = value;
           return true;
         })
         .catch(error => {
-          console.log('getCreateStreamTransaction error:', error);
+          console.log('oneTimePaymentTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.CreateTransactionFailure
@@ -329,7 +323,7 @@ export const OneTimePayment = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signAllTransactions(wallet, ...transactions)
         .then(signed => {
           console.log('signTransaction returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
@@ -337,7 +331,7 @@ export const OneTimePayment = () => {
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransactions = signed;
           return true;
         })
         .catch(error => {
@@ -360,15 +354,15 @@ export const OneTimePayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendAllSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            console.log('sendAllSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signatures = sig;
             return true;
           })
           .catch(error => {
@@ -389,9 +383,9 @@ export const OneTimePayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransaction(signature)
+      return await moneyStream.confirmAllTransactions(signatures)
         .then(result => {
-          console.log('confirmTransaction result:', result);
+          console.log('confirmAllTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
