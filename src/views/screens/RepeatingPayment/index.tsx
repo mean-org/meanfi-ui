@@ -31,6 +31,7 @@ import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { listStreams } from '../../../money-streaming/utils';
+import { Wallet } from "@project-serum/anchor/dist/provider";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -455,7 +456,7 @@ export const RepeatingPayment = () => {
         const treasurerAssociatedToken = new PublicKey(selectedToken?.address as string);
 
         console.log('Beneficiary address:', recipientAddress);
-        const destPubkey = new PublicKey(recipientAddress as string);
+        const beneficiary = new PublicKey(recipientAddress as string);
 
         console.log('beneficiaryAssociatedToken:', destinationToken?.address);
         const beneficiaryAssociatedToken = new PublicKey(destinationToken?.address as string);
@@ -479,7 +480,7 @@ export const RepeatingPayment = () => {
         // Create a transaction
         const data = {
           wallet: wallet,                                             // wallet
-          beneficiary: destPubkey,                                    // beneficiary
+          beneficiary: beneficiary,                                    // beneficiary
           treasurerAssociatedToken: treasurerAssociatedToken,         // treasurerAssociatedToken
           beneficiaryAssociatedToken: beneficiaryAssociatedToken,     // beneficiaryAssociatedToken
           rateAmount: rateAmount,                                     // rateAmount
@@ -493,17 +494,18 @@ export const RepeatingPayment = () => {
         };
         console.log('data:', data);
         return await moneyStream.createStreamTransactions(
-          wallet,                                           // wallet
-          destPubkey,                                       // beneficiary
-          treasurerAssociatedToken,                         // treasurerAssociatedToken
-          beneficiaryAssociatedToken,                       // beneficiaryAssociatedToken
-          rateAmount,                                       // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          fromParsedDate,                                   // startUtc
+          wallet as Wallet,                                           // wallet
+          undefined,                                                  // treasury
+          beneficiary,                                                // beneficiary
+          treasurerAssociatedToken,                                   // treasurerAssociatedToken
+          beneficiaryAssociatedToken,                                 // beneficiaryAssociatedToken
+          rateAmount,                                                 // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
+          fromParsedDate,                                             // startUtc
           recipientNote
             ? recipientNote.trim()
-            : undefined,                                    // streamName
-          amount                                            // fundingAmount
+            : undefined,                                              // streamName
+          amount                                                      // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);

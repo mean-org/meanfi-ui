@@ -253,10 +253,10 @@ export const OneTimePayment = () => {
       if (wallet) {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
-        const senderPubkey = wallet.publicKey as PublicKey;
+        const treasurer = wallet.publicKey as PublicKey;
 
         console.log('Beneficiary address:', recipientAddress);
-        const destPubkey = new PublicKey(recipientAddress as string);
+        const beneficiary = new PublicKey(recipientAddress as string);
 
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
@@ -278,25 +278,26 @@ export const OneTimePayment = () => {
         });
         // Create a transaction
         const data = {
-          treasurer: senderPubkey,                                        // treasurer
-          beneficiary: destPubkey,                                        // beneficiary
-          associatedToken: associatedToken,                               // associatedToken
-          fundingAmount: amount,                                          // fundingAmount
-          startUtc: fromParsedDate,                                       // startUtc
+          treasurer: treasurer,                                             // treasurer
+          beneficiary: beneficiary,                                         // beneficiary
+          associatedToken: associatedToken,                                 // associatedToken
+          fundingAmount: amount,                                            // fundingAmount
+          startUtc: fromParsedDate,                                         // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                                      // streamName
+            : contract?.name.trim(),                                        // streamName
         };
         console.log('data:', data);
         return await moneyStream.oneTimePaymentTransactions(
-          senderPubkey,                                     // treasurer
-          destPubkey,                                       // beneficiary
-          associatedToken,                                  // associatedToken
-          amount,                                           // fundingAmount
-          fromParsedDate,                                   // startUtc
+          treasurer,                                                  // treasurer
+          undefined,                                                  // treasury
+          beneficiary,                                                // beneficiary
+          associatedToken,                                            // associatedToken
+          amount,                                                     // fundingAmount
+          fromParsedDate,                                             // startUtc
           recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                        // streamName
+            : contract?.name.trim(),                                  // streamName
         )
         .then(value => {
           console.log('oneTimePaymentTransactions returned transaction:', value);

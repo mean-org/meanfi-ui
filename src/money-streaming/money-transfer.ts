@@ -5,7 +5,7 @@ import {
     SystemProgram,
     TransactionInstruction
 } from "@solana/web3.js";
-import { WalletAdapter } from "../contexts/wallet";
+import { WalletAdapter } from "./wallet-adapter";
 
 export class MoneyTransfer {
 

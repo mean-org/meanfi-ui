@@ -477,7 +477,7 @@ export const PayrollPayment = () => {
         const treasurerAssociatedToken = new PublicKey(selectedToken?.address as string);
 
         console.log('Beneficiary address:', recipientAddress);
-        const destPubkey = new PublicKey(recipientAddress as string);
+        const beneficiary = new PublicKey(recipientAddress as string);
 
         console.log('beneficiaryAssociatedToken:', destinationToken?.address);
         const beneficiaryAssociatedToken = new PublicKey(destinationToken?.address as string);
@@ -501,7 +501,7 @@ export const PayrollPayment = () => {
         // Create a transaction
         const data = {
           wallet: wallet,                                             // wallet
-          beneficiary: destPubkey,                                    // beneficiary
+          beneficiary: beneficiary,                                    // beneficiary
           treasurerAssociatedToken: treasurerAssociatedToken,         // treasurerAssociatedToken
           beneficiaryAssociatedToken: beneficiaryAssociatedToken,     // beneficiaryAssociatedToken
           rateAmount: rateAmount,                                     // rateAmount
@@ -515,17 +515,18 @@ export const PayrollPayment = () => {
         };
         console.log('data:', data);
         return await moneyStream.createStreamTransactions(
-          wallet,                                           // wallet
-          destPubkey,                                       // beneficiary
-          treasurerAssociatedToken,                         // treasurerAssociatedToken
-          beneficiaryAssociatedToken,                       // beneficiaryAssociatedToken
-          rateAmount,                                       // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),   // rateIntervalInSeconds
-          fromParsedDate,                                   // startUtc
+          wallet,                                                     // wallet
+          undefined,                                                  // treasury
+          beneficiary,                                                // beneficiary
+          treasurerAssociatedToken,                                   // treasurerAssociatedToken
+          beneficiaryAssociatedToken,                                 // beneficiaryAssociatedToken
+          rateAmount,                                                 // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
+          fromParsedDate,                                             // startUtc
           recipientNote
             ? recipientNote.trim()
-            : undefined,                                    // streamName
-          amount                                            // fundingAmount
+            : undefined,                                              // streamName
+          amount                                                      // fundingAmount
         )
         .then(value => {
           console.log('getCreateStreamTransaction returned transaction:', value);

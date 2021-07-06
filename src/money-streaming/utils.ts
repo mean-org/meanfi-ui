@@ -2,9 +2,9 @@ import { BN, Provider, Wallet } from "@project-serum/anchor";
 import { Commitment, Connection, Finality, ParsedConfirmedTransaction, PartiallyDecodedInstruction, PublicKey, TransactionSignature } from "@solana/web3.js";
 import { Constants } from "./constants";
 import { Layout } from "./layout";
-import { StreamInfo } from "./money-streaming";
+import { StreamInfo, StreamTermsInfo, TreasuryInfo } from "./money-streaming";
 import { u64Number } from "./u64n";
-import { MintInfo, MintLayout, u64 } from '@solana/spl-token';
+import { Token, AccountInfo, MintInfo, AccountLayout, MintLayout, u64 } from '@solana/spl-token';
 import { TokenInfo, TokenListContainer, TokenListProvider } from "@solana/spl-token-registry";
 import { Swap } from "@project-serum/swap";
 import { MEAN_TOKEN_LIST } from "./token-list";
@@ -53,6 +53,22 @@ Array.prototype.getChainTokens = function (cluster: string): TokenInfo[] {
     });
 }
 
+let defaultStreamTermsInfo: StreamTermsInfo = {
+    id: undefined,
+    initialized: false,
+    streamId: undefined,
+    streamMemo: "",
+    treasurerAddress: undefined,
+    beneficiaryAddress: undefined,
+    associatedToken: undefined,
+    rateAmount: 0,
+    rateIntervalInSeconds: 0,
+    rateCliffInSeconds: 0,
+    cliffVestAmount: 0,
+    cliffVestPercent: 0,
+    autoPauseInSeconds: 0
+}
+
 let defaultStreamInfo: StreamInfo = {
     id: undefined,
     initialized: false,
@@ -74,16 +90,27 @@ let defaultStreamInfo: StreamInfo = {
     totalWithdrawals: 0,
     escrowVestedAmountSnap: 0,
     escrowVestedAmountSnapBlockHeight: 0,
-    autoOffClockInSeconds: 0,
+    escrowVestedAmountSnapBlockTime: 0,
+    streamResumedBlockHeight: 0,
+    streamResumedBlockTime: 0,
+    autoPauseInSeconds: 0,
     isStreaming: false,
     isUpdatePending: false,
     transactionSignature: undefined,
     blockTime: 0
 }
 
+let defaultTreasuryInfo: TreasuryInfo = {
+    id: undefined,
+    initialized: false,
+    mintAddress: undefined,
+    nounce: 0,
+}
+
 function parseStreamData(
     streamId: PublicKey,
     streamData: Buffer,
+    currentBlockTime: number,
     friendly: boolean = true
 
 ): StreamInfo {
@@ -91,20 +118,24 @@ function parseStreamData(
     let stream: StreamInfo = defaultStreamInfo;
     let decodedData = Layout.streamLayout.decode(streamData);
     let startDateUtc = new Date(decodedData.start_utc as string);
-    let currentBlockTime = new Date().getTime() / 1000;
     let escrowVestedAmountSnapBlockHeight = parseFloat(u64Number.fromBuffer(decodedData.escrow_vested_amount_snap_block_height).toString());
-    let escrowVestedAmountSnapBlockTime = new Date(escrowVestedAmountSnapBlockHeight).getTime();
+    let escrowVestedAmountSnapBlockTime = parseFloat(u64Number.fromBuffer(decodedData.escrow_vested_amount_snap_block_time).toString());
+    let streamResumedBlockHeight = parseFloat(u64Number.fromBuffer(decodedData.stream_resumed_block_height).toString());
+    let streamResumedBlockTime = parseFloat(u64Number.fromBuffer(decodedData.stream_resumed_block_time).toString());
+    let autoPauseInSeconds = parseFloat(u64Number.fromBuffer(decodedData.auto_pause_in_seconds).toString());
     let rateIntervalInSeconds = parseFloat(u64Number.fromBuffer(decodedData.rate_interval_in_seconds).toString());
+    let isStreaming = streamResumedBlockTime > escrowVestedAmountSnapBlockTime ? 1 : 0;
+    let lastTimeSnap = isStreaming === 1 ? streamResumedBlockTime : escrowVestedAmountSnapBlockTime;
     let escrowVestedAmount = 0.0;
 
-    const rate = decodedData.rate_amount / rateIntervalInSeconds * decodedData.is_streaming;
-    const elapsedTime = currentBlockTime - escrowVestedAmountSnapBlockTime;
+    const rate = decodedData.rate_amount / rateIntervalInSeconds * isStreaming;
+    const elapsedTime = currentBlockTime - lastTimeSnap;
     const beneficiaryAssociatedToken = new PublicKey(decodedData.stream_associated_token);
     const associatedToken = beneficiaryAssociatedToken.toBase58() !== Constants.DEFAULT_PUBLICKEY
         ? beneficiaryAssociatedToken.toBase58()
         : (friendly ? beneficiaryAssociatedToken.toBase58() : beneficiaryAssociatedToken);
 
-    if (currentBlockTime >= escrowVestedAmountSnapBlockTime) {
+    if (currentBlockTime >= lastTimeSnap) {
         escrowVestedAmount = decodedData.escrow_vested_amount_snap + rate * elapsedTime;
 
         if (escrowVestedAmount >= decodedData.total_deposits - decodedData.total_withdrawals) {
@@ -148,8 +179,11 @@ function parseStreamData(
         totalWithdrawals: decodedData.total_withdrawals,
         escrowVestedAmountSnap: decodedData.escrow_vested_amount_snap,
         escrowVestedAmountSnapBlockHeight: escrowVestedAmountSnapBlockHeight,
-        autoOffClockInSeconds: parseFloat(u64Number.fromBuffer(decodedData.auto_off_clock_in_seconds).toString()),
-        isStreaming: escrowVestedAmount < decodedData.total_deposits && decodedData.is_streaming ? true : false,
+        escrowVestedAmountSnapBlockTime: escrowVestedAmountSnapBlockTime,
+        streamResumedBlockHeight: streamResumedBlockHeight,
+        streamResumedBlockTime: streamResumedBlockTime,
+        autoPauseInSeconds: autoPauseInSeconds,
+        isStreaming: isStreaming === 1 ? true : false,
         isUpdatePending: false,
         transactionSignature: '',
         blockTime: 0
@@ -175,18 +209,109 @@ export async function getStream(
 
         if (signatures.length > 0) {
 
+            let slot = await connection.getSlot(commitment);
+            let currentBlockTime = await connection.getBlockTime(slot);
+
             stream = Object.assign({}, parseStreamData(
                 id,
                 accountInfo?.data,
+                currentBlockTime as number,
                 friendly
             ));
 
             stream.transactionSignature = signatures[0].signature;
             stream.blockTime = signatures[0].blockTime as number;
+
+            let terms = await getStreamTerms(
+                accountInfo.owner,
+                connection,
+                stream.id as PublicKey
+            );
+
+            stream.isUpdatePending = terms !== undefined && terms.streamId === stream.id;
         }
     }
 
     return stream as StreamInfo;
+}
+
+export async function getStreamTerms(
+    programId: PublicKey,
+    connection: Connection,
+    streamId: PublicKey,
+    commitment?: any,
+    friendly: boolean = true
+
+): Promise<StreamTermsInfo | undefined> {
+
+    let terms: StreamTermsInfo | undefined;
+    const accounts = await connection.getProgramAccounts(programId, commitment);
+
+    if (accounts === null || !accounts.length) {
+        return terms;
+    }
+
+    for (let item of accounts) {
+        if (item.account.data !== undefined && item.account.data.length === Layout.streamTermsLayout.span) {
+
+            let info = Object.assign({}, parseStreamTermsData(
+                item.pubkey,
+                item.account.data,
+                friendly
+            ));
+
+            if (streamId.toBase58() === info.streamId) {
+                terms = info;
+                break;
+            }
+        }
+    }
+
+    return terms;
+}
+
+function parseStreamTermsData(
+    id: PublicKey,
+    streamTermData: Buffer,
+    friendly: boolean = true
+
+): StreamTermsInfo {
+
+    let streamTerms: StreamTermsInfo = defaultStreamTermsInfo;
+    let decodedData = Layout.streamTermsLayout.decode(streamTermData);
+    let autoPauseInSeconds = parseFloat(u64Number.fromBuffer(decodedData.auto_pause_in_seconds).toString());
+    let rateIntervalInSeconds = parseFloat(u64Number.fromBuffer(decodedData.rate_interval_in_seconds).toString());
+
+    const beneficiaryAssociatedToken = new PublicKey(decodedData.associated_token_address);
+    const associatedToken = beneficiaryAssociatedToken.toBase58() !== Constants.DEFAULT_PUBLICKEY
+        ? beneficiaryAssociatedToken.toBase58()
+        : (friendly ? beneficiaryAssociatedToken.toBase58() : beneficiaryAssociatedToken);
+
+    let nameBuffer = Buffer
+        .alloc(decodedData.stream_name.length, decodedData.stream_name)
+        .filter(function (elem, index) {
+            return elem !== 0;
+        });
+
+    const termsId = friendly !== undefined ? id.toBase58() : id;
+    const treasurerAddress = new PublicKey(decodedData.treasurer_address);
+    const beneficiaryAddress = new PublicKey(decodedData.beneficiary_address);
+
+    Object.assign(streamTerms, { id: termsId }, {
+        initialized: decodedData.initialized ? true : false,
+        memo: new TextDecoder().decode(nameBuffer),
+        treasurerAddress: friendly !== undefined ? treasurerAddress.toBase58() : treasurerAddress,
+        beneficiaryAddress: friendly !== undefined ? beneficiaryAddress.toBase58() : beneficiaryAddress,
+        associatedToken: associatedToken,
+        rateAmount: decodedData.rate_amount,
+        rateIntervalInSeconds: rateIntervalInSeconds,
+        rateCliffInSeconds: parseFloat(u64Number.fromBuffer(decodedData.rate_cliff_in_seconds).toString()),
+        cliffVestAmount: decodedData.cliff_vest_amount,
+        cliffVestPercent: decodedData.cliff_vest_percent,
+        autoPauseInSeconds: autoPauseInSeconds
+    });
+
+    return streamTerms;
 }
 
 export async function listStreams(
@@ -206,6 +331,9 @@ export async function listStreams(
         return streams;
     }
 
+    let slot = await connection.getSlot(commitment);
+    let currentBlockTime = await connection.getBlockTime(slot);
+
     for (let item of accounts) {
         if (item.account.data !== undefined && item.account.data.length === Layout.streamLayout.span) {
 
@@ -213,6 +341,7 @@ export async function listStreams(
             let info = Object.assign({}, parseStreamData(
                 item.pubkey,
                 item.account.data,
+                currentBlockTime as number,
                 friendly
             ));
 
@@ -252,6 +381,33 @@ export async function listStreams(
     let orderedStreams = streams.sort((a, b) => (b.blockTime - a.blockTime));
 
     return orderedStreams;
+}
+
+export async function getStreamContributors(
+    connection: Connection,
+    id: PublicKey,
+    commitment?: any
+
+): Promise<PublicKey[]> {
+
+    let contributors: PublicKey[] = [];
+    let commitmentValue = commitment !== undefined ? commitment as Finality : 'confirmed';
+    let signatures = await connection.getConfirmedSignaturesForAddress2(id, {}, commitmentValue);
+
+    for (let sign of signatures) {
+        let tx = await connection.getParsedConfirmedTransaction(sign.signature, commitmentValue);
+
+        if (tx !== null) {
+            let lastIxIndex = tx.transaction.message.instructions.length - 1;
+            let lastIx = tx.transaction.message.instructions[lastIxIndex] as PartiallyDecodedInstruction;
+
+            if (lastIx.accounts.length) {
+                contributors.push(lastIx.accounts[0]);
+            }
+        }
+    }
+
+    return contributors;
 }
 
 function parseActivityData(
@@ -336,65 +492,116 @@ export async function listStreamActivity(
     return activity.sort((a: { blockTime: number; }, b: { blockTime: number; }) => (b.blockTime - a.blockTime));
 }
 
-export function getSeedBuffer(
-    from: PublicKey,
-    programId: PublicKey
+function parseTreasuryData(
+    id: PublicKey,
+    treasuryData: Buffer,
+    friendly: boolean = true
 
-): (Buffer | Uint8Array)[] {
+): TreasuryInfo {
 
-    return [
-        from.toBytes(),
-        programId.toBytes(),
-        new TextEncoder().encode('MoneyStreamingProgram')
-    ];
+    let treasuryInfo: TreasuryInfo = defaultTreasuryInfo;
+    let decodedData = Layout.streamTermsLayout.decode(treasuryData);
+
+    const treasuryId = friendly !== undefined ? id.toBase58() : id;
+    const mintToken = new PublicKey(decodedData.mint);
+    const mintTokenAddress = mintToken.toBase58() !== Constants.DEFAULT_PUBLICKEY
+        ? mintToken.toBase58() : (friendly ? mintToken.toBase58() : mintToken);
+
+    Object.assign(treasuryInfo, { id: treasuryId }, {
+        initialized: decodedData.initialized ? true : false,
+        mintAddress: mintTokenAddress,
+        nounce: decodedData.nounce
+    });
+
+    return treasuryInfo;
+}
+
+export async function getTreasury(
+    programId: PublicKey,
+    connection: Connection,
+    id: PublicKey,
+    commitment?: any,
+    friendly: boolean = true
+
+): Promise<TreasuryInfo | undefined> {
+
+    let treasury: TreasuryInfo | undefined;
+    const accounts = await connection.getProgramAccounts(programId, commitment);
+
+    if (accounts === null || !accounts.length) {
+        return treasury;
+    }
+
+    for (let item of accounts) {
+        if (item.account.data !== undefined && item.account.data.length === Layout.treasuryLayout.span) {
+
+            let info = Object.assign({}, parseTreasuryData(
+                item.pubkey,
+                item.account.data,
+                friendly
+            ));
+
+            if (id.toBase58() === info.id) {
+                treasury = info;
+                break;
+            }
+        }
+    }
+
+    return treasury;
+}
+
+export async function getTreasuryMints(
+    connection: Connection,
+    programId: PublicKey,
+    treasury: PublicKey,
+    commitment?: any
+
+): Promise<PublicKey[]> {
+
+    let mints: PublicKey[] = [];
+    let commitmentValue = commitment !== undefined ? commitment as Finality : 'confirmed';
+    let context = await connection.getParsedTokenAccountsByOwner(
+        treasury,
+        {
+            programId
+        },
+        commitmentValue
+    );
+
+    for (let resp in context) {
+        let tokenAccount = (resp as any).account;
+        let parsedTokenAccount = await getTokenAccount(connection, tokenAccount.data)
+
+        if (parsedTokenAccount !== null) {
+            mints.push(parsedTokenAccount.mint);
+        }
+    }
+
+    return mints;
 }
 
 export async function findMSPAddress(
+    programId: PublicKey,
     from: PublicKey,
-    programId: PublicKey
+    slot: number
 
-): Promise<[PublicKey, number]> {
+): Promise<[PublicKey, (Buffer | Uint8Array)[], string, number]> {
 
-    const seedBuffer = getSeedBuffer(from, programId);
+    const bytes: number[] = [];
+    const buffers = [
+        from.toBuffer(),
+        Buffer.from([slot])
+    ];
 
-    return (
-        await PublicKey.findProgramAddress(
-            seedBuffer,
-            programId
-        )
+    buffers.forEach(item => item.map(n => bytes.push(n)));
+    const seed = Buffer.from(bytes).toString('utf-8');
+    const [key, nounce] = await PublicKey.findProgramAddress(
+        buffers,
+        programId
     );
-}
 
-export async function findMSPStreamAddress(
-    treasurer: PublicKey,
-    programId: PublicKey
-
-): Promise<[PublicKey, number]> {
-
-    const seedBuffer = getSeedBuffer(treasurer, programId);
-
-    return (
-        await PublicKey.findProgramAddress(
-            seedBuffer,
-            programId
-        )
-    );
-}
-
-export async function findMSPTreasuryAddress(
-    stream: PublicKey,
-    programId: PublicKey
-
-): Promise<[PublicKey, number]> {
-
-    const seedBuffer = getSeedBuffer(stream, programId);
-
-    return (
-        await PublicKey.findProgramAddress(
-            seedBuffer,
-            programId
-        )
-    );
+    return [key, buffers, seed, nounce];
 }
 
 export async function findATokenAddress(
@@ -462,6 +669,32 @@ export const deserializeMint = (data: Buffer): MintInfo => {
     }
 
     return mintInfo as MintInfo;
+};
+
+export const getTokenAccount = async (
+    connection: Connection,
+    pubKey: PublicKey | string
+
+): Promise<AccountInfo> => {
+
+    const address = typeof pubKey === 'string' ? new PublicKey(pubKey) : pubKey;
+    const info = await connection.getAccountInfo(address);
+
+    if (info === null) {
+        throw new Error('Failed to find token account');
+    }
+
+    return deserializeTokenAccount(info.data);
+};
+
+export const deserializeTokenAccount = (data: Buffer): AccountInfo => {
+    if (data.length !== AccountLayout.span) {
+        throw new Error('Not a valid Token');
+    }
+
+    const accountInfo = AccountLayout.decode(data);
+
+    return accountInfo as AccountInfo;
 };
 
 export function convertLocalDateToUTCIgnoringTimezone(date: Date) {
@@ -570,6 +803,7 @@ export async function swapClient(
 //     return market;
 // }
 
+/*
 export async function swapTokens(
     connection: Connection,
     client: Swap,
@@ -619,6 +853,7 @@ export async function swapTokens(
 
     return txs;
 }
+*/
 
 export function encode(data: Buffer): string {
     return base64.fromByteArray(data);

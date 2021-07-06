@@ -407,9 +407,9 @@ export const Streams = () => {
   }
 
   const onExecuteAddFundsTransaction = async (addAmount: string) => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
+    let transactions: Transaction[];
+    let signedTransactions: Transaction[];
+    let signatures: any[];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -429,24 +429,24 @@ export const Streams = () => {
         setAddFundsAmount(amount);
 
         // Create a transaction
-        return await moneyStream.getAddFundsTransaction(
+        return await moneyStream.addFundsTransactions(
+          wallet,
           stream,
-          publicKey as PublicKey,
           associatedToken,
           amount
         )
         .then(value => {
-          console.log('getAddFundsTransaction returned transaction:', value);
+          console.log('addFundsTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.CreateTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transactions = value;
           return true;
         })
         .catch(error => {
-          console.log('getAddFundsTransaction error:', error);
+          console.log('addFundsTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.CreateTransactionFailure
@@ -460,15 +460,15 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signAllTransactions(wallet, ...transactions)
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signAllTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransactions = signed;
           return true;
         })
         .catch(error => {
@@ -491,15 +491,15 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendAllSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            console.log('sendAllSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signatures = sig;
             return true;
           })
           .catch(error => {
@@ -520,9 +520,9 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransaction(signature)
+      return await moneyStream.confirmAllTransactions(signatures)
         .then(result => {
-          console.log('confirmTransaction result:', result);
+          console.log('confirmAllTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -605,13 +605,13 @@ export const Streams = () => {
         setWithdrawFundsAmount(amount);
 
         // Create a transaction
-        return await moneyStream.getWithdrawTransaction(
+        return await moneyStream.withdrawTransaction(
           stream,
           beneficiary,
           amount
         )
         .then(value => {
-          console.log('getWithdrawTransaction returned transaction:', value);
+          console.log('withdrawTransaction returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.CreateTransactionSuccess,
@@ -637,7 +637,7 @@ export const Streams = () => {
         console.log('Signing transaction...');
         return await moneyStream.signTransaction(wallet, transaction)
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signTransaction returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,

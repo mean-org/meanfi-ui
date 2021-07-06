@@ -1,55 +1,12 @@
-import { Connection, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
+import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, TransactionInstruction } from "@solana/web3.js";
 import { Constants } from "./constants";
 import { Layout } from "./layout";
 import { u64Number } from "./u64n";
 import { Buffer } from 'buffer';
 import * as Utils from "./utils";
-import { StreamInfo } from "./money-streaming";
-
-const BufferLayout = require('buffer-layout');
+import { StreamInfo, StreamTermsInfo } from "./money-streaming";
 
 export module Instructions {
-
-    export const createMSPAccountInstruction = async (
-        connection: Connection,
-        from: PublicKey,
-        programId: PublicKey,
-        lamports: number,
-        space: number
-
-    ): Promise<TransactionInstruction> => {
-
-        const [accountKey, _] = await Utils.findMSPAddress(from, programId);
-        const balance = await connection.getMinimumBalanceForRentExemption(space);
-        const dataLayout = BufferLayout.struct([
-            BufferLayout.u8('instruction'),
-            BufferLayout.nu64('lamports'),
-            BufferLayout.nu64('amount'),
-            Layout.publicKey('owner')
-        ]);
-
-        let data = Buffer.alloc(dataLayout.span)
-        {
-            const decodedData = {
-                instruction: 0,
-                lamports: balance,
-                space: dataLayout.span,
-                owner: programId
-            };
-
-            const encodeLength = dataLayout.encode(decodedData, data);
-            data = data.slice(0, encodeLength);
-        };
-
-        return new TransactionInstruction({
-            keys: [
-                { pubkey: from, isSigner: true, isWritable: true },
-                { pubkey: accountKey, isSigner: false, isWritable: true }
-            ],
-            programId: Constants.ATOKEN_PROGRAM_ADDRESS.toPublicKey(),
-            data
-        });
-    }
 
     export const createATokenAccountInstruction = async (
         tokenAddress: PublicKey,
@@ -87,17 +44,16 @@ export module Instructions {
         rateIntervalInSeconds: number,
         startUtcNow: number,
         streamName?: String,
-        fundingAmount?: number,
+        // fundingAmount?: number,
         rateCliffInSeconds?: number,
         cliffVestAmount?: number,
         cliffVestPercent?: number,
-        autoOffClockInSeconds?: number
+        autoPauseInSeconds?: number
 
     ): Promise<TransactionInstruction> => {
 
         const mspOpsAccount = Constants.MSP_OPERATIONS_ADDRESS.toPublicKey();
         const splTokenProgramAccount = Constants.TOKEN_PROGRAM_ADDRESS.toPublicKey();
-        const aTokenProgramAccount = Constants.ATOKEN_PROGRAM_ADDRESS.toPublicKey();
         const keys = [
             { pubkey: treasurer, isSigner: true, isWritable: false },
             { pubkey: treasurerToken, isSigner: false, isWritable: true },
@@ -128,14 +84,14 @@ export module Instructions {
                 tag: 0,
                 beneficiary_address: beneficiary.toBuffer(),
                 stream_name: nameBuffer,
-                funding_amount: fundingAmount,
+                // funding_amount: fundingAmount,
                 rate_amount: rateAmount,
                 rate_interval_in_seconds: new u64Number(rateIntervalInSeconds).toBuffer(), // default = MIN
                 start_utc: startDateValue.getTime(),
                 rate_cliff_in_seconds: new u64Number(rateCliffInSeconds as number).toBuffer(),
                 cliff_vest_amount: cliffVestAmount as number,
                 cliff_vest_percent: cliffVestPercent as number,
-                auto_off_clock_in_seconds: new u64Number(autoOffClockInSeconds as number).toBuffer()
+                auto_pause_in_seconds: new u64Number(autoPauseInSeconds as number).toBuffer()
             };
 
             const encodeLength = Layout.createStreamLayout.encode(decodedData, data);
@@ -145,18 +101,20 @@ export module Instructions {
         return new TransactionInstruction({
             keys,
             programId,
-            data,
+            data
         });
     }
 
     export const addFundsInstruction = async (
         programId: PublicKey,
-        stream: PublicKey,
         contributor: PublicKey,
         contributorToken: PublicKey,
         treasury: PublicKey,
         treasuryToken: PublicKey,
-        mintToken: PublicKey,
+        beneficiaryMintToken: PublicKey,
+        beneficiaryTreasuryToken: PublicKey,
+        treasuryMintToken: PublicKey,
+        stream: PublicKey,
         amount: number,
         resume?: boolean
 
@@ -169,10 +127,11 @@ export module Instructions {
             { pubkey: contributorToken, isSigner: false, isWritable: true },
             { pubkey: treasury, isSigner: false, isWritable: false },
             { pubkey: treasuryToken, isSigner: false, isWritable: true },
-            { pubkey: mintToken, isSigner: false, isWritable: false },
+            { pubkey: beneficiaryMintToken, isSigner: false, isWritable: false },
+            { pubkey: beneficiaryTreasuryToken, isSigner: false, isWritable: true },
+            { pubkey: treasuryMintToken, isSigner: false, isWritable: true },
             { pubkey: stream, isSigner: false, isWritable: true },
             { pubkey: mspOpsAccount, isSigner: false, isWritable: true },
-            // { pubkey: programId, isSigner: false, isWritable: false },
             { pubkey: splTokenProgramAccount, isSigner: false, isWritable: false },
             { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
         ];
@@ -226,7 +185,7 @@ export module Instructions {
         let data = Buffer.alloc(Layout.withdrawLayout.span)
         {
             const decodedData = {
-                tag: 2,
+                tag: 3,
                 withdrawal_amount: amount
             };
 
@@ -258,8 +217,8 @@ export module Instructions {
 
         let data = Buffer.alloc(1)
         {
-            const decodedData = { tag: 3 };
-            const encodeLength = Layout.assertClockLayout.encode(decodedData, data);
+            const decodedData = { tag: 4 };
+            const encodeLength = Layout.pauseOrResumeLayout.encode(decodedData, data);
             data = data.slice(0, encodeLength);
         };
 
@@ -287,8 +246,8 @@ export module Instructions {
 
         let data = Buffer.alloc(1)
         {
-            const decodedData = { tag: 4 };
-            const encodeLength = Layout.assertClockLayout.encode(decodedData, data);
+            const decodedData = { tag: 5 };
+            const encodeLength = Layout.pauseOrResumeLayout.encode(decodedData, data);
             data = data.slice(0, encodeLength);
         };
 
@@ -340,7 +299,7 @@ export module Instructions {
         tokenMint: PublicKey,
         treasury: PublicKey,
         treasuryToken: PublicKey,
-        streamInfo: StreamInfo
+        stream: PublicKey
 
     ): Promise<TransactionInstruction> => {
 
@@ -349,7 +308,7 @@ export module Instructions {
         const keys = [
             { pubkey: initializer, isSigner: true, isWritable: false },
             { pubkey: counterparty, isSigner: false, isWritable: false },
-            { pubkey: streamInfo.id as PublicKey, isSigner: false, isWritable: true },
+            { pubkey: stream, isSigner: false, isWritable: true },
             { pubkey: beneficiaryToken, isSigner: false, isWritable: true },
             { pubkey: tokenMint, isSigner: false, isWritable: false },
             { pubkey: treasury, isSigner: false, isWritable: false },
@@ -362,13 +321,182 @@ export module Instructions {
 
         let data = Buffer.alloc(1)
         {
-            const decodedData = { tag: 7 };
+            const decodedData = { tag: 8 };
             const encodeLength = Layout.withdrawLayout.encode(decodedData, data);
             data = data.slice(0, encodeLength);
         };
 
         return new TransactionInstruction({
             keys,
+            programId,
+            data
+        });
+    }
+
+    export const proposeUpdateInstruction = async (
+        programId: PublicKey,
+        streamInfo: StreamInfo,
+        streamTerms: PublicKey,
+        initializer: PublicKey,
+        counterparty: PublicKey,
+        streamName?: string,
+        associatedToken?: PublicKey,
+        rateAmount?: number,
+        rateIntervalInSeconds?: number,
+        rateCliffInSeconds?: number,
+        cliffVestAmount?: number,
+        cliffVestPercent?: number,
+        autoPauseInSeconds?: number
+
+    ): Promise<TransactionInstruction> => {
+
+        const mspOpsAccount = Constants.MSP_OPERATIONS_ADDRESS.toPublicKey();
+        const keys = [
+            { pubkey: initializer, isSigner: true, isWritable: false },
+            { pubkey: streamTerms, isSigner: false, isWritable: true },
+            { pubkey: counterparty, isSigner: false, isWritable: false },
+            { pubkey: streamInfo.id as PublicKey, isSigner: false, isWritable: true },
+            { pubkey: mspOpsAccount, isSigner: false, isWritable: true },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+        ];
+
+        let data = Buffer.alloc(Layout.proposeUpdateLayout.span)
+        {
+            let nameBuffer = Buffer.alloc(32).fill((streamName as string), 0, (streamName as string).length);
+
+            const decodedData = {
+                tag: 6,
+                proposed_by: initializer,
+                stream_name: nameBuffer,
+                treasurer_address: streamInfo.treasurerAddress as PublicKey,
+                beneficiary_address: streamInfo.beneficiaryAddress as PublicKey,
+                associated_token_address: associatedToken as PublicKey,
+                rate_amount: rateAmount as number,
+                rate_interval_in_seconds: new u64Number(rateIntervalInSeconds as number).toBuffer(),
+                rate_cliff_in_seconds: new u64Number(rateCliffInSeconds as number).toBuffer(),
+                cliff_vest_amount: cliffVestAmount as number,
+                cliff_vest_percent: cliffVestPercent as number,
+                auto_pause_in_seconds: new u64Number(autoPauseInSeconds as number).toBuffer()
+            };
+
+            const encodeLength = Layout.proposeUpdateLayout.encode(decodedData, data);
+            data = data.slice(0, encodeLength);
+        };
+
+        return new TransactionInstruction({
+            keys,
+            programId,
+            data
+        });
+    }
+
+    export const answerUpdateInstruction = async (
+        programId: PublicKey,
+        streamTerms: StreamTermsInfo,
+        initializer: PublicKey,
+        counterparty: PublicKey,
+        approve: true
+
+    ): Promise<TransactionInstruction> => {
+
+        const mspOpsAccount = Constants.MSP_OPERATIONS_ADDRESS.toPublicKey();
+        const keys = [
+            { pubkey: initializer, isSigner: true, isWritable: false },
+            { pubkey: streamTerms.id as PublicKey, isSigner: false, isWritable: true },
+            { pubkey: counterparty, isSigner: false, isWritable: false },
+            { pubkey: streamTerms.streamId as PublicKey, isSigner: false, isWritable: true },
+            { pubkey: mspOpsAccount, isSigner: false, isWritable: true },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+        ];
+
+        let data = Buffer.alloc(Layout.answerUpdateLayout.span)
+        {
+            const decodedData = {
+                tag: 7,
+                approve: approve === true ? 1 : 0
+            };
+
+            const encodeLength = Layout.proposeUpdateLayout.encode(decodedData, data);
+            data = data.slice(0, encodeLength);
+        };
+
+        return new TransactionInstruction({
+            keys,
+            programId,
+            data
+        });
+    }
+
+    export const createTreasuryInstruction = async (
+        programId: PublicKey,
+        treasurer: PublicKey,
+        treasury: PublicKey,
+        mint: PublicKey,
+        nounce: number,
+
+    ): Promise<TransactionInstruction> => {
+
+        const mspOpsAccount = Constants.MSP_OPERATIONS_ADDRESS.toPublicKey();
+        const splTokenProgramAccount = Constants.TOKEN_PROGRAM_ADDRESS.toPublicKey();
+
+        let data = Buffer.alloc(Layout.createTreasuryLayout.span)
+        {
+            const decodedData = {
+                tag: 9,
+                nounce: nounce
+            };
+
+            const encodeLength = Layout.createTreasuryLayout.encode(decodedData, data);
+            data = data.slice(0, encodeLength);
+        };
+
+        return new TransactionInstruction({
+            keys: [
+                { pubkey: treasurer, isSigner: true, isWritable: false },
+                { pubkey: treasury, isSigner: false, isWritable: true },
+                { pubkey: mint, isSigner: false, isWritable: true },
+                { pubkey: mspOpsAccount, isSigner: false, isWritable: true },
+                { pubkey: splTokenProgramAccount, isSigner: false, isWritable: false },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+            ],
+            programId,
+            data
+        });
+    }
+
+    export const transferInstruction = async (
+        programId: PublicKey,
+        treasurer: PublicKey,
+        treasurerToken: PublicKey,
+        beneficiaryToken: PublicKey,
+        associatedToken: PublicKey,
+        amount: number,
+
+    ): Promise<TransactionInstruction> => {
+
+        const mspOpsAccount = Constants.MSP_OPERATIONS_ADDRESS.toPublicKey();
+        const splTokenProgramAccount = Constants.TOKEN_PROGRAM_ADDRESS.toPublicKey();
+
+        let data = Buffer.alloc(Layout.transferLayout.span)
+        {
+            const decodedData = {
+                tag: 11,
+                amount: amount
+            };
+
+            const encodeLength = Layout.transferLayout.encode(decodedData, data);
+            data = data.slice(0, encodeLength);
+        };
+
+        return new TransactionInstruction({
+            keys: [
+                { pubkey: treasurer, isSigner: true, isWritable: false },
+                { pubkey: treasurerToken, isSigner: false, isWritable: true },
+                { pubkey: beneficiaryToken, isSigner: false, isWritable: true },
+                { pubkey: associatedToken, isSigner: false, isWritable: true },
+                { pubkey: mspOpsAccount, isSigner: false, isWritable: false },
+                { pubkey: splTokenProgramAccount, isSigner: false, isWritable: false }
+            ],
             programId,
             data
         });

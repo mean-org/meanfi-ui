@@ -11,10 +11,10 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { notify } from "./../utils/notifications";
 import { ExplorerLink } from "../components/ExplorerLink";
 import { setProgramIds } from "../utils/ids";
-import { WalletAdapter } from "./wallet";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { WalletAdapter } from "../money-streaming/wallet-adapter";
 
 export type ENV =
   | "mainnet-beta"

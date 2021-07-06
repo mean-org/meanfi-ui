@@ -1,7 +1,7 @@
 import EventEmitter from "eventemitter3";
 import { PublicKey, Transaction } from "@solana/web3.js";
-import { WalletAdapter } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
+import { WalletAdapter } from "../../money-streaming/wallet-adapter";
 
 export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
   _publicKey: PublicKey | null;
@@ -14,11 +14,19 @@ export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
   }
 
   get publicKey() {
-    return this._publicKey;
+    return this._publicKey as PublicKey;
   }
 
   async signTransaction(transaction: Transaction) {
     return (window as any).solong.signTransaction(transaction);
+  }
+
+  async signAllTransactions(transactions: Transaction[]) {
+    if (!this._publicKey) {
+      throw new Error("Not connected");
+    }
+
+    return (window as any).solong.signAllTransactions(transactions);
   }
 
   connect() {

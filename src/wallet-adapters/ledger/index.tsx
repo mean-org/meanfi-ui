@@ -4,9 +4,9 @@ import type { Transaction } from "@solana/web3.js";
 import EventEmitter from "eventemitter3";
 import { PublicKey } from "@solana/web3.js";
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
-import { WalletAdapter } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
 import { getPublicKey, signTransaction } from "./core";
+import { WalletAdapter } from "../../money-streaming/wallet-adapter";
 
 export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
   _connecting: boolean;
@@ -21,7 +21,7 @@ export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
   }
 
   get publicKey() {
-    return this._publicKey;
+    return this._publicKey as PublicKey;
   }
 
   async signTransaction(transaction: Transaction) {
@@ -35,6 +35,20 @@ export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
     transaction.addSignature(this._publicKey, signature);
 
     return transaction;
+  }
+
+  async signAllTransactions(transactions: Transaction[]) {
+    if (!this._transport || !this._publicKey) {
+      throw new Error("Not connected to Ledger");
+    }
+
+    // @TODO: account selection (derivation path changes with account)
+    for (let tx of transactions) {
+      const signature = await signTransaction(this._transport, tx);
+      tx.addSignature(this._publicKey, signature);
+    }
+
+    return transactions;
   }
 
   async connect() {
