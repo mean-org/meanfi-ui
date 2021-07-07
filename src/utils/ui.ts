@@ -1,10 +1,11 @@
 import { TokenInfo } from "@solana/spl-token-registry";
 import { TransactionStatusInfo } from "../contexts/appstate";
+import { environment } from "../environments/environment";
 import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    // if (process.env.REACT_APP_ENV === 'production') { return; }
+    if (environment === 'production') { return; }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);

@@ -31,6 +31,7 @@ import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Wallet } from "@project-serum/anchor/dist/provider";
+import { environment } from "../../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -341,6 +342,9 @@ export const RepeatingPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setDestinationToken(token);
+            if (environment !== 'production') {
+              setSelectedToken(token);
+            }
             console.log("token selected:", token);
             onCloseTokenSelector();
           };
@@ -376,6 +380,9 @@ export const RepeatingPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
+            if (environment !== 'production') {
+              setDestinationToken(token);
+            }
             console.log("token selected:", token);
             setEffectiveRate(
               coinPrices && coinPrices[token.symbol]

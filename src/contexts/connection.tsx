@@ -12,7 +12,7 @@ import { notify } from "./../utils/notifications";
 import { ExplorerLink } from "../components/ExplorerLink";
 import { setProgramIds } from "../utils/ids";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
-import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
+import { ENV as ChainID, TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { WalletAdapter } from "../money-streaming/wallet-adapter";
 import { environment } from "../environments/environment";
@@ -88,12 +88,6 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
 export function ConnectionProvider({ children = undefined as any }) {
 
   const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
-
-  // const [endpoint, setEndpoint] = useLocalStorageState(
-  //   "connectionEndpts",
-  //   getEndpointByRuntimeEnv()
-  // );
-
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
     DEFAULT_SLIPPAGE.toString()
@@ -106,8 +100,7 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  const chain =
-    ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
+  const chain = ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
   const env = chain.name;
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
@@ -116,13 +109,16 @@ export function ConnectionProvider({ children = undefined as any }) {
     cache.clear();
     // fetch token files
     (async () => {
-      // const res = await new TokenListProvider().resolve();
-      // const list = res
-      //   .filterByChainId(chain.chainID)
-      //   .excludeByTag("nft")
-      //   .getList();
-      //
-      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
+      let list: TokenInfo[];
+      if (environment === 'production') {
+        const res = await new TokenListProvider().resolve();
+        list = res
+          .filterByChainId(chain.chainID)
+          .excludeByTag("nft")
+          .getList();
+      } else {
+        list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
+      }
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;
