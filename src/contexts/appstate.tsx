@@ -343,6 +343,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const { publicKey } = useWallet();
+
   const refreshStreamList = useCallback(() => {
     if (!publicKey) {
       return [];
@@ -354,9 +355,11 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
+          console.log('Streams:', streams);
           if (streams.length) {
             if (selectedStream) {
               const item = streams.find(s => s.id === selectedStream.id);
+              console.log('selectedStream:', item);
               if (item) {
                 updateSelectedStream(item);
                 updateStreamDetail(item);
@@ -364,19 +367,17 @@ const AppStateProvider: React.FC = ({ children }) => {
             } else {
               updateSelectedStream(streams[0]);
               updateStreamDetail(streams[0]);
-            }
-            if (!previousWalletConnectState && connected) {
-              setSelectedTab('streams');
+              console.log('Selecting 1st stream:', streams[0]);
             }
           }
           setStreamList(streams);
-          console.log('Streams:', streams);
+          updateLoadingStreams(false);
+        }).catch(err => {
+          console.log(err);
           updateLoadingStreams(false);
         });
     }
   }, [
-    connected,
-    previousWalletConnectState,
     streamProgramAddress,
     loadingStreams,
     publicKey,
@@ -387,26 +388,23 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    // Call it 1st time
-    if (publicKey && !streamList) {
+    if (!streamList) {
       refreshStreamList();
     }
 
-    // Install the timer only in the streams screen
-    if (currentScreen === 'streams') {
-      timer = window.setInterval(() => {
+    if (streamList && currentScreen === 'streams') {
+      timer = setInterval(() => {
         console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshStreamList();
       }, STREAMS_REFRESH_TIMEOUT);
     }
 
-    // Return callback to run on unmount.
-    return () => {
-      if (timer) {
-        window.clearInterval(timer);
-      }
-    };
-  }, [publicKey, streamList, currentScreen, refreshStreamList]);
+    return () => clearInterval(timer);
+  }, [
+    currentScreen,
+    refreshStreamList,
+    streamList
+  ]);
 
   useEffect(() => {
 

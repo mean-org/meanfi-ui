@@ -1,26 +1,30 @@
-import { useContext, useState } from 'react';
-import { Modal, Button } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { percentage } from '../../utils/ui';
+import { useState } from "react";
+import { Modal, Button } from "antd";
+import {
+  getTokenAmountAndSymbolByTokenAddress,
+  isValidNumber,
+} from "../../utils/utils";
+import { StreamInfo } from "../../money-streaming/money-streaming";
+import { percentage } from "../../utils/ui";
 
 export const WithdrawModal = (props: {
+  startUpData: StreamInfo | undefined;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
 }) => {
-  const { streamDetail } = useContext(AppStateContext);
-  const [withdrawAmountRaw, setWithdrawAmountRaw] = useState<string>('');
-  const [withdrawAmountFormatted, setWithdrawAmountFormatted] = useState<string>('');
+  const [withdrawAmountRaw, setWithdrawAmountRaw] = useState<string>("");
+  const [withdrawAmountFormatted, setWithdrawAmountFormatted] =
+    useState<string>("");
 
   const onAcceptWithdrawal = () => {
     props.handleOk(withdrawAmountRaw);
-  }
+  };
 
   const setValue = (value: string) => {
     setWithdrawAmountRaw(value);
     setWithdrawAmountFormatted(value);
-  }
+  };
 
   const handleWithdrawAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -31,17 +35,28 @@ export const WithdrawModal = (props: {
     }
   };
 
-  const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
+  const getAmountWithSymbol = (
+    amount: any,
+    address: string,
+    onlyValue = false
+  ) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
-  }
+  };
 
   const isValidInput = () => {
     return withdrawAmountRaw &&
-           parseFloat(withdrawAmountRaw) &&
-           parseFloat(withdrawAmountRaw) <= parseFloat(getAmountWithSymbol(streamDetail?.escrowVestedAmount, streamDetail?.associatedToken as string, true))
+      parseFloat(withdrawAmountRaw) &&
+      parseFloat(withdrawAmountRaw) <=
+        parseFloat(
+          getAmountWithSymbol(
+            props.startUpData?.escrowVestedAmount,
+            props.startUpData?.associatedToken as string,
+            true
+          )
+        )
       ? true
       : false;
-  }
+  };
 
   return (
     <Modal
@@ -51,19 +66,25 @@ export const WithdrawModal = (props: {
       visible={props.isVisible}
       onOk={onAcceptWithdrawal}
       onCancel={props.handleClose}
-      afterClose={() => setValue('')}
-      width={480}>
+      afterClose={() => setValue("")}
+      width={480}
+    >
       <div className="mb-3">
         <div className="transaction-field disabled">
           <div className="transaction-field-row">
-            <span className="field-label-left">Funds available to withdraw now</span>
+            <span className="field-label-left">
+              Funds available to withdraw now
+            </span>
             <span className="field-label-right">&nbsp;</span>
           </div>
           <div className="transaction-field-row main-row">
             <span className="field-select-left">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              : '--'}
+              {props.startUpData
+                ? getAmountWithSymbol(
+                    props.startUpData.escrowVestedAmount,
+                    props.startUpData.associatedToken as string
+                  )
+                : "--"}
             </span>
           </div>
         </div>
@@ -92,58 +113,117 @@ export const WithdrawModal = (props: {
             </span>
             <div className="addon-right">
               <div className="token-group">
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      const partialAmount = percentage(25, streamDetail.escrowVestedAmount as number);
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    if (props.startUpData) {
+                      const partialAmount = percentage(
+                        25,
+                        props.startUpData.escrowVestedAmount as number
+                      );
                       setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                      setWithdrawAmountFormatted(
+                        getAmountWithSymbol(
+                          partialAmount,
+                          props.startUpData.associatedToken as string,
+                          true
+                        )
+                      );
                     } else {
-                      setValue('0');
+                      setValue("0");
                     }
-                  }}>
+                  }}
+                >
                   25%
                 </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      const partialAmount = percentage(50, streamDetail.escrowVestedAmount as number);
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    if (props.startUpData) {
+                      const partialAmount = percentage(
+                        50,
+                        props.startUpData.escrowVestedAmount as number
+                      );
                       setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                      setWithdrawAmountFormatted(
+                        getAmountWithSymbol(
+                          partialAmount,
+                          props.startUpData.associatedToken as string,
+                          true
+                        )
+                      );
                     } else {
-                      setValue('0');
+                      setValue("0");
                     }
-                  }}>
+                  }}
+                >
                   50%
                 </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      const partialAmount = percentage(75, streamDetail.escrowVestedAmount as number);
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    if (props.startUpData) {
+                      const partialAmount = percentage(
+                        75,
+                        props.startUpData.escrowVestedAmount as number
+                      );
                       setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(partialAmount, streamDetail.associatedToken as string, true));
+                      setWithdrawAmountFormatted(
+                        getAmountWithSymbol(
+                          partialAmount,
+                          props.startUpData.associatedToken as string,
+                          true
+                        )
+                      );
                     } else {
-                      setValue('0');
+                      setValue("0");
                     }
-                  }}>
+                  }}
+                >
                   75%
                 </div>
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      setWithdrawAmountRaw(`${streamDetail.escrowVestedAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string, true));
+                <div
+                  className="token-max simplelink"
+                  onClick={() => {
+                    if (props.startUpData) {
+                      setWithdrawAmountRaw(
+                        `${props.startUpData.escrowVestedAmount}`
+                      );
+                      setWithdrawAmountFormatted(
+                        getAmountWithSymbol(
+                          props.startUpData.escrowVestedAmount,
+                          props.startUpData.associatedToken as string,
+                          true
+                        )
+                      );
                     } else {
-                      setValue('0');
+                      setValue("0");
                     }
-                  }}>
+                  }}
+                >
                   100%
                 </div>
               </div>
             </div>
           </div>
           <div className="transaction-field-row">
-            <span className="field-label-left">{
-              streamDetail && parseFloat(withdrawAmountFormatted) > parseFloat(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail?.associatedToken as string, true))
-                ? (<span className="fg-red">Amount is greater than the available funds</span>)
-                : (<span>&nbsp;</span>)
-            }</span>
+            <span className="field-label-left">
+              {props.startUpData &&
+              parseFloat(withdrawAmountFormatted) >
+                parseFloat(
+                  getAmountWithSymbol(
+                    props.startUpData.escrowVestedAmount,
+                    props.startUpData?.associatedToken as string,
+                    true
+                  )
+                ) ? (
+                <span className="fg-red">
+                  Amount is greater than the available funds
+                </span>
+              ) : (
+                <span>&nbsp;</span>
+              )}
+            </span>
             <span className="field-label-right">&nbsp;</span>
           </div>
         </div>
@@ -156,7 +236,7 @@ export const WithdrawModal = (props: {
         size="large"
         disabled={!isValidInput()}
         onClick={onAcceptWithdrawal}>
-        {isValidInput() ? 'Start withdrawal' : 'Invalid amount'}
+        {isValidInput() ? "Start withdrawal" : "Invalid amount"}
       </Button>
     </Modal>
   );

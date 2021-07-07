@@ -1,10 +1,12 @@
+import { PublicKey } from "@solana/web3.js";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
-import { useConnectionConfig } from "../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
+import { listStreams } from "../../money-streaming/utils";
 import { consoleOut } from "../../utils/ui";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
@@ -13,13 +15,19 @@ export const HomeView = () => {
     currentScreen,
     contract,
     streamList,
+    streamProgramAddress,
     previousWalletConnectState,
+    setStreamList,
+    setStreamDetail,
     setCurrentScreen,
+    setLoadingStreams,
+    setSelectedStream,
     refreshTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { account } = useNativeAccount();
   const [previousChain, setChain] = useState("");
@@ -71,9 +79,23 @@ export const HomeView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected) {
         consoleOut('User is connecting...', '', 'blue');
-        if (streamList && streamList.length > 0) {
-          consoleOut('streamList is available, opening streams...', '', 'blue');
-          setCurrentScreen("streams");
+        if (publicKey) {
+          const programId = new PublicKey(streamProgramAddress);
+          setLoadingStreams(true);
+          listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+            .then(async streams => {
+              setStreamList(streams);
+              setLoadingStreams(false);
+              console.log('Home -> streamList:', streams);
+              setSelectedStream(streams[0]);
+              setStreamDetail(streams[0]);
+              if (streams && streams.length > 0) {
+                consoleOut('streams are available, opening streams...', '', 'blue');
+                setCurrentScreen("streams");
+              } else {
+                setCurrentScreen("contract");
+              }
+            });
         }
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
@@ -85,10 +107,17 @@ export const HomeView = () => {
 
     return () => {};
   }, [
+    connection,
+    publicKey,
     connected,
     streamList,
+    streamProgramAddress,
     previousWalletConnectState,
+    setStreamList,
+    setStreamDetail,
     setCurrentScreen,
+    setSelectedStream,
+    setLoadingStreams,
     refreshTokenBalance,
     setPreviousWalletConnectState
   ]);

@@ -30,7 +30,6 @@ import { WithdrawModal } from '../../../components/WithdrawModal';
 import _ from "lodash";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { PublicKey, Transaction } from "@solana/web3.js";
-import { listStreams } from "../../../money-streaming/utils";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
@@ -50,10 +49,9 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     setCurrentScreen,
-    setLoadingStreams,
-    setStreamList,
     setStreamDetail,
     setSelectedStream,
+    refreshStreamList,
     setTransactionStatus,
     openStreamById,
     setDtailsPanelOpen
@@ -74,14 +72,15 @@ export const Streams = () => {
   useEffect(() => {
     let updateDateTimer: any;
 
-    const updateData = async () => {
+    const updateData = () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
 
         const isStreaming = clonedDetail.streamResumedBlockTime > clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
-        const slot = await connection.getSlot(connection.commitment);
-        const currentBlockTime = await connection.getBlockTime(slot) as number;
+        // const slot = await connection.getSlot(connection.commitment);
+        // const currentBlockTime = await connection.getBlockTime(slot) as number;
+        const currentBlockTime = Date.now() / 1000;
 
         const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
         const elapsedTime = currentBlockTime - lastTimeSnap;
@@ -104,7 +103,7 @@ export const Streams = () => {
     // Install the timer
     updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 150);
+    }, 200);
 
     // Return callback to run on unmount.
     return () => {
@@ -112,7 +111,7 @@ export const Streams = () => {
         window.clearInterval(updateDateTimer);
       }
     };
-  }, [streamDetail, setStreamDetail]);
+  }, [connection, streamDetail, setStreamDetail]);
 
   useEffect(() => {
     const resizeListener = () => {
@@ -170,8 +169,12 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
+  const showWithdrawModal = useCallback(() => {
+    setLastStreamDetail(streamDetail);
+    setIsWithdrawModalVisibility(true)
+  }, [streamDetail]);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+  const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
@@ -330,28 +333,6 @@ export const Streams = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const refreshStreamList = () => {
-    if (publicKey) {
-      const programId = new PublicKey(streamProgramAddress);
-
-      setTimeout(() => {
-        setLoadingStreams(true);
-        listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-          .then(async streams => {
-            setStreamList(streams);
-            setLoadingStreams(false);
-            console.log('streamList:', streamList);
-            setSelectedStream(streams[0]);
-            setStreamDetail(streams[0]);
-            hideWithdrawFundsTransactionModal();
-            hideCloseStreamTransactionModal();
-            hideAddFundsTransactionModal();
-            setCurrentScreen("streams");
-          });
-      }, 1000);
-    }
-  };
-
   const resetTransactionStatus = () => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -397,6 +378,10 @@ export const Streams = () => {
   const onAddFundsTransactionFinished = () => {
     resetTransactionStatus();
     refreshStreamList();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    setCurrentScreen("streams");
   };
 
   const onAfterAddFundsTransactionModalClosed = () => {
@@ -405,6 +390,10 @@ export const Streams = () => {
     }
     if (isSuccess()) {
       refreshStreamList();
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
+      setCurrentScreen("streams");
     }
   }
 
@@ -573,6 +562,10 @@ export const Streams = () => {
   const onWithdrawFundsTransactionFinished = () => {
     resetTransactionStatus();
     refreshStreamList();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    setCurrentScreen("streams");
   };
 
   const onAfterWithdrawFundsTransactionModalClosed = () => {
@@ -581,6 +574,10 @@ export const Streams = () => {
     }
     if (isSuccess()) {
       refreshStreamList();
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
+      setCurrentScreen("streams");
     }
   }
 
@@ -748,6 +745,10 @@ export const Streams = () => {
   const onCloseStreamTransactionFinished = () => {
     resetTransactionStatus();
     refreshStreamList();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    setCurrentScreen("streams");
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -756,6 +757,10 @@ export const Streams = () => {
     }
     if (isSuccess()) {
       refreshStreamList();
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
+      setCurrentScreen("streams");
     }
   }
 
@@ -1480,6 +1485,7 @@ export const Streams = () => {
         handleOk={onAcceptAddFunds}
         handleClose={closeAddFundsModal} />
       <WithdrawModal
+        startUpData={lastStreamDetail}
         isVisible={isWithdrawModalVisible}
         handleOk={onAcceptWithdraw}
         handleClose={closeWithdrawModal} />

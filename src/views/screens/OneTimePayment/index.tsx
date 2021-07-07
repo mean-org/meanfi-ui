@@ -6,7 +6,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnection, useConnectionConfig } from "../../../contexts/connection";
+import { useConnectionConfig } from "../../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
@@ -23,19 +23,16 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { listStreams } from '../../../money-streaming/utils';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
   const connectionConfig = useConnectionConfig();
-  const connection = useConnection();
-  const { connected, wallet, publicKey } = useWallet();
+  const { connected, wallet } = useWallet();
   const {
     contract,
     tokenList,
-    streamList,
     selectedToken,
     tokenBalance,
     effectiveRate,
@@ -55,10 +52,7 @@ export const OneTimePayment = () => {
     setPaymentStartDate,
     setFromCoinAmount,
     setTransactionStatus,
-    setLoadingStreams,
-    setStreamList,
-    setStreamDetail,
-    setSelectedStream,
+    refreshStreamList
   } = useContext(AppStateContext);
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
@@ -84,26 +78,6 @@ export const OneTimePayment = () => {
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
   const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
-  const refreshStreamList = () => {
-    if (publicKey) {
-      const programId = new PublicKey(streamProgramAddress);
-  
-      setTimeout(() => {
-        setLoadingStreams(true);
-        listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-          .then(async streams => {
-            setStreamList(streams);
-            setLoadingStreams(false);
-            console.log('streamList:', streamList);
-            setSelectedStream(streams[0]);
-            setStreamDetail(streams[0]);
-            closeTransactionModal();
-            setCurrentScreen("streams");
-          });
-      }, 1000);
-    }
-  };
-
   // Event handling
 
   const onAfterTransactionModalClosed = () => {
@@ -115,6 +89,8 @@ export const OneTimePayment = () => {
   const handleGoToStreamsClick = () => {
     resetContractValues();
     refreshStreamList();
+    closeTransactionModal();
+    setCurrentScreen("streams");
   };
 
   const handleFromCoinAmountChange = (e: any) => {

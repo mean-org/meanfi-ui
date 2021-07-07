@@ -8,10 +8,10 @@ import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { StreamInfo } from "../../money-streaming/money-streaming";
+import { copyText } from "../../utils/ui";
 import { PublicKey } from "@solana/web3.js";
 import { listStreams } from "../../money-streaming/utils";
 import { useConnection } from "../../contexts/connection";
-import { copyText } from "../../utils/ui";
 
 interface StreamStats {
   incoming: number;
@@ -25,6 +25,7 @@ const defaultStreamStats = {
 
 export const CurrentUserBadge = (props: {}) => {
 
+  const connection = useConnection();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
@@ -33,36 +34,18 @@ export const CurrentUserBadge = (props: {}) => {
     streamList,
     loadingStreams,
     streamProgramAddress,
-    setCurrentScreen,
-    setLoadingStreams,
     setStreamList,
-    setSelectedStream,
     setStreamDetail,
+    setSelectedStream,
+    setLoadingStreams,
+    setCurrentScreen
   } = useContext(AppStateContext);
   const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
-  const connection = useConnection();
   const { wallet, publicKey, select } = useWallet();
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
   );
-
-  const refreshStreamList = () => {
-    if (publicKey && !loadingStreams) {
-      const programId = new PublicKey(streamProgramAddress);
-  
-      setLoadingStreams(true);
-      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-        .then(async streams => {
-          setStreamList(streams);
-          setLoadingStreams(false);
-          console.log('streamList:', streamList);
-          setSelectedStream(streams[0]);
-          setStreamDetail(streams[0]);
-          setCurrentScreen("streams");
-        });
-    }
-  };
 
   useEffect(() => {
 
@@ -108,7 +91,21 @@ export const CurrentUserBadge = (props: {}) => {
   }
 
   const onGoToStreamsClick = () => {
-    refreshStreamList();
+    const programId = new PublicKey(streamProgramAddress);
+    setLoadingStreams(true);
+    listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+      .then(async streams => {
+        setStreamList(streams);
+        setLoadingStreams(false);
+        console.log('Home -> streamList:', streams);
+        setSelectedStream(streams[0]);
+        setStreamDetail(streams[0]);
+        if (streams && streams.length > 0) {
+          setCurrentScreen("streams");
+        } else {
+          setCurrentScreen("contract");
+        }
+      });
   };
 
   if (!wallet?.publicKey) {
