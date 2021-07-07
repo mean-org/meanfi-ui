@@ -74,20 +74,22 @@ export const Streams = () => {
   useEffect(() => {
     let updateDateTimer: any;
 
-    const updateData = () => {
+    const updateData = async () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
 
-        let startDateUtc = new Date(clonedDetail.startUtc as string);
-        let utcNow = new Date();
-        const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
-        const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
+        const isStreaming = clonedDetail.streamResumedBlockTime > clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
+        const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
+        const slot = await connection.getSlot(connection.commitment);
+        const currentBlockTime = await connection.getBlockTime(slot) as number;
+
+        const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
+        const elapsedTime = currentBlockTime - lastTimeSnap;
 
         let escrowVestedAmount = 0;
 
-        if (utcNow.getTime() >= startDateUtc.getTime()) {
-          escrowVestedAmount = rate * elapsedTime;;
-
+        if (currentBlockTime >= lastTimeSnap) {
+          escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
           if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
             escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
           }
