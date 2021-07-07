@@ -527,7 +527,7 @@ export class MoneyStreaming {
         let ixs: TransactionInstruction[] = [];
         let txSigners: Signer[] = [];
 
-        const treasuryAccountKey = treasury as PublicKey;
+        const treasuryAccountKey = (treasury === undefined) ? PublicKey.default : (treasury as PublicKey);
         const treasuryTokenAccountKey = await Utils.findATokenAddress(treasuryAccountKey, beneficiaryAssociatedToken);
         const treasuryTokenAccountInfo = await this.connection.getAccountInfo(treasuryTokenAccountKey);
 

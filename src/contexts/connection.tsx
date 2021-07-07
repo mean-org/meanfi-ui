@@ -15,6 +15,7 @@ import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { WalletAdapter } from "../money-streaming/wallet-adapter";
+import { environment } from "../environments/environment";
 
 export type ENV =
   | "mainnet-beta"
@@ -48,6 +49,18 @@ export const ENDPOINTS = [
 const DEFAULT = ENDPOINTS[0].endpoint;
 const DEFAULT_SLIPPAGE = 0.25;
 
+const getEndpointByRuntimeEnv = (): string => {
+  switch (environment) {
+    case 'development':
+      return ENDPOINTS[2].endpoint;
+    case 'staging':
+      return ENDPOINTS[1].endpoint;
+    case 'production':
+    default:
+      return ENDPOINTS[0].endpoint;
+  }
+}
+
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;
@@ -73,10 +86,13 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
-  const [endpoint, setEndpoint] = useLocalStorageState(
-    "connectionEndpts",
-    ENDPOINTS[0].endpoint
-  );
+
+  const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
+
+  // const [endpoint, setEndpoint] = useLocalStorageState(
+  //   "connectionEndpts",
+  //   getEndpointByRuntimeEnv()
+  // );
 
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
