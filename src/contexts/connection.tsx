@@ -49,7 +49,7 @@ export const ENDPOINTS = [
 const DEFAULT = ENDPOINTS[0].endpoint;
 const DEFAULT_SLIPPAGE = 0.25;
 
-const getEndpointByRuntimeEnv = (): string => {
+export const getEndpointByRuntimeEnv = (): string => {
   switch (environment) {
     case 'development':
       return ENDPOINTS[2].endpoint;

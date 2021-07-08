@@ -3,9 +3,9 @@ import { convert, useLocalStorageState } from "../utils/utils";
 import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { getStream, listStreams } from "../money-streaming/utils";
+import { getStream, listStreamActivity, listStreams } from "../money-streaming/utils";
 import { useWallet } from "./wallet";
-import { useConnection, useConnectionConfig } from "./connection";
+import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
 import { StreamInfo } from "../money-streaming/money-streaming";
 import { deserializeMint, useAccountsContext } from "./accounts";
@@ -44,6 +44,7 @@ interface AppStateConfig {
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
   streamProgramAddress: string;
+  streamActivity: any[];
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -68,6 +69,7 @@ interface AppStateConfig {
   setSelectedStream: (stream: StreamInfo | undefined) => void;
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
+  getStreamActivity: (streamId: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -97,6 +99,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedStream: undefined,
   streamDetail: undefined,
   streamProgramAddress: '',
+  streamActivity: [],
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -121,6 +124,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedStream: () => {},
   setStreamDetail: () => {},
   openStreamById: () => {},
+  getStreamActivity: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -129,6 +133,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Parent contexts
   const connected = useWallet();
   const connection = useConnection();
+  const { publicKey } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
@@ -157,6 +162,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
+  const [streamActivity, setStreamActivity] = useState<any[]>([]);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -233,12 +239,30 @@ const AppStateProvider: React.FC = ({ children }) => {
     const streamPublicKey = new PublicKey(streamId);
     const detail = await getStream(connection, streamPublicKey, 'finalized', true);
     console.log('streamDetail', detail);
-    updateStreamDetail(detail);
+    setStreamDetail(detail);
   }
 
-  const setSelectedStream = async (stream: StreamInfo | undefined) => {
+  const getStreamActivity = useCallback((streamId: string) => {
+    if (!connected || !streamId) {
+      return [];
+    }
+
+    const streamPublicKey = new PublicKey(streamId);
+    listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
+      .then(value => {
+        console.log('activity:', value);
+        setStreamActivity(value);
+      })
+      .catch(err => {
+        console.log(err);
+        setStreamActivity([]);
+      });
+  }, [connection, connected]);
+
+  const setSelectedStream = (stream: StreamInfo | undefined) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
+    getStreamActivity(stream?.id as string);
   }
 
   const setStreamDetail = (stream: StreamInfo) => {
@@ -342,8 +366,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
-  const { publicKey } = useWallet();
-
   const refreshStreamList = useCallback(() => {
     if (!publicKey) {
       return [];
@@ -356,18 +378,18 @@ const AppStateProvider: React.FC = ({ children }) => {
       listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
         .then(streams => {
           console.log('Streams:', streams);
+          let item: StreamInfo | undefined;
           if (streams.length) {
             if (selectedStream) {
-              const item = streams.find(s => s.id === selectedStream.id);
-              console.log('selectedStream:', item);
-              if (item) {
-                updateSelectedStream(item);
-                updateStreamDetail(item);
-              }
+              item = streams.find(s => s.id === selectedStream.id);
             } else {
-              updateSelectedStream(streams[0]);
-              updateStreamDetail(streams[0]);
-              console.log('Selecting 1st stream:', streams[0]);
+              item = streams[0];
+            }
+            console.log('selectedStream:', item);
+            if (item) {
+              updateSelectedStream(item);
+              updateStreamDetail(item);
+              getStreamActivity(item.id as string);
             }
           }
           setStreamList(streams);
@@ -382,7 +404,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingStreams,
     publicKey,
     connection,
-    selectedStream
+    selectedStream,
+    getStreamActivity
   ]);
 
   useEffect(() => {
@@ -513,6 +536,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedStream,
         streamDetail,
         streamProgramAddress,
+        streamActivity,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -537,6 +561,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedStream,
         setStreamDetail,
         openStreamById,
+        getStreamActivity
       }}>
       {children}
     </AppStateContext.Provider>

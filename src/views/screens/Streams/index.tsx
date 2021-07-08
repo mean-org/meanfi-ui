@@ -45,6 +45,7 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
+    streamActivity,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
