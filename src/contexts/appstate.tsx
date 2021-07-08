@@ -14,6 +14,7 @@ import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
+import { StreamActivity } from "../models/stream-activity-models";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -44,7 +45,7 @@ interface AppStateConfig {
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
   streamProgramAddress: string;
-  streamActivity: any[];
+  streamActivity: StreamActivity[];
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -162,7 +163,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
-  const [streamActivity, setStreamActivity] = useState<any[]>([]);
+  const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -389,7 +390,16 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
-              getStreamActivity(item.id as string);
+              const streamPublicKey = new PublicKey(item.id as string);
+              listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
+                .then(value => {
+                  console.log('activity:', value);
+                  setStreamActivity(value);
+                })
+                .catch(err => {
+                  console.log(err);
+                  setStreamActivity([]);
+                });
             }
           }
           setStreamList(streams);
@@ -400,12 +410,11 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
     }
   }, [
+    connection,
     streamProgramAddress,
     loadingStreams,
     publicKey,
-    connection,
-    selectedStream,
-    getStreamActivity
+    selectedStream
   ]);
 
   useEffect(() => {

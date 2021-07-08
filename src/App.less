@@ -1688,6 +1688,37 @@ em {
         text-transform: uppercase;
         margin-bottom: 0.5rem;
       }
+      .activity-list {
+        .activity-list-row {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          .activity-highlight {
+            display: flex;
+            flex: 1 1 auto;
+            margin-right: 1rem;
+            align-items: center;
+            .mean-svg-icons {
+              &.incoming {
+                color: var(--color-incoming-transaction);
+              }
+              &.outgoing {
+                color: var(--color-outgoing-transaction);
+              }
+            }
+            .description-cell {
+              width: 100%;
+              padding-left: 0.5rem;
+              color: var(--color-secondary-alpha-70);
+            }
+          }
+          .date-cell {
+            color: var(--color-secondary-alpha-50);
+          }
+        }
+      }
     }
     @media (min-width: 768px) {
       .ant-divider.ant-divider-horizontal.streams-divider,

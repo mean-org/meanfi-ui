@@ -1,6 +1,8 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu } from "antd";
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
   ExclamationCircleOutlined,
@@ -33,6 +35,7 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
+import { StreamActivity, StreamActivityType } from "../../../models/stream-activity-models";
 
 var dateFormat = require("dateformat");
 
@@ -193,8 +196,8 @@ export const Streams = () => {
             : false;
   }
 
-  const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
+  const getAmountWithSymbol = (amount: any, address?: string, onlyValue = false) => {
+    return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
   }
 
   const getStreamIcon = (item: StreamInfo) => {
@@ -988,6 +991,24 @@ export const Streams = () => {
     }
   }
 
+  const getActivityIcon = (item: StreamActivity) => {
+    if (item.type === StreamActivityType.in) {
+      return (
+        <ArrowDownOutlined className="mean-svg-icons incoming" />
+      );
+    } else {
+      return (
+        <ArrowUpOutlined className="mean-svg-icons outgoing" />
+      );
+    }
+  }
+
+  const getActivityActionDescription = (item: StreamActivity): string => {
+    const who = item.type === StreamActivityType.out ? 'You' : 'Sender'
+    const amount = getAmountWithSymbol(item.amount, item.mint);
+    return `${who} ${item.action} ${amount}`;
+  }
+
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={showCloseStreamConfirm}>
@@ -1181,8 +1202,29 @@ export const Streams = () => {
 
       <Divider className="activity-divider" plain></Divider>
       <div className="activity-title">Activity</div>
-      <p>No activity so far.</p>
-
+      {!streamActivity || streamActivity.length === 0 ? (
+        <p>No activity so far.</p>
+      ) : (
+        <div className="activity-list">
+          {streamActivity.map((item, index) => {
+            return (
+              <div key={`${index}`} className="activity-list-row">
+                <div className="activity-highlight">
+                  <div className="icon-cell">
+                    {getActivityIcon(item)}
+                  </div>
+                  <div className="description-cell text-truncate">
+                    {getActivityActionDescription(item)}
+                  </div>
+                </div>
+                <div className="date-cell">
+                  {getShortDate(item.utcDate as string)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
     {streamDetail && (
       <div className="stream-share-ctas">
@@ -1376,7 +1418,29 @@ export const Streams = () => {
 
       <Divider className="activity-divider" plain></Divider>
       <div className="activity-title">Activity</div>
-      <p>No activity so far.</p>
+      {!streamActivity || streamActivity.length === 0 ? (
+        <p>No activity so far.</p>
+      ) : (
+        <div className="activity-list">
+          {streamActivity.map((item, index) => {
+            return (
+              <div key={`${index}`} className="activity-list-row">
+                <div className="activity-highlight">
+                  <div className="icon-cell">
+                    {getActivityIcon(item)}
+                  </div>
+                  <div className="description-cell text-truncate">
+                    {getActivityActionDescription(item)}
+                  </div>
+                </div>
+                <div className="date-cell">
+                  {getShortDate(item.utcDate as string)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
     </div>
     {streamDetail && (

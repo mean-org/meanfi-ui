@@ -283,7 +283,7 @@ export const getTokenDecimals = (address: string): number => {
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string, onlyValue = false): string => {
-  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  const tokenFromTokenList = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
   const inputAmount = amount ? parseFloat(amount.toString()) : 0;
   if (tokenFromTokenList) {
     const formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals)) || 0}`;
