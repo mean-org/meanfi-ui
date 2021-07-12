@@ -3,14 +3,9 @@ export enum StreamActivityType {
     out = 'out'
 }
 
-export enum StreamActivityAction {
-    'deposited',
-    'withdrew'
-}
-
 export interface StreamActivity {
     type: StreamActivityType;
-    action: StreamActivityAction;
+    action: string;
     amount: number;
     mint: string;
     blockTime: number;
