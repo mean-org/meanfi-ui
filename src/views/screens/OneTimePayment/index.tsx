@@ -264,9 +264,9 @@ export const OneTimePayment = () => {
             : contract?.name.trim(),                                        // streamName
         };
         console.log('data:', data);
-        return await moneyStream.oneTimePaymentTransactions(
-          treasurer,                                                  // treasurer
-          undefined,                                                  // treasury
+        return await moneyStream.oneTimePayment(
+          wallet,
+          associatedToken,                                            // treasurerMint
           beneficiary,                                                // beneficiary
           associatedToken,                                            // associatedToken
           amount,                                                     // fundingAmount

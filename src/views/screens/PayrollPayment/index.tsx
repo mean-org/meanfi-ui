@@ -449,14 +449,14 @@ export const PayrollPayment = () => {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
 
-        console.log('treasurerAssociatedToken:', selectedToken?.address);
-        const treasurerAssociatedToken = new PublicKey(selectedToken?.address as string);
+        console.log('treasurerMint:', selectedToken?.address);
+        const treasurerMint = new PublicKey(selectedToken?.address as string);
 
         console.log('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
 
-        console.log('beneficiaryAssociatedToken:', destinationToken?.address);
-        const beneficiaryAssociatedToken = new PublicKey(destinationToken?.address as string);
+        console.log('beneficiaryMint:', destinationToken?.address);
+        const beneficiaryMint = new PublicKey(destinationToken?.address as string);
 
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
@@ -477,9 +477,9 @@ export const PayrollPayment = () => {
         // Create a transaction
         const data = {
           wallet: wallet,                                             // wallet
-          beneficiary: beneficiary,                                    // beneficiary
-          treasurerAssociatedToken: treasurerAssociatedToken,         // treasurerAssociatedToken
-          beneficiaryAssociatedToken: beneficiaryAssociatedToken,     // beneficiaryAssociatedToken
+          beneficiary: beneficiary,                                   // beneficiary
+          treasurerMint: treasurerMint,                               // treasurerMint
+          beneficiaryMint: beneficiaryMint,                           // beneficiaryMint
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
@@ -487,15 +487,15 @@ export const PayrollPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-            fundingAmount: amount                                     // fundingAmount
+          fundingAmount: amount                                       // fundingAmount
         };
         console.log('data:', data);
-        return await moneyStream.createStreamTransactions(
+        return await moneyStream.createStream(
           wallet,                                                     // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
-          treasurerAssociatedToken,                                   // treasurerAssociatedToken
-          beneficiaryAssociatedToken,                                 // beneficiaryAssociatedToken
+          treasurerMint,                                              // treasurerMint
+          beneficiaryMint,                                            // beneficiaryMint
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc

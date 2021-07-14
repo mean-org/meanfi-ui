@@ -7,14 +7,13 @@ import { getStream, listStreamActivity, listStreams } from "../money-streaming/u
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
-import { StreamInfo } from "../money-streaming/money-streaming";
+import { StreamActivity, StreamInfo } from "../money-streaming/money-streaming";
 import { deserializeMint, useAccountsContext } from "./accounts";
 import { TokenAccount } from "../models";
 import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
-import { StreamActivity } from "../models/stream-activity-models";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -401,6 +400,10 @@ const AppStateProvider: React.FC = ({ children }) => {
                   setStreamActivity([]);
                 });
             }
+          } else {
+            setStreamActivity([]);
+            updateSelectedStream(undefined);
+            updateStreamDetail(undefined);
           }
           setStreamList(streams);
           updateLoadingStreams(false);

@@ -21,7 +21,7 @@ import {
   IconUpload,
 } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
+import { MoneyStreaming, StreamActivity, StreamActivityType, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
 import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
@@ -31,11 +31,11 @@ import { OpenStreamModal } from '../../../components/OpenStreamModal';
 import { WithdrawModal } from '../../../components/WithdrawModal';
 import _ from "lodash";
 import { useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { Commitment, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
-import { StreamActivity, StreamActivityType } from "../../../models/stream-activity-models";
+import { getTreasury } from "../../../money-streaming/utils";
 
 var dateFormat = require("dateformat");
 
@@ -80,7 +80,7 @@ export const Streams = () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
 
-        const isStreaming = clonedDetail.streamResumedBlockTime > clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
+        const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
         // const slot = await connection.getSlot(connection.commitment);
         // const currentBlockTime = await connection.getBlockTime(slot) as number;
@@ -191,9 +191,10 @@ export const Streams = () => {
   }
 
   const isStreaming = (item: StreamInfo): boolean => {
-    return item && item.escrowUnvestedAmount > 0 && item.escrowVestedAmount > 0
-            ? true
-            : false;
+    return item && item.escrowVestedAmount < (item.totalDeposits - item.totalWithdrawals) &&
+           item.streamResumedBlockTime >= item.escrowVestedAmountSnapBlockTime
+           ? true
+           : false;
   }
 
   const getAmountWithSymbol = (amount: any, address?: string, onlyValue = false) => {
@@ -322,9 +323,10 @@ export const Streams = () => {
   const getStartDateLabel = (): string => {
     let label = 'Start Date';
     if (streamDetail) {
-      const now = new Date();
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
       const streamStartDate = new Date(streamDetail?.startUtc as string);
-      if (streamStartDate > now) {
+      if (streamStartDate > nowUtc) {
         label = 'Scheduled';
       } else {
         label = 'Started'
@@ -419,15 +421,20 @@ export const Streams = () => {
           currentOperation: TransactionStatus.CreateTransaction
         });
         const stream = new PublicKey(streamDetail.id as string);
-        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
+        const treasury = new PublicKey(streamDetail.treasuryAddress as string);
+        const treasuryInfo = await moneyStream.getTreasury(treasury, connection.commitment as Commitment);
+        const treasuryMintAddress = new PublicKey(treasuryInfo.treasuryMintAddress as string);
+        const beneficiaryMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addAmount);
         setAddFundsAmount(amount);
 
         // Create a transaction
-        return await moneyStream.addFundsTransactions(
+        return await moneyStream.addFunds(
           wallet,
           stream,
-          associatedToken,
+          beneficiaryMint,                                  // contributorMint
+          beneficiaryMint,                                  // beneficiaryMint
+          treasuryMintAddress,                              // treasuryMint
           amount
         )
         .then(value => {
