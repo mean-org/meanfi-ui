@@ -21,7 +21,7 @@ import { MEANPAY_WEBSITE_URL } from "../../constants";
 export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
-  const { connected, disconnect } = useWallet();
+  const { connected, disconnect,resetWalletProvider } = useWallet();
   const {
     theme,
     setTheme,
@@ -31,6 +31,7 @@ export const AppContextMenu = () => {
 
   const onDisconnectWallet = () => {
     disconnect();
+    resetWalletProvider();
     setSelectedStream(undefined);
     setStreamList(undefined);
   }

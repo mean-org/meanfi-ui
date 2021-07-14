@@ -15,8 +15,7 @@ import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { WalletAdapter } from "../money-streaming/wallet-adapter";
 
-const ASSETS_URL =
-  "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
+const ASSETS_URL = "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
 export const WALLET_PROVIDERS = [
   {
     name: "Sollet",
@@ -65,11 +64,13 @@ const WalletContext = React.createContext<{
   connected: boolean;
   select: () => void;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
+  resetWalletProvider: () => void;
 }>({
   wallet: undefined,
   connected: false,
   select() {},
   provider: undefined,
+  resetWalletProvider: () => {},
 });
 
 export function WalletProvider({ children = null as any }) {
@@ -77,6 +78,10 @@ export function WalletProvider({ children = null as any }) {
 
   const [autoConnect, setAutoConnect] = useState(true);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
+
+  const resetWalletProvider = () => {
+    setProviderUrl(null);
+  }
 
   const provider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
@@ -123,7 +128,6 @@ export function WalletProvider({ children = null as any }) {
 
       wallet.on("disconnect", () => {
         setConnected(false);
-        setProviderUrl(null);
         notify({
           message: "Wallet update",
           description: "Disconnected from wallet",
@@ -160,6 +164,7 @@ export function WalletProvider({ children = null as any }) {
         connected,
         select,
         provider,
+        resetWalletProvider,
       }}
     >
       {children}
@@ -213,12 +218,13 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, select } = useContext(WalletContext);
+  const { wallet, connected, provider, select, resetWalletProvider } = useContext(WalletContext);
   return {
     wallet,
     connected,
     provider,
     select,
+    resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
       wallet ? wallet.connect() : select();
