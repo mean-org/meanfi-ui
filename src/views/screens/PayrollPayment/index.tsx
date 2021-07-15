@@ -66,6 +66,7 @@ export const PayrollPayment = () => {
     setPaymentRateFrequency,
     setTransactionStatus,
     setTimeSheetRequirement,
+    setSelectedStream,
     refreshStreamList
   } = useContext(AppStateContext);
 
@@ -99,6 +100,11 @@ export const PayrollPayment = () => {
   const onAfterTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setSelectedStream(undefined);
+      refreshStreamList();
+      setCurrentScreen("streams");
     }
   }
 
@@ -989,7 +995,7 @@ export const PayrollPayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+        disabled={!recipientAddress || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
       {/* Transaction execution modal */}

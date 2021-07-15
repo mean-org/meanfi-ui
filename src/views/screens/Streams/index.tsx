@@ -1184,30 +1184,10 @@ export const Streams = () => {
             <span className="info-icon">
               <IconUpload className="mean-svg-icons" />
             </span>
-            {/* {streamDetail ? (
-              <span className="info-data large">
-                {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-                ? (
-                  <>
-                  <CountUp
-                    delay={0}
-                    duration={500}
-                    decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                    start={previousStreamDetail?.escrowVestedAmount || 0}
-                    end={streamDetail?.escrowVestedAmount || 0} />
-                  <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                  </>
-                )
-                : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-                }
-              </span>
-            ) : (
-              <span className="info-data large">&nbsp;</span>
-            )} */}
             {streamDetail ? (
               <span className="info-data large">
               {streamDetail
-                ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                ? getAmountWithSymbol(streamDetail.escrowVestedAmount - streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
                 : '--'}
               </span>
             ) : (

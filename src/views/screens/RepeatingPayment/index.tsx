@@ -65,6 +65,7 @@ export const RepeatingPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
+    setSelectedStream,
     refreshStreamList,
   } = useContext(AppStateContext);
 
@@ -98,6 +99,11 @@ export const RepeatingPayment = () => {
   const onAfterTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setSelectedStream(undefined);
+      refreshStreamList();
+      setCurrentScreen("streams");
     }
   }
 
@@ -955,7 +961,7 @@ export const RepeatingPayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+        disabled={!recipientAddress || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
       {/* Transaction execution modal */}

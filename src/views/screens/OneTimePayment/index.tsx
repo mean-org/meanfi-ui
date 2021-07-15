@@ -52,6 +52,7 @@ export const OneTimePayment = () => {
     setPaymentStartDate,
     setFromCoinAmount,
     setTransactionStatus,
+    setSelectedStream,
     refreshStreamList
   } = useContext(AppStateContext);
 
@@ -83,6 +84,11 @@ export const OneTimePayment = () => {
   const onAfterTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setSelectedStream(undefined);
+      refreshStreamList();
+      setCurrentScreen("streams");
     }
   }
 
@@ -715,7 +721,7 @@ export const OneTimePayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || !paymentStartDate || !areSendAmountSettingsValid()}>
+        disabled={!recipientAddress || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
       {/* Transaction execution modal */}

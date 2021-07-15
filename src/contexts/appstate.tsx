@@ -262,7 +262,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const setSelectedStream = (stream: StreamInfo | undefined) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
-    getStreamActivity(stream?.id as string);
+    if (stream) {
+      getStreamActivity(stream.id as string);
+    } else {
+      setStreamActivity([]);
+    }
   }
 
   const setStreamDetail = (stream: StreamInfo) => {
