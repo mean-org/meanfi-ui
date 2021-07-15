@@ -6,5 +6,6 @@ export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const STREAM_MINIMUM_DATE_FORMAT = 'MMM Do';
 export const STREAM_SHORT_DATE_FORMAT = 'MMM d, hh:mm A z';
 export const STREAM_LONG_DATE_FORMAT = 'MMM Do, YYYY [at] HH:mm A z';
-export const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
+export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
+export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
 export const MEANPAY_WEBSITE_URL = 'https://meanfi.com';

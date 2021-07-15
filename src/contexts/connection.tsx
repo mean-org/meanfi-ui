@@ -61,6 +61,17 @@ export const getEndpointByRuntimeEnv = (): string => {
   }
 }
 
+export const getSolanaExplorerClusterParam = (): string => {
+  switch (environment) {
+    case 'development':
+      return '?cluster=devnet';
+    case 'staging':
+      return '?cluster=testnet';
+    default:
+      return '';
+  }
+}
+
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;

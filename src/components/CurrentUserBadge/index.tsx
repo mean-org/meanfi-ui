@@ -3,7 +3,7 @@ import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { SOLANA_EXPLORER_URI } from "../../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
@@ -11,7 +11,7 @@ import { StreamInfo } from "../../money-streaming/money-streaming";
 import { copyText } from "../../utils/ui";
 import { PublicKey } from "@solana/web3.js";
 import { listStreams } from "../../money-streaming/utils";
-import { useConnection } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnection } from "../../contexts/connection";
 
 interface StreamStats {
   incoming: number;
@@ -180,7 +180,8 @@ export const CurrentUserBadge = (props: {}) => {
               </span>
             </Col>
             <Col span={14}>
-              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${wallet.publicKey}`} target="_blank" rel="noopener noreferrer">
+              <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons link" />
                 <span className="link-text">View on Solana Explorer</span>
               </a>
