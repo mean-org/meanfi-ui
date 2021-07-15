@@ -226,6 +226,12 @@ export const RepeatingPayment = () => {
   }, []);
 
   // Validation
+
+  const isAddressOwnAccount = (): boolean => {
+    return recipientAddress && wallet && recipientAddress === wallet.publicKey.toBase58()
+           ? true : false;
+  }
+
   const areSendAmountSettingsValid = (): boolean => {
     return connected &&
            selectedToken &&
@@ -255,7 +261,7 @@ export const RepeatingPayment = () => {
       ? "Connect your wallet"
       : !selectedToken || !tokenBalance
       ? "No balance"
-      : !recipientAddress
+      : !recipientAddress || isAddressOwnAccount()
       ? "Select recipient"
       : !fromCoinAmount
       ? "Enter amount"
@@ -694,6 +700,16 @@ export const RepeatingPayment = () => {
           <div className="addon-right simplelink" onClick={showQrScannerModal}>
             <QrcodeOutlined />
           </div>
+        </div>
+        <div className="transaction-field-row">
+          <span className="field-label-left">
+            {isAddressOwnAccount() ? (
+              <span className="fg-red">Cannot send to your own account</span>
+            ) : (
+              <span>&nbsp;</span>
+            )}
+          </span>
+          <span className="field-label-right">&nbsp;</span>
         </div>
       </div>
       {/* QR scan modal */}
