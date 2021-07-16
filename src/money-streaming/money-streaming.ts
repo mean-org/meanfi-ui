@@ -291,7 +291,7 @@ export class MoneyStreaming {
                     beneficiaryMint,
                     streamAccount.publicKey,
                     streamName || "",
-                    amount || 0,
+                    0,
                     0,
                     start,
                     0,
