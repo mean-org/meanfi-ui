@@ -14,8 +14,8 @@ import { setProgramIds } from "../utils/ids";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { WalletAdapter } from "../money-streaming/wallet-adapter";
 import { environment } from "../environments/environment";
+import { WalletAdapter } from "../money-streaming/wallet-adapter";
 
 export type ENV =
   | "mainnet-beta"

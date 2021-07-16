@@ -1,11 +1,14 @@
-import EventEmitter from "eventemitter3";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { notify } from "../../utils/notifications";
-import { WalletAdapter } from "../../money-streaming/wallet-adapter";
+import EventEmitter from "eventemitter3";
+import { Wallet as IWallet } from '@project-serum/anchor/dist/provider';
 
-export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
-  _publicKey: PublicKey | null;
+export class SolongWalletAdapter
+  extends EventEmitter
+  implements IWallet {
+  private _publicKey: PublicKey | null;
   _onProcess: boolean;
+
   constructor() {
     super();
     this._publicKey = null;
@@ -14,7 +17,7 @@ export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
   }
 
   get publicKey() {
-    return this._publicKey as PublicKey;
+    return this._publicKey!;
   }
 
   async signTransaction(transaction: Transaction) {
@@ -29,7 +32,7 @@ export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
     return (window as any).solong.signAllTransactions(transactions);
   }
 
-  connect() {
+  async connect() {
     if (this._onProcess) {
       return;
     }
@@ -57,10 +60,33 @@ export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
       });
   }
 
-  disconnect() {
+  async disconnect() {
     if (this._publicKey) {
-      this._publicKey = null;
+      this._publicKey = PublicKey.default;
       this.emit("disconnect");
     }
   }
+
+  public async sign(msg: string): Promise<{
+    signature: Buffer;
+    publicKey: PublicKey;
+
+  }> {
+
+    let enc = new TextEncoder(),
+        buffer = enc.encode(msg),
+        data = {
+            signature: Buffer.alloc(0),
+            publicKey: PublicKey.default
+        };
+
+    // if (typeof this.sign === 'function') {
+    //     data = await this.sign(buffer, 'utf-8');
+    // } else {
+    //     throw Error('Invalid provider');
+    // }
+
+    return data;
+  }
+
 }

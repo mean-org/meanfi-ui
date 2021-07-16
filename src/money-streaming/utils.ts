@@ -1,8 +1,8 @@
 import { BN, Provider, Wallet } from "@project-serum/anchor";
-import { Commitment, Connection, Finality, ParsedConfirmedTransaction, PartiallyDecodedInstruction, PublicKey } from "@solana/web3.js";
+import { Commitment, Connection, Finality, ParsedConfirmedTransaction, PartiallyDecodedInstruction, PublicKey, Transaction } from "@solana/web3.js";
 import { Constants } from "./constants";
 import { Layout } from "./layout";
-import { StreamActivity, StreamActivityType, StreamInfo, StreamTermsInfo, TreasuryInfo } from "./money-streaming";
+import { StreamActivity, StreamInfo, StreamTermsInfo, TransactionMessage, TreasuryInfo } from "./money-streaming";
 import { u64Number } from "./u64n";
 import { AccountInfo, MintInfo, AccountLayout, MintLayout, u64 } from '@solana/spl-token';
 import { TokenInfo, TokenListContainer, TokenListProvider } from "@solana/spl-token-registry";
@@ -112,7 +112,6 @@ let defaultTreasuryInfo: TreasuryInfo = {
 let defaultStreamActivity: StreamActivity = {
     signature: '',
     initializer: '',
-    type: StreamActivityType.out,
     action: '',
     amount: 0,
     mint: '',
@@ -438,25 +437,28 @@ function parseActivityData(
     let buffer = base58.decode(lastIx.data);
     let actionIndex = buffer.readUInt8(0);
 
-    if (actionIndex <= 2 || actionIndex === 10 /*Transfer*/) {
+    if (actionIndex <= 3 || actionIndex === 10 /*Transfer*/) {
         let blockTime = (tx.blockTime as number) * 1000; // mult by 1000 to add milliseconds
-        let action = actionIndex === 2 ? 'withdraw' : 'deposit';
+        let action = actionIndex === 2 ? 'withdrew' : 'deposited';
         let layoutBuffer = Buffer.alloc(buffer.length, buffer);
         let data: any,
             amount = 0;
 
         if (actionIndex === 0) {
             data = Layout.createStreamLayout.decode(layoutBuffer);
-            console.log('data.funding_amount:', data.funding_amount);
             amount = data.funding_amount;
         } else if (actionIndex === 1) {
             data = Layout.addFundsLayout.decode(layoutBuffer);
-            console.log('data.contribution_amount:', data.contribution_amount);
             amount = data.contribution_amount;
-        } else {
+        } else if (actionIndex === 2) {
+            // data = Layout.recoverFunds.decode(layoutBuffer);
+            // amount = data.recover_amount;
+        } else if (actionIndex === 3) {
             data = Layout.withdrawLayout.decode(layoutBuffer);
-            console.log('data.withdrawal_amount:', data.withdrawal_amount);
             amount = data.withdrawal_amount;
+        } else { // Transfer
+            data = Layout.transferLayout.decode(layoutBuffer);
+            amount = data.amount;
         }
 
         let mint: PublicKey | string;
@@ -470,7 +472,7 @@ function parseActivityData(
         }
 
         let tokenInfo = tokens.find((t) => t.address === mint);
-
+    
         Object.assign(streamActivity, {
             signature: signature,
             initializer: (friendly === true ? signer.pubkey.toBase58() : signer.pubkey),
@@ -478,8 +480,7 @@ function parseActivityData(
             utcDate: new Date(blockTime).toUTCString(),
             action: action,
             amount: amount,
-            mint: !tokenInfo ? mint : tokenInfo.address,
-            type: action === 'withdraw' ? 'in' : 'out', // this should be removed from here and be treated on MeanFi
+            mint: !tokenInfo ? mint : tokenInfo.address
         });
     }
 
@@ -708,13 +709,14 @@ export const getTokenAccount = async (
     connection: Connection,
     pubKey: PublicKey | string
 
-): Promise<AccountInfo> => {
+): Promise<AccountInfo | null> => {
 
     const address = typeof pubKey === 'string' ? new PublicKey(pubKey) : pubKey;
     const info = await connection.getAccountInfo(address);
 
     if (info === null) {
-        throw new Error('Failed to find token account');
+        // throw new Error('Failed to find token account');
+        return null;
     }
 
     return deserializeTokenAccount(info.data);
@@ -899,24 +901,27 @@ export function decode(data: string): Buffer {
 }
 
 export async function calculateWrapAmount(
-    connection: Connection,
-    token: PublicKey,
+    tokenInfo: AccountInfo,
     amount: number
 
 ): Promise<number> {
 
-    const tokenAccountInfo = await getTokenAccount(connection, token);
+    const wrappedAmount = tokenInfo.amount.toNumber() / LAMPORTS_PER_SOL;
 
-    if (!tokenAccountInfo) {
-        return amount;
+    if (wrappedAmount < amount) {
+        return amount - wrappedAmount;
     } else {
-
-        const wrappedAmount = tokenAccountInfo.amount.toNumber() / LAMPORTS_PER_SOL;
-
-        if (wrappedAmount < amount) {
-            return amount - wrappedAmount;
-        } else {
-            return 0;
-        }
+        return 0;
     }
+}
+
+export async function buildTransactionsMessageData(
+    connection: Connection,
+    transactions: Transaction[]
+
+): Promise<string> {
+
+    let message = 'Sign this test message';
+    // TODO: Implement
+    return message;
 }

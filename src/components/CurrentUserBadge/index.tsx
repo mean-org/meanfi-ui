@@ -93,7 +93,7 @@ export const CurrentUserBadge = (props: {}) => {
   const onGoToStreamsClick = () => {
     const programId = new PublicKey(streamProgramAddress);
     setLoadingStreams(true);
-    listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+    listStreams(connection, programId, publicKey as PublicKey, publicKey as PublicKey, 'confirmed', true)
       .then(async streams => {
         setStreamList(streams);
         setLoadingStreams(false);

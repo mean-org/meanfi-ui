@@ -179,6 +179,9 @@ export function WalletProvider({ children = null as any }) {
         <div className="wallet-providers">
           {WALLET_PROVIDERS.map((provider, index) => {
             const onClick = function () {
+              if (wallet) {
+                wallet.disconnect();
+              }
               setProviderUrl(provider.url);
               setAutoConnect(true);
               close();

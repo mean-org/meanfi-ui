@@ -1,7 +1,7 @@
-import EventEmitter from "eventemitter3";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { notify } from "../../utils/notifications";
 import { WalletAdapter } from "../../money-streaming/wallet-adapter";
+import { EventEmitter } from "eventemitter3";
 
 type PhantomEvent = "disconnect" | "connect";
 type PhantomRequestMethod =
@@ -21,6 +21,12 @@ interface PhantomProvider {
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
   request: (method: PhantomRequestMethod, params: any) => Promise<any>;
   listeners: (event: PhantomEvent) => (() => void)[];
+  signMessage: (
+    message: Uint8Array | string, encoding: string
+  ) => Promise<{
+    signature: Buffer;
+    publicKey: PublicKey;
+  }>;
 }
 
 export class PhantomWalletAdapter
@@ -78,9 +84,9 @@ export class PhantomWalletAdapter
     return this._provider.signTransaction(transaction);
   }
 
-  connect() {
+  async connect() {
     if (!this._provider) {
-      return false;
+      return;
     }
 
     if (!(window as any).solana.isPhantom) {
@@ -88,7 +94,7 @@ export class PhantomWalletAdapter
         message: "Phantom Error",
         description: "Please install Phantom wallet from Chrome ",
       });
-      return false;
+      return;
     }
 
     if (this._provider && !this._provider.listeners("connect").length) {
@@ -97,12 +103,41 @@ export class PhantomWalletAdapter
     if (!this._provider.listeners("disconnect").length) {
       this._provider?.on("disconnect", this._handleDisconnect);
     }
-    return this._provider?.connect();
+    return await this._provider?.connect();
   }
 
-  disconnect() {
+  async disconnect() {
     if (this._provider) {
-      this._provider.disconnect();
+      await this._provider.disconnect();
     }
   }
+
+  public async signMessage(msg: string): Promise<{
+    signature: Buffer;
+    publicKey: PublicKey;
+
+  }> {
+
+    let enc = new TextEncoder(),
+        buffer = enc.encode(msg),
+        data = {
+            signature: Buffer.alloc(0),
+            publicKey: PublicKey.default
+        };
+
+    console.log('_provider in signMessage', this._provider);
+    if (!this._provider) {
+        throw Error('Invalid provider');
+    }
+
+    if (typeof this._provider.signMessage === 'function') {
+        data = await this._provider.signMessage(buffer, 'utf-8');
+    } else {
+      console.log('_provider has NO signMessage function');
+      throw Error('Invalid provider');
+    }
+
+    return data;
+  }
+
 }

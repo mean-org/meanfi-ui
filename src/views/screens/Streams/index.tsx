@@ -461,7 +461,7 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signAllTransactions(wallet, ...transactions)
+        return await moneyStream.signAllTransactions(wallet, transactions)
         .then(signed => {
           console.log('signAllTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
@@ -614,7 +614,7 @@ export const Streams = () => {
         setWithdrawFundsAmount(amount);
 
         // Create a transaction
-        return await moneyStream.withdrawTransaction(
+        return await moneyStream.withdraw(
           stream,
           beneficiary,
           amount
@@ -644,7 +644,7 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signAllTransactions(wallet, [transaction])
         .then(signed => {
           console.log('signTransaction returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
@@ -652,7 +652,7 @@ export const Streams = () => {
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransaction = signed[0];
           return true;
         })
         .catch(error => {
@@ -822,7 +822,7 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signAllTransactions(wallet, [transaction])
         .then(signed => {
           console.log('signTransaction returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
@@ -830,7 +830,7 @@ export const Streams = () => {
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransaction = signed[0];
           return true;
         })
         .catch(error => {
@@ -949,21 +949,6 @@ export const Streams = () => {
       }
 
     }
-    // If ( I am the treasurer )
-    // {
-    //   If ( Number of Beneficiaries benefiting from Treasury > 1 )
-    //   {
-    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amounts back to the original treasury (TR3…SU81). Are you sure you want to do this?`
-    //   }
-    //   else
-    //   {
-    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amount back to the contributor (HnH…B4CF). Are you sure you want to do this?`
-    //   }
-    // }
-    // Else if ( I am the beneficiary )
-    // {
-    //   message = Closing a stream will send ~$66.98 to your account (AC4…UIUI8) and stop the flow of money immediately. Are you sure you want to do this?
-    // }
 
     return message;
   }
@@ -1002,7 +987,7 @@ export const Streams = () => {
   }
 
   const isAddressMyAccount = (addr: string): Boolean => {
-    return wallet && addr && addr === wallet.publicKey.toBase58()
+    return wallet && addr && wallet.publicKey && addr === wallet.publicKey.toBase58()
            ? true
            : false;
   }

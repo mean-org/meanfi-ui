@@ -1,14 +1,15 @@
 import type Transport from "@ledgerhq/hw-transport";
 import type { Transaction } from "@solana/web3.js";
-
-import EventEmitter from "eventemitter3";
 import { PublicKey } from "@solana/web3.js";
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 import { notify } from "../../utils/notifications";
 import { getPublicKey, signTransaction } from "./core";
-import { WalletAdapter } from "../../money-streaming/wallet-adapter";
+import EventEmitter from "eventemitter3";
+import { Wallet as IWallet } from '@project-serum/anchor/dist/provider';
 
-export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
+export class LedgerWalletAdapter
+  extends EventEmitter
+  implements IWallet {
   _connecting: boolean;
   _publicKey: PublicKey | null;
   _transport: Transport | null;
@@ -25,27 +26,27 @@ export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
   }
 
   async signTransaction(transaction: Transaction) {
-    if (!this._transport || !this._publicKey) {
+    if (!this._transport || !this.publicKey) {
       throw new Error("Not connected to Ledger");
     }
 
     // @TODO: account selection (derivation path changes with account)
     const signature = await signTransaction(this._transport, transaction);
 
-    transaction.addSignature(this._publicKey, signature);
+    transaction.addSignature(this.publicKey, signature);
 
     return transaction;
   }
 
   async signAllTransactions(transactions: Transaction[]) {
-    if (!this._transport || !this._publicKey) {
+    if (!this._transport || !this.publicKey) {
       throw new Error("Not connected to Ledger");
     }
 
     // @TODO: account selection (derivation path changes with account)
     for (let tx of transactions) {
       const signature = await signTransaction(this._transport, tx);
-      tx.addSignature(this._publicKey, signature);
+      tx.addSignature(this.publicKey, signature);
     }
 
     return transactions;
@@ -63,7 +64,7 @@ export class LedgerWalletAdapter extends EventEmitter implements WalletAdapter {
       this._transport = await TransportWebUSB.create();
       // @TODO: account selection
       this._publicKey = await getPublicKey(this._transport);
-      this.emit("connect", this._publicKey);
+      this.emit("connect", this.publicKey);
     } catch (error) {
       notify({
         message: "Ledger Error",
