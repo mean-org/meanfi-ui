@@ -1,11 +1,11 @@
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { notify } from "../../utils/notifications";
 import EventEmitter from "eventemitter3";
-import { Wallet as IWallet } from '@project-serum/anchor/dist/provider';
+import { WalletAdapter } from "../../money-streaming/wallet-adapter";
 
 export class SolongWalletAdapter
   extends EventEmitter
-  implements IWallet {
+  implements WalletAdapter {
   private _publicKey: PublicKey | null;
   _onProcess: boolean;
 
@@ -65,28 +65,6 @@ export class SolongWalletAdapter
       this._publicKey = PublicKey.default;
       this.emit("disconnect");
     }
-  }
-
-  public async sign(msg: string): Promise<{
-    signature: Buffer;
-    publicKey: PublicKey;
-
-  }> {
-
-    let enc = new TextEncoder(),
-        buffer = enc.encode(msg),
-        data = {
-            signature: Buffer.alloc(0),
-            publicKey: PublicKey.default
-        };
-
-    // if (typeof this.sign === 'function') {
-    //     data = await this.sign(buffer, 'utf-8');
-    // } else {
-    //     throw Error('Invalid provider');
-    // }
-
-    return data;
   }
 
 }

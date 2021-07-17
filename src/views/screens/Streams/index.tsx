@@ -16,6 +16,8 @@ import {
   IconDocument,
   IconDownload,
   IconExternalLink,
+  IconIncomingPaused,
+  IconOutgoingPaused,
   IconPause,
   IconShare,
   IconUpload,
@@ -210,7 +212,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconPause className="mean-svg-icons paused" />
+          <IconIncomingPaused className="mean-svg-icons" />
         );
       } else {
         return (
@@ -224,7 +226,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconPause className="mean-svg-icons paused" />
+          <IconOutgoingPaused className="mean-svg-icons" />
         );
       } else {
         return (

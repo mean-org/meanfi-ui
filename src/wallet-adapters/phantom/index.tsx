@@ -21,12 +21,6 @@ interface PhantomProvider {
   on: (event: PhantomEvent, handler: (args: any) => void) => void;
   request: (method: PhantomRequestMethod, params: any) => Promise<any>;
   listeners: (event: PhantomEvent) => (() => void)[];
-  signMessage: (
-    message: Uint8Array | string, encoding: string
-  ) => Promise<{
-    signature: Buffer;
-    publicKey: PublicKey;
-  }>;
 }
 
 export class PhantomWalletAdapter
@@ -110,34 +104,6 @@ export class PhantomWalletAdapter
     if (this._provider) {
       await this._provider.disconnect();
     }
-  }
-
-  public async signMessage(msg: string): Promise<{
-    signature: Buffer;
-    publicKey: PublicKey;
-
-  }> {
-
-    let enc = new TextEncoder(),
-        buffer = enc.encode(msg),
-        data = {
-            signature: Buffer.alloc(0),
-            publicKey: PublicKey.default
-        };
-
-    console.log('_provider in signMessage', this._provider);
-    if (!this._provider) {
-        throw Error('Invalid provider');
-    }
-
-    if (typeof this._provider.signMessage === 'function') {
-        data = await this._provider.signMessage(buffer, 'utf-8');
-    } else {
-      console.log('_provider has NO signMessage function');
-      throw Error('Invalid provider');
-    }
-
-    return data;
   }
 
 }
