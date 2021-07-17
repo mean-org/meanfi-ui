@@ -212,7 +212,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconIncomingPaused className="mean-svg-icons" />
+          <IconIncomingPaused className="mean-svg-icons incoming" />
         );
       } else {
         return (
@@ -226,7 +226,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconOutgoingPaused className="mean-svg-icons" />
+          <IconOutgoingPaused className="mean-svg-icons outgoing" />
         );
       } else {
         return (
@@ -463,9 +463,9 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signAllTransactions(wallet, transactions)
+        return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signAllTransactions returned a signed transaction array:', signed);
+          console.log('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -646,9 +646,9 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signAllTransactions(wallet, [transaction])
+        return await moneyStream.signTransactions(wallet, [transaction])
         .then(signed => {
-          console.log('signTransaction returned a signed transaction array:', signed);
+          console.log('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -824,9 +824,9 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signAllTransactions(wallet, [transaction])
+        return await moneyStream.signTransactions(wallet, [transaction])
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,

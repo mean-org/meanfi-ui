@@ -1,5 +1,4 @@
 import { BN } from '@project-serum/anchor';
-// import Wallet from '@project-serum/sol-wallet-adapter';
 import { NodeWallet, Wallet as IWallet } from '@project-serum/anchor/dist/provider';
 import { Token, AccountLayout } from '@solana/spl-token';
 import { TOKEN_PROGRAM_ID } from '@project-serum/serum/lib/token-instructions';
@@ -23,9 +22,6 @@ import { TokenSwap } from './token-swap';
 import * as Utils from './utils';
 import { u64Number } from './u64n';
 import { WalletAdapter } from './wallet-adapter';
-import { LedgerWalletAdapter } from '../wallet-adapters/ledger';
-import { PhantomWalletAdapter } from '../wallet-adapters/phantom';
-import { SolongWalletAdapter } from '../wallet-adapters/solong';
 
 export type StreamActivity = {
     signature: string,
@@ -1022,48 +1018,18 @@ export class MoneyStreaming {
         return tx;
     }
 
-    private async signTransactionsWithMessage(
-        wallet: WalletAdapter,
+    public async signTransactions(
+        adapter: WalletAdapter,
         transactions: Transaction[]
 
     ): Promise<Transaction[]> {
 
-        let txs: Transaction[] = [],
-            msg = await Utils.buildTransactionsMessageData(this.connection, transactions),
-            data: any;
-
-        if (wallet instanceof PhantomWalletAdapter && 'signMessage' in wallet && typeof wallet.signMessage === 'function') {
-            data = await wallet.signMessage(msg);
-        } else if (wallet instanceof SolongWalletAdapter && 'sign' in wallet && typeof wallet.sign === 'function') {
-            data = await wallet.sign(msg);
-        }
-
-        for (let tx of transactions) {
-            tx.addSignature(data.publicKey as PublicKey, data.signature);
-            txs.push(tx);
-        }
-
-        return txs;
-    }
-
-    public async signAllTransactions(
-        wallet: WalletAdapter,
-        transactions: Transaction[],
-        friendly = true
-
-    ): Promise<Transaction[]> {
-
         try {
-
-            if (friendly && friendly === true) {
-                return await this.signTransactionsWithMessage(wallet, transactions);
-            }
-
             let txs: Transaction[] = [];
             console.log("Sending transaction for wallet for approval...");
 
             for (let tx of transactions) {
-                let signedTx = await wallet.signTransaction(tx);
+                let signedTx = await adapter.signTransaction(tx);
                 txs.push(signedTx);
             }
 

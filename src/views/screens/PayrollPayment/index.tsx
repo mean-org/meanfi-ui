@@ -541,7 +541,7 @@ export const PayrollPayment = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signAllTransactions(wallet, transactions)
+        return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
           console.log('signAllTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
