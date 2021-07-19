@@ -328,7 +328,11 @@ export const Streams = () => {
       const nowUtc = new Date(now);
       const streamStartDate = new Date(streamDetail?.startUtc as string);
       if (streamStartDate > nowUtc) {
-        label = 'Scheduled';
+        if (isOtp()) {
+          label = 'Scheduled delivery';
+        } else {
+          label = 'Scheduled';
+        }
       } else {
         label = 'Started'
       }
@@ -984,6 +988,26 @@ export const Streams = () => {
     }
   }
 
+  const getRateAmountDisplay = (item: StreamInfo): string => {
+    let value = '';
+    if (item && item.rateAmount && item.associatedToken) {
+      value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
+  const getDepositAmountDisplay = (item: StreamInfo): string => {
+    let value = '';
+    if (item && item.rateAmount === 0 && item.totalDeposits > 0) {
+      value += getFormattedNumberToLocale(formatAmount(item.totalDeposits, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
   const isOtp = (): boolean => {
     return streamDetail?.rateAmount === 0 ? true : false;
   }
@@ -1038,9 +1062,10 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
-    <div className="stream-details-data-wrapper">
+    <div className="stream-details-data-wrapper vertical-scroll">
 
       <div className="stream-fields-container">
+        {/* Background animation */}
         {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
           <div className="stream-background">
             <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
@@ -1086,9 +1111,34 @@ export const Streams = () => {
           </Col>
         </Row>
 
+        {/* Amount for OTPs */}
+        {isOtp() ? (
+          <div className="mb-3">
+            <div className="info-label">Amount</div>
+            <div className="transaction-detail-row">
+              <span className="info-icon">
+                <IconDownload className="mean-svg-icons" />
+              </span>
+              {streamDetail ?
+                (
+                  <span className="info-data">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                    : '--'}
+                    <span className="ml-1">(funded on ----)</span>
+                  </span>
+                ) : (
+                  <span className="info-data">&nbsp;</span>
+                )}
+            </div>
+          </div>
+        ) : (
+          null
+        )}
+
         {/* Started date */}
         <div className="mb-3">
-          <div className="info-label">Started</div>
+          <div className="info-label">{getStartDateLabel()}</div>
           <div className="transaction-detail-row">
             <span className="info-icon">
               <IconClock className="mean-svg-icons" />
@@ -1239,7 +1289,7 @@ export const Streams = () => {
     </div>
     {streamDetail && (
       <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
           <IconExternalLink className="mean-svg-icons" />
@@ -1254,9 +1304,10 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
-    <div className="stream-details-data-wrapper">
+    <div className="stream-details-data-wrapper vertical-scroll">
 
       <div className="stream-fields-container">
+        {/* Background animation */}
         {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
           <div className="stream-background">
             <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
@@ -1300,6 +1351,31 @@ export const Streams = () => {
           </Col>
         </Row>
 
+        {/* Amount for OTPs */}
+        {isOtp() ? (
+          <div className="mb-3">
+            <div className="info-label">Amount</div>
+            <div className="transaction-detail-row">
+              <span className="info-icon">
+                <IconUpload className="mean-svg-icons" />
+              </span>
+              {streamDetail ?
+                (
+                  <span className="info-data">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                    : '--'}
+                    <span className="ml-1">(funded on ----)</span>
+                  </span>
+                ) : (
+                  <span className="info-data">&nbsp;</span>
+                )}
+            </div>
+          </div>
+        ) : (
+          null
+        )}
+
         {/* Start date */}
         <div className="mb-3">
           <div className="info-label">{getStartDateLabel()}</div>
@@ -1337,43 +1413,47 @@ export const Streams = () => {
         )}
 
         {/* Funds sent (Total Vested) */}
-        <div className="mb-3">
-          <div className="info-label">Funds sent to recepient</div>
-          <div className="transaction-detail-row">
-            <span className="info-icon">
-              <IconUpload className="mean-svg-icons" />
-            </span>
-            {/* {streamDetail ? (
-              <span className="info-data">
-                {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-                ? (
-                  <>
-                  <CountUp
-                    delay={0}
-                    duration={500}
-                    decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                    start={previousStreamDetail?.escrowVestedAmount || 0}
-                    end={streamDetail?.escrowVestedAmount || 0} />
-                  <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                  </>
-                )
-                : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-                }
+        {isOtp() ? (
+          null
+        ) : (
+          <div className="mb-3">
+            <div className="info-label">Funds sent to recepient</div>
+            <div className="transaction-detail-row">
+              <span className="info-icon">
+                <IconUpload className="mean-svg-icons" />
               </span>
-            ) : (
-              <span className="info-data">&nbsp;</span>
-            )} */}
-            {streamDetail ? (
-              <span className="info-data">
-              {streamDetail
-                ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-                : '--'}
-              </span>
-            ) : (
-              <span className="info-data">&nbsp;</span>
-            )}
+              {/* {streamDetail ? (
+                <span className="info-data">
+                  {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
+                  ? (
+                    <>
+                    <CountUp
+                      delay={0}
+                      duration={500}
+                      decimals={getTokenDecimals(streamDetail.associatedToken as string)}
+                      start={previousStreamDetail?.escrowVestedAmount || 0}
+                      end={streamDetail?.escrowVestedAmount || 0} />
+                    <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
+                    </>
+                  )
+                  : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                  }
+                </span>
+              ) : (
+                <span className="info-data">&nbsp;</span>
+              )} */}
+              {streamDetail ? (
+                <span className="info-data">
+                {streamDetail
+                  ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                  : '--'}
+                </span>
+              ) : (
+                <span className="info-data">&nbsp;</span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Funds left (Total Unvested) */}
         {isOtp() ? (
@@ -1462,7 +1542,7 @@ export const Streams = () => {
     </div>
     {streamDetail && (
       <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>{streamDetail.id}</span>
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
           <IconExternalLink className="mean-svg-icons" />
@@ -1499,13 +1579,11 @@ export const Streams = () => {
                     </div>
                     <div className="rate-cell">
                       <div className="rate-amount">
-                        {item && item.rateAmount && isValidNumber(item.rateAmount.toString())
-                          ? getFormattedNumberToLocale(formatAmount(item.rateAmount, 2))
-                          : '--'}
-                        &nbsp;
-                        {item && item.associatedToken ? getTokenSymbol(item.associatedToken as string) : ''}
+                        {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
                       </div>
-                      <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
+                      {item && item.rateAmount > 0 && (
+                        <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
+                      )}
                     </div>
                   </div>
                 );

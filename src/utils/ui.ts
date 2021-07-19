@@ -250,7 +250,7 @@ export const getIntervalFromSeconds = (seconds: number, slash = false): string =
         case 31557000:
             return slash ? ' / year' : 'per year';
         default:
-            return '--';
+            return '';
     }
 }
 

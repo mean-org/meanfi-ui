@@ -1443,7 +1443,7 @@ em {
     @media (max-width: 575.98px) {
       padding: 0;
       border: none;
-      height: 90%;
+      height: calc(100% - 1rem);
     }
   }
   @media (max-width: 575.98px) {
@@ -1599,6 +1599,8 @@ em {
     width: 100%;
     .inner-container {
       .stream-details-data-wrapper {
+        padding-right: 0.6rem;
+        max-height: calc(100% - 0.6rem);
         z-index: 3;
       }
       .stream-fields-container {
@@ -1741,9 +1743,8 @@ em {
       .inner-container {
         height: calc(100% + 1rem);
         min-height: 500px;
-        overflow-y: auto;
         z-index: 2;
-        padding: 1.4rem 6%;
+        padding: 1.4rem calc(6% - 0.6rem) 1.4rem 6%;
         transform: translateX(-1rem) translateY(1rem);
         box-shadow: 0px 0px 3px 0 rgba(0,0,0,0.05), -1px 0px 2px 0 rgba(0,0,0,0.05);
       }
