@@ -25,8 +25,8 @@ import {
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamActivity, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
-import { copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
 import { WithdrawModal } from '../../../components/WithdrawModal';
@@ -37,6 +37,7 @@ import { Commitment, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
+import { TokenInfo } from "@solana/spl-token-registry";
 
 var dateFormat = require("dateformat");
 
@@ -49,10 +50,12 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
+    selectedToken,
     streamActivity,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
+    setSelectedToken,
     setCurrentScreen,
     setStreamDetail,
     setSelectedStream,
@@ -62,6 +65,7 @@ export const Streams = () => {
     setDtailsPanelOpen
   } = useContext(AppStateContext);
   const { confirm } = Modal;
+  const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
 
   useEffect(() => {
     if (!connected) {
@@ -163,8 +167,25 @@ export const Streams = () => {
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
-  const showAddFundsModal = useCallback(() => setIsAddFundsModalVisibility(true), []);
-  const closeAddFundsModal = useCallback(() => setIsAddFundsModalVisibility(false), []);
+  const showAddFundsModal = useCallback(() => {
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string)
+    console.log("selected token:", token?.symbol);
+    if (token) {
+      setOldSelectedToken(selectedToken);
+      setSelectedToken(token);
+    }
+    setIsAddFundsModalVisibility(true)
+  }, [
+    selectedToken,
+    streamDetail,
+    setSelectedToken
+  ]);
+  const closeAddFundsModal = useCallback(() => {
+    if (oldSelectedToken) {
+      setSelectedToken(oldSelectedToken);
+    }
+    setIsAddFundsModalVisibility(false);
+  }, [oldSelectedToken, setSelectedToken]);
   const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
   const onAcceptAddFunds = (amount: any) => {
     closeAddFundsModal();
@@ -198,7 +219,7 @@ export const Streams = () => {
            : false;
   }
 
-  const getAmountWithSymbol = (amount: any, address?: string, onlyValue = false) => {
+  const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
   }
 
@@ -426,10 +447,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.CreateTransaction
         });
         const stream = new PublicKey(streamDetail.id as string);
-        const treasury = new PublicKey(streamDetail.treasuryAddress as string);
-        const treasuryInfo = await moneyStream.getTreasury(treasury, connection.commitment as Commitment);
-        const treasuryMintAddress = new PublicKey(treasuryInfo.treasuryMintAddress as string);
-        const beneficiaryMint = new PublicKey(streamDetail.associatedToken as string);
+        const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addAmount);
         setAddFundsAmount(amount);
 
@@ -437,9 +455,7 @@ export const Streams = () => {
         return await moneyStream.addFunds(
           wallet,
           stream,
-          beneficiaryMint,                                  // contributorMint
-          beneficiaryMint,                                  // beneficiaryMint
-          treasuryMintAddress,                              // treasuryMint
+          contributorMint,                                  // contributorMint
           amount
         )
         .then(value => {
@@ -498,9 +514,9 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendAllSignedTransactions(...signedTransactions)
+        return moneyStream.sendSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendAllSignedTransactions returned a signature:', sig);
+            console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -619,6 +635,13 @@ export const Streams = () => {
         const amount = parseFloat(withdrawAmount);
         setWithdrawFundsAmount(amount);
 
+        const data = {
+          stream: stream,
+          beneficiary: beneficiary,
+          amount: amount
+        };
+        consoleOut('withdraw params:', data, 'brown');
+
         // Create a transaction
         return await moneyStream.withdraw(
           stream,
@@ -681,7 +704,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendSignedTransactions(signedTransaction)
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -689,7 +712,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signature = sig[0];
             return true;
           })
           .catch(error => {
@@ -799,7 +822,7 @@ export const Streams = () => {
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
         // Create a transaction
-        return await moneyStream.closeStreamTransaction(
+        return await moneyStream.closeStream(
           streamPublicKey,                                  // Stream ID
           publicKey as PublicKey                            // Initializer public key
         )
@@ -859,7 +882,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendSignedTransactions(signedTransaction)
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -867,7 +890,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signature = sig[0];
             return true;
           })
           .catch(error => {
@@ -1162,26 +1185,6 @@ export const Streams = () => {
               <span className="info-icon">
                 <IconBank className="mean-svg-icons" />
               </span>
-              {/* {streamDetail ? (
-                <span className="info-data">
-                  {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-                  ? (
-                    <>
-                    <CountUp
-                      delay={0}
-                      duration={500}
-                      decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                      start={previousStreamDetail?.escrowUnvestedAmount || 0}
-                      end={streamDetail?.escrowUnvestedAmount || 0} />
-                    <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                    </>
-                  )
-                  : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
-                  }
-                </span>
-              ) : (
-                <span className="info-data">&nbsp;</span>
-              )} */}
               {streamDetail ? (
                 <span className="info-data">
                 {streamDetail
@@ -1224,7 +1227,7 @@ export const Streams = () => {
             {streamDetail ? (
               <span className="info-data large">
               {streamDetail
-                ? getAmountWithSymbol(streamDetail.escrowVestedAmount - streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
+                ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
                 : '--'}
               </span>
             ) : (
@@ -1422,26 +1425,6 @@ export const Streams = () => {
               <span className="info-icon">
                 <IconUpload className="mean-svg-icons" />
               </span>
-              {/* {streamDetail ? (
-                <span className="info-data">
-                  {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-                  ? (
-                    <>
-                    <CountUp
-                      delay={0}
-                      duration={500}
-                      decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                      start={previousStreamDetail?.escrowVestedAmount || 0}
-                      end={streamDetail?.escrowVestedAmount || 0} />
-                    <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                    </>
-                  )
-                  : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-                  }
-                </span>
-              ) : (
-                <span className="info-data">&nbsp;</span>
-              )} */}
               {streamDetail ? (
                 <span className="info-data">
                 {streamDetail
@@ -1484,31 +1467,28 @@ export const Streams = () => {
         )}
 
         {/* Top up (add funds) */}
-        {isOtp() ? (
-          null
-        ) : (
-          <div className="mt-3 mb-3 withdraw-container">
+        <div className="mt-3 mb-3 withdraw-container">
+          <Button
+            block
+            className="withdraw-cta"
+            type="text"
+            shape="round"
+            size="small"
+            disabled={isOtp()}
+            onClick={showAddFundsModal}>
+            Top up (add funds)
+          </Button>
+          <Dropdown overlay={menu} trigger={["click"]}>
             <Button
-              block
-              className="withdraw-cta"
-              type="text"
               shape="round"
+              type="text"
               size="small"
-              onClick={showAddFundsModal}>
-              Top up (add funds)
+              className="ant-btn-shaded"
+              onClick={(e) => e.preventDefault()}
+              icon={<EllipsisOutlined />}>
             </Button>
-            <Dropdown overlay={menu} trigger={["click"]}>
-              <Button
-                shape="round"
-                type="text"
-                size="small"
-                className="ant-btn-shaded"
-                onClick={(e) => e.preventDefault()}
-                icon={<EllipsisOutlined />}>
-              </Button>
-            </Dropdown>
-          </div>
-        )}
+          </Dropdown>
+        </div>
 
       </div>
 

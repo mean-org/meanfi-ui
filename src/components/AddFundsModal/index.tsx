@@ -57,67 +57,6 @@ export const AddFundsModal = (props: {
       width={480}>
       <div className="mb-3">
 
-        {/* <div className="transaction-field disabled">
-          <div className="transaction-field-row">
-            <span className="field-label-left">Funds available to withdraw now</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="field-select-left">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          </div>
-        </div> */}
-
-        {/* <div className="transaction-field mb-1">
-          <div className="transaction-field-row">
-            <span className="field-label-left">Enter amount to withdraw</span>
-            <span className="field-label-right">By percentual preset</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
-              <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={withdrawAmountFormatted}
-              />
-            </span>
-            <div className="addon-right">
-              <div className="token-group">
-                <div className="token-max simplelink" onClick={() => {
-                    if (streamDetail) {
-                      setWithdrawAmountRaw(`${streamDetail.escrowVestedAmount}`);
-                      setWithdrawAmountFormatted(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string, true));
-                    } else {
-                      setValue('0');
-                    }
-                  }}>
-                  MAX
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="transaction-field-row">
-            <span className="field-label-left">{
-              streamDetail && parseFloat(withdrawAmountFormatted) > parseFloat(getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail?.associatedToken as string, true))
-                ? (<span className="fg-red">Amount is greater than the available funds</span>)
-                : (<span>&nbsp;</span>)
-            }</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-        </div> */}
-
         {/* Top up amount */}
         <div className="transaction-field mb-1">
           <div className="transaction-field-row">
@@ -132,7 +71,7 @@ export const AddFundsModal = (props: {
               <span>Balance:</span>
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
-                    ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+                    ? formatAmount(tokenBalance as number, selectedToken.decimals || 2)
                     : "Unknown"
                 }`}
               </span>

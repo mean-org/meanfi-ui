@@ -558,9 +558,9 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendAllSignedTransactions(...signedTransactions)
+        return moneyStream.sendSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendAllSignedTransactions returned a signature:', sig);
+            console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,

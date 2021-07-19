@@ -266,6 +266,14 @@ export function isPositiveNumber(str: string): boolean {
   return POSITIVE_NUMBER_PATTERN.test(str);
 }
 
+export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
+  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList;
+  }
+  return undefined;
+}
+
 export const getTokenSymbol = (address: string): string => {
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   if (tokenFromTokenList) {
@@ -282,16 +290,15 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string, onlyValue = false): string => {
+export const getTokenAmountAndSymbolByTokenAddress = (amount: number, address: string, onlyValue = false): string => {
   const tokenFromTokenList = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
-  const inputAmount = amount ? parseFloat(amount.toString()) : 0;
+  const inputAmount = amount || 0;
   if (tokenFromTokenList) {
-    const formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals)) || 0}`;
+    const formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
-  } else {
-    return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
   }
+  return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
