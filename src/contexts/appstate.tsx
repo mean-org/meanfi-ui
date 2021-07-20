@@ -55,7 +55,7 @@ interface AppStateConfig {
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
-  refreshStreamList: () => void;
+  refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -409,10 +409,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
-  const refreshStreamList = useCallback(() => {
+  const refreshStreamList = useCallback((reset = false) => {
     if (!publicKey) {
       return [];
     }
+
+    console.log('Reset selected stream:', reset);
 
     if (!loadingStreams) {
       updateLoadingStreams(true);
@@ -423,12 +425,11 @@ const AppStateProvider: React.FC = ({ children }) => {
           console.log('Streams:', streams);
           let item: StreamInfo | undefined;
           if (streams.length) {
-            // if (selectedStream) {
-            //   item = streams.find(s => s.id === selectedStream.id);
-            // } else {
-            //   item = streams[0];
-            // }
-            item = selectedStream || streams[0];
+            if (reset) {
+              item = streams[0];
+            } else {
+              item = selectedStream || streams[0];
+            }
             console.log('selectedStream:', item);
             if (item) {
               updateSelectedStream(item);
@@ -444,10 +445,14 @@ const AppStateProvider: React.FC = ({ children }) => {
                   setStreamActivity([]);
                 });
             }
+            if (currentScreen === 'contract') {
+              setSelectedTab('streams');
+            }
           } else {
             setStreamActivity([]);
             updateSelectedStream(undefined);
             updateStreamDetail(undefined);
+            setSelectedTab('contract');
           }
           setStreamList(streams);
           updateLoadingStreams(false);
@@ -458,6 +463,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [
     connection,
+    currentScreen,
     streamProgramAddress,
     loadingStreams,
     publicKey,
@@ -468,13 +474,13 @@ const AppStateProvider: React.FC = ({ children }) => {
     let timer: any;
 
     if (!streamList) {
-      refreshStreamList();
+      refreshStreamList(true);
     }
 
     if (streamList && currentScreen === 'streams' && !customStreamDocked) {
       timer = setInterval(() => {
         console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshStreamList();
+        refreshStreamList(false);
       }, STREAMS_REFRESH_TIMEOUT);
     }
 
@@ -506,6 +512,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         if (tokenAccount) {
           const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
           const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
+          console.log('mintInfoDecoded:', mintInfoDecoded);
           return convert(tokenAccount as TokenAccount, mintInfoDecoded as MintInfo);
         }
       }
@@ -516,10 +523,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       if (connection && connected && tokenList?.length && accounts?.tokenAccounts?.length) {
         if (selectedToken) {
           const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
+          console.log('balance:', balance);
           updateTokenBalance(balance);
         } else {
           setSelectedToken(tokenList[0]);
           const balance = await getTokenAccountBalanceByAddress(tokenList[0].address);
+          console.log('balance:', balance);
           updateTokenBalance(balance);
         }
       } else {

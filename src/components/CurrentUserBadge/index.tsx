@@ -16,9 +16,7 @@ import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { StreamInfo } from "../../money-streaming/money-streaming";
 import { copyText } from "../../utils/ui";
-import { PublicKey } from "@solana/web3.js";
-import { listStreams } from "../../money-streaming/utils";
-import { getSolanaExplorerClusterParam, useConnection } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 
 interface StreamStats {
   incoming: number;
@@ -32,7 +30,6 @@ const defaultStreamStats = {
 
 export const CurrentUserBadge = (props: {}) => {
 
-  const connection = useConnection();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
@@ -41,13 +38,8 @@ export const CurrentUserBadge = (props: {}) => {
     streamList,
     loadingStreams,
     customStreamDocked,
-    streamProgramAddress,
-    setStreamList,
-    setStreamDetail,
-    setSelectedStream,
-    setLoadingStreams,
-    setCurrentScreen,
-    setCustomStreamDocked
+    setCustomStreamDocked,
+    refreshStreamList,
   } = useContext(AppStateContext);
   const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
   const { wallet, publicKey, select } = useWallet();
@@ -100,22 +92,8 @@ export const CurrentUserBadge = (props: {}) => {
   }
 
   const onGoToStreamsClick = () => {
-    const programId = new PublicKey(streamProgramAddress);
-    setLoadingStreams(true);
-    listStreams(connection, programId, publicKey as PublicKey, publicKey as PublicKey, 'confirmed', true)
-      .then(async streams => {
-        setStreamList(streams);
-        setLoadingStreams(false);
-        console.log('Home -> streamList:', streams);
-        setSelectedStream(streams[0]);
-        setStreamDetail(streams[0]);
-        if (streams && streams.length > 0) {
-          setCurrentScreen("streams");
-          setCustomStreamDocked(false);
-        } else {
-          setCurrentScreen("contract");
-        }
-      });
+    refreshStreamList(true);
+    setCustomStreamDocked(false);
   };
 
   if (!wallet?.publicKey) {

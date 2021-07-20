@@ -87,14 +87,14 @@ export const OneTimePayment = () => {
     }
     if (isSuccess()) {
       setSelectedStream(undefined);
-      refreshStreamList();
+      refreshStreamList(true);
       setCurrentScreen("streams");
     }
   }
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
-    refreshStreamList();
+    refreshStreamList(true);
     closeTransactionModal();
     setCurrentScreen("streams");
   };

@@ -169,7 +169,7 @@ export const Streams = () => {
   };
   const handleCancelCustomStreamClick = () => {
     setCustomStreamDocked(false);
-    refreshStreamList();
+    refreshStreamList(false);
   }
 
   // Add funds modal
@@ -416,11 +416,15 @@ export const Streams = () => {
 
   const onAddFundsTransactionFinished = () => {
     resetTransactionStatus();
-    refreshStreamList();
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-    setCurrentScreen("streams");
+    console.log(`customStreamDocked: ${customStreamDocked}\nstreamId: ${streamDetail?.id as string}`);
+    if (customStreamDocked) {
+      openStreamById(streamDetail?.id as string);
+    } else {
+      refreshStreamList(false);
+    }
   };
 
   const onAfterAddFundsTransactionModalClosed = () => {
@@ -428,11 +432,9 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList();
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      setCurrentScreen("streams");
     }
   }
 
@@ -600,11 +602,10 @@ export const Streams = () => {
 
   const onWithdrawFundsTransactionFinished = () => {
     resetTransactionStatus();
-    refreshStreamList();
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-    setCurrentScreen("streams");
+    refreshStreamList(false);
   };
 
   const onAfterWithdrawFundsTransactionModalClosed = () => {
@@ -612,7 +613,7 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList();
+      refreshStreamList(false);
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
@@ -790,7 +791,7 @@ export const Streams = () => {
 
   const onCloseStreamTransactionFinished = () => {
     resetTransactionStatus();
-    refreshStreamList();
+    refreshStreamList(true);
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
@@ -802,7 +803,7 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList();
+      refreshStreamList(true);
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
@@ -1144,7 +1145,9 @@ export const Streams = () => {
         {/* Amount for OTPs */}
         {isOtp() ? (
           <div className="mb-3">
-            <div className="info-label">Amount</div>
+            <div className="info-label">
+              Amount&nbsp;(funded on {getReadableDate(streamDetail?.fundedOnUtc as string)})
+            </div>
             <div className="transaction-detail-row">
               <span className="info-icon">
                 <IconDownload className="mean-svg-icons" />
@@ -1155,7 +1158,6 @@ export const Streams = () => {
                   {streamDetail
                     ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
                     : '--'}
-                    <span className="ml-1">(funded on ----)</span>
                   </span>
                 ) : (
                   <span className="info-data">&nbsp;</span>
@@ -1364,7 +1366,9 @@ export const Streams = () => {
         {/* Amount for OTPs */}
         {isOtp() ? (
           <div className="mb-3">
-            <div className="info-label">Amount</div>
+            <div className="info-label">
+              Amount&nbsp;(funded on {getReadableDate(streamDetail?.fundedOnUtc as string)})
+            </div>
             <div className="transaction-detail-row">
               <span className="info-icon">
                 <IconUpload className="mean-svg-icons" />
@@ -1375,7 +1379,6 @@ export const Streams = () => {
                   {streamDetail
                     ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
                     : '--'}
-                    <span className="ml-1">(funded on ----)</span>
                   </span>
                 ) : (
                   <span className="info-data">&nbsp;</span>
