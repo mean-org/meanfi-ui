@@ -1,8 +1,15 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
-import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
-import { Button, Col, Modal, Row, Spin } from "antd";
+import {
+  IconCopy,
+  IconDownload,
+  IconExternalLink,
+  IconRefresh,
+  IconUpload,
+  IconWallet,
+} from "../../Icons";
+import { Button, Col, Modal, Row, Spin, Tooltip } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
@@ -33,12 +40,14 @@ export const CurrentUserBadge = (props: {}) => {
   const {
     streamList,
     loadingStreams,
+    customStreamDocked,
     streamProgramAddress,
     setStreamList,
     setStreamDetail,
     setSelectedStream,
     setLoadingStreams,
-    setCurrentScreen
+    setCurrentScreen,
+    setCustomStreamDocked
   } = useContext(AppStateContext);
   const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
   const { wallet, publicKey, select } = useWallet();
@@ -102,6 +111,7 @@ export const CurrentUserBadge = (props: {}) => {
         setStreamDetail(streams[0]);
         if (streams && streams.length > 0) {
           setCurrentScreen("streams");
+          setCustomStreamDocked(false);
         } else {
           setCurrentScreen("contract");
         }
@@ -118,20 +128,27 @@ export const CurrentUserBadge = (props: {}) => {
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
-          {/* <span className="effective-amount">
-            {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
-          </span> */}
-          <Spin size="small" />
-          <span className="transaction-legend incoming">
-            <IconDownload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">{streamStats.incoming}</span>
-          </span>
-          <span className="transaction-legend outgoing">
-            <IconUpload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
-          </span>
-        </div>
+        <Tooltip placement="bottom" title="Click to reload streams">
+          <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
+            <Spin size="small" />
+            {customStreamDocked ? (
+              <span className="transaction-legend neutral">
+                <IconRefresh className="mean-svg-icons"/>
+              </span>
+            ) : (
+              <>
+                <span className="transaction-legend incoming">
+                  <IconDownload className="mean-svg-icons"/>
+                  <span className="incoming-transactions-amout">{streamStats.incoming}</span>
+                </span>
+                <span className="transaction-legend outgoing">
+                  <IconUpload className="mean-svg-icons"/>
+                  <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
+                </span>
+              </>
+            )}
+          </div>
+        </Tooltip>
       </div>
       <Modal
         className="mean-modal"

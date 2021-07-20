@@ -259,28 +259,29 @@ export const OneTimePayment = () => {
         console.log('Local time added to parsed date!');
         console.log('fromParsedDate.toString()', fromParsedDate.toString());
         console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
-  
+
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.CreateTransaction
         });
         // Create a transaction
         const data = {
-          treasurer: treasurer,                                             // treasurer
-          beneficiary: beneficiary,                                         // beneficiary
-          associatedToken: associatedToken,                                 // associatedToken
-          fundingAmount: amount,                                            // fundingAmount
-          startUtc: fromParsedDate,                                         // startUtc
-          streamName: recipientNote
+          wallet: wallet,
+          treasurerMint: associatedToken,                                             // treasurerMint
+          beneficiary: beneficiary,                                                   // beneficiary
+          associatedToken: associatedToken,                                           // beneficiaryMint
+          amount: amount,                                                             // fundingAmount
+          fromParsedDate: fromParsedDate,                                             // startUtc
+          recipientNote: recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                                        // streamName
+            : contract?.name.trim(),                                                  // streamName
         };
         console.log('data:', data);
         return await moneyStream.oneTimePayment(
           wallet,
           associatedToken,                                            // treasurerMint
           beneficiary,                                                // beneficiary
-          associatedToken,                                            // associatedToken
+          associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount
           fromParsedDate,                                             // startUtc
           recipientNote

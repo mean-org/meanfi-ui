@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { convert, useLocalStorageState } from "../utils/utils";
+import { convert, shortenAddress, useLocalStorageState } from "../utils/utils";
 import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
@@ -14,6 +14,7 @@ import { MintInfo } from "@solana/spl-token";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
+import { notify } from "../utils/notifications";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -45,6 +46,7 @@ interface AppStateConfig {
   streamDetail: StreamInfo | undefined;
   streamProgramAddress: string;
   streamActivity: StreamActivity[];
+  customStreamDocked: boolean;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -70,6 +72,7 @@ interface AppStateConfig {
   setStreamDetail: (stream: StreamInfo) => void;
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
+  setCustomStreamDocked: (state: boolean) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -100,6 +103,7 @@ const contextDefaultValues: AppStateConfig = {
   streamDetail: undefined,
   streamProgramAddress: '',
   streamActivity: [],
+  customStreamDocked: false,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -125,6 +129,7 @@ const contextDefaultValues: AppStateConfig = {
   setStreamDetail: () => {},
   openStreamById: () => {},
   getStreamActivity: () => {},
+  setCustomStreamDocked: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -163,6 +168,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
+  const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -236,10 +242,43 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const openStreamById = async (streamId: string) => {
-    const streamPublicKey = new PublicKey(streamId);
-    const detail = await getStream(connection, streamPublicKey, 'finalized', true);
-    console.log('streamDetail', detail);
-    setStreamDetail(detail);
+    let streamPublicKey: PublicKey;
+    try {
+      streamPublicKey = new PublicKey(streamId);
+      try {
+        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
+        console.log('customStream', detail);
+        if (detail) {
+          setStreamDetail(detail);
+          setStreamList([detail]);
+          getStreamActivity(streamId);
+          setCustomStreamDocked(true);
+          notify({
+            description: `The stream with ID ${shortenAddress(streamId, 10)} has been loaded`,
+            type: "success"
+          });
+        } else {
+          notify({
+            message: "Error",
+            description: `Could not find or load stream with ID ${shortenAddress(streamId, 10)}`,
+            type: "error"
+          });
+        }
+      } catch (error) {
+        console.log('customStream', error);
+        notify({
+          message: "Error",
+          description: (error),
+          type: "error"
+        });
+      }
+    } catch (error) {
+      notify({
+        message: "Error",
+        description: 'Invalid public key. Please check input.',
+        type: "error"
+      });
+    }
   }
 
   const getStreamActivity = useCallback((streamId: string) => {
@@ -384,11 +423,12 @@ const AppStateProvider: React.FC = ({ children }) => {
           console.log('Streams:', streams);
           let item: StreamInfo | undefined;
           if (streams.length) {
-            if (selectedStream) {
-              item = streams.find(s => s.id === selectedStream.id);
-            } else {
-              item = streams[0];
-            }
+            // if (selectedStream) {
+            //   item = streams.find(s => s.id === selectedStream.id);
+            // } else {
+            //   item = streams[0];
+            // }
+            item = selectedStream || streams[0];
             console.log('selectedStream:', item);
             if (item) {
               updateSelectedStream(item);
@@ -431,7 +471,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       refreshStreamList();
     }
 
-    if (streamList && currentScreen === 'streams') {
+    if (streamList && currentScreen === 'streams' && !customStreamDocked) {
       timer = setInterval(() => {
         console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshStreamList();
@@ -440,9 +480,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => clearInterval(timer);
   }, [
+    streamList,
     currentScreen,
-    refreshStreamList,
-    streamList
+    customStreamDocked,
+    refreshStreamList
   ]);
 
   useEffect(() => {
@@ -553,6 +594,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamDetail,
         streamProgramAddress,
         streamActivity,
+        customStreamDocked,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -577,7 +619,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedStream,
         setStreamDetail,
         openStreamById,
-        getStreamActivity
+        getStreamActivity,
+        setCustomStreamDocked
       }}>
       {children}
     </AppStateContext.Provider>

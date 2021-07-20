@@ -18,6 +18,7 @@ export { IconLogout } from "./IconLogout";
 export { IconMoon } from "./IconMoon";
 export { IconOutgoingPaused } from "./IconOutgoingPaused";
 export { IconPause } from "./IconPause";
+export { IconRefresh } from "./IconRefresh";
 export { IconSettings } from "./IconSettings";
 export { IconShare } from "./IconShare";
 export { IconSort } from "./IconSort";

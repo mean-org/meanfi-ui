@@ -55,6 +55,7 @@ export const Streams = () => {
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
+    customStreamDocked,
     setSelectedToken,
     setCurrentScreen,
     setStreamDetail,
@@ -62,7 +63,8 @@ export const Streams = () => {
     refreshStreamList,
     setTransactionStatus,
     openStreamById,
-    setDtailsPanelOpen
+    setDtailsPanelOpen,
+    setCustomStreamDocked
   } = useContext(AppStateContext);
   const { confirm } = Modal;
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
@@ -153,6 +155,7 @@ export const Streams = () => {
   const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
   const onAcceptContractSelector = () => {
     setCurrentScreen("contract");
+    setCustomStreamDocked(false);
     closeContractSelectorModal();
   };
 
@@ -164,6 +167,10 @@ export const Streams = () => {
     openStreamById(e);
     closeOpenStreamModal();
   };
+  const handleCancelCustomStreamClick = () => {
+    setCustomStreamDocked(false);
+    refreshStreamList();
+  }
 
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
@@ -1576,26 +1583,41 @@ export const Streams = () => {
           </div>
           {/* Bottom CTA */}
           <div className="bottom-ctas">
-            <div className="create-stream">
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="small"
-                onClick={showContractSelectorModal}>
-                Create new money stream
-              </Button>
-            </div>
-            <div className="open-stream">
-              <Button
-                shape="round"
-                type="text"
-                size="small"
-                className="ant-btn-shaded"
-                onClick={showOpenStreamModal}
-                icon={<SearchOutlined />}>
-              </Button>
-            </div>
+            {customStreamDocked ? (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={handleCancelCustomStreamClick}>
+                  Back to My Streams
+                </Button>
+              </div>
+            ) : (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={showContractSelectorModal}>
+                  Create new money stream
+                </Button>
+              </div>
+            )}
+            {!customStreamDocked && (
+              <div className="open-stream">
+                <Button
+                  shape="round"
+                  type="text"
+                  size="small"
+                  className="ant-btn-shaded"
+                  onClick={showOpenStreamModal}
+                  icon={<SearchOutlined />}>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
