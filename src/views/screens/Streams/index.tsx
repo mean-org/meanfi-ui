@@ -1776,7 +1776,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={onWithdrawFundsTransactionFinished}>
-                Finish
+                Close
               </Button>
             </>
           ) : isError() ? (
