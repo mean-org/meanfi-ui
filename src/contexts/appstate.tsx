@@ -45,6 +45,7 @@ interface AppStateConfig {
   selectedStream: StreamInfo | undefined;
   streamDetail: StreamInfo | undefined;
   streamProgramAddress: string;
+  loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
   setTheme: (name: string) => void;
@@ -102,6 +103,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedStream: undefined,
   streamDetail: undefined,
   streamProgramAddress: '',
+  loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
   setTheme: () => {},
@@ -167,6 +169,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
+  const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
 
@@ -286,15 +289,18 @@ const AppStateProvider: React.FC = ({ children }) => {
       return [];
     }
 
+    setLoadingStreamActivity(true);
     const streamPublicKey = new PublicKey(streamId);
     listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
       .then(value => {
         console.log('activity:', value);
         setStreamActivity(value);
+        setLoadingStreamActivity(false);
       })
       .catch(err => {
         console.log(err);
         setStreamActivity([]);
+        setLoadingStreamActivity(false);
       });
   }, [connection, connected]);
 
@@ -428,21 +434,30 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (reset) {
               item = streams[0];
             } else {
-              item = selectedStream || streams[0];
+              // Try to get current item by its id
+              if (selectedStream) {
+                const itemFromServer = streams.find(i => i.id === selectedStream.id);
+                item = itemFromServer || selectedStream;
+              } else {
+                item = streams[0];
+              }
             }
             console.log('selectedStream:', item);
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
+              setLoadingStreamActivity(true);
               const streamPublicKey = new PublicKey(item.id as string);
               listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
                 .then(value => {
                   console.log('activity:', value);
                   setStreamActivity(value);
+                  setLoadingStreamActivity(false);
                 })
                 .catch(err => {
                   console.log(err);
                   setStreamActivity([]);
+                  setLoadingStreamActivity(false);
                 });
             }
             if (currentScreen === 'contract') {
@@ -602,6 +617,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedStream,
         streamDetail,
         streamProgramAddress,
+        loadingStreamActivity,
         streamActivity,
         customStreamDocked,
         setTheme,

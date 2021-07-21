@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Input, Button } from 'antd';
+import { Modal, Button } from 'antd';
 
 export const OpenStreamModal = (props: {
   handleClose: any;
@@ -14,6 +14,9 @@ export const OpenStreamModal = (props: {
 
   const onAcceptStreamId = () => {
     props.handleOk(streamId);
+    setTimeout(() => {
+      setStreamId('');
+    }, 100);
   }
 
   return (
@@ -25,22 +28,28 @@ export const OpenStreamModal = (props: {
       onOk={onAcceptStreamId}
       onCancel={props.handleClose}
       width={480}>
-      <div className="mb-3">
-        <div className="top-input-label">Existing stream id to open</div>
-        <span className="ant-input-affix-wrapper w-100 gray-stroke">
-          <Input
-            className="w-100"
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">Stream id to open</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <div className="transaction-field-row main-row">
+          <span className="input-left">
+          <input
+            id="stream-id-input"
+            className="w-100 general-text-input"
             autoComplete="on"
             autoCorrect="off"
             type="text"
             onChange={handleSreamIdChange}
-            placeholder="Address of the money stream created by Mean Pay"
+            placeholder="Stream ID created by Mean Finance"
             required={true}
             minLength={1}
             maxLength={79}
             spellCheck="false"
-            value={streamId}/>
-        </span>
+            value={streamId} />
+          </span>
+        </div>
       </div>
       <Button
         className="main-cta"
