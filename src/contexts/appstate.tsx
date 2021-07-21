@@ -441,8 +441,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       return [];
     }
 
-    console.log('Reset selected stream:', reset);
-
     if (!loadingStreams) {
       updateLoadingStreams(true);
       const programId = new PublicKey(streamProgramAddress);
@@ -467,19 +465,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
-              setLoadingStreamActivity(true);
-              const streamPublicKey = new PublicKey(item.id as string);
-              listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
-                .then(value => {
-                  console.log('activity:', value);
-                  setStreamActivity(value);
-                  setLoadingStreamActivity(false);
-                })
-                .catch(err => {
-                  console.log(err);
-                  setStreamActivity([]);
-                  setLoadingStreamActivity(false);
-                });
             }
             if (currentScreen === 'contract') {
               setSelectedTab('streams');

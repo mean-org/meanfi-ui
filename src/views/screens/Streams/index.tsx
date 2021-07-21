@@ -177,7 +177,7 @@ export const Streams = () => {
   };
   const handleCancelCustomStreamClick = () => {
     setCustomStreamDocked(false);
-    refreshStreamList(false);
+    refreshStreamList(true);
   }
 
   // Add funds modal

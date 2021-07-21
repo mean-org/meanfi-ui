@@ -32,6 +32,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { environment } from "../../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -171,15 +172,19 @@ export const PayrollPayment = () => {
   // Effect to set a default beneficiary token
   useEffect(() => {
 
-    if (tokenList) {
+    if (tokenList && selectedToken) {
       // Preset a token for the beneficiary account
       if (!destinationToken) {
-        setDestinationToken(tokenList[0] as TokenInfo);
+        setDestinationToken(selectedToken);
       }
     }
 
     return () => {};
-  }, [tokenList, destinationToken]);
+  }, [
+    tokenList,
+    selectedToken,
+    destinationToken
+  ]);
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
@@ -357,6 +362,9 @@ export const PayrollPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setDestinationToken(token);
+            if (environment !== 'production') {
+              setSelectedToken(token);
+            }
             console.log("token selected:", token);
             onCloseTokenSelector();
           };
@@ -392,6 +400,9 @@ export const PayrollPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
+            if (environment !== 'production') {
+              setDestinationToken(token);
+            }
             console.log("token selected:", token);
             setEffectiveRate(
               coinPrices && coinPrices[token.symbol]
