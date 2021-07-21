@@ -1715,7 +1715,7 @@ export const Streams = () => {
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds withdrawn successfuly!</p>
+              <p className="operation">Funds added successfuly!</p>
               <Button
                 block
                 type="primary"
