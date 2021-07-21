@@ -550,7 +550,7 @@ export const PayrollPayment = () => {
         console.log('Signing transaction...');
         return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signAllTransactions returned a signed transaction:', signed);
+          console.log('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,

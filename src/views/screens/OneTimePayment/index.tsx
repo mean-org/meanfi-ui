@@ -197,7 +197,7 @@ export const OneTimePayment = () => {
   // Validation
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
            ? true : false;
   }
 

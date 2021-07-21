@@ -350,8 +350,9 @@ const AppStateProvider: React.FC = ({ children }) => {
             console.log("Coin prices:", prices);
             setCoinPrices(prices);
             if (selectedToken) {
+              const symbol = selectedToken.symbol.toUpperCase();
               updateEffectiveRate(
-                prices[selectedToken.symbol] ? prices[selectedToken.symbol] : 0
+                prices[symbol] ? prices[symbol] : 0
               );
             }
           })

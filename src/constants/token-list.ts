@@ -115,7 +115,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'WSOL',
         name: 'Wrapped SOL',
         decimals: 9,
         logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
@@ -130,7 +130,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 102,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'WSOL',
         name: 'Wrapped SOL',
         decimals: 9,
         logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
@@ -143,7 +143,7 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 103,
         address: 'So11111111111111111111111111111111111111112',
-        symbol: 'wSOL',
+        symbol: 'WSOL',
         name: 'Wrapped SOL',
         decimals: 9,
         logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png',
