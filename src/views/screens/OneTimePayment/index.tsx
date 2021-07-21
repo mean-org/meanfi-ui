@@ -88,14 +88,16 @@ export const OneTimePayment = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      setSelectedStream(undefined);
-      refreshStreamList(true);
-      setCurrentScreen("streams");
+      resetContractValues();
+      if (isScheduledPayment) {
+        setSelectedStream(undefined);
+        refreshStreamList(true);
+        setCurrentScreen("streams");
+      }
     }
   }
 
   const handleGoToStreamsClick = () => {
-    resetContractValues();
     refreshStreamList(true);
     closeTransactionModal();
     setCurrentScreen("streams");
@@ -756,8 +758,8 @@ export const OneTimePayment = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={handleGoToStreamsClick}>
-                View Stream
+                onClick={isScheduledPayment ? handleGoToStreamsClick : closeTransactionModal}>
+                {isScheduledPayment ? 'View Stream' : 'Finish'}
               </Button>
             </>
           ) : isError() ? (
