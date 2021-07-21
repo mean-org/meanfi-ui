@@ -27,9 +27,9 @@ export enum TimesheetRequirementOption {
 export enum TransactionStatus {
     Iddle = 0,
     TransactionStart = 1,
-    CreateTransaction = 2,
-    CreateTransactionSuccess = 3,
-    CreateTransactionFailure = 4,
+    InitTransaction = 2,
+    InitTransactionSuccess = 3,
+    InitTransactionFailure = 4,
     SignTransaction = 5,
     SignTransactionSuccess = 6,
     SignTransactionFailure = 7,
@@ -40,4 +40,13 @@ export enum TransactionStatus {
     ConfirmTransactionSuccess = 12,
     ConfirmTransactionFailure = 13,
     TransactionFinished = 14
+}
+
+export enum Operations {
+    Transfer = 0,
+    CreateStream = 1,
+    FundStream = 2,
+    CloseStream = 3,
+    Withdraw = 4,
+    ClaimFunds = 5
 }

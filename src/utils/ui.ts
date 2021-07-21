@@ -1,7 +1,8 @@
 import { TokenInfo } from "@solana/spl-token-registry";
+import moment from "moment";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { environment } from "../environments/environment";
-import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { Operations, PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
@@ -211,17 +212,17 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
 export const getTransactionOperationDescription = (status: TransactionStatusInfo): string => {
     switch (status.currentOperation) {
         case TransactionStatus.TransactionStart:
+            return 'Collecting data';
+        case TransactionStatus.InitTransaction:
             return 'Init transaction';
-        case TransactionStatus.CreateTransaction:
-            return 'Create transaction';
         case TransactionStatus.SignTransaction:
             return 'Waiting for confirmation';
         case TransactionStatus.SendTransaction:
             return 'Sending transaction';
         case TransactionStatus.ConfirmTransaction:
             return 'Confirming transaction';
-        case TransactionStatus.CreateTransactionFailure:
-            return 'Could not create transaction';
+        case TransactionStatus.InitTransactionFailure:
+            return 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
             return 'Transaction rejected';
         case TransactionStatus.SendTransactionFailure:
@@ -335,4 +336,9 @@ export const getFormattedNumberToLocale = (value: any) => {
     const converted = parseFloat(value.toString());
     const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9 }).format(converted);
     return formatted || '';
+}
+
+export function disabledDate(current: any) {
+    // Can not select days before today and today
+    return current && current < moment().subtract(1, 'days').endOf('day');
 }

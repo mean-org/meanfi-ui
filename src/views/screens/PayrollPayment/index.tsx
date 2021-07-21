@@ -17,6 +17,7 @@ import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../../models/enums";
 import {
+  disabledDate,
   getAmountWithTokenSymbol,
   getFairPercentForInterval,
   getOptionsFromEnum,
@@ -72,6 +73,7 @@ export const PayrollPayment = () => {
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
+  const [isScheduledPayment, setIsScheduledPayment] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
 
   // Token selection modal
@@ -476,6 +478,11 @@ export const PayrollPayment = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
         let fromParsedDate = new Date(parsedDate);
+        if (fromParsedDate.getDate() === now.getDate()) {
+          setIsScheduledPayment(false);
+        } else {
+          setIsScheduledPayment(true);
+        }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         console.log('Local time added to parsed date!');
@@ -484,7 +491,7 @@ export const PayrollPayment = () => {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         // Create a transaction
         const data = {
@@ -520,7 +527,7 @@ export const PayrollPayment = () => {
           console.log('getCreateStreamTransaction returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactions = value;
@@ -530,7 +537,7 @@ export const PayrollPayment = () => {
           console.log('getCreateStreamTransaction error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -682,7 +689,7 @@ export const PayrollPayment = () => {
   }
 
   const isError = () => {
-    return transactionStatus.currentOperation === TransactionStatus.CreateTransactionFailure ||
+    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
@@ -859,6 +866,7 @@ export const PayrollPayment = () => {
               className="addon-date-picker"
               aria-required={true}
               allowClear={false}
+              disabledDate={disabledDate}
               onChange={(value, date) => handleDateChange(date)}
               value={moment(
                 paymentStartDate,

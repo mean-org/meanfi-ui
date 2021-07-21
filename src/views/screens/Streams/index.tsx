@@ -422,7 +422,7 @@ export const Streams = () => {
   }
 
   const isError = () => {
-    return transactionStatus.currentOperation === TransactionStatus.CreateTransactionFailure ||
+    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
@@ -473,7 +473,7 @@ export const Streams = () => {
       if (wallet && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         const stream = new PublicKey(streamDetail.id as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
@@ -491,7 +491,7 @@ export const Streams = () => {
           console.log('addFundsTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactions = value;
@@ -501,7 +501,7 @@ export const Streams = () => {
           console.log('addFundsTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -656,7 +656,7 @@ export const Streams = () => {
       if (wallet && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
@@ -680,7 +680,7 @@ export const Streams = () => {
           console.log('withdrawTransaction returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transaction = value;
@@ -690,7 +690,7 @@ export const Streams = () => {
           console.log('closeStreamTransaction error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -845,7 +845,7 @@ export const Streams = () => {
       if (wallet && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
         // Create a transaction
@@ -854,20 +854,20 @@ export const Streams = () => {
           publicKey as PublicKey                            // Initializer public key
         )
         .then(value => {
-          console.log('closeStreamTransaction returned transaction:', value);
+          console.log('closeStream returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transaction = value;
           return true;
         })
         .catch(error => {
-          console.log('closeStreamTransaction error:', error);
+          console.log('closeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });

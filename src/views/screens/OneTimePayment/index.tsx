@@ -14,6 +14,7 @@ import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
+  disabledDate,
   getAmountWithTokenSymbol,
   getTransactionOperationDescription
 } from "../../../utils/ui";
@@ -58,6 +59,7 @@ export const OneTimePayment = () => {
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
+  const [isScheduledPayment, setIsScheduledPayment] = useState(false);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -240,20 +242,20 @@ export const OneTimePayment = () => {
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log("Start transaction for contract type:", contract?.name);
-        console.log('Wallet address:', wallet?.publicKey?.toBase58());
-        const treasurer = wallet.publicKey as PublicKey;
-
         console.log('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
         const amount = parseFloat(fromCoinAmount as string);
-
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
         let fromParsedDate = new Date(parsedDate);
+        if (fromParsedDate.getDate() === now.getDate()) {
+          setIsScheduledPayment(false);
+        } else {
+          setIsScheduledPayment(true);
+        }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         console.log('Local time added to parsed date!');
@@ -262,7 +264,7 @@ export const OneTimePayment = () => {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         // Create a transaction
         const data = {
@@ -292,7 +294,7 @@ export const OneTimePayment = () => {
           console.log('oneTimePaymentTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactions = value;
@@ -302,7 +304,7 @@ export const OneTimePayment = () => {
           console.log('oneTimePaymentTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -452,7 +454,7 @@ export const OneTimePayment = () => {
   }
 
   const isError = () => {
-    return transactionStatus.currentOperation === TransactionStatus.CreateTransactionFailure ||
+    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
@@ -697,6 +699,7 @@ export const OneTimePayment = () => {
               className="addon-date-picker"
               aria-required={true}
               allowClear={false}
+              disabledDate={disabledDate}
               onChange={(value, date) => handleDateChange(date)}
               value={moment(
                 paymentStartDate,
