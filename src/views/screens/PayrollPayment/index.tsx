@@ -608,9 +608,9 @@ export const PayrollPayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmAllTransactions(signatures)
+      return await moneyStream.confirmTransactions(...signatures)
         .then(result => {
-          console.log('confirmAllTransactions result:', result);
+          console.log('confirmTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,

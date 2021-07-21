@@ -503,7 +503,6 @@ export async function listStreamActivity(
 
     for (let sign of signatures) {
         let tx = await connection.getParsedConfirmedTransaction(sign.signature, commitmentValue);
-        console.log(sign.signature);
 
         if (tx !== null) {
             activity.push(Object.assign({}, parseActivityData(
