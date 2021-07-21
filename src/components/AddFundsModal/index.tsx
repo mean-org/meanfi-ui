@@ -45,6 +45,17 @@ export const AddFundsModal = (props: {
             : false;
   }
 
+  // 'Start funding' : 'Invalid amount'
+  const getTransactionStartButtonLabel = (): string => {
+    return !selectedToken || !tokenBalance
+      ? "No balance"
+      : !topupAmount
+      ? "Enter amount"
+      : parseFloat(topupAmount) <= 0 || parseFloat(topupAmount) > tokenBalance
+      ? "Invalid amount"
+      : "Start funding";
+  }
+
   return (
     <Modal
       className="mean-modal"
@@ -159,7 +170,7 @@ export const AddFundsModal = (props: {
         size="large"
         disabled={!isValidInput()}
         onClick={onAcceptTopup}>
-        {isValidInput() ? 'Start funding' : 'Invalid amount'}
+        {getTransactionStartButtonLabel()}
       </Button>
     </Modal>
   );

@@ -103,14 +103,12 @@ export const RepeatingPayment = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      setSelectedStream(undefined);
-      refreshStreamList(true);
-      setCurrentScreen("streams");
+      resetContractValues();
     }
   }
 
   const handleGoToStreamsClick = () => {
-    resetContractValues();
+    setSelectedStream(undefined);
     refreshStreamList(true);
     closeTransactionModal();
     setCurrentScreen("streams");
