@@ -29,7 +29,14 @@ import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSecond
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
 import { WithdrawModal } from '../../../components/WithdrawModal';
-import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../../constants";
+import {
+  SIMPLE_DATE_FORMAT,
+  SIMPLE_DATE_TIME_FORMAT,
+  VERBOSE_DATE_FORMAT,
+  VERBOSE_DATE_TIME_FORMAT,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+} from "../../../constants";
 import _ from "lodash";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { PublicKey, Transaction } from "@solana/web3.js";
@@ -272,16 +279,22 @@ export const Streams = () => {
     }
   }
 
-  const getShortDate = (date: string): string => {
+  const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return dateFormat(localDate, "mm/dd/yyyy HH:MM TT");
+    return dateFormat(
+      localDate,
+      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+    );
   }
 
-  const getReadableDate = (date: string): string => {
+  const getReadableDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return dateFormat(localDate, "ddd mmm dd yyyy HH:MM TT");
+    return dateFormat(
+      localDate,
+      includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+    );
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
@@ -1305,7 +1318,7 @@ export const Streams = () => {
                     </div>
                   </div>
                   <div className="date-cell">
-                    {getShortDate(item.utcDate as string)}
+                    {getShortDate(item.utcDate as string, true)}
                   </div>
                 </a>
               );
@@ -1542,7 +1555,7 @@ export const Streams = () => {
                     </div>
                   </div>
                   <div className="date-cell">
-                    {getShortDate(item.utcDate as string)}
+                    {getShortDate(item.utcDate as string, true)}
                   </div>
                 </a>
               );
