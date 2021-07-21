@@ -21,7 +21,7 @@ import { MEANPAY_WEBSITE_URL } from "../../constants";
 export const AppContextMenu = () => {
 
   const connection = useConnectionConfig();
-  const { connected, disconnect,resetWalletProvider } = useWallet();
+  const { connected, disconnect, resetWalletProvider } = useWallet();
   const {
     theme,
     setTheme,
@@ -100,10 +100,12 @@ export const AppContextMenu = () => {
           </Menu.Item>
         </>
       )}
-      <Menu.Item key="9" onClick={onDisconnectWallet}>
-        <IconLogout className="mean-svg-icons" />
-        <span className="menu-item-text">Disconnect wallet</span>
-      </Menu.Item>
+      {connected && (
+        <Menu.Item key="9" onClick={onDisconnectWallet}>
+          <IconLogout className="mean-svg-icons" />
+          <span className="menu-item-text">Disconnect wallet</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
