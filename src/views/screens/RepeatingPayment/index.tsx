@@ -57,6 +57,7 @@ export const RepeatingPayment = () => {
     streamProgramAddress,
     setCurrentScreen,
     setSelectedToken,
+    resetContractValues,
     setSelectedTokenBalance,
     setEffectiveRate,
     setRecipientAddress,
@@ -236,7 +237,7 @@ export const RepeatingPayment = () => {
   // Validation
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
            ? true : false;
   }
 
@@ -638,21 +639,6 @@ export const RepeatingPayment = () => {
 
   };
 
-  const resetContractValues = () => {
-    const today = new Date().toLocaleDateString();
-    setFromCoinAmount('');
-    setRecipientAddress('');
-    setRecipientNote('');
-    setPaymentStartDate(today);
-    setPaymentRateAmount('');
-    setPaymentRateFrequency(PaymentRateType.PerMonth);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-    setSelectedToken(undefined);
-  }
-
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
@@ -866,7 +852,7 @@ export const RepeatingPayment = () => {
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
                   ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
-                  : "Unknown"
+                  : "0"
               }`}
             </span>
             <span>

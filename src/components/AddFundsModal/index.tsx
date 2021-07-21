@@ -72,7 +72,7 @@ export const AddFundsModal = (props: {
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
                     ? formatAmount(tokenBalance as number, selectedToken.decimals || 2)
-                    : "Unknown"
+                    : "0"
                 }`}
               </span>
               <span>

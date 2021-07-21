@@ -643,8 +643,8 @@ export const Streams = () => {
 
   const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
+    let signedTransactions: Transaction[];
+    let signatures: any[];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -709,7 +709,7 @@ export const Streams = () => {
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed[0];
+          signedTransactions = signed;
           return true;
         })
         .catch(error => {
@@ -732,7 +732,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransactions(signedTransaction)
+        return moneyStream.sendSignedTransactions(...signedTransactions)
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -740,7 +740,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig[0];
+            signatures = sig;
             return true;
           })
           .catch(error => {
@@ -761,7 +761,7 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(...signature)
+      return await moneyStream.confirmTransactions(...signatures)
         .then(result => {
           console.log('confirmTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
@@ -1229,6 +1229,7 @@ export const Streams = () => {
             </div>
           )}
 
+          {/* Show only if the stream is not an Otp */}
           {/* Amount withdrawn */}
           <div className="mb-3">
             <div className="info-label">Total amount you have withdrawn since stream started</div>
@@ -1715,7 +1716,7 @@ export const Streams = () => {
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds added successfuly!</p>
+              <p className="operation">Funds added successfully!</p>
               <Button
                 block
                 type="primary"
@@ -1768,7 +1769,7 @@ export const Streams = () => {
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds withdrawn successfuly!</p>
+              <p className="operation">Funds withdrawn successfully!</p>
               <Button
                 block
                 type="primary"

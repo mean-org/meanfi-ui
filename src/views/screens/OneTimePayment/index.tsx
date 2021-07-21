@@ -46,6 +46,7 @@ export const OneTimePayment = () => {
     streamProgramAddress,
     setCurrentScreen,
     setSelectedToken,
+    resetContractValues,
     setSelectedTokenBalance,
     setEffectiveRate,
     setRecipientAddress,
@@ -421,19 +422,6 @@ export const OneTimePayment = () => {
 
   };
 
-  const resetContractValues = () => {
-    const today = new Date().toLocaleDateString();
-    setFromCoinAmount('');
-    setRecipientAddress('');
-    setRecipientNote('');
-    setPaymentStartDate(today);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-    setSelectedToken(undefined);
-  }
-
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
@@ -529,7 +517,7 @@ export const OneTimePayment = () => {
             <span className="balance-amount">
               {`${tokenBalance && selectedToken
                   ? formatAmount(tokenBalance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
-                  : "Unknown"
+                  : "0"
             }`}
             </span>
             <span>

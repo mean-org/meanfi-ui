@@ -57,6 +57,7 @@ export const PayrollPayment = () => {
     streamProgramAddress,
     setCurrentScreen,
     setSelectedToken,
+    resetContractValues,
     setSelectedTokenBalance,
     setEffectiveRate,
     setRecipientAddress,
@@ -237,7 +238,7 @@ export const PayrollPayment = () => {
   // Validation
 
   const isAddressOwnAccount = (): boolean => {
-    return recipientAddress && wallet && recipientAddress === wallet.publicKey.toBase58()
+    return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
            ? true : false;
   }
 
@@ -652,21 +653,6 @@ export const PayrollPayment = () => {
 
   };
 
-  const resetContractValues = () => {
-    const today = new Date().toLocaleDateString();
-    setFromCoinAmount('');
-    setRecipientAddress('');
-    setRecipientNote('');
-    setPaymentStartDate(today);
-    setPaymentRateAmount('');
-    setPaymentRateFrequency(PaymentRateType.PerMonth);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-    setSelectedToken(undefined);
-  }
-
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
@@ -900,7 +886,7 @@ export const PayrollPayment = () => {
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
                   ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
-                  : "Unknown"
+                  : "0"
               }`}
             </span>
             <span>

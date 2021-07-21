@@ -3,7 +3,7 @@ import { convert, shortenAddress, useLocalStorageState } from "../utils/utils";
 import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { getStream, listStreamActivity, listStreams } from "../money-streaming/utils";
+import { findATokenAddress, getStream, listStreamActivity, listStreams } from "../money-streaming/utils";
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
@@ -56,6 +56,7 @@ interface AppStateConfig {
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
+  resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
   setRecipientAddress: (address: string) => void;
@@ -115,6 +116,7 @@ const contextDefaultValues: AppStateConfig = {
   setEffectiveRate: () => {},
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
+  resetContractValues: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
   setRecipientNote: () => {},
@@ -240,8 +242,26 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateTransactionStatus(status);
   }
 
+  const resetContractValues = () => {
+    setFromCoinAmount('');
+    setRecipientAddress('');
+    setRecipientNote('');
+    setPaymentStartDate(today);
+    setPaymentRateAmount('');
+    setPaymentRateFrequency(PaymentRateType.PerMonth);
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+    setSelectedToken(undefined);
+  }
+
   const setPreviousWalletConnectState = (state: boolean) => {
     updatePreviousWalletConnectState(state);
+    if (state === false) {
+      resetContractValues();
+      setCustomStreamDocked(false);
+    }
   }
 
   const openStreamById = async (streamId: string) => {
@@ -523,33 +543,29 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (address) {
-        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
-        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === address) as TokenAccount;
-        if (tokenAccount) {
-          const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
-          const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
-          console.log('mintInfoDecoded:', mintInfoDecoded);
-          return convert(tokenAccount as TokenAccount, mintInfoDecoded as MintInfo);
+        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
+        if (accountInfo) {
+          const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
+          return tokenAmount.uiAmount || 0;
         }
       }
       return 0;
     }
 
     const updateToken = async () => {
+      let balance = 0;
       if (connection && connected && tokenList?.length && accounts?.tokenAccounts?.length) {
+        let selectedTokenAddress: any;
         if (selectedToken) {
-          const balance = await getTokenAccountBalanceByAddress(selectedToken.address);
-          console.log('balance:', balance);
-          updateTokenBalance(balance);
+          selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
         } else {
           setSelectedToken(tokenList[0]);
-          const balance = await getTokenAccountBalanceByAddress(tokenList[0].address);
-          console.log('balance:', balance);
-          updateTokenBalance(balance);
+          selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, tokenList[0].address.toPublicKey());
         }
-      } else {
-        updateTokenBalance(0);
+        balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
       }
+      console.log('balance:', balance);
+      updateTokenBalance(balance);
     }
 
     if (shouldUpdateToken) {
@@ -559,6 +575,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     return () => {};
   }, [
+    publicKey,
     tokenList,
     connected,
     shouldUpdateToken,
@@ -629,6 +646,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setEffectiveRate,
         setCoinPrices,
         refreshTokenBalance,
+        resetContractValues,
         refreshStreamList,
         setContract,
         setRecipientAddress,
