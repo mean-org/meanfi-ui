@@ -14,9 +14,9 @@ import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
-import { StreamInfo } from "../../money-streaming/money-streaming";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+import { StreamInfo } from "../../money-streaming/types";
 
 interface StreamStats {
   incoming: number;

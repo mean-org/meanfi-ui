@@ -22,7 +22,7 @@ import {
   IconUpload,
 } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming, StreamActivity, StreamInfo } from "../../../money-streaming/money-streaming";
+import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { getStream } from "../../../money-streaming/utils";
 import { useWallet } from "../../../contexts/wallet";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTokenDecimals, getTokenSymbol, shortenAddress, truncateFloat } from "../../../utils/utils";
@@ -45,6 +45,7 @@ import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { StreamActivity, StreamInfo } from "../../../money-streaming/types";
 
 var dateFormat = require("dateformat");
 
@@ -102,10 +103,17 @@ export const Streams = () => {
         // const currentBlockTime = await connection.getBlockTime(slot) as number;
         const currentBlockTime = Date.now() / 1000;
 
-        const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
+        let rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
         const elapsedTime = currentBlockTime - lastTimeSnap;
 
         let escrowVestedAmount = 0;
+
+        let rateAmount = clonedDetail.rateAmount;
+    
+        if (rateAmount === 0) {
+            rateAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
+            rate = rateAmount / clonedDetail.rateIntervalInSeconds;
+        }
 
         if (currentBlockTime >= lastTimeSnap) {
           escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
@@ -1332,9 +1340,7 @@ export const Streams = () => {
               type="text"
               shape="round"
               size="small"
-              disabled={!streamDetail ||
-                        !streamDetail.escrowVestedAmount ||
-                        publicKey?.toBase58() !== streamDetail.beneficiaryAddress}
+              disabled={isScheduledOtp() || !streamDetail?.escrowVestedAmount || publicKey?.toBase58() !== streamDetail?.beneficiaryAddress}
               onClick={showWithdrawModal}>
               Withdraw funds
             </Button>

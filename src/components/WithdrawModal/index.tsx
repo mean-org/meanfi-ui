@@ -4,8 +4,8 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber
 } from "../../utils/utils";
-import { StreamInfo } from "../../money-streaming/money-streaming";
 import { percentage } from "../../utils/ui";
+import { StreamInfo } from "../../money-streaming/types";
 
 export const WithdrawModal = (props: {
   startUpData: StreamInfo | undefined;

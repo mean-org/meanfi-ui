@@ -7,7 +7,6 @@ import { findATokenAddress, getStream, listStreamActivity, listStreams } from ".
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
-import { StreamActivity, StreamInfo } from "../money-streaming/money-streaming";
 import { deserializeMint, useAccountsContext } from "./accounts";
 import { TokenAccount } from "../models";
 import { MintInfo } from "@solana/spl-token";
@@ -15,6 +14,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
+import { StreamActivity, StreamInfo } from "../money-streaming/types";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
