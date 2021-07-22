@@ -1141,6 +1141,18 @@ export const Streams = () => {
     return `${item.action} ${amount}`;
   }
 
+  const isScheduledOtp = (): boolean => {
+    if (streamDetail && streamDetail.rateAmount === 0) {
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
+      const streamStartDate = new Date(streamDetail.startUtc as string);
+      if (streamStartDate > nowUtc) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={showCloseStreamConfirm} disabled={!isAuthority()}>
@@ -1269,44 +1281,48 @@ export const Streams = () => {
             </div>
           )}
 
-          {/* Show only if the stream is not an Otp */}
-          {/* Amount withdrawn */}
-          <div className="mb-3">
-            <div className="info-label">Total amount you have withdrawn since stream started</div>
-            <div className="transaction-detail-row">
-              <span className="info-icon">
-                <IconDownload className="mean-svg-icons" />
-              </span>
-              {streamDetail ? (
-                <span className="info-data">
-                {streamDetail
-                  ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
-                  : '--'}
-                </span>
-              ) : (
-                <span className="info-data">&nbsp;</span>
-              )}
-            </div>
-          </div>
+          {/* Show only if the stream is not a scheduled Otp */}
+          {!isScheduledOtp() && (
+            <>
+              {/* Amount withdrawn */}
+              <div className="mb-3">
+                <div className="info-label">Total amount you have withdrawn since stream started</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconDownload className="mean-svg-icons" />
+                  </span>
+                  {streamDetail ? (
+                    <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data">&nbsp;</span>
+                  )}
+                </div>
+              </div>
 
-          {/* Funds available to withdraw now (Total Vested) */}
-          <div className="mb-3">
-            <div className="info-label">Funds available to withdraw now</div>
-            <div className="transaction-detail-row">
-              <span className="info-icon">
-                <IconUpload className="mean-svg-icons" />
-              </span>
-              {streamDetail ? (
-                <span className="info-data large">
-                {streamDetail
-                  ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-                  : '--'}
-                </span>
-              ) : (
-                <span className="info-data large">&nbsp;</span>
-              )}
-            </div>
-          </div>
+              {/* Funds available to withdraw now (Total Vested) */}
+              <div className="mb-3">
+                <div className="info-label">Funds available to withdraw now</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconUpload className="mean-svg-icons" />
+                  </span>
+                  {streamDetail ? (
+                    <span className="info-data large">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data large">&nbsp;</span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Withdraw button */}
           <div className="mt-3 mb-3 withdraw-container">
