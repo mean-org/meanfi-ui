@@ -290,15 +290,35 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getTokenAmountAndSymbolByTokenAddress = (amount: number, address: string, onlyValue = false): string => {
+export const getTokenAmountAndSymbolByTokenAddress = (
+  amount: number,
+  address: string,
+  onlyValue = false,
+  truncateInsteadRound = false
+): string => {
   const tokenFromTokenList = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
   const inputAmount = amount || 0;
   if (tokenFromTokenList) {
-    const formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals))}`;
+    const formatted = truncateInsteadRound
+      ? truncateFloat(inputAmount, tokenFromTokenList.decimals)
+      : `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
+}
+
+export const truncateFloat = (value: any, decimals = 2): string => {
+  const numericString = value.toString();
+  const splitted = numericString.split('.');
+
+  if (splitted.length === 1 || splitted[1].length <= decimals) {
+    return numericString;
+  }
+
+  const reshapedDecimals = splitted[1].slice(0, decimals);
+  splitted[1] = reshapedDecimals;
+  return splitted.join('.');
 }

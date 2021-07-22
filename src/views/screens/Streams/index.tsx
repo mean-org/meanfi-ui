@@ -23,8 +23,9 @@ import {
 } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming, StreamActivity, StreamInfo } from "../../../money-streaming/money-streaming";
+import { getStream } from "../../../money-streaming/utils";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTokenSymbol, shortenAddress } from "../../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTokenDecimals, getTokenSymbol, shortenAddress, truncateFloat } from "../../../utils/utils";
 import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
@@ -210,13 +211,52 @@ export const Streams = () => {
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
-  const showWithdrawModal = useCallback(() => {
-    setLastStreamDetail(streamDetail);
-    setIsWithdrawModalVisibility(true)
-  }, [streamDetail]);
+  const showWithdrawModal = useCallback(async () => {
+    let streamPublicKey: PublicKey;
+    const streamId = streamDetail?.id;
+    try {
+      streamPublicKey = new PublicKey(streamId as string);
+      try {
+        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
+        if (detail) {
+          console.log('escrowVestedAmount', detail.escrowVestedAmount);
+          const totalAmount = detail.isStreaming
+            ? truncateFloat(
+              detail.escrowVestedAmount,
+              getTokenDecimals(streamDetail?.associatedToken as string)
+            )
+            : detail.escrowVestedAmount.toString();
+          detail.escrowVestedAmount = parseFloat(totalAmount);
+          console.log('detail', detail);
+          setLastStreamDetail(detail);
+          setIsWithdrawModalVisibility(true)
+        } else {
+          notify({
+            message: "Error",
+            description: `Could not find or load stream with ID ${shortenAddress(streamId as string, 10)}`,
+            type: "error"
+          });
+        }
+      } catch (error) {
+        console.log(error);
+        notify({
+          message: "Error",
+          description: (error),
+          type: "error"
+        });
+      }
+    } catch (error) {
+      notify({
+        message: "Error",
+        description: 'Invalid stream id!',
+        type: "error"
+      });
+    }
+  }, [connection, streamDetail]);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
     console.log('Withdraw amount:', parseFloat(amount));

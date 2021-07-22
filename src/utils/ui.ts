@@ -2,7 +2,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import moment from "moment";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { environment } from "../environments/environment";
-import { Operations, PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Modal, Button } from "antd";
 import {
   getTokenAmountAndSymbolByTokenAddress,
-  isValidNumber,
+  isValidNumber
 } from "../../utils/utils";
 import { StreamInfo } from "../../money-streaming/money-streaming";
 import { percentage } from "../../utils/ui";
@@ -13,18 +13,30 @@ export const WithdrawModal = (props: {
   handleOk: any;
   isVisible: boolean;
 }) => {
-  const [withdrawAmountRaw, setWithdrawAmountRaw] = useState<string>("");
-  const [withdrawAmountFormatted, setWithdrawAmountFormatted] =
-    useState<string>("");
+  const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
 
   const onAcceptWithdrawal = () => {
-    props.handleOk(withdrawAmountRaw);
+    props.handleOk(withdrawAmountInput);
   };
 
   const setValue = (value: string) => {
-    setWithdrawAmountRaw(value);
-    setWithdrawAmountFormatted(value);
+    setWithdrawAmountInput(value);
   };
+
+  const setPercentualValue = (value: number) => {
+    if (props.startUpData) {
+      if (value === 100) {
+        setWithdrawAmountInput(props.startUpData.escrowVestedAmount.toString());
+      } else {
+        const partialAmount = percentage(value, props.startUpData.escrowVestedAmount);
+        setWithdrawAmountInput(
+          getAmountWithSymbol(partialAmount, props.startUpData.associatedToken as string, true)
+        );
+      }
+    } else {
+      setValue("0");
+    }
+  }
 
   const handleWithdrawAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -35,25 +47,14 @@ export const WithdrawModal = (props: {
     }
   };
 
-  const getAmountWithSymbol = (
-    amount: any,
-    address: string,
-    onlyValue = false
-  ) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
-  };
+  const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, truncateInsteadRound = false) => {
+    return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
+  }
 
   const isValidInput = () => {
-    return withdrawAmountRaw &&
-      parseFloat(withdrawAmountRaw) &&
-      parseFloat(withdrawAmountRaw) <=
-        parseFloat(
-          getAmountWithSymbol(
-            props.startUpData?.escrowVestedAmount,
-            props.startUpData?.associatedToken as string,
-            true
-          )
-        )
+    return props.startUpData && withdrawAmountInput &&
+      parseFloat(withdrawAmountInput) &&
+      parseFloat(withdrawAmountInput) <= props.startUpData.escrowVestedAmount
       ? true
       : false;
   };
@@ -67,8 +68,7 @@ export const WithdrawModal = (props: {
       onOk={onAcceptWithdrawal}
       onCancel={props.handleClose}
       afterClose={() => setValue("")}
-      width={480}
-    >
+      width={480}>
       <div className="mb-3">
         <div className="transaction-field disabled">
           <div className="transaction-field-row">
@@ -108,99 +108,29 @@ export const WithdrawModal = (props: {
                 minLength={1}
                 maxLength={79}
                 spellCheck="false"
-                value={withdrawAmountFormatted}
+                value={withdrawAmountInput}
               />
             </span>
             <div className="addon-right">
               <div className="token-group">
                 <div
                   className="token-max simplelink"
-                  onClick={() => {
-                    if (props.startUpData) {
-                      const partialAmount = percentage(
-                        25,
-                        props.startUpData.escrowVestedAmount as number
-                      );
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(
-                        getAmountWithSymbol(
-                          partialAmount,
-                          props.startUpData.associatedToken as string,
-                          true
-                        )
-                      );
-                    } else {
-                      setValue("0");
-                    }
-                  }}
-                >
+                  onClick={() => setPercentualValue(25)}>
                   25%
                 </div>
                 <div
                   className="token-max simplelink"
-                  onClick={() => {
-                    if (props.startUpData) {
-                      const partialAmount = percentage(
-                        50,
-                        props.startUpData.escrowVestedAmount as number
-                      );
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(
-                        getAmountWithSymbol(
-                          partialAmount,
-                          props.startUpData.associatedToken as string,
-                          true
-                        )
-                      );
-                    } else {
-                      setValue("0");
-                    }
-                  }}
-                >
+                  onClick={() => setPercentualValue(50)}>
                   50%
                 </div>
                 <div
                   className="token-max simplelink"
-                  onClick={() => {
-                    if (props.startUpData) {
-                      const partialAmount = percentage(
-                        75,
-                        props.startUpData.escrowVestedAmount as number
-                      );
-                      setWithdrawAmountRaw(`${partialAmount}`);
-                      setWithdrawAmountFormatted(
-                        getAmountWithSymbol(
-                          partialAmount,
-                          props.startUpData.associatedToken as string,
-                          true
-                        )
-                      );
-                    } else {
-                      setValue("0");
-                    }
-                  }}
-                >
+                  onClick={() => setPercentualValue(75)}>
                   75%
                 </div>
                 <div
                   className="token-max simplelink"
-                  onClick={() => {
-                    if (props.startUpData) {
-                      setWithdrawAmountRaw(
-                        `${props.startUpData.escrowVestedAmount}`
-                      );
-                      setWithdrawAmountFormatted(
-                        getAmountWithSymbol(
-                          props.startUpData.escrowVestedAmount,
-                          props.startUpData.associatedToken as string,
-                          true
-                        )
-                      );
-                    } else {
-                      setValue("0");
-                    }
-                  }}
-                >
+                  onClick={() => setPercentualValue(100)}>
                   100%
                 </div>
               </div>
@@ -208,15 +138,7 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">
-              {props.startUpData &&
-              parseFloat(withdrawAmountFormatted) >
-                parseFloat(
-                  getAmountWithSymbol(
-                    props.startUpData.escrowVestedAmount,
-                    props.startUpData?.associatedToken as string,
-                    true
-                  )
-                ) ? (
+              {props.startUpData && parseFloat(withdrawAmountInput) > props.startUpData.escrowVestedAmount ? (
                 <span className="fg-red">
                   Amount is greater than the available funds
                 </span>

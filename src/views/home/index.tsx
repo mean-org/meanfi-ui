@@ -7,6 +7,7 @@ import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
 import { listStreams } from "../../money-streaming/utils";
+import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 
@@ -102,6 +103,10 @@ export const HomeView = () => {
         consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         refreshTokenBalance();
+        notify({
+          message: "Wallet update",
+          description: "Disconnected from wallet",
+        });
       }
     }
 
