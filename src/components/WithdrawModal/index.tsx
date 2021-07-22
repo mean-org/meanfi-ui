@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Button } from "antd";
 import {
-  getTokenAmountAndSymbolByTokenAddress,
-  isValidNumber
+  getTokenDecimals,
+  getTokenSymbol,
+  isValidNumber,
+  truncateFloat
 } from "../../utils/utils";
 import { percentage } from "../../utils/ui";
 import { StreamInfo } from "../../money-streaming/types";
@@ -14,10 +16,23 @@ export const WithdrawModal = (props: {
   isVisible: boolean;
 }) => {
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
+  const [maxAmount, setMaxAmount] = useState<number>(0);
+
+  useEffect(() => {
+    if (props.startUpData) {
+      setMaxAmount(props.startUpData.escrowVestedAmount);
+    }
+  }, [props]);
 
   const onAcceptWithdrawal = () => {
-    props.handleOk(withdrawAmountInput);
+    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(withdrawAmountInput)
+      ? true : false;
+    props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
   };
+
+  const onCloseModal = () => {
+    props.handleClose();
+  }
 
   const setValue = (value: string) => {
     setWithdrawAmountInput(value);
@@ -26,15 +41,13 @@ export const WithdrawModal = (props: {
   const setPercentualValue = (value: number) => {
     if (props.startUpData) {
       if (value === 100) {
-        setWithdrawAmountInput(props.startUpData.escrowVestedAmount.toString());
+        setValue(getDisplayAmount(maxAmount));
       } else {
-        const partialAmount = percentage(value, props.startUpData.escrowVestedAmount);
-        setWithdrawAmountInput(
-          getAmountWithSymbol(partialAmount, props.startUpData.associatedToken as string, true)
-        );
+        const partialAmount = percentage(value, maxAmount);
+        setValue(getDisplayAmount(partialAmount));
       }
     } else {
-      setValue("0");
+      setValue("");
     }
   }
 
@@ -47,17 +60,25 @@ export const WithdrawModal = (props: {
     }
   };
 
-  const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false, truncateInsteadRound = false) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
-  }
-
   const isValidInput = () => {
     return props.startUpData && withdrawAmountInput &&
       parseFloat(withdrawAmountInput) &&
-      parseFloat(withdrawAmountInput) <= props.startUpData.escrowVestedAmount
+      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount))
       ? true
       : false;
   };
+
+  const getDisplayAmount = (amount: any, addSymbol = false): string => {
+    if (props && props.startUpData) {
+      const bareAmount = truncateFloat(amount, getTokenDecimals(props.startUpData.associatedToken as string));
+      if (addSymbol) {
+        return bareAmount + ' ' + getTokenSymbol(props.startUpData.associatedToken as string);
+      }
+      return bareAmount;
+    }
+
+    return '';
+  }
 
   return (
     <Modal
@@ -66,8 +87,7 @@ export const WithdrawModal = (props: {
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptWithdrawal}
-      onCancel={props.handleClose}
-      afterClose={() => setValue("")}
+      onCancel={onCloseModal}
       width={480}>
       <div className="mb-3">
         <div className="transaction-field disabled">
@@ -79,12 +99,7 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row main-row">
             <span className="field-select-left">
-              {props.startUpData
-                ? getAmountWithSymbol(
-                    props.startUpData.escrowVestedAmount,
-                    props.startUpData.associatedToken as string
-                  )
-                : "--"}
+              {props.startUpData && getDisplayAmount(maxAmount, true)}
             </span>
           </div>
         </div>
@@ -138,7 +153,7 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">
-              {props.startUpData && parseFloat(withdrawAmountInput) > props.startUpData.escrowVestedAmount ? (
+              {props.startUpData && parseFloat(withdrawAmountInput) > maxAmount ? (
                 <span className="fg-red">
                   Amount is greater than the available funds
                 </span>

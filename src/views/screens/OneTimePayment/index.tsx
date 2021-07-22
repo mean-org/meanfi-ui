@@ -747,7 +747,7 @@ export const OneTimePayment = () => {
                 shape="round"
                 size="middle"
                 onClick={isScheduledPayment ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment ? 'View Stream' : 'Finish'}
+                {isScheduledPayment ? 'View Stream' : 'Close'}
               </Button>
             </>
           ) : isError() ? (
