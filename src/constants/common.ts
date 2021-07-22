@@ -9,4 +9,4 @@ export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
 export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
 export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
-export const MEANPAY_WEBSITE_URL = 'https://meanfi.com';
+export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';

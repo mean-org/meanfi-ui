@@ -23,7 +23,7 @@ export const AppLayout = React.memo((props: any) => {
           <BackButton />
           <Link to="/">
             <div className="app-title simplelink" onClick={onGoToHomeClick}>
-              <img className="app-logo" src={theme === 'dark' ? 'assets/mean-pay-logo-color-light.svg' : 'assets/mean-pay-logo-color-dark.svg'} alt="Mean Pay" />
+              <img className="app-logo" src={theme === 'dark' ? 'assets/mean-pay-logo-color-light.svg' : 'assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
             </div>
           </Link>
           <AppBar />
