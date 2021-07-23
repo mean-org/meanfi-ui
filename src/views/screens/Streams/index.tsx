@@ -227,14 +227,6 @@ export const Streams = () => {
       try {
         const detail = await getStream(connection, streamPublicKey, 'finalized', true);
         if (detail) {
-          console.log('escrowVestedAmount', detail.escrowVestedAmount);
-          const totalAmount = detail.isStreaming
-            ? truncateFloat(
-              detail.escrowVestedAmount,
-              getTokenDecimals(streamDetail?.associatedToken as string)
-            )
-            : detail.escrowVestedAmount.toString();
-          detail.escrowVestedAmount = parseFloat(totalAmount);
           console.log('detail', detail);
           setLastStreamDetail(detail);
           setIsWithdrawModalVisibility(true)
