@@ -508,9 +508,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     connection,
     currentScreen,
     streamProgramAddress,
+    loadingStreamActivity,
+    selectedStream,
     loadingStreams,
-    publicKey,
-    selectedStream
+    publicKey
   ]);
 
   useEffect(() => {
@@ -547,7 +548,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => {};
   }, [connectionConfig, selectedToken]);
 
-  useEffect(() => {
+  const refreshTokenBalance = useCallback(async () => {
+
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (address) {
         const accountInfo = await connection.getAccountInfo(address.toPublicKey());
@@ -559,62 +561,37 @@ const AppStateProvider: React.FC = ({ children }) => {
       return 0;
     }
 
-    const updateToken = async () => {
-      let balance = 0;
-      if (connection && connected && tokenList?.length && accounts?.tokenAccounts?.length) {
-        let selectedTokenAddress: any;
-        if (selectedToken) {
-          selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
-        } else {
-          setSelectedToken(tokenList[0]);
-          selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, tokenList[0].address.toPublicKey());
-        }
-        balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
+    let balance = 0;
+    if (connection && publicKey && tokenList?.length && accounts?.tokenAccounts?.length) {
+      let selectedTokenAddress: any;
+      if (selectedToken) {
+        selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
+      } else {
+        setSelectedToken(tokenList[0]);
+        selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, tokenList[0].address.toPublicKey());
       }
-      console.log('balance:', balance);
-      updateTokenBalance(balance);
+      balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
     }
+    updateTokenBalance(balance);
+  
+  }, [
+    accounts,
+    connection,
+    publicKey,
+    selectedToken,
+    tokenList
+  ]);
+
+  // Effect to refresh token balance if needed or on screen change
+  useEffect(() => {
 
     if (shouldUpdateToken) {
       setShouldUpdateToken(false);
-      updateToken();
+      refreshTokenBalance();
     }
 
     return () => {};
-  }, [
-    publicKey,
-    tokenList,
-    connected,
-    shouldUpdateToken,
-    connection,
-    accounts,
-    selectedToken,
-    updateSelectedToken
-  ]);
-
-  const refreshTokenBalance = useCallback(async () => {
-
-    const getTokenBalanceByAddress = async (address: string): Promise<number> => {
-      if (address) {
-        const tokenAccounts = accounts.tokenAccounts as TokenAccount[];
-        const tokenAccount = tokenAccounts.find(t => t.info.mint.toBase58() === address) as TokenAccount;
-        if (tokenAccount) {
-          const minAccountInfo = await connection.getAccountInfo(tokenAccount?.info.mint as PublicKey);
-          const mintInfoDecoded = deserializeMint(minAccountInfo?.data as Buffer);
-          return convert(tokenAccount as TokenAccount, mintInfoDecoded as MintInfo);
-        }
-      }
-      return 0;
-    }
-
-    if (connection && accounts?.tokenAccounts?.length && selectedToken) {
-      const balance = await getTokenBalanceByAddress(selectedToken.address);
-      updateTokenBalance(balance);
-    } else {
-      updateTokenBalance(0);
-    }
-  
-  }, [selectedToken, accounts, connection]);
+  }, [shouldUpdateToken, refreshTokenBalance]);
 
   return (
     <AppStateContext.Provider

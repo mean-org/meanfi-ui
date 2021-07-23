@@ -58,6 +58,7 @@ import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamActivity, StreamInfo } from "../../../money-streaming/types";
 import { CloseStreamModal } from "../../../components/CloseStreamModal";
+import { useNativeAccount } from "../../../contexts/accounts";
 
 var dateFormat = require("dateformat");
 
@@ -86,8 +87,11 @@ export const Streams = () => {
     setTransactionStatus,
     openStreamById,
     setDtailsPanelOpen,
+    refreshTokenBalance,
     setCustomStreamDocked
   } = useContext(AppStateContext);
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
 
   useEffect(() => {
@@ -99,6 +103,15 @@ export const Streams = () => {
       }
     }
   });
+
+  useEffect(() => {
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [account, previousBalance, refreshTokenBalance]);
 
   // Live data calculation
   useEffect(() => {

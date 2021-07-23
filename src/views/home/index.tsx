@@ -1,7 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
-import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -30,9 +29,7 @@ export const HomeView = () => {
   const { connected, publicKey } = useWallet();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { account } = useNativeAccount();
   const [previousChain, setChain] = useState("");
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -55,15 +52,6 @@ export const HomeView = () => {
     previousChain,
     connectionConfig
   ]);
-
-  useEffect(() => {
-    if (account?.lamports !== previousBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      // Update previous balance
-      setPreviousBalance(account.lamports);
-    }
-  }, [account, previousBalance, refreshTokenBalance]);
 
   // Effect to set a default tab if none selected already
   useEffect(() => {

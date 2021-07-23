@@ -32,6 +32,7 @@ import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { environment } from "../../../environments/environment";
+import { useNativeAccount } from "../../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -68,12 +69,23 @@ export const RepeatingPayment = () => {
     setTransactionStatus,
     setSelectedStream,
     refreshStreamList,
+    refreshTokenBalance,
   } = useContext(AppStateContext);
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
-  const [isScheduledPayment, setIsScheduledPayment] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  useEffect(() => {
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [account, previousBalance, refreshTokenBalance]);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -466,11 +478,6 @@ export const RepeatingPayment = () => {
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
         let fromParsedDate = new Date(parsedDate);
-        if (fromParsedDate.getDate() === now.getDate()) {
-          setIsScheduledPayment(false);
-        } else {
-          setIsScheduledPayment(true);
-        }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         console.log('Local time added to parsed date!');

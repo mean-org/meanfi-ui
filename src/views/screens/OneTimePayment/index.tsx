@@ -24,6 +24,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { useNativeAccount } from "../../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -55,12 +56,24 @@ export const OneTimePayment = () => {
     setFromCoinAmount,
     setTransactionStatus,
     setSelectedStream,
-    refreshStreamList
+    refreshStreamList,
+    refreshTokenBalance,
   } = useContext(AppStateContext);
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [isScheduledPayment, setIsScheduledPayment] = useState(false);
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  useEffect(() => {
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [account, previousBalance, refreshTokenBalance]);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
