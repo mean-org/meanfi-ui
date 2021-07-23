@@ -5,7 +5,6 @@ import {
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
-  ExclamationCircleOutlined,
   LoadingOutlined,
   SearchOutlined,
   WarningOutlined,
@@ -25,8 +24,20 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { getStream } from "../../../money-streaming/utils";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTokenDecimals, getTokenSymbol, shortenAddress, truncateFloat } from "../../../utils/utils";
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
+import {
+  formatAmount,
+  getTokenAmountAndSymbolByTokenAddress,
+  getTokenByMintAddress,
+  getTokenSymbol,
+  shortenAddress
+} from "../../../utils/utils";
+import {
+  consoleOut,
+  copyText,
+  getFormattedNumberToLocale,
+  getIntervalFromSeconds,
+  getTransactionOperationDescription
+} from "../../../utils/ui";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
 import { WithdrawModal } from '../../../components/WithdrawModal';
@@ -46,6 +57,7 @@ import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamActivity, StreamInfo } from "../../../money-streaming/types";
+import { CloseStreamModal } from "../../../components/CloseStreamModal";
 
 var dateFormat = require("dateformat");
 
@@ -76,7 +88,6 @@ export const Streams = () => {
     setDtailsPanelOpen,
     setCustomStreamDocked
   } = useContext(AppStateContext);
-  const { confirm } = Modal;
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
 
   useEffect(() => {
@@ -96,18 +107,12 @@ export const Streams = () => {
     const updateData = () => {
       if (streamDetail) {
         const clonedDetail = _.cloneDeep(streamDetail);
-
         const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
-        // const slot = await connection.getSlot(connection.commitment);
-        // const currentBlockTime = await connection.getBlockTime(slot) as number;
         const currentBlockTime = Date.now() / 1000;
-
         let rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
         const elapsedTime = currentBlockTime - lastTimeSnap;
-
         let escrowVestedAmount = 0;
-
         let rateAmount = clonedDetail.rateAmount;
     
         if (rateAmount === 0) {
@@ -174,6 +179,15 @@ export const Streams = () => {
     setCurrentScreen("contract");
     setCustomStreamDocked(false);
     closeContractSelectorModal();
+  };
+
+  // Close stream modal
+  const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
+  const showCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(true), []);
+  const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
+  const onAcceptCloseStream = (e: any) => {
+    hideCloseStreamModal();
+    onExecuteCloseStreamTransaction();
   };
 
   // Open stream modal
@@ -1021,7 +1035,7 @@ export const Streams = () => {
 
   };
 
-  const getStreamClosureMessage = (): string => {
+  const getStreamClosureMessage = () => {
     let message = '';
 
     if (publicKey && streamDetail && streamList) {
@@ -1036,32 +1050,21 @@ export const Streams = () => {
 
       if (treasurer === me) {  // If I am the treasurer
         if (numTreasuryBeneficiaries > 1) {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amounts back to the original treasury (${shortenAddress(treasury as string)}).\nAre you sure you want to do this?`
+          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amounts back to the original treasury (${shortenAddress(treasury as string)}).`
         } else {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amount back to the contributor.\nAre you sure you want to do this?`
+          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amount back to the contributor.`
         }
       } else if (beneficiary === me)  {  // If I am the beneficiary
-        message = `Closing a stream will send ~${withdrawAmount} to your account (${shortenAddress(beneficiary)}) and stop the flow of money immediately.\nAre you sure you want to do this?`;
+        message = `Closing a stream will send ~${withdrawAmount} to your account (${shortenAddress(beneficiary)}) and stop the flow of money immediately.`;
       }
 
     }
 
-    return message;
-  }
-
-  const showCloseStreamConfirm = () => {
-    confirm({
-      title: 'Close stream',
-      icon: <ExclamationCircleOutlined />,
-      content: getStreamClosureMessage(),
-      okText: 'CLOSE STREAM',
-      okType: 'danger',
-      cancelText: 'CANCEL',
-      onOk() {
-        onExecuteCloseStreamTransaction();
-      },
-      onCancel() {},
-    });
+    return (
+      <div>
+        {message}<br/><span>Are you sure you want to do this?</span>
+      </div>
+    );
   }
 
   const onCopyStreamAddress = (data: any) => {
@@ -1155,7 +1158,7 @@ export const Streams = () => {
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={showCloseStreamConfirm} disabled={!isAuthority()}>
+      <Menu.Item key="1" onClick={showCloseStreamModal} disabled={!isAuthority()}>
         <span className="menu-item-text">Close money stream</span>
       </Menu.Item>
     </Menu>
@@ -1735,6 +1738,11 @@ export const Streams = () => {
         isVisible={isContractSelectorModalVisible}
         handleOk={onAcceptContractSelector}
         handleClose={closeContractSelectorModal}/>
+      <CloseStreamModal
+        isVisible={isCloseStreamModalVisible}
+        handleOk={onAcceptCloseStream}
+        handleClose={hideCloseStreamModal}
+        content={getStreamClosureMessage()} />
       <OpenStreamModal
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}
