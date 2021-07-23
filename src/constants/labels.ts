@@ -8,6 +8,7 @@ export const LABELS = {
     "This view displays all loans that can be liquidated. A liquidation is a process where borrower collateral does not cover value of the loan. It is represented by health factor falling below 1.0. When a loan is liquidated, an liquidator can purchase collateral at a discount by repaing the portio of the loan. ",
   FAUCET_INFO:
     "This faucet will help you fund your accounts outside of Solana main network.",
+  CANNOT_FUND: "Cannot faucet in mainnet",
   ACCOUNT_FUNDED: "Account funded.",
   REPAY_QUESTION: "How much would you like to repay?",
   REPAY_ACTION: "Repay",

@@ -89,7 +89,7 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">Discord</span>
         </a>
       </Menu.Item>
-      {(connected && (connection.env === 'devnet' || connection.env === 'testnet')) && (
+      {connected && connection.env !== 'mainnet-beta' && (
         <>
           <Menu.Divider />
           <Menu.Item key="8">
