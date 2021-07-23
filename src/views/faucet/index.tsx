@@ -15,7 +15,7 @@ export const FaucetView = () => {
   const { account } = useNativeAccount();
 
   const getFaucetAmount = (): number => {
-    if (environment === 'testnet') {
+    if (environment === 'staging') {
       return 1 * LAMPORTS_PER_SOL;
     }
     return 4 * LAMPORTS_PER_SOL;
