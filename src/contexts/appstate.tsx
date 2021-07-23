@@ -309,20 +309,27 @@ const AppStateProvider: React.FC = ({ children }) => {
       return [];
     }
 
-    setLoadingStreamActivity(true);
-    const streamPublicKey = new PublicKey(streamId);
-    listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
-      .then(value => {
-        console.log('activity:', value);
-        setStreamActivity(value);
-        setLoadingStreamActivity(false);
-      })
-      .catch(err => {
-        console.log(err);
-        setStreamActivity([]);
-        setLoadingStreamActivity(false);
-      });
-  }, [connection, connected]);
+    if (!loadingStreamActivity) {
+      setLoadingStreamActivity(true);
+      const streamPublicKey = new PublicKey(streamId);
+      listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
+        .then(value => {
+          console.log('activity:', value);
+          setStreamActivity(value);
+          setLoadingStreamActivity(false);
+        })
+        .catch(err => {
+          console.log(err);
+          setStreamActivity([]);
+          setLoadingStreamActivity(false);
+        });
+    }
+
+  }, [
+    connection,
+    connected,
+    loadingStreamActivity
+  ]);
 
   const setSelectedStream = (stream: StreamInfo | undefined) => {
     updateSelectedStream(stream);
@@ -465,7 +472,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
-              if (!reset) {
+              if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
                 listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
