@@ -1,4 +1,4 @@
-import { Button, Modal, DatePicker, Spin } from "antd";
+import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -6,17 +6,18 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnectionConfig } from "../../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../../Icons";
-import { formatAmount, isValidNumber } from "../../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../../constants";
+import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
   disabledDate,
   getAmountWithTokenSymbol,
-  getTransactionOperationDescription
+  getTransactionOperationDescription,
+  percentage
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -25,11 +26,14 @@ import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
+import { MSP_ACTIONS, TransactionFees } from "../../../money-streaming/types";
+import { calculateActionFees } from "../../../money-streaming/utils";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const today = new Date().toLocaleDateString();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
   const {
@@ -74,6 +78,32 @@ export const OneTimePayment = () => {
       setPreviousBalance(account.lamports);
     }
   }, [account, previousBalance, refreshTokenBalance]);
+
+  const [otpFees, setOtpFees] = useState<TransactionFees>();
+
+  useEffect(() => {
+    const getTransactionFees = async (): Promise<TransactionFees> => {
+      return await calculateActionFees(connection, MSP_ACTIONS.oneTimePayment);
+    }
+    if (!otpFees) {
+      getTransactionFees().then(values => {
+        setOtpFees(values);
+      });
+    }
+  }, [connection, otpFees]);
+
+  const getFeeAmount = (amount: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (otpFees) {
+      if (otpFees.mspPercentFee) {
+        fee = percentage(otpFees.mspPercentFee, inputAmount);
+      } else if (otpFees.mspFlatFee) {
+        fee = otpFees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -219,8 +249,10 @@ export const OneTimePayment = () => {
     return connected &&
            selectedToken &&
            tokenBalance &&
-           fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= tokenBalance
+           fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
+           parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount) &&
+           paymentStartDate
             ? true
             : false;
   }
@@ -229,14 +261,16 @@ export const OneTimePayment = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? "Connect your wallet"
-      : !selectedToken || !tokenBalance
-      ? "No balance"
       : !recipientAddress || isAddressOwnAccount()
       ? "Select recipient"
-      : !fromCoinAmount
+      : !selectedToken || !tokenBalance
+      ? "No balance"
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? "Enter amount"
-      : parseFloat(fromCoinAmount) > tokenBalance
+      : parseFloat(fromCoinAmount) > tokenBalance - getFeeAmount(fromCoinAmount)
       ? "Amount exceeds your balance"
+      : tokenBalance < getFeeAmount(fromCoinAmount)
+      ? "Not enough balance"
       : !paymentStartDate
       ? "Set a valid date"
       : "Approve on your wallet";
@@ -463,6 +497,15 @@ export const OneTimePayment = () => {
            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
            ? true
            : false;
+  }
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
   }
 
   return (
@@ -715,11 +758,26 @@ export const OneTimePayment = () => {
       </div>
 
       {/* Info */}
-      <div className="text-center p-2">
-        {selectedToken && effectiveRate
-          ? `1 ${selectedToken.symbol} = $${formatAmount(effectiveRate, 2)}`
-          : "--"}
-      </div>
+      {selectedToken && (
+        <div className="p-2 mb-2">
+          {infoRow(
+            `1 ${selectedToken.symbol}:`,
+            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+          )}
+          {otpFees && infoRow(
+            'Transaction fee:',
+            `~${getTokenAmountAndSymbolByTokenAddress((otpFees.blockchainFee || 0), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
+          )}
+          {infoRow(
+            'Received amount:',
+            `${areSendAmountSettingsValid()
+              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              : '0'
+            }`
+          )}
+        </div>
+      )}
+
       {/* Action button */}
       <Button
         className="main-cta"

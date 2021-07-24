@@ -1,4 +1,4 @@
-import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -6,14 +6,15 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnectionConfig } from "../../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
+  getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../../constants";
+import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
@@ -23,7 +24,8 @@ import {
   getOptionsFromEnum,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
-  getTransactionOperationDescription
+  getTransactionOperationDescription,
+  percentage
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -33,11 +35,14 @@ import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
+import { MSP_ACTIONS, TransactionFees } from "../../../money-streaming/types";
+import { calculateActionFees } from "../../../money-streaming/utils";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const RepeatingPayment = () => {
   const today = new Date().toLocaleDateString();
+  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
   const {
@@ -86,6 +91,32 @@ export const RepeatingPayment = () => {
       setPreviousBalance(account.lamports);
     }
   }, [account, previousBalance, refreshTokenBalance]);
+
+  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>();
+
+  useEffect(() => {
+    const getTransactionFees = async (): Promise<TransactionFees> => {
+      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
+    }
+    if (!repeatingPaymentFees) {
+      getTransactionFees().then(values => {
+        setRepeatingPaymentFees(values);
+      });
+    }
+  }, [connection, repeatingPaymentFees]);
+
+  const getFeeAmount = (amount: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (repeatingPaymentFees) {
+      if (repeatingPaymentFees.mspPercentFee) {
+        fee = percentage(repeatingPaymentFees.mspPercentFee, inputAmount);
+      } else if (repeatingPaymentFees.mspFlatFee) {
+        fee = repeatingPaymentFees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -258,8 +289,10 @@ export const RepeatingPayment = () => {
     return connected &&
            selectedToken &&
            tokenBalance &&
-           fromCoinAmount &&
-           parseFloat(fromCoinAmount) <= tokenBalance
+           fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
+           parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount) &&
+           paymentStartDate
             ? true
             : false;
   }
@@ -281,14 +314,16 @@ export const RepeatingPayment = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? "Connect your wallet"
-      : !selectedToken || !tokenBalance
-      ? "No balance"
       : !recipientAddress || isAddressOwnAccount()
       ? "Select recipient"
-      : !fromCoinAmount
+      : !selectedToken || !tokenBalance
+      ? "No balance"
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? "Enter amount"
-      : parseFloat(fromCoinAmount) > tokenBalance
+      : parseFloat(fromCoinAmount) > tokenBalance - getFeeAmount(fromCoinAmount)
       ? "Amount exceeds your balance"
+      : tokenBalance < getFeeAmount(fromCoinAmount)
+      ? "Not enough balance"
       : !paymentStartDate
       ? "Set a valid date"
       : !arePaymentSettingsValid()
@@ -302,8 +337,6 @@ export const RepeatingPayment = () => {
       ? "Add payment rate"
       : rateAmount > parseFloat(fromCoinAmount || '0')
       ? "Review payment rate"
-      // : paymentRateFrequency === PaymentRateType.Other && !paymentRateInterval
-      // ? 'Select a valid interval'
       : '';
   }
 
@@ -677,6 +710,15 @@ export const RepeatingPayment = () => {
            : false;
   }
 
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
+  }
+
   return (
     <>
       {/* Recipient */}
@@ -949,11 +991,25 @@ export const RepeatingPayment = () => {
       </Modal>
 
       {/* Info */}
-      <div className="text-center mb-1">
-        {selectedToken && effectiveRate
-          ? `1 ${selectedToken.symbol} = $${formatAmount(effectiveRate, 2)}`
-          : "--"}
-      </div>
+      {selectedToken && (
+        <div className="p-2 mb-2">
+          {infoRow(
+            `1 ${selectedToken.symbol}:`,
+            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+          )}
+          {repeatingPaymentFees && infoRow(
+            'Transaction fee:',
+            `~${getTokenAmountAndSymbolByTokenAddress((repeatingPaymentFees.blockchainFee || 0), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
+          )}
+          {infoRow(
+            'Received amount:',
+            `${areSendAmountSettingsValid()
+              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              : '0'
+            }`
+          )}
+        </div>
+      )}
 
       {/* Action button */}
       <Button
