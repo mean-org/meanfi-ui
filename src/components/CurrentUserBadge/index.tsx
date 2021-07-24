@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Redirect } from "react-router-dom";
 import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import {
@@ -30,6 +31,7 @@ const defaultStreamStats = {
 
 export const CurrentUserBadge = (props: {}) => {
 
+  const [redirect, setRedirect] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
@@ -94,6 +96,7 @@ export const CurrentUserBadge = (props: {}) => {
   const onGoToStreamsClick = () => {
     refreshStreamList(true);
     setCustomStreamDocked(false);
+    setRedirect('/');
   };
 
   if (!wallet?.publicKey) {
@@ -102,6 +105,7 @@ export const CurrentUserBadge = (props: {}) => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       <div className="wallet-wrapper">
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
