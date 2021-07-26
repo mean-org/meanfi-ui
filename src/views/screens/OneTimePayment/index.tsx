@@ -10,7 +10,7 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
+import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
@@ -610,7 +610,7 @@ export const OneTimePayment = () => {
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          tokenBalance as number,
+                          (tokenBalance as number) - getFeeAmount(tokenBalance),
                           selectedToken.decimals
                         )
                       )
@@ -764,14 +764,17 @@ export const OneTimePayment = () => {
             `1 ${selectedToken.symbol}:`,
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
-          {otpFees && infoRow(
+          {infoRow(
             'Transaction fee:',
-            `~${getTokenAmountAndSymbolByTokenAddress((otpFees.blockchainFee || 0), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
+            `${areSendAmountSettingsValid()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
+              : '0'
+            }`
           )}
           {infoRow(
-            'Received amount:',
+            'Recipient receives:',
             `${areSendAmountSettingsValid()
-              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}

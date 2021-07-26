@@ -294,7 +294,7 @@ export const percentual = (partialValue: number, total: number): number => {
 
 // Get the given percent of total
 export const percentage = (percent: number, total: number): number => {
-    return ((percent / 100) * total);
+    return percent * total / 100;
 }
 
 export const maxTrailingZeroes = (original: any, zeroes = 2): string => {

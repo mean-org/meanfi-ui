@@ -1268,6 +1268,10 @@ em {
     @media (min-width: 576px) {
       max-height: calc(100vh - 200px);
     }
+    &.close-stream .ant-divider.ant-divider-horizontal.ant-divider-plain {
+      margin: 24px -24px 12px;
+      width: auto;
+    }
     .mean-modal-form {
       .modal-form-heading {
         font-size: 1rem;
@@ -3507,10 +3511,6 @@ em {
 }
 
 .transaction-progress {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   text-align: center;
   .icon {
     margin: 1rem;

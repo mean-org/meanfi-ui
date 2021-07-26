@@ -1,15 +1,69 @@
-import { Modal, Button } from 'antd';
+import { useCallback, useContext, useEffect, useState } from 'react';
+import { Modal, Button, Row, Col, Divider } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { TransactionFees } from '../../money-streaming/types';
+import { useWallet } from '../../contexts/wallet';
+import { AppStateContext } from '../../contexts/appstate';
+import { percentage } from '../../utils/ui';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+
 export const CloseStreamModal = (props: {
   handleClose: any;
   handleOk: any;
   content: JSX.Element;
   isVisible: boolean;
+  transactionFees: TransactionFees;
 }) => {
+  const { publicKey } = useWallet();
+  const { streamDetail } = useContext(AppStateContext);
+  const [feeAmount, setFeeAmount] = useState<number | null>(null);
+
+  const getFeeAmount = useCallback((fees: TransactionFees): number => {
+    let fee = 0;
+    const isAddressMyAccount = (addr: string): Boolean => {
+      return publicKey && addr && addr === publicKey.toBase58() ? true : false;
+    }
+    // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
+    // If the Beneficiary is initializing the CloseStream Tx, both mspFlatFee and mspPercentFee
+    // must be used by adding the percentFee of the vested amount to the flat fee
+    if (fees && streamDetail) {
+      const amItreasurer = isAddressMyAccount(streamDetail.treasurerAddress as string);
+      const amIbeneficiary = isAddressMyAccount(streamDetail.beneficiaryAddress as string);
+      if (amIbeneficiary) {
+        fee = percentage(fees.mspPercentFee, streamDetail.escrowVestedAmount) || 0;
+      } else if (amItreasurer) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  }, [
+    publicKey,
+    streamDetail
+  ]);
+
+  useEffect(() => {
+    if (!feeAmount && props.transactionFees && streamDetail) {
+      setFeeAmount(getFeeAmount(props.transactionFees));
+    }
+  }, [
+    feeAmount,
+    streamDetail,
+    props.transactionFees,
+    getFeeAmount
+  ]);
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
+  }
 
   return (
     <Modal
-      className="mean-modal"
+      className="mean-modal close-stream"
       title={<div className="modal-title">Close stream</div>}
       footer={null}
       visible={props.isVisible}
@@ -19,24 +73,40 @@ export const CloseStreamModal = (props: {
       <div className="transaction-progress">
         <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
         <h4 className="operation">{props.content}</h4>
-        <div className="text-center mt-3">
-            <Button
-                className="mr-3"
-                type="default"
-                shape="round"
-                size="large"
-                onClick={props.handleClose}>
-                Cancel
-            </Button>
-            <Button
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={props.handleOk}>
-                Close stream
-            </Button>
+        <Divider plain></Divider>
+
+        {/* Info */}
+        {streamDetail && streamDetail.associatedToken && (
+          <div className="p-2 mb-2">
+            {infoRow(
+              'Transaction fee:',
+              `${feeAmount
+                ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
+                : '0'
+              }`
+            )}
+          </div>
+        )}
+
+        <div className="mt-3">
+          <Button
+              className="mr-3"
+              type="text"
+              shape="round"
+              size="large"
+              onClick={props.handleClose}>
+              Cancel
+          </Button>
+          <Button
+              type="primary"
+              shape="round"
+              size="large"
+              onClick={props.handleOk}>
+              Close stream
+          </Button>
         </div>
       </div>
+
     </Modal>
   );
 };

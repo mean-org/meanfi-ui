@@ -1,15 +1,18 @@
-import { useContext, useState } from 'react';
-import { Modal, Button } from 'antd';
+import { useContext, useEffect, useState } from 'react';
+import { Modal, Button, Row, Col } from 'antd';
 import { IconSort } from "../../Icons";
 
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, isValidNumber } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
+import { TransactionFees } from '../../money-streaming/types';
+import { percentage } from '../../utils/ui';
 
 export const AddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  transactionFees: TransactionFees;
 }) => {
   const {
     selectedToken,
@@ -17,6 +20,13 @@ export const AddFundsModal = (props: {
     effectiveRate
   } = useContext(AppStateContext);
   const [topupAmount, setTopupAmount] = useState<string>('');
+  const [feeAmount, setFeeAmount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!feeAmount && props.transactionFees) {
+      setFeeAmount(getFeeAmount(props.transactionFees));
+    }
+  }, [feeAmount, props.transactionFees]);
 
   const onAcceptTopup = () => {
     props.handleOk(topupAmount);
@@ -27,33 +37,56 @@ export const AddFundsModal = (props: {
   }
 
   const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setValue("");
-    } else if (isValidNumber(newValue)) {
-      setValue(newValue);
-    }
+    const newValue = isValidNumber(e.target.value) ? e.target.value : '';
+    setValue(newValue);
+    setFeeAmount(getFeeAmount(props.transactionFees, newValue));
   };
 
+  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
+
+  // Validation
+
   const isValidInput = (): boolean => {
+    const numberAmount = parseFloat(topupAmount);
     return selectedToken &&
            tokenBalance &&
            topupAmount &&
-           parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance
+           numberAmount > (feeAmount as number) &&
+           numberAmount <= tokenBalance - (feeAmount as number)
             ? true
             : false;
   }
 
-  // 'Start funding' : 'Invalid amount'
   const getTransactionStartButtonLabel = (): string => {
     return !selectedToken || !tokenBalance
       ? "No balance"
-      : !topupAmount
+      : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
       ? "Enter amount"
-      : parseFloat(topupAmount) <= 0 || parseFloat(topupAmount) > tokenBalance
+      : parseFloat(topupAmount) > tokenBalance - (feeAmount as number)
+      ? "Invalid amount"
+      : tokenBalance < (feeAmount as number)
       ? "Invalid amount"
       : "Start funding";
+  }
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
   }
 
   return (
@@ -66,9 +99,9 @@ export const AddFundsModal = (props: {
       onCancel={props.handleClose}
       afterClose={() => setValue('')}
       width={480}>
-      <div className="mb-3">
 
-        {/* Top up amount */}
+      {/* Top up amount */}
+      <div className="mb-3">
         <div className="transaction-field mb-1">
           <div className="transaction-field-row">
             <span className="field-label-left" style={{marginBottom: '-6px'}}>
@@ -118,14 +151,16 @@ export const AddFundsModal = (props: {
                   {selectedToken && (
                     <div
                       className="token-max simplelink"
-                      onClick={() =>
+                      onClick={() => {
+                        const feeForTotal = getFeeAmount(props.transactionFees, (tokenBalance as number));
                         setValue(
                           formatAmount(
-                            tokenBalance as number,
+                            (tokenBalance as number) - feeForTotal,
                             selectedToken.decimals
                           )
-                        )
-                      }>
+                        );
+                        setFeeAmount(feeForTotal);
+                      }}>
                       MAX
                     </div>
                   )}
@@ -153,15 +188,41 @@ export const AddFundsModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">{
-              parseFloat(topupAmount) > tokenBalance
-                ? (<span className="fg-red">Amount exceeds your balance</span>)
-                : (<span>&nbsp;</span>)
+              parseFloat(topupAmount) > tokenBalance - (feeAmount as number)
+              ? (<span className="fg-red">Amount exceeds your balance</span>)
+              : tokenBalance < (feeAmount as number)
+              ? (<span className="fg-red">Amount has to be greater than the transaction fee</span>)
+              : (<span>&nbsp;</span>)
             }</span>
             <span className="field-label-right">&nbsp;</span>
           </div>
         </div>
-
       </div>
+
+      {/* Info */}
+      {selectedToken && (
+        <div className="p-2 mb-2">
+          {infoRow(
+            `1 ${selectedToken.symbol}:`,
+            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+          )}
+          {infoRow(
+            'Transaction fee:',
+            `${isValidInput()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), selectedToken?.address)
+              : '0'
+            }`
+          )}
+          {infoRow(
+            'Beneficiary receives:',
+            `${isValidInput()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - (feeAmount as number), selectedToken?.address)
+              : '0'
+            }`
+          )}
+        </div>
+      )}
+
       <Button
         className="main-cta"
         block

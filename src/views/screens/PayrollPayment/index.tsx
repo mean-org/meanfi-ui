@@ -14,7 +14,7 @@ import {
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
+import { DATEPICKER_FORMAT } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../../models/enums";
 import {
@@ -925,7 +925,7 @@ export const PayrollPayment = () => {
       <Divider plain></Divider>
 
       <div className="mb-3 text-center">
-        <div>You must add funds to start the repeating payment.</div>
+        <div>You must add funds to start a payroll.</div>
         <div>Recommended minimum amount: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
       </div>
 
@@ -981,7 +981,7 @@ export const PayrollPayment = () => {
                     onClick={() =>
                       setFromCoinAmount(
                         formatAmount(
-                          tokenBalance as number,
+                          (tokenBalance as number) - getFeeAmount(tokenBalance),
                           selectedToken.decimals
                         )
                       )
@@ -1039,14 +1039,17 @@ export const PayrollPayment = () => {
             `1 ${selectedToken.symbol}:`,
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
-          {payrollFees && infoRow(
+          {infoRow(
             'Transaction fee:',
-            `~${getTokenAmountAndSymbolByTokenAddress((payrollFees.blockchainFee || 0), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
+            `${areSendAmountSettingsValid()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
+              : '0'
+            }`
           )}
           {infoRow(
-            'Received amount:',
+            'Recipient receives:',
             `${areSendAmountSettingsValid()
-              ? getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}

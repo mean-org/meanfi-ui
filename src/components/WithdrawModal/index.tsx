@@ -1,28 +1,37 @@
 import { useEffect, useState } from "react";
-import { Modal, Button } from "antd";
+import { Modal, Button, Row, Col } from "antd";
 import {
+  getTokenAmountAndSymbolByTokenAddress,
   getTokenDecimals,
   getTokenSymbol,
   isValidNumber,
   truncateFloat
 } from "../../utils/utils";
 import { percentage } from "../../utils/ui";
-import { StreamInfo } from "../../money-streaming/types";
+import { StreamInfo, TransactionFees } from "../../money-streaming/types";
 
 export const WithdrawModal = (props: {
   startUpData: StreamInfo | undefined;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  transactionFees: TransactionFees;
 }) => {
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
+  const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
   useEffect(() => {
     if (props.startUpData) {
       setMaxAmount(props.startUpData.escrowVestedAmount);
     }
   }, [props]);
+
+  useEffect(() => {
+    if (!feeAmount && props.transactionFees) {
+      setFeeAmount(getFeeAmount(props.transactionFees));
+    }
+  }, [feeAmount, props.transactionFees]);
 
   const onAcceptWithdrawal = () => {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(withdrawAmountInput)
@@ -39,34 +48,49 @@ export const WithdrawModal = (props: {
   };
 
   const setPercentualValue = (value: number) => {
+    let newValue = '';
+    let fee = 0;
     if (props.startUpData) {
       if (value === 100) {
-        setValue(getDisplayAmount(maxAmount));
+        fee = getFeeAmount(props.transactionFees, maxAmount)
+        newValue = getDisplayAmount(maxAmount - fee);
       } else {
         const partialAmount = percentage(value, maxAmount);
-        setValue(getDisplayAmount(partialAmount));
+        fee = getFeeAmount(props.transactionFees, partialAmount)
+        newValue = getDisplayAmount(partialAmount - fee);
       }
-    } else {
-      setValue("");
     }
+    setValue(newValue);
+    setFeeAmount(fee);
   }
 
   const handleWithdrawAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setValue("");
-    } else if (isValidNumber(newValue)) {
-      setValue(newValue);
-    }
+    const newValue = isValidNumber(e.target.value) ? e.target.value : '';
+    setValue(newValue);
+    setFeeAmount(getFeeAmount(props.transactionFees, newValue));
   };
 
-  const isValidInput = () => {
-    return props.startUpData && withdrawAmountInput &&
-      parseFloat(withdrawAmountInput) &&
-      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount))
+  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
+
+  const isValidInput = (): boolean => {
+    return props.startUpData &&
+      withdrawAmountInput &&
+      parseFloat(withdrawAmountInput) > (feeAmount as number) &&
+      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) - (feeAmount as number)
       ? true
       : false;
-  };
+  }
 
   const getDisplayAmount = (amount: any, addSymbol = false): string => {
     if (props && props.startUpData) {
@@ -78,6 +102,15 @@ export const WithdrawModal = (props: {
     }
 
     return '';
+  }
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
   }
 
   return (
@@ -153,7 +186,7 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">
-              {props.startUpData && parseFloat(withdrawAmountInput) > maxAmount ? (
+              {props.startUpData && parseFloat(withdrawAmountInput) > maxAmount - (feeAmount as number) ? (
                 <span className="fg-red">
                   Amount is greater than the available funds
                 </span>
@@ -165,6 +198,27 @@ export const WithdrawModal = (props: {
           </div>
         </div>
       </div>
+
+      {/* Info */}
+      {props.startUpData && props.startUpData.associatedToken && (
+        <div className="p-2 mb-2">
+          {infoRow(
+            'Transaction fee:',
+            `${isValidInput()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.startUpData.associatedToken as string)
+              : '0'
+            }`
+          )}
+          {infoRow(
+            'You receive:',
+            `${isValidInput()
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.startUpData.associatedToken as string)
+              : '0'
+            }`
+          )}
+        </div>
+      )}
+
       <Button
         className="main-cta"
         block
