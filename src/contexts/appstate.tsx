@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { convert, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { shortenAddress, useLocalStorageState } from "../utils/utils";
 import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
@@ -7,9 +7,7 @@ import { findATokenAddress, getStream, listStreamActivity, listStreams } from ".
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
-import { deserializeMint, useAccountsContext } from "./accounts";
-import { TokenAccount } from "../models";
-import { MintInfo } from "@solana/spl-token";
+import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";

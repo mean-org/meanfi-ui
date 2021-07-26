@@ -125,22 +125,29 @@ export const Streams = () => {
   useEffect(() => {
     let updateDateTimer: any;
 
-    const updateData = () => {
+    const updateData = async () => {
       if (streamDetail) {
-        const clonedDetail = _.cloneDeep(streamDetail);
+        const clonedDetail = Object.assign({}, streamDetail);
         const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
-        const currentBlockTime = Date.now() / 1000;
-        let rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds * isStreaming;
-        const elapsedTime = currentBlockTime - lastTimeSnap;
-        let escrowVestedAmount = 0;
+        let escrowVestedAmount = 0.0;
         let rateAmount = clonedDetail.rateAmount;
-    
-        if (rateAmount === 0) {
-            rateAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
-            rate = rateAmount / clonedDetail.rateIntervalInSeconds;
+        let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
+
+        if (rateIntervalInSeconds === 0) {
+          rateIntervalInSeconds = 1;
         }
 
+        let rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
+
+        if (rateAmount === 0) {
+            rateAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
+            rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds) : 0;
+        }
+
+        const slot = await connection.getSlot();
+        const currentBlockTime = await connection.getBlockTime(slot) as number;
+        const elapsedTime = currentBlockTime - lastTimeSnap;
         if (currentBlockTime >= lastTimeSnap) {
           escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
           if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
@@ -157,7 +164,7 @@ export const Streams = () => {
     // Install the timer
     updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 200);
+    }, 1000);
 
     // Return callback to run on unmount.
     return () => {
@@ -165,7 +172,11 @@ export const Streams = () => {
         window.clearInterval(updateDateTimer);
       }
     };
-  }, [connection, streamDetail, setStreamDetail]);
+  }, [
+    connection,
+    streamDetail,
+    setStreamDetail
+  ]);
 
   useEffect(() => {
     const resizeListener = () => {
