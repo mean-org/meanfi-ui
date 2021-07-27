@@ -391,10 +391,13 @@ export const FaucetView = () => {
               </div>
             </div>
             <p className="text-center">
-              Wrapped amount: {getTokenAmountAndSymbolByTokenAddress(
-                parseFloat(wrapAmount) - (wrapFees?.blockchainFee || 0),
+              Wrapped amount: {wrapFees ? '~' + 
+              getTokenAmountAndSymbolByTokenAddress(
+                parseFloat(wrapAmount) >= (wrapFees.blockchainFee as number)
+                ? parseFloat(wrapAmount) - wrapFees.blockchainFee
+                : 0,
                 WRAPPED_SOL_MINT_ADDRESS
-              )}
+              ) : '0'}
             </p>
             <Button
               className="main-cta"
