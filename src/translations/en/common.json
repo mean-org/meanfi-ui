@@ -60,6 +60,16 @@
 		"es": "Spanish",
 		"fr": "French"
 	},
+	"account-area": {
+		"connect-button": "Connect wallet account",
+		"network-unknown": "Unknown",
+		"streams-tooltip": "Click to reload streams",
+		"modal-title": "Account",
+		"wallet-provider": "Connected with",
+		"wallet-change": "Change",
+		"copy-address": "Copy Address",
+		"explorer-link": "View on Solana Explorer"
+	},
 	"ui-menus": {
 		"app-context-menu": {
 			"about": "About",
@@ -84,5 +94,8 @@
 			},
 			"transfers": "Transfers"
 		}
+	},
+	"wallet-selector": {
+		"primary-action": "Select"
 	}
 }

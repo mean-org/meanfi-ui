@@ -14,6 +14,7 @@ import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { WalletAdapter } from "../money-streaming/wallet-adapter";
+import { useTranslation } from "react-i18next";
 
 const ASSETS_URL = "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
 export const WALLET_PROVIDERS = [
@@ -75,6 +76,7 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { endpoint } = useConnectionConfig();
+  const { t } = useTranslation("common");
 
   const [autoConnect, setAutoConnect] = useState(false);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
@@ -161,12 +163,11 @@ export function WalletProvider({ children = null as any }) {
         select,
         provider,
         resetWalletProvider,
-      }}
-    >
+      }}>
       {children}
       <Modal
         className="mean-modal"
-        title="Select Wallet"
+        title={t(`wallet-selector.primary-action`)}
         okText="Connect"
         visible={isModalVisible}
         footer={null}

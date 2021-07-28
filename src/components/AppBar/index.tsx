@@ -1,11 +1,9 @@
-import { Popover } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
-// import { Settings } from '../Settings';
 import { useConnectionConfig } from '../../contexts/connection';
 
 export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
@@ -21,16 +19,6 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
             <ThunderboltOutlined />
             <span className="network-name">{connection.env}</span>
           </div>
-          // <Popover
-          //   placement="bottom"
-          //   title="Network selection"
-          //   content={<Settings />}
-          //   trigger="click">
-          //   <div className="cluster-indicator">
-          //     <ThunderboltOutlined />
-          //     <span className="network-name">{connection.env}</span>
-          //   </div>
-          // </Popover>
         )}
         <div className="connection-and-account-bar">
           <CurrentNetwork />

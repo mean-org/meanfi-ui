@@ -18,6 +18,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { StreamInfo } from "../../money-streaming/types";
+import { useTranslation } from "react-i18next";
 
 interface StreamStats {
   incoming: number;
@@ -31,6 +32,7 @@ const defaultStreamStats = {
 
 export const CurrentUserBadge = (props: {}) => {
 
+  const { t } = useTranslation("common");
   const [redirect, setRedirect] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
@@ -103,6 +105,10 @@ export const CurrentUserBadge = (props: {}) => {
     return null;
   }
 
+  const getUiTranslation = (translationId: string) => {
+    return t(`account-area.${translationId}`);
+  }
+
   return (
     <>
       {redirect && (<Redirect to={redirect} />)}
@@ -110,7 +116,7 @@ export const CurrentUserBadge = (props: {}) => {
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <Tooltip placement="bottom" title="Click to reload streams">
+        <Tooltip placement="bottom" title={getUiTranslation('streams-tooltip')}>
           <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
             <Spin size="small" />
             {customStreamDocked ? (
@@ -135,7 +141,7 @@ export const CurrentUserBadge = (props: {}) => {
       <Modal
         className="mean-modal"
         visible={isModalVisible}
-        title="Account"
+        title={getUiTranslation('modal-title')}
         onCancel={close}
         width={450}
         footer={null}>
@@ -143,7 +149,7 @@ export const CurrentUserBadge = (props: {}) => {
           {/* Wallet */}
           <Row>
             <Col span={12}>
-              Connected with {usedProvider?.name}
+              {getUiTranslation('wallet-provider')} {usedProvider?.name}
             </Col>
             <Col span={12} className="text-right">
               <Button
@@ -153,7 +159,7 @@ export const CurrentUserBadge = (props: {}) => {
                 className="mean-icon-button"
                 onClick={switchWallet}>
                 <IconWallet className="mean-svg-icons" />
-                <span className="icon-button-text">Change</span>
+                <span className="icon-button-text">{getUiTranslation('wallet-change')}</span>
               </Button>
             </Col>
           </Row>
@@ -175,14 +181,14 @@ export const CurrentUserBadge = (props: {}) => {
             <Col span={10}>
               <span className="secondary-link" role="link" onClick={onCopyAddress}>
                 <IconCopy className="mean-svg-icons link" />
-                <span className="link-text">Copy Address</span>
+                <span className="link-text">{getUiTranslation('copy-address')}</span>
               </span>
             </Col>
             <Col span={14}>
               <a className="secondary-link" target="_blank" rel="noopener noreferrer"
                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons link" />
-                <span className="link-text">View on Solana Explorer</span>
+                <span className="link-text">{getUiTranslation('explorer-link')}</span>
               </a>
             </Col>
           </Row>
