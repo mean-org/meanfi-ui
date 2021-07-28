@@ -1,0 +1,88 @@
+{
+	"contract-selector": {
+		"categories": {
+			"cat1": "Individuals",
+			"cat2": "Business",
+			"cat3": "Real Estate",
+			"cat4": "Other"
+		},
+		"donation-fund": {
+			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
+			"name": "Donation Fund"
+		},
+		"fundraising": {
+			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
+			"name": "Fundraising"
+		},
+		"lead": "Choose from battle-tested audited contracts",
+		"modal-title": "New Money Stream",
+		"otp": {
+			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
+			"name": "One Time Payment"
+		},
+		"payroll": {
+			"description": "Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.",
+			"name": "Payroll"
+		},
+		"pension-fund": {
+			"description": "For employers setting up pension plans that pay employees upon qualifying events, such as reaching retirement age.",
+			"name": "Pension Fund"
+		},
+		"primary-action": "Next",
+		"real-estate-sale-escrow": {
+			"description": "Setup the escrow account for a Real Estate transaction. Seller and buyer get direct access and full auditing for free.",
+			"name": "Real Estate Sale (Escrow)"
+		},
+		"rent-collection": {
+			"description": "Setup rent collection for your tenants. Get paid in real time for every minute they occupy your property.",
+			"name": "Rent Collection"
+		},
+		"repeating": {
+			"description": "Send money to anyone at a fixed flow rate over time. Great for family remmitances, child allowances and more.",
+			"name": "Repeating Payment"
+		},
+		"setup-everything": {
+			"description": "Recommended for professionals that want to setup a contract with unique terms, not commonly used.",
+			"name": "Setup everything (Advanced)"
+		},
+		"subscription": {
+			"description": "Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.",
+			"name": "Subscription"
+		}
+	},
+	"language-selector": {
+		"modal-title": "Language selector",
+		"primary-action": "Select",
+		"secondary-action": "Cancel"
+	},
+	"ui-language": {
+		"en": "English",
+		"es": "Spanish",
+		"fr": "French"
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"about": "About",
+			"code": "Code",
+			"developers": "Developers",
+			"disconnect": "Disconnect wallet",
+			"discord": "Discord",
+			"faucet": "Faucet",
+			"how-to-use": "How to use",
+			"switch-language": "Language",
+			"switch-theme": "Switch to",
+			"theme-dark": "Dark Mode",
+			"theme-light": "Light Mode"
+		},
+		"main-menu": {
+			"pro-services": {
+				"payroll": "Payroll"
+			},
+			"tools": {
+				"faucet": "Faucet",
+				"wrapper": "Wrapper"
+			},
+			"transfers": "Transfers"
+		}
+	}
+}

@@ -63,7 +63,7 @@ export const CloseStreamModal = (props: {
 
   return (
     <Modal
-      className="mean-modal close-stream"
+      className="mean-modal simple-modal"
       title={<div className="modal-title">Close stream</div>}
       footer={null}
       visible={props.isVisible}

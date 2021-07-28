@@ -1,5 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
@@ -30,6 +31,7 @@ export const HomeView = () => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const [previousChain, setChain] = useState("");
+  const { t } = useTranslation('common');
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -160,8 +162,8 @@ export const HomeView = () => {
             <div className="position-relative mb-2">
               {contract && (
                 <>
-                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{contract.name}<IconCaretDown className="mean-svg-icons" /></h2>
-                  <p>{contract.description}</p>
+                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                  <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
                 </>
               )}
             </div>

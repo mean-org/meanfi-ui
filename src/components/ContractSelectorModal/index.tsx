@@ -4,6 +4,7 @@ import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { STREAMING_PAYMENT_CONTRACTS } from "../../constants";
 import { ContractDefinition } from "../../models/contract-definition";
+import { useTranslation } from "react-i18next";
 
 const { TabPane } = Tabs;
 
@@ -13,11 +14,12 @@ export const ContractSelectorModal = (props: {
   isVisible: boolean;
 }) => {
   const { contract, setContract } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
 
   const getCategories = (): ContractDefinition[] => {
     const results = STREAMING_PAYMENT_CONTRACTS.reduce((accumulator: ContractDefinition[], currentItem: ContractDefinition, currentIndex) => {
-      // look up if the current item is of an integrationId that is already in our end result.
-      const index = accumulator.findIndex((item) => item.category === currentItem.category);
+      // look up if the current item is of category that is already in our end result.
+      const index = accumulator.findIndex((item) => item.categoryId === currentItem.categoryId);
       if (index < 0) {
           accumulator.push(currentItem); // now item added to the array
       }
@@ -35,7 +37,7 @@ export const ContractSelectorModal = (props: {
     <Tabs defaultActiveKey={contract?.categoryId} centered>
       {getCategories().map((tab) => {
         return (
-          <TabPane tab={tab.category} key={tab.categoryId}>
+          <TabPane tab={t(`contract-selector.categories.${tab.categoryId}`)} key={tab.categoryId}>
             <div className="contract-card-list vertical-scroll">
               {getContractListByCategory(tab.categoryId).map(cntrct => {
                 return (
@@ -54,8 +56,8 @@ export const ContractSelectorModal = (props: {
                       <CheckOutlined />
                     </div>
                     <div className="contract-meta">
-                      <div className="contract-name">{cntrct.name}</div>
-                      <div className="contract-description">{cntrct.description}</div>
+                      <div className="contract-name">{t(`contract-selector.${cntrct.translationId}.name`)}</div>
+                      <div className="contract-description">{t(`contract-selector.${cntrct.translationId}.description`)}</div>
                     </div>
                   </div>
                 );
@@ -70,7 +72,7 @@ export const ContractSelectorModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">New Money Stream</div>}
+      title={<div className="modal-title">{t('contract-selector.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -78,7 +80,7 @@ export const ContractSelectorModal = (props: {
       width={480}>
       {/* A formarla */}
       <div className="text-center">
-        <span className="yellow-pill">Choose from battle-tested audited contracts</span>
+        <span className="yellow-pill">{t('contract-selector.lead')}</span>
       </div>
       {contractCategories}
       <Button
@@ -88,7 +90,7 @@ export const ContractSelectorModal = (props: {
         shape="round"
         size="large"
         onClick={props.handleOk}>
-        Next
+        {t("contract-selector.primary-action")}
       </Button>
     </Modal>
   );

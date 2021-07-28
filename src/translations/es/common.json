@@ -1,0 +1,88 @@
+{
+	"contract-selector": {
+		"categories": {
+			"cat1": "Individuos",
+			"cat2": "Negocio",
+			"cat3": "Bienes Raíces",
+			"cat4": "Otros"
+		},
+		"donation-fund": {
+			"description": "Cree una cuenta en la que cualquiera pueda donar con la tranquilidad de que los fondos se utilizarán para la causa correcta.",
+			"name": "Fondo de donación"
+		},
+		"fundraising": {
+			"description": "¿Desea recaudar fondos para su semilla, serie, ICO, DAICO, rondas privadas? No busque más allá de un contrato de recaudación de fondos.",
+			"name": "Recaudación de fondos"
+		},
+		"lead": "Elija entre contratos auditados probados en batalla",
+		"modal-title": "Nuevo flujo de dinero",
+		"otp": {
+			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
+			"name": "Pago único"
+		},
+		"payroll": {
+			"description": "Configure la nómina para un empleado o contratista, en cualquier parte del mundo sin los gastos generales de los servicios bancarios tradicionales.",
+			"name": "Nómina de sueldos"
+		},
+		"pension-fund": {
+			"description": "Para empleadores que establecen planes de pensión que pagan a los empleados sobre eventos que califiquen, como alcanzar la edad de jubilación.",
+			"name": "Fondo de pensiones"
+		},
+		"primary-action": "Siguiente",
+		"real-estate-sale-escrow": {
+			"description": "Configure la cuenta de depósito en garantía para una transacción de bienes raíces. El vendedor y el comprador obtienen acceso directo y auditoría completa de forma gratuita.",
+			"name": "Venta de bienes raíces (fideicomiso)"
+		},
+		"rent-collection": {
+			"description": "Configure el cobro de alquiler para sus inquilinos. Reciba pagos en tiempo real por cada minuto que ocupen su propiedad.",
+			"name": "Cobro de alquiler"
+		},
+		"repeating": {
+			"description": "Envíe dinero a cualquier persona con un caudal fijo a lo largo del tiempo. Ideal para retribuciones familiares, asignaciones por hijos y más.",
+			"name": "Pago repetido"
+		},
+		"setup-everything": {
+			"description": "Recomendado para profesionales que desean establecer un contrato con términos únicos, no de uso común.",
+			"name": "Configurar todo (avanzado)"
+		},
+		"subscription": {
+			"description": "Configure un contrato de suscripción SaaS para pagos regulares de membresía. Piense en Netflix o en su membresía mensual de Gym Club.",
+			"name": "Suscripción"
+		}
+	},
+	"language-selector": {
+		"modal-title": "Selector de idioma",
+		"primary-action": "Seleccionar",
+		"secondary-action": "Cancelar"
+	},
+	"ui-language": {
+		"en": "Inglés",
+		"es": "Español",
+		"fr": "Francés"
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"about": "Acerca de",
+			"code": "Código",
+			"developers": "Desarrolladores",
+			"disconnect": "Desconectar billetera",
+			"discord": "Discord",
+			"faucet": "Grifo",
+			"how-to-use": "Cómo utilizar",
+			"switch-language": "Idioma",
+			"switch-theme": "Cambiar a",
+			"theme-dark": "Modo Oscuro",
+			"theme-light": "Modo Claro"
+		},
+		"main-menu": {
+			"pro-services": {
+				"payroll": "Nómina de sueldos"
+			},
+			"tools": {
+				"faucet": "Grifo",
+				"wrapper": "Envoltura"
+			},
+			"transfers": "Transferencias"
+		}
+	}
+}

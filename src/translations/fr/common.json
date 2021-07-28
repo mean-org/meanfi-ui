@@ -1,0 +1,88 @@
+{
+	"contract-selector": {
+		"categories": {
+			"cat1": "Personnes",
+			"cat2": "Affaires",
+			"cat3": "Immobilier",
+			"cat4": "Autre"
+		},
+		"donation-fund": {
+			"description": "Créez un compte où n'importe qui peut faire un don avec la tranquillité d'esprit que les fonds seront utilisés pour la bonne cause.",
+			"name": "Fonds de dons"
+		},
+		"fundraising": {
+			"description": "Vous cherchez à lever des fonds pour vos Seed, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin qu'un contrat de collecte de fonds.",
+			"name": "Collecte de fonds"
+		},
+		"lead": "Choisissez parmi des contrats audités éprouvés",
+		"modal-title": "Nouveau flux d'argent",
+		"otp": {
+			"description": "Envoyez de l'argent ou programmez un paiement à une autre personne une seule fois. Utilisez cette option pour payer tout ce que vous voulez.",
+			"name": "Paiement unique"
+		},
+		"payroll": {
+			"description": "Configurez la paie d'un employé ou d'un entrepreneur, partout dans le monde, sans les frais généraux des services bancaires traditionnels.",
+			"name": "Paie"
+		},
+		"pension-fund": {
+			"description": "Pour les employeurs qui mettent en place des régimes de retraite qui paient les employés lors d'événements qualifiants, tels que l'âge de la retraite.",
+			"name": "Fonds de pension"
+		},
+		"primary-action": "Suivant",
+		"real-estate-sale-escrow": {
+			"description": "Configurez le compte séquestre pour une transaction immobilière. Le vendeur et l'acheteur bénéficient d'un accès direct et d'un audit complet gratuitement.",
+			"name": "Vente immobilière (Escroc)"
+		},
+		"rent-collection": {
+			"description": "Configurez la perception des loyers pour vos locataires. Soyez payé en temps réel pour chaque minute qu'ils occupent votre propriété.",
+			"name": "Perception des loyers"
+		},
+		"repeating": {
+			"description": "Envoyez de l'argent à n'importe qui à un débit fixe dans le temps. Idéal pour les envois de fonds familiaux, les allocations familiales et plus encore.",
+			"name": "Paiement répété"
+		},
+		"setup-everything": {
+			"description": "Recommandé pour les professionnels qui souhaitent mettre en place un contrat avec des conditions uniques, pas couramment utilisées.",
+			"name": "Tout configurer (Avancé)"
+		},
+		"subscription": {
+			"description": "Configurez un contrat d'abonnement SaaS pour les paiements d'adhésion réguliers. Pensez à Netflix ou à votre abonnement mensuel au Gym Club.",
+			"name": "Abonnement"
+		}
+	},
+	"language-selector": {
+		"modal-title": "Sélecteur de langue",
+		"primary-action": "Sélectionner",
+		"secondary-action": "Annuler"
+	},
+	"ui-language": {
+		"en": "Anglais",
+		"es": "Espanol",
+		"fr": "Français"
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"about": "Sur",
+			"code": "Code",
+			"developers": "Développeurs",
+			"disconnect": "Déconnecter le portefeuille",
+			"discord": "Discord",
+			"faucet": "Robinet",
+			"how-to-use": "Comment utiliser",
+			"switch-language": "La langue",
+			"switch-theme": "Basculer vers",
+			"theme-dark": "Mode Sombre",
+			"theme-light": "Mode lumière"
+		},
+		"main-menu": {
+			"pro-services": {
+				"payroll": "Paie"
+			},
+			"tools": {
+				"faucet": "Robinet",
+				"wrapper": "Emballage"
+			},
+			"transfers": "Transferts"
+		}
+	}
+}

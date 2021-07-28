@@ -14,9 +14,11 @@ import {
 } from "../../Icons";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { useContext } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { MEAN_FINANCE_WEBSITE_URL } from "../../constants";
+import { LanguageSelector } from "../LanguageSelector";
+import { useTranslation } from "react-i18next";
 
 export const AppContextMenu = () => {
 
@@ -28,6 +30,36 @@ export const AppContextMenu = () => {
     setSelectedStream,
     setStreamList
   } = useContext(AppStateContext);
+
+  const { t, i18n } = useTranslation("common");
+  const [selectedLanguage] = useState<string>(i18n.language);
+  const [language, setLanguage] = useState<string>("");
+  useEffect(() => {
+    if (!language) {
+      setLanguage(getLanguageCode(selectedLanguage));
+    }
+  }, [language, selectedLanguage]);
+
+  const getLanguageCode = (fullCode: string): string => {
+    if (!fullCode) {
+      return "en";
+    }
+    const splitted = fullCode.split("-");
+    if (splitted.length > 1) {
+      return splitted[0];
+    }
+    return fullCode;
+  };
+
+  // Close stream modal
+  const [isLanguageModalVisible, setIsLanguageModalVisibility] = useState(false);
+  const showLanguageModal = useCallback(() => setIsLanguageModalVisibility(true), []);
+  const hideLanguageModal = useCallback(() => setIsLanguageModalVisibility(false), []);
+  const onAcceptLanguage = (e: any) => {
+    hideLanguageModal();
+    i18n.changeLanguage(e);
+    setLanguage(e);
+  };
 
   const onDisconnectWallet = () => {
     disconnect();
@@ -48,45 +80,45 @@ export const AppContextMenu = () => {
     <Menu>
       <Menu.Item key="1" onClick={onSwitchTheme}>
         <IconMoon className="mean-svg-icons" />
-        <span className="menu-item-text">{
-          theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'
-        }</span>
+        <span className="menu-item-text">
+          {t(`ui-menus.app-context-menu.switch-theme`)} {theme === 'light'
+            ? t(`ui-menus.app-context-menu.theme-dark`)
+            : t(`ui-menus.app-context-menu.theme-light`)}
+        </span>
       </Menu.Item>
-      <Menu.Item key="2">
-        <a href="https://www.someplace.com">
+      <Menu.Item key="2" onClick={showLanguageModal}>
           <IconSettings className="mean-svg-icons" />
-          <span className="menu-item-text">Language: English</span>
-        </a>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}</span>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
         <a href={MEAN_FINANCE_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
           <IconInfoCircle className="mean-svg-icons" />
-          <span className="menu-item-text">About</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.about')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="4">
         <a href="https://www.someplace.com">
           <IconUniversity className="mean-svg-icons" />
-          <span className="menu-item-text">How to use</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="5">
         <a href="https://www.someplace.com">
           <IconBookOpen className="mean-svg-icons" />
-          <span className="menu-item-text">Developers</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.developers')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="6">
         <a href="https://www.someplace.com">
           <IconCodeBlock className="mean-svg-icons" />
-          <span className="menu-item-text">Code</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="7">
         <a href="https://www.someplace.com">
           <IconChat className="mean-svg-icons" />
-          <span className="menu-item-text">Discord</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       </Menu.Item>
       {connected && connection.env !== 'mainnet-beta' && (
@@ -95,7 +127,7 @@ export const AppContextMenu = () => {
           <Menu.Item key="8">
             <Link to="/faucet">
               <IconAdd className="mean-svg-icons" />
-              <span className="menu-item-text">Faucet</span>
+              <span className="menu-item-text">{t('ui-menus.app-context-menu.faucet')}</span>
             </Link>
           </Menu.Item>
         </>
@@ -103,22 +135,29 @@ export const AppContextMenu = () => {
       {connected && (
         <Menu.Item key="9" onClick={onDisconnectWallet}>
           <IconLogout className="mean-svg-icons" />
-          <span className="menu-item-text">Disconnect wallet</span>
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.disconnect')}</span>
         </Menu.Item>
       )}
     </Menu>
   );
 
   return (
-    <Dropdown overlay={menu} trigger={["click"]}>
-      <Button
-        shape="round"
-        type="text"
-        size="middle"
-        className="ant-btn-shaded"
-        onClick={(e) => e.preventDefault()}
-        icon={<EllipsisOutlined />}
-      ></Button>
-    </Dropdown>
+    <>
+      <Dropdown overlay={menu} trigger={["click"]}>
+        <Button
+          shape="round"
+          type="text"
+          size="middle"
+          className="ant-btn-shaded"
+          onClick={(e) => e.preventDefault()}
+          icon={<EllipsisOutlined />}
+        ></Button>
+      </Dropdown>
+      <LanguageSelector
+        isVisible={isLanguageModalVisible}
+        handleOk={onAcceptLanguage}
+        handleClose={hideLanguageModal}
+      />
+    </>
   );
 };

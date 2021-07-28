@@ -1268,7 +1268,7 @@ em {
     @media (min-width: 576px) {
       max-height: calc(100vh - 200px);
     }
-    &.close-stream .ant-divider.ant-divider-horizontal.ant-divider-plain {
+    &.simple-modal .ant-divider.ant-divider-horizontal.ant-divider-plain {
       margin: 24px -24px 12px;
       width: auto;
     }
@@ -3528,6 +3528,33 @@ em {
     font-size: 0.62rem;
     color: var(--color-secondary-alpha-40);
   }
+  h4, h5 {
+    color: var(--color-secondary-alpha-85);
+  }
+  .ant-btn.ant-btn-round {
+    border-radius: var(--custom-border-radius);
+    border: none;
+    box-shadow: none;
+    transition: none;
+    height: 40px;
+    &.ant-btn-default {
+      color: var(--color-secondary);
+      background-color: transparent;
+      &:hover {
+        background-color: var(--color-secondary-alpha-05);
+      }
+    }
+    &.ant-btn-primary {
+      color: var(--color-white);
+      background-color: var(--color-primary);
+      &:hover {
+        background-color: var(--color-primary-highlight);
+      }
+    }
+  }
+}
+
+.language-select {
   h4, h5 {
     color: var(--color-secondary-alpha-85);
   }
