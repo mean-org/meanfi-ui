@@ -1,4 +1,14 @@
 {
+	"account-area": {
+		"connect-button": "Conectar cuenta de billetera",
+		"copy-address": "Copiar dirección",
+		"explorer-link": "Ver en Solana Explorer",
+		"modal-title": "Cuenta",
+		"network-unknown": "Desconocido",
+		"streams-tooltip": "Haga clic para recargar las transmisiones",
+		"wallet-change": "Cambiar",
+		"wallet-provider": "Conectado con"
+	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Individuos",
@@ -50,10 +60,107 @@
 			"name": "Suscripción"
 		}
 	},
+	"general": {
+		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
+		"loading": "Cargando",
+		"not-implemented": "No implementado",
+		"today": "hoy"
+	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
 		"secondary-action": "Cancelar"
+	},
+	"token-selector": {
+		"modal-title": "Seleccione un token"
+	},
+	"transactions": {
+		"memo": {
+			"label": "Nota",
+			"placeholder": "Agregar una nota opcional"
+		},
+		"memo2": {
+			"label": "Nota / Asunto",
+			"placeholder": "¿Para qué es este pago?"
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "por día",
+				"per-hour": "por hora",
+				"per-minute": "por minuto",
+				"per-month": "por mes",
+				"per-week": "por semana",
+				"per-year": "por año"
+			},
+			"rate-label": "Tasa y frecuencia",
+			"token-label": "El destinatario recibe"
+		},
+		"recipient": {
+			"label": "Destinatario",
+			"placeholder": "Dirección pública o ENS",
+			"qr-scan-title": "Obtener dirección desde código QR",
+			"recipient-is-own-account": "No se puede enviar a su propia cuenta"
+		},
+		"send-amount": {
+			"add-on": "MAX",
+			"label": "Enviar",
+			"label-right": "Balance"
+		},
+		"send-date": {
+			"label": "Enviar en",
+			"placeholder": "Elige una fecha"
+		},
+		"status": {
+			"cta-close": "Cerrar",
+			"cta-dismiss": "Retirar",
+			"cta-view-stream": "Ver Flujo de dinero",
+			"instructions": "Confirma esta transacción en tu billetera",
+			"modal-title-executing-transaction": "Ejecutando transacción",
+			"modal-title-transaction-completed": "Transacción Completada",
+			"stream-started-post": "se inició con éxito",
+			"stream-started-pre": "Tu flujo de dinero por",
+			"tx-completed": "Operación completada",
+			"tx-confirm": "Confirmando transacción",
+			"tx-confirm-failure": "No se pudo confirmar la transacción",
+			"tx-idle": "Ocioso",
+			"tx-init": "Inicializar transacción",
+			"tx-init-failure": "No se pudo inicializar la transacción",
+			"tx-operation": "Enviando",
+			"tx-operation-success": "fue enviado exitosamente",
+			"tx-rejected": "Transacción rechazada",
+			"tx-send": "Enviando transacción",
+			"tx-send-failure": "Error al enviar la transacción",
+			"tx-sign": "Esperando confirmación",
+			"tx-start": "Recolectando datos",
+			"tx-wait": "Trabajando, por favor espere"
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "Hora de entrada / salida",
+			"label": "Requisito del parte de horas",
+			"not-required": "Innecesario (transmisiones 24/7)",
+			"submit-timesheets": "Enviar hojas de horas"
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
+			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
+			"beneficiary-receives": "El beneficiario recibe",
+			"min-recommended-amount": "Cantidad mínima recomendada",
+			"recipient-receives": "El destinatario recibe",
+			"transaction-fee": "Tarifa de transacción"
+		},
+		"validation": {
+			"amount-high": "La cantidad excede su saldo",
+			"amount-low": "No hay suficiente saldo",
+			"invalid-amount": "Monto no válido",
+			"no-amount": "Ingrese la cantidad",
+			"no-balance": "Sin saldo",
+			"no-payment-rate": "Agregar tasa de pago",
+			"no-recipient": "Seleccionar destinatario",
+			"no-valid-date": "Establecer una fecha válida",
+			"not-connected": "Conecta tu billetera",
+			"payment-rate-high": "La tasa de pago excede su saldo",
+			"valid-approve": "Aprobar en su billetera"
+		}
 	},
 	"ui-language": {
 		"en": "Inglés",
@@ -84,5 +191,8 @@
 			},
 			"transfers": "Transferencias"
 		}
+	},
+	"wallet-selector": {
+		"primary-action": "Seleccionar"
 	}
 }

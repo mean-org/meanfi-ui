@@ -1,8 +1,7 @@
 import { useContext, useEffect } from "react";
 import { Modal } from "antd";
 import { AppStateContext } from "../../contexts/appstate";
-
-// declare var Html5QrcodeScanner: any;
+import { useTranslation } from "react-i18next";
 
 export const QrScannerModal = (props: {
   handleClose: any;
@@ -10,6 +9,7 @@ export const QrScannerModal = (props: {
   isVisible: boolean;
 }) => {
   const { recipientAddress, setRecipientAddress } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     let tempString = '';
@@ -58,7 +58,7 @@ export const QrScannerModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Get address from QR code</div>}
+      title={<div className="modal-title">{t('transactions.recipient.qr-scan-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}

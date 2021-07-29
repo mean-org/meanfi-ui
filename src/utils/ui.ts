@@ -2,7 +2,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import moment from "moment";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { environment } from "../environments/environment";
-import { PaymentRateType, PaymentStartPlan, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
@@ -80,77 +80,31 @@ export function timeConvert(n: number, decimals = 0, abbr = false): string {
     return returnString;
 }
 
-export const getPaymentStartPlanOptionLabel = (val: PaymentStartPlan): string => {
-    if (val === PaymentStartPlan.Now) {
-        return 'Now';
-    } else {
-        return 'On a given date'
-    }
-}
-
-export const getPaymentRateOptionLabel = (val: PaymentRateType): string => {
+export const getPaymentRateOptionLabel = (val: PaymentRateType, trans?: any): string => {
     let result = '';
     switch (val) {
         case PaymentRateType.PerMinute:
-            result = 'per minute';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-minute') : 'per minute';
             break;
         case PaymentRateType.PerHour:
-            result = 'per hour';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-hour') : 'per hour';
             break;
         case PaymentRateType.PerDay:
-            result = 'per day';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-day') : 'per day';
             break;
         case PaymentRateType.PerWeek:
-            result = 'per week';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-week') : 'per week';
             break;
         case PaymentRateType.PerMonth:
-            result = 'per month';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-month') : 'per month';
             break;
         case PaymentRateType.PerYear:
-            result = 'per year';
+            result = trans ? trans('transactions.rate-and-frequency.payment-rates.per-year') : 'per year';
             break;
         default:
             break;
     }
     return result;
-}
-
-export function getOptionsFromEnum(value: any): PaymentRateTypeOption[] {
-    let index = 0;
-    const options: PaymentRateTypeOption[] = [];
-    for (const enumMember in value) {
-        const mappedValue = parseInt(enumMember, 10);
-        if (!isNaN(mappedValue)) {
-            const item = new PaymentRateTypeOption(
-                index,
-                mappedValue,
-                getPaymentRateOptionLabel(mappedValue)
-            );
-            options.push(item);
-        }
-        index++;
-    }
-    return options;
-}
-
-// In minutes for UI kindness
-export const getPaymentRateIntervalByRateType = (rateType: PaymentRateType): string => {
-    switch (rateType) {
-        case PaymentRateType.PerMinute:
-            return '1';
-        case PaymentRateType.PerHour:
-            return '60';
-        case PaymentRateType.PerDay:
-            return '1440';
-        case PaymentRateType.PerWeek:
-            return '10080';
-        case PaymentRateType.PerMonth:
-            return '43800';
-        case PaymentRateType.PerYear:
-            return '525600';
-        default:
-            return '1';
-    }
 }
 
 export const getAmountWithTokenSymbol = (
@@ -164,17 +118,17 @@ export const getAmountWithTokenSymbol = (
     return `${formatAmount(parsed, decimals)} ${token.symbol}`;
 }
 
-export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption): string => {
+export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOption, trans?: any): string => {
     let result = '';
     switch (val) {
         case TimesheetRequirementOption.NotRequired:
-            result = 'Not required (streams 24/7)';
+            result = trans ? trans('transactions.timeshift-requirement.not-required') : 'Not required (streams 24/7)';
             break;
         case TimesheetRequirementOption.SubmitTimesheets:
-            result = 'Submit timesheets';
+            result = trans ? trans('transactions.timeshift-requirement.submit-timesheets') : 'Submit timesheets';
             break;
         case TimesheetRequirementOption.ClockinClockout:
-            result = 'Clock-in / Clock-out';
+            result = trans ? trans('transactions.timeshift-requirement.clock-in-out') : 'Clock-in / Clock-out';
             break;
         default:
             break;
@@ -209,30 +163,30 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
-export const getTransactionOperationDescription = (status: TransactionStatusInfo): string => {
+export const getTransactionOperationDescription = (status: TransactionStatusInfo, trans?: any): string => {
     switch (status.currentOperation) {
         case TransactionStatus.TransactionStart:
-            return 'Collecting data';
+            return trans ? trans('transactions.status.tx-start') : 'Collecting data';
         case TransactionStatus.InitTransaction:
-            return 'Init transaction';
+            return trans ? trans('transactions.status.tx-init') : 'Init transaction';
         case TransactionStatus.SignTransaction:
-            return 'Waiting for confirmation';
+            return trans ? trans('transactions.status.tx-sign') : 'Waiting for confirmation';
         case TransactionStatus.SendTransaction:
-            return 'Sending transaction';
+            return trans ? trans('transactions.status.tx-send') : 'Sending transaction';
         case TransactionStatus.ConfirmTransaction:
-            return 'Confirming transaction';
+            return trans ? trans('transactions.status.tx-confirm') : 'Confirming transaction';
         case TransactionStatus.InitTransactionFailure:
-            return 'Could not init transaction';
+            return trans ? trans('transactions.status.tx-init-failure') : 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
-            return 'Transaction rejected';
+            return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
         case TransactionStatus.SendTransactionFailure:
-            return 'Failure submitting transaction';
+            return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
         case TransactionStatus.ConfirmTransactionFailure:
-            return 'The transaction could not be confirmed';
+            return trans ? trans('transactions.status.tx-confirm-failure') : 'The transaction could not be confirmed';
         case TransactionStatus.TransactionFinished:
-            return 'Operation completed';
+            return trans ? trans('transactions.status.tx-completed') : 'Operation completed';
         default:
-            return 'Idle';
+            return trans ? trans('transactions.status.tx-idle') : 'Idle';
     }
 }
 
@@ -341,4 +295,13 @@ export const getFormattedNumberToLocale = (value: any) => {
 export function disabledDate(current: any) {
     // Can not select days before today and today
     return current && current < moment().subtract(1, 'days').endOf('day');
+}
+
+export const isToday = (someDate: string): boolean => {
+    if (!someDate) { return false; }
+    const inputDate = new Date(someDate);
+    const today = new Date();
+    return inputDate.getDate() === today.getDate() &&
+      inputDate.getMonth() === today.getMonth() &&
+      inputDate.getFullYear() === today.getFullYear()
 }

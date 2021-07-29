@@ -120,7 +120,7 @@ export const HomeView = () => {
   const renderPreFooter = (
     <div className="pre-footer-notice">
       <div className="footer-left">
-        This product is in beta. Do not deposit or swap large amounts of funds.
+        {t(`general.app-background-disclaimer`)}
       </div>
       <div className="footer-right">
         Powered by the Solana Network
@@ -149,7 +149,7 @@ export const HomeView = () => {
         case 1:   return <OneTimePayment />;
         case 2:   return <RepeatingPayment />;
         case 3:   return <PayrollPayment />;
-        default:  return <h4>Not implemented</h4>
+        default:  return <h4>{t(`general.not-implemented`)}</h4>
       }
     }
 
@@ -187,7 +187,7 @@ export const HomeView = () => {
       <>
       <div className="container main-container">
         <div className="interaction-area px-4 py-4 text-center">
-          <p>Loading...</p>
+          <p>{t('general.loading')}...</p>
         </div>
       </div>
       {renderPreFooter}

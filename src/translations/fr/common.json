@@ -1,4 +1,14 @@
 {
+	"account-area": {
+		"connect-button": "Connecter un compte portefeuille",
+		"copy-address": "Copier l'adresse",
+		"explorer-link": "Vue sur Solana Explorer",
+		"modal-title": "Compte",
+		"network-unknown": "Inconnu",
+		"streams-tooltip": "Cliquez pour recharger les flux",
+		"wallet-change": "Changement",
+		"wallet-provider": "Connecté avec"
+	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Personnes",
@@ -50,10 +60,107 @@
 			"name": "Abonnement"
 		}
 	},
+	"general": {
+		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez ou n'échangez pas de gros montants.",
+		"loading": "Chargement",
+		"not-implemented": "Pas mis en œuvre",
+		"today": "aujourd'hui"
+	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
 		"primary-action": "Sélectionner",
 		"secondary-action": "Annuler"
+	},
+	"token-selector": {
+		"modal-title": "Sélectionnez un jeton"
+	},
+	"transactions": {
+		"memo": {
+			"label": "Note",
+			"placeholder": "Ajouter une note facultative"
+		},
+		"memo2": {
+			"label": "Mémo / Sujet",
+			"placeholder": "A quoi sert ce paiement ?"
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "par jour",
+				"per-hour": "par heure",
+				"per-minute": "par minute",
+				"per-month": "par mois",
+				"per-week": "par semaine",
+				"per-year": "par an"
+			},
+			"rate-label": "Taux et fréquence",
+			"token-label": "Le destinataire reçoit"
+		},
+		"recipient": {
+			"label": "Bénéficiaire",
+			"placeholder": "Sonorisation ou ENS",
+			"qr-scan-title": "Obtenir l'adresse à partir du code QR",
+			"recipient-is-own-account": "Impossible d'envoyer vers votre propre compte"
+		},
+		"send-amount": {
+			"add-on": "MAX",
+			"label": "Envoyer",
+			"label-right": "Solde du compte"
+		},
+		"send-date": {
+			"label": "Envoyer le",
+			"placeholder": "Veuillez choisir une date"
+		},
+		"status": {
+			"cta-close": "Fermer",
+			"cta-dismiss": "Rejeter",
+			"cta-view-stream": "Voir le flux",
+			"instructions": "Confirmez cette transaction dans votre portefeuille",
+			"modal-title-executing-transaction": "Exécution de la transaction",
+			"modal-title-transaction-completed": "Transaction terminée",
+			"stream-started-post": "a démarré avec succès",
+			"stream-started-pre": "Votre flux d'argent pour",
+			"tx-completed": "Opération terminée",
+			"tx-confirm": "Confirmation de la transaction",
+			"tx-confirm-failure": "La transaction n'a pas pu être confirmée",
+			"tx-idle": "Tourner au ralenti",
+			"tx-init": "Initialiser la transaction",
+			"tx-init-failure": "Impossible d'initialiser la transaction",
+			"tx-operation": "Envoi",
+			"tx-operation-success": "a été envoyé avec succès",
+			"tx-rejected": "Transaction rejetée",
+			"tx-send": "Envoi de l'opération",
+			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-sign": "En attente de confirmation",
+			"tx-start": "La collecte de données",
+			"tx-wait": "Fonctionne, veuillez patienter"
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "Pointage d'entrée / Pointage de sortie",
+			"label": "Exigence de feuille de temps",
+			"not-required": "Non requis (flux 24/7)",
+			"submit-timesheets": "Soumettre des feuilles de temps"
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "Vous devez ajouter des fonds pour commencer une paie",
+			"add-funds-repeating-payment-advice": "Vous devez ajouter des fonds pour commencer le paiement répété",
+			"beneficiary-receives": "Le bénéficiaire reçoit",
+			"min-recommended-amount": "Montant minimum recommandé",
+			"recipient-receives": "Le destinataire reçoit",
+			"transaction-fee": "Frais de transaction"
+		},
+		"validation": {
+			"amount-high": "Le montant dépasse votre solde",
+			"amount-low": "Pas assez de solde de compte",
+			"invalid-amount": "Montant invalide",
+			"no-amount": "Entrer le montant",
+			"no-balance": "Aucun solde",
+			"no-payment-rate": "Ajouter un taux de paiement",
+			"no-recipient": "Sélectionnez le destinataire",
+			"no-valid-date": "Définir une date valide",
+			"not-connected": "Connectez votre portefeuille",
+			"payment-rate-high": "Le taux de paiement dépasse votre solde",
+			"valid-approve": "Approuver sur votre portefeuille"
+		}
 	},
 	"ui-language": {
 		"en": "Anglais",
@@ -84,5 +191,8 @@
 			},
 			"transfers": "Transferts"
 		}
+	},
+	"wallet-selector": {
+		"primary-action": "sélectionner"
 	}
 }

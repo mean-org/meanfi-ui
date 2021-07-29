@@ -17,6 +17,7 @@ import {
   disabledDate,
   getAmountWithTokenSymbol,
   getTransactionOperationDescription,
+  isToday,
   percentage
 } from "../../../utils/ui";
 import moment from "moment";
@@ -28,11 +29,11 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "../../../money-streaming/types";
 import { calculateActionFees } from "../../../money-streaming/utils";
+import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
-  const today = new Date().toLocaleDateString();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
@@ -63,6 +64,7 @@ export const OneTimePayment = () => {
     refreshStreamList,
     refreshTokenBalance,
   } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
@@ -175,13 +177,13 @@ export const OneTimePayment = () => {
   const handleRecipientAddressFocusIn = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 100);
+    }, 50);
   }
 
   const handleRecipientAddressFocusOut = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 100);
+    }, 50);
   }
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
@@ -260,20 +262,20 @@ export const OneTimePayment = () => {
   // Ui helpers
   const getTransactionStartButtonLabel = (): string => {
     return !connected
-      ? "Connect your wallet"
+      ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? "Select recipient"
+      ? t('transactions.validation.no-recipient')
       : !selectedToken || !tokenBalance
-      ? "No balance"
+      ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
-      ? "Enter amount"
+      ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance - getFeeAmount(fromCoinAmount)
-      ? "Amount exceeds your balance"
+      ? t('transactions.validation.amount-high')
       : tokenBalance < getFeeAmount(fromCoinAmount)
-      ? "Not enough balance"
+      ? t('transactions.validation.amount-low')
       : !paymentStartDate
-      ? "Set a valid date"
-      : "Approve on your wallet";
+      ? t('transactions.validation.no-valid-date')
+      : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -472,13 +474,13 @@ export const OneTimePayment = () => {
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
-      title = 'Executing transaction';
+      title = t('transactions.status.modal-title-executing-transaction');
     } else {
       if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
           transactionStatus.currentOperation === TransactionStatus.Iddle) {
         title = null;
       } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = 'Transaction completed'
+        title = t('transactions.status.modal-title-transaction-completed');
       } else {
         title = null;
       }
@@ -486,11 +488,11 @@ export const OneTimePayment = () => {
     return title;
   }
 
-  const isSuccess = () => {
+  const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isError = () => {
+  const isError = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
@@ -513,7 +515,7 @@ export const OneTimePayment = () => {
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Recipient</span>
+          <span className="field-label-left">{t('transactions.recipient.label')}</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -526,13 +528,13 @@ export const OneTimePayment = () => {
               onFocus={handleRecipientAddressFocusIn}
               onChange={handleRecipientAddressChange}
               onBlur={handleRecipientAddressFocusOut}
-              placeholder="Public address or ENS"
+              placeholder={t('transactions.recipient.placeholder')}
               required={true}
               spellCheck="false"
               value={recipientAddress}/>
             <span id="payment-recipient-static-field"
                   className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-              {recipientAddress || 'Public address or ENS'}
+              {recipientAddress || t('transactions.recipient.placeholder')}
             </span>
           </span>
           <div className="addon-right simplelink" onClick={showQrScannerModal}>
@@ -542,7 +544,7 @@ export const OneTimePayment = () => {
         <div className="transaction-field-row">
           <span className="field-label-left">
             {isAddressOwnAccount() ? (
-              <span className="fg-red">Cannot send to your own account</span>
+              <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
             ) : (
               <span>&nbsp;</span>
             )}
@@ -562,14 +564,14 @@ export const OneTimePayment = () => {
       <div className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            Send ~${fromCoinAmount && effectiveRate
+            {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
               ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
               : "0.00"}
             <IconSort className="mean-svg-icons usd-switcher fg-red" />
             <span className="fg-red">USD</span>
           </span>
           <span className="field-label-right">
-            <span>Balance:</span>
+            <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${tokenBalance && selectedToken
                   ? formatAmount(tokenBalance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
@@ -615,7 +617,7 @@ export const OneTimePayment = () => {
                         )
                       )
                     }>
-                    MAX
+                    {t('transactions.send-amount.add-on')}
                   </div>
                 ) : null}
                 <div
@@ -651,7 +653,7 @@ export const OneTimePayment = () => {
       <Modal
         className="mean-modal unpadded-content"
         visible={isTokenSelectorModalVisible}
-        title={<div className="modal-title">Select a token</div>}
+        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
@@ -701,7 +703,7 @@ export const OneTimePayment = () => {
               );
             })
           ) : (
-            <p>Loading...</p>
+            <p>{t('general.loading')}...</p>
           )}
         </div>
       </Modal>
@@ -709,7 +711,7 @@ export const OneTimePayment = () => {
       {/* Optional note */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Memo</span>
+          <span className="field-label-left">{t('transactions.memo.label')}</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -721,7 +723,7 @@ export const OneTimePayment = () => {
               autoCorrect="off"
               type="text"
               onChange={handleRecipientNoteChange}
-              placeholder="Add an optional note"
+              placeholder={t('transactions.memo.placeholder')}
               spellCheck="false"
               value={recipientNote} />
           </span>
@@ -731,12 +733,14 @@ export const OneTimePayment = () => {
       {/* Send date */}
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Send on</span>
+          <span className="field-label-left">{t('transactions.send-date.label')}</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
           <span className="field-select-left">
-            {paymentStartDate === today ? `${paymentStartDate} (today)` : `${paymentStartDate}`}
+            {isToday(paymentStartDate || '')
+              ? `${paymentStartDate} (${t('common:general.today')})`
+              : `${paymentStartDate}`}
           </span>
           <div className="addon-right">
             <DatePicker
@@ -746,6 +750,7 @@ export const OneTimePayment = () => {
               aria-required={true}
               allowClear={false}
               disabledDate={disabledDate}
+              placeholder={t('transactions.send-date.placeholder')}
               onChange={(value, date) => handleDateChange(date)}
               value={moment(
                 paymentStartDate,
@@ -765,14 +770,14 @@ export const OneTimePayment = () => {
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
           {infoRow(
-            'Transaction fee:',
+            t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
               ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {infoRow(
-            'Recipient receives:',
+            t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
               ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
@@ -806,41 +811,41 @@ export const OneTimePayment = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Sending {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+              <p className="operation">{t('transactions.status.tx-operation')} {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} was sent successfully.</p>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+              <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} {t('transactions.status.tx-operation-success')}.</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={isScheduledPayment ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment ? 'View Stream' : 'Close'}
+                {isScheduledPayment ? t('transactions.status.cta-view-stream') : t('transactions.status.cta-close')}
               </Button>
             </>
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={closeTransactionModal}>
-                Dismiss
+                {t('transactions.status.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>

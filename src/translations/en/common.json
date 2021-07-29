@@ -1,4 +1,14 @@
 {
+	"account-area": {
+		"connect-button": "Connect wallet account",
+		"copy-address": "Copy Address",
+		"explorer-link": "View on Solana Explorer",
+		"modal-title": "Account",
+		"network-unknown": "Unknown",
+		"streams-tooltip": "Click to reload streams",
+		"wallet-change": "Change",
+		"wallet-provider": "Connected with"
+	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Individuals",
@@ -50,25 +60,112 @@
 			"name": "Subscription"
 		}
 	},
+	"general": {
+		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
+		"loading": "Loading",
+		"not-implemented": "Not implemented",
+		"today": "today"
+	},
 	"language-selector": {
 		"modal-title": "Language selector",
 		"primary-action": "Select",
 		"secondary-action": "Cancel"
 	},
+	"token-selector": {
+		"modal-title": "Select a token"
+	},
+	"transactions": {
+		"memo": {
+			"label": "Memo",
+			"placeholder": "Add an optional note"
+		},
+		"memo2": {
+			"label": "Memo / Subject",
+			"placeholder": "What is this payment for?"
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "per day",
+				"per-hour": "per hour",
+				"per-minute": "per minute",
+				"per-month": "per month",
+				"per-week": "per week",
+				"per-year": "per year"
+			},
+			"rate-label": "Rate and frequency",
+			"token-label": "Recipient receives"
+		},
+		"recipient": {
+			"label": "Recipient",
+			"placeholder": "Public address or ENS",
+			"qr-scan-title": "Get address from QR code",
+			"recipient-is-own-account": "Cannot send to your own account"
+		},
+		"send-amount": {
+			"add-on": "MAX",
+			"label": "Send",
+			"label-right": "Balance"
+		},
+		"send-date": {
+			"label": "Send on",
+			"placeholder": "Please pick a date"
+		},
+		"status": {
+			"cta-close": "Close",
+			"cta-dismiss": "Dismiss",
+			"cta-view-stream": "View Stream",
+			"instructions": "Confirm this transaction in your wallet",
+			"modal-title-executing-transaction": "Executing transaction",
+			"modal-title-transaction-completed": "Transaction completed",
+			"stream-started-post": "was started successfully",
+			"stream-started-pre": "Your money stream for",
+			"tx-completed": "Operation completed",
+			"tx-confirm": "Confirming transaction",
+			"tx-confirm-failure": "The transaction could not be confirmed",
+			"tx-idle": "Idle",
+			"tx-init": "Initialize transaction",
+			"tx-init-failure": "Could not initialize transaction",
+			"tx-operation": "Sending",
+			"tx-operation-success": "was sent successfully",
+			"tx-rejected": "Transaction rejected",
+			"tx-send": "Sending transaction",
+			"tx-send-failure": "Failure submitting transaction",
+			"tx-sign": "Waiting for confirmation",
+			"tx-start": "Collecting data",
+			"tx-wait": "Working, please wait"
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "Clock-in / Clock-out",
+			"label": "Timesheet requirement",
+			"not-required": "Not required (streams 24/7)",
+			"submit-timesheets": "Submit timesheets"
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "You must add funds to start a payroll",
+			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
+			"beneficiary-receives": "Beneficiary receives",
+			"min-recommended-amount": "Recommended minimum amount",
+			"recipient-receives": "Recipient receives",
+			"transaction-fee": "Transaction fee"
+		},
+		"validation": {
+			"amount-high": "Amount exceeds your balance",
+			"amount-low": "Not enough balance",
+			"invalid-amount": "Invalid amount",
+			"no-amount": "Enter amount",
+			"no-balance": "No balance",
+			"no-payment-rate": "Add payment rate",
+			"no-recipient": "Select recipient",
+			"no-valid-date": "Set a valid date",
+			"not-connected": "Connect your wallet",
+			"payment-rate-high": "Payment rate exceeds your balance",
+			"valid-approve": "Approve on your wallet"
+		}
+	},
 	"ui-language": {
 		"en": "English",
 		"es": "Spanish",
 		"fr": "French"
-	},
-	"account-area": {
-		"connect-button": "Connect wallet account",
-		"network-unknown": "Unknown",
-		"streams-tooltip": "Click to reload streams",
-		"modal-title": "Account",
-		"wallet-provider": "Connected with",
-		"wallet-change": "Change",
-		"copy-address": "Copy Address",
-		"explorer-link": "View on Solana Explorer"
 	},
 	"ui-menus": {
 		"app-context-menu": {
