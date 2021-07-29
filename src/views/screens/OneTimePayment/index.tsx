@@ -177,13 +177,13 @@ export const OneTimePayment = () => {
   const handleRecipientAddressFocusIn = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 50);
+    }, 10);
   }
 
   const handleRecipientAddressFocusOut = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 50);
+    }, 10);
   }
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
@@ -194,7 +194,7 @@ export const OneTimePayment = () => {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setSelectedToken(tokenList[0]);
-        }, 1000);
+        }, 100);
       } else {
         setSelectedTokenBalance(0);
       }

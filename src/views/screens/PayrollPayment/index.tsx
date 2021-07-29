@@ -190,13 +190,13 @@ export const PayrollPayment = () => {
   const handleRecipientAddressFocusIn = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 50);
+    }, 10);
   }
 
   const handleRecipientAddressFocusOut = (e: any) => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 50);
+    }, 10);
   }
 
   const handlePaymentRateAmountChange = (e: any) => {
@@ -237,7 +237,7 @@ export const PayrollPayment = () => {
         // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setSelectedToken(tokenList[0]);
-        }, 1000);
+        }, 100);
       } else {
         setSelectedTokenBalance(0);
       }
@@ -945,8 +945,6 @@ export const PayrollPayment = () => {
           </div>
         </div>
       </div>
-
-      <Divider plain></Divider>
 
       <div className="mb-3 text-center">
         <div>{t('transactions.transaction-info.add-funds-payroll-advice')}.</div>
