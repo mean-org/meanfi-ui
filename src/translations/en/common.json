@@ -60,6 +60,17 @@
 			"name": "Subscription"
 		}
 	},
+	"faucet": {
+		"current-sol-balance": "Current SOL balance",
+		"current-wsol-balance": "Current Wrapped SOL balance",
+		"fund-cta": "Give me SOL",
+		"funding-amount": "Your account will be funded with",
+		"not-connected": "Your wallet is not connected, please connect your wallet",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Wrap transaction fee",
+		"wrapped-amount": "Wrapped amount"
+	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
 		"loading": "Loading",
@@ -125,14 +136,16 @@
 			"tx-idle": "Idle",
 			"tx-init": "Initialize transaction",
 			"tx-init-failure": "Could not initialize transaction",
-			"tx-operation": "Sending",
-			"tx-operation-success": "was sent successfully",
 			"tx-rejected": "Transaction rejected",
 			"tx-send": "Sending transaction",
 			"tx-send-failure": "Failure submitting transaction",
+			"tx-send-operation": "Sending",
+			"tx-send-operation-success": "was sent successfully",
 			"tx-sign": "Waiting for confirmation",
 			"tx-start": "Collecting data",
-			"tx-wait": "Working, please wait"
+			"tx-wait": "Working, please wait",
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "Wrap operation completed successfully"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
@@ -151,6 +164,8 @@
 		"validation": {
 			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
+			"amount-lt-fee": "Amount has to be greater than the transaction fee",
+			"amount-sol-high": "Amount exceeds your SOL balance",
 			"invalid-amount": "Invalid amount",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",

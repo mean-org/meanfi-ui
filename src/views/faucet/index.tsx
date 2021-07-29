@@ -4,7 +4,7 @@ import { useWallet } from "../../contexts/wallet";
 import { Commitment, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { notify } from "../../utils/notifications";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
-import { Button, Divider, Modal, Spin } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import { environment } from "../../environments/environment";
 import { formatNumber, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
@@ -15,6 +15,7 @@ import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/ico
 import { getTransactionOperationDescription } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MSP_ACTIONS, TransactionFees } from "../../money-streaming/types";
+import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -31,6 +32,7 @@ export const FaucetView = () => {
     refreshTokenBalance,
     setTransactionStatus,
   } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
   const [isWrapEnabled, setIsWrapEnabled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [wrapAmount, setWrapAmount] = useState<string>('');
@@ -116,16 +118,16 @@ export const FaucetView = () => {
   }, [publicKey, connection]);
 
   const disconnectedBlock = (
-    <p>Your wallet is not connected, please connect your wallet.</p>
+    <p>{t('faucet.not-connected')}.</p>
   );
 
   const connectedBlock = (
     <>
       <div className="deposit-input-title" style={{ margin: 10 }}>
-        <p>Current SOL balance: {formatNumber.format(getAccountBalance())} SOL</p>
-        <p>Your account will be funded with {formatNumber.format(getFaucetAmount() / LAMPORTS_PER_SOL)} SOL</p>
+        <p>{t('faucet.current-sol-balance')}: {formatNumber.format(getAccountBalance())} SOL</p>
+        <p>{t('faucet.funding-amount')} {formatNumber.format(getFaucetAmount() / LAMPORTS_PER_SOL)} SOL</p>
       </div>
-      <Button type="primary" shape="round" size="large" onClick={airdrop}>Give me SOL</Button>
+      <Button type="primary" shape="round" size="large" onClick={airdrop}>{t('faucet.fund-cta')}</Button>
     </>
   );
 
@@ -306,13 +308,13 @@ export const FaucetView = () => {
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
-      title = 'Executing transaction';
+      title = t('transactions.status.modal-title-executing-transaction');
     } else {
       if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
           transactionStatus.currentOperation === TransactionStatus.Iddle) {
         title = null;
       } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = 'Transaction completed'
+        title = t('transactions.status.modal-title-transaction-completed');
       } else {
         title = null;
       }
@@ -320,17 +322,26 @@ export const FaucetView = () => {
     return title;
   }
 
-  const isSuccess = () => {
+  const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isError = () => {
+  const isError = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
            ? true
            : false;
+  }
+
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <Row>
+        <Col span={12} className="text-right pr-1">{caption}</Col>
+        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
+      </Row>
+    );
   }
 
   return (
@@ -342,10 +353,7 @@ export const FaucetView = () => {
         )}
         {/* tokenBalance */}
         {publicKey && (
-          <p>Current Wrapped SOL balance: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS)}</p>
-        )}
-        {publicKey && wrapFees && (
-          <p>Wrap transaction fee: ~{getTokenAmountAndSymbolByTokenAddress(wrapFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS)}</p>
+          <p>{t('faucet.current-wsol-balance')}: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS)}</p>
         )}
         {publicKey && (
           <Button
@@ -354,7 +362,7 @@ export const FaucetView = () => {
             shape="round"
             size="large"
             onClick={() => toggleWrapForm()}>
-            Wrap some SOL
+            {t('faucet.wrap-sol-cta-toggle')}
           </Button>
         )}
         {publicKey && isWrapEnabled && (
@@ -382,23 +390,34 @@ export const FaucetView = () => {
               <div className="transaction-field-row">
                 <span className="field-label-left">{
                   parseFloat(wrapAmount) > (getAccountBalance() - (wrapFees?.blockchainFee || 0))
-                    ? (<span className="fg-red">Amount exceeds your SOL balance</span>)
+                    ? (<span className="fg-red">{t('transactions.validation.amount-sol-high')}</span>)
                     : parseFloat(wrapAmount) <= (wrapFees?.blockchainFee || 0)
-                    ? (<span className="fg-red">Amount has to be greater than the transaction fee</span>)
+                    ? (<span className="fg-red">{t('transactions.validation.amount-lt-fee')}</span>)
                     : (<span>&nbsp;</span>)
                 }</span>
                 <span className="field-label-right">&nbsp;</span>
               </div>
             </div>
-            <p className="text-center">
-              Wrapped amount: {wrapFees ? '~' + 
-              getTokenAmountAndSymbolByTokenAddress(
-                parseFloat(wrapAmount) >= (wrapFees.blockchainFee as number)
-                ? parseFloat(wrapAmount) - wrapFees.blockchainFee
-                : 0,
-                WRAPPED_SOL_MINT_ADDRESS
-              ) : '0'}
-            </p>
+            <div className="p-2 mb-2">
+              {infoRow(
+                t('faucet.wrap-transaction-fee') + ':',
+                `${wrapFees
+                  ? '~' + getTokenAmountAndSymbolByTokenAddress(wrapFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS)
+                  : '0'
+                }`
+              )}
+              {infoRow(
+                t('faucet.wrapped-amount') + ':',
+                `${wrapFees
+                  ? '~' + getTokenAmountAndSymbolByTokenAddress(
+                      parseFloat(wrapAmount) >= (wrapFees.blockchainFee as number)
+                      ? parseFloat(wrapAmount) - wrapFees.blockchainFee
+                      : 0,
+                      WRAPPED_SOL_MINT_ADDRESS)
+                  : '0'
+                }`
+              )}
+            </div>
             <Button
               className="main-cta"
               block
@@ -407,7 +426,7 @@ export const FaucetView = () => {
               size="large"
               disabled={!isValidInput()}
               onClick={onTransactionStart}>
-              WRAP
+              {t('faucet.wrap-sol-cta')}
             </Button>
             {/* Transaction execution modal */}
             <Modal
@@ -423,21 +442,21 @@ export const FaucetView = () => {
                   <>
                     <Spin indicator={bigLoadingIcon} className="icon" />
                     <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                    <p className="operation">Wrapping {wrapAmount} SOL ...</p>
-                    <div className="indication">Confirm this transaction in your wallet</div>
+                    <p className="operation">{t('transactions.status.tx-wrap-operation')} {wrapAmount} SOL ...</p>
+                    <div className="indication">{t('transactions.status.instructions')}</div>
                   </>
                 ) : isSuccess() ? (
                   <>
                     <CheckOutlined style={{ fontSize: 48 }} className="icon" />
                     <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                    <p className="operation">Wrap operation completed successfully.</p>
+                    <p className="operation">{t('transactions.status.tx-wrap-operation-success')}.</p>
                     <Button
                       block
                       type="primary"
                       shape="round"
                       size="middle"
                       onClick={closeTransactionModal}>
-                      Close
+                      {t('transactions.status.cta-close')}
                     </Button>
                   </>
                 ) : isError() ? (
@@ -450,13 +469,13 @@ export const FaucetView = () => {
                       shape="round"
                       size="middle"
                       onClick={closeTransactionModal}>
-                      Dismiss
+                      {t('transactions.status.cta-dismiss')}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Spin indicator={bigLoadingIcon} className="icon" />
-                    <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+                    <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
                   </>
                 )}
               </div>

@@ -60,6 +60,17 @@
 			"name": "Abonnement"
 		}
 	},
+	"faucet": {
+		"current-sol-balance": "Solde SOL actuel",
+		"current-wsol-balance": "Solde SOL encapsulé actuel",
+		"fund-cta": "Donne moi SOL",
+		"funding-amount": "Votre compte sera alimenté avec",
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Enveloppez du SOL",
+		"wrap-transaction-fee": "Frais de transaction d'emballage",
+		"wrapped-amount": "Montant emballé"
+	},
 	"general": {
 		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez ou n'échangez pas de gros montants.",
 		"loading": "Chargement",
@@ -125,14 +136,16 @@
 			"tx-idle": "Tourner au ralenti",
 			"tx-init": "Initialiser la transaction",
 			"tx-init-failure": "Impossible d'initialiser la transaction",
-			"tx-operation": "Envoi",
-			"tx-operation-success": "a été envoyé avec succès",
 			"tx-rejected": "Transaction rejetée",
 			"tx-send": "Envoi de l'opération",
 			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-send-operation": "Envoi",
+			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
 			"tx-start": "La collecte de données",
-			"tx-wait": "Fonctionne, veuillez patienter"
+			"tx-wait": "Fonctionne, veuillez patienter",
+			"tx-wrap-operation": "Emballage",
+			"tx-wrap-operation-success": "Opération de bouclage terminée avec succès"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Pointage d'entrée / Pointage de sortie",
@@ -151,6 +164,8 @@
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
 			"amount-low": "Pas assez de solde de compte",
+			"amount-lt-fee": "",
+			"amount-sol-high": "",
 			"invalid-amount": "Montant invalide",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",

@@ -60,6 +60,17 @@
 			"name": "Suscripción"
 		}
 	},
+	"faucet": {
+		"current-sol-balance": "Saldo actual de SOL",
+		"current-wsol-balance": "Saldo actual de wSOL",
+		"fund-cta": "Dame SOL",
+		"funding-amount": "Su cuenta se financiará con",
+		"not-connected": "Su billetera no está conectada, conecte su billetera",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Envolver un poco de SOL",
+		"wrap-transaction-fee": "Tarifa de transacción de envoltura",
+		"wrapped-amount": "Cantidad envuelta"
+	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
 		"loading": "Cargando",
@@ -125,14 +136,16 @@
 			"tx-idle": "Ocioso",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo inicializar la transacción",
-			"tx-operation": "Enviando",
-			"tx-operation-success": "fue enviado exitosamente",
 			"tx-rejected": "Transacción rechazada",
 			"tx-send": "Enviando transacción",
 			"tx-send-failure": "Error al enviar la transacción",
+			"tx-send-operation": "Enviando",
+			"tx-send-operation-success": "fue enviado exitosamente",
 			"tx-sign": "Esperando confirmación",
 			"tx-start": "Recolectando datos",
-			"tx-wait": "Trabajando, por favor espere"
+			"tx-wait": "Trabajando, por favor espere",
+			"tx-wrap-operation": "Envolviendo",
+			"tx-wrap-operation-success": "La operación de envoltura se completó con éxito"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Hora de entrada / salida",
@@ -151,6 +164,8 @@
 		"validation": {
 			"amount-high": "La cantidad excede su saldo",
 			"amount-low": "No hay suficiente saldo",
+			"amount-lt-fee": "",
+			"amount-sol-high": "",
 			"invalid-amount": "Monto no válido",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
