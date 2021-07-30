@@ -109,6 +109,7 @@
 			"label-funds-available-to-withdraw": "Funds available to withdraw now",
 			"label-funds-left-in-account": "Funds left in account",
 			"label-funds-runout": "will run out by",
+			"label-funds-runout-today": "will run out today",
 			"label-funds-sent": "Funds sent to recipient",
 			"label-payment-rate": "Payment Rate",
 			"label-receiving-from": "Receiving from",
@@ -171,7 +172,6 @@
 			"recipient-is-own-account": "Cannot send to your own account"
 		},
 		"send-amount": {
-			"add-on": "MAX",
 			"label": "Send",
 			"label-right": "Balance"
 		},
@@ -217,12 +217,14 @@
 			"beneficiary-receives": "Beneficiary receives",
 			"min-recommended-amount": "Recommended minimum amount",
 			"recipient-receives": "Recipient receives",
-			"transaction-fee": "Transaction fee"
+			"transaction-fee": "Transaction fee",
+			"you-receive": "You receive"
 		},
 		"validation": {
 			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
+			"amount-withdraw-high": "Amount is greater than the available funds",
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"invalid-amount": "Invalid amount",
 			"no-amount": "Enter amount",
@@ -232,7 +234,9 @@
 			"no-valid-date": "Set a valid date",
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment rate exceeds your balance",
-			"valid-approve": "Approve on your wallet"
+			"valid-approve": "Approve on your wallet",
+			"valid-start-funding": "Start funding",
+			"valid-start-withdrawal": "Start withdrawal"
 		}
 	},
 	"ui-language": {
@@ -283,5 +287,16 @@
 		"context-beneficiary": "Closing a stream will send {{amount}} to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}})."
+	},
+	"add-funds": {
+		"modal-title": "Add funds",
+		"label": "Amount",
+		"label-right": "Balance"
+	},
+	"withdraw-funds": {
+		"modal-title": "Withdraw funds",
+		"label-available-amount": "Funds available to withdraw now",
+		"label-input-amount": "Enter amount to withdraw",
+		"label-input-right": "By percentual preset"
 	}
 }

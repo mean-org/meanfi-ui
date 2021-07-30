@@ -7,6 +7,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } fr
 import { Identicon } from '../Identicon';
 import { TransactionFees } from '../../money-streaming/types';
 import { percentage } from '../../utils/ui';
+import { useTranslation } from 'react-i18next';
 
 export const AddFundsModal = (props: {
   handleClose: any;
@@ -19,14 +20,8 @@ export const AddFundsModal = (props: {
     tokenBalance,
     effectiveRate
   } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
   const [topupAmount, setTopupAmount] = useState<string>('');
-  const [feeAmount, setFeeAmount] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!feeAmount && props.transactionFees) {
-      setFeeAmount(getFeeAmount(props.transactionFees));
-    }
-  }, [feeAmount, props.transactionFees]);
 
   const onAcceptTopup = () => {
     props.handleOk(topupAmount);
@@ -39,17 +34,16 @@ export const AddFundsModal = (props: {
   const handleAmountChange = (e: any) => {
     const newValue = isValidNumber(e.target.value) ? e.target.value : '';
     setValue(newValue);
-    setFeeAmount(getFeeAmount(props.transactionFees, newValue));
   };
 
-  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+  const getFeeAmount = (amount?: any): number => {
     let fee = 0;
     let inputAmount = amount ? parseFloat(amount) : 0;
-    if (fees) {
-      if (fees.mspPercentFee) {
-        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee;
+    if (props && props.transactionFees) {
+      if (props.transactionFees.mspPercentFee) {
+        fee = percentage(props.transactionFees.mspPercentFee, inputAmount);
+      } else if (props.transactionFees.mspFlatFee) {
+        fee = props.transactionFees.mspFlatFee;
       }
     }
     return fee;
@@ -58,26 +52,25 @@ export const AddFundsModal = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
-    const numberAmount = parseFloat(topupAmount);
     return selectedToken &&
            tokenBalance &&
-           topupAmount &&
-           numberAmount > (feeAmount as number) &&
-           numberAmount <= tokenBalance - (feeAmount as number)
+           topupAmount && parseFloat(topupAmount) > 0 &&
+           parseFloat(topupAmount) <= tokenBalance - getFeeAmount(tokenBalance) &&
+           parseFloat(topupAmount) > getFeeAmount(topupAmount)
             ? true
             : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
     return !selectedToken || !tokenBalance
-      ? "No balance"
+      ? t('transactions.validation.no-balance')
       : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
-      ? "Enter amount"
-      : parseFloat(topupAmount) > tokenBalance - (feeAmount as number)
-      ? "Invalid amount"
-      : tokenBalance < (feeAmount as number)
-      ? "Invalid amount"
-      : "Start funding";
+      ? t('transactions.validation.no-amount')
+      : parseFloat(topupAmount) > tokenBalance - getFeeAmount(topupAmount)
+      ? t('transactions.validation.amount-high')
+      : tokenBalance < getFeeAmount(topupAmount)
+      ? t('transactions.validation.amount-low')
+      : t('transactions.validation.valid-start-funding');
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -92,7 +85,7 @@ export const AddFundsModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Add funds</div>}
+      title={<div className="modal-title">{t('add-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptTopup}
@@ -105,14 +98,14 @@ export const AddFundsModal = (props: {
         <div className="transaction-field mb-1">
           <div className="transaction-field-row">
             <span className="field-label-left" style={{marginBottom: '-6px'}}>
-              Amount ~${topupAmount && effectiveRate
+              {t('add-funds.label')} ~${topupAmount && effectiveRate
                 ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
                 : "0.00"}
               <IconSort className="mean-svg-icons usd-switcher fg-red" />
               <span className="fg-red">USD</span>
             </span>
             <span className="field-label-right">
-              <span>Balance:</span>
+              <span>{t('add-funds.label-right')}:</span>
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
                     ? formatAmount(tokenBalance as number, selectedToken.decimals || 2)
@@ -152,14 +145,14 @@ export const AddFundsModal = (props: {
                     <div
                       className="token-max simplelink"
                       onClick={() => {
-                        const feeForTotal = getFeeAmount(props.transactionFees, (tokenBalance as number));
                         setValue(
-                          formatAmount(
-                            (tokenBalance as number) - feeForTotal,
-                            selectedToken.decimals
+                          getTokenAmountAndSymbolByTokenAddress(
+                            (tokenBalance as number) - getFeeAmount(tokenBalance),
+                            selectedToken.address,
+                            true,
+                            true
                           )
                         );
-                        setFeeAmount(feeForTotal);
                       }}>
                       MAX
                     </div>
@@ -188,11 +181,11 @@ export const AddFundsModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">{
-              parseFloat(topupAmount) > tokenBalance - (feeAmount as number)
-              ? (<span className="fg-red">Amount exceeds your balance</span>)
-              : tokenBalance < (feeAmount as number)
-              ? (<span className="fg-red">Amount has to be greater than the transaction fee</span>)
-              : (<span>&nbsp;</span>)
+              parseFloat(topupAmount) > tokenBalance - getFeeAmount(tokenBalance)
+                ? (<span className="fg-red">{t('transactions.validation.amount-high')}</span>)
+                : tokenBalance < getFeeAmount(topupAmount)
+                ? (<span className="fg-red">{t('transactions.validation.amount-lt-fee')}</span>)
+                : (<span>&nbsp;</span>)
             }</span>
             <span className="field-label-right">&nbsp;</span>
           </div>
@@ -207,16 +200,16 @@ export const AddFundsModal = (props: {
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
           {infoRow(
-            'Transaction fee:',
+            t('transactions.transaction-info.transaction-fee') + ':',
             `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(topupAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {infoRow(
-            'Beneficiary receives:',
+            t('transactions.transaction-info.beneficiary-receives') + ':',
             `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - (feeAmount as number), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - getFeeAmount(topupAmount), selectedToken?.address)
               : '0'
             }`
           )}

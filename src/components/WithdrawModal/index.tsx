@@ -9,6 +9,7 @@ import {
 } from "../../utils/utils";
 import { percentage } from "../../utils/ui";
 import { StreamInfo, TransactionFees } from "../../money-streaming/types";
+import { useTranslation } from "react-i18next";
 
 export const WithdrawModal = (props: {
   startUpData: StreamInfo | undefined;
@@ -17,6 +18,7 @@ export const WithdrawModal = (props: {
   isVisible: boolean;
   transactionFees: TransactionFees;
 }) => {
+  const { t } = useTranslation('common');
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -53,11 +55,11 @@ export const WithdrawModal = (props: {
     if (props.startUpData) {
       if (value === 100) {
         fee = getFeeAmount(props.transactionFees, maxAmount)
-        newValue = getDisplayAmount(maxAmount - fee);
+        newValue = getDisplayAmount(maxAmount);
       } else {
         const partialAmount = percentage(value, maxAmount);
         fee = getFeeAmount(props.transactionFees, partialAmount)
-        newValue = getDisplayAmount(partialAmount - fee);
+        newValue = getDisplayAmount(partialAmount);
       }
     }
     setValue(newValue);
@@ -83,11 +85,13 @@ export const WithdrawModal = (props: {
     return fee;
   }
 
+  // Validation
+
   const isValidInput = (): boolean => {
     return props.startUpData &&
       withdrawAmountInput &&
-      parseFloat(withdrawAmountInput) > (feeAmount as number) &&
-      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) - (feeAmount as number)
+      parseFloat(withdrawAmountInput) <= parseFloat(getDisplayAmount(maxAmount)) &&
+      parseFloat(withdrawAmountInput) > (feeAmount as number)
       ? true
       : false;
   }
@@ -116,7 +120,7 @@ export const WithdrawModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Withdraw funds</div>}
+      title={<div className="modal-title">{t('withdraw-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptWithdrawal}
@@ -125,9 +129,7 @@ export const WithdrawModal = (props: {
       <div className="mb-3">
         <div className="transaction-field disabled">
           <div className="transaction-field-row">
-            <span className="field-label-left">
-              Funds available to withdraw now
-            </span>
+            <span className="field-label-left">{t('withdraw-funds.label-available-amount')}</span>
             <span className="field-label-right">&nbsp;</span>
           </div>
           <div className="transaction-field-row main-row">
@@ -139,8 +141,8 @@ export const WithdrawModal = (props: {
 
         <div className="transaction-field mb-1">
           <div className="transaction-field-row">
-            <span className="field-label-left">Enter amount to withdraw</span>
-            <span className="field-label-right">By percentual preset</span>
+            <span className="field-label-left">{t('withdraw-funds.label-input-amount')}</span>
+            <span className="field-label-right">{t('withdraw-funds.label-input-right')}</span>
           </div>
           <div className="transaction-field-row main-row">
             <span className="input-left">
@@ -186,9 +188,9 @@ export const WithdrawModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">
-              {props.startUpData && parseFloat(withdrawAmountInput) > maxAmount - (feeAmount as number) ? (
+              {props.startUpData && parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount)) ? (
                 <span className="fg-red">
-                  Amount is greater than the available funds
+                  {t('transactions.validation.amount-withdraw-high')}
                 </span>
               ) : (
                 <span>&nbsp;</span>
@@ -203,14 +205,14 @@ export const WithdrawModal = (props: {
       {props.startUpData && props.startUpData.associatedToken && (
         <div className="p-2 mb-2">
           {infoRow(
-            'Transaction fee:',
+            t('transactions.transaction-info.transaction-fee') + ':',
             `${isValidInput()
               ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.startUpData.associatedToken as string)
               : '0'
             }`
           )}
           {infoRow(
-            'You receive:',
+            t('transactions.transaction-info.you-receive') + ':',
             `${isValidInput()
               ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.startUpData.associatedToken as string)
               : '0'
@@ -227,7 +229,7 @@ export const WithdrawModal = (props: {
         size="large"
         disabled={!isValidInput()}
         onClick={onAcceptWithdrawal}>
-        {isValidInput() ? "Start withdrawal" : "Invalid amount"}
+        {isValidInput() ? t('transactions.validation.valid-start-withdrawal') : t('transactions.validation.invalid-amount')}
       </Button>
     </Modal>
   );

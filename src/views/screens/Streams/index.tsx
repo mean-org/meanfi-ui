@@ -411,11 +411,11 @@ export const Streams = () => {
       : '';
 
     if (date > today) {
-      return '(will run out today)';
+      return `(${t('streams.stream-detail.label-funds-runout-today')})`;
     } else if (date < today) {
       return '';
     } else {
-      return `(will run out by ${miniDate})`;
+      return `(${t('streams.stream-detail.label-funds-runout')} ${miniDate})`;
     }
   }
 
@@ -511,13 +511,13 @@ export const Streams = () => {
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
-      title = 'Executing transaction';
+      title = t('transactions.status.modal-title-executing-transaction');
     } else {
       if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
           transactionStatus.currentOperation === TransactionStatus.Iddle) {
         title = null;
       } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = 'Transaction completed'
+        title = t('transactions.status.modal-title-transaction-completed');
       } else {
         title = null;
       }
@@ -525,11 +525,11 @@ export const Streams = () => {
     return title;
   }
 
-  const isSuccess = () => {
+  const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isError = () => {
+  const isError = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||

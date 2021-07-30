@@ -959,13 +959,15 @@ export const RepeatingPayment = () => {
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
-                        formatAmount(
+                        getTokenAmountAndSymbolByTokenAddress(
                           (tokenBalance as number) - getFeeAmount(tokenBalance),
-                          selectedToken.decimals
+                          selectedToken.address,
+                          true,
+                          true
                         )
                       )
                     }>
-                    {t('transactions.send-amount.add-on')}
+                    MAX
                   </div>
                 )}
                 <div className="token-selector simplelink" onClick={() => {
