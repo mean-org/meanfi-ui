@@ -190,20 +190,32 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
     }
 }
 
-export const getIntervalFromSeconds = (seconds: number, slash = false): string => {
+export const getIntervalFromSeconds = (seconds: number, slash = false, trans?: any): string => {
     switch (seconds) {
         case 60:
-            return slash ? ' / minute' : 'per minute';
+            return trans
+                    ? slash ? ` / ${trans('general.minute')}` : trans('transactions.rate-and-frequency.payment-rates.per-minute')
+                    : slash ? ' / minute' : 'per minute';
         case 3600:
-            return slash ? ' / hour' : 'per hour';
+            return trans
+                    ? slash ? ` / ${trans('general.hour')}` : trans('transactions.rate-and-frequency.payment-rates.per-hour')
+                    : slash ? ' / hour' : 'per hour';
         case 86400:
-            return slash ? ' / day' : 'per day';
+            return trans
+                    ? slash ? ` / ${trans('general.day')}` : trans('transactions.rate-and-frequency.payment-rates.per-day')
+                    : slash ? ' / day' : 'per day';
         case 604800:
-            return slash ? ' / week' : 'per week';
+            return trans
+                    ? slash ? ` / ${trans('general.week')}` : trans('transactions.rate-and-frequency.payment-rates.per-week')
+                    : slash ? ' / week' : 'per week';
         case 2629750:
-            return slash ? ' / month' : 'per month';
+            return trans
+                    ? slash ? ` / ${trans('general.month')}` : trans('transactions.rate-and-frequency.payment-rates.per-month')
+                    : slash ? ' / month' : 'per month';
         case 31557000:
-            return slash ? ' / year' : 'per year';
+            return trans
+                    ? slash ? ` / ${trans('general.year')}` : trans('transactions.rate-and-frequency.payment-rates.per-year')
+                    : slash ? ' / year' : 'per year';
         default:
             return '';
     }

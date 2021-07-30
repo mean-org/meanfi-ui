@@ -73,14 +73,71 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez ou n'échangez pas de gros montants.",
+		"day": "journée",
+		"hour": "heure",
 		"loading": "Chargement",
+		"minute": "minute",
+		"month": "mois",
 		"not-implemented": "Pas mis en œuvre",
-		"today": "aujourd'hui"
+		"today": "aujourd'hui",
+		"week": "la semaine",
+		"year": "année",
+		"you": "vous"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
 		"primary-action": "Sélectionner",
 		"secondary-action": "Annuler"
+	},
+	"streams": {
+		"create-new-stream-cta": "Créer un nouveau flux d'argent",
+		"lookup-stream-cta-tooltip": "Rechercher un flux",
+		"screen-title": "Mes flux d'argent",
+		"stream-activity": {
+			"action-deposit": "déposé",
+			"action-withdraw": "Retiré",
+			"heading": "activité",
+			"no-activity": "Aucune activité à ce jour"
+		},
+		"stream-detail": {
+			"add-funds-cta": "Recharger (ajouter des fonds)",
+			"amount-funded-date": "financé sur",
+			"close-money-stream-menu-item": "Fermer le flux d'argent",
+			"heading": "Détails du flux",
+			"label-amount": "Montant",
+			"label-funds-available-to-withdraw": "Fonds disponibles à retirer maintenant",
+			"label-funds-left-in-account": "Fonds laissés en compte",
+			"label-funds-runout": "s'épuisera par",
+			"label-funds-sent": "Fonds envoyés au bénéficiaire",
+			"label-payment-rate": "Taux de paiement",
+			"label-receiving-from": "Réception de",
+			"label-sending-to": "Envoi à",
+			"label-start-date-default": "Date de début",
+			"label-start-date-scheduled": "Prévu",
+			"label-start-date-scheduled-otp": "Livraison programmée",
+			"label-start-date-started": "Commencé",
+			"label-total-deposits": "Montant total que vous avez déposé depuis le début du flux",
+			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du flux",
+			"no-stream": "Veuillez sélectionner ou rechercher un flux pour afficher les détails",
+			"withdraw-funds-cta": "Retirer des fonds"
+		},
+		"stream-list": {
+			"no-streams": "Aucun flux disponible",
+			"subtitle-paused-inbound": "Ce flux est suspendu en raison du manque de fonds",
+			"subtitle-paused-outbound": "Ce flux est suspendu en raison du manque de fonds",
+			"subtitle-pending-inbound": "Ce contrat est en attente de votre approbation",
+			"subtitle-pending-outbound": "Ce contrat est en attente d'approbation du bénéficiaire",
+			"subtitle-running-inbound": "Reçoit de l'argent depuis",
+			"subtitle-running-outbound": "Envoi d'argent depuis",
+			"subtitle-scheduled-inbound": "Prêt à recevoir de l'argent le",
+			"subtitle-scheduled-outbound": "Prêt à démarrer le",
+			"title-paused-from": "Flux en pause de",
+			"title-paused-to": "Flux interrompu vers",
+			"title-pending-from": "En attente d'exécution de",
+			"title-pending-to": "En attente d'exécution à",
+			"title-receiving-from": "Réception de",
+			"title-sending-to": "Envoi à"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un jeton"
@@ -164,8 +221,8 @@
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
 			"amount-low": "Pas assez de solde de compte",
-			"amount-lt-fee": "",
-			"amount-sol-high": "",
+			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
+			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"invalid-amount": "Montant invalide",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",

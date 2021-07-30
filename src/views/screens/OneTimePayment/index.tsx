@@ -135,17 +135,13 @@ export const OneTimePayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
-      if (isScheduledPayment) {
-        setSelectedStream(undefined);
-        refreshStreamList(true);
-        setCurrentScreen("streams");
-      }
     }
   }
 
   const handleGoToStreamsClick = () => {
-    refreshStreamList(true);
+    setSelectedStream(undefined);
     closeTransactionModal();
+    refreshStreamList(true);
     setCurrentScreen("streams");
   };
 
@@ -328,7 +324,7 @@ export const OneTimePayment = () => {
           fromParsedDate: fromParsedDate,                                             // startUtc
           recipientNote: recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                                                  // streamName
+            : undefined                                                               // streamName
         };
         console.log('data:', data);
         return await moneyStream.oneTimePayment(
@@ -340,7 +336,7 @@ export const OneTimePayment = () => {
           fromParsedDate,                                             // startUtc
           recipientNote
             ? recipientNote.trim()
-            : contract?.name.trim(),                                  // streamName
+            : undefined                                               // streamName
         )
         .then(value => {
           console.log('oneTimePaymentTransactions returned transaction:', value);

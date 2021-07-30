@@ -73,14 +73,71 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
+		"day": "día",
+		"hour": "hora",
 		"loading": "Cargando",
+		"minute": "minuto",
+		"month": "mes",
 		"not-implemented": "No implementado",
-		"today": "hoy"
+		"today": "hoy",
+		"week": "semana",
+		"year": "año",
+		"you": "tú"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
 		"secondary-action": "Cancelar"
+	},
+	"streams": {
+		"create-new-stream-cta": "Crear nueva transmisión",
+		"lookup-stream-cta-tooltip": "Buscar una transmisión",
+		"screen-title": "Mis flujos de dinero",
+		"stream-activity": {
+			"action-deposit": "depositó",
+			"action-withdraw": "retiró",
+			"heading": "Actividad",
+			"no-activity": "Sin actividad hasta ahora"
+		},
+		"stream-detail": {
+			"add-funds-cta": "Recargar (agregar fondos)",
+			"amount-funded-date": "financiado en",
+			"close-money-stream-menu-item": "Cerrar flujo de dinero",
+			"heading": "Detalles de la transmisión",
+			"label-amount": "Cantidad",
+			"label-funds-available-to-withdraw": "Fondos disponibles para retirar ahora",
+			"label-funds-left-in-account": "Fondos que quedan en la cuenta",
+			"label-funds-runout": "se acabará por",
+			"label-funds-sent": "Fondos enviados al destinatario",
+			"label-payment-rate": "Tasa de pago",
+			"label-receiving-from": "Recibiendo de",
+			"label-sending-to": "Enviando a",
+			"label-start-date-default": "Fecha de inicio",
+			"label-start-date-scheduled": "Programado",
+			"label-start-date-scheduled-otp": "Entrega programada",
+			"label-start-date-started": "Empezado",
+			"label-total-deposits": "Cantidad total que ha depositado desde que comenzó la transmisión",
+			"label-total-withdrawals": "Cantidad total que ha retirado desde que comenzó la transmisión",
+			"no-stream": "Seleccione o busque una transmisión para ver los detalles",
+			"withdraw-funds-cta": "Retirar Fondos"
+		},
+		"stream-list": {
+			"no-streams": "No hay transmisiones disponibles",
+			"subtitle-paused-inbound": "Esta transmisión está en pausa debido a la falta de fondos.",
+			"subtitle-paused-outbound": "Esta transmisión está en pausa debido a la falta de fondos.",
+			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
+			"subtitle-pending-outbound": "Este contrato está pendiente de la aprobación del beneficiario",
+			"subtitle-running-inbound": "Recibiendo dinero desde",
+			"subtitle-running-outbound": "Enviando dinero desde",
+			"subtitle-scheduled-inbound": "Configurado para recibir dinero en",
+			"subtitle-scheduled-outbound": "Establecido para comenzar en",
+			"title-paused-from": "Transmisión en pausa de",
+			"title-paused-to": "Transmisión en pausa a",
+			"title-pending-from": "Pendiente de ejecución de",
+			"title-pending-to": "Pendiente de ejecución para",
+			"title-receiving-from": "Recibiendo de",
+			"title-sending-to": "Enviando a"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token"
@@ -164,8 +221,8 @@
 		"validation": {
 			"amount-high": "La cantidad excede su saldo",
 			"amount-low": "No hay suficiente saldo",
-			"amount-lt-fee": "",
-			"amount-sol-high": "",
+			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
+			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"invalid-amount": "Monto no válido",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",

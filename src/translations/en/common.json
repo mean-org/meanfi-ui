@@ -73,14 +73,71 @@
 	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
+		"day": "day",
+		"hour": "hour",
 		"loading": "Loading",
+		"minute": "minute",
+		"month": "month",
 		"not-implemented": "Not implemented",
-		"today": "today"
+		"today": "today",
+		"week": "week",
+		"year": "year",
+		"you": "you"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
 		"primary-action": "Select",
 		"secondary-action": "Cancel"
+	},
+	"streams": {
+		"create-new-stream-cta": "Create new money stream",
+		"lookup-stream-cta-tooltip": "Lookup a stream",
+		"screen-title": "My Money Streams",
+		"stream-activity": {
+			"action-deposit": "deposited",
+			"action-withdraw": "withdrew",
+			"heading": "Activity",
+			"no-activity": "No activity so far"
+		},
+		"stream-detail": {
+			"add-funds-cta": "Top up (add funds)",
+			"amount-funded-date": "funded on",
+			"close-money-stream-menu-item": "Close money stream",
+			"heading": "Stream details",
+			"label-amount": "Amount",
+			"label-funds-available-to-withdraw": "Funds available to withdraw now",
+			"label-funds-left-in-account": "Funds left in account",
+			"label-funds-runout": "will run out by",
+			"label-funds-sent": "Funds sent to recipient",
+			"label-payment-rate": "Payment Rate",
+			"label-receiving-from": "Receiving from",
+			"label-sending-to": "Sending to",
+			"label-start-date-default": "Start Date",
+			"label-start-date-scheduled": "Scheduled",
+			"label-start-date-scheduled-otp": "Scheduled delivery",
+			"label-start-date-started": "Started",
+			"label-total-deposits": "Total amount you have deposited since stream started",
+			"label-total-withdrawals": "Total amount you have withdrawn since stream started",
+			"no-stream": "Please select or lookup a stream to view details",
+			"withdraw-funds-cta": "Withdraw funds"
+		},
+		"stream-list": {
+			"no-streams": "No streams available",
+			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
+			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
+			"subtitle-pending-inbound": "This contract is pending your approval",
+			"subtitle-pending-outbound": "This contract is pending beneficiary approval",
+			"subtitle-running-inbound": "Receiving money since",
+			"subtitle-running-outbound": "Sending money since",
+			"subtitle-scheduled-inbound": "Set to receive money on",
+			"subtitle-scheduled-outbound": "Set to start on",
+			"title-paused-from": "Paused stream from",
+			"title-paused-to": "Paused stream to",
+			"title-pending-from": "Pending execution from",
+			"title-pending-to": "Pending execution to",
+			"title-receiving-from": "Receiving from",
+			"title-sending-to": "Sending to"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Select a token"

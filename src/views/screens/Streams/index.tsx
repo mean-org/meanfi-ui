@@ -60,6 +60,7 @@ import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "../../
 import { CloseStreamModal } from "../../../components/CloseStreamModal";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { calculateActionFees } from "../../../money-streaming/utils";
+import { useTranslation } from "react-i18next";
 
 var dateFormat = require("dateformat");
 
@@ -91,6 +92,7 @@ export const Streams = () => {
     refreshTokenBalance,
     setCustomStreamDocked
   } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
@@ -420,21 +422,22 @@ export const Streams = () => {
   const getTransactionTitle = (item: StreamInfo): string => {
     let title = '';
     const isInbound = isInboundStream(item);
+
     if (isInbound) {
       if (item.isUpdatePending) {
-        title = `Pending execution from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else if (!item.isStreaming) {
-        title = `Paused stream from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else {
-        title = `Receiving from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       }
     } else {
       if (item.isUpdatePending) {
-        title = `Pending execution to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else if (!item.isStreaming) {
-        title = `Paused stream to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
-        title = `Sending to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       }
     }
     return title;
@@ -447,27 +450,27 @@ export const Streams = () => {
     const streamStartDate = new Date(item.startUtc as string);
     if (isInbound) {
       if (item.isUpdatePending) {
-        title = `This contract is pending your approval`;
+        title = t('streams.stream-list.subtitle-pending-inbound');
       } else if (!item.isStreaming) {
-        title = `This stream is paused due to the lack of funds`;
+        title = t('streams.stream-list.subtitle-paused-inbound');
       } else {
         if (streamStartDate > now) {
-          title = `Set to receive money on`;
+          title = t('streams.stream-list.subtitle-scheduled-inbound');
         } else {
-          title = `Receiving money since`;
+          title = t('streams.stream-list.subtitle-running-inbound');
         }
         title += ` ${getShortDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
-        title = `This contract is pending beneficiary approval`;
+        title = t('streams.stream-list.subtitle-pending-outbound');
       } else if (!item.isStreaming) {
-        title = `This stream is paused due to the lack of funds`;
+        title = t('streams.stream-list.subtitle-paused-outbound');
       } else {
         if (streamStartDate > now) {
-          title = `Set to start on`;
+          title = t('streams.stream-list.subtitle-scheduled-outbound');
         } else {
-          title = `Sending money since`;
+          title = t('streams.stream-list.subtitle-running-outbound');
         }
         title += ` ${getShortDate(item.startUtc as string)}`;
       }
@@ -476,19 +479,19 @@ export const Streams = () => {
   }
 
   const getStartDateLabel = (): string => {
-    let label = 'Start Date';
+    let label = t('streams.stream-detail.label-start-date-default');
     if (streamDetail) {
       const now = new Date().toUTCString();
       const nowUtc = new Date(now);
       const streamStartDate = new Date(streamDetail?.startUtc as string);
       if (streamStartDate > nowUtc) {
         if (isOtp()) {
-          label = 'Scheduled delivery';
+          label = t('streams.stream-detail.label-start-date-scheduled-otp');
         } else {
-          label = 'Scheduled';
+          label = t('streams.stream-detail.label-start-date-scheduled');
         }
       } else {
-        label = 'Started'
+        label = t('streams.stream-detail.label-start-date-started');
       }
     }
     return label;
@@ -1187,12 +1190,15 @@ export const Streams = () => {
   }
 
   const getActivityActor = (item: StreamActivity): string => {
-    return isAddressMyAccount(item.initializer) ? "You" : shortenAddress(item.initializer);
+    return isAddressMyAccount(item.initializer) ? t('general.you') : shortenAddress(item.initializer);
   }
 
   const getActivityAction = (item: StreamActivity): string => {
     const amount = getAmountWithSymbol(item.amount, item.mint);
-    return `${item.action} ${amount}`;
+    const actionText = item.action === 'deposited'
+      ? t('streams.stream-activity.action-deposit')
+      : t('streams.stream-activity.action-withdraw');
+    return `${actionText} ${amount}`;
   }
 
   const isScheduledOtp = (): boolean => {
@@ -1210,7 +1216,7 @@ export const Streams = () => {
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={showCloseStreamModal} disabled={!isAuthority()}>
-        <span className="menu-item-text">Close money stream</span>
+        <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
       </Menu.Item>
     </Menu>
   );
@@ -1235,7 +1241,7 @@ export const Streams = () => {
           {/* Sender */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">Receiving from</div>
+              <div className="info-label">{t('streams.stream-detail.label-receiving-from')}</div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
@@ -1255,14 +1261,14 @@ export const Streams = () => {
                 null
               ) : (
                 <>
-                <div className="info-label">Payment Rate</div>
+                <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-data">
                     {streamDetail
                       ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
                       : '--'
                     }
-                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
+                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}
                   </span>
                 </div>
                 </>
@@ -1274,7 +1280,7 @@ export const Streams = () => {
           {isOtp() ? (
             <div className="mb-3">
               <div className="info-label">
-                Amount&nbsp;(funded on {getReadableDate(streamDetail?.fundedOnUtc as string)})
+                {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(streamDetail?.fundedOnUtc as string)})
               </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
@@ -1314,7 +1320,7 @@ export const Streams = () => {
             null
           ) : (
             <div className="mb-3">
-              <div className="info-label text-truncate">Funds left in account {streamDetail
+              <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {streamDetail
                 ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
                 : ''}
               </div>
@@ -1340,7 +1346,7 @@ export const Streams = () => {
             <>
               {/* Amount withdrawn */}
               <div className="mb-3">
-                <div className="info-label">Total amount you have withdrawn since stream started</div>
+                <div className="info-label">{t('streams.stream-detail.label-total-withdrawals')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconDownload className="mean-svg-icons" />
@@ -1359,7 +1365,7 @@ export const Streams = () => {
 
               {/* Funds available to withdraw now (Total Vested) */}
               <div className="mb-3">
-                <div className="info-label">Funds available to withdraw now</div>
+                <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconUpload className="mean-svg-icons" />
@@ -1388,7 +1394,7 @@ export const Streams = () => {
               size="small"
               disabled={isScheduledOtp() || !streamDetail?.escrowVestedAmount || publicKey?.toBase58() !== streamDetail?.beneficiaryAddress}
               onClick={showWithdrawModal}>
-              Withdraw funds
+              {t('streams.stream-detail.withdraw-funds-cta')}
             </Button>
             {!customStreamDocked && (
               <Dropdown overlay={menu} trigger={["click"]}>
@@ -1407,9 +1413,9 @@ export const Streams = () => {
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">Activity</div>
+      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
-        <p>No activity so far.</p>
+        <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
         <div className="activity-list">
           <Spin spinning={loadingStreamActivity}>
@@ -1422,7 +1428,7 @@ export const Streams = () => {
                       {getActivityIcon(item)}
                     </div>
                     <div className="description-cell text-truncate">
-                      <span>{getActivityActor(item)}</span>
+                      <span className={isAddressMyAccount(item.initializer) && 'text-capitalize'}>{getActivityActor(item)}</span>
                       <span className="activity-action">{getActivityAction(item)}</span>
                     </div>
                   </div>
@@ -1468,7 +1474,7 @@ export const Streams = () => {
           {/* Beneficiary */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">Sending to</div>
+              <div className="info-label">{t('streams.stream-detail.label-sending-to')}</div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
@@ -1486,14 +1492,14 @@ export const Streams = () => {
                 null
               ) : (
                 <>
-                <div className="info-label">Payment Rate</div>
+                <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-data">
                     {streamDetail
                       ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
                       : '--'
                     }
-                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
+                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}
                   </span>
                 </div>
                 </>
@@ -1505,7 +1511,7 @@ export const Streams = () => {
           {isOtp() ? (
             <div className="mb-3">
               <div className="info-label">
-                Amount&nbsp;(funded on {getReadableDate(streamDetail?.fundedOnUtc as string)})
+                {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(streamDetail?.fundedOnUtc as string)})
               </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
@@ -1545,7 +1551,7 @@ export const Streams = () => {
             null
           ) : (
             <div className="mb-3">
-              <div className="info-label">Total amount you have deposited since stream started</div>
+              <div className="info-label">{t('streams.stream-detail.label-total-deposits')}</div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconDownload className="mean-svg-icons" />
@@ -1568,7 +1574,7 @@ export const Streams = () => {
             null
           ) : (
             <div className="mb-3">
-              <div className="info-label">Funds sent to recepient</div>
+              <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconUpload className="mean-svg-icons" />
@@ -1592,8 +1598,8 @@ export const Streams = () => {
           ) : (
             <div className="mb-3">
               <div className="info-label text-truncate">{streamDetail && !streamDetail?.escrowUnvestedAmount
-                ? `Funds left in account`
-                : `Funds left in account (will run out by ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
+                ? t('streams.stream-detail.label-funds-left-in-account')
+                : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
                   ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())
                   : ''})`}
               </div>
@@ -1624,7 +1630,7 @@ export const Streams = () => {
               size="small"
               disabled={isOtp()}
               onClick={showAddFundsModal}>
-              Top up (add funds)
+              {t('streams.stream-detail.add-funds-cta')}
             </Button>
             {!customStreamDocked && (
               <Dropdown overlay={menu} trigger={["click"]}>
@@ -1639,14 +1645,13 @@ export const Streams = () => {
               </Dropdown>
             )}
           </div>
-
         </div>
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">Activity</div>
+      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
-        <p>No activity so far.</p>
+        <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
         <div className="activity-list">
           <Spin spinning={loadingStreamActivity}>
@@ -1659,7 +1664,7 @@ export const Streams = () => {
                       {getActivityIcon(item)}
                     </div>
                     <div className="description-cell text-truncate">
-                      <span>{getActivityActor(item)}</span>
+                      <span className={isAddressMyAccount(item.initializer) && 'text-capitalize'}>{getActivityActor(item)}</span>
                       <span className="activity-action">{getActivityAction(item)}</span>
                     </div>
                   </div>
@@ -1685,48 +1690,55 @@ export const Streams = () => {
   </>
   );
 
+  const renderStreamList = (
+    <>
+    {streamList && streamList.length ? (
+      streamList.map((item, index) => {
+        const onStreamClick = () => {
+          console.log('selected stream:', item);
+          setSelectedStream(item);
+          setDtailsPanelOpen(true);
+        };
+        return (
+          <div key={`${index + 50}`} onClick={onStreamClick}
+            className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
+            <div className="icon-cell">
+              {getStreamIcon(item)}
+            </div>
+            <div className="description-cell">
+              <div className="title text-truncate">{item.memo || getTransactionTitle(item)}</div>
+              <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">
+                {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
+              </div>
+              {item && item.rateAmount > 0 && (
+                <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
+              )}
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <>
+      <p>{t('streams.stream-list.no-streams')}</p>
+      </>
+    )}
+
+    </>
+  );
+
   return (
     <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
       {/* Left / top panel*/}
       <div className="streams-container">
-        <div className="streams-heading">My Money Streams</div>
+        <div className="streams-heading">{t('streams.screen-title')}</div>
         <div className="inner-container">
           {/* item block */}
           <div className="item-block vertical-scroll">
             <Spin spinning={loadingStreams}>
-              {streamList && streamList.length ? (
-                streamList.map((item, index) => {
-                  const onStreamClick = () => {
-                    console.log('selected stream:', item);
-                    setSelectedStream(item);
-                    setDtailsPanelOpen(true);
-                  };
-                  return (
-                    <div key={`${index + 50}`} onClick={onStreamClick}
-                      className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
-                      <div className="icon-cell">
-                        {getStreamIcon(item)}
-                      </div>
-                      <div className="description-cell">
-                        <div className="title text-truncate">{item.memo || getTransactionTitle(item)}</div>
-                        <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
-                      </div>
-                      <div className="rate-cell">
-                        <div className="rate-amount">
-                          {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
-                        </div>
-                        {item && item.rateAmount > 0 && (
-                          <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <>
-                <p>No streams available</p>
-                </>
-              )}
+              {renderStreamList}
             </Spin>
           </div>
           {/* Bottom CTA */}
@@ -1750,13 +1762,13 @@ export const Streams = () => {
                   shape="round"
                   size="small"
                   onClick={showContractSelectorModal}>
-                  Create new money stream
+                  {t('streams.create-new-stream-cta')}
                 </Button>
               </div>
             )}
             {!customStreamDocked && (
               <div className="open-stream">
-                <Tooltip title="Lookup a stream">
+                <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
                   <Button
                     shape="round"
                     type="text"
@@ -1774,14 +1786,14 @@ export const Streams = () => {
       {/* Right / down panel */}
       <div className="stream-details-container">
         <Divider className="streams-divider" plain></Divider>
-        <div className="streams-heading">Stream details</div>
+        <div className="streams-heading">{t('streams.stream-detail.heading')}</div>
         <div className="inner-container">
           {connected && streamDetail ? (
             <>
             {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
             </>
           ) : (
-            <p>Please select or lookup a stream to view details</p>
+            <p>{t('streams.stream-detail.no-stream')}</p>
           )}
         </div>
       </div>
