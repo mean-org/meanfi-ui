@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 export const OpenStreamModal = (props: {
   handleClose: any;
@@ -7,6 +8,7 @@ export const OpenStreamModal = (props: {
   isVisible: boolean;
 }) => {
   const [streamId, setStreamId] = useState('');
+  const { t } = useTranslation('common');
 
   const handleSreamIdChange = (e: any) => {
     setStreamId(e.target.value);
@@ -16,13 +18,13 @@ export const OpenStreamModal = (props: {
     props.handleOk(streamId);
     setTimeout(() => {
       setStreamId('');
-    }, 100);
+    }, 50);
   }
 
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">Open money stream</div>}
+      title={<div className="modal-title">{t('open-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptStreamId}
@@ -30,7 +32,7 @@ export const OpenStreamModal = (props: {
       width={480}>
       <div className="transaction-field">
         <div className="transaction-field-row">
-          <span className="field-label-left">Stream id to open</span>
+          <span className="field-label-left">{t('open-stream.label-streamid-input')}</span>
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
@@ -42,7 +44,7 @@ export const OpenStreamModal = (props: {
             autoCorrect="off"
             type="text"
             onChange={handleSreamIdChange}
-            placeholder="Stream ID created by Mean Finance"
+            placeholder={t('open-stream.streamid-placeholder')}
             required={true}
             minLength={1}
             maxLength={79}
@@ -59,7 +61,7 @@ export const OpenStreamModal = (props: {
         size="large"
         disabled={!streamId}
         onClick={onAcceptStreamId}>
-        {!streamId ? 'Missing stream id' : 'Open stream'}
+        {!streamId ? t('open-stream.streamid-empty') : t('open-stream.streamid-open-cta')}
       </Button>
     </Modal>
   );

@@ -6,6 +6,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { useTranslation } from 'react-i18next';
 
 export const CloseStreamModal = (props: {
   handleClose: any;
@@ -14,6 +15,7 @@ export const CloseStreamModal = (props: {
   isVisible: boolean;
   transactionFees: TransactionFees;
 }) => {
+  const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const { streamDetail } = useContext(AppStateContext);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -64,7 +66,7 @@ export const CloseStreamModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">Close stream</div>}
+      title={<div className="modal-title">{t('close-stream.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -79,7 +81,7 @@ export const CloseStreamModal = (props: {
         {streamDetail && streamDetail.associatedToken && (
           <div className="p-2 mb-2">
             {infoRow(
-              'Transaction fee:',
+              t('transactions.transaction-info.transaction-fee') + ':',
               `${feeAmount
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
                 : '0'
@@ -95,14 +97,14 @@ export const CloseStreamModal = (props: {
               shape="round"
               size="large"
               onClick={props.handleClose}>
-              Cancel
+              {t('close-stream.secondary-cta')}
           </Button>
           <Button
               type="primary"
               shape="round"
               size="large"
               onClick={props.handleOk}>
-              Close stream
+              {t('close-stream.primary-cta')}
           </Button>
         </div>
       </div>

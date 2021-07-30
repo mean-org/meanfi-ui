@@ -1095,28 +1095,34 @@ export const Streams = () => {
     if (publicKey && streamDetail && streamList) {
 
       const me = publicKey.toBase58();
-      const treasury = streamDetail.treasuryAddress;
-      const treasurer = streamDetail.treasurerAddress;
-      const beneficiary = streamDetail.beneficiaryAddress;
+      const treasury = streamDetail.treasuryAddress as string;
+      const treasurer = streamDetail.treasurerAddress as string;
+      const beneficiary = streamDetail.beneficiaryAddress as string;
       const withdrawAmount = getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string);
       // TODO: Account for multiple beneficiaries funded by the same treasury (only 1 right now)
       const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
 
       if (treasurer === me) {  // If I am the treasurer
         if (numTreasuryBeneficiaries > 1) {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amounts back to the original treasury (${shortenAddress(treasury as string)}).`
+          message = t('close-stream.context-treasurer-multiple-beneficiaries', {
+            beneficiary: shortenAddress(beneficiary),
+            treasury: shortenAddress(treasury)
+          });
         } else {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amount back to the contributor.`
+          message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
         }
       } else if (beneficiary === me)  {  // If I am the beneficiary
-        message = `Closing a stream will send ~${withdrawAmount} to your account (${shortenAddress(beneficiary)}) and stop the flow of money immediately.`;
+        message = t('close-stream.context-beneficiary', {
+          amount: `~${withdrawAmount}`,
+          beneficiary: shortenAddress(beneficiary)
+        });
       }
 
     }
 
     return (
       <div>
-        {message}<br/><span>Are you sure you want to do this?</span>
+        {message}<br/><span>{t('close-stream.confirmation-question')}</span>
       </div>
     );
   }
@@ -1751,7 +1757,7 @@ export const Streams = () => {
                   shape="round"
                   size="small"
                   onClick={handleCancelCustomStreamClick}>
-                  Back to My Streams
+                  {t('streams.back-to-my-streams-cta')}
                 </Button>
               </div>
             ) : (
@@ -1801,16 +1807,16 @@ export const Streams = () => {
         isVisible={isContractSelectorModalVisible}
         handleOk={onAcceptContractSelector}
         handleClose={closeContractSelectorModal}/>
+      <OpenStreamModal
+        isVisible={isOpenStreamModalVisible}
+        handleOk={onAcceptOpenStream}
+        handleClose={closeOpenStreamModal} />
       <CloseStreamModal
         isVisible={isCloseStreamModalVisible}
         transactionFees={transactionFees}
         handleOk={onAcceptCloseStream}
         handleClose={hideCloseStreamModal}
         content={getStreamClosureMessage()} />
-      <OpenStreamModal
-        isVisible={isOpenStreamModalVisible}
-        handleOk={onAcceptOpenStream}
-        handleClose={closeOpenStreamModal} />
       <AddFundsModal
         isVisible={isAddFundsModalVisible}
         transactionFees={transactionFees}
