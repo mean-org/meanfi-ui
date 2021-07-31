@@ -122,8 +122,9 @@ export function WalletProvider({ children = null as any }) {
               : walletPublicKey;
 
           notify({
-            message: "Wallet update",
-            description: "Connected to wallet " + keyToDisplay,
+            message: t('notifications.wallet-connection-event-title'),
+            description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
+            type: 'info'
           });
         }
       });
@@ -139,16 +140,16 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [wallet]);
+  }, [wallet, t]);
 
   useEffect(() => {
     if (wallet && autoConnect) {
-      wallet.connect();
+      wallet.connect(t);
       setAutoConnect(false);
     }
 
     return () => {};
-  }, [wallet, autoConnect]);
+  }, [wallet, autoConnect, t]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -219,6 +220,8 @@ export function WalletProvider({ children = null as any }) {
 
 export function useWallet() {
   const { wallet, connected, provider, select, resetWalletProvider } = useContext(WalletContext);
+  const { t } = useTranslation("common");
+
   return {
     wallet,
     connected,
@@ -227,7 +230,7 @@ export function useWallet() {
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
-      wallet ? wallet.connect() : select();
+      wallet ? wallet.connect(t) : select();
     },
     disconnect() {
       wallet?.disconnect();

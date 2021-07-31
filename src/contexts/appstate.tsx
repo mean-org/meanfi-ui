@@ -13,6 +13,7 @@ import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { StreamActivity, StreamInfo } from "../money-streaming/types";
+import { useTranslation } from "react-i18next";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -137,6 +138,7 @@ const contextDefaultValues: AppStateConfig = {
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
+  const { t } = useTranslation('common');
   // Parent contexts
   const connected = useWallet();
   const connection = useConnection();
@@ -275,28 +277,28 @@ const AppStateProvider: React.FC = ({ children }) => {
           getStreamActivity(streamId);
           setCustomStreamDocked(true);
           notify({
-            description: `The stream with ID ${shortenAddress(streamId, 10)} has been loaded`,
+            description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
             type: "success"
           });
         } else {
           notify({
-            message: "Error",
-            description: `Could not find or load stream with ID ${shortenAddress(streamId, 10)}`,
+            message: t('notifications.error-title'),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
             type: "error"
           });
         }
       } catch (error) {
         console.log('customStream', error);
         notify({
-          message: "Error",
-          description: (error),
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
           type: "error"
         });
       }
     } catch (error) {
       notify({
-        message: "Error",
-        description: 'Invalid public key. Please check input.',
+        message: t('notifications.error-title'),
+        description: t('notifications.invalid-publickey-message'),
         type: "error"
       });
     }

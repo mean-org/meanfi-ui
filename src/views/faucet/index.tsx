@@ -95,8 +95,9 @@ export const FaucetView = () => {
 
     if (environment === 'production') {
       notify({
-        message: 'Cannot faucet in mainnet',
-        type: "error",
+        message: t('notifications.error-title'),
+        description: t('notifications.error-cannot-faucet-mainnet-message'),
+        type: "error"
       });
       return;
     }
@@ -104,18 +105,19 @@ export const FaucetView = () => {
     try {
       connection.requestAirdrop(publicKey, getFaucetAmount()).then(() => {
         notify({
-          message: 'Account funded.',
-          type: "success",
+          description: t('notifications.success-account-funded-message') + '.',
+          type: "success"
         });
       });
     } catch (error) {
       console.log(error);
       notify({
-        message: 'Could not fund your account, please try again later',
-        type: "error",
+        message: t('notifications.error-title'),
+        description: t('notifications.error-cannot-fund-account-message'),
+        type: "error"
       });
     }
-  }, [publicKey, connection]);
+  }, [publicKey, connection, t]);
 
   const disconnectedBlock = (
     <p>{t('faucet.not-connected')}.</p>

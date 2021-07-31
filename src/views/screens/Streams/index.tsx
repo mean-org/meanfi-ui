@@ -295,29 +295,30 @@ export const Streams = () => {
           });
         } else {
           notify({
-            message: "Error",
-            description: `Could not find or load stream with ID ${shortenAddress(streamId as string, 10)}`,
+            message: t('notifications.error-title'),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
             type: "error"
           });
         }
       } catch (error) {
         console.log(error);
         notify({
-          message: "Error",
-          description: (error),
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
           type: "error"
         });
       }
     } catch (error) {
       notify({
-        message: "Error",
-        description: 'Invalid stream id!',
+        message: t('notifications.error-title'),
+        description: t('notifications.invalid-streamid-message') + '!',
         type: "error"
       });
     }
   }, [
     connection,
     streamDetail,
+    t,
     getTransactionFees
   ]);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
@@ -1130,13 +1131,13 @@ export const Streams = () => {
   const onCopyStreamAddress = (data: any) => {
     if (copyText(data.toString())) {
       notify({
-        message: "Copy to Clipboard",
-        description: "Stream address successfully copied",
+        description: t('notifications.streamid-copied-message'),
+        type: "info"
       });
     } else {
       notify({
-        message: "Copy to Clipboard",
-        description: "Could not copy stream Address",
+        description: t('notifications.streamid-not-copied-message'),
+        type: "error"
       });
     }
   }

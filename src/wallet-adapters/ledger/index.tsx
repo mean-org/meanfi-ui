@@ -52,7 +52,7 @@ export class LedgerWalletAdapter
     return transactions;
   }
 
-  async connect() {
+  async connect(t?: any) {
     if (this._connecting) {
       return;
     }
@@ -66,10 +66,18 @@ export class LedgerWalletAdapter
       this._publicKey = await getPublicKey(this._transport);
       this.emit("connect", this.publicKey);
     } catch (error) {
-      notify({
-        message: "Ledger Error",
-        description: error.message,
-      });
+      if (t) {
+        notify({
+          message: t('notifications.error-ledger-title'),
+          description: error.message,
+          type: 'error'
+        });
+      } else {
+        notify({
+          message: "Ledger Error",
+          description: error.message,
+        });
+      }
       await this.disconnect();
     } finally {
       this._connecting = false;

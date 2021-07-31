@@ -94,8 +94,9 @@ export const HomeView = () => {
         setPreviousWalletConnectState(false);
         refreshTokenBalance();
         notify({
-          message: "Wallet update",
-          description: "Disconnected from wallet",
+          message: t('notifications.wallet-connection-event-title'),
+          description: t('notifications.wallet-disconnect-message'),
+          type: 'info'
         });
       }
     }
@@ -108,6 +109,7 @@ export const HomeView = () => {
     streamList,
     streamProgramAddress,
     previousWalletConnectState,
+    t,
     setStreamList,
     setStreamDetail,
     setCurrentScreen,

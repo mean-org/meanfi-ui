@@ -298,5 +298,27 @@
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset"
+	},
+	"notifications": {
+		"error-title": "Error",
+		"error-phantom-title": "Phantom Error",
+		"error-phantom-message": "Please install Phantom wallet from Chrome Web Store",
+		"error-solong-title": "Solong Error",
+		"error-solong-message": "Please install solong wallet from Chrome Web Store",
+		"error-ledger-title": "Ledger Error",
+		"success-account-funded-message": "Account funded",
+		"wallet-connection-event-title": "Wallet update",
+		"wallet-disconnect-message": "Disconnected from wallet",
+		"wallet-connect-message": "Connected to wallet {{address}}",
+		"invalid-streamid-message": "Invalid stream id",
+		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
+		"account-address-copied-message": "Account Address successfully copied",
+		"account-address-not-copied-message": "Could not copy Account Address",
+		"streamid-copied-message": "Stream address successfully copied to clipboard",
+		"streamid-not-copied-message": "Could not copy stream Address",
+		"invalid-publickey-message": "Invalid public key. Please check input",
+		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
+		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
+		"error-cannot-fund-account-message": "Could not fund your account, please try again later"
 	}
 }

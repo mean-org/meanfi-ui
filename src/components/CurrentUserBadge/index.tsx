@@ -84,13 +84,13 @@ export const CurrentUserBadge = (props: {}) => {
   const onCopyAddress = () => {
     if (copyText(wallet?.publicKey)) {
       notify({
-        message: "Copy to Clipboard",
-        description: "Account Address successfully copied",
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
       });
     } else {
       notify({
-        message: "Copy to Clipboard",
-        description: "Could not copy Account Address",
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
       });
     }
   }
