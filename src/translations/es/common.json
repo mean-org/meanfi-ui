@@ -9,6 +9,20 @@
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
+	"add-funds": {
+		"label": "",
+		"label-right": "",
+		"modal-title": ""
+	},
+	"close-stream": {
+		"confirmation-question": "",
+		"context-beneficiary": "",
+		"context-treasurer-multiple-beneficiaries": "",
+		"context-treasurer-single-beneficiary": "",
+		"modal-title": "",
+		"primary-cta": "",
+		"secondary-cta": ""
+	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Individuos",
@@ -89,13 +103,43 @@
 		"primary-action": "Seleccionar",
 		"secondary-action": "Cancelar"
 	},
+	"notifications": {
+		"account-address-copied-message": "",
+		"account-address-not-copied-message": "",
+		"error-cannot-faucet-mainnet-message": "",
+		"error-cannot-fund-account-message": "",
+		"error-ledger-title": "",
+		"error-loading-streamid-message": "",
+		"error-phantom-message": "",
+		"error-phantom-title": "",
+		"error-solong-message": "",
+		"error-solong-title": "",
+		"error-title": "",
+		"invalid-publickey-message": "",
+		"invalid-streamid-message": "",
+		"streamid-copied-message": "",
+		"streamid-not-copied-message": "",
+		"success-account-funded-message": "",
+		"success-loading-stream-message": "",
+		"wallet-connect-message": "",
+		"wallet-connection-event-title": "",
+		"wallet-disconnect-message": ""
+	},
+	"open-stream": {
+		"label-streamid-input": "",
+		"modal-title": "",
+		"streamid-empty": "",
+		"streamid-open-cta": "",
+		"streamid-placeholder": ""
+	},
 	"streams": {
+		"back-to-my-streams-cta": "",
 		"create-new-stream-cta": "Crear nueva transmisión",
 		"lookup-stream-cta-tooltip": "Buscar una transmisión",
 		"screen-title": "Mis flujos de dinero",
 		"stream-activity": {
-			"action-deposit": "depositó",
-			"action-withdraw": "retiró",
+			"action-deposit": "Depósito",
+			"action-withdraw": "Retiro",
 			"heading": "Actividad",
 			"no-activity": "Sin actividad hasta ahora"
 		},
@@ -108,6 +152,7 @@
 			"label-funds-available-to-withdraw": "Fondos disponibles para retirar ahora",
 			"label-funds-left-in-account": "Fondos que quedan en la cuenta",
 			"label-funds-runout": "se acabará por",
+			"label-funds-runout-today": "",
 			"label-funds-sent": "Fondos enviados al destinatario",
 			"label-payment-rate": "Tasa de pago",
 			"label-receiving-from": "Recibiendo de",
@@ -216,13 +261,15 @@
 			"beneficiary-receives": "El beneficiario recibe",
 			"min-recommended-amount": "Cantidad mínima recomendada",
 			"recipient-receives": "El destinatario recibe",
-			"transaction-fee": "Tarifa de transacción"
+			"transaction-fee": "Tarifa de transacción",
+			"you-receive": ""
 		},
 		"validation": {
 			"amount-high": "La cantidad excede su saldo",
 			"amount-low": "No hay suficiente saldo",
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
+			"amount-withdraw-high": "",
 			"invalid-amount": "Monto no válido",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
@@ -231,7 +278,9 @@
 			"no-valid-date": "Establecer una fecha válida",
 			"not-connected": "Conecta tu billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
-			"valid-approve": "Aprobar en su billetera"
+			"valid-approve": "Aprobar en su billetera",
+			"valid-start-funding": "",
+			"valid-start-withdrawal": ""
 		}
 	},
 	"ui-language": {
@@ -266,5 +315,11 @@
 	},
 	"wallet-selector": {
 		"primary-action": "Seleccionar"
+	},
+	"withdraw-funds": {
+		"label-available-amount": "",
+		"label-input-amount": "",
+		"label-input-right": "",
+		"modal-title": ""
 	}
 }

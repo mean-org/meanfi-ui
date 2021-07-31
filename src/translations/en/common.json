@@ -9,6 +9,20 @@
 		"wallet-change": "Change",
 		"wallet-provider": "Connected with"
 	},
+	"add-funds": {
+		"label": "Amount",
+		"label-right": "Balance",
+		"modal-title": "Add funds"
+	},
+	"close-stream": {
+		"confirmation-question": "Are you sure you want to do this?",
+		"context-beneficiary": "Closing a stream will send {{amount}} to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"modal-title": "Close stream",
+		"primary-cta": "Close stream",
+		"secondary-cta": "Cancel"
+	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Individuals",
@@ -89,14 +103,43 @@
 		"primary-action": "Select",
 		"secondary-action": "Cancel"
 	},
+	"notifications": {
+		"account-address-copied-message": "Account Address successfully copied",
+		"account-address-not-copied-message": "Could not copy Account Address",
+		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
+		"error-cannot-fund-account-message": "Could not fund your account, please try again later",
+		"error-ledger-title": "Ledger Error",
+		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
+		"error-phantom-message": "Please install Phantom wallet from Chrome Web Store",
+		"error-phantom-title": "Phantom Error",
+		"error-solong-message": "Please install solong wallet from Chrome Web Store",
+		"error-solong-title": "Solong Error",
+		"error-title": "Error",
+		"invalid-publickey-message": "Invalid public key. Please check input",
+		"invalid-streamid-message": "Invalid stream id",
+		"streamid-copied-message": "Stream address successfully copied to clipboard",
+		"streamid-not-copied-message": "Could not copy stream Address",
+		"success-account-funded-message": "Account funded",
+		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
+		"wallet-connect-message": "Connected to wallet {{address}}",
+		"wallet-connection-event-title": "Wallet update",
+		"wallet-disconnect-message": "Disconnected from wallet"
+	},
+	"open-stream": {
+		"label-streamid-input": "Stream id to open",
+		"modal-title": "Open money stream",
+		"streamid-empty": "Missing stream id",
+		"streamid-open-cta": "Open stream",
+		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
 	"streams": {
-		"create-new-stream-cta": "Create new money stream",
 		"back-to-my-streams-cta": "Back to My Streams",
+		"create-new-stream-cta": "Create new money stream",
 		"lookup-stream-cta-tooltip": "Lookup a stream",
 		"screen-title": "My Money Streams",
 		"stream-activity": {
-			"action-deposit": "deposited",
-			"action-withdraw": "withdrew",
+			"action-deposit": "Deposit",
+			"action-withdraw": "Withdraw",
 			"heading": "Activity",
 			"no-activity": "No activity so far"
 		},
@@ -172,6 +215,7 @@
 			"recipient-is-own-account": "Cannot send to your own account"
 		},
 		"send-amount": {
+			"add-on": "",
 			"label": "Send",
 			"label-right": "Balance"
 		},
@@ -224,8 +268,8 @@
 			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
-			"amount-withdraw-high": "Amount is greater than the available funds",
 			"amount-sol-high": "Amount exceeds your SOL balance",
+			"amount-withdraw-high": "Amount is greater than the available funds",
 			"invalid-amount": "Invalid amount",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
@@ -272,53 +316,10 @@
 	"wallet-selector": {
 		"primary-action": "Select"
 	},
-	"open-stream": {
-		"modal-title": "Open money stream",
-		"label-streamid-input": "Stream id to open",
-		"streamid-placeholder": "Stream ID created by Mean Finance",
-		"streamid-empty": "Missing stream id",
-		"streamid-open-cta": "Open stream"
-	},
-	"close-stream": {
-		"modal-title": "Close stream",
-		"primary-cta": "Close stream",
-		"secondary-cta": "Cancel",
-		"confirmation-question": "Are you sure you want to do this?",
-		"context-beneficiary": "Closing a stream will send {{amount}} to your account ({{beneficiary}}) and stop the flow of money immediately.",
-		"context-treasurer-single-beneficiary": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
-		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}})."
-	},
-	"add-funds": {
-		"modal-title": "Add funds",
-		"label": "Amount",
-		"label-right": "Balance"
-	},
 	"withdraw-funds": {
-		"modal-title": "Withdraw funds",
 		"label-available-amount": "Funds available to withdraw now",
 		"label-input-amount": "Enter amount to withdraw",
-		"label-input-right": "By percentual preset"
-	},
-	"notifications": {
-		"error-title": "Error",
-		"error-phantom-title": "Phantom Error",
-		"error-phantom-message": "Please install Phantom wallet from Chrome Web Store",
-		"error-solong-title": "Solong Error",
-		"error-solong-message": "Please install solong wallet from Chrome Web Store",
-		"error-ledger-title": "Ledger Error",
-		"success-account-funded-message": "Account funded",
-		"wallet-connection-event-title": "Wallet update",
-		"wallet-disconnect-message": "Disconnected from wallet",
-		"wallet-connect-message": "Connected to wallet {{address}}",
-		"invalid-streamid-message": "Invalid stream id",
-		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
-		"account-address-copied-message": "Account Address successfully copied",
-		"account-address-not-copied-message": "Could not copy Account Address",
-		"streamid-copied-message": "Stream address successfully copied to clipboard",
-		"streamid-not-copied-message": "Could not copy stream Address",
-		"invalid-publickey-message": "Invalid public key. Please check input",
-		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
-		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
-		"error-cannot-fund-account-message": "Could not fund your account, please try again later"
+		"label-input-right": "By percentual preset",
+		"modal-title": "Withdraw funds"
 	}
 }

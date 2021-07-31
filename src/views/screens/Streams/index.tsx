@@ -1201,11 +1201,10 @@ export const Streams = () => {
   }
 
   const getActivityAction = (item: StreamActivity): string => {
-    const amount = getAmountWithSymbol(item.amount, item.mint);
     const actionText = item.action === 'deposited'
       ? t('streams.stream-activity.action-deposit')
       : t('streams.stream-activity.action-withdraw');
-    return `${actionText} ${amount}`;
+    return actionText;
   }
 
   const isScheduledOtp = (): boolean => {
@@ -1426,25 +1425,41 @@ export const Streams = () => {
       ) : (
         <div className="activity-list">
           <Spin spinning={loadingStreamActivity}>
-            {streamActivity.map((item, index) => {
-              return (
-                <a key={`${index}`} className="activity-list-row" target="_blank" rel="noopener noreferrer"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                  <div className="activity-highlight">
-                    <div className="icon-cell">
-                      {getActivityIcon(item)}
-                    </div>
-                    <div className="description-cell text-truncate">
-                      <span className={isAddressMyAccount(item.initializer) && 'text-capitalize'}>{getActivityActor(item)}</span>
-                      <span className="activity-action">{getActivityAction(item)}</span>
-                    </div>
+            {streamActivity && (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-60">Action</div>
+                    <div className="std-table-cell fixed-width-60">Amount</div>
+                    <div className="std-table-cell fixed-width-120">Date</div>
                   </div>
-                  <div className="date-cell">
-                    {getShortDate(item.utcDate as string, true)}
-                  </div>
-                </a>
-              );
-            })}
+                </div>
+                <div className="item-list-body compact">
+                  {streamActivity.map((item, index) => {
+                    return (
+                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                        <div className="std-table-cell fixed-width-80">
+                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getActivityAction(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-120" >
+                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </Spin>
         </div>
       )}
@@ -1662,25 +1677,41 @@ export const Streams = () => {
       ) : (
         <div className="activity-list">
           <Spin spinning={loadingStreamActivity}>
-            {streamActivity.map((item, index) => {
-              return (
-                <a key={`${index}`} className="activity-list-row" target="_blank" rel="noopener noreferrer"
-                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                  <div className="activity-highlight">
-                    <div className="icon-cell">
-                      {getActivityIcon(item)}
-                    </div>
-                    <div className="description-cell text-truncate">
-                      <span className={isAddressMyAccount(item.initializer) && 'text-capitalize'}>{getActivityActor(item)}</span>
-                      <span className="activity-action">{getActivityAction(item)}</span>
-                    </div>
+            {streamActivity && (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-60">Action</div>
+                    <div className="std-table-cell fixed-width-60">Amount</div>
+                    <div className="std-table-cell fixed-width-120">Date</div>
                   </div>
-                  <div className="date-cell">
-                    {getShortDate(item.utcDate as string, true)}
-                  </div>
-                </a>
-              );
-            })}
+                </div>
+                <div className="item-list-body compact">
+                  {streamActivity.map((item, index) => {
+                    return (
+                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                        <div className="std-table-cell fixed-width-80">
+                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getActivityAction(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-120" >
+                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </Spin>
         </div>
       )}
