@@ -1431,9 +1431,9 @@ export const Streams = () => {
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
                     <div className="std-table-cell fixed-width-80">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-60">Action</div>
-                    <div className="std-table-cell fixed-width-60">Amount</div>
-                    <div className="std-table-cell fixed-width-120">Date</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                    <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
                   </div>
                 </div>
                 <div className="item-list-body compact">
@@ -1683,9 +1683,9 @@ export const Streams = () => {
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
                     <div className="std-table-cell fixed-width-80">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-60">Action</div>
-                    <div className="std-table-cell fixed-width-60">Amount</div>
-                    <div className="std-table-cell fixed-width-120">Date</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                    <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
                   </div>
                 </div>
                 <div className="item-list-body compact">
@@ -1875,21 +1875,21 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">{`Add ${getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}`}</h5>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds added successfully!</p>
+              <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={onAddFundsTransactionFinished}>
-                Close
+                {t('transactions.status.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -1902,13 +1902,13 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideAddFundsTransactionModal}>
-                Dismiss
+                {t('transactions.status.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>
@@ -1928,21 +1928,21 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">{`Withdraw ${getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}`}</h5>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds withdrawn successfully!</p>
+              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={onWithdrawFundsTransactionFinished}>
-                Close
+                {t('transactions.status.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -1955,13 +1955,13 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideWithdrawFundsTransactionModal}>
-                Dismiss
+                {t('transactions.status.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>
@@ -1981,21 +1981,21 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">Close stream operation</h5>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h5 className="operation">{t('transactions.status.close-operation')}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Stream successfully closed!</p>
+              <p className="operation">{t('transactions.status.close-operation-success')}</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={onCloseStreamTransactionFinished}>
-                Finish
+                {t('transactions.status.cta-finish')}
               </Button>
             </>
           ) : isError() ? (
@@ -2008,13 +2008,13 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideCloseStreamTransactionModal}>
-                Dismiss
+                {t('transactions.status.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>

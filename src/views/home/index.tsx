@@ -109,6 +109,7 @@ export const HomeView = () => {
     streamList,
     streamProgramAddress,
     previousWalletConnectState,
+    t,
     setStreamList,
     setStreamDetail,
     setCurrentScreen,

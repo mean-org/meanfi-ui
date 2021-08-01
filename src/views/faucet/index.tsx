@@ -41,11 +41,7 @@ export const FaucetView = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const closeTransactionModal = useCallback(() => {
-    setTransactionModalVisibility(false);
-    setWrapAmount('');
-    setIsWrapEnabled(false);
-  }, []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
   useEffect(() => {
 
@@ -286,6 +282,24 @@ export const FaucetView = () => {
 
   };
 
+  const onTransactionFinished = () => {
+    setWrapAmount('');
+    setIsWrapEnabled(false);
+    hideTransactionModal();
+  };
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setWrapAmount('');
+      setIsWrapEnabled(false);
+      hideTransactionModal();
+    }
+  }
+
+
   const setValue = (value: string) => {
     setWrapAmount(value);
   }
@@ -436,7 +450,8 @@ export const FaucetView = () => {
               maskClosable={false}
               visible={isTransactionModalVisible}
               title={getTransactionModalTitle()}
-              onCancel={closeTransactionModal}
+              onCancel={hideTransactionModal}
+              afterClose={onAfterTransactionModalClosed}
               width={280}
               footer={null}>
               <div className="transaction-progress">
@@ -457,7 +472,7 @@ export const FaucetView = () => {
                       type="primary"
                       shape="round"
                       size="middle"
-                      onClick={closeTransactionModal}>
+                      onClick={onTransactionFinished}>
                       {t('transactions.status.cta-close')}
                     </Button>
                   </>
@@ -470,7 +485,7 @@ export const FaucetView = () => {
                       type="primary"
                       shape="round"
                       size="middle"
-                      onClick={closeTransactionModal}>
+                      onClick={hideTransactionModal}>
                       {t('transactions.status.cta-dismiss')}
                     </Button>
                   </>
