@@ -10,13 +10,13 @@
 		"wallet-provider": "Conectado con"
 	},
 	"add-funds": {
-		"label": "",
-		"label-right": "",
-		"modal-title": ""
+		"label": "Cantidad",
+		"label-right": "Balance",
+		"modal-title": "Añadir fondos"
 	},
 	"close-stream": {
-		"confirmation-question": "",
-		"context-beneficiary": "",
+		"confirmation-question": "Confirme que desea hacer esto",
+		"context-beneficiary": "Cerrar una transmisión enviará {{amount}} a tu cuenta ({{beneficiary}}) y detendrá el flujo de dinero inmediatamente.",
 		"context-treasurer-multiple-beneficiaries": "",
 		"context-treasurer-single-beneficiary": "",
 		"modal-title": "",
@@ -214,7 +214,6 @@
 			"recipient-is-own-account": "No se puede enviar a su propia cuenta"
 		},
 		"send-amount": {
-			"add-on": "MAX",
 			"label": "Enviar",
 			"label-right": "Balance"
 		},

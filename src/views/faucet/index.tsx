@@ -282,12 +282,6 @@ export const FaucetView = () => {
 
   };
 
-  const onTransactionFinished = () => {
-    setWrapAmount('');
-    setIsWrapEnabled(false);
-    hideTransactionModal();
-  };
-
   const onAfterTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
@@ -312,6 +306,8 @@ export const FaucetView = () => {
       setValue(newValue);
     }
   };
+
+  // Validation
 
   const isValidInput = (): boolean => {
     return wrapAmount &&
@@ -422,7 +418,7 @@ export const FaucetView = () => {
                   : '0'
                 }`
               )}
-              {infoRow(
+              {isValidInput() && infoRow(
                 t('faucet.wrapped-amount') + ':',
                 `${wrapFees
                   ? '~' + getTokenAmountAndSymbolByTokenAddress(
@@ -472,7 +468,7 @@ export const FaucetView = () => {
                       type="primary"
                       shape="round"
                       size="middle"
-                      onClick={onTransactionFinished}>
+                      onClick={hideTransactionModal}>
                       {t('transactions.status.cta-close')}
                     </Button>
                   </>

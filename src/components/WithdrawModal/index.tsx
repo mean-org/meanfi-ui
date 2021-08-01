@@ -204,19 +204,13 @@ export const WithdrawModal = (props: {
       {/* Info */}
       {props.startUpData && props.startUpData.associatedToken && (
         <div className="p-2 mb-2">
-          {infoRow(
+          {isValidInput() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.startUpData.associatedToken as string)
-              : '0'
-            }`
+            `~${getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.startUpData.associatedToken as string)}`
           )}
-          {infoRow(
+          {isValidInput() && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
-            `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.startUpData.associatedToken as string)
-              : '0'
-            }`
+            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.startUpData.associatedToken as string)}`
           )}
         </div>
       )}

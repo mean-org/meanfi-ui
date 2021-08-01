@@ -214,7 +214,6 @@
 			"recipient-is-own-account": "Impossible d'envoyer vers votre propre compte"
 		},
 		"send-amount": {
-			"add-on": "MAX",
 			"label": "Envoyer",
 			"label-right": "Solde du compte"
 		},

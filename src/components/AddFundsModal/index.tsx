@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { IconSort } from "../../Icons";
-
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
@@ -55,7 +54,7 @@ export const AddFundsModal = (props: {
     return selectedToken &&
            tokenBalance &&
            topupAmount && parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance - getFeeAmount(tokenBalance) &&
+           parseFloat(topupAmount) <= tokenBalance &&
            parseFloat(topupAmount) > getFeeAmount(topupAmount)
             ? true
             : false;
@@ -66,11 +65,11 @@ export const AddFundsModal = (props: {
       ? t('transactions.validation.no-balance')
       : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(topupAmount) > tokenBalance - getFeeAmount(topupAmount)
+      : parseFloat(topupAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
       : tokenBalance < getFeeAmount(topupAmount)
       ? t('transactions.validation.amount-low')
-      : t('transactions.validation.valid-start-funding');
+      : t('transactions.validation.valid-approve');
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -146,12 +145,7 @@ export const AddFundsModal = (props: {
                       className="token-max simplelink"
                       onClick={() => {
                         setValue(
-                          getTokenAmountAndSymbolByTokenAddress(
-                            (tokenBalance as number) - getFeeAmount(tokenBalance),
-                            selectedToken.address,
-                            true,
-                            true
-                          )
+                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true, true)
                         );
                       }}>
                       MAX
@@ -181,10 +175,8 @@ export const AddFundsModal = (props: {
           </div>
           <div className="transaction-field-row">
             <span className="field-label-left">{
-              parseFloat(topupAmount) > tokenBalance - getFeeAmount(tokenBalance)
+              parseFloat(topupAmount) > tokenBalance
                 ? (<span className="fg-red">{t('transactions.validation.amount-high')}</span>)
-                : tokenBalance < getFeeAmount(topupAmount)
-                ? (<span className="fg-red">{t('transactions.validation.amount-lt-fee')}</span>)
                 : (<span>&nbsp;</span>)
             }</span>
             <span className="field-label-right">&nbsp;</span>
@@ -199,19 +191,13 @@ export const AddFundsModal = (props: {
             `1 ${selectedToken.symbol}:`,
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
-          {infoRow(
+          {isValidInput() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(topupAmount), selectedToken?.address)
-              : '0'
-            }`
+            `~${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(topupAmount), selectedToken?.address)}`
           )}
-          {infoRow(
+          {isValidInput() && infoRow(
             t('transactions.transaction-info.beneficiary-receives') + ':',
-            `${isValidInput()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - getFeeAmount(topupAmount), selectedToken?.address)
-              : '0'
-            }`
+            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - getFeeAmount(topupAmount), selectedToken?.address)}`
           )}
         </div>
       )}

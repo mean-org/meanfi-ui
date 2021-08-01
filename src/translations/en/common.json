@@ -214,7 +214,6 @@
 			"recipient-is-own-account": "Cannot send to your own account"
 		},
 		"send-amount": {
-			"add-on": "",
 			"label": "Send",
 			"label-right": "Balance"
 		},

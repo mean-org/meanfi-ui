@@ -1981,14 +1981,14 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">{t('transactions.status.close-operation')}</h5>
+              <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
               <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">{t('transactions.status.close-operation-success')}</p>
+              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
               <Button
                 block
                 type="primary"

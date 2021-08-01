@@ -139,6 +139,7 @@ export const OneTimePayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
+    resetContractValues();
     setSelectedStream(undefined);
     closeTransactionModal();
     refreshStreamList(true);
@@ -243,16 +244,20 @@ export const OneTimePayment = () => {
            ? true : false;
   }
 
-  const areSendAmountSettingsValid = (): boolean => {
+  const isSendAmountValid = (): boolean => {
     return connected &&
            selectedToken &&
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
-           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount) &&
-           paymentStartDate
+           parseFloat(fromCoinAmount) <= tokenBalance &&
+           // parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
             ? true
             : false;
+  }
+
+  const areSendAmountSettingsValid = (): boolean => {
+    return isSendAmountValid() && paymentStartDate ? true : false;
   }
 
   // Ui helpers
@@ -265,7 +270,7 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance - getFeeAmount(fromCoinAmount)
+      : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
       : tokenBalance < getFeeAmount(fromCoinAmount)
       ? t('transactions.validation.amount-low')
@@ -607,12 +612,7 @@ export const OneTimePayment = () => {
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
-                        getTokenAmountAndSymbolByTokenAddress(
-                          (tokenBalance as number) - getFeeAmount(tokenBalance),
-                          selectedToken.address,
-                          true,
-                          true
-                        )
+                        getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true, true)
                       )
                     }>
                     MAX
@@ -767,14 +767,14 @@ export const OneTimePayment = () => {
             `1 ${selectedToken.symbol}:`,
             effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
           )}
-          {infoRow(
+          {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
               ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
-          {infoRow(
+          {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
               ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
