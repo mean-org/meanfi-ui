@@ -78,15 +78,15 @@ export class PhantomWalletAdapter
     return this._provider.signTransaction(transaction);
   }
 
-  async connect(t?: any) {
+  async connect() {
     if (!this._provider) {
       return;
     }
 
     if (!(window as any).solana.isPhantom) {
       notify({
-        message: t('notifications.error-phantom-title'),
-        description: t('notifications.error-phantom-message'),
+        message: "Phantom Error",
+        description: "Please install Phantom wallet from Chrome Web Store",
         type: 'error'
       });
       return;

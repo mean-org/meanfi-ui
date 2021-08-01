@@ -104,7 +104,7 @@
 		"secondary-action": "Cancelar"
 	},
 	"notifications": {
-		"account-address-copied-message": "",
+		"account-address-copied-message": "La dirección de la cuenta se copió correctamente",
 		"account-address-not-copied-message": "",
 		"error-cannot-faucet-mainnet-message": "",
 		"error-cannot-fund-account-message": "",
@@ -119,11 +119,11 @@
 		"invalid-streamid-message": "",
 		"streamid-copied-message": "",
 		"streamid-not-copied-message": "",
-		"success-account-funded-message": "",
-		"success-loading-stream-message": "",
-		"wallet-connect-message": "",
-		"wallet-connection-event-title": "",
-		"wallet-disconnect-message": ""
+		"success-account-funded-message": "Cuenta financiada",
+		"success-loading-stream-message": "Se cargó la transmisión con el ID {{streamId}}",
+		"wallet-connect-message": "Conectado a la billetera {{address}}",
+		"wallet-connection-event-title": "Actualización de billetera",
+		"wallet-disconnect-message": "Desconectado de la billetera"
 	},
 	"open-stream": {
 		"label-streamid-input": "",

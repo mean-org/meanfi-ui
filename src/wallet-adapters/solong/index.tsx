@@ -32,15 +32,15 @@ export class SolongWalletAdapter
     return (window as any).solong.signAllTransactions(transactions);
   }
 
-  async connect(t?: any) {
+  async connect() {
     if (this._onProcess) {
       return;
     }
 
     if ((window as any).solong === undefined) {
       notify({
-        message: t('notifications.error-solong-title'),
-        description: t('notifications.error-solong-message'),
+        message: "Solong Error",
+        description: "Please install solong wallet from Chrome Web Store",
         type: 'error'
       });
       return;

@@ -140,16 +140,16 @@ export function WalletProvider({ children = null as any }) {
         wallet.disconnect();
       }
     };
-  }, [wallet, t]);
+  }, [wallet]);
 
   useEffect(() => {
     if (wallet && autoConnect) {
-      wallet.connect(t);
+      wallet.connect();
       setAutoConnect(false);
     }
 
     return () => {};
-  }, [wallet, autoConnect, t]);
+  }, [wallet, autoConnect]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -220,7 +220,6 @@ export function WalletProvider({ children = null as any }) {
 
 export function useWallet() {
   const { wallet, connected, provider, select, resetWalletProvider } = useContext(WalletContext);
-  const { t } = useTranslation("common");
 
   return {
     wallet,
@@ -230,7 +229,7 @@ export function useWallet() {
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
-      wallet ? wallet.connect(t) : select();
+      wallet ? wallet.connect() : select();
     },
     disconnect() {
       wallet?.disconnect();

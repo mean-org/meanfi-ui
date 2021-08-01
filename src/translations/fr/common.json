@@ -104,7 +104,7 @@
 		"secondary-action": "Annuler"
 	},
 	"notifications": {
-		"account-address-copied-message": "",
+		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "",
 		"error-cannot-faucet-mainnet-message": "",
 		"error-cannot-fund-account-message": "",
@@ -119,11 +119,11 @@
 		"invalid-streamid-message": "",
 		"streamid-copied-message": "",
 		"streamid-not-copied-message": "",
-		"success-account-funded-message": "",
-		"success-loading-stream-message": "",
-		"wallet-connect-message": "",
-		"wallet-connection-event-title": "",
-		"wallet-disconnect-message": ""
+		"success-account-funded-message": "Compte financé",
+		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
+		"wallet-connect-message": "Connecté au portefeuille {{address}}",
+		"wallet-connection-event-title": "Mise à jour du portefeuille",
+		"wallet-disconnect-message": "Déconnecté du portefeuille"
 	},
 	"open-stream": {
 		"label-streamid-input": "",
