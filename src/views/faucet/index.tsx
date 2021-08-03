@@ -155,7 +155,8 @@ export const FaucetView = () => {
         });
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        if (getAccountBalance() < wrapFees.blockchainFee) {
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < wrapFees.mspFlatFee ? wrapFees.blockchainFee + wrapFees.mspFlatFee :wrapFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure

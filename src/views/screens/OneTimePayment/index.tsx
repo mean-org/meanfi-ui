@@ -342,7 +342,8 @@ export const OneTimePayment = () => {
         console.log('data:', data);
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        if (getAccountBalance() < otpFees.blockchainFee) {
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < otpFees.mspFlatFee ? otpFees.blockchainFee + otpFees.mspFlatFee :otpFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure

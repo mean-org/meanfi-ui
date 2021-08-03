@@ -595,7 +595,8 @@ export const Streams = () => {
         setAddFundsAmount(amount);
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        if (getAccountBalance() < transactionFees.blockchainFee) {
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -794,7 +795,8 @@ export const Streams = () => {
         consoleOut('withdraw params:', data, 'brown');
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        if (getAccountBalance() < transactionFees.blockchainFee) {
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -982,7 +984,8 @@ export const Streams = () => {
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        if (getAccountBalance() < transactionFees.blockchainFee) {
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
