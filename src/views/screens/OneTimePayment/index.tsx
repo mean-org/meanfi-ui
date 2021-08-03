@@ -10,7 +10,7 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { IconCaretDown, IconSort } from "../../../Icons";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../../constants";
+import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { TransactionStatus } from "../../../models/enums";
 import {
@@ -24,7 +24,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "../../../money-streaming/types";
@@ -81,7 +81,13 @@ export const OneTimePayment = () => {
     }
   }, [account, previousBalance, refreshTokenBalance]);
 
-  const [otpFees, setOtpFees] = useState<TransactionFees>();
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  }
+
+  const [otpFees, setOtpFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
@@ -296,6 +302,12 @@ export const OneTimePayment = () => {
       if (wallet) {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Beneficiary address:', recipientAddress);
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
         const beneficiary = new PublicKey(recipientAddress as string);
         console.log('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
@@ -315,10 +327,6 @@ export const OneTimePayment = () => {
         console.log('fromParsedDate.toString()', fromParsedDate.toString());
         console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
         // Create a transaction
         const data = {
           wallet: wallet,
@@ -332,6 +340,16 @@ export const OneTimePayment = () => {
             : undefined                                                               // streamName
         };
         console.log('data:', data);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < otpFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         return await moneyStream.oneTimePayment(
           wallet,
           associatedToken,                                            // treasurerMint
@@ -830,7 +848,14 @@ export const OneTimePayment = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4> */}
+              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                ? t('transactions.status.tx-start-failure', {
+                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(otpFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                })
+                : getTransactionOperationDescription(transactionStatus)}
+              </h4>
               <Button
                 block
                 type="primary"

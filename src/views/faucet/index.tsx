@@ -36,7 +36,9 @@ export const FaucetView = () => {
   const [isWrapEnabled, setIsWrapEnabled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [wrapAmount, setWrapAmount] = useState<string>('');
-  const [wrapFees, setWrapFees] = useState<TransactionFees>();
+  const [wrapFees, setWrapFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
   // Transaction execution modal
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
@@ -66,9 +68,10 @@ export const FaucetView = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.wrapSol);
     }
-    if (!wrapFees) {
+    if (!wrapFees.blockchainFee) {
       getTransactionFees().then(values => {
         setWrapFees(values);
+        console.log('wrapFees:', values);
       });
     }
   }, [connection, wrapFees]);
@@ -123,6 +126,9 @@ export const FaucetView = () => {
     <>
       <div className="deposit-input-title" style={{ margin: 10 }}>
         <p>{t('faucet.current-sol-balance')}: {formatNumber.format(getAccountBalance())} SOL</p>
+        {environment === 'local' && (
+          <p className="localdev-label">lamports: {account?.lamports || 0}</p>
+        )}
         <p>{t('faucet.funding-amount')} {formatNumber.format(getFaucetAmount() / LAMPORTS_PER_SOL)} SOL</p>
       </div>
       <Button type="primary" shape="round" size="large" onClick={airdrop}>{t('faucet.fund-cta')}</Button>
@@ -147,6 +153,16 @@ export const FaucetView = () => {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < wrapFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         return await wrapSol(
           connection,                                 // connection
           publicKey as PublicKey,                     // from
@@ -411,6 +427,12 @@ export const FaucetView = () => {
               </div>
             </div>
             <div className="p-2 mb-2">
+              {environment === 'local' && (
+                <>
+                <p className="localdev-label">network fee: {getTokenAmountAndSymbolByTokenAddress(wrapFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS)}</p>
+                <p className="localdev-label">balance - fee: {getTokenAmountAndSymbolByTokenAddress(getAccountBalance() - wrapFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS)}</p>
+                </>
+              )}
               {infoRow(
                 t('faucet.wrap-transaction-fee') + ':',
                 `${wrapFees
@@ -475,7 +497,13 @@ export const FaucetView = () => {
                 ) : isError() ? (
                   <>
                     <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                    <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                    <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                      ? t('transactions.status.tx-start-failure', {
+                        accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                        feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(wrapFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                      })
+                      : getTransactionOperationDescription(transactionStatus)}
+                    </h4>
                     <Button
                       block
                       type="primary"

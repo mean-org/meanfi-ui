@@ -16,6 +16,9 @@ export class AppConfigService {
         development: {
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k'
         },
+        local: {
+            streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k'
+        },
     };
 
     constructor(private envName = '') {

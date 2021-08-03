@@ -51,6 +51,7 @@ const DEFAULT_SLIPPAGE = 0.25;
 
 export const getEndpointByRuntimeEnv = (): string => {
   switch (environment) {
+    case 'local':
     case 'development':
       return ENDPOINTS[2].endpoint;
     case 'staging':

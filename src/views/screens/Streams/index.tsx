@@ -21,8 +21,6 @@ import {
   IconUpload,
 } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming } from "../../../money-streaming/money-streaming";
-import { getStream } from "../../../money-streaming/utils";
 import { useWallet } from "../../../contexts/wallet";
 import {
   formatAmount,
@@ -48,18 +46,20 @@ import {
   VERBOSE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS,
 } from "../../../constants";
 import _ from "lodash";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "../../../money-streaming/types";
 import { CloseStreamModal } from "../../../components/CloseStreamModal";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { calculateActionFees } from "../../../money-streaming/utils";
+import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "../../../money-streaming/types";
+import { calculateActionFees, getStream } from "../../../money-streaming/utils";
+import { MoneyStreaming } from "../../../money-streaming/money-streaming";
 import { useTranslation } from "react-i18next";
 
 var dateFormat = require("dateformat");
@@ -118,6 +118,10 @@ export const Streams = () => {
       setPreviousBalance(account.lamports);
     }
   }, [account, previousBalance, refreshTokenBalance]);
+
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  }
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
@@ -584,10 +588,20 @@ export const Streams = () => {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
+
         const stream = new PublicKey(streamDetail.id as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addAmount);
         setAddFundsAmount(amount);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < transactionFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
 
         // Create a transaction
         return await moneyStream.addFunds(
@@ -779,6 +793,15 @@ export const Streams = () => {
         };
         consoleOut('withdraw params:', data, 'brown');
 
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < transactionFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         // Create a transaction
         return await moneyStream.withdraw(
           stream,
@@ -957,6 +980,16 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < transactionFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         // Create a transaction
         return await moneyStream.closeStream(
           streamPublicKey,                                  // Stream ID
@@ -1895,7 +1928,14 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
+              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                ? t('transactions.status.tx-start-failure', {
+                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                })
+                : getTransactionOperationDescription(transactionStatus)}
+              </h4>
               <Button
                 block
                 type="primary"
@@ -1948,7 +1988,14 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
+              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                ? t('transactions.status.tx-start-failure', {
+                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                })
+                : getTransactionOperationDescription(transactionStatus)}
+              </h4>
               <Button
                 block
                 type="primary"
@@ -2001,7 +2048,14 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
+              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                ? t('transactions.status.tx-start-failure', {
+                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                })
+                : getTransactionOperationDescription(transactionStatus)}
+              </h4>
               <Button
                 block
                 type="primary"

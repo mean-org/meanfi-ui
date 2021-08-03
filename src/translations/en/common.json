@@ -248,6 +248,7 @@
 			"tx-send-operation-success": "was sent successfully",
 			"tx-sign": "Waiting for confirmation",
 			"tx-start": "Collecting data",
+			"tx-start-failure": "Your account balance {{accountBalance}} is lower that the fee amount {{feeAmount}} required to pay for network fees",
 			"tx-wait": "Working, please wait",
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",

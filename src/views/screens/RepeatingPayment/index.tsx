@@ -14,7 +14,7 @@ import {
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT } from "../../../constants";
+import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
@@ -32,7 +32,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "../../../money-streaming/money-streaming";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
@@ -94,7 +94,13 @@ export const RepeatingPayment = () => {
     }
   }, [account, previousBalance, refreshTokenBalance]);
 
-  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>();
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  }
+
+  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
@@ -520,6 +526,11 @@ export const RepeatingPayment = () => {
         console.log("Start transaction for contract type:", contract?.name);
         console.log('Wallet address:', wallet?.publicKey?.toBase58());
 
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
         console.log('treasurerMint:', selectedToken?.address);
         const treasurerMint = new PublicKey(selectedToken?.address as string);
 
@@ -541,10 +552,6 @@ export const RepeatingPayment = () => {
         console.log('fromParsedDate.toString()', fromParsedDate.toString());
         console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
         // Create a transaction
         const data = {
           wallet: wallet,                                             // wallet
@@ -561,6 +568,16 @@ export const RepeatingPayment = () => {
             fundingAmount: amount                                     // fundingAmount
         };
         console.log('data:', data);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        if (getAccountBalance() < repeatingPaymentFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         return await moneyStream.createStream(
           wallet,                                                     // wallet
           undefined,                                                  // treasury
@@ -1082,7 +1099,14 @@ export const RepeatingPayment = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
+              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
+                ? t('transactions.status.tx-start-failure', {
+                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
+                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
+                })
+                : getTransactionOperationDescription(transactionStatus)}
+              </h4>
               <Button
                 block
                 type="primary"
