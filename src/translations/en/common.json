@@ -15,10 +15,9 @@
 		"modal-title": "Add funds"
 	},
 	"close-stream": {
-		"confirmation-question": "Are you sure you want to do this?",
 		"context-beneficiary": "Closing a stream will send {{amount}} to your account ({{beneficiary}}) and stop the flow of money immediately.",
-		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
-		"context-treasurer-single-beneficiary": "Closing a stream will stop the flow of money, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
 		"secondary-cta": "Cancel"

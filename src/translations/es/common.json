@@ -1,11 +1,11 @@
 {
 	"account-area": {
-		"connect-button": "Conectar cuenta de billetera",
+		"connect-button": "Conectarse a una billetera",
 		"copy-address": "Copiar dirección",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
-		"streams-tooltip": "Haga clic para recargar las transmisiones",
+		"streams-tooltip": "Click para actualizar las transacciones",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
@@ -15,13 +15,12 @@
 		"modal-title": "Añadir fondos"
 	},
 	"close-stream": {
-		"confirmation-question": "Confirme que desea hacer esto",
-		"context-beneficiary": "Cerrar una transmisión enviará {{amount}} a tu cuenta ({{beneficiary}}) y detendrá el flujo de dinero inmediatamente.",
-		"context-treasurer-multiple-beneficiaries": "",
-		"context-treasurer-single-beneficiary": "",
-		"modal-title": "",
-		"primary-cta": "",
-		"secondary-cta": ""
+		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará {{amount}} a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
+		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes al treasury ({{treasury}}) original.",
+		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
+		"modal-title": "Concluir transferencia",
+		"primary-cta": "Concluir transferencia",
+		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
 		"categories": {

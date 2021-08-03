@@ -1,6 +1,6 @@
 {
 	"account-area": {
-		"connect-button": "Connecter un compte portefeuille",
+		"connect-button": "Connecter un portefeuille",
 		"copy-address": "Copier l'adresse",
 		"explorer-link": "Vue sur Solana Explorer",
 		"modal-title": "Compte",
@@ -15,7 +15,6 @@
 		"modal-title": ""
 	},
 	"close-stream": {
-		"confirmation-question": "",
 		"context-beneficiary": "",
 		"context-treasurer-multiple-beneficiaries": "",
 		"context-treasurer-single-beneficiary": "",
