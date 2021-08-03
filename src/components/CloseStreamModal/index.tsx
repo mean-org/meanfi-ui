@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col, Divider } from 'antd';
+import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { TransactionFees } from '../../money-streaming/types';
 import { useWallet } from '../../contexts/wallet';
@@ -75,7 +75,6 @@ export const CloseStreamModal = (props: {
       <div className="transaction-progress">
         <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
         <h4 className="operation">{props.content}</h4>
-        <Divider plain></Divider>
 
         {/* Info */}
         {streamDetail && streamDetail.associatedToken && (

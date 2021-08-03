@@ -1155,9 +1155,7 @@ export const Streams = () => {
     }
 
     return (
-      <div>
-        {message}<br/><span>{t('close-stream.confirmation-question')}</span>
-      </div>
+      <div>{message}</div>
     );
   }
 
