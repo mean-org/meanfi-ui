@@ -6,7 +6,7 @@ import { notify } from "../../utils/notifications";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import { environment } from "../../environments/environment";
-import { formatNumber, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatNumber, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
@@ -156,7 +156,7 @@ export const FaucetView = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < wrapFees.mspFlatFee ? wrapFees.blockchainFee + wrapFees.mspFlatFee :wrapFees.blockchainFee) {
+        if (getAccountBalance() < getComputedFees(wrapFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -356,12 +356,13 @@ export const FaucetView = () => {
   }
 
   const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-           ? true
-           : false;
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -498,13 +499,16 @@ export const FaucetView = () => {
                 ) : isError() ? (
                   <>
                     <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                    <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                      ? t('transactions.status.tx-start-failure', {
-                        accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
-                        feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(wrapFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
-                      })
-                      : getTransactionOperationDescription(transactionStatus)}
-                    </h4>
+                    {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                      <h4 className="mb-4">
+                        {t('transactions.status.tx-start-failure', {
+                          accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                          feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(wrapFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                        }
+                      </h4>
+                    ) : (
+                      <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                    )}
                     <Button
                       block
                       type="primary"

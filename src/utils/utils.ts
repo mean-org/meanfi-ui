@@ -7,6 +7,7 @@ import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from 
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { TransactionFees } from "../money-streaming/types";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -321,4 +322,8 @@ export const truncateFloat = (value: any, decimals = 2): string => {
   const reshapedDecimals = splitted[1].slice(0, decimals);
   splitted[1] = reshapedDecimals;
   return splitted.join('.');
+}
+
+export const getComputedFees = (fees: TransactionFees): number => {
+  return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
 }

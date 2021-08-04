@@ -24,6 +24,7 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { useWallet } from "../../../contexts/wallet";
 import {
   formatAmount,
+  getComputedFees,
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   getTokenSymbol,
@@ -535,12 +536,13 @@ export const Streams = () => {
   }
 
   const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-           ? true
-           : false;
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
   }
 
   // Add funds Transaction execution modal
@@ -596,7 +598,7 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
+        if (getAccountBalance() < getComputedFees(transactionFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -796,7 +798,7 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
+        if (getAccountBalance() < getComputedFees(transactionFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -985,7 +987,7 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < transactionFees.mspFlatFee ? transactionFees.blockchainFee + transactionFees.mspFlatFee :transactionFees.blockchainFee) {
+        if (getAccountBalance() < getComputedFees(transactionFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1929,14 +1931,16 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
-              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                ? t('transactions.status.tx-start-failure', {
-                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
-                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
-                })
-                : getTransactionOperationDescription(transactionStatus)}
-              </h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"
@@ -1989,14 +1993,16 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
-              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                ? t('transactions.status.tx-start-failure', {
-                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
-                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
-                })
-                : getTransactionOperationDescription(transactionStatus)}
-              </h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"
@@ -2049,14 +2055,16 @@ export const Streams = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
-              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                ? t('transactions.status.tx-start-failure', {
-                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
-                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(transactionFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
-                })
-                : getTransactionOperationDescription(transactionStatus)}
-              </h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"

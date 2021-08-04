@@ -10,6 +10,7 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
+  getComputedFees,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../../utils/utils";
@@ -594,7 +595,7 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < payrollFees.mspFlatFee ? payrollFees.blockchainFee + payrollFees.mspFlatFee :payrollFees.blockchainFee) {
+        if (getAccountBalance() < getComputedFees(payrollFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -767,12 +768,13 @@ export const PayrollPayment = () => {
   }
 
   const isError = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-           ? true
-           : false;
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
   }
 
   const infoRow = (caption: string, value: string) => {
@@ -1143,14 +1145,16 @@ export const PayrollPayment = () => {
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              {/* <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4> */}
-              <h4 className="font-bold mb-4 text-uppercase">{transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure
-                ? t('transactions.status.tx-start-failure', {
-                  accountBalance: getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS),
-                  feeAmount: `~${getTokenAmountAndSymbolByTokenAddress(payrollFees?.blockchainFee || 0, WRAPPED_SOL_MINT_ADDRESS)}`
-                })
-                : getTransactionOperationDescription(transactionStatus)}
-              </h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(payrollFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"
