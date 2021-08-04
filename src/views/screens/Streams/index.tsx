@@ -58,9 +58,9 @@ import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../../components/CloseStreamModal";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "../../../money-streaming/types";
-import { calculateActionFees, getStream } from "../../../money-streaming/utils";
-import { MoneyStreaming } from "../../../money-streaming/money-streaming";
+import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/src/types";
+import { calculateActionFees, getStream } from "money-streaming/src/utils";
+import { MoneyStreaming } from "money-streaming/src/money-streaming";
 import { useTranslation } from "react-i18next";
 
 var dateFormat = require("dateformat");

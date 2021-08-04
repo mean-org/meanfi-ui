@@ -4,9 +4,9 @@ import { IconSort } from "../../Icons";
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
-import { TransactionFees } from '../../money-streaming/types';
 import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
+import { TransactionFees } from 'money-streaming/src/types';
 
 export const AddFundsModal = (props: {
   handleClose: any;
