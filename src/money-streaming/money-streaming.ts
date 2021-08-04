@@ -1,7 +1,7 @@
 /**
  * Solana
  */
- import {
+import {
     Commitment,
     Connection,
     ConnectionConfig,
