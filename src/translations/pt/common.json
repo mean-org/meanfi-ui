@@ -1,0 +1,330 @@
+{
+	"account-area": {
+		"connect-button": "",
+		"copy-address": "",
+		"explorer-link": "",
+		"modal-title": "",
+		"network-unknown": "",
+		"streams-tooltip": "",
+		"wallet-change": "",
+		"wallet-provider": ""
+	},
+	"add-funds": {
+		"label": "",
+		"label-right": "",
+		"modal-title": ""
+	},
+	"close-stream": {
+		"context-beneficiary": "",
+		"context-treasurer-multiple-beneficiaries": "",
+		"context-treasurer-single-beneficiary": "",
+		"modal-title": "",
+		"primary-cta": "",
+		"secondary-cta": ""
+	},
+	"contract-selector": {
+		"categories": {
+			"cat1": "",
+			"cat2": "",
+			"cat3": "",
+			"cat4": ""
+		},
+		"donation-fund": {
+			"description": "",
+			"name": ""
+		},
+		"fundraising": {
+			"description": "",
+			"name": ""
+		},
+		"lead": "",
+		"modal-title": "",
+		"otp": {
+			"description": "",
+			"name": ""
+		},
+		"payroll": {
+			"description": "",
+			"name": ""
+		},
+		"pension-fund": {
+			"description": "",
+			"name": ""
+		},
+		"primary-action": "",
+		"real-estate-sale-escrow": {
+			"description": "",
+			"name": ""
+		},
+		"rent-collection": {
+			"description": "",
+			"name": ""
+		},
+		"repeating": {
+			"description": "",
+			"name": ""
+		},
+		"setup-everything": {
+			"description": "",
+			"name": ""
+		},
+		"subscription": {
+			"description": "",
+			"name": ""
+		}
+	},
+	"faucet": {
+		"current-sol-balance": "",
+		"current-wsol-balance": "",
+		"fund-cta": "",
+		"funding-amount": "",
+		"not-connected": "",
+		"wrap-sol-cta": "",
+		"wrap-sol-cta-toggle": "",
+		"wrap-transaction-fee": "",
+		"wrapped-amount": ""
+	},
+	"general": {
+		"app-background-disclaimer": "",
+		"day": "",
+		"hour": "",
+		"loading": "",
+		"minute": "",
+		"month": "",
+		"not-implemented": "",
+		"today": "",
+		"week": "",
+		"year": "",
+		"you": ""
+	},
+	"language-selector": {
+		"modal-title": "",
+		"primary-action": "",
+		"secondary-action": ""
+	},
+	"notifications": {
+		"account-address-copied-message": "",
+		"account-address-not-copied-message": "",
+		"error-cannot-faucet-mainnet-message": "",
+		"error-cannot-fund-account-message": "",
+		"error-ledger-title": "",
+		"error-loading-streamid-message": "",
+		"error-title": "",
+		"invalid-publickey-message": "",
+		"invalid-streamid-message": "",
+		"streamid-copied-message": "",
+		"streamid-not-copied-message": "",
+		"success-account-funded-message": "",
+		"success-loading-stream-message": "",
+		"wallet-connect-message": "",
+		"wallet-connection-event-title": "",
+		"wallet-disconnect-message": ""
+	},
+	"open-stream": {
+		"label-streamid-input": "",
+		"modal-title": "",
+		"streamid-empty": "",
+		"streamid-open-cta": "",
+		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"streams": {
+		"back-to-my-streams-cta": "",
+		"create-new-stream-cta": "",
+		"lookup-stream-cta-tooltip": "",
+		"screen-title": "",
+		"stream-activity": {
+			"action-deposit": "",
+			"action-withdraw": "",
+			"heading": "",
+			"label-action": "",
+			"label-amount": "",
+			"label-date": "",
+			"no-activity": ""
+		},
+		"stream-detail": {
+			"add-funds-cta": "",
+			"amount-funded-date": "",
+			"close-money-stream-menu-item": "",
+			"heading": "",
+			"label-amount": "",
+			"label-funds-available-to-withdraw": "",
+			"label-funds-left-in-account": "",
+			"label-funds-runout": "",
+			"label-funds-runout-today": "",
+			"label-funds-sent": "",
+			"label-payment-rate": "",
+			"label-receiving-from": "",
+			"label-sending-to": "",
+			"label-start-date-default": "",
+			"label-start-date-scheduled": "",
+			"label-start-date-scheduled-otp": "",
+			"label-start-date-started": "",
+			"label-total-deposits": "",
+			"label-total-withdrawals": "",
+			"no-stream": "",
+			"withdraw-funds-cta": ""
+		},
+		"stream-list": {
+			"no-streams": "",
+			"subtitle-paused-inbound": "",
+			"subtitle-paused-outbound": "",
+			"subtitle-pending-inbound": "",
+			"subtitle-pending-outbound": "",
+			"subtitle-running-inbound": "",
+			"subtitle-running-outbound": "",
+			"subtitle-scheduled-inbound": "",
+			"subtitle-scheduled-outbound": "",
+			"title-paused-from": "",
+			"title-paused-to": "",
+			"title-pending-from": "",
+			"title-pending-to": "",
+			"title-receiving-from": "",
+			"title-sending-to": ""
+		}
+	},
+	"token-selector": {
+		"modal-title": ""
+	},
+	"transactions": {
+		"memo": {
+			"label": "",
+			"placeholder": ""
+		},
+		"memo2": {
+			"label": "",
+			"placeholder": ""
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "",
+				"per-hour": "",
+				"per-minute": "",
+				"per-month": "",
+				"per-week": "",
+				"per-year": ""
+			},
+			"rate-label": "",
+			"token-label": ""
+		},
+		"recipient": {
+			"label": "",
+			"placeholder": "",
+			"qr-scan-title": "",
+			"recipient-is-own-account": ""
+		},
+		"send-amount": {
+			"label": "",
+			"label-right": ""
+		},
+		"send-date": {
+			"label": "",
+			"placeholder": ""
+		},
+		"status": {
+			"cta-close": "",
+			"cta-dismiss": "",
+			"cta-finish": "",
+			"cta-view-stream": "",
+			"instructions": "",
+			"modal-title-executing-transaction": "",
+			"modal-title-transaction-completed": "",
+			"stream-started-post": "",
+			"stream-started-pre": "",
+			"tx-add-funds-operation": "",
+			"tx-add-funds-operation-success": "",
+			"tx-close-operation": "",
+			"tx-close-operation-success": "",
+			"tx-completed": "",
+			"tx-confirm": "",
+			"tx-confirm-failure": "",
+			"tx-idle": "",
+			"tx-init": "",
+			"tx-init-failure": "",
+			"tx-rejected": "",
+			"tx-send": "",
+			"tx-send-failure": "",
+			"tx-send-operation": "",
+			"tx-send-operation-success": "",
+			"tx-sign": "",
+			"tx-start": "",
+			"tx-start-failure": "",
+			"tx-wait": "",
+			"tx-withdraw-operation": "",
+			"tx-withdraw-operation-success": "",
+			"tx-wrap-operation": "",
+			"tx-wrap-operation-success": ""
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "",
+			"label": "",
+			"not-required": "",
+			"submit-timesheets": ""
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "",
+			"add-funds-repeating-payment-advice": "",
+			"beneficiary-receives": "",
+			"min-recommended-amount": "",
+			"recipient-receives": "",
+			"transaction-fee": "",
+			"you-receive": ""
+		},
+		"validation": {
+			"amount-high": "",
+			"amount-low": "",
+			"amount-lt-fee": "",
+			"amount-sol-high": "",
+			"amount-withdraw-high": "",
+			"invalid-amount": "",
+			"no-amount": "",
+			"no-balance": "",
+			"no-payment-rate": "",
+			"no-recipient": "",
+			"no-valid-date": "",
+			"not-connected": "",
+			"payment-rate-high": "",
+			"valid-approve": "",
+			"valid-start-funding": "",
+			"valid-start-withdrawal": ""
+		}
+	},
+	"ui-language": {
+		"en": "",
+		"es": "",
+		"fr": ""
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"about": "",
+			"code": "",
+			"developers": "",
+			"disconnect": "",
+			"discord": "",
+			"faucet": "Faucet",
+			"how-to-use": "",
+			"switch-language": "",
+			"switch-theme": "",
+			"theme-dark": "",
+			"theme-light": ""
+		},
+		"main-menu": {
+			"pro-services": {
+				"payroll": ""
+			},
+			"tools": {
+				"faucet": "",
+				"wrapper": ""
+			},
+			"transfers": ""
+		}
+	},
+	"wallet-selector": {
+		"primary-action": ""
+	},
+	"withdraw-funds": {
+		"label-available-amount": "",
+		"label-input-amount": "",
+		"label-input-right": "",
+		"modal-title": ""
+	}
+}
