@@ -80,7 +80,7 @@
 		"funding-amount": "Votre compte sera alimenté avec",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"wrap-sol-cta": "WRAP",
-		"wrap-sol-cta-toggle": "Enveloppez du SOL",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Frais de transaction d'emballage",
 		"wrapped-amount": "Montant emballé"
 	},
@@ -125,7 +125,7 @@
 		"modal-title": "",
 		"streamid-empty": "",
 		"streamid-open-cta": "",
-		"streamid-placeholder": ""
+		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
 		"back-to-my-streams-cta": "",
@@ -183,7 +183,7 @@
 		}
 	},
 	"token-selector": {
-		"modal-title": "Sélectionnez un jeton"
+		"modal-title": "Sélectionnez un token"
 	},
 	"transactions": {
 		"memo": {
@@ -247,6 +247,7 @@
 			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
 			"tx-start": "La collecte de données",
+			"tx-start-failure": "",
 			"tx-wait": "Fonctionne, veuillez patienter",
 			"tx-withdraw-operation": "Se désister",
 			"tx-withdraw-operation-success": "Fonds retirés avec succès",
@@ -299,7 +300,7 @@
 			"developers": "Développeurs",
 			"disconnect": "Déconnecter le portefeuille",
 			"discord": "Discord",
-			"faucet": "Robinet",
+			"faucet": "Faucet",
 			"how-to-use": "Comment utiliser",
 			"switch-language": "La langue",
 			"switch-theme": "Basculer vers",

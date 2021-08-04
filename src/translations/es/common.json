@@ -30,15 +30,15 @@
 			"cat4": "Otros"
 		},
 		"donation-fund": {
-			"description": "Cree una cuenta en la que cualquiera pueda donar con la tranquilidad de que los fondos se utilizarán para la causa correcta.",
-			"name": "Fondo de donación"
+			"description": "Cree una cuenta donde cualquiera pueda donar con la tranquilidad que los fondos se utilizarán para la causa correcta.",
+			"name": "Fondo de Donación"
 		},
 		"fundraising": {
-			"description": "¿Desea recaudar fondos para su semilla, serie, ICO, DAICO, rondas privadas? No busque más allá de un contrato de recaudación de fondos.",
+			"description": "¿Desea recaudar fondos para su Seed, Series, ICO, DAICO, Private Rounds? No busque más, su mejor opción es el Contrato de Recaudación de Fondos.",
 			"name": "Recaudación de fondos"
 		},
-		"lead": "Elija entre contratos auditados probados en batalla",
-		"modal-title": "Nuevo flujo de dinero",
+		"lead": "Elija de nuestros contratos auditados",
+		"modal-title": "Nueva transferencia de dinero",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
 			"name": "Pago único"
@@ -74,15 +74,15 @@
 		}
 	},
 	"faucet": {
-		"current-sol-balance": "Saldo actual de SOL",
-		"current-wsol-balance": "Saldo actual de wSOL",
-		"fund-cta": "Dame SOL",
-		"funding-amount": "Su cuenta se financiará con",
+		"current-sol-balance": "Saldo de SOL actual",
+		"current-wsol-balance": "Saldo de wSOL actual ",
+		"fund-cta": "Obtenga SOL",
+		"funding-amount": "Su cuenta tendrá el saldo de",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"wrap-sol-cta": "WRAP",
-		"wrap-sol-cta-toggle": "Envolver un poco de SOL",
-		"wrap-transaction-fee": "Tarifa de transacción de envoltura",
-		"wrapped-amount": "Cantidad envuelta"
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Cargos for hacer Wrap",
+		"wrapped-amount": "Cantidad wrapped"
 	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
@@ -91,7 +91,7 @@
 		"loading": "Cargando",
 		"minute": "minuto",
 		"month": "mes",
-		"not-implemented": "No implementado",
+		"not-implemented": "Sin implementar",
 		"today": "hoy",
 		"week": "semana",
 		"year": "año",
@@ -103,16 +103,16 @@
 		"secondary-action": "Cancelar"
 	},
 	"notifications": {
-		"account-address-copied-message": "La dirección de la cuenta se copió correctamente",
-		"account-address-not-copied-message": "No se pudo copiar la dirección de la cuenta",
-		"error-cannot-faucet-mainnet-message": "No se puede faucet en mainnet",
-		"error-cannot-fund-account-message": "No se pudieron depositar fondos en su cuenta. Vuelva a intentarlo más tarde.",
+		"account-address-copied-message": "La cuenta ha sido copiada correctamente",
+		"account-address-not-copied-message": "No se pudo copiar la cuenta",
+		"error-cannot-faucet-mainnet-message": "No se puede hacer faucet en mainnet",
+		"error-cannot-fund-account-message": "No pudimos depositar fondos en su cuenta. Inténtelo más tarde.",
 		"error-ledger-title": "Error de Ledger",
-		"error-loading-streamid-message": "No se pudo encontrar o cargar la transmisión con el ID {{streamId}}",
+		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
 		"error-title": "Error",
-		"invalid-publickey-message": "Clave pública no válida. Por favor revise la entrada",
-		"invalid-streamid-message": "ID de transmisión no válido",
-		"streamid-copied-message": "La dirección de la transmisión se copió correctamente en el portapapeles",
+		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
+		"invalid-streamid-message": "ID de transferencia incorrecto",
+		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el portapapeles",
 		"streamid-not-copied-message": "No se pudo copiar dirección de la transmisión al portapapeles",
 		"success-account-funded-message": "Cuenta financiada",
 		"success-loading-stream-message": "Se cargó la transmisión con el ID {{streamId}}",
@@ -121,17 +121,17 @@
 		"wallet-disconnect-message": "Desconectado de la billetera"
 	},
 	"open-stream": {
-		"label-streamid-input": "",
-		"modal-title": "",
-		"streamid-empty": "",
-		"streamid-open-cta": "",
-		"streamid-placeholder": ""
+		"label-streamid-input": "Introduzca id de transferencia ",
+		"modal-title": "Abrir Transferencia de dinero",
+		"streamid-empty": "Introduzca id de transferencia ",
+		"streamid-open-cta": "Abrir transferencia",
+		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "",
-		"create-new-stream-cta": "Crear nueva transmisión",
-		"lookup-stream-cta-tooltip": "Buscar una transmisión",
-		"screen-title": "Mis flujos de dinero",
+		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
+		"create-new-stream-cta": "Crear nueva transferencia",
+		"lookup-stream-cta-tooltip": "Buscar transferencia",
+		"screen-title": "Mis transferencias de dinero",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -188,7 +188,7 @@
 	"transactions": {
 		"memo": {
 			"label": "Nota",
-			"placeholder": "Agregar una nota opcional"
+			"placeholder": "Agregue nota adicional"
 		},
 		"memo2": {
 			"label": "Nota / Asunto",
@@ -247,6 +247,7 @@
 			"tx-send-operation-success": "fue enviado exitosamente",
 			"tx-sign": "Esperando confirmación",
 			"tx-start": "Recolectando datos",
+			"tx-start-failure": "",
 			"tx-wait": "Trabajando, por favor espere",
 			"tx-withdraw-operation": "Retirar",
 			"tx-withdraw-operation-success": "Fondos retirados con éxito",
@@ -299,7 +300,7 @@
 			"developers": "Desarrolladores",
 			"disconnect": "Desconectar billetera",
 			"discord": "Discord",
-			"faucet": "Grifo",
+			"faucet": "Faucet",
 			"how-to-use": "Cómo utilizar",
 			"switch-language": "Idioma",
 			"switch-theme": "Cambiar a",
@@ -321,9 +322,9 @@
 		"primary-action": "Seleccionar"
 	},
 	"withdraw-funds": {
-		"label-available-amount": "",
-		"label-input-amount": "",
-		"label-input-right": "",
-		"modal-title": ""
+		"label-available-amount": "Fondos disponibles para retirar inmediatamente ",
+		"label-input-amount": "Introduzca la cantidad a retirar",
+		"label-input-right": "Porcentaje automático",
+		"modal-title": "Retirar fondos"
 	}
 }
