@@ -46,7 +46,7 @@ export const HomeView = () => {
   useEffect(() => {
     if (previousChain !== connectionConfig.env) {
       setChain(connectionConfig.env);
-      console.log(`cluster:`, connectionConfig.env);
+      console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
     }
 
     return () => {};

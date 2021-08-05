@@ -19,6 +19,7 @@ import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants"
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TransactionStatus } from "../../../models/enums";
 import {
+  consoleOut,
   disabledDate,
   getAmountWithTokenSymbol,
   getFairPercentForInterval,
@@ -434,10 +435,8 @@ export const RepeatingPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setDestinationToken(token);
-            if (environment !== 'production') {
-              setSelectedToken(token);
-            }
-            console.log("token selected:", token);
+            setSelectedToken(token);
+            consoleOut("token selected:", token);
             onCloseTokenSelector();
           };
           return (
@@ -472,10 +471,8 @@ export const RepeatingPayment = () => {
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
-            if (environment !== 'production') {
-              setDestinationToken(token);
-            }
-            console.log("token selected:", token);
+            setDestinationToken(token);
+            consoleOut("token selected:", token);
             setEffectiveRate(
               coinPrices && coinPrices[token.symbol]
                 ? coinPrices[token.symbol]
