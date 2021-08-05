@@ -4,7 +4,6 @@ import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import { AppConfigService } from "./environments/environment";
-import { consoleOut } from "./utils/ui";
 import { I18nextProvider } from "react-i18next";
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -13,8 +12,8 @@ import common_en from "./translations/en/common.json";
 import common_fr from "./translations/fr/common.json";
 
 const env = new AppConfigService(process.env.REACT_APP_ENV);
-consoleOut('Environment:', process.env.REACT_APP_ENV, 'brown');
-consoleOut('ProgramId:', env.getConfig().streamProgramAddress, 'brown');
+console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
+console.log(`%cProgramId:`, 'color:brown', env.getConfig().streamProgramAddress);
 
 i18next.use(LanguageDetector).init({
   interpolation: { escapeValue: false },  // React already does escaping

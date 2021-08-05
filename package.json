@@ -9,7 +9,7 @@
     "eject": "react-scripts eject",
     "start:local": "REACT_APP_ENV=local npm start",
     "start:dev": "REACT_APP_ENV=development npm start",
-    "start:production": "REACT_APP_ENV=production npm start",
+    "start:prod": "REACT_APP_ENV=production npm start",
     "start:staging": "REACT_APP_ENV=staging npm start",
     "build:dev": "REACT_APP_ENV=development npm run build",
     "build:staging": "REACT_APP_ENV=staging npm run build",
