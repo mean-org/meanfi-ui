@@ -1270,7 +1270,8 @@ em {
       }
     }
     @media (min-width: 576px) {
-      max-height: calc(100vh - 200px);
+      padding: 0;
+      height: auto;
     }
     &.simple-modal .ant-divider.ant-divider-horizontal.ant-divider-plain {
       margin: 24px -24px 12px;
@@ -1285,16 +1286,17 @@ em {
     }
     &.unpadded-content {
       .ant-modal-body {
-        padding: 6px 0;
+        padding: 6px 0px;
       }
     }
     .ant-modal-content {
       display: block;
       width: 100%;
-      height: 100%;
-      border-radius: var(--custom-border-radius);
+      height: auto;
+      overflow: hidden;
       color: var(--font-color);
       background-color: var(--bg-color);
+      border-radius: var(--custom-border-radius);
       @media (max-width: 575.98px) {
         border-radius: 0;
       }
@@ -1315,6 +1317,11 @@ em {
           font-weight: 700;
           text-align: center;
         }
+      }
+      .ant-modal-body {
+        &:extend(.vertical-scroll);
+        height: auto;
+        max-height: 74vh;
       }
       .ant-modal-close {
         color: var(--color-secondary-alpha-50);

@@ -48,7 +48,7 @@ export const LanguageSelector = (props: {
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={320}>
-      <div className="language-select mb-2">
+      <div className="language-select">
         <Radio.Group onChange={onChange} value={language}>
           <Space direction="vertical">
             {LANGUAGES && LANGUAGES.map(item => {

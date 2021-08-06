@@ -6,7 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
-import { listStreams } from "../../money-streaming/utils";
+import { listStreams } from "money-streaming/src/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
@@ -46,7 +46,7 @@ export const HomeView = () => {
   useEffect(() => {
     if (previousChain !== connectionConfig.env) {
       setChain(connectionConfig.env);
-      console.log(`cluster:`, connectionConfig.env);
+      console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
     }
 
     return () => {};

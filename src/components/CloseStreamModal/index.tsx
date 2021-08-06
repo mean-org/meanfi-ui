@@ -1,12 +1,12 @@
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
-import { TransactionFees } from '../../money-streaming/types';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
+import { TransactionFees } from 'money-streaming/src/types';
 
 export const CloseStreamModal = (props: {
   handleClose: any;

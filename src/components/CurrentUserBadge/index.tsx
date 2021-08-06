@@ -17,7 +17,7 @@ import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { StreamInfo } from "../../money-streaming/types";
+import { StreamInfo } from "money-streaming/src/types";
 import { useTranslation } from "react-i18next";
 
 interface StreamStats {

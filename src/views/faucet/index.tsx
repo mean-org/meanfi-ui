@@ -10,11 +10,11 @@ import { formatNumber, getComputedFees, getTokenAmountAndSymbolByTokenAddress, i
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
-import { calculateActionFees, wrapSol } from "../../money-streaming/utils";
+import { calculateActionFees, wrapSol } from "money-streaming/src/utils";
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { getTransactionOperationDescription } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MSP_ACTIONS, TransactionFees } from "../../money-streaming/types";
+import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
 import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
