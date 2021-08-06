@@ -1,16 +1,17 @@
-import { useContext, useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
+import { PreFooter } from '../../components/PreFooter';
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { listStreams } from "money-streaming/src/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
-import { PreFooter } from "../../components/PreFooter";
+import { Streams } from "../screens";
 import { Redirect } from "react-router-dom";
 
-export const HomeView = () => {
+export const StreamsView = () => {
   const {
     streamList,
     streamProgramAddress,
@@ -59,9 +60,8 @@ export const HomeView = () => {
               console.log('Home -> streamList:', streams);
               setSelectedStream(streams[0]);
               setStreamDetail(streams[0]);
-              if (streams && streams.length > 0) {
-                consoleOut('streams are available, opening streams...', '', 'blue');
-                setRedirect('/streams');
+              if (!streams || streams.length === 0) {
+                setRedirect('/transfers');
               }
             });
         }
@@ -99,12 +99,11 @@ export const HomeView = () => {
     <>
     {redirect && (<Redirect to={redirect} />)}
     <div className="container main-container">
-      <div className="interaction-area px-4 py-4 text-center">
-        <p>Home content goes here</p>
+      <div className="interaction-area">
+        <Streams />
       </div>
     </div>
     <PreFooter />
-
     </>
   );
 

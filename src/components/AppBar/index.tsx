@@ -1,3 +1,6 @@
+import { useContext, useState } from 'react';
+import { Link, Redirect } from 'react-router-dom';
+import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
@@ -5,32 +8,45 @@ import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
 import { useConnectionConfig } from '../../contexts/connection';
-import { Link } from 'react-router-dom';
-import { Menu } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { AppStateContext } from '../../contexts/appstate';
 
 const { SubMenu } = Menu;
 
 export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
   const connection = useConnectionConfig();
   const { connected } = useWallet();
+  const { t } = useTranslation("common");
+  const { setContract } = useContext(AppStateContext);
+  const [redirect, setRedirect] = useState<string | null>(null);
+
+  const setPayroll = () => {
+    setContract('Payroll');
+    setRedirect('/transfers');
+  }
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       <div className="App-Bar-left">
         <Menu mode="horizontal" className="w-100">
           <Menu.Item key="swap">
-            <Link to="/swap">Swap</Link>
+            <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
           </Menu.Item>
           <Menu.Item key="transfers">
-            <Link to="/transfers">Transfers</Link>
+            <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
           </Menu.Item>
-          <SubMenu key="services" title="Pro Services">
-            <Menu.Item key="payroll">Payroll</Menu.Item>
-            <Menu.Item key="custody">Custody</Menu.Item>
+          <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>
+            <Menu.Item key="payroll" onClick={setPayroll}>{t('ui-menus.main-menu.pro-services.payroll')}</Menu.Item>
+            <Menu.Item key="custody">{t('ui-menus.main-menu.pro-services.custody')}</Menu.Item>
           </SubMenu>
-          <SubMenu key="tools" title="Tools">
-            <Menu.Item key="faucet">Faucet</Menu.Item>
-            <Menu.Item key="wrap">Wrapper</Menu.Item>
+          <SubMenu key="tools" title={t('ui-menus.main-menu.tools.submenu-title')}>
+            {connection.env !== 'mainnet-beta' && (
+              <Menu.Item key="faucet">
+                <Link to="/faucet">{t('ui-menus.main-menu.tools.faucet')}</Link>
+              </Menu.Item>
+            )}
+            <Menu.Item key="wrap">{t('ui-menus.main-menu.tools.wrapper')}</Menu.Item>
           </SubMenu>
         </Menu>
       </div>

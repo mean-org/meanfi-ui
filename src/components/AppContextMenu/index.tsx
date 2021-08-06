@@ -17,8 +17,8 @@ import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { MEAN_FINANCE_WEBSITE_URL } from "../../constants";
-import { LanguageSelector } from "../LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "../LanguageSelector";
 
 export const AppContextMenu = () => {
 

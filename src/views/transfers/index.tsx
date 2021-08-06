@@ -1,17 +1,21 @@
-import { useContext, useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
+import { IconCaretDown } from "../../Icons";
 import { listStreams } from "money-streaming/src/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
+import { OneTimePayment, RepeatingPayment, PayrollPayment } from "../screens";
 import { PreFooter } from "../../components/PreFooter";
 import { Redirect } from "react-router-dom";
 
-export const HomeView = () => {
+export const TransfersView = () => {
   const {
+    contract,
     streamList,
     streamProgramAddress,
     previousWalletConnectState,
@@ -29,6 +33,15 @@ export const HomeView = () => {
   const connectionConfig = useConnectionConfig();
   const [previousChain, setChain] = useState("");
   const [redirect, setRedirect] = useState<string | null>(null);
+
+  // Contract switcher modal
+  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
+  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
+  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
+  const onAcceptContractSelector = () => {
+    // Do something and close the modal
+    closeContractSelectorModal();
+  };
 
   // Effect Network change
   useEffect(() => {
@@ -95,16 +108,40 @@ export const HomeView = () => {
     setPreviousWalletConnectState
   ]);
 
+  const renderContract = () => {
+    switch(contract?.id) {
+      case 1:   return <OneTimePayment />;
+      case 2:   return <RepeatingPayment />;
+      case 3:   return <PayrollPayment />;
+      default:  return <h4>{t(`general.not-implemented`)}</h4>
+    }
+  }
+
+  // CONTRACT SETUP SCREEN
   return (
     <>
     {redirect && (<Redirect to={redirect} />)}
     <div className="container main-container">
-      <div className="interaction-area px-4 py-4 text-center">
-        <p>Home content goes here</p>
+      <div className="interaction-area">
+        <div className="place-transaction-box">
+          <div className="position-relative mb-2">
+            {contract && (
+              <>
+                <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
+              </>
+            )}
+          </div>
+          <ContractSelectorModal
+            isVisible={isContractSelectorModalVisible}
+            handleOk={onAcceptContractSelector}
+            handleClose={closeContractSelectorModal}/>
+          {/* Display apropriate contract setup screen */}
+          {renderContract()}
+        </div>
       </div>
     </div>
     <PreFooter />
-
     </>
   );
 
