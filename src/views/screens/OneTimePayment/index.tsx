@@ -522,6 +522,15 @@ export const OneTimePayment = () => {
             : false;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -682,11 +691,7 @@ export const OneTimePayment = () => {
               const onClick = function () {
                 setSelectedToken(token);
                 console.log("token selected:", token.symbol);
-                setEffectiveRate(
-                  coinPrices && coinPrices[token.symbol]
-                    ? coinPrices[token.symbol]
-                    : 0
-                );
+                setEffectiveRate(getPricePerToken(token));
                 onCloseTokenSelector();
               };
               return (

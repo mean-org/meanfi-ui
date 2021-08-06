@@ -416,6 +416,15 @@ export const PayrollPayment = () => {
     return options;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   // Prefabrics
 
   const paymentRateOptionsMenu = (
@@ -440,6 +449,7 @@ export const PayrollPayment = () => {
             setDestinationToken(token);
             setSelectedToken(token);
             consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (
@@ -476,11 +486,7 @@ export const PayrollPayment = () => {
             setSelectedToken(token);
             setDestinationToken(token);
             consoleOut("token selected:", token);
-            setEffectiveRate(
-              coinPrices && coinPrices[token.symbol]
-                ? coinPrices[token.symbol]
-                : 0
-            );
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (

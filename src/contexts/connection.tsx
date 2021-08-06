@@ -122,15 +122,14 @@ export function ConnectionProvider({ children = undefined as any }) {
     // fetch token files
     (async () => {
       let list: TokenInfo[];
-      if (environment === 'production') {
-        const res = await new TokenListProvider().resolve();
-        list = res
-          .filterByChainId(chain.chainID)
-          .excludeByTag("nft")
-          .getList();
-      } else {
-        list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
-      }
+      // if (environment === 'production') {
+      //   const res = await new TokenListProvider().resolve();
+      //   list = res
+      //     .filterByChainId(chain.chainID)
+      //     .excludeByTag("nft")
+      //     .getList();
+      // }
+      list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;

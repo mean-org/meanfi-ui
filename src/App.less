@@ -607,25 +607,35 @@ footer.ant-layout-footer {
   @media (max-width: 575.98px) {
     justify-content: center;
   }
+  .ant-menu-horizontal .ant-menu-item,
+  .ant-menu-horizontal .ant-menu-submenu {
+    height: 35px;
+    line-height: 35px;
+  }
   .ant-menu-horizontal {
     border-bottom-color: transparent;
     background-color: transparent;
     line-height: inherit;
     font-size: 16px;
     margin: 0 10px;
-    .ant-menu-item {
-      margin: 0 10px;
-      color: lightgrey;
-      height: 35px;
-      line-height: 35px;
-      border-width: 0px !important;
+    > .ant-menu-item,
+    > .ant-menu-submenu {
+      padding: 0 8px;
+      &:after {
+        right: 8px;
+        left: 8px;
+      }
+      a,
+      .ant-menu-submenu-title {
+        color: var(--color-secondary-alpha-70);
+      }
+      &:hover {
+        a,
+        .ant-menu-submenu-title {
+          color: var(--color-secondary-alpha-85);
+        }
+      }
     }
-
-    .ant-menu-item:hover {
-      color: white;
-      border-width: 0px !important;
-    }
-
     .ant-menu-item-selected {
       font-weight: bold;
     }
@@ -633,14 +643,11 @@ footer.ant-layout-footer {
 }
 
 .App-Bar-left {
-  box-sizing: border-box;
   margin: 0px;
-  min-width: 0px;
   display: flex;
   padding: 0px;
-  -webkit-box-align: center;
   align-items: center;
-  width: fit-content;
+  flex: 1 1 auto;
 }
 
 .App-Bar-right {
@@ -1022,7 +1029,7 @@ em {
     .field-label-right {
       font-size: 0.7rem;
       font-weight: 500;
-      color: gray;
+      color: var(--color-secondary-alpha-60);
       line-height: 1;
       display: inline-flex;
       align-items: center;
@@ -1247,7 +1254,7 @@ em {
       }
       .token-name {
         font-size: 12px;
-        color: gray;
+        color: var(--color-secondary-alpha-60);
         line-height: 15px;
       }
     }
