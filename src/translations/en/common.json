@@ -309,12 +309,16 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"payroll": "Payroll"
+				"submenu-title": "Pro Services",
+				"payroll": "Payroll",
+				"custody": "Custody"
 			},
 			"tools": {
+				"submenu-title": "Tools",
 				"faucet": "Faucet",
 				"wrapper": "Wrapper"
 			},
+			"swap": "Swap",
 			"transfers": "Transfers"
 		}
 	},
