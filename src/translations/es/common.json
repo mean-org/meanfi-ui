@@ -37,11 +37,11 @@
 			"description": "¿Desea recaudar fondos para su Seed, Series, ICO, DAICO, Private Rounds? No busque más, su mejor opción es el Contrato de Recaudación de Fondos.",
 			"name": "Recaudación de fondos"
 		},
-		"lead": "Elija de nuestros contratos auditados",
+		"lead": "Elija uno de nuestros contratos auditados",
 		"modal-title": "Nueva transferencia de dinero",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
-			"name": "Pago único"
+			"name": "Efectuar Pago único"
 		},
 		"payroll": {
 			"description": "Configure la nómina para un empleado o contratista, en cualquier parte del mundo sin los gastos generales de los servicios bancarios tradicionales.",
@@ -58,11 +58,11 @@
 		},
 		"rent-collection": {
 			"description": "Configure el cobro de alquiler para sus inquilinos. Reciba pagos en tiempo real por cada minuto que ocupen su propiedad.",
-			"name": "Cobro de alquiler"
+			"name": "Pago de alquiler"
 		},
 		"repeating": {
-			"description": "Envíe dinero a cualquier persona con un caudal fijo a lo largo del tiempo. Ideal para retribuciones familiares, asignaciones por hijos y más.",
-			"name": "Pago repetido"
+			"description": "Envíe dinero a cualquier persona con un flujo de dinero fijo a lo largo del tiempo. Ideal para retribuciones familiares, asignaciones por hijos y más.",
+			"name": "Efectuar Pago repetido"
 		},
 		"setup-everything": {
 			"description": "Recomendado para profesionales que desean establecer un contrato con términos únicos, no de uso común.",

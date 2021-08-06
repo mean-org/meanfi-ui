@@ -41,7 +41,7 @@
 		"modal-title": "New Money Stream",
 		"otp": {
 			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
-			"name": "One Time Payment"
+			"name": "One-Time Payment"
 		},
 		"payroll": {
 			"description": "Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.",
