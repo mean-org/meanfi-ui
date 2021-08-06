@@ -41,7 +41,7 @@
 		"modal-title": "Nueva transferencia de dinero",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
-			"name": "Efectuar Pago único"
+			"name": "Enviar Pago"
 		},
 		"payroll": {
 			"description": "Configure la nómina para un empleado o contratista, en cualquier parte del mundo sin los gastos generales de los servicios bancarios tradicionales.",
@@ -62,7 +62,7 @@
 		},
 		"repeating": {
 			"description": "Envíe dinero a cualquier persona con un flujo de dinero fijo a lo largo del tiempo. Ideal para retribuciones familiares, asignaciones por hijos y más.",
-			"name": "Efectuar Pago repetido"
+			"name": "Pago Recurrente"
 		},
 		"setup-everything": {
 			"description": "Recomendado para profesionales que desean establecer un contrato con términos únicos, no de uso común.",
