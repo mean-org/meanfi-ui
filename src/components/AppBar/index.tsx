@@ -37,8 +37,10 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
             <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
           </Menu.Item>
           <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>
-            <Menu.Item key="payroll" onClick={setPayroll}>{t('ui-menus.main-menu.pro-services.payroll')}</Menu.Item>
-            <Menu.Item key="custody">{t('ui-menus.main-menu.pro-services.custody')}</Menu.Item>
+            <Menu.Item key="payroll" onClick={() => setPayroll()}>{t('ui-menus.main-menu.pro-services.payroll')}</Menu.Item>
+            <Menu.Item key="custody">
+              <Link to="/custody">{t('ui-menus.main-menu.pro-services.custody')}</Link>
+            </Menu.Item>
           </SubMenu>
           <SubMenu key="tools" title={t('ui-menus.main-menu.tools.submenu-title')}>
             {connection.env !== 'mainnet-beta' && (
@@ -46,7 +48,9 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
                 <Link to="/faucet">{t('ui-menus.main-menu.tools.faucet')}</Link>
               </Menu.Item>
             )}
-            <Menu.Item key="wrap">{t('ui-menus.main-menu.tools.wrapper')}</Menu.Item>
+            <Menu.Item key="wrap">
+              <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
+            </Menu.Item>
           </SubMenu>
         </Menu>
       </div>

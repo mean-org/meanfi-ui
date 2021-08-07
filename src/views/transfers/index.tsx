@@ -1,38 +1,14 @@
-import { PublicKey } from "@solana/web3.js";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { useWallet } from "../../contexts/wallet";
 import { IconCaretDown } from "../../Icons";
-import { listStreams } from "money-streaming/src/utils";
-import { notify } from "../../utils/notifications";
-import { consoleOut } from "../../utils/ui";
 import { OneTimePayment, RepeatingPayment, PayrollPayment } from "../screens";
 import { PreFooter } from "../../components/PreFooter";
-import { Redirect } from "react-router-dom";
 
 export const TransfersView = () => {
-  const {
-    contract,
-    streamList,
-    streamProgramAddress,
-    previousWalletConnectState,
-    setStreamList,
-    setStreamDetail,
-    setLoadingStreams,
-    setSelectedStream,
-    refreshTokenBalance,
-    setPreviousWalletConnectState
-  } = useContext(AppStateContext);
-
+  const { contract } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const { connected, publicKey } = useWallet();
-  const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
-  const [previousChain, setChain] = useState("");
-  const [redirect, setRedirect] = useState<string | null>(null);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -42,71 +18,6 @@ export const TransfersView = () => {
     // Do something and close the modal
     closeContractSelectorModal();
   };
-
-  // Effect Network change
-  useEffect(() => {
-    if (previousChain !== connectionConfig.env) {
-      setChain(connectionConfig.env);
-      console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
-    }
-
-    return () => {};
-  }, [
-    previousChain,
-    connectionConfig
-  ]);
-
-  // Effect to go to streams on wallet connect if there are streams available
-  useEffect(() => {
-    if (previousWalletConnectState !== connected) {
-      // User is connecting
-      if (!previousWalletConnectState && connected) {
-        consoleOut('User is connecting...', '', 'blue');
-        if (publicKey) {
-          const programId = new PublicKey(streamProgramAddress);
-          setLoadingStreams(true);
-          listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-            .then(async streams => {
-              setStreamList(streams);
-              setLoadingStreams(false);
-              console.log('Home -> streamList:', streams);
-              setSelectedStream(streams[0]);
-              setStreamDetail(streams[0]);
-              if (streams && streams.length > 0) {
-                consoleOut('streams are available, opening streams...', '', 'blue');
-                setRedirect('/streams');
-              }
-            });
-        }
-        setPreviousWalletConnectState(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'blue');
-        setPreviousWalletConnectState(false);
-        refreshTokenBalance();
-        notify({
-          message: t('notifications.wallet-connection-event-title'),
-          description: t('notifications.wallet-disconnect-message'),
-          type: 'info'
-        });
-      }
-    }
-
-    return () => {};
-  }, [
-    connection,
-    publicKey,
-    connected,
-    streamList,
-    streamProgramAddress,
-    previousWalletConnectState,
-    t,
-    setStreamList,
-    setStreamDetail,
-    setSelectedStream,
-    setLoadingStreams,
-    refreshTokenBalance,
-    setPreviousWalletConnectState
-  ]);
 
   const renderContract = () => {
     switch(contract?.id) {
@@ -120,7 +31,6 @@ export const TransfersView = () => {
   // CONTRACT SETUP SCREEN
   return (
     <>
-    {redirect && (<Redirect to={redirect} />)}
     <div className="container main-container">
       <div className="interaction-area">
         <div className="place-transaction-box">
