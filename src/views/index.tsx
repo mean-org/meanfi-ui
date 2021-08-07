@@ -5,3 +5,4 @@ export { StreamsView } from './streams';
 export { SwapView } from './swap';
 export { TransfersView } from './transfers';
 export { WrapView } from './wrap';
+export { PayrollView } from './payroll';

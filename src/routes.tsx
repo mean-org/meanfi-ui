@@ -6,7 +6,8 @@ import { MarketProvider } from "./contexts/market";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
-  CustodyView, FaucetView, HomeView, StreamsView, SwapView, TransfersView, WrapView
+  CustodyView, FaucetView, HomeView, PayrollView, StreamsView, SwapView,
+  TransfersView, WrapView
 } from "./views";
 
 export function Routes() {
@@ -24,6 +25,7 @@ export function Routes() {
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/streams" children={<StreamsView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
+                      <Route exact path="/payroll" children={<PayrollView />} />
                       <Route exact path="/swap" children={<SwapView />} />
                       <Route exact path="/wrap" children={<WrapView />} />
                       <Route exact path="/custody" children={<CustodyView />} />

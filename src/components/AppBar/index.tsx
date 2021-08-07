@@ -1,5 +1,4 @@
-import { useContext, useState } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -9,7 +8,6 @@ import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
-import { AppStateContext } from '../../contexts/appstate';
 
 const { SubMenu } = Menu;
 
@@ -17,17 +15,9 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
   const connection = useConnectionConfig();
   const { connected } = useWallet();
   const { t } = useTranslation("common");
-  const { setContract } = useContext(AppStateContext);
-  const [redirect, setRedirect] = useState<string | null>(null);
-
-  const setPayroll = () => {
-    setContract('Payroll');
-    setRedirect('/transfers');
-  }
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
       <div className="App-Bar-left">
         <Menu mode="horizontal" className="w-100">
           <Menu.Item key="swap">
@@ -37,7 +27,9 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
             <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
           </Menu.Item>
           <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>
-            <Menu.Item key="payroll" onClick={() => setPayroll()}>{t('ui-menus.main-menu.pro-services.payroll')}</Menu.Item>
+            <Menu.Item key="payroll">
+              <Link to="/payroll">{t('ui-menus.main-menu.pro-services.payroll')}</Link>
+            </Menu.Item>
             <Menu.Item key="custody">
               <Link to="/custody">{t('ui-menus.main-menu.pro-services.custody')}</Link>
             </Menu.Item>

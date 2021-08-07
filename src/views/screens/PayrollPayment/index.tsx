@@ -1,4 +1,4 @@
-import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin, Row, Col } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -15,7 +15,7 @@ import {
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
+import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../../models/enums";
 import {
@@ -37,11 +37,12 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/src/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
 import { calculateActionFees } from "money-streaming/src/utils";
 import { useTranslation } from "react-i18next";
+import { ContractDefinition } from "../../../models/contract-definition";
+import { Redirect } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -50,7 +51,6 @@ export const PayrollPayment = () => {
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -65,7 +65,6 @@ export const PayrollPayment = () => {
     transactionStatus,
     timeSheetRequirement,
     streamProgramAddress,
-    setCurrentScreen,
     setSelectedToken,
     resetContractValues,
     setSelectedTokenBalance,
@@ -83,6 +82,8 @@ export const PayrollPayment = () => {
     refreshTokenBalance,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
@@ -167,7 +168,7 @@ export const PayrollPayment = () => {
     setSelectedStream(undefined);
     refreshStreamList(true);
     closeTransactionModal();
-    setCurrentScreen("streams");
+    setRedirect('/streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -791,6 +792,8 @@ export const PayrollPayment = () => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
+
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">

@@ -575,6 +575,7 @@ footer.ant-layout-footer {
   margin-bottom: 0;
   align-items: center;
   display: inline-flex;
+  color: inherit;
   > svg {
     margin-left: 4px;
   }
@@ -635,6 +636,25 @@ footer.ant-layout-footer {
           color: var(--color-secondary-alpha-85);
         }
       }
+    }
+  }
+}
+.ant-menu:not(.ant-menu-horizontal) {
+  &.ant-menu-submenu-popup > .ant-menu {
+    background-color: var(--bg-color);
+  }
+  .ant-menu-item {
+    a {
+      color: var(--color-secondary-alpha-70);
+    }
+    &.ant-menu-item-selected {
+      background-color: var(--color-secondary-alpha-05);
+      a {
+        color: var(--color-secondary-alpha-85);
+      }
+    }
+    &.ant-menu-item-active:not(.ant-menu-item-selected) {
+      background-color: var(--color-secondary-alpha-02);
     }
   }
 }
