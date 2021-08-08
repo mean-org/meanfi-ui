@@ -23,12 +23,6 @@
 		"secondary-cta": ""
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Personnes",
-			"cat2": "Affaires",
-			"cat3": "Immobilier",
-			"cat4": "Autre"
-		},
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec la tranquillité d'esprit que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -37,8 +31,7 @@
 			"description": "Vous cherchez à lever des fonds pour vos Seed, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin qu'un contrat de collecte de fonds.",
 			"name": "Collecte de fonds"
 		},
-		"lead": "Choisissez parmi des contrats audités éprouvés",
-		"modal-title": "Nouveau flux d'argent",
+		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à une autre personne une seule fois. Utilisez cette option pour payer tout ce que vous voulez.",
 			"name": "Paiement unique"
@@ -309,10 +302,14 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"payroll": "Paie"
+				"custody": "",
+				"payroll": "Paie",
+				"submenu-title": ""
 			},
+			"swap": "",
 			"tools": {
 				"faucet": "Robinet",
+				"submenu-title": "",
 				"wrapper": "Emballage"
 			},
 			"transfers": "Transferts"

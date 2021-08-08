@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Individuals",
-			"cat2": "Business",
-			"cat3": "Real Estate",
-			"cat4": "Other"
-		},
 		"donation-fund": {
 			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
 			"name": "Donation Fund"
@@ -37,8 +31,7 @@
 			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
 			"name": "Fundraising"
 		},
-		"lead": "Choose from battle-tested audited contracts",
-		"modal-title": "New Money Stream",
+		"modal-title": "Select type of transfer",
 		"otp": {
 			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
 			"name": "One-Time Payment"
@@ -309,16 +302,16 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"submenu-title": "Pro Services",
+				"custody": "Custody",
 				"payroll": "Payroll",
-				"custody": "Custody"
-			},
-			"tools": {
-				"submenu-title": "Tools",
-				"faucet": "Faucet",
-				"wrapper": "Wrapper"
+				"submenu-title": "Pro Services"
 			},
 			"swap": "Swap",
+			"tools": {
+				"faucet": "Faucet",
+				"submenu-title": "Tools",
+				"wrapper": "Wrapper"
+			},
 			"transfers": "Transfers"
 		}
 	},

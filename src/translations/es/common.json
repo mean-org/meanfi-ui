@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Individuos",
-			"cat2": "Negocio",
-			"cat3": "Bienes Raíces",
-			"cat4": "Otros"
-		},
 		"donation-fund": {
 			"description": "Cree una cuenta donde cualquiera pueda donar con la tranquilidad que los fondos se utilizarán para la causa correcta.",
 			"name": "Fondo de Donación"
@@ -37,8 +31,7 @@
 			"description": "¿Desea recaudar fondos para su Seed, Series, ICO, DAICO, Private Rounds? No busque más, su mejor opción es el Contrato de Recaudación de Fondos.",
 			"name": "Recaudación de fondos"
 		},
-		"lead": "Elija uno de nuestros contratos auditados",
-		"modal-title": "Nueva transferencia de dinero",
+		"modal-title": "Seleccione tipo de transferencia",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
 			"name": "Enviar Pago"
@@ -309,10 +302,14 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"payroll": "Nómina de sueldos"
+				"custody": "",
+				"payroll": "Nómina de sueldos",
+				"submenu-title": ""
 			},
+			"swap": "",
 			"tools": {
 				"faucet": "Grifo",
+				"submenu-title": "",
 				"wrapper": "Envoltura"
 			},
 			"transfers": "Transferencias"
