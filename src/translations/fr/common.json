@@ -2,53 +2,53 @@
 	"account-area": {
 		"connect-button": "Connecter un portefeuille",
 		"copy-address": "Copier l'adresse",
-		"explorer-link": "Vue sur Solana Explorer",
+		"explorer-link": "Voir dans Solana Explorer",
 		"modal-title": "Compte",
 		"network-unknown": "Inconnu",
-		"streams-tooltip": "Cliquez pour recharger les flux",
+		"streams-tooltip": "Cliquez pour mettre à jour les transferts",
 		"wallet-change": "Changement",
 		"wallet-provider": "Connecté avec"
 	},
 	"add-funds": {
-		"label": "",
-		"label-right": "",
-		"modal-title": ""
+		"label": "Quantité",
+		"label-right": "Solde",
+		"modal-title": "Ajouter des fonds"
 	},
 	"close-stream": {
-		"context-beneficiary": "",
-		"context-treasurer-multiple-beneficiaries": "",
-		"context-treasurer-single-beneficiary": "",
-		"modal-title": "",
-		"primary-cta": "",
-		"secondary-cta": ""
+		"context-beneficiary": "Veuillez compléter ce transfert d'argent et ce montant ({{amount}}) sera envoyé sur votre compte ({{beneficiary}}) et le flux d'argent s'arrêtera immédiatement.",
+		"context-treasurer-multiple-beneficiaries": "À la fin de ce transfert monétaire, le flux d'argent s'arrêtera immédiatement, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront retournés à la trésorerie d'origine ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "À l'issue de ce transfert monétaire, le flux d'argent sera immédiatement arrêté, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront restitués au contributeur d'origine.",
+		"modal-title": "Terminer le transfert",
+		"primary-cta": "Terminer le transfert",
+		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
 		"categories": {
 			"cat1": "Personnes",
 			"cat2": "Affaires",
 			"cat3": "Immobilier",
-			"cat4": "Autre"
+			"cat4": "Autres"
 		},
 		"donation-fund": {
-			"description": "Créez un compte où n'importe qui peut faire un don avec la tranquillité d'esprit que les fonds seront utilisés pour la bonne cause.",
+			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
 		},
 		"fundraising": {
-			"description": "Vous cherchez à lever des fonds pour vos Seed, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin qu'un contrat de collecte de fonds.",
+			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
-		"lead": "Choisissez parmi des contrats audités éprouvés",
-		"modal-title": "Nouveau flux d'argent",
+		"lead": "Choisissez l'un de nos contrats audités",
+		"modal-title": "Nouveau transfert d'argent",
 		"otp": {
-			"description": "Envoyez de l'argent ou programmez un paiement à une autre personne une seule fois. Utilisez cette option pour payer tout ce que vous voulez.",
-			"name": "Paiement unique"
+			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
+			"name": "Envoyer le paiement"
 		},
 		"payroll": {
 			"description": "Configurez la paie d'un employé ou d'un entrepreneur, partout dans le monde, sans les frais généraux des services bancaires traditionnels.",
 			"name": "Paie"
 		},
 		"pension-fund": {
-			"description": "Pour les employeurs qui mettent en place des régimes de retraite qui paient les employés lors d'événements qualifiants, tels que l'âge de la retraite.",
+			"description": "Pour les employeurs qui établissent des régimes de retraite qui rémunèrent les employés lors d'événements qualifiants, comme l'atteinte de l'âge de la retraite.",
 			"name": "Fonds de pension"
 		},
 		"primary-action": "Suivant",
@@ -57,16 +57,16 @@
 			"name": "Vente immobilière (Escroc)"
 		},
 		"rent-collection": {
-			"description": "Configurez la perception des loyers pour vos locataires. Soyez payé en temps réel pour chaque minute qu'ils occupent votre propriété.",
-			"name": "Perception des loyers"
+			"description": "Configurez la perception des loyers pour vos locataires. Recevez des paiements en temps réel pour chaque minute qu'ils occupent votre propriété.",
+			"name": "Paiement du loyer"
 		},
 		"repeating": {
-			"description": "Envoyez de l'argent à n'importe qui à un débit fixe dans le temps. Idéal pour les envois de fonds familiaux, les allocations familiales et plus encore.",
-			"name": "Paiement répété"
+			"description": "Envoyez de l'argent à toute personne disposant d'un flux d'argent constant au fil du temps. Idéal pour les allocations familiales, les allocations familiales, etc.",
+			"name": "Paiement récurrent"
 		},
 		"setup-everything": {
 			"description": "Recommandé pour les professionnels qui souhaitent mettre en place un contrat avec des conditions uniques, pas couramment utilisées.",
-			"name": "Tout configurer (Avancé)"
+			"name": "Tout configurer (avancé)"
 		},
 		"subscription": {
 			"description": "Configurez un contrat d'abonnement SaaS pour les paiements d'adhésion réguliers. Pensez à Netflix ou à votre abonnement mensuel au Gym Club.",
@@ -75,17 +75,17 @@
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
-		"current-wsol-balance": "Solde SOL encapsulé actuel",
-		"fund-cta": "Donne moi SOL",
-		"funding-amount": "Votre compte sera alimenté avec",
+		"current-wsol-balance": "Solde wSOL actuel",
+		"fund-cta": "Obtenez SOL",
+		"funding-amount": "Votre compte aura le solde de",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
-		"wrap-transaction-fee": "Frais de transaction d'emballage",
-		"wrapped-amount": "Montant emballé"
+		"wrap-transaction-fee": "Frais pour faire Wrap",
+		"wrapped-amount": "Montant wrapped"
 	},
 	"general": {
-		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez ou n'échangez pas de gros montants.",
+		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez pas et n'échangez pas de grandes quantités de fonds.",
 		"day": "journée",
 		"hour": "heure",
 		"loading": "Chargement",
@@ -105,14 +105,14 @@
 	"notifications": {
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
-		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au réseau principal",
-		"error-cannot-fund-account-message": "Impossible d'approvisionner votre compte, veuillez réessayer plus tard",
+		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au faucet dans mainnet",
+		"error-cannot-fund-account-message": "Nous n'avons pas pu approvisionner votre compte. Veuillez réessayer plus tard.",
 		"error-ledger-title": "Erreur du Ledger",
-		"error-loading-streamid-message": "Impossible de trouver ou de charger le flux avec l'ID {{streamId}}",
+		"error-loading-streamid-message": "Nous n'avons pas pu trouver ou charger le flux avec l'ID {{streamId}}",
 		"error-title": "Erreur",
 		"invalid-publickey-message": "Clé publique non valide. Veuillez vérifier la saisie",
-		"invalid-streamid-message": "ID de flux non valide",
-		"streamid-copied-message": "",
+		"invalid-streamid-message": "ID de transfert erroné",
+		"streamid-copied-message": "Le compte de transfert a été copié avec succès dans le clipboard",
 		"streamid-not-copied-message": "",
 		"success-account-funded-message": "Compte financé",
 		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
@@ -121,37 +121,37 @@
 		"wallet-disconnect-message": "Déconnecté du portefeuille"
 	},
 	"open-stream": {
-		"label-streamid-input": "",
-		"modal-title": "",
-		"streamid-empty": "",
-		"streamid-open-cta": "",
+		"label-streamid-input": "Entrez l'id du transfert",
+		"modal-title": "Commencer le transfert d'argent",
+		"streamid-empty": "Entrez l'id du transfert",
+		"streamid-open-cta": "Commencer le transfert",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "",
-		"create-new-stream-cta": "Créer un nouveau flux d'argent",
-		"lookup-stream-cta-tooltip": "Rechercher un flux",
-		"screen-title": "Mes flux d'argent",
+		"back-to-my-streams-cta": "Retour à Mes transferts",
+		"create-new-stream-cta": "Créer un nouveau transfert",
+		"lookup-stream-cta-tooltip": "Recherche de transfert",
+		"screen-title": "Mes transferts d'argent",
 		"stream-activity": {
 			"action-deposit": "Dépôt",
-			"action-withdraw": "Se désister",
-			"heading": "activité",
-			"label-action": "",
-			"label-amount": "",
-			"label-date": "",
+			"action-withdraw": "Retirer",
+			"heading": "Activité",
+			"label-action": "Action",
+			"label-amount": "Solde",
+			"label-date": "Date",
 			"no-activity": "Aucune activité à ce jour"
 		},
 		"stream-detail": {
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
 			"close-money-stream-menu-item": "Fermer le flux d'argent",
-			"heading": "Détails du flux",
-			"label-amount": "Montant",
-			"label-funds-available-to-withdraw": "Fonds disponibles à retirer maintenant",
-			"label-funds-left-in-account": "Fonds laissés en compte",
-			"label-funds-runout": "s'épuisera par",
-			"label-funds-runout-today": "",
-			"label-funds-sent": "Fonds envoyés au bénéficiaire",
+			"heading": "Détails du transfert",
+			"label-amount": "Solde",
+			"label-funds-available-to-withdraw": "Fonds disponibles pour un retrait immédiat",
+			"label-funds-left-in-account": "Fonds laissés sur le compte",
+			"label-funds-runout": "ce sera fini pour",
+			"label-funds-runout-today": "ce sera fini pour",
+			"label-funds-sent": "Fonds envoyés au destinataire",
 			"label-payment-rate": "Taux de paiement",
 			"label-receiving-from": "Réception de",
 			"label-sending-to": "Envoi à",
@@ -188,10 +188,10 @@
 	"transactions": {
 		"memo": {
 			"label": "Note",
-			"placeholder": "Ajouter une note facultative"
+			"placeholder": "Ajouter une note supplémentaire"
 		},
 		"memo2": {
-			"label": "Mémo / Sujet",
+			"label": "Remarque / Sujet",
 			"placeholder": "A quoi sert ce paiement ?"
 		},
 		"rate-and-frequency": {
@@ -309,22 +309,26 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"payroll": "Paie"
+				"custody": "",
+				"payroll": "Paie",
+				"submenu-title": ""
 			},
+			"swap": "",
 			"tools": {
 				"faucet": "Robinet",
+				"submenu-title": "",
 				"wrapper": "Emballage"
 			},
 			"transfers": "Transferts"
 		}
 	},
 	"wallet-selector": {
-		"primary-action": "sélectionner"
+		"primary-action": "Sélectionner"
 	},
 	"withdraw-funds": {
-		"label-available-amount": "",
-		"label-input-amount": "",
-		"label-input-right": "",
-		"modal-title": ""
+		"label-available-amount": "Fonds disponibles pour un retrait immédiat",
+		"label-input-amount": "Saisissez le montant à retirer",
+		"label-input-right": "Pourcentage automatique",
+		"modal-title": "Retirer des fonds"
 	}
 }
