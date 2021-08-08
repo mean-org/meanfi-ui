@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
@@ -6,7 +6,7 @@ import { MarketProvider } from "./contexts/market";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
-  CustodyView, FaucetView, HomeView, PayrollView, StreamsView, SwapView,
+  CustodyView, FaucetView, PayrollView, StreamsView, SwapView,
   TransfersView, WrapView
 } from "./views";
 
@@ -21,7 +21,10 @@ export function Routes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Switch>
-                      <Route exact path="/" component={() => <HomeView />} />
+                      {/* <Route path="/" component={() => <HomeView />} /> */}
+                      <Route exact path="/">
+                        <Redirect to="/swap" />
+                      </Route>
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/streams" children={<StreamsView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />

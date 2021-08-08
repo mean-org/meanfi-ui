@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 const { SubMenu } = Menu;
 
 export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
+  const location = useLocation();
   const connection = useConnectionConfig();
   const { connected } = useWallet();
   const { t } = useTranslation("common");
@@ -19,28 +20,28 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
   return (
     <>
       <div className="App-Bar-left">
-        <Menu mode="horizontal" className="w-100">
-          <Menu.Item key="swap">
+        <Menu selectedKeys={[location.pathname]} mode="horizontal" className="w-100" >
+          <Menu.Item key="/swap">
             <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
           </Menu.Item>
-          <Menu.Item key="transfers">
+          <Menu.Item key="/transfers">
             <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
           </Menu.Item>
           <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>
-            <Menu.Item key="payroll">
+            <Menu.Item key="/payroll">
               <Link to="/payroll">{t('ui-menus.main-menu.pro-services.payroll')}</Link>
             </Menu.Item>
-            <Menu.Item key="custody">
+            <Menu.Item key="/custody">
               <Link to="/custody">{t('ui-menus.main-menu.pro-services.custody')}</Link>
             </Menu.Item>
           </SubMenu>
           <SubMenu key="tools" title={t('ui-menus.main-menu.tools.submenu-title')}>
             {connection.env !== 'mainnet-beta' && (
-              <Menu.Item key="faucet">
+              <Menu.Item key="/faucet">
                 <Link to="/faucet">{t('ui-menus.main-menu.tools.faucet')}</Link>
               </Menu.Item>
             )}
-            <Menu.Item key="wrap">
+            <Menu.Item key="/wrap">
               <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
             </Menu.Item>
           </SubMenu>
