@@ -5,19 +5,19 @@
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
-		"streams-tooltip": "Click para actualizar las transacciones",
+		"streams-tooltip": "Click para actualizar las transferencias",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
 	"add-funds": {
 		"label": "Cantidad",
-		"label-right": "Balance",
+		"label-right": "Saldo",
 		"modal-title": "Añadir fondos"
 	},
 	"close-stream": {
-		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará {{amount}} a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
+		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes al treasury ({{treasury}}) original.",
-		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
+		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
 		"secondary-cta": "Cancelar"
@@ -105,7 +105,7 @@
 		"error-title": "Error",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
-		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el portapapeles",
+		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
 		"streamid-not-copied-message": "No se pudo copiar dirección de la transmisión al portapapeles",
 		"success-account-funded-message": "Cuenta financiada",
 		"success-loading-stream-message": "Se cargó la transmisión con el ID {{streamId}}",
@@ -115,9 +115,9 @@
 	},
 	"open-stream": {
 		"label-streamid-input": "Introduzca id de transferencia ",
-		"modal-title": "Abrir Transferencia de dinero",
+		"modal-title": "Iniciar Transferencia de dinero",
 		"streamid-empty": "Introduzca id de transferencia ",
-		"streamid-open-cta": "Abrir transferencia",
+		"streamid-open-cta": "Iniciar transferencia",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
@@ -130,7 +130,7 @@
 			"action-withdraw": "Retiro",
 			"heading": "Actividad",
 			"label-action": "Acción",
-			"label-amount": "Cantidad",
+			"label-amount": "Saldo",
 			"label-date": "Fecha",
 			"no-activity": "Sin actividad hasta ahora"
 		},
@@ -138,12 +138,12 @@
 			"add-funds-cta": "Recargar (agregar fondos)",
 			"amount-funded-date": "financiado en",
 			"close-money-stream-menu-item": "Cerrar flujo de dinero",
-			"heading": "Detalles de la transmisión",
-			"label-amount": "Cantidad",
-			"label-funds-available-to-withdraw": "Fondos disponibles para retirar ahora",
+			"heading": "Detalles de la transferencia",
+			"label-amount": "Saldo",
+			"label-funds-available-to-withdraw": "Fondos disponibles para retirar inmediatamente",
 			"label-funds-left-in-account": "Fondos que quedan en la cuenta",
-			"label-funds-runout": "se acabará por",
-			"label-funds-runout-today": "",
+			"label-funds-runout": "se acabará para",
+			"label-funds-runout-today": "se acabará para",
 			"label-funds-sent": "Fondos enviados al destinatario",
 			"label-payment-rate": "Tasa de pago",
 			"label-receiving-from": "Recibiendo de",

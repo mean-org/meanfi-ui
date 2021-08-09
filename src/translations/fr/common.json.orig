@@ -23,6 +23,15 @@
 		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
+<<<<<<< HEAD
+=======
+		"categories": {
+			"cat1": "Personnes",
+			"cat2": "Affaires",
+			"cat3": "Immobilier",
+			"cat4": "Autres"
+		},
+>>>>>>> develop
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -31,7 +40,12 @@
 			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
+<<<<<<< HEAD
 		"modal-title": "Sélectionnez le type de transfert",
+=======
+		"lead": "Choisissez l'un de nos contrats audités",
+		"modal-title": "Nouveau transfert d'argent",
+>>>>>>> develop
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
 			"name": "Envoyer le paiement"
