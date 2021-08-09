@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Link, Redirect } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./../../App.less";
 import { Layout } from "antd";
 import { AppBar } from "../AppBar";
@@ -17,6 +17,7 @@ import { consoleOut } from "../../utils/ui";
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
+  const location = useLocation();
   const {
     theme,
     streamList,
@@ -24,6 +25,7 @@ export const AppLayout = React.memo((props: any) => {
     previousWalletConnectState,
     setStreamList,
     setStreamDetail,
+    setCurrentScreen,
     setLoadingStreams,
     setSelectedStream,
     refreshTokenBalance,
@@ -35,7 +37,6 @@ export const AppLayout = React.memo((props: any) => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const [previousChain, setChain] = useState("");
-  const [redirect, setRedirect] = useState<string | null>(null);
 
   // Effect Network change
   useEffect(() => {
@@ -66,9 +67,9 @@ export const AppLayout = React.memo((props: any) => {
               console.log('Home -> streamList:', streams);
               setSelectedStream(streams[0]);
               setStreamDetail(streams[0]);
-              if (streams && streams.length > 0) {
+              if (streams && streams.length > 0 && location.pathname === '/transfers') {
                 consoleOut('streams are available, opening streams...', '', 'blue');
-                setRedirect('/streams');
+                setCurrentScreen('streams');
               }
             });
         }
@@ -77,7 +78,9 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         refreshTokenBalance();
-        setRedirect('/');
+        if (location.pathname === '/transfers') {
+          setCurrentScreen('contract');
+        }
         notify({
           message: t('notifications.wallet-connection-event-title'),
           description: t('notifications.wallet-disconnect-message'),
@@ -88,6 +91,7 @@ export const AppLayout = React.memo((props: any) => {
 
     return () => {};
   }, [
+    location,
     connection,
     publicKey,
     connected,
@@ -97,6 +101,7 @@ export const AppLayout = React.memo((props: any) => {
     t,
     setStreamList,
     setStreamDetail,
+    setCurrentScreen,
     setSelectedStream,
     setLoadingStreams,
     refreshTokenBalance,
@@ -105,7 +110,6 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
-    {redirect && (<Redirect to={redirect} />)}
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">

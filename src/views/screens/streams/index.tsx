@@ -19,9 +19,9 @@ import {
   IconOutgoingPaused,
   IconShare,
   IconUpload,
-} from "../../Icons";
-import { AppStateContext } from "../../contexts/appstate";
-import { useWallet } from "../../contexts/wallet";
+} from "../../../Icons";
+import { AppStateContext } from "../../../contexts/appstate";
+import { useWallet } from "../../../contexts/wallet";
 import {
   formatAmount,
   getComputedFees,
@@ -29,17 +29,17 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   shortenAddress
-} from "../../utils/utils";
+} from "../../../utils/utils";
 import {
   consoleOut,
   copyText,
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getTransactionOperationDescription,
-} from "../../utils/ui";
-import { ContractSelectorModal } from '../../components/ContractSelectorModal';
-import { OpenStreamModal } from '../../components/OpenStreamModal';
-import { WithdrawModal } from '../../components/WithdrawModal';
+} from "../../../utils/ui";
+import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
+import { OpenStreamModal } from '../../../components/OpenStreamModal';
+import { WithdrawModal } from '../../../components/WithdrawModal';
 import {
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
@@ -48,27 +48,26 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
-} from "../../constants";
+} from "../../../constants";
 import _ from "lodash";
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { TransactionStatus } from "../../models/enums";
-import { notify } from "../../utils/notifications";
-import { AddFundsModal } from "../../components/AddFundsModal";
+import { TransactionStatus } from "../../../models/enums";
+import { notify } from "../../../utils/notifications";
+import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { CloseStreamModal } from "../../components/CloseStreamModal";
-import { useNativeAccount } from "../../contexts/accounts";
+import { CloseStreamModal } from "../../../components/CloseStreamModal";
+import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/src/types";
 import { calculateActionFees, getStream } from "money-streaming/src/utils";
 import { MoneyStreaming } from "money-streaming/src/money-streaming";
 import { useTranslation } from "react-i18next";
-import { PreFooter } from "../../components/PreFooter";
 
 var dateFormat = require("dateformat");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const StreamsView = () => {
+export const Streams = () => {
   const connectionConfig = useConnectionConfig();
   const connection = useConnection();
   const { connected, wallet, publicKey } = useWallet();
@@ -754,7 +753,6 @@ export const StreamsView = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      setCurrentScreen("streams");
     }
   }
 
@@ -953,7 +951,6 @@ export const StreamsView = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      setCurrentScreen("streams");
     }
   }
 
@@ -1795,294 +1792,285 @@ export const StreamsView = () => {
   );
 
   return (
-    <>
-    <div className="container main-container">
-      <div className="interaction-area">
-
-        <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
-          {/* Left / top panel*/}
-          <div className="streams-container">
-            <div className="streams-heading">{t('streams.screen-title')}</div>
-            <div className="inner-container">
-              {/* item block */}
-              <div className="item-block vertical-scroll">
-                <Spin spinning={loadingStreams}>
-                  {renderStreamList}
-                </Spin>
-              </div>
-              {/* Bottom CTA */}
-              <div className="bottom-ctas">
-                {customStreamDocked ? (
-                  <div className="create-stream">
-                    <Button
-                      block
-                      type="primary"
-                      shape="round"
-                      size="small"
-                      onClick={handleCancelCustomStreamClick}>
-                      {t('streams.back-to-my-streams-cta')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="create-stream">
-                    <Button
-                      block
-                      type="primary"
-                      shape="round"
-                      size="small"
-                      onClick={showContractSelectorModal}>
-                      {t('streams.create-new-stream-cta')}
-                    </Button>
-                  </div>
-                )}
-                {!customStreamDocked && (
-                  <div className="open-stream">
-                    <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
-                      <Button
-                        shape="round"
-                        type="text"
-                        size="small"
-                        className="ant-btn-shaded"
-                        onClick={showOpenStreamModal}
-                        icon={<SearchOutlined />}>
-                      </Button>
-                    </Tooltip>
-                  </div>
-                )}
-              </div>
-            </div>
+    <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+      {/* Left / top panel*/}
+      <div className="streams-container">
+        <div className="streams-heading">{t('streams.screen-title')}</div>
+        <div className="inner-container">
+          {/* item block */}
+          <div className="item-block vertical-scroll">
+            <Spin spinning={loadingStreams}>
+              {renderStreamList}
+            </Spin>
           </div>
-          {/* Right / down panel */}
-          <div className="stream-details-container">
-            <Divider className="streams-divider" plain></Divider>
-            <div className="streams-heading">{t('streams.stream-detail.heading')}</div>
-            <div className="inner-container">
-              {connected && streamDetail ? (
-                <>
-                {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
-                </>
-              ) : (
-                <p>{t('streams.stream-detail.no-stream')}</p>
-              )}
-            </div>
+          {/* Bottom CTA */}
+          <div className="bottom-ctas">
+            {customStreamDocked ? (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={handleCancelCustomStreamClick}>
+                  {t('streams.back-to-my-streams-cta')}
+                </Button>
+              </div>
+            ) : (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={showContractSelectorModal}>
+                  {t('streams.create-new-stream-cta')}
+                </Button>
+              </div>
+            )}
+            {!customStreamDocked && (
+              <div className="open-stream">
+                <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
+                  <Button
+                    shape="round"
+                    type="text"
+                    size="small"
+                    className="ant-btn-shaded"
+                    onClick={showOpenStreamModal}
+                    icon={<SearchOutlined />}>
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
           </div>
-          <ContractSelectorModal
-            isVisible={isContractSelectorModalVisible}
-            handleOk={onAcceptContractSelector}
-            handleClose={closeContractSelectorModal}/>
-          <OpenStreamModal
-            isVisible={isOpenStreamModalVisible}
-            handleOk={onAcceptOpenStream}
-            handleClose={closeOpenStreamModal} />
-          <CloseStreamModal
-            isVisible={isCloseStreamModalVisible}
-            transactionFees={transactionFees}
-            handleOk={onAcceptCloseStream}
-            handleClose={hideCloseStreamModal}
-            content={getStreamClosureMessage()} />
-          <AddFundsModal
-            isVisible={isAddFundsModalVisible}
-            transactionFees={transactionFees}
-            handleOk={onAcceptAddFunds}
-            handleClose={closeAddFundsModal} />
-          <WithdrawModal
-            startUpData={lastStreamDetail}
-            transactionFees={transactionFees}
-            isVisible={isWithdrawModalVisible}
-            handleOk={onAcceptWithdraw}
-            handleClose={closeWithdrawModal} />
-          {/* Add funds transaction execution modal */}
-          <Modal
-            className="mean-modal no-full-screen"
-            maskClosable={false}
-            afterClose={onAfterAddFundsTransactionModalClosed}
-            visible={isAddFundsTransactionModalVisible}
-            title={getTransactionModalTitle()}
-            onCancel={hideAddFundsTransactionModal}
-            width={280}
-            footer={null}>
-            <div className="transaction-progress">
-              {isBusy ? (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
-                  <div className="indication">{t('transactions.status.instructions')}</div>
-                </>
-              ) : isSuccess() ? (
-                <>
-                  <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={onAddFundsTransactionFinished}>
-                    {t('transactions.status.cta-close')}
-                  </Button>
-                </>
-              ) : isError() ? (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">
-                      {t('transactions.status.tx-start-failure', {
-                        accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                        feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
-                      }
-                    </h4>
-                  ) : (
-                    <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideAddFundsTransactionModal}>
-                    {t('transactions.status.cta-dismiss')}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-                </>
-              )}
-            </div>
-          </Modal>
-          {/* Withdraw funds transaction execution modal */}
-          <Modal
-            className="mean-modal no-full-screen"
-            maskClosable={false}
-            afterClose={onAfterWithdrawFundsTransactionModalClosed}
-            visible={isWithdrawFundsTransactionModalVisible}
-            title={getTransactionModalTitle()}
-            onCancel={hideWithdrawFundsTransactionModal}
-            width={280}
-            footer={null}>
-            <div className="transaction-progress">
-              {isBusy ? (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
-                  <div className="indication">{t('transactions.status.instructions')}</div>
-                </>
-              ) : isSuccess() ? (
-                <>
-                  <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={onWithdrawFundsTransactionFinished}>
-                    {t('transactions.status.cta-close')}
-                  </Button>
-                </>
-              ) : isError() ? (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">
-                      {t('transactions.status.tx-start-failure', {
-                        accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                        feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
-                      }
-                    </h4>
-                  ) : (
-                    <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideWithdrawFundsTransactionModal}>
-                    {t('transactions.status.cta-dismiss')}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-                </>
-              )}
-            </div>
-          </Modal>
-          {/* Close stream transaction execution modal */}
-          <Modal
-            className="mean-modal no-full-screen"
-            maskClosable={false}
-            afterClose={onAfterCloseStreamTransactionModalClosed}
-            visible={isCloseStreamTransactionModalVisible}
-            title={getTransactionModalTitle()}
-            onCancel={hideCloseStreamTransactionModal}
-            width={280}
-            footer={null}>
-            <div className="transaction-progress">
-              {isBusy ? (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
-                  <div className="indication">{t('transactions.status.instructions')}</div>
-                </>
-              ) : isSuccess() ? (
-                <>
-                  <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={onCloseStreamTransactionFinished}>
-                    {t('transactions.status.cta-finish')}
-                  </Button>
-                </>
-              ) : isError() ? (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">
-                      {t('transactions.status.tx-start-failure', {
-                        accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                        feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
-                      }
-                    </h4>
-                  ) : (
-                    <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-                  )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideCloseStreamTransactionModal}>
-                    {t('transactions.status.cta-dismiss')}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
-                </>
-              )}
-            </div>
-          </Modal>
         </div>
-
       </div>
+      {/* Right / down panel */}
+      <div className="stream-details-container">
+        <Divider className="streams-divider" plain></Divider>
+        <div className="streams-heading">{t('streams.stream-detail.heading')}</div>
+        <div className="inner-container">
+          {connected && streamDetail ? (
+            <>
+            {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
+            </>
+          ) : (
+            <p>{t('streams.stream-detail.no-stream')}</p>
+          )}
+        </div>
+      </div>
+      <ContractSelectorModal
+        isVisible={isContractSelectorModalVisible}
+        handleOk={onAcceptContractSelector}
+        handleClose={closeContractSelectorModal}/>
+      <OpenStreamModal
+        isVisible={isOpenStreamModalVisible}
+        handleOk={onAcceptOpenStream}
+        handleClose={closeOpenStreamModal} />
+      <CloseStreamModal
+        isVisible={isCloseStreamModalVisible}
+        transactionFees={transactionFees}
+        handleOk={onAcceptCloseStream}
+        handleClose={hideCloseStreamModal}
+        content={getStreamClosureMessage()} />
+      <AddFundsModal
+        isVisible={isAddFundsModalVisible}
+        transactionFees={transactionFees}
+        handleOk={onAcceptAddFunds}
+        handleClose={closeAddFundsModal} />
+      <WithdrawModal
+        startUpData={lastStreamDetail}
+        transactionFees={transactionFees}
+        isVisible={isWithdrawModalVisible}
+        handleOk={onAcceptWithdraw}
+        handleClose={closeWithdrawModal} />
+      {/* Add funds transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterAddFundsTransactionModalClosed}
+        visible={isAddFundsTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideAddFundsTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onAddFundsTransactionFinished}>
+                {t('transactions.status.cta-close')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideAddFundsTransactionModal}>
+                {t('transactions.status.cta-dismiss')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
+      {/* Withdraw funds transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterWithdrawFundsTransactionModalClosed}
+        visible={isWithdrawFundsTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideWithdrawFundsTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onWithdrawFundsTransactionFinished}>
+                {t('transactions.status.cta-close')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideWithdrawFundsTransactionModal}>
+                {t('transactions.status.cta-dismiss')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
+      {/* Close stream transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterCloseStreamTransactionModalClosed}
+        visible={isCloseStreamTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideCloseStreamTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onCloseStreamTransactionFinished}>
+                {t('transactions.status.cta-finish')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideCloseStreamTransactionModal}>
+                {t('transactions.status.cta-dismiss')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
-    <PreFooter />
-    </>
   );
 
 };

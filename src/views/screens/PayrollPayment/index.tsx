@@ -42,7 +42,6 @@ import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
 import { calculateActionFees } from "money-streaming/src/utils";
 import { useTranslation } from "react-i18next";
 import { ContractDefinition } from "../../../models/contract-definition";
-import { Redirect } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -65,6 +64,7 @@ export const PayrollPayment = () => {
     transactionStatus,
     timeSheetRequirement,
     streamProgramAddress,
+    setCurrentScreen,
     setSelectedToken,
     resetContractValues,
     setSelectedTokenBalance,
@@ -83,7 +83,6 @@ export const PayrollPayment = () => {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
-  const [redirect, setRedirect] = useState<string | null>(null);
 
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
@@ -115,6 +114,7 @@ export const PayrollPayment = () => {
     if (!payrollFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setPayrollFees(values);
+        console.log("payrollFees:", values);
       });
     }
   }, [connection, payrollFees]);
@@ -168,7 +168,7 @@ export const PayrollPayment = () => {
     setSelectedStream(undefined);
     refreshStreamList(true);
     closeTransactionModal();
-    setRedirect('/streams');
+    setCurrentScreen('streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -792,8 +792,6 @@ export const PayrollPayment = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
-
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">

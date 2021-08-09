@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown } from "../../Icons";
-import { OneTimePayment, RepeatingPayment, PayrollPayment } from "../screens";
+import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
 import { PreFooter } from "../../components/PreFooter";
 
 export const TransfersView = () => {
-  const { contract } = useContext(AppStateContext);
+  const { contract, currentScreen } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
   // Contract switcher modal
@@ -33,22 +33,26 @@ export const TransfersView = () => {
     <>
     <div className="container main-container">
       <div className="interaction-area">
-        <div className="place-transaction-box">
-          <div className="position-relative mb-2">
-            {contract && (
-              <>
-                <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
-                <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
-              </>
-            )}
+        {currentScreen === 'streams' ? (
+          <Streams />
+        ) : (
+          <div className="place-transaction-box">
+            <div className="position-relative mb-2">
+              {contract && (
+                <>
+                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                  <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
+                </>
+              )}
+            </div>
+            {/* Display apropriate contract setup screen */}
+            {renderContract()}
+            <ContractSelectorModal
+              isVisible={isContractSelectorModalVisible}
+              handleOk={onAcceptContractSelector}
+              handleClose={closeContractSelectorModal}/>
           </div>
-          <ContractSelectorModal
-            isVisible={isContractSelectorModalVisible}
-            handleOk={onAcceptContractSelector}
-            handleClose={closeContractSelectorModal}/>
-          {/* Display apropriate contract setup screen */}
-          {renderContract()}
-        </div>
+        )}
       </div>
     </div>
     <PreFooter />

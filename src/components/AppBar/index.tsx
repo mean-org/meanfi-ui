@@ -8,6 +8,8 @@ import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
+import { useContext } from 'react';
+import { AppStateContext } from '../../contexts/appstate';
 
 const { SubMenu } = Menu;
 
@@ -16,6 +18,12 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
   const connection = useConnectionConfig();
   const { connected } = useWallet();
   const { t } = useTranslation("common");
+  const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
+
+  const onGoToTransfersClick = () => {
+    refreshStreamList(true);
+    setCustomStreamDocked(false);
+  };
 
   return (
     <>
@@ -24,7 +32,7 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
           <Menu.Item key="/swap">
             <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
           </Menu.Item>
-          <Menu.Item key="/transfers">
+          <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
             <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
           </Menu.Item>
           <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>

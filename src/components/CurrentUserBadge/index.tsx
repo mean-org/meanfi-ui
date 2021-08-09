@@ -98,7 +98,7 @@ export const CurrentUserBadge = (props: {}) => {
   const onGoToStreamsClick = () => {
     refreshStreamList(true);
     setCustomStreamDocked(false);
-    setRedirect('/streams');
+    setRedirect('/transfers');
   };
 
   if (!wallet?.publicKey) {

@@ -154,7 +154,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
-  const [currentScreen, setSelectedTab] = useState<string | undefined>();
+  const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);

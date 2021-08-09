@@ -110,6 +110,7 @@ export const RepeatingPayment = () => {
     if (!repeatingPaymentFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
+        console.log("repeatingPaymentFees:", values);
       });
     }
   }, [connection, repeatingPaymentFees]);
