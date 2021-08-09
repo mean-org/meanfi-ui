@@ -36,7 +36,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/src/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
 import { calculateActionFees } from "money-streaming/src/utils";
@@ -108,7 +107,7 @@ export const RepeatingPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees) {
+    if (!repeatingPaymentFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
       });

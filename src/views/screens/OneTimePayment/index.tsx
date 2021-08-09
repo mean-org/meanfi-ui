@@ -93,9 +93,10 @@ export const OneTimePayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.oneTimePayment);
     }
-    if (!otpFees) {
+    if (!otpFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setOtpFees(values);
+        console.log("otpFees:", values);
       });
     }
   }, [connection, otpFees]);

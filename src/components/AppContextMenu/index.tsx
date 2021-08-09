@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Button, Dropdown, Menu } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import {
-  IconAdd,
   IconBookOpen,
   IconChat,
   IconCodeBlock,
@@ -12,17 +11,15 @@ import {
   IconSettings,
   IconUniversity,
 } from "../../Icons";
-import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_WEBSITE_URL } from "../../constants";
+import { MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_WEBSITE_URL } from "../../constants";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 
 export const AppContextMenu = () => {
 
-  const connection = useConnectionConfig();
   const { connected, disconnect, resetWalletProvider } = useWallet();
   const {
     theme,
@@ -116,22 +113,11 @@ export const AppContextMenu = () => {
         </a>
       </Menu.Item>
       <Menu.Item key="7">
-        <a href="https://www.someplace.com">
+        <a href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">
           <IconChat className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       </Menu.Item>
-      {connected && connection.env !== 'mainnet-beta' && (
-        <>
-          <Menu.Divider />
-          <Menu.Item key="8">
-            <Link to="/faucet">
-              <IconAdd className="mean-svg-icons" />
-              <span className="menu-item-text">{t('ui-menus.app-context-menu.faucet')}</span>
-            </Link>
-          </Menu.Item>
-        </>
-      )}
       {connected && (
         <Menu.Item key="9" onClick={onDisconnectWallet}>
           <IconLogout className="mean-svg-icons" />
