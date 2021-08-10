@@ -3,7 +3,7 @@ import { shortenAddress, useLocalStorageState } from "../utils/utils";
 import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/src/utils";
+import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { PublicKey } from "@solana/web3.js";
@@ -12,7 +12,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
-import { StreamActivity, StreamInfo } from "money-streaming/src/types";
+import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 
 export interface TransactionStatusInfo {

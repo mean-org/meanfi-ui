@@ -7,7 +7,7 @@ import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from 
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
-import { TransactionFees } from "money-streaming/src/types";
+import { TransactionFees } from "money-streaming/lib/types";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 

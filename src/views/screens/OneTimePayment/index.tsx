@@ -23,12 +23,12 @@ import {
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming } from "money-streaming/src/money-streaming";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
-import { calculateActionFees } from "money-streaming/src/utils";
+import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;

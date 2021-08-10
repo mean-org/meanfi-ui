@@ -10,7 +10,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { listStreams } from "money-streaming/src/utils";
+import { listStreams } from "money-streaming/lib/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 

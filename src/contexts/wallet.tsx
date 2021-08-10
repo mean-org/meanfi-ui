@@ -13,7 +13,7 @@ import { useLocalStorageState } from "./../utils/utils";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
-import { WalletAdapter } from "money-streaming/src/wallet-adapter";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import { useTranslation } from "react-i18next";
 
 const ASSETS_URL = "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
