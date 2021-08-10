@@ -161,9 +161,10 @@ export const RepeatingPayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
+    resetContractValues();
     setSelectedStream(undefined);
-    refreshStreamList(true);
     closeTransactionModal();
+    refreshStreamList(true);
     setCurrentScreen("streams");
   };
 

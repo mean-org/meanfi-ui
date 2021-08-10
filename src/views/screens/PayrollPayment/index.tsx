@@ -83,7 +83,7 @@ export const PayrollPayment = () => {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
-
+  const [redirect, setRedirect] = useState<string | null>(null);
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
@@ -165,10 +165,12 @@ export const PayrollPayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
+    resetContractValues();
     setSelectedStream(undefined);
-    refreshStreamList(true);
     closeTransactionModal();
+    refreshStreamList(true);
     setCurrentScreen('streams');
+    setRedirect('/transfers');
   };
 
   const handleFromCoinAmountChange = (e: any) => {
