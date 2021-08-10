@@ -42,6 +42,7 @@ import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { ContractDefinition } from "../../../models/contract-definition";
+import { Redirect } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -168,9 +169,9 @@ export const PayrollPayment = () => {
     resetContractValues();
     setSelectedStream(undefined);
     closeTransactionModal();
-    refreshStreamList(true);
     setCurrentScreen('streams');
     setRedirect('/transfers');
+    refreshStreamList(true);
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -245,7 +246,6 @@ export const PayrollPayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setSelectedToken(tokenList[0]);
         }, 100);
@@ -794,6 +794,7 @@ export const PayrollPayment = () => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">

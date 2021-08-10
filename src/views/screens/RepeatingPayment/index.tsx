@@ -240,7 +240,6 @@ export const RepeatingPayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
         setTimeout(() => {
           setSelectedToken(tokenList[0]);
         }, 100);
