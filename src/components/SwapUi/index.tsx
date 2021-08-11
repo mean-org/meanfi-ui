@@ -127,8 +127,8 @@ export const SwapUi = () => {
       tokenBalance &&
       fromCoinAmount &&
       parseFloat(fromCoinAmount) > 0 &&
-      parseFloat(fromCoinAmount) <= tokenBalance &&
-      parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
+      // parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount) &&
+      parseFloat(fromCoinAmount) <= tokenBalance
       ? true
       : false;
   };
@@ -144,8 +144,8 @@ export const SwapUi = () => {
       ? t("transactions.validation.no-amount")
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t("transactions.validation.amount-high")
-      : tokenBalance < getFeeAmount(fromCoinAmount)
-      ? t("transactions.validation.amount-low")
+      // : tokenBalance < getFeeAmount(fromCoinAmount)
+      // ? t("transactions.validation.amount-low")
       : t("transactions.validation.valid-approve");
   };
 
@@ -164,6 +164,19 @@ export const SwapUi = () => {
             : false;
   }
 
+  const updateTokenPair = (source: TokenInfo, destination: TokenInfo, flip = false) => {
+    const tokenUp = JSON.parse(JSON.stringify(flip ? destination : source)) as TokenInfo;
+    const tokenDn = JSON.parse(JSON.stringify(flip ? source : destination)) as TokenInfo;
+    setSelectedToken(tokenUp);
+    setSwapToToken(tokenDn);
+    if (flip) {
+      const valueUp = fromCoinAmount.slice();
+      const valueDn = swapToTokenAmount.slice()
+      setFromCoinAmount(valueDn);
+      setSwapToTokenAmount(valueUp);
+    }
+  }
+
   // Prefabrics
 
   const renderSourceTokenList = (
@@ -171,12 +184,7 @@ export const SwapUi = () => {
       {tokenList ? (
         tokenList.map((token, index) => {
           const onClick = () => {
-            if (areSameTokens(token, swapToToken as TokenInfo)) {
-              setSelectedToken(swapToToken);
-              setSwapToToken(token);
-            } else {
-              setSelectedToken(token);
-            }
+            setSelectedToken(token);
             consoleOut("token selected:", token);
             setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
@@ -188,6 +196,8 @@ export const SwapUi = () => {
               className={`token-item ${
                 selectedToken && selectedToken.address === token.address
                   ? "selected"
+                  : areSameTokens(token, swapToToken as TokenInfo)
+                  ? 'disabled'
                   : "simplelink"
               }`}
             >
@@ -224,12 +234,7 @@ export const SwapUi = () => {
       {tokenList ? (
         tokenList.map((token, index) => {
           const onClick = () => {
-            if (areSameTokens(token, selectedToken as TokenInfo)) {
-              setSwapToToken(selectedToken);
-              setSelectedToken(token);
-            } else {
-              setSwapToToken(token);
-            }
+            setSwapToToken(token);
             consoleOut("token selected:", token);
             setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
@@ -241,6 +246,8 @@ export const SwapUi = () => {
               className={`token-item ${
                 swapToToken && swapToToken.address === token.address
                   ? "selected"
+                  : areSameTokens(token, selectedToken as TokenInfo)
+                  ? 'disabled'
                   : "simplelink"
               }`}
             >
@@ -317,7 +324,9 @@ export const SwapUi = () => {
       />
 
       <div className="flip-button-container">
-        <div className="flip-button"><IconSwapFlip className="mean-svg-icons" /></div>
+        <div className="flip-button" onClick={() => updateTokenPair(selectedToken as TokenInfo, swapToToken as TokenInfo, true)}>
+          <IconSwapFlip className="mean-svg-icons" />
+        </div>
       </div>
 
       {/* Destination token / amount */}
@@ -361,7 +370,7 @@ export const SwapUi = () => {
       </Modal>
 
       {/* Info */}
-      {selectedToken && (
+      {/* {selectedToken && (
         <div className="p-2 mb-2">
           {infoRow(
             `1 ${selectedToken.symbol}:`,
@@ -386,7 +395,7 @@ export const SwapUi = () => {
                 )
             )}
         </div>
-      )}
+      )} */}
 
       {/* Action button */}
       <Button

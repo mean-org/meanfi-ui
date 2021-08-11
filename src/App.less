@@ -1244,6 +1244,11 @@ em {
     justify-content: flex-start;
     align-items: center;
     padding: 8px 16px;
+    &.disabled {
+      pointer-events: none;
+      opacity: 0.6;
+      background-color: var(--color-secondary-alpha-02);
+    }
     &.selected {
       background-color: var(--color-secondary-alpha-10);
     }
