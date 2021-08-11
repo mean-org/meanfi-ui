@@ -175,6 +175,12 @@
 			"title-sending-to": "Sending to"
 		}
 	},
+	"swap": {
+		"input-label-destination": "Swap to (Estimate)",
+		"input-label-source": "Swap from",
+		"token-select-destination": "Select token",
+		"token-select-source": "Select token"
+	},
 	"token-selector": {
 		"modal-title": "Select a token"
 	},

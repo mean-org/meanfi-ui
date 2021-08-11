@@ -175,6 +175,12 @@
 			"title-sending-to": "Envoi à"
 		}
 	},
+	"swap": {
+		"input-label-destination": "",
+		"input-label-source": "",
+		"token-select-destination": "",
+		"token-select-source": ""
+	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un token"
 	},

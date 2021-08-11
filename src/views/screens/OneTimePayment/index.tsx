@@ -195,10 +195,6 @@ export const OneTimePayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        setTimeout(() => {
-          setSelectedToken(tokenList[0]);
-        }, 100);
-      } else {
         setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);

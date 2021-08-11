@@ -77,10 +77,10 @@ export const AppLayout = React.memo((props: any) => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
-        refreshTokenBalance();
         if (location.pathname === '/transfers') {
           setCurrentScreen('contract');
         }
+        refreshTokenBalance();
         notify({
           message: t('notifications.wallet-connection-event-title'),
           description: t('notifications.wallet-disconnect-message'),
