@@ -67,6 +67,8 @@ export const CurrentUserBadge = (props: {}) => {
           outgoing: outgoing.length
         }
         setStreamStats(stats);
+      } else {
+        setStreamStats(defaultStreamStats);
       }
     }
 
