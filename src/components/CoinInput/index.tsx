@@ -16,8 +16,7 @@ export const CoinInput = (props: {
   const { t } = useTranslation('common');
 
   return (
-    <>
-        <div className="transaction-field mb-1">
+    <div className={`transaction-field ${props.translationId}`}>
         <div className="transaction-field-row">
             <span className="field-label-left">{t(`swap.input-label-${props.translationId}`)}</span>
             <span className="field-label-right">
@@ -76,7 +75,6 @@ export const CoinInput = (props: {
                 <IconCaretDown className="mean-svg-icons" />
             </span>
         </div>
-        </div>
-    </>
+    </div>
   );
 };
