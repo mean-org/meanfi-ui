@@ -269,7 +269,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
+        const detail = await getStream(connection, streamPublicKey);
         console.log('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
@@ -312,7 +312,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!loadingStreamActivity) {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
+      listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
         .then(value => {
           console.log('activity:', value);
           setStreamActivity(value);
@@ -453,7 +453,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateLoadingStreams(true);
       const programId = new PublicKey(streamProgramAddress);
 
-      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+      listStreams(connection, programId, publicKey, publicKey)
         .then(streams => {
           console.log('Streams:', streams);
           let item: StreamInfo | undefined;
@@ -476,7 +476,7 @@ const AppStateProvider: React.FC = ({ children }) => {
               if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
-                listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey, 'confirmed', true)
+                listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
                   .then(value => {
                     console.log('activity:', value);
                     setStreamActivity(value);

@@ -279,7 +279,7 @@ export const Streams = () => {
     try {
       streamPublicKey = new PublicKey(streamId as string);
       try {
-        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
+        const detail = await getStream(connection, streamPublicKey);
         if (detail) {
           console.log('detail', detail);
           setLastStreamDetail(detail);

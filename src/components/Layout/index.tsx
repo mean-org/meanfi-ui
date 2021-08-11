@@ -60,7 +60,7 @@ export const AppLayout = React.memo((props: any) => {
         if (publicKey) {
           const programId = new PublicKey(streamProgramAddress);
           setLoadingStreams(true);
-          listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
+          listStreams(connection, programId, publicKey, publicKey)
             .then(async streams => {
               setStreamList(streams);
               setLoadingStreams(false);
