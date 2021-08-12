@@ -100,7 +100,6 @@ export const SwapUi = () => {
   // Event handling
 
   const handleSwapFromAmountChange = (e: any) => {
-    console.log("swapToToken:", swapToToken);
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
