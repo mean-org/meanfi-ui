@@ -334,6 +334,9 @@ footer.ant-layout-footer {
   height: 100%;
   width: auto;
   max-height: 42px;
+  @media (max-width: 399.98px) {
+    max-height: 32px;
+  }
 }
 
 // Buttons
@@ -616,7 +619,7 @@ footer.ant-layout-footer {
     .app-bar-inner {
       display: block;
       flex: 1 0 auto;
-      padding-left: 32px;
+      padding-left: 30px;
       text-align: center;
     }
   }
@@ -637,7 +640,7 @@ footer.ant-layout-footer {
     }
     #overlay-button {
       display: block;
-      padding: 18px 5px;
+      padding: 14px 2px;
       cursor: pointer;
       user-select: none;
       span {
