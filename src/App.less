@@ -202,7 +202,7 @@ footer.ant-layout-footer {
   background-color: var(--bg-color);
   height: var(--footer-bar-height);
   @media (min-width: 1200px) {
-    background-color: var(--bg-color);
+    display: none;
   }
   .app-footer {
     padding: 8px 0;
@@ -612,9 +612,19 @@ footer.ant-layout-footer {
   z-index: 100;
   height: var(--main-navigation-bar-height);
   background-color: var(--bg-color);
-  .app-bar-inner {
-    flex: 1 0 auto;
-    display: flex;
+  @media (max-width: 575.98px) {
+    .app-bar-inner {
+      display: block;
+      flex: 1 0 auto;
+      padding-left: 32px;
+      text-align: center;
+    }
+  }
+  @media (min-width: 576px) {
+    .app-bar-inner {
+      display: flex;
+      flex: 1 0 auto;
+    }
   }
   .mobile-menu {
     position: relative;
@@ -709,6 +719,8 @@ footer.ant-layout-footer {
         padding: 0;
         list-style-type: none;
         width: 100%;
+        min-width: 160px;
+        max-width: 300px;
         .mobile-submenu-title {
           text-transform: uppercase;
           line-height: 1;
@@ -720,18 +732,22 @@ footer.ant-layout-footer {
         }
         li.mobile-menu-item {
           &.active {
+            border-radius: var(--custom-border-radius);
             background-color: var(--color-primary);
             a {
               color: var(--color-white);
             }
           }
           &:not(.active):hover {
-            background-color: var(--color-secondary-alpha-05);
+            // background-color: var(--color-secondary-alpha-02);
+            a {
+              color: var(--color-secondary-alpha-85);
+            }
           }
           a {
             display: block;
             padding: 1em 0;
-            color: var(--font-color);
+            color: var(--color-secondary-alpha-60);
             text-decoration: none;
             font-size: 1.5em;
           }
