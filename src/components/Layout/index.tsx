@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./../../App.less";
 import { AppConfig } from "../..";
@@ -10,13 +10,12 @@ import { BackButton } from "../BackButton";
 import { PublicKey } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
+import { useWallet } from "../../contexts/wallet";
 import { listStreams } from "money-streaming/lib/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import { isMobile, isDesktop, isTablet } from "react-device-detect";
-import { useLocalStorageState } from "../../utils/utils";
+import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
 
 const { Header, Content, Footer } = Layout;
 
@@ -54,10 +53,14 @@ export const AppLayout = React.memo((props: any) => {
     const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket);
     const data = {
       platform: getPlatform(),
+      browser: browserName,
       'wallet_address': address,
       'wallet_type': provider?.name || 'Other'
     };
-    writeApi.useDefaultTags({platform: getPlatform()});
+    writeApi.useDefaultTags({
+      platform: getPlatform(),
+      browser: browserName
+    });
 
     const point1 = new Point('wallet_account_connections')
       .tag('wallet_address', address)
