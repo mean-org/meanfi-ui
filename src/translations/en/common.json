@@ -329,5 +329,8 @@
 		"label-input-amount": "Enter amount to withdraw",
 		"label-input-right": "By percentual preset",
 		"modal-title": "Withdraw funds"
+	},
+	"custody": {
+		"apply-to-custody-cta": "Apply to MeanFi Custody"
 	}
 }
