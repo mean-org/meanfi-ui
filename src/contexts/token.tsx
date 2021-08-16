@@ -38,7 +38,7 @@ export function TokenContextProvider(props: any) {
 
   // Fetch all the owned token accounts for the wallet.
   useEffect(() => {      
-    if (!provider.wallet.publicKey) {
+    if (!provider || !provider.wallet || !provider.wallet.publicKey) {
       OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
       setRefresh((r) => r + 1);
       return;
@@ -72,10 +72,7 @@ export function TokenContextProvider(props: any) {
         }
       });
 
-  }, [
-      provider.wallet.publicKey,
-      provider.connection
-  ]);
+  }, [provider]);
 
   return (
     <TokenContext.Provider
@@ -170,8 +167,7 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
     
   }, [
       isSol,
-      provider.connection,
-      provider.wallet.publicKey,
+      provider,
       tokenAccount
   ]);
 

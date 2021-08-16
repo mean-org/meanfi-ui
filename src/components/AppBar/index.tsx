@@ -10,6 +10,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
+import { environment } from '../../environments/environment';
 
 const { SubMenu } = Menu;
 
@@ -70,9 +71,11 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode={props.menuType === 'desktop' ? 'horizontal' : 'vertical'} className="w-100" >
+      {environment === 'production' &&
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
+      }
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
@@ -132,9 +135,11 @@ export const AppBar = (props: { menuType: string }) => {
       <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
       <div id="overlay">
         <ul onClick={dismissMenu}>
-          <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-            <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
-          </li>
+          {environment === 'production' &&
+            <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+              <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+            </li>
+          }
           <li key="/transfers"
               className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
               onClick={() => onGoToTransfersClick()}>

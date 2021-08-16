@@ -14,6 +14,7 @@ import {
   WrapView
   
 } from "./views";
+import { environment } from "./environments/environment";
 
 export function Routes() {
   return (
@@ -28,14 +29,21 @@ export function Routes() {
                     <Switch>
                       {/* <Route path="/" component={() => <HomeView />} /> */}
                       <Route exact path="/">
-                        <Redirect to="/swap" />
+                        {environment === 'production' && <Redirect to="/swap" />}
+                        {environment !== 'production' && <Redirect to="/transfers" />}
                       </Route>
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />
-                      <Route exact path="/swap" children={<SwapView />} />
+                      {environment === 'production' &&
+                        <Route exact path="/swap" children={<SwapView />} />
+                      }
                       <Route exact path="/wrap" children={<WrapView />} />
                       <Route exact path="/custody" children={<CustodyView />} />
+                      <Route path="*">
+                        {/* TODO: Create a decent 404 page */}
+                        <Redirect to="/" />
+                      </Route>
                     </Switch>
                   </AppLayout>
                 </AppStateProvider>

@@ -63,13 +63,14 @@ export function MarketContextProvider(props: any) {
   // 2. Batch fetch all market accounts for those open orders.
   // 3. Batch fetch all mints associated with the markets.
   useEffect(() => {
-    if (!swapClient.program.provider.wallet.publicKey) {
+    if (!swapClient || !swapClient.program || !swapClient.program.provider ||
+        !swapClient.program.provider.wallet || !swapClient.program.provider.wallet.publicKey) {
       setOoAccounts(new Map());
       return;
     }
-    
+
     OpenOrders.findForOwner(
-        
+
       swapClient.program.provider.connection,
       swapClient.program.provider.wallet.publicKey,
       DEX_PROGRAM_ID
@@ -161,11 +162,7 @@ export function MarketContextProvider(props: any) {
       });
     });
       
-  }, [
-    swapClient.program.provider.connection,
-    swapClient.program.provider.wallet.publicKey,
-    swapClient.program.provider.opts,
-  ]);
+  }, [swapClient]);
   
   return (
     <MarketContext.Provider
