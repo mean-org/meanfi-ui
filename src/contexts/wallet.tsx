@@ -10,7 +10,6 @@ import React, {
 import { notify } from "./../utils/notifications";
 import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
-import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
@@ -38,12 +37,6 @@ export const WALLET_PROVIDERS = [
     name: "MathWallet",
     url: "https://mathwallet.org",
     icon: `${ASSETS_URL}mathwallet.svg`,
-  },
-  {
-    name: "Ledger",
-    url: "https://www.ledger.com",
-    icon: `${ASSETS_URL}ledger.svg`,
-    adapter: LedgerWalletAdapter,
   },
   {
     name: "Phantom",

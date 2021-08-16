@@ -24,6 +24,7 @@ import "./style.less";
 import { Token } from "@solana/spl-token";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Keypair } from "@solana/web3.js";
+import { encode } from "money-streaming/lib/utils";
 
 export const SwapUi = () => {
 
@@ -67,8 +68,8 @@ export const SwapUi = () => {
   // const canSwap = useCanSwap();
   const referral = useReferral(fromMarket);
   const fair = useSwapFair();
-  let fromWallet = useOwnedTokenAccount(fromMint);
-  let toWallet = useOwnedTokenAccount(toMint);
+  // let fromWallet = useOwnedTokenAccount(fromMint);
+  // let toWallet = useOwnedTokenAccount(toMint);
   const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
   const quoteMintInfo = useMint(quoteMint);
   const quoteWallet = useOwnedTokenAccount(quoteMint);
@@ -245,6 +246,10 @@ export const SwapUi = () => {
     const walletKey = wallet?.publicKey as PublicKey;
     // const wrappedSolKey = await findATokenAddress(wallet?.publicKey as PublicKey, WRAPPED_SOL_MINT);
     const wrappedAccount = Keypair.generate();
+    const fromWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, fromMint);
+    const fromWalletInfo = await connection.getAccountInfo(fromWalletKey);
+    const toWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, toMint);
+    const toWalletInfo = await connection.getAccountInfo(toWalletKey);
 
     // Build the swap.
     let swapTxs = await (async () => {
@@ -271,16 +276,19 @@ export const SwapUi = () => {
     
       const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
         ? wrappedAccount.publicKey
-        : fromWallet
-        ? fromWallet.publicKey
+        : fromWalletInfo
+        ? fromWalletKey
         : undefined;
       
       const toWalletAddr = toMint.equals(NATIVE_SOL_MINT)
         ? wrappedAccount.publicKey
-        : toWallet
-        ? toWallet.publicKey
+        : toWalletInfo
+        ? toWalletKey
         : undefined;
-
+        
+      console.log('fromWallet => ', fromWalletAddr);
+      console.log('toWallet => ', toWalletAddr);
+      
       const swapParams = {
         fromMint,
         toMint,
@@ -464,7 +472,9 @@ export const SwapUi = () => {
     if (wallet) {
       const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);
       console.log('tx => ', signedTx);
-      const result = await connection.sendRawTransaction(signedTx.serialize());
+      const serializedTx = signedTx.serialize();
+      console.log('tx serialized => ', encode(serializedTx));
+      const result = await connection.sendRawTransaction(serializedTx);
       console.log('signature => ', result);
     }
   };
