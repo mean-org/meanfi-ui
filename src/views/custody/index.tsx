@@ -1,10 +1,8 @@
 import { HddOutlined, SafetyOutlined } from "@ant-design/icons";
 import { Avatar, Button, Col, Row, Image } from "antd";
-import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 
 export const CustodyView = () => {
-  const { t } = useTranslation("common");
 
   return (
     <div className="solid-bg">
@@ -16,7 +14,7 @@ export const CustodyView = () => {
           shape="round"
           size="large"
           onClick={() => {}}>
-          {t("custody.apply-to-custody-cta")}
+          Apply to MeanFi Custody
         </Button>
       </div>
       <div className="container main-container">
@@ -24,14 +22,18 @@ export const CustodyView = () => {
         <section className="content">
           <Row gutter={[24, 24]}>
             <Col span={12}>
-              <div className="highlight-icon">
-                <Avatar
-                  size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
-                  icon={<HddOutlined />}
-                />
+              <div className="highlight-box">
+                <div className="highlight-icon">
+                  <Avatar
+                    size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
+                    icon={<HddOutlined />}
+                  />
+                </div>
+                <h2 className="highlight-title">Feature highlights</h2>
+                <div className="text-container">
+                  <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
+                </div>
               </div>
-              <h2 className="highlight-title">Feature highlights</h2>
-              <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
             </Col>
             <Col span={12}>
               <Image height={400} src="https://images.squarespace-cdn.com/content/v1/58f7bc39bebafb94498d25bf/1598361043038-I1DQT0LWPTPJOSK2Z0PP/crypto-asset-custody.jpeg?format=1500w" />
@@ -45,14 +47,18 @@ export const CustodyView = () => {
               <Image height={400} src="https://images.squarespace-cdn.com/content/v1/5475f6eae4b0821160f6ac3e/1538589349188-9CFX678L2PDDFZVCOIH1/blockchain+handshake?format=1500w" />
             </Col>
             <Col span={12}>
-              <div className="highlight-icon">
-                <Avatar
-                  size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
-                  icon={<SafetyOutlined />}
-                />
+              <div className="highlight-box">
+                <div className="highlight-icon">
+                  <Avatar
+                    size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
+                    icon={<SafetyOutlined />}
+                  />
+                </div>
+                <h2 className="highlight-title">Feature highlights</h2>
+                <div className="text-container">
+                  <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
+                </div>
               </div>
-              <h2 className="highlight-title">Feature highlights</h2>
-              <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
             </Col>
           </Row>
         </section>
