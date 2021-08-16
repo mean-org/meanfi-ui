@@ -50,6 +50,7 @@ interface AppStateConfig {
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
+  referral: TokenInfo | undefined;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -81,6 +82,7 @@ interface AppStateConfig {
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
+  setReferral: (token: TokenInfo | undefined) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -116,6 +118,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
+  referral: undefined,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -146,7 +149,8 @@ const contextDefaultValues: AppStateConfig = {
   setStreamDetail: () => {},
   openStreamById: () => {},
   getStreamActivity: () => {},
-  setCustomStreamDocked: () => {},
+  setCustomStreamDocked: () => { },
+  setReferral: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -365,11 +369,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-
   const [swapToToken, updateSwapToToken] = useState<TokenInfo>();
   const [swapToTokenBalance, updateSwapToTokenBalance] = useState<number>(contextDefaultValues.swapToTokenBalance);
   const [swapToTokenAmount, updateSwapToTokenAmount] = useState<string>(contextDefaultValues.swapToTokenAmount);
   const [shouldUpdateSwapToToken, setShouldUpdateSwapToToken] = useState<boolean>(true);
+  const [referral, setReferral] = useState<TokenInfo>();  
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
@@ -635,7 +639,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (connection && publicKey && tokenList?.length && accounts?.tokenAccounts?.length) {
       let swapToTokenAddress: any;
       if (swapToToken) {
-        swapToTokenAddress = await findATokenAddress(publicKey as PublicKey, swapToToken.address.toPublicKey());
+        console.log('swapToToken => ', swapToToken);
+        swapToTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(swapToToken.address));
         balance = await getTokenAccountBalanceByAddress(swapToTokenAddress.toBase58());
       }
       updateSwapToTokenBalance(balance);
@@ -706,6 +711,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
+        referral,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -736,7 +742,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStreamDetail,
         openStreamById,
         getStreamActivity,
-        setCustomStreamDocked
+        setCustomStreamDocked,
+        setReferral
       }}>
       {children}
     </AppStateContext.Provider>

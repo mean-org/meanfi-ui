@@ -53,8 +53,8 @@ export function getPoolByTokenMintAddresses(
 ): LiquidityPoolInfo | undefined {
   const pool = LIQUIDITY_POOLS.find(
     (pool) =>
-      (pool.coin.mintAddress === coinMintAddress && pool.pc.mintAddress === pcMintAddress) ||
-      (pool.coin.mintAddress === pcMintAddress && pool.pc.mintAddress === coinMintAddress)
+      (pool.coin.address === coinMintAddress && pool.pc.address === pcMintAddress) ||
+      (pool.coin.address === pcMintAddress && pool.pc.address === coinMintAddress)
   )
 
   if (pool) {
@@ -71,24 +71,24 @@ export function getLpMintByTokenMintAddresses(
 ): string | null {
   const pool = LIQUIDITY_POOLS.find(
     (pool) =>
-      ((pool.coin.mintAddress === coinMintAddress && pool.pc.mintAddress === pcMintAddress) ||
-        (pool.coin.mintAddress === pcMintAddress && pool.pc.mintAddress === coinMintAddress)) &&
+      ((pool.coin.address === coinMintAddress && pool.pc.address === pcMintAddress) ||
+        (pool.coin.address === pcMintAddress && pool.pc.address === coinMintAddress)) &&
       version.includes(pool.version)
   )
 
   if (pool) {
-    return pool.lp.mintAddress
+    return pool.lp.address
   }
 
   return null
 }
 
 export function canWrap(fromMintAddress: string, toMintAddress: string): boolean {
-  return fromMintAddress === TOKENS.WUSDT.mintAddress && toMintAddress === TOKENS.USDT.mintAddress
+  return fromMintAddress === TOKENS.WUSDT.address && toMintAddress === TOKENS.USDT.address
 }
 
 export function getPoolByLpMintAddress(lpMintAddress: string): LiquidityPoolInfo | undefined {
-  const pool = LIQUIDITY_POOLS.find((pool) => pool.lp.mintAddress === lpMintAddress)
+  const pool = LIQUIDITY_POOLS.find((pool) => pool.lp.address === lpMintAddress)
 
   if (pool) {
     return cloneDeep(pool)
@@ -101,11 +101,11 @@ export function getAddressForWhat(address: string) {
   for (const pool of LIQUIDITY_POOLS) {
     for (const [key, value] of Object.entries(pool)) {
       if (key === 'lp') {
-        if (value.mintAddress === address) {
-          return { key: 'lpMintAddress', lpMintAddress: pool.lp.mintAddress, version: pool.version }
+        if (value.address === address) {
+          return { key: 'lpMintAddress', lpMintAddress: pool.lp.address, version: pool.version }
         }
       } else if (value === address) {
-        return { key, lpMintAddress: pool.lp.mintAddress, version: pool.version }
+        return { key, lpMintAddress: pool.lp.address, version: pool.version }
       }
     }
   }
@@ -394,7 +394,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'DUVSNpoCNyGDP9ef9gJC5Dg53khxTyM1pQrKVetmaW8R',
     ammTargetOrders: '89HcsFvCQaUdorVF712EhNhecvVM7Dk6XAdPbaykB3q2',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '6YeEo7ZTRHotXd89JTBJKRXERBjv3N3ofgsgJ4FoAa39',
     poolPcTokenAccount: 'DDNURcWy3CU3CpkCnDoGXwQAeCg1mp2CC8WqvwHp5Fdt',
     poolWithdrawQueue: 'H8gZ2f4hp6LfaszDN5uHAeDwZ1qJ4M4s2A59i7nMFFkN',
@@ -422,7 +422,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'FVb13WU1W1vFouhRXZWVZWGkQdK5jo35EnaCrMzFqzyd',
     ammTargetOrders: 'FYPP5v8SLHPPcivgBJPE9FgrN6o2QVMB627n3XcZ8rCS',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '6ttf7G7FR9GWqxiyCLFNaBTvwYzTLPdbbrNcRvShaqtS',
     poolPcTokenAccount: '8orrvb6rHB776KbQmszcxPH44cZHdCTYC1fr2a3oHufC',
     poolWithdrawQueue: '4Q9bNJsWreAGhkwhKYL7ApyhEBuwNxiPkcEQNmUjQGHZ',
@@ -450,7 +450,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'HViBtwESRNKLZY7qLQxP68b5vLdUQa1XMAKz19LbSHjx',
     ammTargetOrders: '8Cwm1Z75hQdUpFUxCuoWmWBLcAaZvKMAn2xKeuotC4eC',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '6rYv6kLfhAVKZw1xN2S9NWNgp8EfUVvYKi1Hgzd5x9XE',
     poolPcTokenAccount: '8HfvN4VyAQjX6MhziRxMg5LjbMh9Fw889yf3sDgrXakw',
     poolWithdrawQueue: 'HnzkiYgZg22ZaQGdeTHiCgJaoW138CLqCb8tr6QJFkU4',
@@ -478,7 +478,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'DiP4F6FTR5jiTar8fwuwRVuYop5wYRqy2EjbiKTXPrHw',
     ammTargetOrders: '2ak4VVyS19sVESvvBuPZRMAhvY4vVCZCxeELYAybA7wk',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 's7LP6qptF1wufA9neYhekmVPqhav8Ak85AV5ip5h8wK',
     poolPcTokenAccount: '9Q1Xs1s8tCirX3Ky3qo9UjvSqSoGinZvWaUMFXY5r2HF',
     poolWithdrawQueue: 'DeHaCJ8KL5uwBGenkUwa39JyhacxPDqDqHAp5HLqgd1i',
@@ -506,7 +506,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '7UF3m8hDGZ6bNnHzaT2YHrhp7A7n9qFfBj6QEpHPv5S8',
     ammTargetOrders: '3K2uLkKwVVPvZuMhcQAPLF8hw95somMeNwJS7vgWYrsJ',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '3wqhzSB9avepM9xMteiZnbJw75zmTBDVmPFLTQAGcSMN',
     poolPcTokenAccount: '5GtSbKJEPaoumrDzNj4kGkgZtfDyUceKaHrPziazALC1',
     poolWithdrawQueue: '8VuvrSWfQP8vdbuMAP9AkfgLxU9hbRR6BmTJ8Gfas9aK',
@@ -534,7 +534,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'HRk9CMrpq7Jn9sh7mzxE8CChHG8dneX9p475QKz4Fsfc',
     ammTargetOrders: 'CZza3Ej4Mc58MnxWA385itCC9jCo3L1D7zc3LKy1bZMR',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'DQyrAcCrDXQ7NeoqGgDCZwBvWDcYmFCjSb9JtteuvPpz',
     poolPcTokenAccount: 'HLmqeL62xR1QoZ1HKKbXRrdN1p3phKpxRMb2VVopvBBz',
     poolWithdrawQueue: 'G7xeGGLevkRwB5f44QNgQtrPKBdMfkT6ZZwpS9xcC97n',
@@ -562,7 +562,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'DdBAps8e64hpjdWqAAHTThcVFz8mQ6WU2h6s1Kjgb9vk',
     ammTargetOrders: '8BFicQN1AKaVbf1KNoUieULun1bvpdMxsyjrgC15acM6',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'HhhqmQvx2GMQ6SRQh6nZ1A4C5KjCFLQ6yga1ZXDzRJ92',
     poolPcTokenAccount: '4J4Y6qkF9yzxz1EsZYTSqviMz3Lo1VHx9ViCUoJph167',
     poolWithdrawQueue: 'FPkMHzDo46vzy1eW9FuQFz7TdAp1MNCkZFgKxrHiuh3W',
@@ -590,7 +590,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'GJwrRrNeeQKY2eGzuXGc3KBrBftYbidCYhmA6AZj2Zur',
     ammTargetOrders: '26LLpo8rscCpMxyAnJsqhqESPnzjMGiFdmXA4eF2Jrk5',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'zuLDJ5SEe76L3bpFp2Sm9qTTe5vpJL3gdQFT5At5xXG',
     poolPcTokenAccount: '4usvfgPDwXBX2ySX11ubTvJ3pvJHbGEW2ytpDGCSv5cw',
     poolWithdrawQueue: '7c1VbXTB7Xqx5eQQeUxAu5o6GHPq3P1ByhDsnRRUWYxB',
@@ -618,7 +618,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '23WS5XY3srvBtnP6hXK64HAsXTuj1kT7dd7srjrJUNTR',
     ammTargetOrders: 'CYbPm6BCkMyX8NnnS7AoCUkpxHVwYyxvjQWwZLsrFcLR',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '4TaBaR1ZgHNuQM3QNHnjJdAT4Sws9cz46MtVWVebg7Ax',
     poolPcTokenAccount: '7eDiHvsfcZf1VFC2sUDJwr5EMMr66TpQ2nmAreUjoASV',
     poolWithdrawQueue: '36Aa83kffwBuEP7AqNU1w5c9oB9kLxmR4FMfadXfjNbJ',
@@ -646,7 +646,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'L6A7qW935i2HgaiaRx6xNGCGQfFr4myFU51dUSnCshd',
     ammTargetOrders: '6DGjaczWfFthTYW7oBk3MXP2mMwrYq86PA3ki5YF6hLg',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'HWTaEDR6BpWjmyeUyfGZjeppLnH7s8o225Saar7FYDt5',
     poolPcTokenAccount: '7iGcnvoLAxthsXY3AFSgkTDoqnLiuti5fyPNm2VwZ3Wz',
     poolWithdrawQueue: '8g6jrVU7E7eghT3FQa7uPbwHUHwHHLVCEjBh94pA1NVk',
@@ -674,7 +674,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '7a8WXaxsvDV9CjSxgSpJG8LZgdxmSps1ehvtgQj2qt4j',
     ammTargetOrders: '9f5b3uy3hQutS6pka2GxcSoKjvKaTcB1ivkj1GK43UAV',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'B8vMKgzKHkapzdDu1jW76ALFvVYzHGGKhR5Afz3A4mZd',
     poolPcTokenAccount: 'Hsxi4jvmszcMaWfU3tk98fQa9pVXtRktfKvKJ7rKBQYi',
     poolWithdrawQueue: 'AgEspvUPUuaTqyJTjZMCAW3zTuxQBSaU17GhLJoc6Jad',
@@ -702,7 +702,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'H11WJQWj51KyYU5gdrnsXvpaYZM6ZLGULV93VbTmvaBL',
     ammTargetOrders: '5E9x2QRpTM2oTtwb62C4rDYR8nJZxN8NFhAtnr2uYFKt',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '5swtuQhJQFid8uMd3DsegoxFKXVS8WoiiB3t9Pos9UHj',
     poolPcTokenAccount: 'Eqbux46eaW4aZiuy6VUX6z7MJ2TsszeSA7TPnpdw3jVf',
     poolWithdrawQueue: 'Hwtv6M9iTJc8SH49WjQx5rbRwzAryGm8f1NSQDmnY2iq',
@@ -730,7 +730,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'G4WdXwbczwDSs6iQmYt1F3sHDhfL6aD2uBkbAoMaaTt4',
     ammTargetOrders: 'Hf3g2Q63UPSLFSCKZBPJvjVVZxVr83rXm1xWR7yC6spn',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '2ueuL35kQShG1ebZz3Cov4ug9Ex6xVXx4Fc4ZKvxFqMz',
     poolPcTokenAccount: '66JxeTwodpafkYLPYYAFoVoTh6ukNYoHvtwMMSzSPBCb',
     poolWithdrawQueue: 'AgVo29AiDosdiXysfwMj8bF2AyD1Nvmn971x8PLwaNAA',
@@ -758,7 +758,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '7PwhFjfFaYp7w9N8k2do5Yz7c1G5ebp3YyJRhV4pkUJW',
     ammTargetOrders: 'BV2ucC7miDqsmABSkXGzsibCVWBp7gGPcvkhevDSTyZ1',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'EHT99uYfAnVxWHPLUMJRTyhD4AyQZDDknKMEssHDtor5',
     poolPcTokenAccount: '58tgdkogRoMsrXZJubnFPsFmNp5mpByEmE1fF6FTNvDL',
     poolWithdrawQueue: '9qPsKm82ZFacGn4ipV1DH85k7efP21Zbxrxbxm5v3GPb',
@@ -786,7 +786,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '4tN7g8KbPt5bU9YDpeAsUNs2FY4G6GRvajTwCCHXt9Lk',
     ammTargetOrders: 'Fe5ZjyEhnB7mCgFhRkSLWNgvtkrut4iRzk1ydfJxwA9b',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'Guw4ErphtZQRC1foic6WweDSvA9AfuqJHKDXDcbrWH4f',
     poolPcTokenAccount: '86WgydpDUFRWa9aHzd9JgcKBELPJZVrkZ3uwxiiC3w2V',
     poolWithdrawQueue: 'Gvmc1zR72pdgoWSzNBqMyNoVHe78nxKgd7FSCE422Lcp',
@@ -814,7 +814,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '4NJVwEAoudfSvU5kdxKm5DsQe4AAqG6XxpZcNdQVinS4',
     ammTargetOrders: '9x4knb3nuNAzxsV7YFuGLgnYqKArGemY54r2vFExM1dp',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '876Z9waBygfzUrwwKFfnRcc7cfY4EQf6Kz1w7GRgbVYW',
     poolPcTokenAccount: 'CB86HtaqpXbNWbq67L18y5x2RhqoJ6smb7xHUcyWdQAQ',
     poolWithdrawQueue: '52AfgxYPTGruUA9XyE8eF46hdR6gMQiA6ShVoMMsC6jQ',
@@ -842,7 +842,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'pxedkTHh23HBYoarBPKML3xWh96EaNzKLW3oXvHHCw5',
     ammTargetOrders: 'GUMQZC9SAqynDvoV12sRUzACF8GzLpC5fUtRuzwCbU9S',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'GwY3weBBK4dQFwC96tHAoAQq4pSfMYmMZ4m6Njqq7Wbk',
     poolPcTokenAccount: 'Bs3DatsVrDujvjpV1JUVmVgNrPkaVwvp6WtuHz4z1QE6',
     poolWithdrawQueue: '2JJPww9oCvBxTdZaiB2H69Jx4dKWctCEuvbLtFfNCqHd',
@@ -870,7 +870,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '8E2GLzSgLmzWdpdXjjEaHbPXRXsA5CFehg6FP6N39q2e',
     ammTargetOrders: '8R5TVxXvRfCaYvT493FWAJyLt8rVssUHYVGbGupAbYaQ',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'D6b4Loa4LoidUor2ffouE5BTMt6tLP6MtkNrsfBWG2C3',
     poolPcTokenAccount: '4gNeJniq6yqEygFmbAJa82TQjH1j3Fczm4bdeBHhwGJ1',
     poolWithdrawQueue: 'D3JQytXAydpHKUPChDe8JXdmvYRRV4EpnrxsqzMHNjFp',
@@ -898,7 +898,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'BSDKUy73wuGskKDVgzNGLL2k7hzDEwj237nZZ3Ch3bwz',
     ammTargetOrders: '4j1JaKap2s4XrkJeMDaMabfEDsQm9ykeUgJ9CWa9w4JU',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'HHTXo4Q8HFWMSDKnPJWCe1Y5UmYPFNZ6hU4mc8km7Zf4',
     poolPcTokenAccount: '5rbAHV9ufT11XRR5LcvMVsuA5FcpBozLKj91z372wpZR',
     poolWithdrawQueue: 'AMU4FFUUahWfaUA6WWzTWNNuiXoNDEgNNsZjFLWhvB8f',
@@ -926,7 +926,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'G5rZ4Qfv5SxpJegVng5FuZftDrJkzLkxQUNjEXuoczX5',
     ammTargetOrders: 'DMEasFJLDw27MLkTBFqSX2duvV5GV6LzwtoVqVfBqeGR',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '7KwCHoQ9nqTnGea4XrcfLUr1pwEWp2maGBHWFqBTeoKW',
     poolPcTokenAccount: 'HwbXe9YJVez3BKK22jBH1i64YeX2fSKaYny5jrcPDxAk',
     poolWithdrawQueue: '3XUXNx72jcaXB3N56UjrtWwxv99ivqUwLAdkagvop4HF',
@@ -954,7 +954,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'ARZWhFKLtqubNWdotvqeiTTpmBw4XfrySNtY4485Zmq',
     ammTargetOrders: 'J8f8p2x3wPTbpaqJydxTY5CvxtiB8HrMdW1DouaEVvRx',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'C77d7jRkxu3WyzL7K2UZZPdWXPzsFrmzLG4uHrsZhGTz',
     poolPcTokenAccount: 'BtweN6cYHBntMJiRY2gGB2u4oZFsbapjLz7QJeV3KWF1',
     poolWithdrawQueue: '6WsofMBNdHWacgButviYgn8CCTGyjW19H13vYntkzBzp',
@@ -982,7 +982,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '6As7AcwxnvawiY4mKnVTYqjTSRe9Uu2yW5hhJB97Ur6y',
     ammTargetOrders: 'BPU6CpQ9RVrftpofrXD3Gui5iNXpbiNiCm9ecQUahgH6',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '8Ev8a9a8ZQi2xHYa7fwkYqzrmMrwbnUf6D9z762zAWcF',
     poolPcTokenAccount: 'DriE8fPjPcTf7jzzyMqnQYqBPAVQPNS6bjZ4EABEJPUd',
     poolWithdrawQueue: 'CR4AmK8geX2e1VLdFKgC2raxMwB4JsVUKXd3mBGkv4YW',
@@ -1010,7 +1010,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'CQ9roBWWPV5efTeZHoqgzJJvTSeVNMca6rteaenNwqF6',
     ammTargetOrders: 'DVXgN8m2f8Ggs8zddLZyQdsh49jeUGnLq66s4Lhfd1uj',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'BKNf6HxSz9tCmeZts4ABHpYuXwP2wfKf4uRycwdTm3Jh',
     poolPcTokenAccount: '5Uzq3c6rnedxMF7t7s7PJVQkxxZE7YXGFPJUToyhdebY',
     poolWithdrawQueue: 'Hj5vcVZCm6JXtkmCa1MPjteoxzkWQCmHQutXxofj2sy6',
@@ -1038,7 +1038,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '8x4uasC632WSrk3wgwoCWHy7MK7Xo2WKAe9vV93tj5se',
     ammTargetOrders: 'G1eji3rrfRFfvHUbPEEbvnjmJ4eEyXeiJBVbMTUPfKL1',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'DZZwxvJakqbraXTbjRW3QoGbW5GK4R5nmyrrGrFMKWgh',
     poolPcTokenAccount: 'HoGPb5Rp44TyR1EpM5pjQQyFUdgteeuzuMHtimGkAVHo',
     poolWithdrawQueue: 'EispXkJcfh2PZA2fSXWsAanEGq1GHXzRRtu1DuqADQsL',
@@ -1066,7 +1066,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '5k2VpDkhbvypWvg9erQTZu4KsKjVLe1VAo3K71THrNM8',
     ammTargetOrders: '4dhnWeEq5aeqDFkEa5CKwS2TYrUmTZs7drFBAS656f6e',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '8FufHk1xV2j9RpVztnt9vuw9KJ89rpR7FMT1HTfsqyPH',
     poolPcTokenAccount: 'FTuzfUyp6fhLMQ5kUdAkBWd9BjY114DfjkrVocAFKwkQ',
     poolWithdrawQueue: 'A266ybcveVZYraGgEKWb9JqVWVp9Tsxa9hTudzvTQJgY',
@@ -1094,7 +1094,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'CimwwQH1h2MKbFbodHHByMq8MreFuJznMGVXxYKMpyiB',
     ammTargetOrders: 'Fewh6hVTfeduAnbqwNuUx2Cu7uTyJTALP76hjpWCvRoV',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'Atc9Prscs9RLmDEpsCQzFgCqzkscAtTck5ZSZGV9s7hE',
     poolPcTokenAccount: '31ZJVJMap4WpPbzaScPwg5MGRUDjatP2kXVsSgf12yVZ',
     poolWithdrawQueue: 'yAZD46BC1Bti2X5FEjveobueuyevi7jFV5ew6DH8Thz',
@@ -1122,7 +1122,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '3CGxjymeKv5wvpVg9unUgbrGUESmeqfJUJkPjVeRuMvT',
     ammTargetOrders: 'C8YiDYrk4rfC6sgK93zM3YpGj7SDpGuRbos7DHStSssT',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '5jV7XQ1JnfUg7RvEShyAdV7Gzn1xS54j163x8ZBSzxuh',
     poolPcTokenAccount: 'HSKY5r6iqCpC4nWzCGP2oWMQdGEQsx69eBm33PrmZqhg',
     poolWithdrawQueue: '5faTQUz7gmasinkinA7BkC6HsG8hUrD9iukaohF2fuHZ',
@@ -1150,7 +1150,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'Efpi6e4ckqtfaED9gRmadN3RtiTXDtGPrp1szsh7sj7C',
     ammTargetOrders: 'BZUFGpRWEsYzpVfLrFpdE7E9fzGhrySQE1TrsX92qWAC',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'BjWKHZxVMQykmGGmkhA1m9QQycJTeQFs51kyfP1zQvzv',
     poolPcTokenAccount: 'EnWaAD7WAyznuRjg9PqRr2vVaXqQpTje2fBWyFFEvr37',
     poolWithdrawQueue: 'GbEc9D11VhEHCDsqcSZ5vPVfnzV7BCS6eTquoVvhSaNz',
@@ -1178,7 +1178,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '34eRiATmb9Ktv1QTDzzckyaFhj4KpC2y94TJXXd34erL',
     ammTargetOrders: 'CK2vFsmS2CEZ2Hi6Vf9px8p5DSpoyXST9rkFHwbbHirU',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '8BjTHZccnRNZKZpAxsdXx5BEQ4Kpxd9pQLNgeMqMiTZL',
     poolPcTokenAccount: 'DxcJXkGo8BUmsky51LuKi4Vs1zW48fHrCXEY6BKuY3TY',
     poolWithdrawQueue: 'AoP3EXWypUheq9ZURDBpf8Jd1ijRuhUCQg1uiM5zFpB5',
@@ -1206,7 +1206,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '3bZB7mZ5hRNZfrJx6BL5C4GhP4nT14rEAGVPXL34hrZg',
     ammTargetOrders: 'Ha4yLJU1UrZi8MqCMu2pLK3xXREG1GW1bjjqTsjQnC3c',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '5eTUmVN3kXqBeKHUA2kWU19jB7kFN3wpejWvWYcw6dBa',
     poolPcTokenAccount: '4BsmBxNQtuKgBTNjci8tWd2NqPxXBs2JY38X26epSHYy',
     poolWithdrawQueue: '2jn4FQ2CtYwXDgCcLbNrGUzKFeB5PpPbnMr2x2z2wz3V',
@@ -1234,7 +1234,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'FBfaqV1RRacEi27E3dm8yLcxpbWYx4BzMXG4zMNx7ZdS',
     ammTargetOrders: 'B1gQ6FHLxmBzznDKn8Rj1ZokcJtdSWjkCoXdQLRhz8NS',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'CsFFjzC1hmpqimExTj8g4kregUxGnGrEWX9Jhne172uU',
     poolPcTokenAccount: 'ACg55oVWt1a4ZVxnFVCRDEMz1JAeGY13snXufdQAp4pX',
     poolWithdrawQueue: 'C6MRGfZ13tstxjcWuLqUseUikidsAjgk7zBEYqM6cFb4',
@@ -1262,7 +1262,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: '9ot4bg8aT2FRKfiRrM2fSPHEr7M1ihBqm1iT4771McqR',
     ammTargetOrders: 'AfzGtG3XnMixxJTx2rwoWLXKVaWoFMhsMeYo929BrUBY',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'BCNYwsnz3yXvi4mY5e9w2RmZvwUW3pefzYQ4tsoNdDhp',
     poolPcTokenAccount: '7BXPSUXeBVqJGyxW3yvkNxnJjYHuC8mnhyFCDp2abAs6',
     poolWithdrawQueue: 'HYo9FfBpm8NCpR8qYMGYFZNqzKkXDRFACLxu8PXCCDc4',
@@ -1290,7 +1290,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'EXgME2sUuzBxEc2wuyoSZ8FZNZMC3ChhZgFZRAW3nCQG',
     ammTargetOrders: '78bwAGKJjaiPQqmwKmbj4fhrRTLAdzwqNwpFdpTzrhk1',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '8Gf8Cc6yrxtfUZqM2vf2kg5uR9bGPfCHfzdYRVBAJSJj',
     poolPcTokenAccount: 'ApLc86fHjVbGbU9QFzNPNuWM5VYckZM92q6sgJN1SGYn',
     poolWithdrawQueue: '5bzBcB7cnJYGYvGPFxKcZETn6sGAyBbXgFhUbefbagYh',
@@ -1318,7 +1318,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'EdS5vqjihxRbRujPkqqzHYwBqcTP9QPbrBc9CDtnBDwo',
     ammTargetOrders: '6Rfew8qvNp97PVN14C9Wg8ybqRdF9HUEUhuqqZBWcAUW',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '7zfTWDFmMi3Tzbbd3FZ2vZDdBm1w7whiZq1DrCxAHwMj',
     poolPcTokenAccount: 'FWUnfg1hHuanU8LxJv31TAfEWSvuWWffeMmHpcZ9BYVr',
     poolWithdrawQueue: 'F7MUnGrShtQqSvi9DoWyBNRo7FUpRiYPsS9aw77auhiS',
@@ -1346,7 +1346,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'ASkE1yKPBei2aUxKHrLRptB2gpC3a6oTSxafMikoHYTG',
     ammTargetOrders: '5isDwR41fBJocfmcrcfwRtTnmSf7CdssdpsmBy2N2Eym',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '3mS8mb1vDrD45v4zoxbSdrvbyVM1pBLM31cYLT2RfS2U',
     poolPcTokenAccount: 'BWfzmvvXhQ5V8ZWDMC4u82sEWgc6HyRLnq6nauwrtz5x',
     poolWithdrawQueue: '9T1cwwE5zZr3D2Rim8e5xnJoPJ9yKbTXvaRoxeVoqffo',
@@ -1374,7 +1374,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'FNwXaqyYNKNwJ8Qc39VGzuGnPcNTCVKExrgUKTLCcSzU',
     ammTargetOrders: 'DKgXbNmsm1uCJ2eyh6xcnTe1G6YUav8RgzaxrbkG4xxe',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: '6XZ1hoJQZARtyA17mXkfnKSHWK2RvocC3UDNsY7f4Lf6',
     poolPcTokenAccount: 'F4opwQUoVhVRaf3CpMuCPpWNcB9k3AXvMMsfQh52pa66',
     poolWithdrawQueue: '8mqpqWGL7W2xh8B1s6XDZJsmPuo5zRedcM5sF55hhEKo',
@@ -1402,7 +1402,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
     ammOpenOrders: 'jg8ayFZLH2cEUJULUirWy7wNggN1eyRnTMt6EjbJUun',
     ammTargetOrders: '8pE4fzFzRT6aje7B3hYHXrZakeEqNF2kFmJtxkrxUK9b',
     // no need
-    ammQuantities: NATIVE_SOL.mintAddress,
+    ammQuantities: NATIVE_SOL.address,
     poolCoinTokenAccount: 'FhjBg8vpVgsiW9oCUxujqoWWSPSRvnWNXucEF1G1F39Z',
     poolPcTokenAccount: 'Dv95skm7AUr33x1p2Bu5EgvE3usB1TxgZoxjBe2rpfm6',
     poolWithdrawQueue: '4An6jy1JocXGUjayXqVTx1jvs79o8LgsRk3VvmRgXxaq',
@@ -1430,7 +1430,7 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [
   //   ammOpenOrders: '',
   //   ammTargetOrders: '',
   //   // no need
-  //   ammQuantities: NATIVE_SOL.mintAddress,
+  //   ammQuantities: NATIVE_SOL.address,
   //   poolCoinTokenAccount: '',
   //   poolPcTokenAccount: '',
   //   poolWithdrawQueue: '',

@@ -25,7 +25,7 @@ export class AppConfigService {
         if (envName) {
             environment = envName;
         } else if (!environment) {
-            environment = 'staging';
+            environment = 'production';
         }
     }
 

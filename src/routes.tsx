@@ -2,11 +2,17 @@ import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
-import { MarketProvider } from "./contexts/market";
+// import { MarketProvider } from "./contexts/market";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
-  CustodyView, FaucetView, PayrollView, SwapView, TransfersView, WrapView
+  CustodyView,
+  FaucetView,
+  PayrollView,
+  SwapView,
+  TransfersView,
+  WrapView
+  
 } from "./views";
 
 export function Routes() {
@@ -16,7 +22,7 @@ export function Routes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
-              <MarketProvider>
+              {/* <MarketProvider> */}
                 <AppStateProvider>
                   <AppLayout>
                     <Switch>
@@ -33,7 +39,7 @@ export function Routes() {
                     </Switch>
                   </AppLayout>
                 </AppStateProvider>
-              </MarketProvider>
+              {/* </MarketProvider> */}
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>
