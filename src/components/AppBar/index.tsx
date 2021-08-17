@@ -99,7 +99,7 @@ export const AppBar = (props: { menuType: string }) => {
         </Menu.Item>
         <Menu.Item key="charts">
           <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">Charts</span>
+            <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
           </a>
         </Menu.Item>
       </SubMenu>
@@ -176,7 +176,7 @@ export const AppBar = (props: { menuType: string }) => {
 
               <li key="charts" className="mobile-menu-item">
                 <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">Charts</span>
+                  <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
                 </a>
               </li>
             </ul>

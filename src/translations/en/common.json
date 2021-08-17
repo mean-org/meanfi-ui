@@ -318,7 +318,8 @@
 			"tools": {
 				"faucet": "Faucet",
 				"submenu-title": "Tools",
-				"wrapper": "Wrapper"
+				"wrapper": "Wrapper",
+				"charts": "Charts"
 			},
 			"transfers": "Transfers"
 		}

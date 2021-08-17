@@ -1,3 +1,5 @@
+import { Language } from "../models/languages";
+
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
@@ -14,8 +16,21 @@ export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/GMMS3whn';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/JvAlCnnnz/dev-meanfi?orgId=1&from=now-24h&to=now&refresh=5m';
 
-export const LANGUAGES: string[] = [
-    'en',
-    'es',
-    'fr'
+export const LANGUAGES: Language[] = [
+    {
+        code: 'en',
+        flag: 'assets/flags/us.svg'
+    },
+    {
+        code: 'es',
+        flag: 'assets/flags/es.svg'
+    },
+    {
+        code: 'fr',
+        flag: 'assets/flags/fr.svg'
+    },
+    {
+        code: 'pt',
+        flag: 'assets/flags/br.svg'
+    },
 ];
