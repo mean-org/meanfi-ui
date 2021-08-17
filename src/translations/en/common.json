@@ -251,7 +251,9 @@
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
 			"tx-wrap-operation": "Wrapping",
-			"tx-wrap-operation-success": "Wrap operation completed successfully"
+			"tx-wrap-operation-success": "Wrap operation completed successfully",
+			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Swap operation completed successfully"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",

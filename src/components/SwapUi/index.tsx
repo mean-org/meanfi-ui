@@ -1,23 +1,27 @@
-import { Button, Modal, Row, Col } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { Button, Modal, Row, Col, Spin } from "antd";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
-import { formatAmount, getWrapTxAndSigners, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getWrapTxAndSigners, isValidNumber } from "../../utils/utils";
 import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
-import { consoleOut, percentage } from "../../utils/ui";
+import {
+  CheckOutlined,
+  LoadingOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
+import { consoleOut, getTransactionOperationDescription, percentage } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
-// import { AppStateContext } from "../../contexts/appstate";
+import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useMint } from "../../contexts/accounts";
+import { useAccountsContext, useMint, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { DEX_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
 import BN from "bn.js";
@@ -25,17 +29,19 @@ import "./style.less";
 import { Token } from "@solana/spl-token";
 import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
-import { OpenOrders } from "@project-serum/serum";
-import { SendTxRequest } from "@project-serum/anchor/dist/provider";
-import { SystemProgram } from "@solana/web3.js";
-import { closeAccount, transfer } from "@project-serum/serum/lib/token-instructions";
+import { TransactionStatus } from "../../models/enums";
+import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const SwapUi = () => {
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
   const connection = useConnection();
+  const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
 
   const {
     fromMint,
@@ -80,6 +86,10 @@ export const SwapUi = () => {
           t.name.toLowerCase().startsWith(filter) ||
           t.address.toLowerCase().startsWith(filter)        
       );
+
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  };
 
   // Added by YAF (Token balance)
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
@@ -212,7 +222,7 @@ export const SwapUi = () => {
         console.log("swapFees:", values);
       });
     }
-    
+
   }, [
     connection,
     swapFees
@@ -317,6 +327,16 @@ export const SwapUi = () => {
   //     setToAmount(fromAmount);
   //   }
   // }
+
+  const getCurrentRate = () => {
+    let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
+
+    if (swapRateFlipped === true) {
+      rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
+    }
+
+    return rate;
+  }
 
   const swap = async () => {
 
@@ -557,40 +577,244 @@ export const SwapUi = () => {
     </>
   );
 
-  // Main action
+  // Transaction execution modal
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
+  const getTransactionModalTitle = () => {
+    let title: any;
+    if (isBusy) {
+      title = t("transactions.status.modal-title-executing-transaction");
+    } else {
+      if (
+        transactionStatus.lastOperation === TransactionStatus.Iddle &&
+        transactionStatus.currentOperation === TransactionStatus.Iddle
+      ) {
+        title = null;
+      } else if (
+        transactionStatus.lastOperation ===
+        TransactionStatus.TransactionFinished
+      ) {
+        title = t("transactions.status.modal-title-transaction-completed");
+      } else {
+        title = null;
+      }
+    }
+    return title;
+  };
+
+  const isSuccess = (): boolean => {
+    return (
+      transactionStatus.currentOperation ===
+      TransactionStatus.TransactionFinished
+    );
+  };
+
+  const isError = (): boolean => {
+    return transactionStatus.currentOperation ===
+      TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.ConfirmTransactionFailure
+      ? true
+      : false;
+  };
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setFromAmount("");
+      setToAmount("");
+      hideTransactionModal();
+    }
+  };
 
   const onTransactionStart = async () => {
     consoleOut("Starting swap...", "", "orange");
-    const swapTxs = await swap();
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: string;
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < getComputedFees(swapFees)) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure,
+          });
+          return false;
+        }
+
+        return await swap()
+          .then((value) => {
+            console.log("SWAP returned transaction:", value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.log("SWAP transaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            return false;
+          });
+      }
+      return false;
+    };
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log("Signing transaction...");
+        return await swapClient.program.provider.wallet
+          .signTransaction(transaction)
+          .then((signed) => {
+            console.log("signTransaction returned a signed transaction:", signed);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction,
+            });
+            signedTransaction = signed;
+            return true;
+          })
+          .catch((error) => {
+            console.log("Signing transaction failed!");
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            return false;
+          });
+      } else {
+        console.log("Cannot sign transaction! Wallet not found!");
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure,
+        });
+        return false;
+      }
+    };
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        const serializedTx = signedTransaction.serialize();
+        console.log('tx serialized => ', encode(serializedTx));
+        return await swapClient.program.provider.connection
+          .sendRawTransaction(serializedTx)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      try {
+        return await swapClient.program.provider.connection
+          .confirmTransaction(signature, 'confirmed')
+          .then(result => {
+            console.log('confirmTransaction result:', result);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            return true;
+          })
+          .catch(error => {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            return false;
+          });
+      } catch (error) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
+    }
 
     if (wallet) {
-      const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
-      console.log('tx => ', signedTx);
-      const serializedTx = signedTx.serialize();
-      console.log('tx serialized => ', encode(serializedTx));
-      const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
-      console.log('tx result => ', result);
-
-      // 
-      // let accKey = new PublicKey('8q9ZxWtmWLb8Uu3Tpiq5vsMkv8aELPHNqM1zBWW9PKsf');
-      // let tx = new Transaction().add(        
-      //   closeAccount({
-      //     source: accKey,
-      //     destination: swapClient.program.provider.wallet.publicKey,
-      //     // amount: 23357760,
-      //     owner: new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin')
-      //   })
-      // );
-
-      // tx.feePayer = swapClient.program.provider.wallet.publicKey;
-      // const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
-      // tx.recentBlockhash = blockhash;
-      // const signedTx = await swapClient.program.provider.wallet.signTransaction(tx);
-      // console.log('tx signed => ', signedTx);
+      // const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
+      // console.log('tx => ', signedTx);
       // const serializedTx = signedTx.serialize();
       // console.log('tx serialized => ', encode(serializedTx));
       // const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
       // console.log('tx result => ', result);
+
+      showTransactionModal();
+      const swapTxs = await createTx();
+      console.log("initialized:", swapTxs);
+      if (swapTxs && !transactionCancelled) {
+        const sign = await signTx();
+        console.log("signed:", sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log("sent:", sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log("confirmed:", confirmed);
+            if (confirmed) {
+              // Save signature to the state
+              setIsBusy(false);
+            } else {
+              setIsBusy(false);
+            }
+          } else {
+            setIsBusy(false);
+          }
+        } else {
+          setIsBusy(false);
+        }
+      } else {
+        setIsBusy(false);
+      }
     }
   };
 
@@ -615,16 +839,6 @@ export const SwapUi = () => {
       </Row>
     );
   };
-
-  const getCurrentRate = () => {
-    let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
-
-    if (swapRateFlipped === true) {
-      rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
-    }
-
-    return rate;
-  }
 
   return (
     <div className="swap-wrapper">
@@ -729,7 +943,107 @@ export const SwapUi = () => {
         disabled={!isSwapAmountValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal"
+        maskClosable={false}
+        visible={isTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideTransactionModal}
+        afterClose={onAfterTransactionModalClosed}
+        width={280}
+        footer={null}
+      >
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus, t)}
+              </h4>
+              <p className="operation">
+                {t("transactions.status.tx-swap-operation", {
+                  fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint.toBase58()),
+                  toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint.toBase58())
+                  })
+                }
+              </p>
+              <div className="indication">
+                {t("transactions.status.instructions")}
+              </div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined
+                style={{ fontSize: 48 }}
+                className="icon"
+              />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus, t)}
+              </h4>
+              <p className="operation">
+                {t("transactions.status.tx-swap-operation-success")}.
+              </p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideTransactionModal}
+              >
+                {t("transactions.status.cta-close")}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined
+                style={{ fontSize: 48 }}
+                className="icon"
+              />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t("transactions.status.tx-start-failure", {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      getAccountBalance(),
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      getComputedFees(swapFees),
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                  })}
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(
+                    transactionStatus, t
+                  )}
+                </h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideTransactionModal}
+              >
+                {t("transactions.status.cta-dismiss")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">
+                {t("transactions.status.tx-wait")}...
+              </h4>
+            </>
+          )}
+        </div>
+      </Modal>
+
     </div>
   );
 };
-
