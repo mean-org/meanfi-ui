@@ -12,6 +12,7 @@ export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/GMMS3whn';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
+export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/JvAlCnnnz/dev-meanfi?orgId=1&from=now-24h&to=now&refresh=5m';
 
 export const LANGUAGES: string[] = [
     'en',
