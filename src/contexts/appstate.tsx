@@ -14,6 +14,7 @@ import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -156,6 +157,7 @@ const contextDefaultValues: AppStateConfig = {
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
 
 const AppStateProvider: React.FC = ({ children }) => {
+  const location = useLocation();
   const { t } = useTranslation('common');
   // Parent contexts
   const connected = useWallet();
@@ -556,19 +558,22 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (!streamList) {
-      refreshStreamList(true);
-    }
+    if (location.pathname === '/transfers') {
+      if (!streamList) {
+        refreshStreamList(true);
+      }
 
-    if (streamList && currentScreen === 'streams' && !customStreamDocked) {
-      timer = setInterval(() => {
-        console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-        refreshStreamList(false);
-      }, STREAMS_REFRESH_TIMEOUT);
+      if (streamList && currentScreen === 'streams' && !customStreamDocked) {
+        timer = setInterval(() => {
+          console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+          refreshStreamList(false);
+        }, STREAMS_REFRESH_TIMEOUT);
+      }
     }
 
     return () => clearInterval(timer);
   }, [
+    location,
     streamList,
     currentScreen,
     customStreamDocked,

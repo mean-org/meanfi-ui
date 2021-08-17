@@ -1,44 +1,36 @@
 import { Button, Modal, Row, Col } from "antd";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { formatAmount, getWrapTxAndSigners, isValidNumber } from "../../utils/utils";
 import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
 import { consoleOut, percentage } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
-import { AppStateContext } from "../../contexts/appstate";
+// import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useMint, useNativeAccount } from "../../contexts/accounts";
+import { useAccountsContext, useMint, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees, findATokenAddress, wrapSol } from "money-streaming/lib/utils";
+import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
-import { PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
+import { LAMPORTS_PER_SOL, PublicKey, Signer, Transaction } from "@solana/web3.js";
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
 import BN from "bn.js";
 import "./style.less";
 import { Token } from "@solana/spl-token";
-import { NATIVE_SOL } from "../../utils/tokens";
 import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
 
 export const SwapUi = () => {
 
   const { t } = useTranslation("common");
-  const { wallet, connected } = useWallet();
+  const { publicKey, wallet, connected } = useWallet();
   const connection = useConnection();
-  const {
-    tokenBalance,
-    swapToTokenBalance,
-    setSelectedToken,
-    refreshTokenBalance,
-    refreshSwapToTokenBalance
-
-  } = useContext(AppStateContext);
+  const accounts = useAccountsContext();
 
   const {
     fromMint,
@@ -74,12 +66,9 @@ export const SwapUi = () => {
   const quoteMintInfo = useMint(quoteMint);
   const quoteWallet = useOwnedTokenAccount(quoteMint);
   const { swappableTokens } = useSwappableTokens();
-  const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [tokenFilter, setTokenFilter] = useState("");
   const filter = tokenFilter.toLowerCase();
-  const tokens =
-    tokenFilter === ""
+  const tokens = tokenFilter === ""
       ? swappableTokens
       : swappableTokens.filter((t) =>
           t.symbol.toLowerCase().startsWith(filter) ||
@@ -87,21 +76,118 @@ export const SwapUi = () => {
           t.address.toLowerCase().startsWith(filter)        
       );
 
-  useEffect(() => {
-    if (account && account.lamports !== previousBalance) {
-      // Refresh token balance
-      refreshTokenBalance();
-      refreshSwapToTokenBalance();
-      // Update previous balance
-      setPreviousBalance(account.lamports);
+  // Added by YAF (Token balance)
+  const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
+  const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
+  const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
+  const [fetchingToTokenBalance, setFetchingToTokenBalance] = useState(false);
+
+  const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
+    if (address) {
+      console.log('token address:', address);
+      const accountInfo = await connection.getAccountInfo(address.toPublicKey());
+      console.log('token accountInfo:', accountInfo);
+      if (accountInfo) {
+        if (address === publicKey?.toBase58()) {
+          return accountInfo.lamports / LAMPORTS_PER_SOL;
+        }
+        const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
+        return tokenAmount.uiAmount || 0;
+      }
+    }
+    return 0;
+  }, [
+    publicKey,
+    connection
+  ])
+
+  // Refresh fromMint token balance
+  const refreshFromTokenBalance = useCallback(async (mint: PublicKey) => {
+    setFetchingFromTokenBalance(true);
+    if (mint.equals(NATIVE_SOL_MINT)) {
+      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
+        .then(balance => setFromMintTokenBalance(balance))
+        .catch(() => setFetchingFromTokenBalance(false));
+    } else {
+      findATokenAddress(publicKey as PublicKey, fromMint)
+        .then(value => {
+          if (value) {
+            getTokenAccountBalanceByAddress(value.toBase58())
+              .then(balance => setFromMintTokenBalance(balance))
+              .catch(() => setFetchingFromTokenBalance(false));
+          } else {
+            setFetchingFromTokenBalance(false);
+          }
+        })
+        .catch(() => setFetchingFromTokenBalance(false));
     }
   }, [
-    account,
-    previousBalance,
-    refreshTokenBalance,
-    refreshSwapToTokenBalance,
+    fromMint,
+    publicKey,
+    getTokenAccountBalanceByAddress
   ]);
 
+  // Refresh toMint token balance
+  const refreshToTokenBalance = useCallback(async (mint: PublicKey) => {
+    setFetchingToTokenBalance(true);
+    if (mint.equals(NATIVE_SOL_MINT)) {
+      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
+        .then(balance => setToMintTokenBalance(balance))
+        .catch(() => setFetchingToTokenBalance(false));
+    } else {
+      findATokenAddress(publicKey as PublicKey, toMint)
+        .then(value => {
+          if (value) {
+            getTokenAccountBalanceByAddress(value.toBase58())
+              .then(balance => setToMintTokenBalance(balance))
+              .catch(() => setFetchingToTokenBalance(false));
+          } else {
+            setFetchingToTokenBalance(false);
+          }
+        })
+        .catch(() => setFetchingToTokenBalance(false));
+    }
+  }, [
+    toMint,
+    publicKey,
+    getTokenAccountBalanceByAddress
+  ]);
+
+  // Automatically update fromMint token balance once
+  useEffect(() => {
+    if (publicKey && accounts?.tokenAccounts?.length) {
+      if (fromMint && !fetchingFromTokenBalance) {
+        refreshFromTokenBalance(fromMint);
+      } else {
+        setFromMintTokenBalance(0);
+      }
+    }
+  }, [
+    publicKey,
+    accounts,
+    fromMint,
+    fetchingFromTokenBalance,
+    refreshFromTokenBalance
+  ]);
+
+  // Automatically update toMint token balance once
+  useEffect(() => {
+    if (publicKey && accounts?.tokenAccounts?.length) {
+      if (toMint && !fetchingToTokenBalance) {
+        refreshToTokenBalance(toMint);
+      } else {
+        setToMintTokenBalance(0);
+      }
+    }
+  }, [
+    publicKey,
+    accounts,
+    toMint,
+    fetchingToTokenBalance,
+    refreshToTokenBalance
+  ]);
+
+  // FEES
   const [swapFees, setSwapFees] = useState<TransactionFees>({
     blockchainFee: 0,
     mspFlatFee: 0,
@@ -179,12 +265,12 @@ export const SwapUi = () => {
   const isSwapAmountValid = (): boolean => {
     return (
       connected &&
-      tokenBalance &&
+      fromMintTokenBalance &&
       fromMint &&
       fromAmount &&
       parseFloat(fromAmount) > 0 &&
       parseFloat(fromAmount) > getFeeAmount(fromAmount) &&
-      parseFloat(fromAmount) - getFeeAmount(fromAmount) <= tokenBalance
+      parseFloat(fromAmount) - getFeeAmount(fromAmount) <= fromMintTokenBalance
 
     ) ? true : false;
   };
@@ -192,11 +278,11 @@ export const SwapUi = () => {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t("transactions.validation.not-connected")
-      : !fromMint || !tokenBalance
+      : !fromMint || !fromMintTokenBalance
       ? t("transactions.validation.no-balance")
       : !fromAmount
       ? t("transactions.validation.no-amount")
-      : parseFloat(fromAmount) > tokenBalance
+      : parseFloat(fromAmount) > fromMintTokenBalance
       ? t("transactions.validation.amount-high")
       // : tokenBalance < getFeeAmount(fromCoinAmount)
       // ? t("transactions.validation.amount-low")
@@ -361,16 +447,16 @@ export const SwapUi = () => {
       {tokens ? (
         tokens.map((token, index) => {
           const onClick = () => {
-            setSelectedToken(token.address === NATIVE_SOL_MINT.toBase58() ? NATIVE_SOL : token);
-            refreshTokenBalance();
-            setFromMint(new PublicKey(token.address));
+            const newMint = new PublicKey(token.address);
+            setFromMint(newMint);
             consoleOut("token selected:", token);
             const validAmount = !toAmount ? 0 : parseFloat(fromAmount);
             const amount = validAmount * getCurrentRate();
             setToAmount(amount ? amount.toString() : "", tokenMap.get(toMint.toBase58())?.decimals || 9);
+            refreshFromTokenBalance(newMint);
             onCloseTokenSelector();
           };
-          
+
           return (
             <div
               key={index + 100}
@@ -378,7 +464,7 @@ export const SwapUi = () => {
               className={`token-item ${
                 fromMint && fromMint.toBase58() === token.address
                   ? "selected"
-                  : areSameTokens(token, tokenMap.get(fromMint?.toBase58() || USDC_MINT.toBase58()) as TokenInfo)
+                  : areSameTokens(token, tokenMap.get(toMint?.toBase58() || USDC_MINT.toBase58()) as TokenInfo)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -416,11 +502,13 @@ export const SwapUi = () => {
       {tokens ? (
         tokens.map((token, index) => {
           const onClick = () => {
-            setToMint(new PublicKey(token.address));
+            const newMint = new PublicKey(token.address);
+            setToMint(newMint);
             consoleOut("token selected:", token);
             const validAmount = !fromAmount ? 0 : parseFloat(fromAmount);
             const amount = validAmount / getCurrentRate();
             setFromAmount(amount ? amount.toString() : "", tokenMap.get(fromMint.toBase58())?.decimals || 6);
+            refreshToTokenBalance(newMint);
             onCloseTokenSelector();
           };
           return (
@@ -430,7 +518,7 @@ export const SwapUi = () => {
               className={`token-item ${
                 toMint && toMint.toBase58() === token.address
                   ? "selected"
-                  : areSameTokens(token, tokenMap.get(toMint?.toBase58() || NATIVE_SOL_MINT.toBase58()) as TokenInfo)
+                  : areSameTokens(token, tokenMap.get(fromMint?.toBase58() || NATIVE_SOL_MINT.toBase58()) as TokenInfo)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -516,10 +604,10 @@ export const SwapUi = () => {
       {/* Source token / amount */}
       <CoinInput
         token={tokenMap.get(fromMint.toBase58()) as TokenInfo}
-        tokenBalance={tokenBalance}
+        tokenBalance={fromMintTokenBalance}
         tokenAmount={fromAmount}
         onInputChange={handleSwapFromAmountChange}
-        onMaxAmount={() => setFromAmount(tokenBalance.toString())}
+        onMaxAmount={() => setFromAmount(fromMintTokenBalance.toString())}
         onSelectToken={() => {
           setSubjectTokenSelection("source");
           showTokenSelector();
@@ -536,10 +624,10 @@ export const SwapUi = () => {
       {/* Destination token / amount */}
       <CoinInput
         token={tokenMap.get(toMint.toBase58()) as TokenInfo}
-        tokenBalance={swapToTokenBalance}
+        tokenBalance={toMintTokenBalance}
         tokenAmount={toAmount}
         onInputChange={handleSwapToAmountChange}
-        onMaxAmount={() => setToAmount(swapToTokenBalance.toString())}
+        onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
         onSelectToken={() => {
           setSubjectTokenSelection("destination");
           showTokenSelector();
