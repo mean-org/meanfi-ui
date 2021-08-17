@@ -8,15 +8,16 @@ import { consoleOut, percentage } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 // import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useMint, useNativeAccount } from "../../contexts/accounts";
+import { useAccountsContext, useMint } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
+import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
+import { DEX_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
 import BN from "bn.js";
@@ -24,6 +25,10 @@ import "./style.less";
 import { Token } from "@solana/spl-token";
 import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
+import { OpenOrders } from "@project-serum/serum";
+import { SendTxRequest } from "@project-serum/anchor/dist/provider";
+import { SystemProgram } from "@solana/web3.js";
+import { closeAccount, transfer } from "@project-serum/serum/lib/token-instructions";
 
 export const SwapUi = () => {
 
@@ -351,14 +356,6 @@ export const SwapUi = () => {
         quoteDecimals: quoteMintInfo.decimals,
         strict: isStrict,
       };
-
-      const fromOpenOrders = fromMarket
-        ? openOrders.get(fromMarket?.address.toBase58())
-        : undefined;
-        
-      const toOpenOrders = toMarket
-        ? openOrders.get(toMarket?.address.toBase58())
-        : undefined;
     
       const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
         ? wrappedAccount.publicKey
@@ -371,9 +368,14 @@ export const SwapUi = () => {
         : toWalletInfo
         ? toWalletKey
         : undefined;
-        
-      console.log('fromWallet => ', fromWalletAddr);
-      console.log('toWallet => ', toWalletAddr);
+
+      const fromOpenOrders = fromMarket && openOrders.has(fromMarket?.address.toBase58())
+        ? openOrders.get(fromMarket?.address.toBase58())
+      : undefined;
+    
+      const toOpenOrders = toMarket
+        ? openOrders.get(toMarket?.address.toBase58())
+        : undefined;
       
       const swapParams = {
         fromMint,
@@ -391,10 +393,14 @@ export const SwapUi = () => {
         toWallet: toWalletAddr,
         quoteWallet: quoteWallet ? quoteWallet.publicKey : undefined,
         // Auto close newly created open orders accounts.
-        close: isClosingNewAccounts,
+        close: true,
+        confirmOptions: swapClient.program.provider.opts
       };
 
-      console.log('params => ', swapParams);
+      console.log('fromMarket => ', fromMarket.address);
+      console.log('toOpenOrders => ', toMarket?.address);
+      console.log('fromOpenOrders => ', swapParams.fromOpenOrders);
+      console.log('toOpenOrders => ', swapParams.toOpenOrders);
 
       return await swapClient.swapTxs(swapParams);
 
@@ -434,8 +440,8 @@ export const SwapUi = () => {
       swapTxs[0].signers.push(...wrapSigners);
     }
 
-    swapTxs[0].tx.feePayer = wallet?.publicKey;
-    const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+    swapTxs[0].tx.feePayer = swapClient.program.provider.wallet.publicKey;
+    const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
     swapTxs[0].tx.recentBlockhash = blockhash;
     swapTxs[0].tx.partialSign(...swapTxs[0].signers as Signer[]);
 
@@ -558,12 +564,33 @@ export const SwapUi = () => {
     const swapTxs = await swap();
 
     if (wallet) {
-      const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);
+      const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
       console.log('tx => ', signedTx);
       const serializedTx = signedTx.serialize();
       console.log('tx serialized => ', encode(serializedTx));
-      const result = await connection.sendRawTransaction(serializedTx);
-      console.log('signature => ', result);
+      const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
+      console.log('tx result => ', result);
+
+      // 
+      // let accKey = new PublicKey('8q9ZxWtmWLb8Uu3Tpiq5vsMkv8aELPHNqM1zBWW9PKsf');
+      // let tx = new Transaction().add(        
+      //   closeAccount({
+      //     source: accKey,
+      //     destination: swapClient.program.provider.wallet.publicKey,
+      //     // amount: 23357760,
+      //     owner: new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin')
+      //   })
+      // );
+
+      // tx.feePayer = swapClient.program.provider.wallet.publicKey;
+      // const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
+      // tx.recentBlockhash = blockhash;
+      // const signedTx = await swapClient.program.provider.wallet.signTransaction(tx);
+      // console.log('tx signed => ', signedTx);
+      // const serializedTx = signedTx.serialize();
+      // console.log('tx serialized => ', encode(serializedTx));
+      // const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
+      // console.log('tx result => ', result);
     }
   };
 
