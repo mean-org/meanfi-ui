@@ -41,7 +41,12 @@ export const SwapUi = () => {
   const connection = useConnection();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
-  const { transactionStatus, setTransactionStatus } = useContext(AppStateContext);
+  const {
+    transactionStatus,
+    previousWalletConnectState,
+    setTransactionStatus,
+    setPreviousWalletConnectState
+  } = useContext(AppStateContext);
 
   const {
     fromMint,
@@ -99,9 +104,7 @@ export const SwapUi = () => {
 
   const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
     if (address) {
-      console.log('token address:', address);
       const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-      console.log('token accountInfo:', accountInfo);
       if (accountInfo) {
         if (address === publicKey?.toBase58()) {
           return accountInfo.lamports / LAMPORTS_PER_SOL;
@@ -117,14 +120,15 @@ export const SwapUi = () => {
   ])
 
   // Refresh fromMint token balance
-  const refreshFromTokenBalance = useCallback(async (mint: PublicKey) => {
+  const refreshFromTokenBalance = useCallback(async (mint?: PublicKey) => {
     setFetchingFromTokenBalance(true);
-    if (mint.equals(NATIVE_SOL_MINT)) {
+    const targetMint = mint || fromMint;
+    if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
         .then(balance => setFromMintTokenBalance(balance))
         .catch(() => setFetchingFromTokenBalance(false));
     } else {
-      findATokenAddress(publicKey as PublicKey, fromMint)
+      findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
@@ -143,14 +147,15 @@ export const SwapUi = () => {
   ]);
 
   // Refresh toMint token balance
-  const refreshToTokenBalance = useCallback(async (mint: PublicKey) => {
+  const refreshToTokenBalance = useCallback(async (mint?: PublicKey) => {
     setFetchingToTokenBalance(true);
-    if (mint.equals(NATIVE_SOL_MINT)) {
+    const targetMint = mint || toMint;
+    if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
         .then(balance => setToMintTokenBalance(balance))
         .catch(() => setFetchingToTokenBalance(false));
     } else {
-      findATokenAddress(publicKey as PublicKey, toMint)
+      findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
@@ -200,6 +205,32 @@ export const SwapUi = () => {
     toMint,
     fetchingToTokenBalance,
     refreshToTokenBalance
+  ]);
+
+  // Hook on the wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected) {
+        consoleOut('Refreshing balances...', '', 'blue');
+        refreshFromTokenBalance();
+        refreshToTokenBalance();
+        setPreviousWalletConnectState(true);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
+        setFromMintTokenBalance(0);
+        setToMintTokenBalance(0);
+        setPreviousWalletConnectState(false);
+      }
+    }
+    return () => {};
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    refreshToTokenBalance,
+    refreshFromTokenBalance,
+    setPreviousWalletConnectState
   ]);
 
   // FEES
@@ -313,8 +344,12 @@ export const SwapUi = () => {
   }
 
   const flipMints = () => {
+    const oldFrom = fromMint;
+    const oldTo = toMint;
     swapToFromMints();
     setSwapRateFlipped(!swapRateFlipped);
+    refreshFromTokenBalance(oldTo);
+    refreshToTokenBalance(oldFrom);
   }
 
   // const updateTokenPair = (source: TokenInfo, destination: TokenInfo, flip = false) => {
