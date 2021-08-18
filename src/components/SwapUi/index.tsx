@@ -1,14 +1,10 @@
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getWrapTxAndSigners, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
-import {
-  CheckOutlined,
-  LoadingOutlined,
-  WarningOutlined,
-} from "@ant-design/icons";
+import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionOperationDescription, percentage } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -20,18 +16,18 @@ import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
-import { LAMPORTS_PER_SOL, PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
-import BN from "bn.js";
-import "./style.less";
-import { Token } from "@solana/spl-token";
-import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
+import "./style.less";
+import { swap } from "../../utils/swap";
+import { AccountInfo, MintInfo } from "@solana/spl-token";
+import { Market } from "@project-serum/serum";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -56,8 +52,6 @@ export const SwapUi = () => {
     toAmount,
     slippage,
     isStrict,
-    isClosingNewAccounts,
-    // referral,
     setFromMint,
     setToMint,
     setFromAmount,
@@ -69,16 +63,14 @@ export const SwapUi = () => {
   const { swapClient } = useMarketContext();
   const openOrders = useOpenOrders();
   const route = useRouteVerbose(fromMint, toMint);
+  const fromMintInfo = useMint(fromMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
   const toMarket = useMarket(route && route.markets ? route.markets[1] : undefined);
   const fromBbo = useBbo(fromMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const toBbo = useBbo(toMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const tokenMap = useTokenMap();
-  // const canSwap = useCanSwap();
   const referral = useReferral(fromMarket);
   const fair = useSwapFair();
-  // let fromWallet = useOwnedTokenAccount(fromMint);
-  // let toWallet = useOwnedTokenAccount(toMint);
   const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
   const quoteMintInfo = useMint(quoteMint);
   const quoteWallet = useOwnedTokenAccount(quoteMint);
@@ -273,13 +265,6 @@ export const SwapUi = () => {
     return fee;
   };
 
-  // const getPricePerToken = (token: TokenInfo): number => {
-  //   const tokenSymbol = token.symbol.toUpperCase();
-  //   const symbol = tokenSymbol[0] === "W" ? tokenSymbol.slice(1) : tokenSymbol;
-
-  //   return coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-  // };
-
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -358,17 +343,6 @@ export const SwapUi = () => {
     refreshToTokenBalance(oldFrom);
   }
 
-  // const updateTokenPair = (source: TokenInfo, destination: TokenInfo, flip = false) => {
-  //   if (flip) {
-  //     const tokenFrom = destination;
-  //     const tokenTo = source;
-  //     setFromMint(tokenFrom ? new PublicKey(tokenFrom.address) : USDC_MINT);
-  //     setToMint(tokenTo ? new PublicKey(tokenTo.address) : NATIVE_SOL_MINT);
-  //     setFromAmount(toAmount);
-  //     setToAmount(fromAmount);
-  //   }
-  // }
-
   const getCurrentRate = () => {
     let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
 
@@ -379,7 +353,7 @@ export const SwapUi = () => {
     return rate;
   }
 
-  const swap = async () => {
+  const getSwap = async () => {
 
     if (!fromMint || !toMint) {
       throw new Error("Unable to calculate mint decimals");
@@ -393,120 +367,26 @@ export const SwapUi = () => {
       throw new Error("Quote mint not found");
     }
 
-    const amount = new BN(parseFloat(fromAmount) * 10 ** (tokenMap.get(fromMint.toBase58())?.decimals || 6));
-    const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
-    const walletKey = wallet?.publicKey as PublicKey;
-    // const wrappedSolKey = await findATokenAddress(wallet?.publicKey as PublicKey, WRAPPED_SOL_MINT);
-    const wrappedAccount = Keypair.generate();
-    const fromWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, fromMint);
-    const fromWalletInfo = await connection.getAccountInfo(fromWalletKey);
-    const toWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, toMint);
-    const toWalletInfo = await connection.getAccountInfo(toWalletKey);
+    const quoteWalletKey = (quoteWallet ? quoteWallet.publicKey : undefined);
 
-    // Build the swap.
-    let swapTxs = await (async () => {
-      if (!fromMarket) {
-        throw new Error("Market undefined");
-      }
-
-      const fromDecimals = (tokenMap.get(fromMint.toBase58())?.decimals || 6);
-      const swapFee = swapFees.mspPercentFee * parseFloat(fromAmount) / 100;
-      const minExchangeRate = {
-        rate: new BN((10 ** fromDecimals * swapFee) / fair).muln(100 - slippage).divn(100),
-        fromDecimals: fromDecimals,
-        quoteDecimals: quoteMintInfo.decimals,
-        strict: isStrict,
-      };
-    
-      const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
-        ? wrappedAccount.publicKey
-        : fromWalletInfo
-        ? fromWalletKey
-        : undefined;
-      
-      const toWalletAddr = toMint.equals(NATIVE_SOL_MINT)
-        ? wrappedAccount.publicKey
-        : toWalletInfo
-        ? toWalletKey
-        : undefined;
-
-      const fromOpenOrders = fromMarket && openOrders.has(fromMarket?.address.toBase58())
-        ? openOrders.get(fromMarket?.address.toBase58())
-      : undefined;
-    
-      const toOpenOrders = toMarket
-        ? openOrders.get(toMarket?.address.toBase58())
-        : undefined;
-      
-      const swapParams = {
-        fromMint,
-        toMint,
-        quoteMint,
-        amount,
-        minExchangeRate,
-        referral,
-        fromMarket,
-        toMarket,
-        // Automatically created if undefined.
-        fromOpenOrders: fromOpenOrders ? fromOpenOrders[0].address : undefined,
-        toOpenOrders: toOpenOrders ? toOpenOrders[0].address : undefined,
-        fromWallet: fromWalletAddr,
-        toWallet: toWalletAddr,
-        quoteWallet: quoteWallet ? quoteWallet.publicKey : undefined,
-        // Auto close newly created open orders accounts.
-        close: true,
-        confirmOptions: swapClient.program.provider.opts
-      };
-
-      console.log('fromMarket => ', fromMarket.address);
-      console.log('toOpenOrders => ', toMarket?.address);
-      console.log('fromOpenOrders => ', swapParams.fromOpenOrders);
-      console.log('toOpenOrders => ', swapParams.toOpenOrders);
-
-      return await swapClient.swapTxs(swapParams);
-
-    })();
-
-    // If swapping SOL, then insert a wrap/unwrap instruction.
-    if (isSol) {
-
-      if (swapTxs.length > 1) {
-        throw new Error("SOL must be swapped in a single transaction");
-      }
-
-      const { tx: wrapTx, signers: wrapSigners } = await getWrapTxAndSigners(
-        swapClient.program.provider,
-        wrappedAccount,
-        fromMint,
-        new BN(fromAmount)
-      );
-
-      const unwrapTx = new Transaction().add(
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          wrappedAccount.publicKey,
-          walletKey,
-          walletKey,
-          []
-        )
-      );
-
-      const tx = new Transaction().add(
-        wrapTx,
-        swapTxs[0].tx,
-        unwrapTx
-      );
-
-      swapTxs[0].tx = tx;
-      swapTxs[0].signers.push(...wrapSigners);
-    }
-
-    swapTxs[0].tx.feePayer = swapClient.program.provider.wallet.publicKey;
-    const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
-    swapTxs[0].tx.recentBlockhash = blockhash;
-    swapTxs[0].tx.partialSign(...swapTxs[0].signers as Signer[]);
-
-    return swapTxs[0].tx;
+    return swap(
+      swapClient,
+      fromMint,
+      fromMintInfo,
+      fromMarket,
+      parseFloat(fromAmount),
+      toMint,
+      toMarket,
+      quoteWalletKey,
+      quoteMint,
+      quoteMintInfo,
+      openOrders,
+      swapFees,
+      slippage,
+      fair,
+      referral,
+      isStrict
+    );
   };
 
   const renderSourceTokenList = (
@@ -681,11 +561,11 @@ export const SwapUi = () => {
   };
 
   const onTransactionStart = async () => {
+
     consoleOut("Starting swap...", "", "orange");
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: string;
-
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -707,7 +587,7 @@ export const SwapUi = () => {
           return false;
         }
 
-        return await swap()
+        return await getSwap()
           .then((value) => {
             console.log("SWAP returned transaction:", value);
             setTransactionStatus({
