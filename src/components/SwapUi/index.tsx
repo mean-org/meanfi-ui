@@ -1,42 +1,49 @@
-import { Button, Modal, Row, Col } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { Button, Modal, Row, Col, Spin } from "antd";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
-import { formatAmount, getWrapTxAndSigners, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
-import { consoleOut, percentage } from "../../utils/ui";
+import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { consoleOut, getTransactionOperationDescription, percentage } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
-// import { AppStateContext } from "../../contexts/appstate";
+import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useMint } from "../../contexts/accounts";
+import { useAccountsContext, useMint, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
-import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
-import { Account, LAMPORTS_PER_SOL, PublicKey, Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
-import BN from "bn.js";
-import "./style.less";
-import { Token } from "@solana/spl-token";
-import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
-import { OpenOrders } from "@project-serum/serum";
-import { SendTxRequest } from "@project-serum/anchor/dist/provider";
-import { SystemProgram } from "@solana/web3.js";
-import { closeAccount, transfer } from "@project-serum/serum/lib/token-instructions";
-import { decode } from "bs58";
+import { TransactionStatus } from "../../models/enums";
+import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { TextInput } from "../TextInput";
+import "./style.less";
+import { swap } from "../../utils/swap";
+import { AccountInfo, MintInfo } from "@solana/spl-token";
+import { Market } from "@project-serum/serum";
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const SwapUi = () => {
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
   const connection = useConnection();
+  const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const {
+    transactionStatus,
+    previousWalletConnectState,
+    setTransactionStatus,
+    setPreviousWalletConnectState
+  } = useContext(AppStateContext);
 
   const {
     fromMint,
@@ -45,8 +52,6 @@ export const SwapUi = () => {
     toAmount,
     slippage,
     isStrict,
-    isClosingNewAccounts,
-    // referral,
     setFromMint,
     setToMint,
     setFromAmount,
@@ -58,16 +63,14 @@ export const SwapUi = () => {
   const { swapClient } = useMarketContext();
   const openOrders = useOpenOrders();
   const route = useRouteVerbose(fromMint, toMint);
+  const fromMintInfo = useMint(fromMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
   const toMarket = useMarket(route && route.markets ? route.markets[1] : undefined);
   const fromBbo = useBbo(fromMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const toBbo = useBbo(toMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const tokenMap = useTokenMap();
-  // const canSwap = useCanSwap();
   const referral = useReferral(fromMarket);
   const fair = useSwapFair();
-  // let fromWallet = useOwnedTokenAccount(fromMint);
-  // let toWallet = useOwnedTokenAccount(toMint);
   const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
   const quoteMintInfo = useMint(quoteMint);
   const quoteWallet = useOwnedTokenAccount(quoteMint);
@@ -82,6 +85,10 @@ export const SwapUi = () => {
           t.address.toLowerCase().startsWith(filter)        
       );
 
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  };
+
   // Added by YAF (Token balance)
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
@@ -90,9 +97,7 @@ export const SwapUi = () => {
 
   const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
     if (address) {
-      console.log('token address:', address);
       const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-      console.log('token accountInfo:', accountInfo);
       if (accountInfo) {
         if (address === publicKey?.toBase58()) {
           return accountInfo.lamports / LAMPORTS_PER_SOL;
@@ -108,14 +113,15 @@ export const SwapUi = () => {
   ])
 
   // Refresh fromMint token balance
-  const refreshFromTokenBalance = useCallback(async (mint: PublicKey) => {
+  const refreshFromTokenBalance = useCallback(async (mint?: PublicKey) => {
     setFetchingFromTokenBalance(true);
-    if (mint.equals(NATIVE_SOL_MINT)) {
+    const targetMint = mint || fromMint;
+    if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
         .then(balance => setFromMintTokenBalance(balance))
         .catch(() => setFetchingFromTokenBalance(false));
     } else {
-      findATokenAddress(publicKey as PublicKey, fromMint)
+      findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
@@ -134,14 +140,15 @@ export const SwapUi = () => {
   ]);
 
   // Refresh toMint token balance
-  const refreshToTokenBalance = useCallback(async (mint: PublicKey) => {
+  const refreshToTokenBalance = useCallback(async (mint?: PublicKey) => {
     setFetchingToTokenBalance(true);
-    if (mint.equals(NATIVE_SOL_MINT)) {
+    const targetMint = mint || toMint;
+    if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
         .then(balance => setToMintTokenBalance(balance))
         .catch(() => setFetchingToTokenBalance(false));
     } else {
-      findATokenAddress(publicKey as PublicKey, toMint)
+      findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
@@ -193,6 +200,32 @@ export const SwapUi = () => {
     refreshToTokenBalance
   ]);
 
+  // Hook on the wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected) {
+        consoleOut('Refreshing balances...', '', 'blue');
+        refreshFromTokenBalance();
+        refreshToTokenBalance();
+        setPreviousWalletConnectState(true);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
+        setFromMintTokenBalance(0);
+        setToMintTokenBalance(0);
+        setPreviousWalletConnectState(false);
+      }
+    }
+    return () => {};
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    refreshToTokenBalance,
+    refreshFromTokenBalance,
+    setPreviousWalletConnectState
+  ]);
+
   // FEES
   const [swapFees, setSwapFees] = useState<TransactionFees>({
     blockchainFee: 0,
@@ -213,7 +246,7 @@ export const SwapUi = () => {
         console.log("swapFees:", values);
       });
     }
-    
+
   }, [
     connection,
     swapFees
@@ -231,13 +264,6 @@ export const SwapUi = () => {
     }
     return fee;
   };
-
-  // const getPricePerToken = (token: TokenInfo): number => {
-  //   const tokenSymbol = token.symbol.toUpperCase();
-  //   const symbol = tokenSymbol[0] === "W" ? tokenSymbol.slice(1) : tokenSymbol;
-
-  //   return coinPrices && coinPrices[symbol] ? coinPrices[symbol] : 0;
-  // };
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -264,6 +290,11 @@ export const SwapUi = () => {
       setToAmount(newValue, tokenMap.get(fromMint.toBase58())?.decimals || 6);
     }
   };
+
+  const onTokenSearchInputChange = (e: any) => {
+    const newValue = e.target.value as string;
+    setTokenFilter(newValue.trim());
+  }
 
   // Validation
 
@@ -304,22 +335,25 @@ export const SwapUi = () => {
   }
 
   const flipMints = () => {
+    const oldFrom = fromMint;
+    const oldTo = toMint;
     swapToFromMints();
     setSwapRateFlipped(!swapRateFlipped);
+    refreshFromTokenBalance(oldTo);
+    refreshToTokenBalance(oldFrom);
   }
 
-  // const updateTokenPair = (source: TokenInfo, destination: TokenInfo, flip = false) => {
-  //   if (flip) {
-  //     const tokenFrom = destination;
-  //     const tokenTo = source;
-  //     setFromMint(tokenFrom ? new PublicKey(tokenFrom.address) : USDC_MINT);
-  //     setToMint(tokenTo ? new PublicKey(tokenTo.address) : NATIVE_SOL_MINT);
-  //     setFromAmount(toAmount);
-  //     setToAmount(fromAmount);
-  //   }
-  // }
+  const getCurrentRate = () => {
+    let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
 
-  const swap = async () => {
+    if (swapRateFlipped === true) {
+      rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
+    }
+
+    return rate;
+  }
+
+  const getSwap = async () => {
 
     if (!fromMint || !toMint) {
       throw new Error("Unable to calculate mint decimals");
@@ -333,135 +367,26 @@ export const SwapUi = () => {
       throw new Error("Quote mint not found");
     }
 
-    const walletKey = swapClient.program.provider.wallet.publicKey;
-    const amount = new BN(parseFloat(fromAmount) * 10 ** (tokenMap.get(fromMint.toBase58())?.decimals || 6));
-    const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
-    // const wrappedSolKey = await findATokenAddress(walletKey, WRAPPED_SOL_MINT);
-    const wrappedAccount = Keypair.generate();
-    const fromWalletKey = await findATokenAddress(walletKey, fromMint);
-    const toWalletKey = await findATokenAddress(walletKey, toMint);
+    const quoteWalletKey = (quoteWallet ? quoteWallet.publicKey : undefined);
 
-    // Build the swap.
-    let swapTxs = await (async () => {
-      if (!fromMarket) {
-        throw new Error("Market undefined");
-      }
-
-      const fromDecimals = (tokenMap.get(fromMint.toBase58())?.decimals || 6);
-      const swapFee = swapFees.mspPercentFee * parseFloat(fromAmount) / 100;
-      const minExchangeRate = {
-        rate: new BN((10 ** fromDecimals * swapFee) / fair).muln(100 - slippage).divn(100),
-        fromDecimals: fromDecimals,
-        quoteDecimals: quoteMintInfo.decimals,
-        strict: isStrict,
-      };
-    
-      const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
-        ? wrappedAccount.publicKey
-        : fromWalletKey;
-      
-      const toWalletAddr = toMint.equals(NATIVE_SOL_MINT)
-        ? wrappedAccount.publicKey
-        : toWalletKey;
-
-      const fromOpenOrders = fromMarket && openOrders.has(fromMarket?.address.toBase58())
-        ? openOrders.get(fromMarket?.address.toBase58())
-        : undefined;
-    
-      const toOpenOrders = toMarket
-        ? openOrders.get(toMarket?.address.toBase58())
-        : undefined;
-      
-      const swapParams = {
-        fromMint,
-        toMint,
-        quoteMint,
-        amount,
-        minExchangeRate,
-        referral,
-        fromMarket,
-        toMarket,
-        // Automatically created if undefined.
-        fromOpenOrders: fromOpenOrders ? fromOpenOrders[0].address : undefined,
-        toOpenOrders: toOpenOrders ? toOpenOrders[0].address : undefined,
-        fromWallet: fromWalletAddr,
-        toWallet: toWalletAddr,
-        quoteWallet: quoteWallet ? quoteWallet.publicKey : undefined,
-        // Auto close newly created open orders accounts.
-        close: true,
-        confirmOptions: swapClient.program.provider.opts
-      };
-
-      let swapTxs = await swapClient.swapTxs(swapParams);
-      const toWalletInfo = await swapClient.program.provider.connection.getAccountInfo(toWalletAddr);
-
-      if (!toWalletInfo && !toMint.equals(NATIVE_SOL_MINT)) {
-        const aTokenTx = {
-          tx: new Transaction().add(
-            await createATokenAccountInstruction(
-              toWalletKey,
-              walletKey,
-              walletKey,
-              toMint
-            )
-          ), signers: []
-        };
-        
-        const tx = new Transaction().add(
-          aTokenTx.tx,
-          swapTxs[0].tx
-        );
-
-        swapTxs[0].tx = tx;
-        swapTxs[0].signers.push(...aTokenTx.signers as Signer[]);
-      }
-
-      return swapTxs;
-
-    })();
-
-    // If swapping SOL, then insert a wrap/unwrap instruction.
-    if (isSol) {
-      
-      if (swapTxs.length > 1) {
-        throw new Error("SOL must be swapped in a single transaction");
-      }
-
-      const { tx: wrapTx, signers: wrapSigners } = await getWrapTxAndSigners(
-        swapClient.program.provider,
-        wrappedAccount as Keypair,
-        parseFloat(fromAmount)
-      );
-
-      const unwrapTx = new Transaction().add(
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          wrappedAccount!.publicKey,
-          walletKey,
-          walletKey,
-          []
-        )
-      );
-
-      const tx = new Transaction().add(
-        wrapTx,
-        swapTxs[0].tx,
-        unwrapTx
-      );
-
-      swapTxs[0].tx = tx;
-      swapTxs[0].signers.push(...wrapSigners);
-    }
-
-    swapTxs[0].tx.feePayer = walletKey;
-    const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
-    swapTxs[0].tx.recentBlockhash = blockhash;
-
-    if (swapTxs[0].signers.length) {
-      swapTxs[0].tx.partialSign(...swapTxs[0].signers as Signer[]);
-    }
-
-    return swapTxs[0].tx;
+    return swap(
+      swapClient,
+      fromMint,
+      fromMintInfo,
+      fromMarket,
+      parseFloat(fromAmount),
+      toMint,
+      toMarket,
+      quoteWalletKey,
+      quoteMint,
+      quoteMintInfo,
+      openOrders,
+      swapFees,
+      slippage,
+      fair,
+      referral,
+      isStrict
+    );
   };
 
   const renderSourceTokenList = (
@@ -573,41 +498,244 @@ export const SwapUi = () => {
     </>
   );
 
-  // Main action
+  // Transaction execution modal
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+
+  const getTransactionModalTitle = () => {
+    let title: any;
+    if (isBusy) {
+      title = t("transactions.status.modal-title-executing-transaction");
+    } else {
+      if (
+        transactionStatus.lastOperation === TransactionStatus.Iddle &&
+        transactionStatus.currentOperation === TransactionStatus.Iddle
+      ) {
+        title = null;
+      } else if (
+        transactionStatus.lastOperation ===
+        TransactionStatus.TransactionFinished
+      ) {
+        title = t("transactions.status.modal-title-transaction-completed");
+      } else {
+        title = null;
+      }
+    }
+    return title;
+  };
+
+  const isSuccess = (): boolean => {
+    return (
+      transactionStatus.currentOperation ===
+      TransactionStatus.TransactionFinished
+    );
+  };
+
+  const isError = (): boolean => {
+    return transactionStatus.currentOperation ===
+      TransactionStatus.TransactionStartFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.InitTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SignTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.SendTransactionFailure ||
+      transactionStatus.currentOperation ===
+        TransactionStatus.ConfirmTransactionFailure
+      ? true
+      : false;
+  };
+
+  const onAfterTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      setFromAmount("");
+      setToAmount("");
+      hideTransactionModal();
+    }
+  };
 
   const onTransactionStart = async () => {
+
     consoleOut("Starting swap...", "", "orange");
-    const swapTxs = await swap();
-    console.log('swapTxs => ', swapTxs);
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: string;
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction,
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        if (getAccountBalance() < getComputedFees(swapFees)) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure,
+          });
+          return false;
+        }
+
+        return await getSwap()
+          .then((value) => {
+            console.log("SWAP returned transaction:", value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction,
+            });
+            transaction = value;
+            return true;
+          })
+          .catch((error) => {
+            console.log("SWAP transaction init error:", error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure,
+            });
+            return false;
+          });
+      }
+      return false;
+    };
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log("Signing transaction...");
+        return await swapClient.program.provider.wallet
+          .signTransaction(transaction)
+          .then((signed) => {
+            console.log("signTransaction returned a signed transaction:", signed);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction,
+            });
+            signedTransaction = signed;
+            return true;
+          })
+          .catch((error) => {
+            console.log("Signing transaction failed!");
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure,
+            });
+            return false;
+          });
+      } else {
+        console.log("Cannot sign transaction! Wallet not found!");
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure,
+        });
+        return false;
+      }
+    };
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        const serializedTx = signedTransaction.serialize();
+        console.log('tx serialized => ', encode(serializedTx));
+        return await swapClient.program.provider.connection
+          .sendRawTransaction(serializedTx)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      try {
+        return await swapClient.program.provider.connection
+          .confirmTransaction(signature, 'confirmed')
+          .then(result => {
+            console.log('confirmTransaction result:', result);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            return true;
+          })
+          .catch(error => {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            return false;
+          });
+      } catch (error) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
+    }
 
     if (wallet) {
-      const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
-      console.log('tx => ', signedTx);
-      const serializedTx = signedTx.serialize();
-      console.log('tx serialized => ', encode(serializedTx));
-      const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
-      console.log('tx result => ', result);
-
-      // 
-      // let accKey = new PublicKey('8q9ZxWtmWLb8Uu3Tpiq5vsMkv8aELPHNqM1zBWW9PKsf');
-      // let tx = new Transaction().add(        
-      //   closeAccount({
-      //     source: accKey,
-      //     destination: swapClient.program.provider.wallet.publicKey,
-      //     // amount: 23357760,
-      //     owner: new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin')
-      //   })
-      // );
-
-      // tx.feePayer = swapClient.program.provider.wallet.publicKey;
-      // const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
-      // tx.recentBlockhash = blockhash;
-      // const signedTx = await swapClient.program.provider.wallet.signTransaction(tx);
-      // console.log('tx signed => ', signedTx);
+      // const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
+      // console.log('tx => ', signedTx);
       // const serializedTx = signedTx.serialize();
       // console.log('tx serialized => ', encode(serializedTx));
       // const result = await swapClient.program.provider.connection.sendRawTransaction(serializedTx);
       // console.log('tx result => ', result);
+
+      showTransactionModal();
+      const swapTxs = await createTx();
+      console.log("initialized:", swapTxs);
+      if (swapTxs && !transactionCancelled) {
+        const sign = await signTx();
+        console.log("signed:", sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log("sent:", sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log("confirmed:", confirmed);
+            if (confirmed) {
+              // Save signature to the state
+              setIsBusy(false);
+            } else {
+              setIsBusy(false);
+            }
+          } else {
+            setIsBusy(false);
+          }
+        } else {
+          setIsBusy(false);
+        }
+      } else {
+        setIsBusy(false);
+      }
     }
   };
 
@@ -632,16 +760,6 @@ export const SwapUi = () => {
       </Row>
     );
   };
-
-  const getCurrentRate = () => {
-    let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
-
-    if (swapRateFlipped === true) {
-      rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
-    }
-
-    return rate;
-  }
 
   return (
     <div className="swap-wrapper">
@@ -689,10 +807,18 @@ export const SwapUi = () => {
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
-        <div className="token-list">
-          {subjectTokenSelection === "source"
-            ? renderSourceTokenList
-            : renderDestinationTokenList}
+        <div className="token-selector-wrapper">
+          <div className="token-search-wrapper">
+            <TextInput
+              value={tokenFilter}
+              placeholder={t('token-selector.search-input-placeholder')}
+              onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="token-list vertical-scroll">
+            {subjectTokenSelection === "source"
+              ? renderSourceTokenList
+              : renderDestinationTokenList}
+          </div>
         </div>
       </Modal>
 
@@ -746,7 +872,107 @@ export const SwapUi = () => {
         disabled={!isSwapAmountValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+
+      {/* Transaction execution modal */}
+      <Modal
+        className="mean-modal"
+        maskClosable={false}
+        visible={isTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideTransactionModal}
+        afterClose={onAfterTransactionModalClosed}
+        width={280}
+        footer={null}
+      >
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus, t)}
+              </h4>
+              <p className="operation">
+                {t("transactions.status.tx-swap-operation", {
+                  fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint.toBase58()),
+                  toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint.toBase58())
+                  })
+                }
+              </p>
+              <div className="indication">
+                {t("transactions.status.instructions")}
+              </div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined
+                style={{ fontSize: 48 }}
+                className="icon"
+              />
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus, t)}
+              </h4>
+              <p className="operation">
+                {t("transactions.status.tx-swap-operation-success")}.
+              </p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideTransactionModal}
+              >
+                {t("transactions.status.cta-close")}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined
+                style={{ fontSize: 48 }}
+                className="icon"
+              />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t("transactions.status.tx-start-failure", {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      getAccountBalance(),
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      getComputedFees(swapFees),
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                  })}
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(
+                    transactionStatus, t
+                  )}
+                </h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideTransactionModal}
+              >
+                {t("transactions.status.cta-dismiss")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">
+                {t("transactions.status.tx-wait")}...
+              </h4>
+            </>
+          )}
+        </div>
+      </Modal>
+
     </div>
   );
 };
-

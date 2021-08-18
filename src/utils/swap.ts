@@ -7,7 +7,6 @@ import { TransactionFees } from "money-streaming/lib/types";
 import { findATokenAddress } from "money-streaming/lib/utils";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "./ids";
 import {
-    AccountInfo,
     AccountLayout,
     MintInfo,
     Token,
@@ -31,12 +30,12 @@ import {
 export const swap = async(
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo,
-  fromMarket: Market,
+  fromMintInfo: MintInfo | undefined,
+  fromMarket: Market | undefined,
   fromAmount: number,
   toMint: PublicKey,
-  toMarket: Market,
-  quoteWallet: { key: PublicKey, info: AccountInfo },
+  toMarket: Market | undefined,
+  quoteWallet: PublicKey | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
   openOrders: Map<string, OpenOrders[]>,
@@ -77,12 +76,12 @@ export const swap = async(
 export const swapRequest = async(
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo,
-  fromMarket: Market,
+  fromMintInfo: MintInfo | undefined,
+  fromMarket: Market | undefined,
   fromAmount: number,
   toMint: PublicKey,
-  toMarket: Market,
-  quoteWallet: { key: PublicKey, info: AccountInfo },
+  toMarket: Market | undefined,
+  quoteWallet: PublicKey | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
   openOrders: Map<string, OpenOrders[]>,
@@ -100,7 +99,7 @@ export const swapRequest = async(
     wallet: client.program.provider.wallet    
   };
   
-  const amount = new BN(fromAmount * 10 ** fromMintInfo.decimals);
+  const amount = new BN(fromAmount * 10 ** (fromMintInfo?.decimals || 6));
   const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
   const wrappedAccount = Keypair.generate();
   const fromWalletKey = await findATokenAddress(wallet.publicKey, fromMint);
@@ -243,12 +242,12 @@ export const unwrap = async(
 const swapTxRequest = async (
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo,
-  fromMarket: Market,
+  fromMintInfo: MintInfo | undefined,
+  fromMarket: Market | undefined,
   amount: BN,
   toMint: PublicKey,
-  toMarket: Market,
-  quoteWallet: { key: PublicKey, info: AccountInfo },
+  toMarket: Market | undefined,
+  quoteWallet: PublicKey | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
   fromWallet: PublicKey,
@@ -269,8 +268,8 @@ const swapTxRequest = async (
     
   const swapFee = amount.muln(fees.mspPercentFee).divn(100).toNumber();
   const minExchangeRate = {
-    rate: new BN((10 ** fromMintInfo.decimals * swapFee) / fair).muln(100 - slippage).divn(100),
-    fromDecimals: fromMintInfo.decimals,
+    rate: new BN((10 ** (fromMintInfo?.decimals || 6) * swapFee) / fair).muln(100 - slippage).divn(100),
+    fromDecimals: (fromMintInfo?.decimals || 6),
     quoteDecimals: quoteMintInfo.decimals,
     strict,
   };
@@ -290,13 +289,13 @@ const swapTxRequest = async (
     amount,
     minExchangeRate,
     referral,
-    fromMarket,
+    fromMarket: fromMarket as Market,
     toMarket,
     fromOpenOrders: fromOpenOrders ? fromOpenOrders[0].address : undefined,
     toOpenOrders: toOpenOrders ? toOpenOrders[0].address : undefined,
     fromWallet,
     toWallet,
-    quoteWallet: quoteWallet ? quoteWallet.key : undefined,
+    quoteWallet: quoteWallet ? quoteWallet : undefined,
     close: true,
     confirmOptions: client.program.provider.opts
   };
@@ -305,6 +304,7 @@ const swapTxRequest = async (
   let toWalletInfo = await connection.getAccountInfo(toWallet);
 
   if (!toWalletInfo && !toMint.equals(NATIVE_SOL_MINT)) {
+    console.log('toWalletInfo => ', toWalletInfo);
     const aTokenTx = {
       tx: new Transaction().add(
         await createATokenAccountInstruction(

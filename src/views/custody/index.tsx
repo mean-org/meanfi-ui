@@ -21,11 +21,11 @@ export const CustodyView = () => {
 
         <section className="content">
           <Row gutter={[24, 24]}>
-            <Col span={12}>
+            <Col xs={24} md={12}>
               <div className="highlight-box">
                 <div className="highlight-icon">
                   <Avatar
-                    size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
+                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
                     icon={<HddOutlined />}
                   />
                 </div>
@@ -35,22 +35,28 @@ export const CustodyView = () => {
                 </div>
               </div>
             </Col>
-            <Col span={12}>
-              <Image height={400} src="https://images.squarespace-cdn.com/content/v1/58f7bc39bebafb94498d25bf/1598361043038-I1DQT0LWPTPJOSK2Z0PP/crypto-asset-custody.jpeg?format=1500w" />
+            <Col xs={24} md={12}>
+              <div className="ant-image" style={{width: '100%', height: 'auto'}}>
+                <img className="ant-image-img" alt=""
+                      src="https://images.squarespace-cdn.com/content/v1/58f7bc39bebafb94498d25bf/1598361043038-I1DQT0LWPTPJOSK2Z0PP/crypto-asset-custody.jpeg?format=1500w" />
+              </div>
             </Col>
           </Row>
         </section>
 
         <section className="content">
           <Row gutter={[24, 24]}>
-            <Col span={12}>
-              <Image height={400} src="https://images.squarespace-cdn.com/content/v1/5475f6eae4b0821160f6ac3e/1538589349188-9CFX678L2PDDFZVCOIH1/blockchain+handshake?format=1500w" />
+            <Col xs={{span: 24, order: 2}} md={{span: 12, order: 1}}>
+              <div className="ant-image" style={{width: '100%', height: 'auto'}}>
+                <img className="ant-image-img" alt=""
+                      src="https://images.squarespace-cdn.com/content/v1/5475f6eae4b0821160f6ac3e/1538589349188-9CFX678L2PDDFZVCOIH1/blockchain+handshake?format=1500w" />
+              </div>
             </Col>
-            <Col span={12}>
+            <Col xs={{span: 24, order: 1}} md={{span: 12, order: 2}}>
               <div className="highlight-box">
                 <div className="highlight-icon">
                   <Avatar
-                    size={{ xs: 24, sm: 32, md: 40, lg: 64, xl: 80, xxl: 100 }}
+                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
                     icon={<SafetyOutlined />}
                   />
                 </div>

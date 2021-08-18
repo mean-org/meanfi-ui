@@ -308,15 +308,15 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"custody": "",
+				"custody": "Custody",
 				"payroll": "Paie",
-				"submenu-title": ""
+				"submenu-title": "Services Commerciaux"
 			},
-			"swap": "",
+			"swap": "Échanger",
 			"tools": {
-				"faucet": "Robinet",
-				"submenu-title": "",
-				"wrapper": "Emballage"
+				"faucet": "Faucet",
+				"submenu-title": "Outils",
+				"wrapper": "Wrapper"
 			},
 			"transfers": "Transferts"
 		}

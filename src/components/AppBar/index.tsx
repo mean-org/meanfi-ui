@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
 import { environment } from '../../environments/environment';
+import { MEANFI_METRICS_URL } from '../../constants';
 
 const { SubMenu } = Menu;
 
@@ -96,6 +97,11 @@ export const AppBar = (props: { menuType: string }) => {
         <Menu.Item key="/wrap">
           <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
         </Menu.Item>
+        <Menu.Item key="charts">
+          <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
+          </a>
+        </Menu.Item>
       </SubMenu>
     </Menu>
   );
@@ -166,6 +172,12 @@ export const AppBar = (props: { menuType: string }) => {
               )}
               <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                 <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
+              </li>
+
+              <li key="charts" className="mobile-menu-item">
+                <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
+                </a>
               </li>
             </ul>
           </li>

@@ -10,6 +10,7 @@ import { useOwnedTokenAccount } from "../contexts/token";
 import { useTokenListContext, SPL_REGISTRY_SOLLET_TAG, SPL_REGISTRY_WORM_TAG } from "./tokenList";
 import { AppStateContext } from "../contexts/appstate";
 import { formatAmount } from "../utils/utils";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 const DEFAULT_SLIPPAGE_PERCENT = 0.5;
 
@@ -59,9 +60,16 @@ export function SwapContextProvider(props: any) {
     swapToTokenAmount
 
   } = useContext(AppStateContext);
-  
-  const [fromMint, setFromMint] = useState(selectedToken ? new PublicKey(selectedToken.address) : USDC_MINT);
-  const [toMint, setToMint] = useState(swapToToken ? new PublicKey(swapToToken.address) : NATIVE_SOL_MINT);
+
+  // Get them from the localStorage and set defaults if they are not already stored
+  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', selectedToken ? selectedToken.address : USDC_MINT.toBase58());
+  const [lastSwapToMint, setLastSwapToMint] = useLocalStorage('lastSwapToMint', swapToToken ? swapToToken.address : NATIVE_SOL_MINT.toBase58());
+
+  // Work with our swap From/To subjects
+  const [fromMint, updateFromMint] = useState(new PublicKey(lastSwapFromMint));
+  const [toMint, updateToMint] = useState(new PublicKey(lastSwapToMint));
+
+  // Continue normal flow
   const [fromAmount, _setFromAmount] = useState(fromCoinAmount || "");
   const [toAmount, _setToAmount] = useState(swapToTokenAmount || "");
   const [isClosingNewAccounts, setIsClosingNewAccounts] = useState(false);
@@ -78,6 +86,16 @@ export function SwapContextProvider(props: any) {
     setFromAmount(fromAmount);    
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fair]);
+
+  const setFromMint = (m: PublicKey) => {
+    updateFromMint(m);
+    setLastSwapFromMint(m.toBase58());
+  }
+
+  const setToMint = (m: PublicKey) => {
+    updateToMint(m);
+    setLastSwapToMint(m.toBase58());
+  }
 
   const swapToFromMints = () => {
     const oldFrom = fromMint;

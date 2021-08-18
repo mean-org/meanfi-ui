@@ -16,7 +16,7 @@
 	},
 	"close-stream": {
 		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
-		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes al treasury ({{treasury}}) original.",
+		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
@@ -38,7 +38,7 @@
 		},
 		"payroll": {
 			"description": "Configure la nómina para un empleado o contratista, en cualquier parte del mundo sin los gastos generales de los servicios bancarios tradicionales.",
-			"name": "Nómina de sueldos"
+			"name": "Nómina de pagos"
 		},
 		"pension-fund": {
 			"description": "Para empleadores que establecen planes de pensión que pagan a los empleados sobre eventos que califiquen, como alcanzar la edad de jubilación.",
@@ -308,15 +308,15 @@
 		},
 		"main-menu": {
 			"pro-services": {
-				"custody": "",
+				"custody": "Custody",
 				"payroll": "Nómina de sueldos",
-				"submenu-title": ""
+				"submenu-title": "Servicios"
 			},
-			"swap": "",
+			"swap": "Canjear",
 			"tools": {
-				"faucet": "Grifo",
-				"submenu-title": "",
-				"wrapper": "Envoltura"
+				"faucet": "Faucet",
+				"submenu-title": "Herramientas",
+				"wrapper": "Wrapper"
 			},
 			"transfers": "Transferencias"
 		}

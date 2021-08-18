@@ -182,7 +182,8 @@
 		"token-select-source": "Select token"
 	},
 	"token-selector": {
-		"modal-title": "Select a token"
+		"modal-title": "Select a token",
+		"search-input-placeholder": "Search name or paste address"
 	},
 	"transactions": {
 		"memo": {
@@ -251,7 +252,9 @@
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
 			"tx-wrap-operation": "Wrapping",
-			"tx-wrap-operation-success": "Wrap operation completed successfully"
+			"tx-wrap-operation-success": "Wrap operation completed successfully",
+			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Swap operation completed successfully"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
@@ -310,13 +313,14 @@
 			"pro-services": {
 				"custody": "Custody",
 				"payroll": "Payroll",
-				"submenu-title": "Pro Services"
+				"submenu-title": "Services"
 			},
 			"swap": "Swap",
 			"tools": {
 				"faucet": "Faucet",
 				"submenu-title": "Tools",
-				"wrapper": "Wrapper"
+				"wrapper": "Wrapper",
+				"charts": "Charts"
 			},
 			"transfers": "Transfers"
 		}

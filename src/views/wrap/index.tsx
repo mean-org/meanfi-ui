@@ -32,6 +32,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+
 export const WrapView = () => {
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
@@ -52,18 +53,12 @@ export const WrapView = () => {
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
+
   // Transaction execution modal
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] =
-    useState(false);
-  const showTransactionModal = useCallback(
-    () => setTransactionModalVisibility(true),
-    []
-  );
-  const hideTransactionModal = useCallback(
-    () => setTransactionModalVisibility(false),
-    []
-  );
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
   useEffect(() => {
     if (tokenList && selectedToken) {
@@ -540,7 +535,7 @@ export const WrapView = () => {
                     <>
                       <Spin indicator={bigLoadingIcon} className="icon" />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus)}
+                        {getTransactionOperationDescription(transactionStatus, t)}
                       </h4>
                       <p className="operation">
                         {t("transactions.status.tx-wrap-operation")}{" "}
@@ -557,7 +552,7 @@ export const WrapView = () => {
                         className="icon"
                       />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus)}
+                        {getTransactionOperationDescription(transactionStatus, t)}
                       </h4>
                       <p className="operation">
                         {t("transactions.status.tx-wrap-operation-success")}.
@@ -597,7 +592,7 @@ export const WrapView = () => {
                       ) : (
                         <h4 className="font-bold mb-1 text-uppercase">
                           {getTransactionOperationDescription(
-                            transactionStatus
+                            transactionStatus, t
                           )}
                         </h4>
                       )}
