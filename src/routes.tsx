@@ -12,9 +12,7 @@ import {
   SwapView,
   TransfersView,
   WrapView
-  
 } from "./views";
-import { environment } from "./environments/environment";
 
 export function Routes() {
   return (
@@ -29,15 +27,12 @@ export function Routes() {
                     <Switch>
                       {/* <Route path="/" component={() => <HomeView />} /> */}
                       <Route exact path="/">
-                        {environment === 'production' && <Redirect to="/swap" />}
-                        {environment !== 'production' && <Redirect to="/transfers" />}
+                        <Redirect to="/swap" />
                       </Route>
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />
-                      {environment === 'production' &&
-                        <Route exact path="/swap" children={<SwapView />} />
-                      }
+                      <Route exact path="/swap" children={<SwapView />} />
                       <Route exact path="/wrap" children={<WrapView />} />
                       <Route exact path="/custody" children={<CustodyView />} />
                       <Route path="*">

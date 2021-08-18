@@ -72,11 +72,9 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode={props.menuType === 'desktop' ? 'horizontal' : 'vertical'} className="w-100" >
-      {environment === 'production' &&
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
-      }
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
@@ -97,11 +95,13 @@ export const AppBar = (props: { menuType: string }) => {
         <Menu.Item key="/wrap">
           <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
         </Menu.Item>
-        <Menu.Item key="charts">
-          <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
-          </a>
-        </Menu.Item>
+        {environment !== 'production' && (
+          <Menu.Item key="charts">
+            <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+              <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
+            </a>
+          </Menu.Item>
+        )}
       </SubMenu>
     </Menu>
   );
@@ -141,11 +141,9 @@ export const AppBar = (props: { menuType: string }) => {
       <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
       <div id="overlay">
         <ul onClick={dismissMenu}>
-          {environment === 'production' &&
-            <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-              <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
-            </li>
-          }
+          <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+            <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+          </li>
           <li key="/transfers"
               className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
               onClick={() => onGoToTransfersClick()}>
@@ -173,12 +171,13 @@ export const AppBar = (props: { menuType: string }) => {
               <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                 <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
               </li>
-
-              <li key="charts" className="mobile-menu-item">
-                <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
-                </a>
-              </li>
+              {environment !== 'production' && (
+                <li key="charts" className="mobile-menu-item">
+                  <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
+                  </a>
+                </li>
+              )}
             </ul>
           </li>
         </ul>
