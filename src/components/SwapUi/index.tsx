@@ -557,6 +557,8 @@ export const SwapUi = () => {
       setFromAmount("");
       setToAmount("");
       hideTransactionModal();
+      refreshFromTokenBalance();
+      refreshToTokenBalance();
     }
   };
 
@@ -617,7 +619,7 @@ export const SwapUi = () => {
           .then((signed) => {
             console.log("signTransaction returned a signed transaction:", signed);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
+              lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.SendTransaction,
             });
             signedTransaction = signed;
@@ -650,8 +652,8 @@ export const SwapUi = () => {
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             return true;
@@ -674,31 +676,23 @@ export const SwapUi = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      try {
-        return await swapClient.program.provider.connection
-          .confirmTransaction(signature, 'confirmed')
-          .then(result => {
-            console.log('confirmTransaction result:', result);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            return true;
-          })
-          .catch(error => {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            return false;
+      return await swapClient.program.provider.connection
+        .confirmTransaction(signature, 'confirmed')
+        .then(result => {
+          console.log('confirmTransaction result:', result);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
           });
-      } catch (error) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.ConfirmTransaction,
-          currentOperation: TransactionStatus.ConfirmTransactionFailure
+          return true;
+        })
+        .catch(error => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
         });
-        return false;
-      }
     }
 
     if (wallet) {
@@ -762,217 +756,218 @@ export const SwapUi = () => {
   };
 
   return (
-    <div className="swap-wrapper">
-      {/* Source token / amount */}
-      <CoinInput
-        token={tokenMap.get(fromMint.toBase58()) as TokenInfo}
-        tokenBalance={fromMintTokenBalance}
-        tokenAmount={fromAmount}
-        onInputChange={handleSwapFromAmountChange}
-        onMaxAmount={() => setFromAmount(fromMintTokenBalance.toString())}
-        onSelectToken={() => {
-          setSubjectTokenSelection("source");
-          showTokenSelector();
-        }}
-        translationId="source"
-      />
+    <Spin spinning={isBusy}>
+      <div className="swap-wrapper">
+        {/* Source token / amount */}
+        <CoinInput
+          token={tokenMap.get(fromMint.toBase58()) as TokenInfo}
+          tokenBalance={fromMintTokenBalance}
+          tokenAmount={fromAmount}
+          onInputChange={handleSwapFromAmountChange}
+          onMaxAmount={() => setFromAmount(fromMintTokenBalance.toString())}
+          onSelectToken={() => {
+            setSubjectTokenSelection("source");
+            showTokenSelector();
+          }}
+          translationId="source"
+        />
 
-      <div className="flip-button-container">
-        <div className="flip-button" onClick={() => flipMints()}>
-          <IconSwapFlip className="mean-svg-icons" />
-        </div>
-      </div>
-
-      {/* Destination token / amount */}
-      <CoinInput
-        token={tokenMap.get(toMint.toBase58()) as TokenInfo}
-        tokenBalance={toMintTokenBalance}
-        tokenAmount={toAmount}
-        onInputChange={handleSwapToAmountChange}
-        onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
-        onSelectToken={() => {
-          setSubjectTokenSelection("destination");
-          showTokenSelector();
-        }}
-        translationId="destination"
-      />
-
-      {/* Token selection modal */}
-      <Modal
-        className="mean-modal unpadded-content"
-        visible={isTokenSelectorModalVisible}
-        title={
-          <div className="modal-title">{t("token-selector.modal-title")}</div>
-        }
-        onCancel={onCloseTokenSelector}
-        width={450}
-        footer={null}>
-        <div className="token-selector-wrapper">
-          <div className="token-search-wrapper">
-            <TextInput
-              value={tokenFilter}
-              placeholder={t('token-selector.search-input-placeholder')}
-              onInputChange={onTokenSearchInputChange} />
-          </div>
-          <div className="token-list vertical-scroll">
-            {subjectTokenSelection === "source"
-              ? renderSourceTokenList
-              : renderDestinationTokenList}
+        <div className="flip-button-container">
+          <div className="flip-button" onClick={() => flipMints()}>
+            <IconSwapFlip className="mean-svg-icons" />
           </div>
         </div>
-      </Modal>
 
-      {/* Info */}
-      {fromMarket && (
-        <div className="p-2 mb-2">
-          {
-            infoRow(
-              (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
-              (
-                `${formatAmount(
-                  getCurrentRate(),
+        {/* Destination token / amount */}
+        <CoinInput
+          token={tokenMap.get(toMint.toBase58()) as TokenInfo}
+          tokenBalance={toMintTokenBalance}
+          tokenAmount={toAmount}
+          onInputChange={handleSwapToAmountChange}
+          onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
+          onSelectToken={() => {
+            setSubjectTokenSelection("destination");
+            showTokenSelector();
+          }}
+          translationId="destination"
+        />
+
+        {/* Token selection modal */}
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={
+            <div className="modal-title">{t("token-selector.modal-title")}</div>
+          }
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+              <TextInput
+                value={tokenFilter}
+                placeholder={t('token-selector.search-input-placeholder')}
+                onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="token-list vertical-scroll">
+              {subjectTokenSelection === "source"
+                ? renderSourceTokenList
+                : renderDestinationTokenList}
+            </div>
+          </div>
+        </Modal>
+
+        {/* Info */}
+        {fromMarket && (
+          <div className="p-2 mb-2">
+            {
+              infoRow(
+                (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
+                (
+                  `${formatAmount(
+                    getCurrentRate(),
+                    (tokenMap.get(toMint.toBase58())?.decimals || 9)
+                  )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
+                ),
+                '≈',
+                true
+              )
+            }
+            {
+              isSwapAmountValid() &&
+              infoRow(
+                t("transactions.transaction-info.transaction-fee"),
+                formatAmount(
+                  getFeeAmount(fromAmount),
+                  (tokenMap.get(fromMint.toBase58())?.decimals || 6)
+                ) + ` ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}`
+              )
+            }
+            {
+              isSwapAmountValid() &&
+              infoRow(
+                t("transactions.transaction-info.recipient-receives"),
+                formatAmount(
+                  parseFloat(toAmount) - getFeeAmount(toAmount),
                   (tokenMap.get(toMint.toBase58())?.decimals || 9)
-                )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
-              ),
-              '≈',
-              true
-            )
-          }
-          {
-            isSwapAmountValid() &&
-            infoRow(
-              t("transactions.transaction-info.transaction-fee"),
-              formatAmount(
-                getFeeAmount(fromAmount),
-                (tokenMap.get(fromMint.toBase58())?.decimals || 6)
-              ) + ` ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}`
-            )
-          }
-          {
-            isSwapAmountValid() &&
-            infoRow(
-              t("transactions.transaction-info.recipient-receives"),
-              formatAmount(
-                parseFloat(toAmount) - getFeeAmount(toAmount),
-                (tokenMap.get(toMint.toBase58())?.decimals || 9)
-              ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
-            )
-          }
-        </div>
-      )}
+                ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
+              )
+            }
+          </div>
+        )}
 
-      {/* Action button */}
-      <Button
-        className="main-cta"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={onTransactionStart}
-        disabled={!isSwapAmountValid()}>
-        {getTransactionStartButtonLabel()}
-      </Button>
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onTransactionStart}
+          disabled={!isSwapAmountValid()}>
+          {getTransactionStartButtonLabel()}
+        </Button>
 
-      {/* Transaction execution modal */}
-      <Modal
-        className="mean-modal"
-        maskClosable={false}
-        visible={isTransactionModalVisible}
-        title={getTransactionModalTitle()}
-        onCancel={hideTransactionModal}
-        afterClose={onAfterTransactionModalClosed}
-        width={280}
-        footer={null}
-      >
-        <div className="transaction-progress">
-          {isBusy ? (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
-              </h4>
-              <p className="operation">
-                {t("transactions.status.tx-swap-operation", {
-                  fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint.toBase58()),
-                  toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint.toBase58())
-                  })
-                }
-              </p>
-              <div className="indication">
-                {t("transactions.status.instructions")}
-              </div>
-            </>
-          ) : isSuccess() ? (
-            <>
-              <CheckOutlined
-                style={{ fontSize: 48 }}
-                className="icon"
-              />
-              <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
-              </h4>
-              <p className="operation">
-                {t("transactions.status.tx-swap-operation-success")}.
-              </p>
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideTransactionModal}
-              >
-                {t("transactions.status.cta-close")}
-              </Button>
-            </>
-          ) : isError() ? (
-            <>
-              <WarningOutlined
-                style={{ fontSize: 48 }}
-                className="icon"
-              />
-              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                <h4 className="mb-4">
-                  {t("transactions.status.tx-start-failure", {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                      getAccountBalance(),
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      getComputedFees(swapFees),
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`,
-                  })}
-                </h4>
-              ) : (
+        {/* Transaction execution modal */}
+        <Modal
+          className="mean-modal"
+          maskClosable={false}
+          visible={isTransactionModalVisible}
+          title={getTransactionModalTitle()}
+          onCancel={hideTransactionModal}
+          afterClose={onAfterTransactionModalClosed}
+          width={280}
+          footer={null}
+        >
+          <div className="transaction-progress">
+            {isBusy ? (
+              <>
+                <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1 text-uppercase">
-                  {getTransactionOperationDescription(
-                    transactionStatus, t
-                  )}
+                  {getTransactionOperationDescription(transactionStatus, t)}
                 </h4>
-              )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideTransactionModal}
-              >
-                {t("transactions.status.cta-dismiss")}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">
-                {t("transactions.status.tx-wait")}...
-              </h4>
-            </>
-          )}
-        </div>
-      </Modal>
+                <p className="operation">
+                  {t("transactions.status.tx-swap-operation", {
+                    fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint.toBase58()),
+                    toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint.toBase58())
+                    })
+                  }
+                </p>
+                <div className="indication">
+                  {t("transactions.status.instructions")}
+                </div>
+              </>
+            ) : isSuccess() ? (
+              <>
+                <CheckOutlined
+                  style={{ fontSize: 48 }}
+                  className="icon"
+                />
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(transactionStatus, t)}
+                </h4>
+                <p className="operation">
+                  {t("transactions.status.tx-swap-operation-success")}.
+                </p>
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideTransactionModal}>
+                  {t("transactions.status.cta-close")}
+                </Button>
+              </>
+            ) : isError() ? (
+              <>
+                <WarningOutlined
+                  style={{ fontSize: 48 }}
+                  className="icon"
+                />
+                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <h4 className="mb-4">
+                    {t("transactions.status.tx-start-failure", {
+                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                        getAccountBalance(),
+                        WRAPPED_SOL_MINT_ADDRESS,
+                        true
+                      )} SOL`,
+                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                        getComputedFees(swapFees),
+                        WRAPPED_SOL_MINT_ADDRESS,
+                        true
+                      )} SOL`,
+                    })}
+                  </h4>
+                ) : (
+                  <h4 className="font-bold mb-1 text-uppercase">
+                    {getTransactionOperationDescription(
+                      transactionStatus, t
+                    )}
+                  </h4>
+                )}
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideTransactionModal}
+                >
+                  {t("transactions.status.cta-dismiss")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Spin indicator={bigLoadingIcon} className="icon" />
+                <h4 className="font-bold mb-4 text-uppercase">
+                  {t("transactions.status.tx-wait")}...
+                </h4>
+              </>
+            )}
+          </div>
+        </Modal>
 
-    </div>
+      </div>
+    </Spin>
   );
 };

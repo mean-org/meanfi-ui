@@ -795,11 +795,24 @@ footer.ant-layout-footer {
       a,
       .ant-menu-submenu-title {
         color: var(--color-secondary-alpha-70);
+        .ant-menu-submenu-arrow {
+          display: inline-block;
+          position: relative;
+          left: 0;
+          top: 0;
+          vertical-align: middle;
+          margin-left: 6px;
+          transform-origin: 40%;
+          transform: rotate(90deg);
+        }
       }
       &:hover {
         a,
         .ant-menu-submenu-title {
           color: var(--color-secondary-alpha-85);
+          .ant-menu-submenu-arrow {
+            color: inherit;
+          }
         }
       }
     }
