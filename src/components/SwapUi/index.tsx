@@ -280,7 +280,10 @@ export const SwapUi = () => {
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-  const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    setTokenFilter('');
+  }, []);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
   const [swapRateFlipped, setSwapRateFlipped] = useState(false);
 
