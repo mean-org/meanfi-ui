@@ -31,6 +31,7 @@ import { Keypair } from "@solana/web3.js";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { TextInput } from "../TextInput";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -304,6 +305,11 @@ export const SwapUi = () => {
       setToAmount(newValue, tokenMap.get(fromMint.toBase58())?.decimals || 6);
     }
   };
+
+  const onTokenSearchInputChange = (e: any) => {
+    const newValue = e.target.value as string;
+    setTokenFilter(newValue.trim());
+  }
 
   // Validation
 
@@ -921,10 +927,18 @@ export const SwapUi = () => {
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
-        <div className="token-list">
-          {subjectTokenSelection === "source"
-            ? renderSourceTokenList
-            : renderDestinationTokenList}
+        <div className="token-selector-wrapper">
+          <div className="token-search-wrapper">
+            <TextInput
+              value={tokenFilter}
+              placeholder={t('token-selector.search-input-placeholder')}
+              onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="token-list vertical-scroll">
+            {subjectTokenSelection === "source"
+              ? renderSourceTokenList
+              : renderDestinationTokenList}
+          </div>
         </div>
       </Modal>
 

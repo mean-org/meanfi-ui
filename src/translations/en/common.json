@@ -182,7 +182,8 @@
 		"token-select-source": "Select token"
 	},
 	"token-selector": {
-		"modal-title": "Select a token"
+		"modal-title": "Select a token",
+		"search-input-placeholder": "Search name or paste address"
 	},
 	"transactions": {
 		"memo": {
