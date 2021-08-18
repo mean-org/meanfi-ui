@@ -1616,8 +1616,22 @@ section.content {
   text-align: center;
 }
 .text-container {
-  padding-left: 5rem;
-  padding-right: 5rem;
+  @media (max-width: 575.98px) {
+    padding-left: 8%;
+    padding-right: 8%;
+  }
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    padding-left: 12%;
+    padding-right: 12%;
+  }
+  @media (min-width: 768px) and (max-width: 1023.98px) {
+    padding-left: 4%;
+    padding-right: 4%;
+  }
+  @media (min-width: 1024px) {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
 }
 .highlight-text {
   font-size: 1rem;

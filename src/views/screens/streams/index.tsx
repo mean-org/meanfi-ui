@@ -123,7 +123,7 @@ export const Streams = () => {
     let updateDateTimer: any;
 
     const updateData = async () => {
-      if (streamDetail) {
+      if (streamDetail && streamDetail.escrowUnvestedAmount) {
         const clonedDetail = Object.assign({}, streamDetail);
         const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
