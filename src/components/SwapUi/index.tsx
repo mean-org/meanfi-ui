@@ -118,14 +118,20 @@ export const SwapUi = () => {
     const targetMint = mint || fromMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => setFromMintTokenBalance(balance))
+        .then(balance => {
+          setFromMintTokenBalance(balance);
+          setFetchingFromTokenBalance(false);
+        })
         .catch(() => setFetchingFromTokenBalance(false));
     } else {
       findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => setFromMintTokenBalance(balance))
+              .then(balance => {
+                setFromMintTokenBalance(balance);
+                setFetchingFromTokenBalance(false);
+              })
               .catch(() => setFetchingFromTokenBalance(false));
           } else {
             setFetchingFromTokenBalance(false);
@@ -145,14 +151,20 @@ export const SwapUi = () => {
     const targetMint = mint || toMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
       getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => setToMintTokenBalance(balance))
+        .then(balance => {
+          setToMintTokenBalance(balance);
+          setFetchingToTokenBalance(false);
+        })
         .catch(() => setFetchingToTokenBalance(false));
     } else {
       findATokenAddress(publicKey as PublicKey, targetMint)
         .then(value => {
           if (value) {
             getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => setToMintTokenBalance(balance))
+              .then(balance => {
+                setToMintTokenBalance(balance);
+                setFetchingToTokenBalance(false);
+              })
               .catch(() => setFetchingToTokenBalance(false));
           } else {
             setFetchingToTokenBalance(false);
@@ -756,7 +768,7 @@ export const SwapUi = () => {
   };
 
   return (
-    <Spin spinning={isBusy}>
+    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance}>
       <div className="swap-wrapper">
         {/* Source token / amount */}
         <CoinInput
