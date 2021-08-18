@@ -2,13 +2,13 @@ import BN from 'bn.js';
 import { useCallback, useState } from "react";
 import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
+import { Account, Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from "money-streaming/lib/types";
-import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "./ids";
+import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "./ids";
 import { Provider } from '@project-serum/anchor';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
@@ -406,38 +406,32 @@ function getOwnedAccountsFilters(publicKey: PublicKey) {
   ];
 }
 
+// export async function getCreateATokenTx(
+
+// );
+
 export async function getWrapTxAndSigners(
   provider: Provider,
   account: Keypair,
-  fromMint: PublicKey,
-  amount: BN
+  amount: number
   
 ): Promise<{ tx: Transaction; signers: Array<Signer | undefined> }> {
-
+  
   const signers = [account];
-  const tx = new Transaction().add(
+
+  let tx = new Transaction().add(
     SystemProgram.createAccount({
       fromPubkey: provider.wallet.publicKey,
       newAccountPubkey: account.publicKey,
       lamports: await Token.getMinBalanceRentForExemptAccount(provider.connection),
       space: 165,
       programId: TOKEN_PROGRAM_ID,
-    })
-  );
-
-  // Transfer lamports. These will be converted to an SPL balance by the token program.
-  if (fromMint.equals(NATIVE_SOL_MINT)) {
-    tx.add(
-      SystemProgram.transfer({
-        fromPubkey: provider.wallet.publicKey,
-        toPubkey: account.publicKey,
-        lamports: amount.toNumber(),
-      })
-    );
-  }
-  
-  // Initialize the account.
-  tx.add(
+    }),
+    SystemProgram.transfer({
+      fromPubkey: provider.wallet.publicKey,
+      toPubkey: account.publicKey,
+      lamports: amount,
+    }),
     Token.createInitAccountInstruction(
       TOKEN_PROGRAM_ID,
       WRAPPED_SOL_MINT,

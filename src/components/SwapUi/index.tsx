@@ -10,14 +10,14 @@ import { useWallet } from "../../contexts/wallet";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useMint } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
+import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
 import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
-import { LAMPORTS_PER_SOL, PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { DEX_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT } from "../../utils/ids";
+import { Account, LAMPORTS_PER_SOL, PublicKey, Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, USDC_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { useOwnedTokenAccount } from "../../contexts/token";
 import BN from "bn.js";
@@ -29,6 +29,7 @@ import { OpenOrders } from "@project-serum/serum";
 import { SendTxRequest } from "@project-serum/anchor/dist/provider";
 import { SystemProgram } from "@solana/web3.js";
 import { closeAccount, transfer } from "@project-serum/serum/lib/token-instructions";
+import { decode } from "bs58";
 
 export const SwapUi = () => {
 
@@ -332,15 +333,13 @@ export const SwapUi = () => {
       throw new Error("Quote mint not found");
     }
 
+    const walletKey = swapClient.program.provider.wallet.publicKey;
     const amount = new BN(parseFloat(fromAmount) * 10 ** (tokenMap.get(fromMint.toBase58())?.decimals || 6));
     const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
-    const walletKey = wallet?.publicKey as PublicKey;
-    // const wrappedSolKey = await findATokenAddress(wallet?.publicKey as PublicKey, WRAPPED_SOL_MINT);
+    // const wrappedSolKey = await findATokenAddress(walletKey, WRAPPED_SOL_MINT);
     const wrappedAccount = Keypair.generate();
-    const fromWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, fromMint);
-    const fromWalletInfo = await connection.getAccountInfo(fromWalletKey);
-    const toWalletKey = await findATokenAddress(wallet?.publicKey as PublicKey, toMint);
-    const toWalletInfo = await connection.getAccountInfo(toWalletKey);
+    const fromWalletKey = await findATokenAddress(walletKey, fromMint);
+    const toWalletKey = await findATokenAddress(walletKey, toMint);
 
     // Build the swap.
     let swapTxs = await (async () => {
@@ -359,19 +358,15 @@ export const SwapUi = () => {
     
       const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
         ? wrappedAccount.publicKey
-        : fromWalletInfo
-        ? fromWalletKey
-        : undefined;
+        : fromWalletKey;
       
       const toWalletAddr = toMint.equals(NATIVE_SOL_MINT)
         ? wrappedAccount.publicKey
-        : toWalletInfo
-        ? toWalletKey
-        : undefined;
+        : toWalletKey;
 
       const fromOpenOrders = fromMarket && openOrders.has(fromMarket?.address.toBase58())
         ? openOrders.get(fromMarket?.address.toBase58())
-      : undefined;
+        : undefined;
     
       const toOpenOrders = toMarket
         ? openOrders.get(toMarket?.address.toBase58())
@@ -397,33 +392,51 @@ export const SwapUi = () => {
         confirmOptions: swapClient.program.provider.opts
       };
 
-      console.log('fromMarket => ', fromMarket.address);
-      console.log('toOpenOrders => ', toMarket?.address);
-      console.log('fromOpenOrders => ', swapParams.fromOpenOrders);
-      console.log('toOpenOrders => ', swapParams.toOpenOrders);
+      let swapTxs = await swapClient.swapTxs(swapParams);
+      const toWalletInfo = await swapClient.program.provider.connection.getAccountInfo(toWalletAddr);
 
-      return await swapClient.swapTxs(swapParams);
+      if (!toWalletInfo && !toMint.equals(NATIVE_SOL_MINT)) {
+        const aTokenTx = {
+          tx: new Transaction().add(
+            await createATokenAccountInstruction(
+              toWalletKey,
+              walletKey,
+              walletKey,
+              toMint
+            )
+          ), signers: []
+        };
+        
+        const tx = new Transaction().add(
+          aTokenTx.tx,
+          swapTxs[0].tx
+        );
+
+        swapTxs[0].tx = tx;
+        swapTxs[0].signers.push(...aTokenTx.signers as Signer[]);
+      }
+
+      return swapTxs;
 
     })();
 
     // If swapping SOL, then insert a wrap/unwrap instruction.
     if (isSol) {
-
+      
       if (swapTxs.length > 1) {
         throw new Error("SOL must be swapped in a single transaction");
       }
 
       const { tx: wrapTx, signers: wrapSigners } = await getWrapTxAndSigners(
         swapClient.program.provider,
-        wrappedAccount,
-        fromMint,
-        new BN(fromAmount)
+        wrappedAccount as Keypair,
+        parseFloat(fromAmount)
       );
 
       const unwrapTx = new Transaction().add(
         Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
-          wrappedAccount.publicKey,
+          wrappedAccount!.publicKey,
           walletKey,
           walletKey,
           []
@@ -440,10 +453,13 @@ export const SwapUi = () => {
       swapTxs[0].signers.push(...wrapSigners);
     }
 
-    swapTxs[0].tx.feePayer = swapClient.program.provider.wallet.publicKey;
+    swapTxs[0].tx.feePayer = walletKey;
     const { blockhash } = await swapClient.program.provider.connection.getRecentBlockhash(connection.commitment);
     swapTxs[0].tx.recentBlockhash = blockhash;
-    swapTxs[0].tx.partialSign(...swapTxs[0].signers as Signer[]);
+
+    if (swapTxs[0].signers.length) {
+      swapTxs[0].tx.partialSign(...swapTxs[0].signers as Signer[]);
+    }
 
     return swapTxs[0].tx;
   };
@@ -562,6 +578,7 @@ export const SwapUi = () => {
   const onTransactionStart = async () => {
     consoleOut("Starting swap...", "", "orange");
     const swapTxs = await swap();
+    console.log('swapTxs => ', swapTxs);
 
     if (wallet) {
       const signedTx = await swapClient.program.provider.wallet.signTransaction(swapTxs);  
