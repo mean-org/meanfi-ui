@@ -33,13 +33,12 @@ import {
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming } from "money-streaming/src/money-streaming";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
-import { calculateActionFees } from "money-streaming/src/utils";
+import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -108,9 +107,10 @@ export const RepeatingPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees) {
+    if (!repeatingPaymentFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
+        console.log("repeatingPaymentFees:", values);
       });
     }
   }, [connection, repeatingPaymentFees]);
@@ -161,9 +161,10 @@ export const RepeatingPayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
+    resetContractValues();
     setSelectedStream(undefined);
-    refreshStreamList(true);
     closeTransactionModal();
+    refreshStreamList(true);
     setCurrentScreen("streams");
   };
 
@@ -239,11 +240,6 @@ export const RepeatingPayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
-        setTimeout(() => {
-          setSelectedToken(tokenList[0]);
-        }, 100);
-      } else {
         setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
@@ -413,6 +409,15 @@ export const RepeatingPayment = () => {
     return options;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   // Prefabrics
 
   const paymentRateOptionsMenu = (
@@ -437,6 +442,7 @@ export const RepeatingPayment = () => {
             setDestinationToken(token);
             setSelectedToken(token);
             consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (
@@ -473,11 +479,7 @@ export const RepeatingPayment = () => {
             setSelectedToken(token);
             setDestinationToken(token);
             consoleOut("token selected:", token);
-            setEffectiveRate(
-              coinPrices && coinPrices[token.symbol]
-                ? coinPrices[token.symbol]
-                : 0
-            );
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (

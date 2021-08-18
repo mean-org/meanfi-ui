@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Individuals",
-			"cat2": "Business",
-			"cat3": "Real Estate",
-			"cat4": "Other"
-		},
 		"donation-fund": {
 			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
 			"name": "Donation Fund"
@@ -37,8 +31,7 @@
 			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
 			"name": "Fundraising"
 		},
-		"lead": "Choose from battle-tested audited contracts",
-		"modal-title": "New Money Stream",
+		"modal-title": "Select type of transfer",
 		"otp": {
 			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
 			"name": "One-Time Payment"
@@ -78,7 +71,6 @@
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
-		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Wrap transaction fee",
@@ -91,6 +83,7 @@
 		"loading": "Loading",
 		"minute": "minute",
 		"month": "month",
+		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"not-implemented": "Not implemented",
 		"today": "today",
 		"week": "week",
@@ -182,8 +175,15 @@
 			"title-sending-to": "Sending to"
 		}
 	},
+	"swap": {
+		"input-label-destination": "Swap to (Estimate)",
+		"input-label-source": "Swap from",
+		"token-select-destination": "Select token",
+		"token-select-source": "Select token"
+	},
 	"token-selector": {
-		"modal-title": "Select a token"
+		"modal-title": "Select a token",
+		"search-input-placeholder": "Search token by name, symbol or address"
 	},
 	"transactions": {
 		"memo": {
@@ -252,7 +252,9 @@
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
 			"tx-wrap-operation": "Wrapping",
-			"tx-wrap-operation-success": "Wrap operation completed successfully"
+			"tx-wrap-operation-success": "Wrap operation completed successfully",
+			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Swap operation completed successfully"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
@@ -317,7 +319,8 @@
 			"tools": {
 				"faucet": "Faucet",
 				"submenu-title": "Tools",
-				"wrapper": "Wrapper"
+				"wrapper": "Wrapper",
+				"charts": "Charts"
 			},
 			"transfers": "Transfers"
 		}

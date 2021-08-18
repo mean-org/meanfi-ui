@@ -1,13 +1,15 @@
-import BN from "bn.js";
+import BN from 'bn.js';
 import { useCallback, useState } from "react";
-import { MintInfo } from "@solana/spl-token";
+import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { PublicKey } from "@solana/web3.js";
+import { Account, Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
-import { TransactionFees } from "money-streaming/src/types";
+import { TransactionFees } from "money-streaming/lib/types";
+import { TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "./ids";
+import { Provider } from '@project-serum/anchor';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -326,4 +328,117 @@ export const truncateFloat = (value: any, decimals = 2): string => {
 
 export const getComputedFees = (fees: TransactionFees): number => {
   return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
+}
+
+export async function getOwnedAssociatedTokenAccounts(
+  connection: Connection,
+  publicKey: PublicKey
+) {
+  let filters = getOwnedAccountsFilters(publicKey);
+  // @ts-ignore
+  let resp = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+    commitment: connection.commitment,
+    filters,
+  });
+
+  const accs = resp
+    .map(({ pubkey, account: { data, executable, owner, lamports } }: any) => ({
+      publicKey: new PublicKey(pubkey),
+      accountInfo: {
+        data,
+        executable,
+        owner: new PublicKey(owner),
+        lamports,
+      },
+    }))
+    .map(({ publicKey, accountInfo }: any) => {
+      console.log('public-key => ', publicKey);
+      console.log('accountInfo => ', accountInfo);
+      return { publicKey, account: parseTokenAccountData(accountInfo.data) };
+    });
+
+  return (
+    (
+      await Promise.all(
+        accs
+          // @ts-ignore
+          .map(async (ta) => {
+            const ata = await Token.getAssociatedTokenAddress(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TOKEN_PROGRAM_ID,
+              ta.account.mint,
+              publicKey
+            );
+            return [ta, ata];
+          })
+      )
+    )
+      // @ts-ignore
+      .filter(([ta, ata]) => ta.publicKey.equals(ata))
+      // @ts-ignore
+      .map(([ta]) => ta)
+  );
+}
+
+export function parseTokenAccountData(data: Buffer): AccountInfo {
+  // @ts-ignore
+  let { mint, owner, amount } = AccountLayout.decode(data);
+  // @ts-ignore
+  return {
+    address: new PublicKey(mint),
+    owner: new PublicKey(owner),
+    amount: new BN(amount),
+  };
+}
+
+function getOwnedAccountsFilters(publicKey: PublicKey) {
+  return [
+    {
+      memcmp: {
+        // @ts-ignore
+        offset: AccountLayout.offsetOf("mint"),
+        bytes: publicKey.toBase58(),
+      },
+    },
+    {
+      dataSize: AccountLayout.span,
+    },
+  ];
+}
+
+// export async function getCreateATokenTx(
+
+// );
+
+export async function getWrapTxAndSigners(
+  provider: Provider,
+  account: Keypair,
+  amount: number
+  
+): Promise<{ tx: Transaction; signers: Array<Signer | undefined> }> {
+  
+  const signers = [account];
+
+  let tx = new Transaction().add(
+    SystemProgram.createAccount({
+      fromPubkey: provider.wallet.publicKey,
+      newAccountPubkey: account.publicKey,
+      lamports: await Token.getMinBalanceRentForExemptAccount(provider.connection),
+      space: 165,
+      programId: TOKEN_PROGRAM_ID,
+    }),
+    SystemProgram.transfer({
+      fromPubkey: provider.wallet.publicKey,
+      toPubkey: account.publicKey,
+      lamports: amount,
+    }),
+    Token.createInitAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      WRAPPED_SOL_MINT,
+      account.publicKey,
+      provider.wallet.publicKey
+    )
+  );
+
+  return { tx, signers };
 }

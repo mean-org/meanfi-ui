@@ -6,7 +6,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from 'money-streaming/src/types';
+import { TransactionFees } from 'money-streaming/lib/types';
 
 export const CloseStreamModal = (props: {
   handleClose: any;

@@ -1,5 +1,13 @@
 import { ContractDefinition } from "../models/contract-definition";
 
+export const PAYROLL_CONTRACT: ContractDefinition = {
+    id: 3,
+    translationId: 'payroll',
+    name: 'Payroll',
+    categoryId: 'cat2',
+    disabled: false,
+};
+
 export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
     {
         id: 1,
@@ -13,13 +21,6 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
         translationId: 'repeating',
         name: 'Repeating Payment ',
         categoryId: 'cat1',
-        disabled: false,
-    },
-    {
-        id: 3,
-        translationId: 'payroll',
-        name: 'Payroll',
-        categoryId: 'cat2',
         disabled: false,
     },
     {

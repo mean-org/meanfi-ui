@@ -6,7 +6,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } fr
 import { Identicon } from '../Identicon';
 import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from 'money-streaming/src/types';
+import { TransactionFees } from 'money-streaming/lib/types';
 
 export const AddFundsModal = (props: {
   handleClose: any;

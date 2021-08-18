@@ -17,7 +17,7 @@ import { notify } from "../../utils/notifications";
 import { AppStateContext } from "../../contexts/appstate";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { StreamInfo } from "money-streaming/src/types";
+import { StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 
 interface StreamStats {
@@ -67,6 +67,8 @@ export const CurrentUserBadge = (props: {}) => {
           outgoing: outgoing.length
         }
         setStreamStats(stats);
+      } else {
+        setStreamStats(defaultStreamStats);
       }
     }
 
@@ -98,7 +100,7 @@ export const CurrentUserBadge = (props: {}) => {
   const onGoToStreamsClick = () => {
     refreshStreamList(true);
     setCustomStreamDocked(false);
-    setRedirect('/');
+    setRedirect('/transfers');
   };
 
   if (!wallet?.publicKey) {

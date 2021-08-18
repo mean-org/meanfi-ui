@@ -23,12 +23,6 @@
 		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Personnes",
-			"cat2": "Affaires",
-			"cat3": "Immobilier",
-			"cat4": "Autres"
-		},
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -37,8 +31,7 @@
 			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
-		"lead": "Choisissez l'un de nos contrats audités",
-		"modal-title": "Nouveau transfert d'argent",
+		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
 			"name": "Envoyer le paiement"
@@ -78,7 +71,6 @@
 		"current-wsol-balance": "Solde wSOL actuel",
 		"fund-cta": "Obtenez SOL",
 		"funding-amount": "Votre compte aura le solde de",
-		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Frais pour faire Wrap",
@@ -91,6 +83,7 @@
 		"loading": "Chargement",
 		"minute": "minute",
 		"month": "mois",
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"not-implemented": "Pas mis en œuvre",
 		"today": "aujourd'hui",
 		"week": "la semaine",
@@ -181,6 +174,12 @@
 			"title-receiving-from": "Réception de",
 			"title-sending-to": "Envoi à"
 		}
+	},
+	"swap": {
+		"input-label-destination": "",
+		"input-label-source": "",
+		"token-select-destination": "",
+		"token-select-source": ""
 	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un token"

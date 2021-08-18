@@ -58,9 +58,9 @@ import { AddFundsModal } from "../../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../../components/CloseStreamModal";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/src/types";
-import { calculateActionFees, getStream } from "money-streaming/src/utils";
-import { MoneyStreaming } from "money-streaming/src/money-streaming";
+import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees, getStream } from "money-streaming/lib/utils";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { useTranslation } from "react-i18next";
 
 var dateFormat = require("dateformat");
@@ -102,16 +102,6 @@ export const Streams = () => {
   });
 
   useEffect(() => {
-    if (!connected) {
-      setCurrentScreen("contract");
-    } else {
-      if (streamList && streamList.length === 0) {
-        setCurrentScreen("contract");
-      }
-    }
-  });
-
-  useEffect(() => {
     if (account?.lamports !== previousBalance) {
       // Refresh token balance
       refreshTokenBalance();
@@ -133,7 +123,7 @@ export const Streams = () => {
     let updateDateTimer: any;
 
     const updateData = async () => {
-      if (streamDetail) {
+      if (streamDetail && streamDetail.escrowUnvestedAmount) {
         const clonedDetail = Object.assign({}, streamDetail);
         const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
@@ -289,7 +279,7 @@ export const Streams = () => {
     try {
       streamPublicKey = new PublicKey(streamId as string);
       try {
-        const detail = await getStream(connection, streamPublicKey, 'finalized', true);
+        const detail = await getStream(connection, streamPublicKey);
         if (detail) {
           console.log('detail', detail);
           setLastStreamDetail(detail);
@@ -763,7 +753,6 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      setCurrentScreen("streams");
     }
   }
 
@@ -962,7 +951,6 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      setCurrentScreen("streams");
     }
   }
 
@@ -2084,4 +2072,5 @@ export const Streams = () => {
       </Modal>
     </div>
   );
+
 };

@@ -10,10 +10,11 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import common_es from "./translations/es/common.json";
 import common_en from "./translations/en/common.json";
 import common_fr from "./translations/fr/common.json";
+import common_pt from "./translations/pt/common.json";
 
-const env = new AppConfigService(process.env.REACT_APP_ENV);
+export const AppConfig = new AppConfigService(process.env.REACT_APP_ENV);
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
-console.log(`%cProgramId:`, 'color:brown', env.getConfig().streamProgramAddress);
+console.log(`%cProgramId:`, 'color:brown', AppConfig.getConfig().streamProgramAddress);
 
 i18next.use(LanguageDetector).init({
   interpolation: { escapeValue: false },  // React already does escaping
@@ -26,6 +27,9 @@ i18next.use(LanguageDetector).init({
     },
     fr: {
       common: common_fr
+    },
+    pt: {
+      common: common_pt
     },
   },
 });

@@ -26,3 +26,4 @@ export { IconSun } from "./IconSun";
 export { IconUniversity } from "./IconUniversity";
 export { IconUpload } from "./IconUpload";
 export { IconWallet } from "./IconWallet";
+export { IconSwapFlip } from "./IconSwapFlip";

@@ -1,4 +1,4 @@
-import { Button, Modal, Menu, Dropdown, DatePicker, Divider, Spin, Row, Col } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -15,7 +15,7 @@ import {
   isValidNumber,
 } from "../../../utils/utils";
 import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
+import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
 import { QrScannerModal } from "../../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../../models/enums";
 import {
@@ -34,14 +34,15 @@ import {
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming } from "money-streaming/src/money-streaming";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { environment } from "../../../environments/environment";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
-import { calculateActionFees } from "money-streaming/src/utils";
+import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
+import { ContractDefinition } from "../../../models/contract-definition";
+import { Redirect } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -50,7 +51,6 @@ export const PayrollPayment = () => {
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -83,7 +83,8 @@ export const PayrollPayment = () => {
     refreshTokenBalance,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-
+  const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
+  const [redirect, setRedirect] = useState<string | null>(null);
   const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
@@ -111,9 +112,10 @@ export const PayrollPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!payrollFees) {
+    if (!payrollFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setPayrollFees(values);
+        console.log("payrollFees:", values);
       });
     }
   }, [connection, payrollFees]);
@@ -164,10 +166,12 @@ export const PayrollPayment = () => {
   }
 
   const handleGoToStreamsClick = () => {
+    resetContractValues();
     setSelectedStream(undefined);
-    refreshStreamList(true);
     closeTransactionModal();
-    setCurrentScreen("streams");
+    setCurrentScreen('streams');
+    setRedirect('/transfers');
+    refreshStreamList(true);
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -242,11 +246,6 @@ export const PayrollPayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
-        setTimeout(() => {
-          setSelectedToken(tokenList[0]);
-        }, 100);
-      } else {
         setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
@@ -416,6 +415,15 @@ export const PayrollPayment = () => {
     return options;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   // Prefabrics
 
   const paymentRateOptionsMenu = (
@@ -440,6 +448,7 @@ export const PayrollPayment = () => {
             setDestinationToken(token);
             setSelectedToken(token);
             consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (
@@ -476,11 +485,7 @@ export const PayrollPayment = () => {
             setSelectedToken(token);
             setDestinationToken(token);
             consoleOut("token selected:", token);
-            setEffectiveRate(
-              coinPrices && coinPrices[token.symbol]
-                ? coinPrices[token.symbol]
-                : 0
-            );
+            setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
           return (
@@ -785,6 +790,7 @@ export const PayrollPayment = () => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Divider, Modal, Radio, Space } from "antd";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../../constants";
+import "./style.less";
 
 export const LanguageSelector = (props: {
   handleClose: any;
@@ -47,13 +48,18 @@ export const LanguageSelector = (props: {
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      width={320}>
+      width={300}>
       <div className="language-select">
         <Radio.Group onChange={onChange} value={language}>
           <Space direction="vertical">
             {LANGUAGES && LANGUAGES.map(item => {
                 return (
-                    <Radio key={item} value={item}>{t(`ui-language.${getLanguageCode(item)}`)}</Radio>
+                    <Radio key={item.code} value={item.code}>
+                      <span className="flag-wrapper">
+                        <img src={item.flag} alt={getLanguageCode(item.code)} />
+                      </span>
+                      {t(`ui-language.${getLanguageCode(item.code)}`)}
+                    </Radio>
                 );
             })}
           </Space>

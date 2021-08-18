@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Individuos",
-			"cat2": "Negocio",
-			"cat3": "Bienes Raíces",
-			"cat4": "Otros"
-		},
 		"donation-fund": {
 			"description": "Cree una cuenta donde cualquiera pueda donar con la tranquilidad que los fondos se utilizarán para la causa correcta.",
 			"name": "Fondo de Donación"
@@ -37,8 +31,7 @@
 			"description": "¿Desea recaudar fondos para su Seed, Series, ICO, DAICO, Private Rounds? No busque más, su mejor opción es el Contrato de Recaudación de Fondos.",
 			"name": "Recaudación de fondos"
 		},
-		"lead": "Elija uno de nuestros contratos auditados",
-		"modal-title": "Nueva transferencia de dinero",
+		"modal-title": "Seleccione tipo de transferencia",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
 			"name": "Enviar Pago"
@@ -78,7 +71,6 @@
 		"current-wsol-balance": "Saldo de wSOL actual ",
 		"fund-cta": "Obtenga SOL",
 		"funding-amount": "Su cuenta tendrá el saldo de",
-		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Cargos for hacer Wrap",
@@ -91,6 +83,7 @@
 		"loading": "Cargando",
 		"minute": "minuto",
 		"month": "mes",
+		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
 		"today": "hoy",
 		"week": "semana",
@@ -181,6 +174,12 @@
 			"title-receiving-from": "Recibiendo de",
 			"title-sending-to": "Enviando a"
 		}
+	},
+	"swap": {
+		"input-label-destination": "",
+		"input-label-source": "",
+		"token-select-destination": "",
+		"token-select-source": ""
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token"

@@ -1,11 +1,18 @@
-import { BrowserRouter, Route, Switch } from "react-router-dom";
-import { WalletProvider } from "./contexts/wallet";
+import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
-import { MarketProvider } from "./contexts/market";
-import { AppLayout } from "./components/Layout";
-import { FaucetView, HomeView } from "./views";
+import { WalletProvider } from "./contexts/wallet";
+// import { MarketProvider } from "./contexts/market";
 import AppStateProvider from "./contexts/appstate";
+import { AppLayout } from "./components/Layout";
+import {
+  CustodyView,
+  FaucetView,
+  PayrollView,
+  SwapView,
+  TransfersView,
+  WrapView
+} from "./views";
 
 export function Routes() {
   return (
@@ -14,16 +21,28 @@ export function Routes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
-              <MarketProvider>
+              {/* <MarketProvider> */}
                 <AppStateProvider>
                   <AppLayout>
-                      <Switch>
-                        <Route exact path="/" component={() => <HomeView />} />
-                        <Route exact path="/faucet" children={<FaucetView />} />
-                      </Switch>
+                    <Switch>
+                      {/* <Route path="/" component={() => <HomeView />} /> */}
+                      <Route exact path="/">
+                        <Redirect to="/swap" />
+                      </Route>
+                      <Route exact path="/faucet" children={<FaucetView />} />
+                      <Route exact path="/transfers" children={<TransfersView />} />
+                      <Route exact path="/payroll" children={<PayrollView />} />
+                      <Route exact path="/swap" children={<SwapView />} />
+                      <Route exact path="/wrap" children={<WrapView />} />
+                      <Route exact path="/custody" children={<CustodyView />} />
+                      <Route path="*">
+                        {/* TODO: Create a decent 404 page */}
+                        <Redirect to="/" />
+                      </Route>
+                    </Switch>
                   </AppLayout>
                 </AppStateProvider>
-              </MarketProvider>
+              {/* </MarketProvider> */}
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>

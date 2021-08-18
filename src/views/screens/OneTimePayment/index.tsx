@@ -23,12 +23,12 @@ import {
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming } from "money-streaming/src/money-streaming";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/src/types";
-import { calculateActionFees } from "money-streaming/src/utils";
+import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -93,9 +93,10 @@ export const OneTimePayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.oneTimePayment);
     }
-    if (!otpFees) {
+    if (!otpFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setOtpFees(values);
+        console.log("otpFees:", values);
       });
     }
   }, [connection, otpFees]);
@@ -194,11 +195,6 @@ export const OneTimePayment = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        // TODO: Find how to wait for the accounts' list to be populated to avoit setTimeout
-        setTimeout(() => {
-          setSelectedToken(tokenList[0]);
-        }, 100);
-      } else {
         setSelectedTokenBalance(0);
       }
       setPreviousWalletConnectState(connected);
@@ -522,6 +518,15 @@ export const OneTimePayment = () => {
             : false;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -682,11 +687,7 @@ export const OneTimePayment = () => {
               const onClick = function () {
                 setSelectedToken(token);
                 console.log("token selected:", token.symbol);
-                setEffectiveRate(
-                  coinPrices && coinPrices[token.symbol]
-                    ? coinPrices[token.symbol]
-                    : 0
-                );
+                setEffectiveRate(getPricePerToken(token));
                 onCloseTokenSelector();
               };
               return (
