@@ -14,8 +14,8 @@ import {
 
 } from "./ids";
 
-export const ORDERBOOK_CACHE = new Map<string, Promise<Orderbook>>();
-export const MARKET_CACHE = new Map<string, Promise<Market>>();
+export const ORDERBOOK_CACHE = new Map<string, Orderbook>();
+export const MARKET_CACHE = new Map<string, Market>();
 
 export type RouteKind = "wormhole-native" | "wormhole-sollet" | "usdx";
 export type Orderbook = {
