@@ -12,7 +12,7 @@ import { AppStateContext } from "../contexts/appstate";
 import { formatAmount } from "../utils/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
 
-const DEFAULT_SLIPPAGE_PERCENT = 0.5;
+const DEFAULT_SLIPPAGE_PERCENT = 1;
 
 export type SwapContextState = {
   fromMint: PublicKey;

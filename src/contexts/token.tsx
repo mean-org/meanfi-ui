@@ -37,12 +37,14 @@ export function TokenContextProvider(props: any) {
   const [, setRefresh] = useState(0);
 
   // Fetch all the owned token accounts for the wallet.
-  useEffect(() => {      
+  useEffect(() => {
+
     if (!provider || !provider.wallet || !provider.wallet.publicKey) {
       OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
       setRefresh((r) => r + 1);
       return;
     }
+
     // Fetch SPL tokens.
     getOwnedAssociatedTokenAccounts(
       provider.connection,
@@ -55,22 +57,30 @@ export function TokenContextProvider(props: any) {
       }
     });
     
-    // Fetch SOL balance.
-    provider.connection
-      .getAccountInfo(provider.wallet.publicKey)
-      .then((acc: { lamports: number }) => {
-        if (acc) {
-          OWNED_TOKEN_ACCOUNTS_CACHE.push({
-            publicKey: provider.wallet.publicKey,
-            // @ts-ignore
-            account: {
-              amount: new BN(acc.lamports),
-              mint: NATIVE_SOL_MINT,
-            },
-          });
-          setRefresh((r) => r + 1);
-        }
-      });
+    // // Fetch SOL balance.
+    // provider.connection
+    //   .getAccountInfo(provider.wallet.publicKey)
+    //   .then((acc: { lamports: number }) => {
+    //     if (acc) {
+    //       OWNED_TOKEN_ACCOUNTS_CACHE.push({
+    //         publicKey: provider.wallet.publicKey,
+    //         // @ts-ignore
+    //         account: {
+    //           amount: new BN(acc.lamports),
+    //           mint: NATIVE_SOL_MINT,
+    //         },
+    //       });
+    //       setRefresh((r) => r + 1);
+    //     }
+    //   });
+
+    return () => {
+      if (!provider || !provider.wallet || !provider.wallet.publicKey) {
+        OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
+        setRefresh((r) => r + 1);
+        return;
+      }
+    };
 
   }, [provider]);
 
@@ -82,6 +92,20 @@ export function TokenContextProvider(props: any) {
       {props.children}
     </TokenContext.Provider>
   );
+}
+
+function toDataURL(url: string, callback: any) {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function() {
+    var reader = new FileReader();
+    reader.onloadend = function() {
+      callback(reader.result);
+    }
+    reader.readAsDataURL(xhr.response);
+  };
+  xhr.open('GET', url);
+  xhr.responseType = 'blob';
+  xhr.send();
 }
 
 function useTokenContext() {

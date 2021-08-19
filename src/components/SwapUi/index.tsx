@@ -15,7 +15,7 @@ import { calculateActionFees, findATokenAddress } from "money-streaming/lib/util
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useBbo, useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
+import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
@@ -61,7 +61,6 @@ export const SwapUi = () => {
   } = useSwapContext();
 
   const { swapClient, openOrders } = useMarketContext();
-  // const openOrders = useOpenOrders();
   const route = useRouteVerbose(fromMint, toMint);
   const fromMintInfo = useMint(fromMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
@@ -69,7 +68,7 @@ export const SwapUi = () => {
   const fromBbo = useBbo(fromMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const toBbo = useBbo(toMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const tokenMap = useTokenMap();
-  const referral = useReferral(fromMarket);
+  // const referral = useReferral(fromMarket);
   const fair = useSwapFair();
   const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
   const quoteMintInfo = useMint(quoteMint);
@@ -189,6 +188,7 @@ export const SwapUi = () => {
       } else {
         setFromMintTokenBalance(0);
       }
+      setFetchingFromTokenBalance(false);
     }
   }, [
     publicKey,
@@ -206,6 +206,7 @@ export const SwapUi = () => {
       } else {
         setToMintTokenBalance(0);
       }
+      setFetchingToTokenBalance(false);
     }
   }, [
     publicKey,
@@ -400,7 +401,7 @@ export const SwapUi = () => {
       slippage,
       fair,
       isClosingNewAccounts,
-      referral,
+      undefined,
       isStrict
     );
   };
@@ -985,5 +986,5 @@ export const SwapUi = () => {
 
       </div>
     </Spin>
-  );
+    );
 };

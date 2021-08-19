@@ -4,7 +4,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { PreFooter } from "../../components/PreFooter";
 import { Swap } from "@project-serum/swap";
 import { SwapUi } from "../../components/SwapUi";
-import { TokenListContainer, TokenListProvider } from "@solana/spl-token-registry";
+import { Strategy, TokenListContainer, TokenListProvider } from "@solana/spl-token-registry";
 import { Provider } from "@project-serum/anchor";
 import { useConnection } from "../../contexts/connection";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
@@ -72,11 +72,14 @@ export const SwapView = () => {
                 {
                   tokenProvider &&
                   <TokenContextProvider provider={tokenProvider}>
-                    <MarketContextProvider swapClient={swapClient}>
-                      <SwapContextProvider>
-                          <SwapUi />
-                      </SwapContextProvider>
-                    </MarketContextProvider>
+                    {
+                      swapClient &&
+                      <MarketContextProvider swapClient={swapClient}>
+                        <SwapContextProvider>
+                            <SwapUi />
+                        </SwapContextProvider>
+                      </MarketContextProvider>
+                    }
                   </TokenContextProvider>
                 }
               </div>

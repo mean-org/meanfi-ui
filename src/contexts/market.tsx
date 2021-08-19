@@ -22,10 +22,9 @@ import {
 import { useTokenMap, useTokenListContext } from "./tokenList";
 import { setMintCache } from "./token";
 import { PublicKey } from "@solana/web3.js";
-import { getMultipleAccounts } from "./accounts";
 
-// export const BASE_TAKER_FEE_BPS = 0.0022;
-// export const FEE_MULTIPLIER = 1 - BASE_TAKER_FEE_BPS;
+export const BASE_TAKER_FEE_BPS = 0.0022;
+export const FEE_MULTIPLIER = 1 - BASE_TAKER_FEE_BPS;
 
 type MarketContextState = {
   openOrders: Map<string, Array<OpenOrders>>;
@@ -39,7 +38,7 @@ export function MarketContextProvider(props: any) {
 
   const swapClient = props.swapClient;
   const [ooAccounts, setOoAccounts] = useState<Map<string, Array<OpenOrders>>>(
-    new Map()
+    new Map<string, Array<OpenOrders>>()
   );  
 
   // Removes the given open orders from the context.
@@ -64,58 +63,58 @@ export function MarketContextProvider(props: any) {
   // 2. Batch fetch all market accounts for those open orders.
   // 3. Batch fetch all mints associated with the markets.
   useEffect(() => {
-    if (!swapClient || !swapClient.program || !swapClient.program.provider ||
-        !swapClient.program.provider.wallet || !swapClient.program.provider.wallet.publicKey) {
-      setOoAccounts(new Map());
+
+    if (!swapClient.program.provider.wallet?.publicKey) {
+      setOoAccounts(new Map<string, Array<OpenOrders>>());
       return;
     }
-
+    
     OpenOrders.findForOwner(
       swapClient.program.provider.connection,
       swapClient.program.provider.wallet.publicKey,
       DEX_PROGRAM_ID
-      
+
     ).then(async (openOrders) => {
-      const newOoAccounts = new Map();
+      
+      const newOoAccounts = new Map<string, Array<OpenOrders>>();
       let markets = new Set<string>();
       
       openOrders.forEach((oo) => {
         markets.add(oo.market.toString());
-        if (newOoAccounts.get(oo.market.toString())) {
-          newOoAccounts.get(oo.market.toString()).push(oo);
+        const ooAcc = newOoAccounts.get(oo.market.toString());
+        if (ooAcc) {
+          ooAcc.push(oo);
         } else {
           newOoAccounts.set(oo.market.toString(), [oo]);
         }
       });
-      
+
       if (markets.size > 100) {
         throw new Error("Too many markets. Please file an issue to update this");
       }
-      
-      const multipleMarkets = await getMultipleAccounts(
+
+      const multipleMarkets = await anchor.utils.rpc.getMultipleAccounts(
         swapClient.program.provider.connection,
-        Array.from(markets.values()),
-        swapClient.program.provider.connection.commitment
+        Array.from(markets.values()).map((m) => new PublicKey(m))
       );
 
-      const marketClients = new Array<any>();
-
-      multipleMarkets.keys.forEach((key, index) => {
-        marketClients.push({
-          publicKey: key,
+      const marketClients = multipleMarkets.map((programAccount) => {
+        return {
+          publicKey: programAccount?.publicKey,
           account: new Market(
-            Market.getLayout(DEX_PROGRAM_ID).decode(multipleMarkets.array[index].data),
+            Market.getLayout(DEX_PROGRAM_ID).decode(programAccount?.account.data),
             -1, // Set below so that we can batch fetch mints.
             -1, // Set below so that we can batch fetch mints.
             swapClient.program.provider.opts,
             DEX_PROGRAM_ID
           ),
-        });
+        };
       });
 
       setOoAccounts(newOoAccounts);
 
-      // Batch fetch all the mints, since we know we'll need them at some point.
+      // Batch fetch all the mints, since we know we'll need them at some
+      // point.
       const mintPubkeys = Array.from(
         new Set<string>(
           marketClients
@@ -135,7 +134,7 @@ export function MarketContextProvider(props: any) {
         swapClient.program.provider.connection,
         mintPubkeys
       );
-      
+
       const mintInfos = mints.map((mint) => {
         const mintInfo = MintLayout.decode(mint!.account.data);
         setMintCache(mint!.publicKey, mintInfo);
@@ -146,20 +145,17 @@ export function MarketContextProvider(props: any) {
         const baseMintInfo = mintInfos.filter((mint) =>
           mint.publicKey.equals(m.account.baseMintAddress)
         )[0];
-        
         const quoteMintInfo = mintInfos.filter((mint) =>
           mint.publicKey.equals(m.account.quoteMintAddress)
         )[0];
-        
         assert.ok(baseMintInfo && quoteMintInfo);
         // @ts-ignore
         m.account._baseSplTokenDecimals = baseMintInfo.mintInfo.decimals;
         // @ts-ignore
         m.account._quoteSplTokenDecimals = quoteMintInfo.mintInfo.decimals;
-        
         MARKET_CACHE.set(
           m.publicKey!.toString(),
-          m.account
+          new Promise<Market>((resolve) => resolve(m.account))
         );
       });
     });
@@ -196,23 +192,27 @@ export function useOpenOrders(): Map<string, Array<OpenOrders>> {
 export function useMarket(market?: PublicKey): Market | undefined {    
   const { swapClient } = useMarketContext();
   const asyncMarket = useAsync(async () => {
+
     if (!market) {
       return undefined;
     }
-    
+
     if (MARKET_CACHE.get(market.toString())) {
       return MARKET_CACHE.get(market.toString());
     }
 
-    const marketClient = await Market.load(
-      swapClient.program.provider.connection,
-      market,
-      swapClient.program.provider.opts,
-      DEX_PROGRAM_ID
-    );
+    const marketClient = new Promise<Market>(async (resolve) => {
+      const marketClient = await Market.load(
+        swapClient.program.provider.connection,
+        market,
+        swapClient.program.provider.opts,
+        DEX_PROGRAM_ID
+      );
+      resolve(marketClient);
+    });
 
     MARKET_CACHE.set(market.toString(), marketClient);
-    
+
     return marketClient;
     
   }, [
@@ -233,18 +233,26 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
   const [refresh, setRefresh] = useState(0);
   
   const asyncOrderbook = useAsync(async () => {
+    
     if (!market || !marketClient) {
       return undefined;
     }
-    
+
     if (ORDERBOOK_CACHE.get(market.toString())) {
       return ORDERBOOK_CACHE.get(market.toString());
     }
 
-    const orderbook = {
-      bids: await marketClient.loadBids(swapClient.program.provider.connection),
-      asks: await marketClient.loadAsks(swapClient.program.provider.connection),
-    };
+    const orderbook = new Promise<Orderbook>(async (resolve) => {
+      const [bids, asks] = await Promise.all([
+        marketClient.loadBids(swapClient.program.provider.connection),
+        marketClient.loadAsks(swapClient.program.provider.connection),
+      ]);
+
+      resolve({
+        bids,
+        asks,
+      });
+    });
 
     ORDERBOOK_CACHE.set(market.toString(), orderbook);
 
@@ -259,13 +267,15 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
 
   // Stream in bids updates.
   useEffect(() => {
+
     let listener: number | undefined;
+
     if (marketClient?.bidsAddress) {
       listener = swapClient.program.provider.connection.onAccountChange(
         marketClient?.bidsAddress,
-        async (info: { data: Buffer; }) => {
+        async (info) => {
           const bids = OrderbookSide.decode(marketClient, info.data);
-          const orderbook = ORDERBOOK_CACHE.get(
+          const orderbook = await ORDERBOOK_CACHE.get(
             marketClient.address.toString()
           );
           const oldBestBid = orderbook?.bids.items(true).next().value;
@@ -282,6 +292,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         }
       );
     }
+
     return () => {
       if (listener) {
         swapClient.program.provider.connection.removeAccountChangeListener(
@@ -289,7 +300,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         );
       }
     };
-    
+
   }, [
     marketClient,
     marketClient?.bidsAddress,
@@ -298,14 +309,15 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
 
   // Stream in asks updates.
   useEffect(() => {
+
     let listener: number | undefined;
-    
+
     if (marketClient?.asksAddress) {
       listener = swapClient.program.provider.connection.onAccountChange(
         marketClient?.asksAddress,
-        async (info: { data: Buffer; }) => {
+        async (info) => {
           const asks = OrderbookSide.decode(marketClient, info.data);
-          const orderbook = ORDERBOOK_CACHE.get(
+          const orderbook = await ORDERBOOK_CACHE.get(
             marketClient.address.toString()
           );
           const oldBestOffer = orderbook?.asks.items(false).next().value;
@@ -322,7 +334,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         }
       );
     }
-    
+
     return () => {
       if (listener) {
         swapClient.program.provider.connection.removeAccountChangeListener(
@@ -330,7 +342,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         );
       }
     };
-    
+
   }, [
     marketClient,
     marketClient?.bidsAddress,
