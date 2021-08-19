@@ -22,7 +22,7 @@ const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
 
 // Cache storing all previously fetched mint infos.
 // @ts-ignore
-const MINT_CACHE = new Map<string, Promise<MintInfo>>([
+const MINT_CACHE = new Map<string, MintInfo>([
   [NATIVE_SOL_MINT.toString(), { decimals: 9 } as MintInfo],
 ]);
 
@@ -141,8 +141,7 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
           }
         }
       );
-    }
-    
+    }    
     // SPL tokens.
     else if (tokenAccount) {
       listener = provider.connection.onAccountChange(
@@ -199,17 +198,21 @@ export function useMint(mint?: PublicKey): MintInfo | undefined | null {
       TOKEN_PROGRAM_ID,
       new Account()
     );
-    const mintInfo = mintClient.getMintInfo();
+
+    const mintInfo = await mintClient.getMintInfo();
     MINT_CACHE.set(mint.toString(), mintInfo);
+
     return mintInfo;
+
   }, [provider.connection, mint]);
 
   if (asyncMintInfo.result) {
     return asyncMintInfo.result;
   }
+
   return undefined;
 }
 
 export function setMintCache(pk: PublicKey, account: MintInfo) {
-  MINT_CACHE.set(pk.toString(), new Promise((resolve) => resolve(account)));
+  MINT_CACHE.set(pk.toString(), account);
 }

@@ -22,6 +22,7 @@ import {
 import { useTokenMap, useTokenListContext } from "./tokenList";
 import { setMintCache } from "./token";
 import { PublicKey } from "@solana/web3.js";
+import { getMultipleAccounts } from "./accounts";
 
 // export const BASE_TAKER_FEE_BPS = 0.0022;
 // export const FEE_MULTIPLIER = 1 - BASE_TAKER_FEE_BPS;
@@ -70,13 +71,11 @@ export function MarketContextProvider(props: any) {
     }
 
     OpenOrders.findForOwner(
-
       swapClient.program.provider.connection,
       swapClient.program.provider.wallet.publicKey,
       DEX_PROGRAM_ID
       
     ).then(async (openOrders) => {
-
       const newOoAccounts = new Map();
       let markets = new Set<string>();
       
@@ -93,22 +92,25 @@ export function MarketContextProvider(props: any) {
         throw new Error("Too many markets. Please file an issue to update this");
       }
       
-      const multipleMarkets = await anchor.utils.rpc.getMultipleAccounts(
+      const multipleMarkets = await getMultipleAccounts(
         swapClient.program.provider.connection,
-        Array.from(markets.values()).map((m) => new PublicKey(m))
+        Array.from(markets.values()),
+        swapClient.program.provider.connection.commitment
       );
-      
-      const marketClients = multipleMarkets.map((programAccount) => {
-        return {
-          publicKey: programAccount?.publicKey,
+
+      const marketClients = new Array<any>();
+
+      multipleMarkets.keys.forEach((key, index) => {
+        marketClients.push({
+          publicKey: key,
           account: new Market(
-            Market.getLayout(DEX_PROGRAM_ID).decode(programAccount?.account.data),
+            Market.getLayout(DEX_PROGRAM_ID).decode(multipleMarkets.array[index].data),
             -1, // Set below so that we can batch fetch mints.
             -1, // Set below so that we can batch fetch mints.
             swapClient.program.provider.opts,
             DEX_PROGRAM_ID
           ),
-        };
+        });
       });
 
       setOoAccounts(newOoAccounts);
@@ -157,7 +159,7 @@ export function MarketContextProvider(props: any) {
         
         MARKET_CACHE.set(
           m.publicKey!.toString(),
-          new Promise<Market>((resolve) => resolve(m.account))
+          m.account
         );
       });
     });
@@ -202,18 +204,12 @@ export function useMarket(market?: PublicKey): Market | undefined {
       return MARKET_CACHE.get(market.toString());
     }
 
-    const marketClient = new Promise<Market>(async (resolve) => {
-      // TODO: if we already have the mints, then pass them through to the
-      //       market client here to save a network request.
-      const marketClient = await Market.load(
-        swapClient.program.provider.connection,
-        market,
-        swapClient.program.provider.opts,
-        DEX_PROGRAM_ID
-      );
-      
-      resolve(marketClient);
-    });
+    const marketClient = await Market.load(
+      swapClient.program.provider.connection,
+      market,
+      swapClient.program.provider.opts,
+      DEX_PROGRAM_ID
+    );
 
     MARKET_CACHE.set(market.toString(), marketClient);
     
@@ -245,17 +241,10 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
       return ORDERBOOK_CACHE.get(market.toString());
     }
 
-    const orderbook = new Promise<Orderbook>(async (resolve) => {
-      const [bids, asks] = await Promise.all([
-        marketClient.loadBids(swapClient.program.provider.connection),
-        marketClient.loadAsks(swapClient.program.provider.connection),
-      ]);
-
-      resolve({
-        bids,
-        asks,
-      });
-    });
+    const orderbook = {
+      bids: await marketClient.loadBids(swapClient.program.provider.connection),
+      asks: await marketClient.loadAsks(swapClient.program.provider.connection),
+    };
 
     ORDERBOOK_CACHE.set(market.toString(), orderbook);
 
@@ -276,7 +265,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         marketClient?.bidsAddress,
         async (info: { data: Buffer; }) => {
           const bids = OrderbookSide.decode(marketClient, info.data);
-          const orderbook = await ORDERBOOK_CACHE.get(
+          const orderbook = ORDERBOOK_CACHE.get(
             marketClient.address.toString()
           );
           const oldBestBid = orderbook?.bids.items(true).next().value;
@@ -316,7 +305,7 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
         marketClient?.asksAddress,
         async (info: { data: Buffer; }) => {
           const asks = OrderbookSide.decode(marketClient, info.data);
-          const orderbook = await ORDERBOOK_CACHE.get(
+          const orderbook = ORDERBOOK_CACHE.get(
             marketClient.address.toString()
           );
           const oldBestOffer = orderbook?.asks.items(false).next().value;

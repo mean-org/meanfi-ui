@@ -15,19 +15,18 @@ import { calculateActionFees, findATokenAddress } from "money-streaming/lib/util
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
+import { useBbo, useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
-import { useOwnedTokenAccount } from "../../contexts/token";
+// import { useOwnedTokenAccount } from "../../contexts/token";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
-import "./style.less";
 import { swap } from "../../utils/swap";
-import { AccountInfo, MintInfo } from "@solana/spl-token";
-import { Market } from "@project-serum/serum";
+import "./style.less";
+// import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -52,6 +51,7 @@ export const SwapUi = () => {
     toAmount,
     slippage,
     isStrict,
+    isClosingNewAccounts,
     setFromMint,
     setToMint,
     setFromAmount,
@@ -60,8 +60,8 @@ export const SwapUi = () => {
 
   } = useSwapContext();
 
-  const { swapClient } = useMarketContext();
-  const openOrders = useOpenOrders();
+  const { swapClient, openOrders } = useMarketContext();
+  // const openOrders = useOpenOrders();
   const route = useRouteVerbose(fromMint, toMint);
   const fromMintInfo = useMint(fromMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
@@ -73,7 +73,7 @@ export const SwapUi = () => {
   const fair = useSwapFair();
   const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
   const quoteMintInfo = useMint(quoteMint);
-  const quoteWallet = useOwnedTokenAccount(quoteMint);
+  // const quoteWallet = useOwnedTokenAccount(quoteMint);
   const { swappableTokens } = useSwappableTokens();
   const [tokenFilter, setTokenFilter] = useState("");
   const filter = tokenFilter.toLowerCase();
@@ -111,6 +111,9 @@ export const SwapUi = () => {
     publicKey,
     connection
   ])
+
+  // const fromWallet = useOwnedTokenAccount(fromMint);
+  // const toWallet = useOwnedTokenAccount(toMint);
 
   // Refresh fromMint token balance
   const refreshFromTokenBalance = useCallback(async (mint?: PublicKey) => {
@@ -382,8 +385,6 @@ export const SwapUi = () => {
       throw new Error("Quote mint not found");
     }
 
-    const quoteWalletKey = (quoteWallet ? quoteWallet.publicKey : undefined);
-
     return swap(
       swapClient,
       fromMint,
@@ -392,13 +393,13 @@ export const SwapUi = () => {
       parseFloat(fromAmount),
       toMint,
       toMarket,
-      quoteWalletKey,
       quoteMint,
       quoteMintInfo,
       openOrders,
       swapFees,
       slippage,
       fair,
+      isClosingNewAccounts,
       referral,
       isStrict
     );
