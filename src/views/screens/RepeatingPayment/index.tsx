@@ -62,6 +62,7 @@ export const RepeatingPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     streamProgramAddress,
+    previousWalletConnectState,
     setCurrentScreen,
     setSelectedToken,
     resetContractValues,
@@ -77,10 +78,10 @@ export const RepeatingPayment = () => {
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
+    setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
-  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();
