@@ -30,6 +30,7 @@ type MarketContextState = {
   openOrders: Map<string, Array<OpenOrders>>;
   closeOpenOrders: (openOrder: OpenOrders) => void;
   swapClient: SwapClient;
+  fetchingOpenOrders: boolean;
 };
 
 const MarketContext = React.createContext<MarketContextState | null>(null);
@@ -41,7 +42,7 @@ export function MarketContextProvider(props: any) {
     new Map<string, Array<OpenOrders>>()
   );
   const [shouldFetchOpenOrders, setShouldFetchOpenOrders] = useState(true);
-  const [fetchingOenOrders, setFetchingOenOrders] = useState(false);
+  const [fetchingOpenOrders, setFetchingOpenOrders] = useState(false);
 
   // Removes the given open orders from the context.
   const closeOpenOrders = async (openOrder: OpenOrders) => {
@@ -74,8 +75,8 @@ export function MarketContextProvider(props: any) {
       return;
     }
 
-    if (shouldFetchOpenOrders && !fetchingOenOrders) {
-      setFetchingOenOrders(true);
+    if (shouldFetchOpenOrders && !fetchingOpenOrders) {
+      setFetchingOpenOrders(true);
       setTimeout(() => {
         OpenOrders.findForOwner(
           swapClient.program.provider.connection,
@@ -168,7 +169,7 @@ export function MarketContextProvider(props: any) {
           });
 
           setShouldFetchOpenOrders(false);
-          setFetchingOenOrders(false);
+          setFetchingOpenOrders(false);
         });
       }, 3000);
     }
@@ -179,7 +180,7 @@ export function MarketContextProvider(props: any) {
 
   }, [
     swapClient,
-    fetchingOenOrders,
+    fetchingOpenOrders,
     shouldFetchOpenOrders
   ]);
   
@@ -189,6 +190,7 @@ export function MarketContextProvider(props: any) {
         openOrders: ooAccounts,
         closeOpenOrders,
         swapClient,
+        fetchingOpenOrders
       }}>
       {props.children}
     </MarketContext.Provider>

@@ -107,23 +107,29 @@ export function SwapContextProvider(props: any) {
   };
 
   const setFromAmount = (amount: string, decimals: number = 6) => {
-    if (!amount || fair === undefined) {
-      _setFromAmount("");
-      _setToAmount("");
-      return;
-    }
+    // Reflect the typed amount (let them type)
     _setFromAmount(amount);
+    // If amount is cleared, also clear the opposite field
+    if (amount === '') {
+      _setToAmount("");
+    }
+    // If o or no amount or no fair price, get out
+    if (!amount || fair === undefined) { return; }
+    // Calculate the corresponding TO amount
     const formattedAmount = formatAmount(parseFloat(amount) / fair, decimals);    
     _setToAmount(formattedAmount);
   };
 
   const setToAmount = (amount: string, decimals: number = 9) => {
-    if (!amount || fair === undefined) {
-      _setFromAmount("");
-      _setToAmount("");
-      return;
-    }
+    // Reflect the typed amount (let them type)
     _setToAmount(amount);
+    // If amount is cleared, also clear the opposite field
+    if (amount === '') {
+      _setFromAmount("");
+    }
+    // If o or no amount or no fair price, get out
+    if (!amount || fair === undefined) { return; }
+    // Calculate the corresponding FROM amount
     const formattedAmount = formatAmount(parseFloat(amount) * fair, decimals); 
     _setFromAmount(formattedAmount);
   };

@@ -15,18 +15,16 @@ import { calculateActionFees, findATokenAddress } from "money-streaming/lib/util
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
+import { useBbo, useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
-import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
-// import { useOwnedTokenAccount } from "../../contexts/token";
+import { useSwapContext, useSwapFair } from "../../contexts/swap";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { swap } from "../../utils/swap";
 import "./style.less";
-// import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -60,7 +58,7 @@ export const SwapUi = () => {
 
   } = useSwapContext();
 
-  const { swapClient, openOrders } = useMarketContext();
+  const { swapClient, openOrders, fetchingOpenOrders } = useMarketContext();
   const route = useRouteVerbose(fromMint, toMint);
   const fromMintInfo = useMint(fromMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
@@ -119,16 +117,36 @@ export const SwapUi = () => {
     setFetchingFromTokenBalance(true);
     const targetMint = mint || fromMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
-      const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
-      setFromMintTokenBalance(balance || 0);
-      setFetchingFromTokenBalance(false);
+      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
+        .then(balance => {
+          setFromMintTokenBalance(balance || 0);
+          setFetchingFromTokenBalance(false);
+        })
+        .catch(() => setFetchingFromTokenBalance(false));
+      // const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
+      // setFromMintTokenBalance(balance || 0);
+      // setFetchingFromTokenBalance(false);
     } else {
-      const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
-      if (assocTokenAddress) {
-        const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
-        setFromMintTokenBalance(balance || 0);
-      }
-      setFetchingFromTokenBalance(false);
+      findATokenAddress(publicKey as PublicKey, targetMint)
+        .then(value => {
+          if (value) {
+            getTokenAccountBalanceByAddress(value.toBase58())
+              .then(balance => {
+                setFromMintTokenBalance(balance);
+                setFetchingFromTokenBalance(false);
+              })
+              .catch(() => setFetchingFromTokenBalance(false));
+          } else {
+            setFetchingFromTokenBalance(false);
+          }
+        })
+        .catch(() => setFetchingFromTokenBalance(false));
+      // const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
+      // if (assocTokenAddress) {
+      //   const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
+      //   setFromMintTokenBalance(balance || 0);
+      // }
+      // setFetchingFromTokenBalance(false);
     }
   }, [
     fromMint,
@@ -141,16 +159,36 @@ export const SwapUi = () => {
     setFetchingToTokenBalance(true);
     const targetMint = mint || toMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
-      const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
-      setToMintTokenBalance(balance || 0);
-      setFetchingToTokenBalance(false);
+      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
+        .then(balance => {
+          setToMintTokenBalance(balance);
+          setFetchingToTokenBalance(false);
+        })
+        .catch(() => setFetchingToTokenBalance(false));
+      // const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
+      // setToMintTokenBalance(balance || 0);
+      // setFetchingToTokenBalance(false);
     } else {
-      const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
-      if (assocTokenAddress) {
-        const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
-        setToMintTokenBalance(balance || 0);
-      }
-      setFetchingToTokenBalance(false);
+      findATokenAddress(publicKey as PublicKey, targetMint)
+        .then(value => {
+          if (value) {
+            getTokenAccountBalanceByAddress(value.toBase58())
+              .then(balance => {
+                setToMintTokenBalance(balance);
+                setFetchingToTokenBalance(false);
+              })
+              .catch(() => setFetchingToTokenBalance(false));
+          } else {
+            setFetchingToTokenBalance(false);
+          }
+        })
+        .catch(() => setFetchingToTokenBalance(false));
+      // const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
+      // if (assocTokenAddress) {
+      //   const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
+      //   setToMintTokenBalance(balance || 0);
+      // }
+      // setFetchingToTokenBalance(false);
     }
   }, [
     toMint,
@@ -261,7 +299,16 @@ export const SwapUi = () => {
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
+  const showTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(true);
+    setTimeout(() => {
+      const input = document.getElementById("token-search-input");
+      if (input) {
+        input.focus();
+      }
+    }, 250);
+  }, []);
+
   const onCloseTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(false);
     setTokenFilter('');
@@ -392,9 +439,6 @@ export const SwapUi = () => {
             const newMint = new PublicKey(token.address);
             setFromMint(newMint);
             consoleOut("token selected:", token);
-            const validAmount = !toAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount * getCurrentRate();
-            setToAmount(amount ? amount.toString() : "", tokenMap.get(toMint.toBase58())?.decimals || 9);
             refreshFromTokenBalance(newMint);
             onCloseTokenSelector();
           };
@@ -447,9 +491,6 @@ export const SwapUi = () => {
             const newMint = new PublicKey(token.address);
             setToMint(newMint);
             consoleOut("token selected:", token);
-            const validAmount = !fromAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount / getCurrentRate();
-            setFromAmount(amount ? amount.toString() : "", tokenMap.get(fromMint.toBase58())?.decimals || 6);
             refreshToTokenBalance(newMint);
             onCloseTokenSelector();
           };
@@ -731,7 +772,7 @@ export const SwapUi = () => {
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
     return (
       <Row>
-        <Col span={11} className="text-right">
+        <Col span={10} className="text-right">
           {caption}
         </Col>
         <Col span={1} className="text-center fg-secondary-70">
@@ -750,8 +791,16 @@ export const SwapUi = () => {
     );
   };
 
+  const infoMessage = (caption: string) => {
+    return (
+      <Row>
+        <Col span={24} className="text-center fg-secondary-70">{caption}</Col>
+      </Row>
+    );
+  };
+
   return (
-    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance}>
+    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance || fetchingOpenOrders}>
       <div className="swap-wrapper">
         {/* Source token / amount */}
         <CoinInput
@@ -778,6 +827,7 @@ export const SwapUi = () => {
           token={tokenMap.get(toMint.toBase58()) as TokenInfo}
           tokenBalance={toMintTokenBalance}
           tokenAmount={toAmount}
+          readonly={true}
           onInputChange={handleSwapToAmountChange}
           onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
           onSelectToken={() => {
@@ -813,7 +863,7 @@ export const SwapUi = () => {
         </Modal>
 
         {/* Info */}
-        {fromMarket && (
+        {fromMarket ? (
           <div className="p-2 mb-2">
             {
               infoRow(
@@ -848,6 +898,10 @@ export const SwapUi = () => {
                 ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
               )
             }
+          </div>
+        ) : (
+          <div className="p-2 mb-2">
+            {infoMessage(t('swap.insufficient-liquidity'))}
           </div>
         )}
 

@@ -1278,6 +1278,9 @@ section.content {
       text-overflow: ellipsis;
       padding: 0px;
       appearance: textfield;
+      &[readonly] {
+        cursor: not-allowed;
+      }
       @media (max-width: 575.98px) {
         font-size: 20px;
       }
