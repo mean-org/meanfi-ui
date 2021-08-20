@@ -18,7 +18,7 @@ const { SubMenu } = Menu;
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connection = useConnectionConfig();
-  const { connected } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { t } = useTranslation("common");
   const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +33,10 @@ export const AppBar = (props: { menuType: string }) => {
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
     }
+  }
+
+  const getFtxPayLink = (): string => {
+    return `https://ftx.us/pay/request?coin=SOL&address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false&fixedWidth=true`;
   }
 
   useEffect(() => {
@@ -102,6 +106,9 @@ export const AppBar = (props: { menuType: string }) => {
             </a>
           </Menu.Item>
         )}
+        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','width=360,height=600')}>
+          Buy tokens with FTX Pay
+        </Menu.Item>
       </SubMenu>
     </Menu>
   );
@@ -178,6 +185,14 @@ export const AppBar = (props: { menuType: string }) => {
                   </a>
                 </li>
               )}
+              <li key="ftxpay" className="mobile-menu-item">
+                <a href={getFtxPayLink()} onClick={(e) => {
+                    e.preventDefault();
+                    window.open(getFtxPayLink(), 'newwindow','width=360,height=600');
+                  }} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">Buy tokens with FTX Pay</span>
+                </a>
+              </li>
             </ul>
           </li>
         </ul>
