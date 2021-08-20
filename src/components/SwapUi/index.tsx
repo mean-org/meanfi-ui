@@ -119,27 +119,16 @@ export const SwapUi = () => {
     setFetchingFromTokenBalance(true);
     const targetMint = mint || fromMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
-      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => {
-          setFromMintTokenBalance(balance);
-          setFetchingFromTokenBalance(false);
-        })
-        .catch(() => setFetchingFromTokenBalance(false));
+      const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
+      setFromMintTokenBalance(balance || 0);
+      setFetchingFromTokenBalance(false);
     } else {
-      findATokenAddress(publicKey as PublicKey, targetMint)
-        .then(value => {
-          if (value) {
-            getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => {
-                setFromMintTokenBalance(balance);
-                setFetchingFromTokenBalance(false);
-              })
-              .catch(() => setFetchingFromTokenBalance(false));
-          } else {
-            setFetchingFromTokenBalance(false);
-          }
-        })
-        .catch(() => setFetchingFromTokenBalance(false));
+      const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
+      if (assocTokenAddress) {
+        const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
+        setFromMintTokenBalance(balance || 0);
+      }
+      setFetchingFromTokenBalance(false);
     }
   }, [
     fromMint,
@@ -152,27 +141,16 @@ export const SwapUi = () => {
     setFetchingToTokenBalance(true);
     const targetMint = mint || toMint;
     if (targetMint.equals(NATIVE_SOL_MINT)) {
-      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => {
-          setToMintTokenBalance(balance);
-          setFetchingToTokenBalance(false);
-        })
-        .catch(() => setFetchingToTokenBalance(false));
+      const balance = await getTokenAccountBalanceByAddress(publicKey?.toBase58() as string);
+      setToMintTokenBalance(balance || 0);
+      setFetchingToTokenBalance(false);
     } else {
-      findATokenAddress(publicKey as PublicKey, targetMint)
-        .then(value => {
-          if (value) {
-            getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => {
-                setToMintTokenBalance(balance);
-                setFetchingToTokenBalance(false);
-              })
-              .catch(() => setFetchingToTokenBalance(false));
-          } else {
-            setFetchingToTokenBalance(false);
-          }
-        })
-        .catch(() => setFetchingToTokenBalance(false));
+      const assocTokenAddress = await findATokenAddress(publicKey as PublicKey, targetMint);
+      if (assocTokenAddress) {
+        const balance = await getTokenAccountBalanceByAddress(assocTokenAddress.toBase58());
+        setToMintTokenBalance(balance || 0);
+      }
+      setFetchingToTokenBalance(false);
     }
   }, [
     toMint,
