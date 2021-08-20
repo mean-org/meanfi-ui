@@ -36,7 +36,7 @@ export const AppBar = (props: { menuType: string }) => {
   }
 
   const getFtxPayLink = (): string => {
-    return `https://ftx.us/pay/request?coin=SOL&address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false&fixedWidth=true`;
+    return `https://ftx.us/pay/request?address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false`;
   }
 
   useEffect(() => {
@@ -106,8 +106,8 @@ export const AppBar = (props: { menuType: string }) => {
             </a>
           </Menu.Item>
         )}
-        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','width=360,height=600')}>
-          Buy tokens with FTX Pay
+        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=700,height=900')}>
+          Deposit From FTX US
         </Menu.Item>
       </SubMenu>
     </Menu>
@@ -188,9 +188,9 @@ export const AppBar = (props: { menuType: string }) => {
               <li key="ftxpay" className="mobile-menu-item">
                 <a href={getFtxPayLink()} onClick={(e) => {
                     e.preventDefault();
-                    window.open(getFtxPayLink(), 'newwindow','width=360,height=600');
+                    window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
                   }} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">Buy tokens with FTX Pay</span>
+                  <span className="menu-item-text">Deposit From FTX US</span>
                 </a>
               </li>
             </ul>
