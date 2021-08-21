@@ -68,7 +68,8 @@ export function MarketContextProvider(props: any) {
   // 3. Batch fetch all mints associated with the markets.
   useEffect(() => {
 
-    if (!swapClient.program.provider.wallet?.publicKey) {
+    if (!swapClient || !swapClient.program || !swapClient.program.provider ||
+        !swapClient.program.provider.wallet || !swapClient.program.provider.wallet.publicKey) {
       setOoAccounts(new Map<string, Array<OpenOrders>>());
       if (!shouldFetchOpenOrders) {
         setShouldFetchOpenOrders(true);
@@ -181,9 +182,7 @@ export function MarketContextProvider(props: any) {
     };
 
   },  [
-    swapClient.program.provider.connection, 
-    swapClient.program.provider.opts, 
-    swapClient.program.provider.wallet.publicKey,
+    swapClient,
     fetchingOpenOrders,
     shouldFetchOpenOrders
   ]);
