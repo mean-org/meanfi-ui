@@ -12,6 +12,7 @@ export const CoinInput = (props: {
   onInputChange: any;
   onMaxAmount: any;
   translationId: string;
+  readonly?: boolean;
 }) => {
   const { t } = useTranslation('common');
 
@@ -43,6 +44,7 @@ export const CoinInput = (props: {
                 minLength={1}
                 maxLength={79}
                 spellCheck="false"
+                readOnly={props.readonly ? true : false}
                 value={props.tokenAmount} />
             </span>
             <div className="addon-right">

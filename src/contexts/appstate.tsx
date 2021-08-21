@@ -160,9 +160,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   const location = useLocation();
   const { t } = useTranslation('common');
   // Parent contexts
-  const connected = useWallet();
   const connection = useConnection();
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
@@ -185,7 +184,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
-  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(contextDefaultValues.previousWalletConnectState);
+  const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
   const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
   const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();

@@ -8,36 +8,36 @@ export const TextInput = (props: {
     onInputChange: any;
 }) => {
 
-  return (
-    <div className="transaction-field">
-        {props.label && (
-            <div className="transaction-field-row">
-                <span className="field-label-left">{props.label}</span>
-                <span className="field-label-right">&nbsp;</span>
+    return (
+        <div className="transaction-field">
+            {props.label && (
+                <div className="transaction-field-row">
+                    <span className="field-label-left">{props.label}</span>
+                    <span className="field-label-right">&nbsp;</span>
+                </div>
+            )}
+            <div className="transaction-field-row main-row">
+                <span className="input-left">
+                    <input
+                        id={props.id || 'token-search-input'}
+                        className="general-text-input"
+                        inputMode="decimal"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        type="text"
+                        onChange={props.onInputChange}
+                        placeholder={props.placeholder}
+                        spellCheck="false"
+                        value={props.value} />
+                </span>
             </div>
-        )}
-        <div className="transaction-field-row main-row">
-            <span className="input-left">
-                <input
-                    id={props.id || 'token-search-input'}
-                    className="general-text-input"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    type="text"
-                    onChange={props.onInputChange}
-                    placeholder={props.placeholder}
-                    spellCheck="false"
-                    value={props.value} />
-            </span>
+            {props.hint && (
+                <div className="transaction-field-row">
+                    <span className="field-label-left">{props.hint}</span>
+                    <span className="field-label-right">&nbsp;</span>
+                </div>
+            )}
         </div>
-        {props.hint && (
-            <div className="transaction-field-row">
-                <span className="field-label-left">{props.hint}</span>
-                <span className="field-label-right">&nbsp;</span>
-            </div>
-        )}
-    </div>
-  );
+    );
 
 };

@@ -65,6 +65,7 @@ export const PayrollPayment = () => {
     transactionStatus,
     timeSheetRequirement,
     streamProgramAddress,
+    previousWalletConnectState,
     setCurrentScreen,
     setSelectedToken,
     resetContractValues,
@@ -81,11 +82,11 @@ export const PayrollPayment = () => {
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
+    setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
   const [redirect, setRedirect] = useState<string | null>(null);
-  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();

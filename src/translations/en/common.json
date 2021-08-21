@@ -179,7 +179,8 @@
 		"input-label-destination": "Swap to (Estimate)",
 		"input-label-source": "Swap from",
 		"token-select-destination": "Select token",
-		"token-select-source": "Select token"
+		"token-select-source": "Select token",
+		"insufficient-liquidity": "Insufficient liquidity for this trade"
 	},
 	"token-selector": {
 		"modal-title": "Select a token",

@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import * as assert from "assert";
 import { useAsync } from "react-async-hook";
-import { MintInfo, MintLayout, NATIVE_MINT } from "@solana/spl-token";
+import { MintLayout } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import { Swap as SwapClient } from "@project-serum/swap";
 import { Orderbook as OrderbookSide } from "@project-serum/serum";
@@ -31,6 +31,7 @@ type MarketContextState = {
   openOrders: Map<string, Array<OpenOrders>>;
   closeOpenOrders: (openOrder: OpenOrders) => void;
   swapClient: SwapClient;
+  fetchingOpenOrders: boolean;
 };
 
 const MarketContext = React.createContext<MarketContextState | null>(null);
@@ -40,7 +41,9 @@ export function MarketContextProvider(props: any) {
   const swapClient = props.swapClient;
   const [ooAccounts, setOoAccounts] = useState<Map<string, Array<OpenOrders>>>(
     new Map<string, Array<OpenOrders>>()
-  );  
+  );
+  const [shouldFetchOpenOrders, setShouldFetchOpenOrders] = useState(true);
+  const [fetchingOpenOrders, setFetchingOpenOrders] = useState(false);
 
   // Removes the given open orders from the context.
   const closeOpenOrders = async (openOrder: OpenOrders) => {
@@ -67,104 +70,122 @@ export function MarketContextProvider(props: any) {
 
     if (!swapClient.program.provider.wallet?.publicKey) {
       setOoAccounts(new Map<string, Array<OpenOrders>>());
+      if (!shouldFetchOpenOrders) {
+        setShouldFetchOpenOrders(true);
+      }
       return;
     }
+
+    if (shouldFetchOpenOrders && !fetchingOpenOrders) {
+      setFetchingOpenOrders(true);
+      setTimeout(() => {
+        OpenOrders.findForOwner(
+          swapClient.program.provider.connection,
+          swapClient.program.provider.wallet.publicKey,
+          DEX_PROGRAM_ID
     
-    OpenOrders.findForOwner(
-      swapClient.program.provider.connection,
-      swapClient.program.provider.wallet.publicKey,
-      DEX_PROGRAM_ID
+        ).then(async (openOrders) => {
+          
+          const newOoAccounts = new Map<string, Array<OpenOrders>>();
+          let markets = new Set<string>();
+          
+          openOrders.forEach((oo) => {
+            markets.add(oo.market.toString());
+            const ooAcc = newOoAccounts.get(oo.market.toString());
+            if (ooAcc) {
+              ooAcc.push(oo);
+            } else {
+              newOoAccounts.set(oo.market.toString(), [oo]);
+            }
+          });
+    
+          if (markets.size > 100) {
+            throw new Error("Too many markets. Please file an issue to update this");
+          }
+    
+          const multipleMarkets = await anchor.utils.rpc.getMultipleAccounts(
+            swapClient.program.provider.connection,
+            Array.from(markets.values()).map((m) => new PublicKey(m))
+          );
+    
+          const marketClients = multipleMarkets.map((programAccount) => {
+            return {
+              publicKey: programAccount?.publicKey,
+              account: new Market(
+                Market.getLayout(DEX_PROGRAM_ID).decode(programAccount?.account.data),
+                -1, // Set below so that we can batch fetch mints.
+                -1, // Set below so that we can batch fetch mints.
+                swapClient.program.provider.opts,
+                DEX_PROGRAM_ID
+              ),
+            };
+          });
+    
+          setOoAccounts(newOoAccounts);
+    
+          // Batch fetch all the mints, since we know we'll need them at some
+          // point.
+          const mintPubkeys = Array.from(
+            new Set<string>(
+              marketClients
+                .map((m) => [
+                  m.account.baseMintAddress.toString(),
+                  m.account.quoteMintAddress.toString(),
+                ])
+                .flat()
+            ).values()
+          ).map((pk) => new PublicKey(pk));
+    
+          if (mintPubkeys.length > 100) {
+            throw new Error("Too many mints. Please file an issue to update this");
+          }
+    
+          const mints = await anchor.utils.rpc.getMultipleAccounts(
+            swapClient.program.provider.connection,
+            mintPubkeys
+          );
+    
+          const mintInfos = mints.map((mint) => {
+            const mintInfo = MintLayout.decode(mint!.account.data);
+            setMintCache(mint!.publicKey, mintInfo);
+            return { publicKey: mint!.publicKey, mintInfo };
+          });
+    
+          marketClients.forEach((m) => {
+            const baseMintInfo = mintInfos.filter((mint: any) =>
+              mint.publicKey.equals(m.account.baseMintAddress)
+            )[0];
+            const quoteMintInfo = mintInfos.filter((mint: any) =>
+              mint.publicKey.equals(m.account.quoteMintAddress)
+            )[0];
+            assert.ok(baseMintInfo && quoteMintInfo);
+            // @ts-ignore
+            m.account._baseSplTokenDecimals = baseMintInfo.mintInfo.decimals;
+            // @ts-ignore
+            m.account._quoteSplTokenDecimals = quoteMintInfo.mintInfo.decimals;
+            MARKET_CACHE.set(
+              m.publicKey!.toString(),
+              new Promise<Market>((resolve) => resolve(m.account))
+            );
+          });
 
-    ).then(async (openOrders) => {
-      
-      const newOoAccounts = new Map<string, Array<OpenOrders>>();
-      let markets = new Set<string>();
-      
-      openOrders.forEach((oo) => {
-        markets.add(oo.market.toString());
-        const ooAcc = newOoAccounts.get(oo.market.toString());
-        if (ooAcc) {
-          ooAcc.push(oo);
-        } else {
-          newOoAccounts.set(oo.market.toString(), [oo]);
-        }
-      });
+          setShouldFetchOpenOrders(false);
+          setFetchingOpenOrders(false);
+          
+        });
+      }, 3000);
+    }
 
-      if (markets.size > 100) {
-        throw new Error("Too many markets. Please file an issue to update this");
-      }
+    return () => {
+      clearTimeout();
+    };
 
-      const multipleMarkets = await anchor.utils.rpc.getMultipleAccounts(
-        swapClient.program.provider.connection,
-        Array.from(markets.values()).map((m) => new PublicKey(m))
-      );
-
-      const marketClients = multipleMarkets.map((programAccount) => {
-        return {
-          publicKey: programAccount?.publicKey,
-          account: new Market(
-            Market.getLayout(DEX_PROGRAM_ID).decode(programAccount?.account.data),
-            -1, // Set below so that we can batch fetch mints.
-            -1, // Set below so that we can batch fetch mints.
-            swapClient.program.provider.opts,
-            DEX_PROGRAM_ID
-          ),
-        };
-      });
-
-      setOoAccounts(newOoAccounts);
-
-      // Batch fetch all the mints, since we know we'll need them at some
-      // point.
-      const mintPubkeys = Array.from(
-        new Set<string>(
-          marketClients
-            .map((m) => [
-              m.account.baseMintAddress.toString(),
-              m.account.quoteMintAddress.toString(),
-            ])
-            .flat()
-        ).values()
-      ).map((pk) => new PublicKey(pk));
-
-      if (mintPubkeys.length > 100) {
-        throw new Error("Too many mints. Please file an issue to update this");
-      }
-
-      const mints = await anchor.utils.rpc.getMultipleAccounts(
-        swapClient.program.provider.connection,
-        mintPubkeys
-      );
-
-      const mintInfos = mints.map((mint) => {
-        const mintInfo = MintLayout.decode(mint!.account.data);
-        setMintCache(mint!.publicKey, mintInfo);
-        return { publicKey: mint!.publicKey, mintInfo };
-      });
-
-      marketClients.forEach((m) => {
-        const baseMintInfo = mintInfos.filter((mint: any) =>
-          mint.publicKey.equals(m.account.baseMintAddress)
-        )[0];
-        const quoteMintInfo = mintInfos.filter((mint: any) =>
-          mint.publicKey.equals(m.account.quoteMintAddress)
-        )[0];
-        assert.ok(baseMintInfo && quoteMintInfo);
-        // @ts-ignore
-        m.account._baseSplTokenDecimals = baseMintInfo.mintInfo.decimals;
-        // @ts-ignore
-        m.account._quoteSplTokenDecimals = quoteMintInfo.mintInfo.decimals;
-        MARKET_CACHE.set(
-          m.publicKey!.toString(),
-          new Promise<Market>((resolve) => resolve(m.account))
-        );
-      });
-    });
-      
-  }, [
+  },  [
     swapClient.program.provider.connection, 
     swapClient.program.provider.opts, 
-    swapClient.program.provider.wallet.publicKey
+    swapClient.program.provider.wallet.publicKey,
+    fetchingOpenOrders,
+    shouldFetchOpenOrders
   ]);
   
   return (
@@ -173,6 +194,7 @@ export function MarketContextProvider(props: any) {
         openOrders: ooAccounts,
         closeOpenOrders,
         swapClient,
+        fetchingOpenOrders
       }}>
       {props.children}
     </MarketContext.Provider>

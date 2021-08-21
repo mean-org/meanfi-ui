@@ -50,6 +50,7 @@ export const OneTimePayment = () => {
     fromCoinAmount,
     transactionStatus,
     streamProgramAddress,
+    previousWalletConnectState,
     setCurrentScreen,
     setSelectedToken,
     resetContractValues,
@@ -63,10 +64,10 @@ export const OneTimePayment = () => {
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
+    setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
-  const [previousWalletConnectState, setPreviousWalletConnectState] = useState(connected);
   const [isBusy, setIsBusy] = useState(false);
   const [isScheduledPayment, setIsScheduledPayment] = useState(false);
   const { account } = useNativeAccount();
