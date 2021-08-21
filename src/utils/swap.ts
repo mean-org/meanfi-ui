@@ -1,48 +1,40 @@
-import { BN, Provider } from "@project-serum/anchor";
-import { SendTxRequest } from "@project-serum/anchor/dist/provider";
+import { BN } from "@project-serum/anchor";
+import { SendTxRequest, Wallet } from "@project-serum/anchor/dist/provider";
 import { Market, OpenOrders } from "@project-serum/serum";
 import { Swap } from "@project-serum/swap";
-import { createATokenAccountInstruction } from "money-streaming/lib/instructions";
 import { TransactionFees } from "money-streaming/lib/types";
-import { findATokenAddress } from "money-streaming/lib/utils";
+import { findATokenAddress, getMintAccount } from "money-streaming/lib/utils";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "./ids";
+import { getTxFeeAmount } from "./ui";
 import {
-    AccountInfo,
-    AccountLayout,
-    ASSOCIATED_TOKEN_PROGRAM_ID,
     MintInfo,
     Token,
-    TOKEN_PROGRAM_ID,
-    u64
+    TOKEN_PROGRAM_ID
 
 } from "@solana/spl-token";
 
 import {
-    Commitment,
-    Connection,
-    Keypair,
-    LAMPORTS_PER_SOL,
-    PublicKey,
-    Signer,
-    SystemProgram,
-    Transaction,
-    TransactionInstruction
+  Connection,
+  Keypair,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  Transaction
 
 } from "@solana/web3.js";
+import { parseTxResponse } from "./utils";
 
 export const swap = async(
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo | undefined,
-//   fromWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined,
+  fromMintInfo: MintInfo,
   fromMarket: Market | undefined,
   fromAmount: number,
   toMint: PublicKey,
-//   toWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined,
+  toMintInfo: MintInfo,
   toMarket: Market | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
-//   quoteWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined,
   openOrders: Map<string, OpenOrders[]>,
   fees: TransactionFees,
   slippage: number,
@@ -57,15 +49,13 @@ export const swap = async(
     client,
     fromMint,
     fromMintInfo,
-    // fromWallet,
     fromMarket,
     fromAmount,
     toMint,
-    // toWallet,
+    toMintInfo,
     toMarket,
     quoteMint,
     quoteMintInfo,
-    // quoteWallet,
     openOrders,
     fees,
     slippage,
@@ -85,16 +75,14 @@ export const swap = async(
 export const swapRequest = async(
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo | undefined,
-//   fromWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined, 
+  fromMintInfo: MintInfo,
   fromMarket: Market | undefined,
   fromAmount: number,
   toMint: PublicKey,
-//   toWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined,
+  toMintInfo: MintInfo,
   toMarket: Market | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
-//   quoteWallet: { publicKey: PublicKey, account: AccountInfo } | null | undefined,  
   openOrders: Map<string, OpenOrders[]>,
   fees: TransactionFees,
   slippage: number,
@@ -105,38 +93,31 @@ export const swapRequest = async(
   
 ): Promise<SendTxRequest> => {
 
-  const { provider, connection, wallet } = {
-    provider: client.program.provider,
+  const { connection, wallet } = {
     connection: client.program.provider.connection,
     wallet: client.program.provider.wallet    
   };
   
-  const amount = new BN(fromAmount * 10 ** (fromMintInfo?.decimals || 6));  
+  const amount = new BN(fromAmount * 10 ** fromMintInfo.decimals);
   const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
   const wrappedAccount = Keypair.generate();
   const fromWallet = await findATokenAddress(wallet.publicKey, fromMint);
   const toWallet = await findATokenAddress(wallet.publicKey, toMint);
   const quoteWallet = await findATokenAddress(wallet.publicKey, quoteMint);
-  const fromWalletInfo = await connection.getAccountInfo(fromWallet);
-  const toWalletInfo = await connection.getAccountInfo(toWallet);
   const quoteWalletInfo = await connection.getAccountInfo(quoteWallet);
 
   const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
     ? wrappedAccount.publicKey
-    : fromWalletInfo
-    ? fromWallet
-    : undefined;
+    : fromWallet;
       
   const toWalletAddr = toMint.equals(NATIVE_SOL_MINT)
     ? wrappedAccount.publicKey
-    : toWalletInfo
-    ? toWallet
-    : undefined;
+    : toWallet;
     
   const quoteWalletAddr = quoteWalletInfo
     ? quoteWallet
     : undefined;
-  
+
   let swapTxs = await swapTxRequest(
     client,
     fromMint,
@@ -144,6 +125,7 @@ export const swapRequest = async(
     fromMarket,
     amount,
     toMint,
+    toMintInfo,
     toMarket,
     quoteMint,
     quoteMintInfo,
@@ -160,8 +142,16 @@ export const swapRequest = async(
   );
 
   if (isSol) {
-    const { tx: wrapTx, signers: wrapSigners } = await wrapRequest(provider, fromAmount);
-    const unwrapTx = await unwrap(wallet.publicKey, wrappedAccount!.publicKey);
+    const isFromMint = fromMint.equals(NATIVE_SOL_MINT);
+    const { tx: wrapTx, signers: wrapSigners } = await wrapRequest(
+      connection,
+      wallet,
+      wrappedAccount,
+      amount,
+      isFromMint
+    );
+
+    const unwrapTx = await unwrap(wallet.publicKey, wrappedAccount.publicKey);
     const tx = new Transaction().add(
       wrapTx,
       swapTxs.tx,
@@ -184,14 +174,18 @@ export const swapRequest = async(
 }
 
 export const wrap = async (
-  provider: Provider,
-  amount: number,
+  connection: Connection,
+  wallet: Wallet,
+  account: Keypair,
+  amount: BN,
   temp: boolean = true
 
 ): Promise<Transaction> => {
 
   let { tx, signers } = await wrapRequest(
-    provider,
+    connection,
+    wallet,
+    account,
     amount,
     temp
   );
@@ -204,56 +198,44 @@ export const wrap = async (
 }
 
 export const wrapRequest = async (
-  provider: Provider,
-  amount: number,
-  temp: boolean = false
+  connection: Connection,
+  wallet: Wallet,
+  account: Keypair,
+  amount: BN,
+  isFromMint: boolean = true
 
 ): Promise<SendTxRequest> => {
 
-  let ixs = new Array<TransactionInstruction>();
-  let signers = new Array<Signer>();
-  let { connection, owner } = {
-    connection: provider.connection,
-    owner: provider.wallet.publicKey
-  };
-    
-  if (!temp) {
-    let aTokenKey = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
+  const signers = new Array<Signer>(...[account]);
+  const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
+  const tx = new Transaction().add(
+    SystemProgram.createAccount({
+      fromPubkey: wallet.publicKey,
+      newAccountPubkey: account.publicKey,
+      lamports: minimumWrappedAccountBalance,
+      space: 165,
+      programId: TOKEN_PROGRAM_ID,
+    })
+  );
+  
+  if (isFromMint) {
+    tx.add(
+      SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: account.publicKey,
+        lamports: amount.toNumber()
+      })
+    );
+  }
+  
+  tx.add(
+    Token.createInitAccountInstruction(
       TOKEN_PROGRAM_ID,
       WRAPPED_SOL_MINT,
-      provider.wallet.publicKey
-    );
-
-    let accountInfo = await connection.getAccountInfo(aTokenKey);
-
-    if (!accountInfo) {
-      const account = Keypair.generate();  
-      signers.push(account);
-      aTokenKey = account.publicKey;
-    }
-
-    ixs = await wrapIxs(owner, aTokenKey, amount, !accountInfo);
-    
-  } else {
-    const account = Keypair.generate();  
-    signers.push(account);    
-    ixs = await wrapTempIxs(
-      connection,
-      owner,
       account.publicKey,
-      amount
-    );
-  }
-  
-  let tx = new Transaction().add(...ixs);
-  tx.feePayer = owner;
-  let hash = await connection.getRecentBlockhash(connection.commitment as Commitment);
-  tx.recentBlockhash = hash.blockhash;
-  
-  if (temp && signers.length) {
-    tx.partialSign(...signers);
-  }
+      wallet.publicKey
+    )
+  );
 
   return { tx, signers };
 }
@@ -278,10 +260,11 @@ export const unwrap = async(
 const swapTxRequest = async (
   client: Swap,
   fromMint: PublicKey,
-  fromMintInfo: MintInfo | undefined,
+  fromMintInfo: MintInfo,
   fromMarket: Market | undefined,
   amount: BN,
   toMint: PublicKey,
+  toMintInfo: MintInfo,
   toMarket: Market | undefined,
   quoteMint: PublicKey,
   quoteMintInfo: MintInfo,
@@ -297,11 +280,14 @@ const swapTxRequest = async (
   strict: boolean = false
 
 ): Promise<SendTxRequest> => {
-    
-  const swapFee = amount.muln(fees.mspPercentFee).divn(100).toNumber();
+  
+  const fromAmount = amount.toNumber() / 10 ** fromMintInfo.decimals;
+  const swapFee = getTxFeeAmount(fees, fromAmount);
   const minExchangeRate = {
-    rate: new BN((10 ** (fromMintInfo?.decimals || 6) * swapFee) / fair).muln(100 - slippage).divn(100),
-    fromDecimals: (fromMintInfo?.decimals || 6),
+    rate: new BN((10 ** toMintInfo.decimals * (1 - swapFee)) / fair)
+      .muln(100 - slippage)
+      .divn(100),
+    fromDecimals: fromMintInfo.decimals,
     quoteDecimals: quoteMintInfo.decimals,
     strict,
   };
@@ -313,7 +299,7 @@ const swapTxRequest = async (
   const toOpenOrders = toMarket
     ? openOrders.get(toMarket?.address.toBase58())
     : undefined;
-        
+  
   const swapParams = {
     fromMint,
     toMint,
@@ -332,73 +318,4 @@ const swapTxRequest = async (
   };
 
   return (await client.swapTxs(swapParams))[0];
-}
-
-const wrapIxs = async (
-  from: PublicKey,
-  key: PublicKey,
-  amount: number,
-  isNew: boolean = false
-
-): Promise<TransactionInstruction[]> => {
-
-  let ixs = new Array<TransactionInstruction>();
-    
-  if (isNew) {
-    ixs.push(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        key,
-        from,
-        from
-      )
-    );
-  }
-
-  ixs.push(
-    Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      from,
-      key,
-      from,
-      [],
-      (amount * LAMPORTS_PER_SOL)
-    )
-  );
-  
-  return ixs;
-}
-
-const wrapTempIxs = async (
-  connection: Connection,
-  from: PublicKey,
-  key: PublicKey,
-  amount: number
-
-): Promise<TransactionInstruction[]> => {
-
-  const minimumWrappedAccountBalance = await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
-  
-  return new Array<TransactionInstruction>(
-    SystemProgram.createAccount({
-      fromPubkey: from,
-      newAccountPubkey: key,
-      programId: TOKEN_PROGRAM_ID,
-      lamports: minimumWrappedAccountBalance,
-      space: AccountLayout.span
-    }),
-    SystemProgram.transfer({
-      fromPubkey: from,
-      toPubkey: key,
-      lamports: amount * LAMPORTS_PER_SOL,
-    }),
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT,
-      key,
-      from
-    )
-  )
 }

@@ -22,7 +22,7 @@ const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
 
 // Cache storing all previously fetched mint infos.
 // @ts-ignore
-const MINT_CACHE = new Map<string, MintInfo>([
+export const MINT_CACHE = new Map<string, MintInfo>([
   [NATIVE_SOL_MINT.toString(), { decimals: 9 } as MintInfo],
 ]);
 
@@ -57,22 +57,22 @@ export function TokenContextProvider(props: any) {
       }
     });
     
-    // // Fetch SOL balance.
-    // provider.connection
-    //   .getAccountInfo(provider.wallet.publicKey)
-    //   .then((acc: { lamports: number }) => {
-    //     if (acc) {
-    //       OWNED_TOKEN_ACCOUNTS_CACHE.push({
-    //         publicKey: provider.wallet.publicKey,
-    //         // @ts-ignore
-    //         account: {
-    //           amount: new BN(acc.lamports),
-    //           mint: NATIVE_SOL_MINT,
-    //         },
-    //       });
-    //       setRefresh((r) => r + 1);
-    //     }
-    //   });
+    // Fetch SOL balance.
+    provider.connection
+      .getAccountInfo(provider.wallet.publicKey)
+      .then((acc: { lamports: number }) => {
+        if (acc) {
+          OWNED_TOKEN_ACCOUNTS_CACHE.push({
+            publicKey: provider.wallet.publicKey,
+            // @ts-ignore
+            account: {
+              amount: new BN(acc.lamports),
+              mint: NATIVE_SOL_MINT,
+            },
+          });
+          setRefresh((r) => r + 1);
+        }
+      });
 
     return () => {
       if (!provider || !provider.wallet || !provider.wallet.publicKey) {
@@ -209,9 +209,11 @@ export function useMint(mint?: PublicKey): MintInfo | undefined | null {
   const { provider } = useTokenContext();
   // Lazy load the mint account if needeed.
   const asyncMintInfo = useAsync(async () => {
+
     if (!mint) {
       return undefined;
     }
+
     if (MINT_CACHE.get(mint.toString())) {
       return MINT_CACHE.get(mint.toString());
     }

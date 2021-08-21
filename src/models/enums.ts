@@ -40,7 +40,8 @@ export enum TransactionStatus {
     ConfirmTransaction = 12,
     ConfirmTransactionSuccess = 13,
     ConfirmTransactionFailure = 14,
-    TransactionFinished = 15
+    TransactionFinished = 15,
+    SendTransactionFailureByMinimumAmount = 16,
 }
 
 export enum Operations {

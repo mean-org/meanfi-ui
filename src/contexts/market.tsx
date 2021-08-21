@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import * as assert from "assert";
 import { useAsync } from "react-async-hook";
-import { MintLayout } from "@solana/spl-token";
+import { MintInfo, MintLayout, NATIVE_MINT } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import { Swap as SwapClient } from "@project-serum/swap";
 import { Orderbook as OrderbookSide } from "@project-serum/serum";
@@ -14,6 +14,7 @@ import {
 
 import {
   DEX_PROGRAM_ID,
+  NATIVE_SOL_MINT,
   SOL_MINT,
   WRAPPED_SOL_MINT
   
@@ -142,10 +143,10 @@ export function MarketContextProvider(props: any) {
       });
 
       marketClients.forEach((m) => {
-        const baseMintInfo = mintInfos.filter((mint) =>
+        const baseMintInfo = mintInfos.filter((mint: any) =>
           mint.publicKey.equals(m.account.baseMintAddress)
         )[0];
-        const quoteMintInfo = mintInfos.filter((mint) =>
+        const quoteMintInfo = mintInfos.filter((mint: any) =>
           mint.publicKey.equals(m.account.quoteMintAddress)
         )[0];
         assert.ok(baseMintInfo && quoteMintInfo);
@@ -160,7 +161,11 @@ export function MarketContextProvider(props: any) {
       });
     });
       
-  }, [swapClient]);
+  }, [
+    swapClient.program.provider.connection, 
+    swapClient.program.provider.opts, 
+    swapClient.program.provider.wallet.publicKey
+  ]);
   
   return (
     <MarketContext.Provider
@@ -260,9 +265,9 @@ export function useOrderbook(market?: PublicKey): Orderbook | undefined {
     
   }, [
       refresh,
-      swapClient.program.provider.connection,
       market,
-      marketClient
+      marketClient,
+      swapClient.program.provider.connection
   ]);
 
   // Stream in bids updates.
@@ -429,7 +434,7 @@ export function useFairRoute(
     
     if (fromMarket?.baseMintAddress.equals(fromMint) ||
        (fromMarket?.baseMintAddress.equals(WRAPPED_SOL_MINT) && 
-        fromMint.equals(SOL_MINT))
+        fromMint.equals(NATIVE_SOL_MINT))
     ) {
       return fromBbo.bestBid && 1.0 / fromBbo.bestBid;
     } else {

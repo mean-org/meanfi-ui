@@ -488,7 +488,7 @@ const getMultipleAccountsCore = async (
 export function useMint(key?: string | PublicKey) {
   const connection = useConnection();
   const [mint, setMint] = useState<MintInfo>();
-
+  
   const id = typeof key === "string" ? key : key?.toBase58();
 
   useEffect(() => {

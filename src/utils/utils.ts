@@ -2,13 +2,18 @@ import BN from 'bn.js';
 import { useCallback, useState } from "react";
 import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Account, Connection, PublicKey, SimulatedTransactionResponse, Transaction } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
+import { Provider } from "@project-serum/anchor";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from "money-streaming/lib/types";
 import { TOKEN_PROGRAM_ID } from "./ids";
+import { SendTxRequest } from '@project-serum/anchor/dist/provider';
+import { decode } from 'money-streaming/lib/utils';
+import { Swap } from '@project-serum/swap';
+import { MINT_CACHE } from '../contexts/token';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -398,4 +403,66 @@ function getOwnedAccountsFilters(publicKey: PublicKey) {
       dataSize: AccountLayout.span,
     },
   ];
+}
+
+export async function getMintInfo(connection: Connection, mint: PublicKey) {
+
+  if (!mint) {
+    return undefined;
+  }
+
+  if (MINT_CACHE.get(mint.toString())) {
+    return MINT_CACHE.get(mint.toString());
+  }
+
+  const mintClient = new Token(
+    connection,
+    mint,
+    TOKEN_PROGRAM_ID,
+    new Account()
+  );
+
+  const mintInfo = await mintClient.getMintInfo();
+  MINT_CACHE.set(mint.toString(), mintInfo);
+
+  return mintInfo;
+}
+
+export async function parseTxResponse(
+  client: Swap,
+  resp: SimulatedTransactionResponse,
+) {
+
+  console.log(resp);
+
+  if (resp === undefined || !resp.err || !resp.logs) {
+      throw new Error('Unable to simulate swap');
+  }
+
+  // Decode the return value.
+  let didSwapEvent = resp.logs
+      .filter((log: any) => log.startsWith('Program log: 4ZfIrPLY4R'))
+      .map((log: any) => {
+          const logStr = log.slice('Program log: '.length);
+          return client.program.coder.events.decode(logStr)
+      })[0];
+
+  if (didSwapEvent && didSwapEvent.data) {
+    // console.log(didSwapEvent);
+    const data: any = didSwapEvent.data;
+    const obj = {
+      authority: data.authority?.toBase58(),
+      fromAmount: data.fromAmount.toNumber(),
+      fromMint: data.fromMint?.toBase58(),
+      givenAmount: data.givenAmount.toNumber(),
+      minExchangeRate: data.minExchangeRate,
+      quoteAmount: data.quoteAmount.toNumber(),
+      quiteMint: data.quoteMint?.toBase58(),
+      spillAmount: data.spillAmount.toNumber(),
+      toAmount: data.toAmount.toNumber(),
+      toMint: data.toMint.toBase58()
+    };
+
+    console.log('data => ', obj);    
+  }
 }

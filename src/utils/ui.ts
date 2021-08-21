@@ -1,5 +1,6 @@
 import { TokenInfo } from "@solana/spl-token-registry";
 import moment from "moment";
+import { TransactionFees } from "money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { environment } from "../environments/environment";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
@@ -179,7 +180,7 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
             return trans ? trans('transactions.status.tx-init-failure') : 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
             return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
-        case TransactionStatus.SendTransactionFailure:
+        case TransactionStatus.SendTransactionFailure :
             return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
         case TransactionStatus.ConfirmTransactionFailure:
             return trans ? trans('transactions.status.tx-confirm-failure') : 'The transaction could not be confirmed';
@@ -317,3 +318,16 @@ export const isToday = (someDate: string): boolean => {
       inputDate.getMonth() === today.getMonth() &&
       inputDate.getFullYear() === today.getFullYear()
 }
+
+export const getTxFeeAmount = (fees: TransactionFees, amount: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = percentage(fees.mspPercentFee, inputAmount);
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  };

@@ -243,6 +243,7 @@
 			"tx-rejected": "Transaction rejected",
 			"tx-send": "Sending transaction",
 			"tx-send-failure": "Failure submitting transaction",
+			"tx-send-failure-smallamount": "Failure submitting transaction. Swap amount too small",
 			"tx-send-operation": "Sending",
 			"tx-send-operation-success": "was sent successfully",
 			"tx-sign": "Waiting for confirmation",

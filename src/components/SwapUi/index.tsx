@@ -1,32 +1,32 @@
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getMintInfo, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionOperationDescription, percentage } from "../../utils/ui";
+import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext, useMint, useNativeAccount } from "../../contexts/accounts";
+import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
+import { calculateActionFees, findATokenAddress, getMintAccount } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useBbo, useMarket, useMarketContext, useOpenOrders, useRouteVerbose } from "../../contexts/market";
+import { useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
-// import { useOwnedTokenAccount } from "../../contexts/token";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { swap } from "../../utils/swap";
 import "./style.less";
-// import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { useMint } from "../../contexts/token";
+// import { useMint } from "../../contexts/token";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -61,18 +61,16 @@ export const SwapUi = () => {
   } = useSwapContext();
 
   const { swapClient, openOrders } = useMarketContext();
-  const route = useRouteVerbose(fromMint, toMint);
+  const route = useRouteVerbose(fromMint, toMint);  
   const fromMintInfo = useMint(fromMint);
+  // const toMintInfo = useMint(toMint);
   const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
   const toMarket = useMarket(route && route.markets ? route.markets[1] : undefined);
-  const fromBbo = useBbo(fromMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
-  const toBbo = useBbo(toMarket?.address) || { bestBid: 0, mid: 0, bestOffer: 0 };
   const tokenMap = useTokenMap();
-  // const referral = useReferral(fromMarket);
+  const referral = useReferral(fromMarket);
   const fair = useSwapFair();
-  const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
-  const quoteMintInfo = useMint(quoteMint);
-  // const quoteWallet = useOwnedTokenAccount(quoteMint);
+  const quoteMint = fromMarket && fromMarket.quoteMintAddress;
+  // const quoteMintInfo = useMint(quoteMint);
   const { swappableTokens } = useSwappableTokens();
   const [tokenFilter, setTokenFilter] = useState("");
   const filter = tokenFilter.toLowerCase();
@@ -89,6 +87,7 @@ export const SwapUi = () => {
   };
 
   // Added by YAF (Token balance)
+  const [smallAmount, setSmallAmount] = useState(false);
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
   const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
@@ -269,16 +268,7 @@ export const SwapUi = () => {
   ]);
 
   const getFeeAmount = (amount: any): number => {
-    let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
-    if (swapFees) {
-      if (swapFees.mspPercentFee) {
-        fee = percentage(swapFees.mspPercentFee, inputAmount);
-      } else if (swapFees.mspFlatFee) {
-        fee = swapFees.mspFlatFee;
-      }
-    }
-    return fee;
+    return getTxFeeAmount(swapFees, parseFloat(amount));
   };
 
   // Token selection modal
@@ -362,19 +352,22 @@ export const SwapUi = () => {
     refreshToTokenBalance(oldFrom);
   }
 
-  const getCurrentRate = () => {
-    let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
+  // const getCurrentRate = () => {
+  //   let rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : 1 / (fromBbo?.mid || 1);
 
-    if (swapRateFlipped === true) {
-      rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
-    }
+  //   if (swapRateFlipped === true) {
+  //     rate = toMarket ? (fromBbo?.mid || 1) / (toBbo?.mid || 1) : (fromBbo?.mid || 1);
+  //   }
 
-    return rate;
-  }
+  //   return rate;
+  // }
 
   const getSwap = async () => {
 
-    if (!fromMint || !toMint) {
+    // const toMintInfo = await getMintAccount(connection, toMint);
+    const toMintInfo = await getMintInfo(connection, toMint);
+
+    if (!fromMint || !toMint || !fromMintInfo || !toMintInfo) {
       throw new Error("Unable to calculate mint decimals");
     }
 
@@ -382,8 +375,14 @@ export const SwapUi = () => {
       throw new Error("Invalid fair");
     }
 
-    if (!quoteMint || !quoteMintInfo) {
+    if (!quoteMint) {
       throw new Error("Quote mint not found");
+    }
+
+    const quoteMintInfo = await getMintInfo(connection, quoteMint);
+
+    if (!quoteMintInfo) {
+      throw new Error("Quote mint info not found");
     }
 
     return swap(
@@ -393,6 +392,7 @@ export const SwapUi = () => {
       fromMarket,
       parseFloat(fromAmount),
       toMint,
+      toMintInfo,
       toMarket,
       quoteMint,
       quoteMintInfo,
@@ -401,7 +401,7 @@ export const SwapUi = () => {
       slippage,
       fair,
       isClosingNewAccounts,
-      undefined,
+      referral,
       isStrict
     );
   };
@@ -415,7 +415,7 @@ export const SwapUi = () => {
             setFromMint(newMint);
             consoleOut("token selected:", token);
             const validAmount = !toAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount * getCurrentRate();
+            const amount = validAmount * (fair || 1); //getCurrentRate();
             setToAmount(amount ? amount.toString() : "", tokenMap.get(toMint.toBase58())?.decimals || 9);
             refreshFromTokenBalance(newMint);
             onCloseTokenSelector();
@@ -470,7 +470,7 @@ export const SwapUi = () => {
             setToMint(newMint);
             consoleOut("token selected:", token);
             const validAmount = !fromAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount / getCurrentRate();
+            const amount = validAmount / (fair || 1); //getCurrentRate();
             setFromAmount(amount ? amount.toString() : "", tokenMap.get(fromMint.toBase58())?.decimals || 6);
             refreshToTokenBalance(newMint);
             onCloseTokenSelector();
@@ -587,6 +587,7 @@ export const SwapUi = () => {
     let signature: string;
     setTransactionCancelled(false);
     setIsBusy(true);
+    setSmallAmount(false);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -676,6 +677,7 @@ export const SwapUi = () => {
             return true;
           })
           .catch(error => {
+            setSmallAmount(error && error.toString().indexOf('0x12e') !== -1);
             console.log(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
@@ -838,11 +840,12 @@ export const SwapUi = () => {
         {fromMarket && (
           <div className="p-2 mb-2">
             {
+              fair &&
               infoRow(
                 (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
                 (
                   `${formatAmount(
-                    getCurrentRate(),
+                    1 / fair, //getCurrentRate(),
                     (tokenMap.get(toMint.toBase58())?.decimals || 9)
                   )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
                 ),
@@ -958,9 +961,11 @@ export const SwapUi = () => {
                   </h4>
                 ) : (
                   <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(
-                      transactionStatus, t
-                    )}
+                    {!smallAmount && getTransactionOperationDescription(transactionStatus, t)}
+                    {
+                      smallAmount && 
+                      (t('transactions.status.tx-send-failure-smallamount') || 'Failure submitting transaction. Swap amount too small')
+                    }
                   </h4>
                 )}
                 <Button
