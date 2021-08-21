@@ -1,13 +1,16 @@
-import { HddOutlined, SafetyOutlined } from "@ant-design/icons";
-import { Avatar, Button, Col, Row, Image } from "antd";
+import { CustomerServiceOutlined, HddOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
+import { Avatar, Button, Col, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
+import { environment } from "../../environments/environment";
 
 export const CustodyView = () => {
 
   return (
     <div className="solid-bg">
+
       <div className="hero">
-        <h1 className="heading">Crypto Asset Custody for Institutions</h1>
+        <h1 className="heading">Crypto Asset Custody</h1>
+        <p className="subheading">The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.</p>
         <Button
           className="main-cta"
           type="primary"
@@ -17,12 +20,86 @@ export const CustodyView = () => {
           Apply to MeanFi Custody
         </Button>
       </div>
-      <div className="container main-container">
 
-        <section className="content">
+      <section className="content">
+        <div className="container">
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={8}>
+              <div className="highlight-box text-center">
+                <div className="highlight-icon">
+                  <Avatar
+                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
+                    icon={<SafetyOutlined />}
+                  />
+                </div>
+                <h2 className="highlight-title">Safeguard your investments</h2>
+                <div className="text-container">
+                  <p className="highlight-text">We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.</p>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} md={8}>
+              <div className="highlight-box text-center">
+                <div className="highlight-icon">
+                  <Avatar
+                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
+                    icon={<TransactionOutlined />}
+                  />
+                </div>
+                <h2 className="highlight-title">Trade, borrow, and earn rewards</h2>
+                <div className="text-container">
+                  <p className="highlight-text">With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.</p>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} md={8}>
+              <div className="highlight-box text-center">
+                <div className="highlight-icon">
+                  <Avatar
+                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
+                    icon={<CustomerServiceOutlined />}
+                  />
+                </div>
+                <h2 className="highlight-title">Onboarding and Support</h2>
+                <div className="text-container">
+                  <p className="highlight-text">Dedicated Support Team that guides you during the onboard process and help you resolve any challenge.</p>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </section>
+
+      <section className="flex-center contrast-section min-section-height">
+        <div className="container">
+          <div className="highlight-box text-center">
+            <h2 className="highlight-title">WHY MEANFI CUSTODY</h2>
+            <div className="text-container">
+              <p className="highlight-text">We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {environment === 'development' && (
+        <section className="content flex-center min-section-height">
+          <div className="container">
+            <div className="highlight-box text-center">
+              <h2 className="highlight-title">Supported Assets</h2>
+              <div className="text-container">
+                <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Vitae libero nemo quo mollitia! Temporibus officia corrupti laboriosam nulla pariatur? Qui facilis tempore optio neque quam provident. Adipisci officiis, voluptas illum quod, sapiente eligendi maxime vel vitae architecto dolorum tempora eaque dolor? Incidunt sit facere ad, quos ducimus dolorum nemo magni libero impedit, hic similique possimus soluta ex deserunt quaerat inventore temporibus ullam ea, doloremque veritatis eius? Numquam dolores a saepe ea nulla vitae totam delectus ipsum itaque provident cumque, sunt possimus deserunt quis fuga rerum animi fugit voluptate recusandae veniam minima facilis quas labore.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+{/* 
+      <section className="content">
+        <div className="container">
           <Row gutter={[24, 24]}>
             <Col xs={24} md={12}>
-              <div className="highlight-box">
+              <div className="highlight-box justify-content-center">
                 <div className="highlight-icon">
                   <Avatar
                     size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
@@ -42,9 +119,11 @@ export const CustodyView = () => {
               </div>
             </Col>
           </Row>
-        </section>
+        </div>
+      </section>
 
-        <section className="content">
+      <section className="content">
+        <div className="container">
           <Row gutter={[24, 24]}>
             <Col xs={{span: 24, order: 2}} md={{span: 12, order: 1}}>
               <div className="ant-image" style={{width: '100%', height: 'auto'}}>
@@ -53,7 +132,7 @@ export const CustodyView = () => {
               </div>
             </Col>
             <Col xs={{span: 24, order: 1}} md={{span: 12, order: 2}}>
-              <div className="highlight-box">
+              <div className="highlight-box justify-content-center">
                 <div className="highlight-icon">
                   <Avatar
                     size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
@@ -67,14 +146,18 @@ export const CustodyView = () => {
               </div>
             </Col>
           </Row>
-        </section>
+        </div>
+      </section>
 
-        <section className="content">
+      <section className="content">
+        <div className="container">
           <div className="boxed-area align-center">
             <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Optio harum fuga libero, tempore, error aspernatur iure similique vero deserunt quas, reprehenderit eum corporis magni expedita. Libero ut deserunt dolores aliquid mollitia corporis cum sint in pariatur eveniet dicta, quo dignissimos ducimus obcaecati quasi repudiandae, saepe maiores molestiae autem reprehenderit hic!</div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+ */}
+
       <PreFooter />
     </div>
   );
