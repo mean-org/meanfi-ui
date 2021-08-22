@@ -2,16 +2,13 @@ import BN from 'bn.js';
 import { useCallback, useState } from "react";
 import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, PublicKey, SimulatedTransactionResponse, Transaction } from "@solana/web3.js";
+import { Account, Connection, PublicKey, SimulatedTransactionResponse } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Provider } from "@project-serum/anchor";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from "money-streaming/lib/types";
 import { TOKEN_PROGRAM_ID } from "./ids";
-import { SendTxRequest } from '@project-serum/anchor/dist/provider';
-import { decode } from 'money-streaming/lib/utils';
 import { Swap } from '@project-serum/swap';
 import { MINT_CACHE } from '../contexts/token';
 

@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "start:prod",
+			"problemMatcher": [],
+			"label": "npm: start:prod",
+			"detail": "REACT_APP_ENV=production npm start"
+		}
+	]
+}
