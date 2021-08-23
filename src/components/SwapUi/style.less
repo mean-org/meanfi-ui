@@ -21,6 +21,9 @@
                 transform: translateX(-20px);
                 z-index: 1;
             }
+            &:hover::after {
+                border-color: var(--color-secondary-alpha-20);
+            }
         }
         &.destination {
             &:before {
@@ -39,6 +42,9 @@
                 border-bottom-right-radius: var(--custom-border-radius);
                 transform: translateX(-20px);
                 z-index: 1;
+            }
+            &:hover::before {
+                border-color: var(--color-secondary-alpha-20);
             }
         }
     }
@@ -61,6 +67,7 @@
             justify-content: center;
             align-items: center;
             z-index: 2;
+            .anticon svg,
             .mean-svg-icons {
                 width: 22px;
                 height: 22px;
@@ -71,6 +78,7 @@
                 color: var(--color-secondary-alpha-20);
                 border-color: var(--color-secondary-alpha-20);
                 background-color: var(--color-secondary-alpha-02);
+                .anticon svg,
                 .mean-svg-icons {
                     color: var(--color-secondary-alpha-40);
                 }

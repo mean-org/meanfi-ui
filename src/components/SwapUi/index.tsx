@@ -2,9 +2,8 @@ import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
-import { IconSwapFlip } from "../../Icons";
 import { Identicon } from "../Identicon";
-import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -59,7 +58,7 @@ export const SwapUi = () => {
 
   } = useSwapContext();
 
-  const { swapClient, openOrders, fetchingOpenOrders } = useMarketContext();
+  const { swapClient, openOrders } = useMarketContext();
   const route = useRouteVerbose(fromMint, toMint);  
   const fromMintInfo = useMint(fromMint);
   const toMintInfo = useMint(toMint);
@@ -754,15 +753,9 @@ export const SwapUi = () => {
         <Col span={1} className="text-center fg-secondary-70">
           {separator}
         </Col>
-        <Col span={10} className="text-left fg-secondary-70">
+        <Col span={11} className="text-left fg-secondary-70">
           {value}
         </Col>
-        {
-          route &&
-          <Col span={2} className="text-center fg-secondary-70">
-            {/* <RouteInfo />  */}
-          </Col>
-        }
       </Row>
     );
   };
@@ -776,7 +769,7 @@ export const SwapUi = () => {
   };
 
   return (
-    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance || fetchingOpenOrders}>
+    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance}>
       <div className="swap-wrapper">
         {/* Source token / amount */}
         <CoinInput
@@ -794,7 +787,7 @@ export const SwapUi = () => {
 
         <div className="flip-button-container">
           <div className="flip-button" onClick={() => flipMints()}>
-            <IconSwapFlip className="mean-svg-icons" />
+            <ArrowDownOutlined />
           </div>
         </div>
 
