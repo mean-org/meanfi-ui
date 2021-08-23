@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Button, Dropdown, Menu } from "antd";
 import { EllipsisOutlined } from "@ant-design/icons";
 import {
@@ -14,7 +13,7 @@ import {
 import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_WEBSITE_URL } from "../../constants";
+import { MEAN_FINANCE_ABOUT_URL, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_HOWTOS_URL } from "../../constants";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 
@@ -89,13 +88,13 @@ export const AppContextMenu = () => {
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
-        <a href={MEAN_FINANCE_WEBSITE_URL} target="_blank" rel="noopener noreferrer">
+        <a href={MEAN_FINANCE_ABOUT_URL} target="_blank" rel="noopener noreferrer">
           <IconInfoCircle className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.about')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="4">
-        <a href="https://www.someplace.com">
+        <a href={MEAN_FINANCE_HOWTOS_URL} target="_blank" rel="noopener noreferrer">
           <IconUniversity className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>

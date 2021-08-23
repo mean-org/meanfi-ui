@@ -178,10 +178,10 @@ export function MarketContextProvider(props: any) {
     };
 
   },  [
-    swapClient.program.provider.connection, 
-    swapClient.program.provider.opts, 
-    swapClient.program.provider.wallet.publicKey, 
-    fetchingOpenOrders, 
+    swapClient.program.provider.connection,
+    swapClient.program.provider.opts,
+    swapClient.program.provider.wallet?.publicKey,
+    fetchingOpenOrders,
     shouldFetchOpenOrders, 
     swapClient
   ]);
