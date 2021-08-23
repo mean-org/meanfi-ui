@@ -1,13 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "./connection";
 import { useWallet } from "./wallet";
-import {
-  AccountInfo,
-  ConfirmedSignatureInfo,
-  ConfirmedTransaction,
-  Connection,
-  PublicKey,
-} from "@solana/web3.js";
+import { AccountInfo, ConfirmedSignatureInfo, ConfirmedTransaction, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { chunks } from "./../utils/utils";
@@ -233,7 +227,6 @@ export const cache = {
 
 export const useAccountsContext = () => {
   const context = useContext(AccountsContext);
-
   return context;
 };
 
@@ -267,7 +260,6 @@ function wrapNativeAccount(
 const UseNativeAccount = () => {
   const connection = useConnection();
   const { wallet, publicKey } = useWallet();
-
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
 
   const updateCache = useCallback(
@@ -277,6 +269,7 @@ const UseNativeAccount = () => {
       }
 
       const wrapped = wrapNativeAccount(publicKey, account);
+
       if (wrapped !== undefined) {
         const id = publicKey.toBase58();
         cache.registerParser(id, TokenAccountParser);
@@ -292,19 +285,25 @@ const UseNativeAccount = () => {
       return;
     }
 
-    connection.getAccountInfo(publicKey).then((acc) => {
+    // connection.getAccountInfo(publicKey).then((acc) => {
+    //   if (acc) {
+    //     updateCache(acc);
+    //     setNativeAccount(acc);
+    //   }
+    // });
+
+    const listener = connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
       }
     });
-    connection.onAccountChange(publicKey, (acc) => {
-      if (acc) {
-        updateCache(acc);
-        setNativeAccount(acc);
-      }
-    });
-  }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
+
+    return () => {
+      connection.removeAccountChangeListener(listener);
+    }
+
+  }, [wallet, publicKey, connection, updateCache, setNativeAccount]);
 
   return { nativeAccount };
 };
@@ -434,6 +433,7 @@ export const getMultipleAccounts = async (
   keys: string[],
   commitment: string
 ) => {
+  
   const result = await Promise.all(
     chunks(keys, 99).map((chunk) =>
       getMultipleAccountsCore(connection, chunk, commitment)
@@ -467,9 +467,10 @@ const getMultipleAccountsCore = async (
   keys: string[],
   commitment: string
 ) => {
-  const args = connection._buildArgs([keys], commitment, "base64");
 
+  const args = connection._buildArgs([keys], commitment, "base64");
   const unsafeRes = await connection._rpcRequest("getMultipleAccounts", args);
+  
   if (unsafeRes.error) {
     throw new Error(
       "failed to get info about account " + unsafeRes.error.message

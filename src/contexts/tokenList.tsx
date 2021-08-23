@@ -1,8 +1,9 @@
 import React, { useContext, useMemo } from "react";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo, TokenListContainer } from "@solana/spl-token-registry";
 import { NATIVE_SOL } from "../utils/tokens";
 
 type TokenListContextState = {
+  container: TokenListContainer;
   tokenMap: Map<string, TokenInfo>;
   wormholeMap: Map<string, TokenInfo>;
   solletMap: Map<string, TokenInfo>;
@@ -17,14 +18,14 @@ export const SPL_REGISTRY_SOLLET_TAG = "wrapped-sollet";
 
 // Token List Context Provider
 export function TokenListContextProvider(props: any) {
-  
+
   const tokenList = useMemo(() => {
-    const list = props.tokenList.filterByClusterSlug("mainnet-beta").getList();
+    const list = props.container.filterByClusterSlug("mainnet-beta").getList();
     list.push(NATIVE_SOL);
     
     return list;
     
-  }, [props.tokenList]);
+  }, [props.container]);
 
   // Token map for quick lookup.
   const tokenMap = useMemo(() => {
@@ -91,6 +92,7 @@ export function TokenListContextProvider(props: any) {
   return (
     <TokenListContext.Provider
       value={{
+        container: props.container,
         tokenMap,
         wormholeMap,
         solletMap,
@@ -114,6 +116,11 @@ export function useTokenListContext(): TokenListContextState {
   return ctx;
 }
 
+export function useTokenListcontainer() : TokenListContainer {
+  let { container } = useTokenListContext();
+  return container;
+}
+
 export function useTokenMap(): Map<string, TokenInfo> {
   const { tokenMap } = useTokenListContext();
   return tokenMap;
@@ -133,3 +140,4 @@ export function useSwappableTokens() {
     swappableTokensSollet 
   };
 }
+

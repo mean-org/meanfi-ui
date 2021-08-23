@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { PublicKey } from "@solana/web3.js";
 import { Token, ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -8,7 +8,6 @@ import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT } from "../utils/ids";
 import { useFairRoute, useRouteVerbose, useMarketContext } from "./market";
 import { useOwnedTokenAccount } from "../contexts/token";
 import { useTokenListContext, SPL_REGISTRY_SOLLET_TAG, SPL_REGISTRY_WORM_TAG } from "./tokenList";
-import { AppStateContext } from "../contexts/appstate";
 import { formatAmount } from "../utils/utils";
 import useLocalStorage from "../hooks/useLocalStorage";
 
@@ -53,25 +52,17 @@ const SwapContext = React.createContext<null | SwapContextState>(null);
 
 export function SwapContextProvider(props: any) {
 
-  const {
-    selectedToken,
-    fromCoinAmount,
-    swapToToken,
-    swapToTokenAmount
-
-  } = useContext(AppStateContext);
-
   // Get them from the localStorage and set defaults if they are not already stored
-  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', selectedToken ? selectedToken.address : USDC_MINT.toBase58());
-  const [lastSwapToMint, setLastSwapToMint] = useLocalStorage('lastSwapToMint', swapToToken ? swapToToken.address : NATIVE_SOL_MINT.toBase58());
+  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
+  const [lastSwapToMint, setLastSwapToMint] = useLocalStorage('lastSwapToMint', NATIVE_SOL_MINT.toBase58());
 
   // Work with our swap From/To subjects
   const [fromMint, updateFromMint] = useState(new PublicKey(lastSwapFromMint));
   const [toMint, updateToMint] = useState(new PublicKey(lastSwapToMint));
 
   // Continue normal flow
-  const [fromAmount, _setFromAmount] = useState(fromCoinAmount || "");
-  const [toAmount, _setToAmount] = useState(swapToTokenAmount || "");
+  const [fromAmount, _setFromAmount] = useState("");
+  const [toAmount, _setToAmount] = useState("");
   const [isClosingNewAccounts, setIsClosingNewAccounts] = useState(false);
   const [isStrict, setIsStrict] = useState(false);
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
@@ -80,12 +71,6 @@ export function SwapContextProvider(props: any) {
   const referral = props.referral;
 
   assert.ok(slippage >= 0);
-
-  useEffect(() => {
-    if (!fair) { return; }    
-    setFromAmount(fromAmount);    
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fair]);
 
   const setFromMint = (m: PublicKey) => {
     updateFromMint(m);

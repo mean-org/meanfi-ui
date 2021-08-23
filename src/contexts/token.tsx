@@ -1,18 +1,14 @@
-import React, { useContext, useState, useEffect } from "react";
-import * as assert from "assert";
+import React, { useContext, useState, useEffect, useMemo } from "react";
 import { useAsync } from "react-async-hook";
-import { Provider, BN } from "@project-serum/anchor";
+import { BN, Provider } from "@project-serum/anchor";
 import { PublicKey, Account } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../utils/ids";
-import {
-  MintInfo,
-  AccountInfo as TokenAccount,
-  Token,
-  TOKEN_PROGRAM_ID
-  
-} from "@solana/spl-token";
-
+import { MintInfo, AccountInfo as TokenAccount, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getOwnedAssociatedTokenAccounts, parseTokenAccountData } from "../utils/utils";
+import { useWallet } from "./wallet";
+import { useConnection } from "./connection";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import * as assert from "assert";
 
 // Cache storing all token accounts for the connected wallet provider.
 const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
@@ -27,19 +23,28 @@ export const MINT_CACHE = new Map<string, MintInfo>([
 ]);
 
 export type TokenContextState = {
-  provider: Provider;
+  provider: Provider
 };
 
 const TokenContext = React.createContext<TokenContextState | null>(null);
 
 export function TokenContextProvider(props: any) {
-  const provider = props.provider;
+  const connection = useConnection();
+  const { wallet } = useWallet();  
+  const provider = useMemo(() => {
+    return new Provider(connection, wallet as WalletAdapter, { 
+      commitment: 'recent', 
+      preflightCommitment: 'recent' 
+    });
+
+  }, [connection, wallet]);
+  
   const [, setRefresh] = useState(0);
 
   // Fetch all the owned token accounts for the wallet.
   useEffect(() => {
 
-    if (!provider || !provider.wallet || !provider.wallet.publicKey) {
+    if (!provider || !provider.wallet || !provider.wallet?.publicKey) {
       OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
       setRefresh((r) => r + 1);
       return;
@@ -58,57 +63,48 @@ export function TokenContextProvider(props: any) {
     });
     
     // Fetch SOL balance.
-    provider.connection
-      .getAccountInfo(provider.wallet.publicKey)
-      .then((acc: { lamports: number }) => {
-        if (acc) {
-          OWNED_TOKEN_ACCOUNTS_CACHE.push({
-            publicKey: provider.wallet.publicKey,
-            // @ts-ignore
-            account: {
-              amount: new BN(acc.lamports),
-              mint: NATIVE_SOL_MINT,
-            },
-          });
-          setRefresh((r) => r + 1);
-        }
-      });
+    // provider.connection
+    //   .getAccountInfo(provider.wallet.publicKey)
+    //   .then((acc) => {
+    //     if (acc) {
+    //       OWNED_TOKEN_ACCOUNTS_CACHE.push({
+    //         publicKey: provider.wallet.publicKey,
+    //         // @ts-ignore
+    //         account: {
+    //           amount: new BN(acc.lamports),
+    //           mint: NATIVE_SOL_MINT,
+    //         },
+    //       });
+    //       setRefresh((r) => r + 1);
+    //     }
+    //   });
 
     return () => {
-      if (!provider || !provider.wallet || !provider.wallet.publicKey) {
+      if (!provider || !provider.wallet || !provider.wallet?.publicKey) {
         OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
         setRefresh((r) => r + 1);
         return;
       }
     };
 
-  }, [provider]);
+  }, [
+    provider, 
+    provider.connection, 
+    provider.wallet, 
+    provider.wallet?.publicKey
+  ]);
 
   return (
     <TokenContext.Provider
       value={{
-        provider,
+        provider
       }}>
       {props.children}
     </TokenContext.Provider>
   );
 }
 
-function toDataURL(url: string, callback: any) {
-  var xhr = new XMLHttpRequest();
-  xhr.onload = function() {
-    var reader = new FileReader();
-    reader.onloadend = function() {
-      callback(reader.result);
-    }
-    reader.readAsDataURL(xhr.response);
-  };
-  xhr.open('GET', url);
-  xhr.responseType = 'blob';
-  xhr.send();
-}
-
-function useTokenContext() {
+export function useTokenContext() {
   const ctx = useContext(TokenContext);
   
   if (ctx === null) {
@@ -126,6 +122,7 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
 } | null | undefined {
 
   const { provider } = useTokenContext();
+  const { wallet } = useWallet();
   const [, setRefresh] = useState(0);
   const tokenAccounts = OWNED_TOKEN_ACCOUNTS_CACHE.filter(
     (account) => mint && account.account.mint.equals(mint)
@@ -147,11 +144,14 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
 
   // Stream updates when the balance changes.
   useEffect(() => {
+
+    if (!wallet) return;
     let listener: number;
+    
     // SOL is special cased since it's not an SPL token.
     if (tokenAccount && isSol) {
       listener = provider.connection.onAccountChange(
-        provider.wallet.publicKey,
+        wallet.publicKey,
         (info: { lamports: number }) => {
           const token = {
             amount: new BN(info.lamports),
@@ -189,9 +189,10 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
     };
     
   }, [
-      isSol,
-      provider,
-      tokenAccount
+    isSol, 
+    wallet, 
+    tokenAccount, 
+    provider.connection
   ]);
 
   if (mint === undefined) {

@@ -3,25 +3,13 @@ import * as assert from "assert";
 import { useAsync } from "react-async-hook";
 import { MintLayout } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
-import { Swap as SwapClient } from "@project-serum/swap";
+import { Swap, Swap as SwapClient } from "@project-serum/swap";
 import { Orderbook as OrderbookSide } from "@project-serum/serum";
 import { Bbo, MARKET_CACHE, Orderbook, ORDERBOOK_CACHE, RouteKind, wormholeSwapMarket } from "../utils/wormhole";
-import {
-  Market,
-  OpenOrders
-  
-} from "@project-serum/serum";
-
-import {
-  DEX_PROGRAM_ID,
-  NATIVE_SOL_MINT,
-  SOL_MINT,
-  WRAPPED_SOL_MINT
-  
-} from '../utils/ids';
-
-import { useTokenMap, useTokenListContext } from "./tokenList";
-import { setMintCache } from "./token";
+import { Market, OpenOrders } from "@project-serum/serum";
+import { DEX_PROGRAM_ID, NATIVE_SOL_MINT, SOL_MINT, WRAPPED_SOL_MINT } from '../utils/ids';
+import { useTokenMap, useTokenListContext, useTokenListcontainer } from "./tokenList";
+import { setMintCache, useTokenContext } from "./token";
 import { PublicKey } from "@solana/web3.js";
 
 export const BASE_TAKER_FEE_BPS = 0.0022;
@@ -37,11 +25,13 @@ type MarketContextState = {
 const MarketContext = React.createContext<MarketContextState | null>(null);
 
 export function MarketContextProvider(props: any) {
-
-  const swapClient = props.swapClient;
+  const container = useTokenListcontainer();  
+  const { provider } = useTokenContext();
+  const [swapClient, ] = useState<Swap>(new Swap(provider, container));
   const [ooAccounts, setOoAccounts] = useState<Map<string, Array<OpenOrders>>>(
     new Map<string, Array<OpenOrders>>()
   );
+
   const [shouldFetchOpenOrders, setShouldFetchOpenOrders] = useState(true);
   const [fetchingOpenOrders, setFetchingOpenOrders] = useState(false);
 
@@ -173,7 +163,7 @@ export function MarketContextProvider(props: any) {
           setFetchingOpenOrders(false);
           
         });
-      }, 3000);
+      }, 500);
     }
 
     return () => {
@@ -183,8 +173,8 @@ export function MarketContextProvider(props: any) {
   },  [
     swapClient.program.provider.connection, 
     swapClient.program.provider.opts, 
-    swapClient.program.provider.wallet.publicKey,
-    fetchingOpenOrders,
+    swapClient.program.provider.wallet?.publicKey, 
+    fetchingOpenOrders, 
     shouldFetchOpenOrders
   ]);
   
@@ -505,7 +495,7 @@ export function useRouteVerbose(
 
   const { swapClient } = useMarketContext();
   const { wormholeMap, solletMap } = useTokenListContext();
-  
+
   const asyncRoute = useAsync(async () => {
       
     const swapMarket = await wormholeSwapMarket(

@@ -6,7 +6,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
 import { useWallet } from "./wallet";
 import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
-import { PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
@@ -29,9 +29,6 @@ interface AppStateConfig {
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
   fromCoinAmount: string;
-  swapToToken: TokenInfo | undefined;
-  swapToTokenBalance: number;
-  swapToTokenAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
   contract: ContractDefinition | undefined;
@@ -58,13 +55,9 @@ interface AppStateConfig {
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
-  setSwapToToken: (token: TokenInfo | undefined) => void;
-  setSwapToTokenBalance: (balance: number) => void;
-  setSwapToTokenAmount: (data: string) => void;
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
-  refreshSwapToTokenBalance: () => void;
   resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
@@ -94,9 +87,6 @@ const contextDefaultValues: AppStateConfig = {
   selectedToken: undefined,
   tokenBalance: 0,
   fromCoinAmount: '',
-  swapToToken: undefined,
-  swapToTokenBalance: 0,
-  swapToTokenAmount: '',
   effectiveRate: 0,
   coinPrices: null,
   contract: undefined,
@@ -127,13 +117,9 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
-  setSwapToToken: () => {},
-  setSwapToTokenBalance: () => {},
-  setSwapToTokenAmount: () => {},
   setEffectiveRate: () => {},
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
-  refreshSwapToTokenBalance: () => {},
   resetContractValues: () => {},
   refreshStreamList: () => {},
   setRecipientAddress: () => {},
@@ -370,10 +356,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-  const [swapToToken, updateSwapToToken] = useState<TokenInfo>();
-  const [swapToTokenBalance, updateSwapToTokenBalance] = useState<number>(contextDefaultValues.swapToTokenBalance);
-  const [swapToTokenAmount, updateSwapToTokenAmount] = useState<string>(contextDefaultValues.swapToTokenAmount);
-  const [shouldUpdateSwapToToken, setShouldUpdateSwapToToken] = useState<boolean>(true);
   const [referral, setReferral] = useState<TokenInfo>();  
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
@@ -387,19 +369,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setEffectiveRate = (rate: number) => {
     updateEffectiveRate(rate);
-  }
-
-  const setSwapToToken = (token: TokenInfo | undefined) => {
-    updateSwapToToken(token);
-    setShouldUpdateSwapToToken(true);
-  }
-
-  const setSwapToTokenBalance = (balance: number) => {
-    updateSwapToTokenBalance(balance);
-  }
-
-  const setSwapToTokenAmount = (data: string) => {
-    updateSwapToTokenAmount(data);
   }
 
   // Effect to load coin prices
@@ -597,26 +566,27 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const refreshTokenBalance = useCallback(async () => {
 
-    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
-      if (address) {
-        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-        if (accountInfo) {
-          const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
-          return tokenAmount.uiAmount || 0;
-        }
-      }
-      return 0;
+    if (!connection || !publicKey || !tokenList || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
     }
 
-    let balance = 0;
-    if (connection && publicKey && tokenList?.length && accounts?.tokenAccounts?.length) {
-      let selectedTokenAddress: any;
-      if (selectedToken) {
-        selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
-        balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
+    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
+      if (!address) return 0;
+      const accountInfo = await connection.getAccountInfo(address.toPublicKey());
+      if (!accountInfo) return 0;
+      if (address === publicKey?.toBase58()) {
+        return accountInfo.lamports / LAMPORTS_PER_SOL;
       }
-      updateTokenBalance(balance);
+      const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
+      return tokenAmount.uiAmount || 0;
     }
+
+    if (!selectedToken) return;
+
+    let balance = 0;
+    const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, selectedToken.address.toPublicKey());
+    balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
+    updateTokenBalance(balance);
 
   }, [
     accounts,
@@ -626,61 +596,25 @@ const AppStateProvider: React.FC = ({ children }) => {
     tokenList
   ]);
 
-  const refreshSwapToTokenBalance = useCallback(async () => {
-
-    const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
-      if (address) {
-        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-        if (accountInfo) {
-          const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
-          return tokenAmount.uiAmount || 0;
-        }
-      }
-      return 0;
-    }
-
-    let balance = 0;
-    if (connection && publicKey && tokenList?.length && accounts?.tokenAccounts?.length) {
-      let swapToTokenAddress: any;
-      if (swapToToken) {
-        console.log('swapToToken => ', swapToToken);
-        swapToTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(swapToToken.address));
-        balance = await getTokenAccountBalanceByAddress(swapToTokenAddress.toBase58());
-      }
-      updateSwapToTokenBalance(balance);
-    }
-
-  }, [
-    accounts,
-    connection,
-    publicKey,
-    swapToToken,
-    tokenList
-  ]);
-
   // Effect to refresh token balance if needed
   useEffect(() => {
 
+    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
+      return;
+    }
+
     if (shouldUpdateToken) {
-      if (publicKey && accounts?.tokenAccounts?.length) {
-        setShouldUpdateToken(false);
-        refreshTokenBalance();
-      }
-    } else if (shouldUpdateSwapToToken) {
-      if (publicKey && accounts?.tokenAccounts?.length) {
-        setShouldUpdateSwapToToken(false);
-        refreshSwapToTokenBalance();
-      }
+      setShouldUpdateToken(false);
+      refreshTokenBalance();
     }
 
     return () => {};
+
   }, [
     accounts,
     publicKey,
     shouldUpdateToken,
-    shouldUpdateSwapToToken,
-    refreshTokenBalance,
-    refreshSwapToTokenBalance
+    refreshTokenBalance
   ]);
 
   return (
@@ -693,9 +627,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedToken,
         tokenBalance,
         fromCoinAmount,
-        swapToToken,
-        swapToTokenBalance,
-        swapToTokenAmount,
         effectiveRate,
         coinPrices,
         contract,
@@ -722,13 +653,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedToken,
         setSelectedTokenBalance,
         setFromCoinAmount,
-        setSwapToToken,
-        setSwapToTokenBalance,
-        setSwapToTokenAmount,
         setEffectiveRate,
         setCoinPrices,
         refreshTokenBalance,
-        refreshSwapToTokenBalance,
         resetContractValues,
         refreshStreamList,
         setContract,

@@ -1,21 +1,14 @@
-import { useLocalStorageState } from "./../utils/utils";
-import {
-  Account,
-  clusterApiUrl,
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { notify } from "./../utils/notifications";
 import { ExplorerLink } from "../components/ExplorerLink";
 import { setProgramIds } from "../utils/ids";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
-import { ENV as ChainID, TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
+import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { useLocalStorageState } from "./../utils/utils";
+import { Account, clusterApiUrl, Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 
 export type ENV =
   | "mainnet-beta"
@@ -108,15 +101,16 @@ export function ConnectionProvider({ children = undefined as any }) {
   const connection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
+
   const sendConnection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
 
+  const [tokens, setTokens] = useState<TokenInfo[]>([]);
+  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
   const chain = ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
   const env = chain.name;
 
-  const [tokens, setTokens] = useState<TokenInfo[]>([]);
-  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
   useEffect(() => {
     cache.clear();
     // fetch token files
@@ -135,19 +129,22 @@ export function ConnectionProvider({ children = undefined as any }) {
         return map;
       }, new Map<string, TokenInfo>());
 
-      const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'single');
+      const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'recent');
       accounts.keys.forEach((key, index) => {
         const account = accounts.array[index];
         if(!account) {
           return;
         }
-
         cache.add(new PublicKey(key), account, MintParser);
       })
 
       setTokenMap(knownMints);
       setTokens(list);
+
     })();
+
+    return () => { }
+
   }, [connection, chain]);
 
   setProgramIds(env);
