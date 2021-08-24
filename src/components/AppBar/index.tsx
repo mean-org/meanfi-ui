@@ -75,7 +75,7 @@ export const AppBar = (props: { menuType: string }) => {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={[location.pathname]} mode={props.menuType === 'desktop' ? 'horizontal' : 'vertical'} className="w-100" >
+    <Menu selectedKeys={[location.pathname]} mode={props.menuType === 'desktop' ? 'horizontal' : 'vertical'} >
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
@@ -106,8 +106,8 @@ export const AppBar = (props: { menuType: string }) => {
             </a>
           </Menu.Item>
         )}
-        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=700,height=900')}>
-          Deposit From FTX US
+        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600')}>
+          Deposit From FTX
         </Menu.Item>
       </SubMenu>
     </Menu>
@@ -185,14 +185,16 @@ export const AppBar = (props: { menuType: string }) => {
                   </a>
                 </li>
               )}
-              <li key="ftxpay" className="mobile-menu-item">
-                <a href={getFtxPayLink()} onClick={(e) => {
-                    e.preventDefault();
-                    window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
-                  }} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">Deposit From FTX US</span>
-                </a>
-              </li>
+              {connected && (
+                <li key="ftxpay" className="mobile-menu-item">
+                  <a href={getFtxPayLink()} onClick={(e) => {
+                      e.preventDefault();
+                      window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
+                    }} target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">Deposit From FTX</span>
+                  </a>
+                </li>
+              )}
             </ul>
           </li>
         </ul>
