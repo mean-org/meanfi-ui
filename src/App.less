@@ -345,10 +345,7 @@ footer.ant-layout-footer {
 .app-logo {
   height: 100%;
   width: auto;
-  max-height: 42px;
-  @media (max-width: 399.98px) {
-    max-height: 32px;
-  }
+  max-height: 34px;
 }
 
 // Buttons
@@ -761,11 +758,19 @@ footer.ant-layout-footer {
             }
           }
           a {
-            display: block;
+            display: inline-flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
             padding: 1em 0;
             color: var(--color-secondary-alpha-60);
             text-decoration: none;
             font-size: 1.5em;
+            > .mean-svg-icons.link {
+              width: 1.1rem;
+              height: 1.1rem;
+              margin-top: 1px;
+            }
           }
         }
       }
@@ -785,6 +790,15 @@ footer.ant-layout-footer {
     line-height: inherit;
     font-size: 16px;
     margin: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    @media (max-width: 1199.98px) {
+      justify-content: flex-start;
+    }
+    @media (min-width: 1200px) {
+      justify-content: center;
+    }
     > .ant-menu-item,
     > .ant-menu-submenu {
       padding: 0 8px;
