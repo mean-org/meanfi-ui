@@ -23,6 +23,12 @@
 		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
+		"categories": {
+			"cat1": "",
+			"cat2": "",
+			"cat3": "",
+			"cat4": ""
+		},
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -31,6 +37,7 @@
 			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
+		"lead": "",
 		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
@@ -71,6 +78,7 @@
 		"current-wsol-balance": "Solde wSOL actuel",
 		"fund-cta": "Obtenez SOL",
 		"funding-amount": "Votre compte aura le solde de",
+		"not-connected": "",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Frais pour faire Wrap",
@@ -137,7 +145,7 @@
 		"stream-detail": {
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
-			"close-money-stream-menu-item": "Fermer le flux d'argent",
+			"close-money-stream-menu-item": "Fermer le transfert d'argent",
 			"heading": "Détails du transfert",
 			"label-amount": "Solde",
 			"label-funds-available-to-withdraw": "Fonds disponibles pour un retrait immédiat",
@@ -158,16 +166,16 @@
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
 		"stream-list": {
-			"no-streams": "Aucun flux disponible",
-			"subtitle-paused-inbound": "Ce flux est suspendu en raison du manque de fonds",
-			"subtitle-paused-outbound": "Ce flux est suspendu en raison du manque de fonds",
-			"subtitle-pending-inbound": "Ce contrat est en attente de votre approbation",
+			"no-streams": "Aucun transfert disponible",
+			"subtitle-paused-inbound": "Ce transfert est en attente faute de fonds.",
+			"subtitle-paused-outbound": "Ce transfert est en attente faute de fonds.",
+			"subtitle-pending-inbound": "Ce contrat est en attente d'approbation",
 			"subtitle-pending-outbound": "Ce contrat est en attente d'approbation du bénéficiaire",
 			"subtitle-running-inbound": "Reçoit de l'argent depuis",
 			"subtitle-running-outbound": "Envoi d'argent depuis",
 			"subtitle-scheduled-inbound": "Prêt à recevoir de l'argent le",
-			"subtitle-scheduled-outbound": "Prêt à démarrer le",
-			"title-paused-from": "Flux en pause de",
+			"subtitle-scheduled-outbound": "Prêt à démarrer dans",
+			"title-paused-from": "Transfert interrompu",
 			"title-paused-to": "Flux interrompu vers",
 			"title-pending-from": "En attente d'exécution de",
 			"title-pending-to": "En attente d'exécution à",
@@ -176,13 +184,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "",
-		"input-label-source": "",
-		"token-select-destination": "",
-		"token-select-source": ""
+		"input-label-destination": "Swapper (Estimation)",
+		"input-label-source": "Échange de",
+		"insufficient-liquidity": "Vous n'avez pas assez de liquidités pour cette opération",
+		"token-select-destination": "Sélectionnez le token",
+		"token-select-source": "Sélectionnez le token"
 	},
 	"token-selector": {
-		"modal-title": "Sélectionnez un token"
+		"modal-title": "Sélectionnez un token",
+		"search-input-placeholder": "Token de recherche pour le nom, le symbole ou l'adresse"
 	},
 	"transactions": {
 		"memo": {
@@ -217,7 +227,7 @@
 		},
 		"send-date": {
 			"label": "Envoyer le",
-			"placeholder": "Veuillez choisir une date"
+			"placeholder": "Choisissez une date"
 		},
 		"status": {
 			"cta-close": "Fermer",
@@ -242,11 +252,14 @@
 			"tx-rejected": "Transaction rejetée",
 			"tx-send": "Envoi de l'opération",
 			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-send-failure-smallamount": "",
 			"tx-send-operation": "Envoi",
 			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
 			"tx-start": "La collecte de données",
 			"tx-start-failure": "",
+			"tx-swap-operation": "",
+			"tx-swap-operation-success": "",
 			"tx-wait": "Fonctionne, veuillez patienter",
 			"tx-withdraw-operation": "Se désister",
 			"tx-withdraw-operation-success": "Fonds retirés avec succès",
@@ -254,10 +267,10 @@
 			"tx-wrap-operation-success": "Opération de bouclage terminée avec succès"
 		},
 		"timeshift-requirement": {
-			"clock-in-out": "Pointage d'entrée / Pointage de sortie",
-			"label": "Exigence de feuille de temps",
-			"not-required": "Non requis (flux 24/7)",
-			"submit-timesheets": "Soumettre des feuilles de temps"
+			"clock-in-out": "Heure d'arrivée / départ",
+			"label": "Modèle de emploi du temps",
+			"not-required": "Non requis (transferts 24/7)",
+			"submit-timesheets": "Envoyer un emploi du temps"
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Vous devez ajouter des fonds pour commencer une paie",
@@ -266,14 +279,14 @@
 			"min-recommended-amount": "Montant minimum recommandé",
 			"recipient-receives": "Le destinataire reçoit",
 			"transaction-fee": "Frais de transaction",
-			"you-receive": ""
+			"you-receive": "Vous recevez"
 		},
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
 			"amount-low": "Pas assez de solde de compte",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
-			"amount-withdraw-high": "",
+			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"invalid-amount": "Montant invalide",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",
@@ -312,8 +325,9 @@
 				"payroll": "Paie",
 				"submenu-title": "Services Commerciaux"
 			},
-			"swap": "Échanger",
+			"swap": "Swapper",
 			"tools": {
+				"charts": "Graphiques",
 				"faucet": "Faucet",
 				"submenu-title": "Outils",
 				"wrapper": "Wrapper"
