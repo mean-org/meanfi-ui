@@ -1802,6 +1802,24 @@ section.content {
   }
 }
 
+.deposit-selector {
+  .deposit-option {
+    &.ant-btn.ant-btn-round {
+      height: var(--custom-control-height);
+      border-radius: var(--custom-border-radius);
+      border-style: solid;
+      border-width: 2px;
+      border-color: var(--color-primary-highlight);
+      color: var(--color-primary-highlight);
+      &:disabled {
+        border-color: var(--color-secondary-alpha-20);
+        color: var(--color-secondary-alpha-50);
+        background-color: var(--color-secondary-alpha-05);
+      }
+    }
+  }
+}
+
 // Streams
 .streams-layout {
   display: flex;

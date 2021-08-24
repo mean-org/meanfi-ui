@@ -23,6 +23,12 @@
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {
+		"categories": {
+			"cat1": "",
+			"cat2": "",
+			"cat3": "",
+			"cat4": ""
+		},
 		"donation-fund": {
 			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
 			"name": "Donation Fund"
@@ -31,6 +37,7 @@
 			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
 			"name": "Fundraising"
 		},
+		"lead": "",
 		"modal-title": "Select type of transfer",
 		"otp": {
 			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
@@ -66,11 +73,20 @@
 			"name": "Subscription"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "Connect your wallet",
+		"ftx-cta-label-enabled": "Deposit from FTX",
+		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
+		"modal-title": "Deposit options",
+		"move-from-ethereum-cta-label": "Move assets from Ethereum",
+		"move-from-polygon-cta-label": "Move assets from Polygon"
+	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
+		"not-connected": "",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Wrap transaction fee",
@@ -178,9 +194,9 @@
 	"swap": {
 		"input-label-destination": "Swap to (Estimate)",
 		"input-label-source": "Swap from",
+		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
-		"token-select-source": "Select token",
-		"insufficient-liquidity": "Insufficient liquidity for this trade"
+		"token-select-source": "Select token"
 	},
 	"token-selector": {
 		"modal-title": "Select a token",
@@ -250,13 +266,13 @@
 			"tx-sign": "Waiting for confirmation",
 			"tx-start": "Collecting data",
 			"tx-start-failure": "Your account balance {{accountBalance}} is lower than the fee amount {{feeAmount}} required to pay for network fees",
+			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Swap operation completed successfully",
 			"tx-wait": "Working, please wait",
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
 			"tx-wrap-operation": "Wrapping",
-			"tx-wrap-operation-success": "Wrap operation completed successfully",
-			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
-			"tx-swap-operation-success": "Swap operation completed successfully"
+			"tx-wrap-operation-success": "Wrap operation completed successfully"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
@@ -295,7 +311,8 @@
 	"ui-language": {
 		"en": "English",
 		"es": "Spanish",
-		"fr": "French"
+		"fr": "French",
+		"pt": "Portuguese"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -312,18 +329,16 @@
 			"theme-light": "Light Mode"
 		},
 		"main-menu": {
-			"pro-services": {
+			"charts": "Charts",
+			"deposits": "Deposits",
+			"services": {
 				"custody": "Custody",
+				"faucet": "Faucet",
 				"payroll": "Payroll",
-				"submenu-title": "Services"
+				"submenu-title": "Services",
+				"wallet-guide": "Wallet Guide"
 			},
 			"swap": "Swap",
-			"tools": {
-				"faucet": "Faucet",
-				"submenu-title": "Tools",
-				"wrapper": "Wrapper",
-				"charts": "Charts"
-			},
 			"transfers": "Transfers"
 		}
 	},

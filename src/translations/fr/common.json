@@ -23,6 +23,12 @@
 		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
+		"categories": {
+			"cat1": "",
+			"cat2": "",
+			"cat3": "",
+			"cat4": ""
+		},
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -31,6 +37,7 @@
 			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
+		"lead": "",
 		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
@@ -66,11 +73,20 @@
 			"name": "Abonnement"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "",
+		"ftx-cta-label-enabled": "",
+		"heading": "",
+		"modal-title": "Options de dépôt",
+		"move-from-ethereum-cta-label": "",
+		"move-from-polygon-cta-label": ""
+	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
 		"current-wsol-balance": "Solde wSOL actuel",
 		"fund-cta": "Obtenez SOL",
 		"funding-amount": "Votre compte aura le solde de",
+		"not-connected": "",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Frais pour faire Wrap",
@@ -178,11 +194,13 @@
 	"swap": {
 		"input-label-destination": "",
 		"input-label-source": "",
+		"insufficient-liquidity": "",
 		"token-select-destination": "",
 		"token-select-source": ""
 	},
 	"token-selector": {
-		"modal-title": "Sélectionnez un token"
+		"modal-title": "Sélectionnez un token",
+		"search-input-placeholder": ""
 	},
 	"transactions": {
 		"memo": {
@@ -242,11 +260,14 @@
 			"tx-rejected": "Transaction rejetée",
 			"tx-send": "Envoi de l'opération",
 			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-send-failure-smallamount": "",
 			"tx-send-operation": "Envoi",
 			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
 			"tx-start": "La collecte de données",
 			"tx-start-failure": "",
+			"tx-swap-operation": "",
+			"tx-swap-operation-success": "",
 			"tx-wait": "Fonctionne, veuillez patienter",
 			"tx-withdraw-operation": "Se désister",
 			"tx-withdraw-operation-success": "Fonds retirés avec succès",
@@ -290,7 +311,8 @@
 	"ui-language": {
 		"en": "Anglais",
 		"es": "Espanol",
-		"fr": "Français"
+		"fr": "Français",
+		"pt": "Portugais"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -307,17 +329,16 @@
 			"theme-light": "Mode lumière"
 		},
 		"main-menu": {
-			"pro-services": {
-				"custody": "Custody",
+			"charts": "Graphiques",
+			"deposits": "Dépôts",
+			"services": {
+				"custody": "Garde",
+				"faucet": "Faucet",
 				"payroll": "Paie",
-				"submenu-title": "Services Commerciaux"
+				"submenu-title": "Services",
+				"wallet-guide": "Guide du Portefeuille"
 			},
 			"swap": "Échanger",
-			"tools": {
-				"faucet": "Faucet",
-				"submenu-title": "Outils",
-				"wrapper": "Wrapper"
-			},
 			"transfers": "Transferts"
 		}
 	},

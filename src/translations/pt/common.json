@@ -73,6 +73,14 @@
 			"name": "Inscrição"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "",
+		"ftx-cta-label-enabled": "",
+		"heading": "",
+		"modal-title": "Opções de depósito",
+		"move-from-ethereum-cta-label": "",
+		"move-from-polygon-cta-label": ""
+	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",
 		"current-wsol-balance": "Saldo wSOL atual",
@@ -91,6 +99,7 @@
 		"loading": "Carregando",
 		"minute": "minuto",
 		"month": "mês",
+		"not-connected": "",
 		"not-implemented": "Não implementado",
 		"today": "hoje",
 		"week": "semana",
@@ -182,8 +191,16 @@
 			"title-sending-to": ""
 		}
 	},
+	"swap": {
+		"input-label-destination": "",
+		"input-label-source": "",
+		"insufficient-liquidity": "",
+		"token-select-destination": "",
+		"token-select-source": ""
+	},
 	"token-selector": {
-		"modal-title": "Selecione um token"
+		"modal-title": "Selecione um token",
+		"search-input-placeholder": ""
 	},
 	"transactions": {
 		"memo": {
@@ -243,11 +260,14 @@
 			"tx-rejected": "",
 			"tx-send": "",
 			"tx-send-failure": "",
+			"tx-send-failure-smallamount": "",
 			"tx-send-operation": "",
 			"tx-send-operation-success": "",
 			"tx-sign": "",
 			"tx-start": "",
 			"tx-start-failure": "",
+			"tx-swap-operation": "",
+			"tx-swap-operation-success": "",
 			"tx-wait": "",
 			"tx-withdraw-operation": "",
 			"tx-withdraw-operation-success": "",
@@ -291,7 +311,8 @@
 	"ui-language": {
 		"en": "Inglês",
 		"es": "Espanhol",
-		"fr": "Francês"
+		"fr": "Francês",
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -308,17 +329,16 @@
 			"theme-light": ""
 		},
 		"main-menu": {
-			"pro-services": {
-				"custody": "Custody",
-				"payroll": "Folha de pagamento",
-				"submenu-title": "Serviços"
+			"charts": "Gráfico",
+			"deposits": "Deposits",
+			"services": {
+				"custody": "Custódia",
+				"faucet": "Faucet",
+				"payroll": "Folha de pagamentos",
+				"submenu-title": "Serviços",
+				"wallet-guide": "Guia da carteira"
 			},
 			"swap": "Troca",
-			"tools": {
-				"faucet": "Faucet",
-				"submenu-title": "Ferramentas",
-				"wrapper": "Wrapper"
-			},
 			"transfers": "Transferências"
 		}
 	},

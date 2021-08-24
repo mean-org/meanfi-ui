@@ -47,7 +47,7 @@ export const AppContextMenu = () => {
     return fullCode;
   };
 
-  // Close stream modal
+  // Language switcher modal
   const [isLanguageModalVisible, setIsLanguageModalVisibility] = useState(false);
   const showLanguageModal = useCallback(() => setIsLanguageModalVisibility(true), []);
   const hideLanguageModal = useCallback(() => setIsLanguageModalVisibility(false), []);

@@ -8,10 +8,12 @@ import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
 import { environment } from '../../environments/environment';
-import { MEANFI_METRICS_URL } from '../../constants';
+import { MEANFI_METRICS_URL, MEAN_FINANCE_ALLBRIDGE_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
+import { IconExternalLink } from '../../Icons';
+import { DepositOptions } from '../DepositOptions';
 
 const { SubMenu } = Menu;
 
@@ -22,6 +24,11 @@ export const AppBar = (props: { menuType: string }) => {
   const { t } = useTranslation("common");
   const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Deposits modal
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+  const showDepositOptionsModal = useCallback(() => setIsDepositOptionsModalVisibility(true), []);
+  const hideDepositOptionsModal = useCallback(() => setIsDepositOptionsModalVisibility(false), []);
 
   const onGoToTransfersClick = () => {
     refreshStreamList(true);
@@ -75,41 +82,59 @@ export const AppBar = (props: { menuType: string }) => {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={[location.pathname]} mode={props.menuType === 'desktop' ? 'horizontal' : 'vertical'} >
+    <Menu selectedKeys={[location.pathname]} mode="horizontal">
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
-      <SubMenu key="services" title={t('ui-menus.main-menu.pro-services.submenu-title')}>
+      <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
         <Menu.Item key="/payroll">
-          <Link to="/payroll">{t('ui-menus.main-menu.pro-services.payroll')}</Link>
+          <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
         </Menu.Item>
         <Menu.Item key="/custody">
-          <Link to="/custody">{t('ui-menus.main-menu.pro-services.custody')}</Link>
+          <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
-      </SubMenu>
-      <SubMenu key="tools" title={t('ui-menus.main-menu.tools.submenu-title')}>
+        <Menu.Item key="wallet-guide">
+          <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
+          </a>
+        </Menu.Item>
         {connection.env !== 'mainnet-beta' && (
           <Menu.Item key="/faucet">
-            <Link to="/faucet">{t('ui-menus.main-menu.tools.faucet')}</Link>
+            <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        <Menu.Item key="/wrap">
-          <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
-        </Menu.Item>
-        {environment !== 'production' && (
-          <Menu.Item key="charts">
-            <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-              <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
-            </a>
-          </Menu.Item>
-        )}
-        <Menu.Item key="ftxpay" onClick={() => window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600')}>
-          Deposit From FTX
-        </Menu.Item>
       </SubMenu>
+      <Menu.Item key="deposits" onClick={showDepositOptionsModal}>
+        <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+      </Menu.Item>
+      {connected && (
+        <Menu.Item key="ftxpay">
+          <a href={getFtxPayLink()} onClick={(e) => {
+              e.preventDefault();
+              window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
+            }} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">Deposit From FTX</span>
+            &nbsp;<IconExternalLink className="mean-svg-icons link" />
+          </a>
+        </Menu.Item>
+      )}
+      <Menu.Item key="bridge">
+        <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">Bridge</span>
+          &nbsp;<IconExternalLink className="mean-svg-icons link" />
+        </a>
+      </Menu.Item>
+      {environment !== 'production' && (
+        <Menu.Item key="charts">
+          <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
+            &nbsp;<IconExternalLink className="mean-svg-icons link" />
+          </a>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -138,67 +163,76 @@ export const AppBar = (props: { menuType: string }) => {
             <AppContextMenu />
           </div>
         </div>
+        <DepositOptions isVisible={isDepositOptionsModalVisible && props.menuType === 'desktop'} key="deposit-modal1" handleClose={hideDepositOptionsModal} />
       </>
     );
-  }
-
-  return (
-    <div className="mobile-menu">
-      <input type="checkbox" id="overlay-input" />
-      <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
-      <div id="overlay">
-        <ul onClick={dismissMenu}>
-          <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-            <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
-          </li>
-          <li key="/transfers"
-              className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
-              onClick={() => onGoToTransfersClick()}>
-            <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
-          </li>
-          <li key="services">
-            <div className="mobile-submenu-title">{t('ui-menus.main-menu.pro-services.submenu-title')}</div>
-            <ul className="mobile-submenu">
-              <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/payroll">{t('ui-menus.main-menu.pro-services.payroll')}</Link>
-              </li>
-              <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/custody">{t('ui-menus.main-menu.pro-services.custody')}</Link>
-              </li>
-            </ul>
-          </li>
-          <li key="tools">
-            <div className="mobile-submenu-title">{t('ui-menus.main-menu.tools.submenu-title')}</div>
-            <ul className="mobile-submenu">
-              {connection.env !== 'mainnet-beta' && (
-                <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                  <Link to="/faucet">{t('ui-menus.main-menu.tools.faucet')}</Link>
+  } else {
+    return (
+      <div className="mobile-menu">
+        <input type="checkbox" id="overlay-input" />
+        <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
+        <div id="overlay">
+          <ul onClick={dismissMenu}>
+            <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+              <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+            </li>
+            <li key="/transfers"
+                className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                onClick={() => onGoToTransfersClick()}>
+              <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+            </li>
+            <li key="services">
+              <div className="mobile-submenu-title">{t('ui-menus.main-menu.services.submenu-title')}</div>
+              <ul className="mobile-submenu">
+                <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                  <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
                 </li>
-              )}
-              <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/wrap">{t('ui-menus.main-menu.tools.wrapper')}</Link>
-              </li>
-              {environment !== 'production' && (
-                <li key="charts" className="mobile-menu-item">
-                  <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-                    <span className="menu-item-text">{t('ui-menus.main-menu.tools.charts')}</span>
+                <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                  <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
+                </li>
+                {connection.env !== 'mainnet-beta' && (
+                  <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                    <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+                  </li>
+                )}
+                <li key="wallet-guide" className="mobile-menu-item">
+                  <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                    <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
+                    &nbsp;<IconExternalLink className="mean-svg-icons link" />
                   </a>
                 </li>
-              )}
-              {connected && (
-                <li key="ftxpay" className="mobile-menu-item">
-                  <a href={getFtxPayLink()} onClick={(e) => {
-                      e.preventDefault();
-                      window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
-                    }} target="_blank" rel="noopener noreferrer">
-                    <span className="menu-item-text">Deposit From FTX</span>
-                  </a>
-                </li>
-              )}
-            </ul>
-          </li>
-        </ul>
+              </ul>
+            </li>
+            {connected && (
+              <li key="ftxpay" className="mobile-menu-item">
+                <a href={getFtxPayLink()} onClick={(e) => {
+                    e.preventDefault();
+                    window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
+                  }} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">Deposit From FTX</span>
+                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
+                </a>
+              </li>
+            )}
+            <li key="bridge" className="mobile-menu-item">
+              <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
+                <span className="menu-item-text">Bridge</span>
+                &nbsp;<IconExternalLink className="mean-svg-icons link" />
+              </a>
+            </li>
+            {/* Charts */}
+            {environment !== 'production' && (
+              <li key="charts" className="mobile-menu-item">
+                <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
+                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
+                </a>
+              </li>
+            )}
+          </ul>
+        </div>
+        <DepositOptions isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'} key="deposit-modal2" handleClose={hideDepositOptionsModal} />
       </div>
-    </div>
-  );
+    );
+  }
 };
