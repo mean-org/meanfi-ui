@@ -73,6 +73,14 @@
 			"name": "Subscription"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "Connect your wallet",
+		"ftx-cta-label-enabled": "Deposit from FTX",
+		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
+		"modal-title": "Deposit options",
+		"move-from-ethereum-cta-label": "Move assets from Ethereum",
+		"move-from-polygon-cta-label": "Move assets from Polygon"
+	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
 		"current-wsol-balance": "Current Wrapped SOL balance",
@@ -288,6 +296,7 @@
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"invalid-amount": "Invalid amount",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
@@ -303,7 +312,8 @@
 	"ui-language": {
 		"en": "English",
 		"es": "Spanish",
-		"fr": "French"
+		"fr": "French",
+		"pt": "Portuguese"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -320,18 +330,16 @@
 			"theme-light": "Light Mode"
 		},
 		"main-menu": {
-			"pro-services": {
+			"charts": "Charts",
+			"deposits": "Deposits",
+			"services": {
 				"custody": "Custody",
+				"faucet": "Faucet",
 				"payroll": "Payroll",
-				"submenu-title": "Services"
+				"submenu-title": "Services",
+				"wallet-guide": "Wallet Guide"
 			},
 			"swap": "Swap",
-			"tools": {
-				"charts": "Charts",
-				"faucet": "Faucet",
-				"submenu-title": "Tools",
-				"wrapper": "Wrapper"
-			},
 			"transfers": "Transfers"
 		}
 	},

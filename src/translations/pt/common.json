@@ -73,6 +73,14 @@
 			"name": "Inscrição"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "",
+		"ftx-cta-label-enabled": "",
+		"heading": "",
+		"modal-title": "Opções de depósito",
+		"move-from-ethereum-cta-label": "",
+		"move-from-polygon-cta-label": ""
+	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",
 		"current-wsol-balance": "Saldo wSOL atual",
@@ -143,16 +151,16 @@
 			"no-activity": ""
 		},
 		"stream-detail": {
-			"add-funds-cta": "Recarregar (adicionar fundos)",
-			"amount-funded-date": "financiado em",
-			"close-money-stream-menu-item": "Fechar transferência de dinheiro",
-			"heading": "Detalhes da transferência",
-			"label-amount": "Saldo",
-			"label-funds-available-to-withdraw": "Fundos disponíveis para sacar imediatamente",
-			"label-funds-left-in-account": "Fundos restantes na conta",
-			"label-funds-runout": "estará acabado para",
-			"label-funds-runout-today": "estará acabado para",
-			"label-funds-sent": "Fundos enviados ao destinatário",
+			"add-funds-cta": "",
+			"amount-funded-date": "",
+			"close-money-stream-menu-item": "",
+			"heading": "",
+			"label-amount": "",
+			"label-funds-available-to-withdraw": "",
+			"label-funds-left-in-account": "",
+			"label-funds-runout": "",
+			"label-funds-runout-today": "",
+			"label-funds-sent": "",
 			"label-payment-rate": "",
 			"label-receiving-from": "",
 			"label-sending-to": "",
@@ -166,16 +174,16 @@
 			"withdraw-funds-cta": ""
 		},
 		"stream-list": {
-			"no-streams": "Sem transferências disponíveis",
-			"subtitle-paused-inbound": "Esta transferência está em espera devido à falta de fundos",
-			"subtitle-paused-outbound": "Esta transferência está em espera devido à falta de fundos",
-			"subtitle-pending-inbound": "Este contrato está com aprovação pendente",
-			"subtitle-pending-outbound": "Este contrato encontra-se pendente de aprovação do beneficiário",
-			"subtitle-running-inbound": "Recebendo dinheiro de",
-			"subtitle-running-outbound": "Enviando dinheiro de",
-			"subtitle-scheduled-inbound": "Configure para receber dinheiro em",
-			"subtitle-scheduled-outbound": "Pronto para começar em",
-			"title-paused-from": "Transferência pausada",
+			"no-streams": "",
+			"subtitle-paused-inbound": "",
+			"subtitle-paused-outbound": "",
+			"subtitle-pending-inbound": "",
+			"subtitle-pending-outbound": "",
+			"subtitle-running-inbound": "",
+			"subtitle-running-outbound": "",
+			"subtitle-scheduled-inbound": "",
+			"subtitle-scheduled-outbound": "",
+			"title-paused-from": "",
 			"title-paused-to": "",
 			"title-pending-from": "",
 			"title-pending-to": "",
@@ -184,15 +192,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Troca (Estimativa)",
-		"input-label-source": "Troca de",
-		"insufficient-liquidity": "Você não tem liquidez suficiente para esta operação",
-		"token-select-destination": "Selecione o token",
-		"token-select-source": "Selecione o token"
+		"input-label-destination": "",
+		"input-label-source": "",
+		"insufficient-liquidity": "",
+		"token-select-destination": "",
+		"token-select-source": ""
 	},
 	"token-selector": {
 		"modal-title": "Selecione um token",
-		"search-input-placeholder": "Token de pesquisa por nome, símbolo ou endereço"
+		"search-input-placeholder": ""
 	},
 	"transactions": {
 		"memo": {
@@ -212,8 +220,8 @@
 				"per-week": "por semana",
 				"per-year": "por ano"
 			},
-			"rate-label": "Taxa e frequência",
-			"token-label": "O destinatário recebe"
+			"rate-label": "",
+			"token-label": ""
 		},
 		"recipient": {
 			"label": "",
@@ -222,12 +230,12 @@
 			"recipient-is-own-account": ""
 		},
 		"send-amount": {
-			"label": "Mandar",
-			"label-right": "Saldo"
+			"label": "",
+			"label-right": ""
 		},
 		"send-date": {
-			"label": "Enviar",
-			"placeholder": "Escolha uma data"
+			"label": "",
+			"placeholder": ""
 		},
 		"status": {
 			"cta-close": "",
@@ -267,31 +275,32 @@
 			"tx-wrap-operation-success": ""
 		},
 		"timeshift-requirement": {
-			"clock-in-out": "Horário de check-in / check-out",
-			"label": "Modelo de planilha de horário",
-			"not-required": "Não obrigatório (transferências 24/7)",
-			"submit-timesheets": "Enviar planilha de horário"
+			"clock-in-out": "",
+			"label": "",
+			"not-required": "",
+			"submit-timesheets": ""
 		},
 		"transaction-info": {
-			"add-funds-payroll-advice": "Você deve adicionar fundos para iniciar uma folha de pagamento",
-			"add-funds-repeating-payment-advice": "Você deve adicionar fundos para iniciar o pagamento recorrente",
-			"beneficiary-receives": "O beneficiário recebe",
-			"min-recommended-amount": "Quantidade mínima recomendada",
-			"recipient-receives": "O destinatário recebe",
-			"transaction-fee": "Taxa de transação",
-			"you-receive": "Tu recebes"
+			"add-funds-payroll-advice": "",
+			"add-funds-repeating-payment-advice": "",
+			"beneficiary-receives": "",
+			"min-recommended-amount": "",
+			"recipient-receives": "",
+			"transaction-fee": "",
+			"you-receive": ""
 		},
 		"validation": {
-			"amount-high": "O valor excede o seu saldo",
-			"amount-low": "Você não tem saldo suficiente",
-			"amount-lt-fee": "O valor deve ser maior do que a taxa de transação",
-			"amount-sol-high": "O valor excede o seu saldo SOL",
-			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
-			"invalid-amount": "Quantidade inválida",
-			"no-amount": "Insira a quantidade",
-			"no-balance": "Sem crédito",
-			"no-payment-rate": "Adicionar taxa de pagamento",
-			"no-recipient": "Selecione o destinatário",
+			"amount-high": "",
+			"amount-low": "",
+			"amount-lt-fee": "",
+			"amount-sol-high": "",
+			"amount-withdraw-high": "",
+			"invalid-amount": "",
+			"minimum-swap-amount": "",
+			"no-amount": "",
+			"no-balance": "",
+			"no-payment-rate": "",
+			"no-recipient": "",
 			"no-valid-date": "",
 			"not-connected": "",
 			"payment-rate-high": "",
@@ -303,14 +312,15 @@
 	"ui-language": {
 		"en": "Inglês",
 		"es": "Espanhol",
-		"fr": "Francês"
+		"fr": "Francês",
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {
 			"about": "Sobre",
 			"code": "Código",
 			"developers": "Programadores",
-			"disconnect": "Conectar-se a carteira",
+			"disconnect": "Desconectar carteira",
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Como usar",
@@ -320,18 +330,16 @@
 			"theme-light": ""
 		},
 		"main-menu": {
-			"pro-services": {
-				"custody": "Custody",
-				"payroll": "Folha de pagamento",
-				"submenu-title": "Serviços"
+			"charts": "Gráfico",
+			"deposits": "Deposits",
+			"services": {
+				"custody": "Custódia",
+				"faucet": "Faucet",
+				"payroll": "Folha de pagamentos",
+				"submenu-title": "Serviços",
+				"wallet-guide": "Guia da carteira"
 			},
 			"swap": "Troca",
-			"tools": {
-				"charts": "Gráficos",
-				"faucet": "Faucet",
-				"submenu-title": "Ferramentas",
-				"wrapper": "Wrapper"
-			},
 			"transfers": "Transferências"
 		}
 	},

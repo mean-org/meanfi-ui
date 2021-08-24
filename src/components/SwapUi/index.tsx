@@ -14,15 +14,15 @@ import { calculateActionFees, findATokenAddress } from "money-streaming/lib/util
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
+import { useBbo, useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, USDC_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
-import { swap } from "../../utils/swap";
+import { swap, swapRequest } from "../../utils/swap";
 import "./style.less";
 import { useMint } from "../../contexts/token";
 
@@ -81,7 +81,7 @@ export const SwapUi = () => {
       );
 
   // Added by YAF (Token balance)
-  const [smallAmount, setSmallAmount] = useState(false);
+  const [smallAmount, setSmallAmount] = useState(0);
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
   const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
@@ -301,8 +301,11 @@ export const SwapUi = () => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount("");
+      setSmallAmount(0);
     } else if (isValidNumber(newValue)) {
       setFromAmount(newValue, tokenMap.get(toMint.toBase58())?.decimals || 9);
+      const minSwapSize = minimumSwapSize(parseFloat(newValue));
+      setSmallAmount(minSwapSize);
     }
   };
 
@@ -330,13 +333,30 @@ export const SwapUi = () => {
       fromMint &&
       fromAmount &&
       parseFloat(fromAmount) > 0 &&
+      parseFloat(fromAmount) >= smallAmount &&
       parseFloat(fromAmount) > getFeeAmount(fromAmount) &&
       parseFloat(fromAmount) - getFeeAmount(fromAmount) <= fromMintTokenBalance
 
     ) ? true : false;
   };
 
+  const getMinimumSwapAmountLabel = () => {
+    const from = tokenMap.get(fromMint.toBase58());
+    const toSymbol = tokenMap.get(toMint.toBase58())?.symbol;
+
+    return `${t('transactions.validation.minimum-swap-amount', {
+      mintAmount: `${smallAmount} ${from?.symbol}`,
+      toMint: `${toSymbol}`
+    })}`;
+
+  }
+
   const getTransactionStartButtonLabel = (): string => {
+
+    if (parseFloat(fromAmount) < smallAmount) {
+      return  getMinimumSwapAmountLabel();
+    }
+
     return !connected
       ? t("transactions.validation.not-connected")
       : !fromMint || !fromMintTokenBalance
@@ -345,9 +365,7 @@ export const SwapUi = () => {
       ? t("transactions.validation.no-amount")
       : parseFloat(fromAmount) > fromMintTokenBalance
       ? t("transactions.validation.amount-high")
-      // : tokenBalance < getFeeAmount(fromCoinAmount)
-      // ? t("transactions.validation.amount-low")
-      : t("transactions.validation.valid-approve");
+      : t("transactions.validation.valid-approve")
   };
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
@@ -366,6 +384,45 @@ export const SwapUi = () => {
     refreshFromTokenBalance(oldTo);
     refreshToTokenBalance(oldFrom);
   }
+
+  const minimumSwapSize = (amount: number) => {
+    
+    if (!fromMarket) {
+      return 0;
+    }
+
+    console.log('frommarket => ', fromMarket);
+    console.log('toMarket => ', toMarket);
+    console.log('fair => ', fair);
+    console.log('amount => ', amount);
+    console.log('fromMarket.minOrderSize => ', fromMarket.minOrderSize);
+
+    let result = 0;
+    const fairAmount = fair || 1;
+    const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
+    const isUSDX = 
+      fromMint.equals(USDC_MINT) || 
+      fromMint.equals(USDT_MINT) || 
+      toMint.equals(USDC_MINT) || 
+      toMint.equals(USDT_MINT);
+
+    if (isSol || isUSDX) {      
+      const market = toMarket ? toMarket : fromMarket;
+      result = amount < (market.minOrderSize * fairAmount) ? (market.minOrderSize * fairAmount) : 0;
+    } else {
+      if (toMarket) {
+        result = amount < (toMarket.minOrderSize * fairAmount) ? (toMarket.minOrderSize * fairAmount) : 0;
+      } else {
+        result = amount < (fromMarket.minOrderSize * fairAmount) ? (fromMarket.minOrderSize * fairAmount) : 0;
+      }
+    }
+
+    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+    const formattedResult = formatAmount(result, fromDecimals);
+    result = parseFloat(formattedResult);
+
+    return result;
+  };
 
   const getSwap = async () => {
 
@@ -585,7 +642,6 @@ export const SwapUi = () => {
     let signature: string;
     setTransactionCancelled(false);
     setIsBusy(true);
-    setSmallAmount(false);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -675,8 +731,6 @@ export const SwapUi = () => {
             return true;
           })
           .catch(error => {
-            setSmallAmount(error && error.toString().indexOf('0x12e') !== -1);
-            console.log(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -763,7 +817,9 @@ export const SwapUi = () => {
   const infoMessage = (caption: string) => {
     return (
       <Row>
-        <Col span={24} className="text-center fg-secondary-70">{caption}</Col>
+        <Col span={24} className="text-center fg-secondary-70">
+          {caption}
+        </Col>
       </Row>
     );
   };
@@ -832,11 +888,12 @@ export const SwapUi = () => {
         </Modal>
 
         {/* Info */}
-        {fromMarket ? (
+        {
+          fair ? (
           <div className="p-2 mb-2">
-            {
-              fair &&
-              infoRow(
+          {
+            fair &&
+            infoRow(
                 (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
                 (
                   `${formatAmount(
@@ -873,8 +930,9 @@ export const SwapUi = () => {
           <div className="p-2 mb-2">
             {infoMessage(t('swap.insufficient-liquidity'))}
           </div>
-        )}
-
+        )
+          
+        }
         {/* Action button */}
         <Button
           className="main-cta"

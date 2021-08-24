@@ -73,6 +73,14 @@
 			"name": "Suscripción"
 		}
 	},
+	"deposits": {
+		"ftx-cta-label-disabled": "",
+		"ftx-cta-label-enabled": "",
+		"heading": "",
+		"modal-title": "Opciones de depósito",
+		"move-from-ethereum-cta-label": "",
+		"move-from-polygon-cta-label": ""
+	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
 		"current-wsol-balance": "Saldo de wSOL actual ",
@@ -145,7 +153,7 @@
 		"stream-detail": {
 			"add-funds-cta": "Recargar (agregar fondos)",
 			"amount-funded-date": "financiado en",
-			"close-money-stream-menu-item": "Cerrar transferencia de dinero",
+			"close-money-stream-menu-item": "Cerrar flujo de dinero",
 			"heading": "Detalles de la transferencia",
 			"label-amount": "Saldo",
 			"label-funds-available-to-withdraw": "Fondos disponibles para retirar inmediatamente",
@@ -166,16 +174,16 @@
 			"withdraw-funds-cta": "Retirar Fondos"
 		},
 		"stream-list": {
-			"no-streams": "No hay transferencias disponibles",
-			"subtitle-paused-inbound": "Esta transferencia está en pausa debido a la falta de fondos",
-			"subtitle-paused-outbound": "Esta transferencia está en pausa debido a la falta de fondos",
-			"subtitle-pending-inbound": "Este contrato está pendiente ser aprobado",
+			"no-streams": "No hay transmisiones disponibles",
+			"subtitle-paused-inbound": "Esta transmisión está en pausa debido a la falta de fondos.",
+			"subtitle-paused-outbound": "Esta transmisión está en pausa debido a la falta de fondos.",
+			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
 			"subtitle-pending-outbound": "Este contrato está pendiente de la aprobación del beneficiario",
 			"subtitle-running-inbound": "Recibiendo dinero desde",
 			"subtitle-running-outbound": "Enviando dinero desde",
 			"subtitle-scheduled-inbound": "Configurado para recibir dinero en",
-			"subtitle-scheduled-outbound": "Listo para comenzar en",
-			"title-paused-from": "Transferencia pausada",
+			"subtitle-scheduled-outbound": "Establecido para comenzar en",
+			"title-paused-from": "Transmisión en pausa de",
 			"title-paused-to": "Transmisión en pausa a",
 			"title-pending-from": "Pendiente de ejecución de",
 			"title-pending-to": "Pendiente de ejecución para",
@@ -184,15 +192,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Intercamniar (Estimado)",
-		"input-label-source": "Intercambiar desde",
-		"insufficient-liquidity": "No tiene liquidez suficiente para esta operacion",
-		"token-select-destination": "Seleccionar token",
-		"token-select-source": "Seleccionar token"
+		"input-label-destination": "",
+		"input-label-source": "",
+		"insufficient-liquidity": "",
+		"token-select-destination": "",
+		"token-select-source": ""
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
-		"search-input-placeholder": "Buscar token for nombre, símbolo o dirección"
+		"search-input-placeholder": ""
 	},
 	"transactions": {
 		"memo": {
@@ -223,11 +231,11 @@
 		},
 		"send-amount": {
 			"label": "Enviar",
-			"label-right": "Saldo"
+			"label-right": "Balance"
 		},
 		"send-date": {
 			"label": "Enviar en",
-			"placeholder": "Elija una fecha"
+			"placeholder": "Elige una fecha"
 		},
 		"status": {
 			"cta-close": "Cerrar",
@@ -268,9 +276,9 @@
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Hora de entrada / salida",
-			"label": "Plantilla horaria requerida",
-			"not-required": "No requerido (tranferencias 24/7)",
-			"submit-timesheets": "Enviar plantilla horaria"
+			"label": "Requisito del parte de horas",
+			"not-required": "Innecesario (transmisiones 24/7)",
+			"submit-timesheets": "Enviar hojas de horas"
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
@@ -279,15 +287,16 @@
 			"min-recommended-amount": "Cantidad mínima recomendada",
 			"recipient-receives": "El destinatario recibe",
 			"transaction-fee": "Tarifa de transacción",
-			"you-receive": "Usted recibe"
+			"you-receive": ""
 		},
 		"validation": {
 			"amount-high": "La cantidad excede su saldo",
-			"amount-low": "No tiene suficiente saldo",
+			"amount-low": "No hay suficiente saldo",
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
-			"amount-withdraw-high": "La cantidad es major que los fondos disponibles",
+			"amount-withdraw-high": "",
 			"invalid-amount": "Monto no válido",
+			"minimum-swap-amount": "",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
@@ -303,7 +312,8 @@
 	"ui-language": {
 		"en": "Inglés",
 		"es": "Español",
-		"fr": "Francés"
+		"fr": "Francés",
+		"pt": "Portugués"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -320,18 +330,16 @@
 			"theme-light": "Modo Claro"
 		},
 		"main-menu": {
-			"pro-services": {
-				"custody": "Custody",
-				"payroll": "Nómina de sueldos",
-				"submenu-title": "Servicios"
-			},
-			"swap": "Intercambiar",
-			"tools": {
-				"charts": "Gráficos",
+			"charts": "Gráficos",
+			"deposits": "Depósitos",
+			"services": {
+				"custody": "Custoia",
 				"faucet": "Faucet",
-				"submenu-title": "Herramientas",
-				"wrapper": "Wrapper"
+				"payroll": "Nómina de sueldos",
+				"submenu-title": "Servicios",
+				"wallet-guide": "Guía de Billeteras"
 			},
+			"swap": "Canjear",
 			"transfers": "Transferencias"
 		}
 	},
