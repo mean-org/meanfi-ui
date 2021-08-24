@@ -296,6 +296,7 @@
 			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"amount-withdraw-high": "",
 			"invalid-amount": "Monto no válido",
+			"minimum-swap-amount": "",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",

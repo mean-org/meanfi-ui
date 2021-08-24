@@ -341,14 +341,14 @@ export const SwapUi = () => {
   };
 
   const getMinimumSwapAmountLabel = () => {
-    const needMinOf = `${t("transactions.validation.minimum-of-amount")}`;
-    const toSwapFor = `${t("transactions.validation.minimum-swap-for")}`;
     const from = tokenMap.get(fromMint.toBase58());
     const toSymbol = tokenMap.get(toMint.toBase58())?.symbol;
-    console.log('smallAmount => ', smallAmount);
-    console.log('formatAmount(smallAmount) => ', formatAmount(smallAmount, from?.decimals));
 
-    return `${needMinOf} ${smallAmount} ${from?.symbol} ${toSwapFor} ${toSymbol}`;
+    return `${t('transactions.validation.minimum-swap-amount', {
+      mintAmount: `${smallAmount} ${from?.symbol}`,
+      toMint: `${toSymbol}`
+    })}`;
+
   }
 
   const getTransactionStartButtonLabel = (): string => {

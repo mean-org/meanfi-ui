@@ -296,6 +296,7 @@
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"invalid-amount": "Invalid amount",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
@@ -305,9 +306,7 @@
 			"payment-rate-high": "Payment rate exceeds your balance",
 			"valid-approve": "Approve on your wallet",
 			"valid-start-funding": "Start funding",
-			"valid-start-withdrawal": "Start withdrawal",
-			"minimum-of-amount": "Need at least",
-			"minimum-swap-for": "to swap for"
+			"valid-start-withdrawal": "Start withdrawal"
 		}
 	},
 	"ui-language": {

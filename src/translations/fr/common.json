@@ -296,6 +296,7 @@
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "",
 			"invalid-amount": "Montant invalide",
+			"minimum-swap-amount": "",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",
 			"no-payment-rate": "Ajouter un taux de paiement",

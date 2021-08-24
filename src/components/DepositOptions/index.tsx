@@ -1,6 +1,6 @@
 import { Button, Col, Modal, Row } from "antd";
 import { useTranslation } from "react-i18next";
-import { MEAN_FINANCE_ALLBRIDGE_URL, MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
 import { useWallet } from "../../contexts/wallet";
 
 export const DepositOptions = (props: {
