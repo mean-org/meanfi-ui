@@ -8,34 +8,36 @@ import {
     WalletNotConnectedError,
     WalletPublicKeyError,
     WalletSignatureError,
+    WalletDisconnectedError,
 } from '../errors';
 import { pollUntilReady } from '../poll';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { notify } from '../../utils/notifications';
 
-interface SolongWallet {
-    currentAccount?: string | null;
-    selectAccount: () => Promise<string>;
+interface MathWallet {
+    isMathWallet?: boolean;
+    getAccount: () => Promise<string>;
     signTransaction: (transaction: Transaction) => Promise<Transaction>;
+    signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
 }
 
-interface SolongWindow extends Window {
-    solong?: SolongWallet;
+interface MathWalletWindow extends Window {
+    solana?: MathWallet;
 }
 
-declare const window: SolongWindow;
+declare const window: MathWalletWindow;
 
-export interface SolongWalletAdapterConfig {
+export interface MathWalletWalletAdapterConfig {
     pollInterval?: number;
     pollCount?: number;
 }
 
-export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> implements WalletAdapter {
+export class MathWalletWalletAdapter extends EventEmitter<WalletAdapterEvents> implements WalletAdapter {
     private _connecting: boolean;
-    private _wallet: SolongWallet | null;
+    private _wallet: MathWallet | null;
     private _publicKey: PublicKey | null;
 
-    constructor(config: SolongWalletAdapterConfig = {}) {
+    constructor(config: MathWalletWalletAdapterConfig = {}) {
         super();
         this._connecting = false;
         this._wallet = null;
@@ -49,7 +51,7 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
     }
 
     get ready(): boolean {
-        return !!window.solong;
+        return !!window.solana?.isMathWallet;
     }
 
     get connecting(): boolean {
@@ -57,7 +59,7 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
     }
 
     get connected(): boolean {
-        return !!this._wallet?.currentAccount;
+        return !!this._wallet;
     }
 
     get autoApprove(): boolean {
@@ -69,20 +71,23 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = window.solong;
-            if (!wallet) {
+            const wallet = window.solana;
+            if (!wallet || !wallet.isMathWallet) {
                 notify({
-                    message: "Solong Error",
-                    description: "Please install solong wallet from Chrome Web Store",
+                    message: "MathWallet Error",
+                    description: "Please install MathWallet from Chrome Web Store",
                     type: 'error'
                 });
                 return;
             }
             // if (!wallet) throw new WalletNotFoundError();
+            // if (!wallet.isMathWallet) throw new WalletNotInstalledError();
+
+            // @TODO: handle if popup is blocked
 
             let account: string;
             try {
-                account = await wallet.selectAccount();
+                account = await wallet.getAccount();
             } catch (error) {
                 throw new WalletAccountError(error?.message, error);
             }
@@ -93,6 +98,8 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
             } catch (error) {
                 throw new WalletPublicKeyError(error?.message, error);
             }
+
+            window.addEventListener('message', this._messaged);
 
             this._wallet = wallet;
             this._publicKey = publicKey;
@@ -108,6 +115,8 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
 
     async disconnect(): Promise<void> {
         if (this._wallet) {
+            window.removeEventListener('message', this._messaged);
+
             this._wallet = null;
             this._publicKey = null;
 
@@ -121,7 +130,7 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                return await wallet.signTransaction(transaction);
+                return wallet.signTransaction(transaction);
             } catch (error) {
                 throw new WalletSignatureError(error?.message, error);
             }
@@ -137,7 +146,7 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                return await Promise.all(transactions.map((transaction) => wallet.signTransaction(transaction)));
+                return wallet.signAllTransactions(transactions);
             } catch (error) {
                 throw new WalletSignatureError(error?.message, error);
             }
@@ -146,4 +155,23 @@ export class SolongWalletAdapter extends EventEmitter<WalletAdapterEvents> imple
             throw error;
         }
     }
+
+    private _messaged = (event: MessageEvent) => {
+        const data = event.data;
+        if (data && data.origin === 'mathwallet_internal' && data.type === 'lockStatusChanged' && !data.payload) {
+            this._disconnected();
+        }
+    };
+
+    private _disconnected = () => {
+        if (this._wallet) {
+            window.removeEventListener('message', this._messaged);
+
+            this._wallet = null;
+            this._publicKey = null;
+
+            this.emit('error', new WalletDisconnectedError());
+            this.emit('disconnect');
+        }
+    };
 }

@@ -12,6 +12,7 @@ import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
+import { MathWalletWalletAdapter } from "../wallet-adapters/mathwallet";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import { useTranslation } from "react-i18next";
 
@@ -43,6 +44,7 @@ export const WALLET_PROVIDERS = [
     name: "MathWallet",
     url: "https://mathwallet.org",
     icon: `${ASSETS_URL}mathwallet.svg`,
+    adapter: MathWalletWalletAdapter
   },
 ];
 

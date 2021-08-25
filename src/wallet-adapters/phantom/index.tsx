@@ -1,110 +1,222 @@
-import { PublicKey, Transaction } from "@solana/web3.js";
-import { notify } from "../../utils/notifications";
-import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
-import { EventEmitter } from "eventemitter3";
+import {
+    EventEmitter,
+    WalletAdapter,
+    WalletAdapterEvents,
+} from '../adapter';
+import {
+    WalletError,
+    WalletAccountError,
+    WalletConnectionError,
+    WalletNotConnectedError,
+    WalletPublicKeyError,
+    WalletSignatureError,
+    WalletWindowClosedError,
+    WalletDisconnectionError,
+    WalletDisconnectedError,
+} from '../errors';
+import { pollUntilReady } from '../poll';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { notify } from '../../utils/notifications';
 
-type PhantomEvent = "disconnect" | "connect";
-type PhantomRequestMethod =
-  | "connect"
-  | "disconnect"
-  | "signTransaction"
-  | "signAllTransactions";
-
-interface PhantomProvider {
-  publicKey?: PublicKey;
-  isConnected?: boolean;
-  autoApprove?: boolean;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  on: (event: PhantomEvent, handler: (args: any) => void) => void;
-  request: (method: PhantomRequestMethod, params: any) => Promise<any>;
-  listeners: (event: PhantomEvent) => (() => void)[];
+interface PhantomWalletEvents {
+    connect: (...args: unknown[]) => unknown;
+    disconnect: (...args: unknown[]) => unknown;
 }
 
-export class PhantomWalletAdapter
-  extends EventEmitter
-  implements WalletAdapter {
-  constructor() {
-    super();
-    this.connect = this.connect.bind(this);
-  }
+interface PhantomWallet extends EventEmitter<PhantomWalletEvents> {
+    isPhantom?: boolean;
+    // HACK: Phantom's PublicKey isn't quite like ours
+    publicKey?: { toBuffer(): Buffer };
+    isConnected: boolean;
+    autoApprove: boolean;
+    signTransaction: (transaction: Transaction) => Promise<Transaction>;
+    signAllTransactions: (transactions: Transaction[]) => Promise<Transaction[]>;
+    connect: () => Promise<void>;
+    disconnect: () => Promise<void>;
+    _handleDisconnect: (...args: unknown[]) => unknown;
+}
 
-  private get _provider(): PhantomProvider | undefined {
-    if ((window as any)?.solana?.isPhantom) {
-      return (window as any).solana;
-    }
-    return undefined;
-  }
+interface PhantomWindow extends Window {
+    solana?: PhantomWallet;
+}
 
-  private _handleConnect = (...args: any) => {
-    this.emit("connect", ...args);
-  };
+declare const window: PhantomWindow;
 
-  private _handleDisconnect = (...args: any) => {
-    this.emit("disconnect", ...args);
-  };
+export interface PhantomWalletAdapterConfig {
+    pollInterval?: number;
+    pollCount?: number;
+}
 
-  get connected() {
-    return this._provider?.isConnected || false;
-  }
+export class PhantomWalletAdapter extends EventEmitter<WalletAdapterEvents> implements WalletAdapter {
+    private _connecting: boolean;
+    private _wallet: PhantomWallet | null;
+    private _publicKey: PublicKey | null;
 
-  get autoApprove() {
-    return this._provider?.autoApprove || false;
-  }
+    constructor(config: PhantomWalletAdapterConfig = {}) {
+        super();
+        this._connecting = false;
+        this._wallet = null;
+        this._publicKey = null;
 
-  // eslint-disable-next-line
-  async signAllTransactions(
-    transactions: Transaction[]
-  ): Promise<Transaction[]> {
-    if (!this._provider) {
-      return transactions;
-    }
-
-    return this._provider.signAllTransactions(transactions);
-  }
-
-  get publicKey() {
-    return this._provider?.publicKey!;
-  }
-
-  // eslint-disable-next-line
-  async signTransaction(transaction: Transaction) {
-    if (!this._provider) {
-      return transaction;
+        if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
-    return this._provider.signTransaction(transaction);
-  }
-
-  async connect() {
-    if (!this._provider) {
-      return;
+    get publicKey(): PublicKey | null {
+        return this._publicKey;
     }
 
-    if (!(window as any).solana.isPhantom) {
-      notify({
-        message: "Phantom Error",
-        description: "Please install Phantom wallet from Chrome Web Store",
-        type: 'error'
-      });
-      return;
+    get ready(): boolean {
+        return !!window.solana?.isPhantom;
     }
 
-    if (this._provider && !this._provider.listeners("connect").length) {
-      this._provider?.on("connect", this._handleConnect);
+    get connecting(): boolean {
+        return this._connecting;
     }
-    if (!this._provider.listeners("disconnect").length) {
-      this._provider?.on("disconnect", this._handleDisconnect);
-    }
-    return await this._provider?.connect();
-  }
 
-  async disconnect() {
-    if (this._provider) {
-      await this._provider.disconnect();
+    get connected(): boolean {
+        return !!this._wallet?.isConnected;
     }
-  }
 
+    get autoApprove(): boolean {
+        return !!this._wallet?.autoApprove;
+    }
+
+    async connect(): Promise<void> {
+        try {
+            if (this.connected || this.connecting) return;
+            this._connecting = true;
+
+            const wallet = window.solana;
+            if (!wallet || !wallet.isPhantom) {
+                notify({
+                    message: "Phantom Error",
+                    description: "Please install Phantom wallet from Chrome Web Store",
+                    type: 'error'
+                });
+                return;
+            }
+            // if (!wallet) throw new WalletNotFoundError();
+            // if (!wallet.isPhantom) throw new WalletNotInstalledError();
+
+            if (!wallet.isConnected) {
+                // HACK: Phantom doesn't reject or emit an event if the popup is closed
+                const disconnect = wallet._handleDisconnect;
+                try {
+                    await new Promise<void>((resolve, reject) => {
+                        const connect = () => {
+                            wallet.off('connect', connect);
+                            resolve();
+                        };
+
+                        wallet._handleDisconnect = (...args: unknown[]) => {
+                            wallet.off('connect', connect);
+                            reject(new WalletWindowClosedError());
+                            return disconnect.apply(wallet, args);
+                        };
+
+                        wallet.on('connect', connect);
+
+                        wallet.connect().catch((reason: any) => {
+                            wallet.off('connect', connect);
+                            reject(reason);
+                        });
+                    });
+                } catch (error) {
+                    if (error instanceof WalletError) throw error;
+                    throw new WalletConnectionError(error?.message, error);
+                } finally {
+                    wallet._handleDisconnect = disconnect;
+                }
+            }
+
+            let buffer: Buffer;
+            try {
+                buffer = wallet.publicKey!.toBuffer();
+            } catch (error) {
+                throw new WalletAccountError(error?.message, error);
+            }
+
+            let publicKey: PublicKey;
+            try {
+                publicKey = new PublicKey(buffer);
+            } catch (error) {
+                throw new WalletPublicKeyError(error?.message, error);
+            }
+
+            wallet.on('disconnect', this._disconnected);
+
+            this._wallet = wallet;
+            this._publicKey = publicKey;
+
+            this.emit('connect');
+        } catch (error) {
+            this.emit('error', error);
+            throw error;
+        } finally {
+            this._connecting = false;
+        }
+    }
+
+    async disconnect(): Promise<void> {
+        const wallet = this._wallet;
+        if (wallet) {
+            wallet.off('disconnect', this._disconnected);
+
+            this._wallet = null;
+            this._publicKey = null;
+
+            try {
+                await wallet.disconnect();
+            } catch (error) {
+                this.emit('error', new WalletDisconnectionError(error.message, error));
+            }
+
+            this.emit('disconnect');
+        }
+    }
+
+    async signTransaction(transaction: Transaction): Promise<Transaction> {
+        try {
+            const wallet = this._wallet;
+            if (!wallet) throw new WalletNotConnectedError();
+
+            try {
+                return wallet.signTransaction(transaction);
+            } catch (error) {
+                throw new WalletSignatureError(error?.message, error);
+            }
+        } catch (error) {
+            this.emit('error', error);
+            throw error;
+        }
+    }
+
+    async signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
+        try {
+            const wallet = this._wallet;
+            if (!wallet) throw new WalletNotConnectedError();
+
+            try {
+                return wallet.signAllTransactions(transactions);
+            } catch (error) {
+                throw new WalletSignatureError(error?.message, error);
+            }
+        } catch (error) {
+            this.emit('error', error);
+            throw error;
+        }
+    }
+
+    private _disconnected = () => {
+        const wallet = this._wallet;
+        if (wallet) {
+            wallet.off('disconnect', this._disconnected);
+
+            this._wallet = null;
+            this._publicKey = null;
+
+            this.emit('error', new WalletDisconnectedError());
+            this.emit('disconnect');
+        }
+    };
 }
