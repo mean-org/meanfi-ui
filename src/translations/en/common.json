@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "",
-			"cat2": "",
-			"cat3": "",
-			"cat4": ""
-		},
 		"donation-fund": {
 			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
 			"name": "Donation Fund"
@@ -37,7 +31,6 @@
 			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
 			"name": "Fundraising"
 		},
-		"lead": "",
 		"modal-title": "Select type of transfer",
 		"otp": {
 			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
@@ -88,7 +81,7 @@
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
-		"not-connected": "",
+		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Wrap transaction fee",

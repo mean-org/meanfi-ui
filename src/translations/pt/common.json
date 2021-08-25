@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "Indivíduos",
-			"cat2": "Empresa",
-			"cat3": "Mercado Imobiliário",
-			"cat4": "Outros"
-		},
 		"donation-fund": {
 			"description": "Crie uma conta onde qualquer pessoa possa doar com a certeza de que os fundos serão usados ​​para a causa certa.",
 			"name": "Fundos de doação"
@@ -37,7 +31,6 @@
 			"description": "Você quer aVous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.rrecadar fundos para sua Semente, Série, ICO, DAICO, Rodadas Privadas? Não procure mais, sua melhor opção é o Acordo de Arrecadação de Fundos.",
 			"name": "Angariação de fundos"
 		},
-		"lead": "Escolha um de nossos contratos auditados",
 		"modal-title": "Nova transferência de dinheiro",
 		"otp": {
 			"description": "Envie dinheiro ou agende um pagamento para outra pessoa apenas uma vez. Use esta opção para pagar o que quiser.",
@@ -51,7 +44,7 @@
 			"description": "Para empregadores que estabelecem planos de pensão que pagam aos funcionários em eventos de qualificação, como atingir a idade de aposentadoria.",
 			"name": "Fundo de pensão"
 		},
-		"primary-action": "",
+		"primary-action": "Próximo",
 		"real-estate-sale-escrow": {
 			"description": "Configure a conta de garantia para uma transação imobiliária. O vendedor e o comprador têm acesso direto e auditoria completa gratuitamente.",
 			"name": "Venda de bens imóveis (fideicomisso)"
@@ -96,15 +89,15 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Este produto está em beta. Não deposite ou troque grandes quantias de fundos.",
-		"cta-close": "",
-		"cta-dismiss": "",
-		"cta-finish": "",
+		"cta-close": "Fechar",
+		"cta-dismiss": "Liberar",
+		"cta-finish": "Terminar",
 		"day": "dia",
 		"hour": "tempo",
 		"loading": "Carregando",
 		"minute": "minuto",
 		"month": "mês",
-		"not-connected": "",
+		"not-connected": "Sua carteira não está conectada, conecte sua carteira",
 		"not-implemented": "Não implementado",
 		"today": "hoje",
 		"week": "semana",
@@ -117,7 +110,7 @@
 		"secondary-action": "Cancelar"
 	},
 	"notifications": {
-		"account-address-copied-message": "",
+		"account-address-copied-message": "Endereço da conta copiado com sucesso",
 		"account-address-not-copied-message": "A conta foi copiada com sucesso",
 		"error-cannot-faucet-mainnet-message": "Não é possível fazer faucet no mainnet",
 		"error-cannot-fund-account-message": "Não foi possível financiar sua conta. Por favor, tente novamente mais tarde.",
@@ -197,15 +190,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "",
-		"input-label-source": "",
-		"insufficient-liquidity": "",
-		"token-select-destination": "",
-		"token-select-source": ""
+		"input-label-destination": "Trocar para (Estimado)",
+		"input-label-source": "Trocar de",
+		"insufficient-liquidity": "Liquidez insuficiente para essa transação",
+		"token-select-destination": "Selecione um token",
+		"token-select-source": "Selecione um token"
 	},
 	"token-selector": {
 		"modal-title": "Selecione um token",
-		"search-input-placeholder": ""
+		"search-input-placeholder": "Pesquisar token nome, símbolo ou endereço"
 	},
 	"transactions": {
 		"memo": {
@@ -277,38 +270,38 @@
 			"tx-wrap-operation-success": ""
 		},
 		"timeshift-requirement": {
-			"clock-in-out": "",
-			"label": "",
-			"not-required": "",
-			"submit-timesheets": ""
+			"clock-in-out": "Clock-in / Clock-out",
+			"label": "Requisito de quadro de horários",
+			"not-required": "Desnecessário (fluxo 24/7)",
+			"submit-timesheets": "Enviar planilhas de horas"
 		},
 		"transaction-info": {
-			"add-funds-payroll-advice": "",
-			"add-funds-repeating-payment-advice": "",
-			"beneficiary-receives": "",
-			"min-recommended-amount": "",
-			"recipient-receives": "",
-			"transaction-fee": "",
-			"you-receive": ""
+			"add-funds-payroll-advice": "Você deve adicionar fundos para iniciar uma folha de pagamento",
+			"add-funds-repeating-payment-advice": "Você deve adicionar fundos para iniciar o pagamento repetido",
+			"beneficiary-receives": "Beneficiário recebe",
+			"min-recommended-amount": "Quantidade mínima recomendada",
+			"recipient-receives": "O destinatário recebe",
+			"transaction-fee": "Taxa de transação",
+			"you-receive": "Tu recebes"
 		},
 		"validation": {
-			"amount-high": "",
-			"amount-low": "",
-			"amount-lt-fee": "",
-			"amount-sol-high": "",
-			"amount-withdraw-high": "",
-			"invalid-amount": "",
-			"minimum-swap-amount": "",
-			"no-amount": "",
-			"no-balance": "",
-			"no-payment-rate": "",
-			"no-recipient": "",
-			"no-valid-date": "",
-			"not-connected": "",
-			"payment-rate-high": "",
-			"valid-approve": "",
-			"valid-start-funding": "",
-			"valid-start-withdrawal": ""
+			"amount-high": "O valor excede o seu saldo",
+			"amount-low": "Saldo da conta insuficiente",
+			"amount-lt-fee": "O valor deve ser maior do que a taxa de transação",
+			"amount-sol-high": "O valor excede o seu saldo SOL",
+			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
+			"invalid-amount": "Montante inválido",
+			"minimum-swap-amount": "Precisa de pelo menos {{mintAmount}} para trocar por {{toMint}}",
+			"no-amount": "Inserir um montante",
+			"no-balance": "Sem saldo",
+			"no-payment-rate": "Adicionar taxa de pagamento",
+			"no-recipient": "Selecione o destinatário",
+			"no-valid-date": "Defina uma data válida",
+			"not-connected": "Conecte sua carteira",
+			"payment-rate-high": "A taxa de pagamento excede seu saldo",
+			"valid-approve": "Aprovar na sua carteira",
+			"valid-start-funding": "Comece a financiar",
+			"valid-start-withdrawal": "Iniciar retirada"
 		}
 	},
 	"ui-language": {

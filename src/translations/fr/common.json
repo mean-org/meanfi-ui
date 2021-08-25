@@ -23,12 +23,6 @@
 		"secondary-cta": "Annuler"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "",
-			"cat2": "",
-			"cat3": "",
-			"cat4": ""
-		},
 		"donation-fund": {
 			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
 			"name": "Fonds de dons"
@@ -37,7 +31,6 @@
 			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
 			"name": "Collecte de fonds"
 		},
-		"lead": "",
 		"modal-title": "Sélectionnez le type de transfert",
 		"otp": {
 			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
@@ -88,7 +81,7 @@
 		"current-wsol-balance": "Solde wSOL actuel",
 		"fund-cta": "Obtenez SOL",
 		"funding-amount": "Votre compte aura le solde de",
-		"not-connected": "",
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Frais pour faire Wrap",
@@ -197,15 +190,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "",
-		"input-label-source": "",
-		"insufficient-liquidity": "",
-		"token-select-destination": "",
-		"token-select-source": ""
+		"input-label-destination": "Swapper pour (estimé)",
+		"input-label-source": "Swapper depuis",
+		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
+		"token-select-destination": "Sélectionnez un jeton",
+		"token-select-source": "Sélectionnez un jeton"
 	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un token",
-		"search-input-placeholder": ""
+		"search-input-placeholder": "Rechercher un jeton par nom, symbole ou adresse"
 	},
 	"transactions": {
 		"memo": {
@@ -289,16 +282,16 @@
 			"min-recommended-amount": "Montant minimum recommandé",
 			"recipient-receives": "Le destinataire reçoit",
 			"transaction-fee": "Frais de transaction",
-			"you-receive": ""
+			"you-receive": "Vous recevez"
 		},
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
 			"amount-low": "Pas assez de solde de compte",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
-			"amount-withdraw-high": "",
+			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"invalid-amount": "Montant invalide",
-			"minimum-swap-amount": "",
+			"minimum-swap-amount": "Besoin d'au moins {{mintAmount}} pour échanger contre de {{toMint}}",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",
 			"no-payment-rate": "Ajouter un taux de paiement",
@@ -307,8 +300,8 @@
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
 			"valid-approve": "Approuver sur votre portefeuille",
-			"valid-start-funding": "",
-			"valid-start-withdrawal": ""
+			"valid-start-funding": "Commencer le financement",
+			"valid-start-withdrawal": "Commencer le retrait"
 		}
 	},
 	"ui-language": {

@@ -23,12 +23,6 @@
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
-		"categories": {
-			"cat1": "",
-			"cat2": "",
-			"cat3": "",
-			"cat4": ""
-		},
 		"donation-fund": {
 			"description": "Cree una cuenta donde cualquiera pueda donar con la tranquilidad que los fondos se utilizarán para la causa correcta.",
 			"name": "Fondo de Donación"
@@ -37,7 +31,6 @@
 			"description": "¿Desea recaudar fondos para su Seed, Series, ICO, DAICO, Private Rounds? No busque más, su mejor opción es el Contrato de Recaudación de Fondos.",
 			"name": "Recaudación de fondos"
 		},
-		"lead": "",
 		"modal-title": "Seleccione tipo de transferencia",
 		"otp": {
 			"description": "Envíe dinero o programe un pago a otra persona solo una vez. Utilice esta opción para pagar lo que quiera.",
@@ -88,7 +81,7 @@
 		"current-wsol-balance": "Saldo de wSOL actual ",
 		"fund-cta": "Obtenga SOL",
 		"funding-amount": "Su cuenta tendrá el saldo de",
-		"not-connected": "",
+		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"wrap-sol-cta": "WRAP",
 		"wrap-sol-cta-toggle": "Wrap some SOL",
 		"wrap-transaction-fee": "Cargos for hacer Wrap",
@@ -197,15 +190,15 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "",
-		"input-label-source": "",
-		"insufficient-liquidity": "",
-		"token-select-destination": "",
-		"token-select-source": ""
+		"input-label-destination": "Intercambiar a (Estimado)",
+		"input-label-source": "Intercambiar de",
+		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
+		"token-select-destination": "Seleccione un token",
+		"token-select-source": "Seleccione un token"
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
-		"search-input-placeholder": ""
+		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección"
 	},
 	"transactions": {
 		"memo": {
@@ -289,16 +282,16 @@
 			"min-recommended-amount": "Cantidad mínima recomendada",
 			"recipient-receives": "El destinatario recibe",
 			"transaction-fee": "Tarifa de transacción",
-			"you-receive": ""
+			"you-receive": "Recibes"
 		},
 		"validation": {
 			"amount-high": "La cantidad excede su saldo",
 			"amount-low": "No hay suficiente saldo",
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
-			"amount-withdraw-high": "",
+			"amount-withdraw-high": "La cantidad es mayor que los fondos disponibles",
 			"invalid-amount": "Monto no válido",
-			"minimum-swap-amount": "",
+			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
@@ -307,8 +300,8 @@
 			"not-connected": "Conecta tu billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
 			"valid-approve": "Aprobar en su billetera",
-			"valid-start-funding": "",
-			"valid-start-withdrawal": ""
+			"valid-start-funding": "Empezar a financiar",
+			"valid-start-withdrawal": "Iniciar retiro"
 		}
 	},
 	"ui-language": {
