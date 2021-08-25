@@ -21,6 +21,14 @@ export function TokenListContextProvider(props: any) {
 
   const tokenList = useMemo(() => {
     const list = props.container.filterByClusterSlug("mainnet-beta").getList();
+    
+    for (let token of list) {
+      if (token.symbol === 'SOL') {
+        token.symbol = 'wSOL';
+        break;
+      }
+    }
+    
     list.push(NATIVE_SOL);
     
     return list;

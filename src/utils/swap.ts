@@ -4,7 +4,7 @@ import { Market, OpenOrders } from "@project-serum/serum";
 import { Swap } from "@project-serum/swap";
 import { findATokenAddress } from "money-streaming/lib/utils";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "./ids";
-import { AccountLayout, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 
 export const swap = async(
@@ -84,6 +84,8 @@ export const swapRequest = async(
   const amount = new BN(fromAmount * 10 ** fromMintInfo.decimals);
   const swapFees = new BN(fees * 10 ** fromMintInfo.decimals);
   const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
+  const isWrap = fromMint.equals(NATIVE_SOL_MINT) && toMint.equals(WRAPPED_SOL_MINT);
+  const isUnwrap = toMint.equals(NATIVE_SOL_MINT) && fromMint.equals(WRAPPED_SOL_MINT);
   const wrappedAccount = Keypair.generate();
   const fromWallet = await findATokenAddress(wallet.publicKey, fromMint);
   const toWallet = await findATokenAddress(wallet.publicKey, toMint);
@@ -102,48 +104,72 @@ export const swapRequest = async(
     ? quoteWallet
     : undefined;
 
-  let swapTxs = await swapTxRequest(
-    client,
-    fromMint,
-    fromMintInfo,
-    fromMarket,
+  let swapTxs: SendTxRequest = { 
+    tx: new Transaction(), 
+    signers: new Array<Signer>() 
+  };
+
+  const isFromMint = fromMint.equals(NATIVE_SOL_MINT);
+  const { tx: wrapTx, signers: wrapSigners } = await wrapRequest(
+    connection,
+    wallet,
+    wrappedAccount,
     amount,
-    toMint,
-    toMintInfo,
-    toMarket,
-    quoteMint,
-    quoteMintInfo,
-    quoteWalletAddr,
-    fromWalletAddr,
-    toWalletAddr,
-    openOrders,
-    swapFees,
-    slippage,
-    fair,
-    close,
-    referral,
-    strict
+    isFromMint,
+    isWrap
   );
 
-  if (isSol) {
-    const isFromMint = fromMint.equals(NATIVE_SOL_MINT);
-    const { tx: wrapTx, signers: wrapSigners } = await wrapRequest(
-      connection,
-      wallet,
-      wrappedAccount,
+  const { tx: unwrapTx, signers: unwrapSigners } = await unwrapRequest(
+    connection,
+    wallet, 
+    wrappedAccount,
+    amount
+  );
+
+  if (isWrap) {
+    swapTxs.tx.add(wrapTx);
+    swapTxs.signers.push(...wrapSigners)
+  } else if (isUnwrap) {
+    swapTxs.tx.add(unwrapTx);
+    swapTxs.signers.push(...unwrapSigners);
+  } else {
+    swapTxs = await swapTxRequest(
+      client,
+      fromMint,
+      fromMintInfo,
+      fromMarket,
       amount,
-      isFromMint
+      toMint,
+      toMintInfo,
+      toMarket,
+      quoteMint,
+      quoteMintInfo,
+      quoteWalletAddr,
+      fromWalletAddr,
+      toWalletAddr,
+      openOrders,
+      swapFees,
+      slippage,
+      fair,
+      close,
+      referral,
+      strict
     );
 
-    const unwrapTx = await unwrap(wallet.publicKey, wrappedAccount.publicKey);
-    const tx = new Transaction().add(
-      wrapTx,
-      swapTxs.tx,
-      unwrapTx
-    );
-
-    swapTxs.tx = tx;
-    swapTxs.signers.push(...wrapSigners);
+    if (isSol) {
+      swapTxs.tx.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          wrappedAccount.publicKey,
+          wallet.publicKey,
+          wallet.publicKey,
+          []
+        )
+      );
+      const tx = new Transaction().add(wrapTx, swapTxs.tx);  
+      swapTxs.tx = tx;
+      swapTxs.signers.push(...wrapSigners);
+    }
   }
 
   swapTxs.tx.feePayer = wallet.publicKey;
@@ -186,17 +212,19 @@ export const wrapRequest = async (
   wallet: Wallet,
   account: Keypair,
   amount: BN,
-  isFromMint: boolean = true
+  isFromMint: boolean = true,
+  isWrap: boolean = false
 
 ): Promise<SendTxRequest> => {
 
   const signers = new Array<Signer>(...[account]);
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
+
   const tx = new Transaction().add(
     SystemProgram.createAccount({
       fromPubkey: wallet.publicKey,
       newAccountPubkey: account.publicKey,
-      lamports: isFromMint ? (minimumWrappedAccountBalance + amount.toNumber()) : minimumWrappedAccountBalance,
+      lamports: isFromMint ? minimumWrappedAccountBalance + amount.toNumber() : minimumWrappedAccountBalance,
       space: AccountLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
@@ -208,24 +236,101 @@ export const wrapRequest = async (
     )
   );
 
+  if (isWrap) {
+    const atokenKey = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      WRAPPED_SOL_MINT,
+      wallet.publicKey
+    );
+
+    const atokenAccountInfo = await connection.getAccountInfo(atokenKey);
+    console.log('atokenAccountInfo => ', atokenAccountInfo);
+
+    if (!atokenAccountInfo) {
+      tx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          atokenKey,
+          wallet.publicKey,
+          wallet.publicKey          
+        )
+      );
+    }
+
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        account.publicKey,
+        atokenKey,
+        wallet.publicKey,
+        [],
+        amount.toNumber()
+      ),
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        account.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
+    );
+  }
+
   return { tx, signers };
 }
 
-export const unwrap = async(
-  from: PublicKey,
-  key: PublicKey
+export const unwrapRequest = async(
+  connection: Connection,
+  wallet: Wallet,
+  account: Keypair,
+  amount: BN
   
-): Promise<Transaction> => {
+): Promise<SendTxRequest> => {
 
-  return new Transaction().add(
+  const signers = new Array<Signer>(...[account]);
+  const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
+  const atokenKey = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    WRAPPED_SOL_MINT,
+    wallet.publicKey
+  );
+
+  const tx = new Transaction().add(
+    SystemProgram.createAccount({
+      fromPubkey: wallet.publicKey,
+      newAccountPubkey: account.publicKey,
+      lamports: minimumWrappedAccountBalance,
+      space: AccountLayout.span,
+      programId: TOKEN_PROGRAM_ID,
+    }),
+    Token.createInitAccountInstruction(
+      TOKEN_PROGRAM_ID,
+      WRAPPED_SOL_MINT,
+      account.publicKey,
+      wallet.publicKey
+    ),
+    Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      atokenKey,
+      account.publicKey,
+      wallet.publicKey,
+      [],
+      amount.toNumber()
+    ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
-      key,
-      from,
-      from,
+      account.publicKey,
+      wallet.publicKey,
+      wallet.publicKey,
       []
     )
   );
+
+  return { tx, signers };
 }
 
 const swapTxRequest = async (

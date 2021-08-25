@@ -14,7 +14,7 @@ import { calculateActionFees, findATokenAddress } from "money-streaming/lib/util
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
 import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useBbo, useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
+import { useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT } from "../../utils/ids";
 import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
@@ -22,7 +22,7 @@ import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
-import { swap, swapRequest } from "../../utils/swap";
+import { swap } from "../../utils/swap";
 import "./style.less";
 import { useMint } from "../../contexts/token";
 
@@ -329,6 +329,7 @@ export const SwapUi = () => {
   const isSwapAmountValid = (): boolean => {
     return (
       connected &&
+      fair &&
       fromMintTokenBalance &&
       fromMint &&
       fromAmount &&
@@ -391,12 +392,6 @@ export const SwapUi = () => {
       return 0;
     }
 
-    console.log('frommarket => ', fromMarket);
-    console.log('toMarket => ', toMarket);
-    console.log('fair => ', fair);
-    console.log('amount => ', amount);
-    console.log('fromMarket.minOrderSize => ', fromMarket.minOrderSize);
-
     let result = 0;
     const fairAmount = fair || 1;
     const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
@@ -406,7 +401,9 @@ export const SwapUi = () => {
       toMint.equals(USDC_MINT) || 
       toMint.equals(USDT_MINT);
 
-    if (isSol || isUSDX) {      
+    if (isSol) {
+      result = fromMint.equals(NATIVE_SOL_MINT) ? fromMarket.minOrderSize : fromMarket.minOrderSize * fairAmount;
+    } else if (isUSDX) {
       const market = toMarket ? toMarket : fromMarket;
       result = amount < (market.minOrderSize * fairAmount) ? (market.minOrderSize * fairAmount) : 0;
     } else {
@@ -833,7 +830,12 @@ export const SwapUi = () => {
           tokenBalance={fromMintTokenBalance}
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
-          onMaxAmount={() => setFromAmount(fromMintTokenBalance.toString())}
+          onMaxAmount={() => {
+            setFromAmount(fromMintTokenBalance.toString());
+            const minSwapSize = minimumSwapSize(fromMintTokenBalance);
+            console.log('minSwapSize => ', minSwapSize);
+            setSmallAmount(minSwapSize);
+          }}
           onSelectToken={() => {
             setSubjectTokenSelection("source");
             showTokenSelector();
@@ -1005,7 +1007,7 @@ export const SwapUi = () => {
                   <h4 className="mb-4">
                     {t("transactions.status.tx-start-failure", {
                       accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                        fromMintTokenBalance, // getAccountBalance(),
+                        fromMintTokenBalance,
                         WRAPPED_SOL_MINT_ADDRESS,
                         true
                       )} SOL`,
@@ -1013,7 +1015,7 @@ export const SwapUi = () => {
                         getComputedFees(swapFees),
                         WRAPPED_SOL_MINT_ADDRESS,
                         true
-                      )} SOL`,
+                      )} SOL`
                     })}
                   </h4>
                 ) : (
