@@ -1913,7 +1913,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={onAddFundsTransactionFinished}>
-                {t('transactions.status.cta-close')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -1935,7 +1935,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideAddFundsTransactionModal}>
-                {t('transactions.status.cta-dismiss')}
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (
@@ -1975,7 +1975,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={onWithdrawFundsTransactionFinished}>
-                {t('transactions.status.cta-close')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -1997,7 +1997,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideWithdrawFundsTransactionModal}>
-                {t('transactions.status.cta-dismiss')}
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (
@@ -2037,7 +2037,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={onCloseStreamTransactionFinished}>
-                {t('transactions.status.cta-finish')}
+                {t('general.cta-finish')}
               </Button>
             </>
           ) : isError() ? (
@@ -2059,7 +2059,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideCloseStreamTransactionModal}>
-                {t('transactions.status.cta-dismiss')}
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (

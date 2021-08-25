@@ -74,12 +74,14 @@
 		}
 	},
 	"deposits": {
-		"ftx-cta-label-disabled": "Connect your wallet",
+		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
 		"ftx-cta-label-enabled": "Deposit from FTX",
 		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
 		"modal-title": "Deposit options",
 		"move-from-ethereum-cta-label": "Move assets from Ethereum",
-		"move-from-polygon-cta-label": "Move assets from Polygon"
+		"move-from-polygon-cta-label": "Move assets from Polygon",
+		"operation-cta-label-disabled": "Wallet not connected",
+		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
@@ -94,6 +96,9 @@
 	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
+		"cta-close": "Close",
+		"cta-dismiss": "Dismiss",
+		"cta-finish": "Finish",
 		"day": "day",
 		"hour": "hour",
 		"loading": "Loading",
@@ -238,9 +243,6 @@
 			"placeholder": "Please pick a date"
 		},
 		"status": {
-			"cta-close": "Close",
-			"cta-dismiss": "Dismiss",
-			"cta-finish": "Finish",
 			"cta-view-stream": "View Stream",
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",

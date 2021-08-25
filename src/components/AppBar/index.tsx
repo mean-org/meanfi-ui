@@ -20,7 +20,7 @@ const { SubMenu } = Menu;
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connection = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { connected } = useWallet();
   const { t } = useTranslation("common");
   const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,10 +40,6 @@ export const AppBar = (props: { menuType: string }) => {
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
     }
-  }
-
-  const getFtxPayLink = (): string => {
-    return `https://ftx.us/pay/request?address=${publicKey?.toBase58()}&tag=&wallet=sol&memoIsRequired=false&memo=&allowTip=false`;
   }
 
   useEffect(() => {
@@ -110,17 +106,6 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="deposits" onClick={showDepositOptionsModal}>
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
-      {connected && (
-        <Menu.Item key="ftxpay">
-          <a href={getFtxPayLink()} onClick={(e) => {
-              e.preventDefault();
-              window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
-            }} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">Deposit From FTX</span>
-            &nbsp;<IconExternalLink className="mean-svg-icons link" />
-          </a>
-        </Menu.Item>
-      )}
       <Menu.Item key="bridge">
         <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">Bridge</span>
@@ -203,17 +188,9 @@ export const AppBar = (props: { menuType: string }) => {
                 </li>
               </ul>
             </li>
-            {connected && (
-              <li key="ftxpay" className="mobile-menu-item">
-                <a href={getFtxPayLink()} onClick={(e) => {
-                    e.preventDefault();
-                    window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
-                  }} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">Deposit From FTX</span>
-                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                </a>
-              </li>
-            )}
+            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal}>
+              <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+            </li>
             <li key="bridge" className="mobile-menu-item">
               <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
                 <span className="menu-item-text">Bridge</span>
