@@ -106,6 +106,9 @@ export const DepositOptions = (props: {
       <div className="deposit-selector">
         <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
+          {!connected && (
+            <p className="fg-error">{t('general.not-connected')}!</p>
+          )}
           <Row gutter={[24, 24]}>
             <Col span={24}>
               <Button
@@ -116,7 +119,7 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={handleFtxPayButtonClick}>
-                {connected ? t("deposits.ftx-cta-label-enabled") : t("deposits.operation-cta-label-disabled")}
+                {t("deposits.ftx-cta-label-enabled")}
               </Button>
             </Col>
             <Col span={24}>
@@ -128,7 +131,7 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={enableAddressSharing}>
-                {connected ? t("deposits.send-from-wallet-cta-label") : t("deposits.operation-cta-label-disabled")}
+                {t("deposits.send-from-wallet-cta-label")}
               </Button>
             </Col>
             <Col span={24}>
