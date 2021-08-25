@@ -49,7 +49,6 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
 } from "../../../constants";
-import _ from "lodash";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
@@ -75,6 +74,7 @@ export const Streams = () => {
     streamList,
     streamDetail,
     selectedToken,
+    tokenBalance,
     loadingStreams,
     loadingStreamActivity,
     streamActivity,
@@ -109,10 +109,6 @@ export const Streams = () => {
       setPreviousBalance(account.lamports);
     }
   }, [account, previousBalance, refreshTokenBalance]);
-
-  const getAccountBalance = (): number => {
-    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-  }
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
@@ -588,7 +584,10 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < getComputedFees(transactionFees)) {
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getComputedFees(transactionFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -787,7 +786,10 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < getComputedFees(transactionFees)) {
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getComputedFees(transactionFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -975,7 +977,10 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < getComputedFees(transactionFees)) {
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getComputedFees(transactionFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1922,7 +1927,7 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>
@@ -1984,7 +1989,7 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>
@@ -2046,7 +2051,7 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(transactionFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>

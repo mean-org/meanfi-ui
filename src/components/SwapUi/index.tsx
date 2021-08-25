@@ -893,8 +893,7 @@ export const SwapUi = () => {
         {
           fair ? (
           <div className="p-2 mb-2">
-          {
-            fair &&
+            {fair &&
             infoRow(
                 (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
                 (
@@ -907,8 +906,20 @@ export const SwapUi = () => {
                 true
               )
             }
-            {
-              isSwapAmountValid() &&
+            {/* {fair &&
+            infoRow(
+                (fromMarket ? `1 ${tokenMap.get(toMint.toBase58())?.symbol || "USDC"}` : "--"),
+                (
+                  `${formatAmount(
+                    fair,
+                    (tokenMap.get(fromMint.toBase58())?.decimals || 9)
+                  )} ${tokenMap.get(fromMint.toBase58())?.symbol || "SOL"}`
+                ),
+                '≈',
+                true
+              )
+            } */}
+            {isSwapAmountValid() &&
               infoRow(
                 t("transactions.transaction-info.transaction-fee"),
                 formatAmount(
@@ -917,8 +928,7 @@ export const SwapUi = () => {
                 ) + ` ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}`
               )
             }
-            {
-              isSwapAmountValid() &&
+            {isSwapAmountValid() &&
               infoRow(
                 t("transactions.transaction-info.recipient-receives"),
                 formatAmount(

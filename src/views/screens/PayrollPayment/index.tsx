@@ -101,10 +101,6 @@ export const PayrollPayment = () => {
     }
   }, [account, previousBalance, refreshTokenBalance]);
 
-  const getAccountBalance = (): number => {
-    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-  }
-
   const [payrollFees, setPayrollFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -598,7 +594,10 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < getComputedFees(payrollFees)) {
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getComputedFees(payrollFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1152,7 +1151,7 @@ export const PayrollPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(getAccountBalance(), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(payrollFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>
