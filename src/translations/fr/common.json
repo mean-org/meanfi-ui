@@ -74,12 +74,14 @@
 		}
 	},
 	"deposits": {
-		"ftx-cta-label-disabled": "",
+		"address-share-disclaimer": "",
 		"ftx-cta-label-enabled": "",
 		"heading": "",
 		"modal-title": "Options de dépôt",
 		"move-from-ethereum-cta-label": "",
-		"move-from-polygon-cta-label": ""
+		"move-from-polygon-cta-label": "",
+		"operation-cta-label-disabled": "",
+		"send-from-wallet-cta-label": ""
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
@@ -94,6 +96,9 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez pas et n'échangez pas de grandes quantités de fonds.",
+		"cta-close": "Fermer",
+		"cta-dismiss": "Rejeter",
+		"cta-finish": "Terminer",
 		"day": "journée",
 		"hour": "heure",
 		"loading": "Chargement",
@@ -238,9 +243,6 @@
 			"placeholder": "Veuillez choisir une date"
 		},
 		"status": {
-			"cta-close": "Fermer",
-			"cta-dismiss": "Rejeter",
-			"cta-finish": "Terminer",
 			"cta-view-stream": "Voir le flux",
 			"instructions": "Confirmez cette transaction dans votre portefeuille",
 			"modal-title-executing-transaction": "Exécution de la transaction",

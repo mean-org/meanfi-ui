@@ -1165,7 +1165,7 @@ export const PayrollPayment = () => {
                 shape="round"
                 size="middle"
                 onClick={closeTransactionModal}>
-                {t('transactions.status.cta-dismiss')}
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (

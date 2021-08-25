@@ -564,7 +564,7 @@ export const WrapView = () => {
                         size="middle"
                         onClick={hideTransactionModal}
                       >
-                        {t("transactions.status.cta-close")}
+                        {t("general.cta-close")}
                       </Button>
                     </>
                   ) : isError() ? (
@@ -603,7 +603,7 @@ export const WrapView = () => {
                         size="middle"
                         onClick={hideTransactionModal}
                       >
-                        {t("transactions.status.cta-dismiss")}
+                        {t("general.cta-dismiss")}
                       </Button>
                     </>
                   ) : (

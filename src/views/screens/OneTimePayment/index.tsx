@@ -846,7 +846,7 @@ export const OneTimePayment = () => {
                 shape="round"
                 size="middle"
                 onClick={isScheduledPayment ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment ? t('transactions.status.cta-view-stream') : t('transactions.status.cta-close')}
+                {isScheduledPayment ? t('transactions.status.cta-view-stream') : t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -868,7 +868,7 @@ export const OneTimePayment = () => {
                 shape="round"
                 size="middle"
                 onClick={closeTransactionModal}>
-                {t('transactions.status.cta-dismiss')}
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (

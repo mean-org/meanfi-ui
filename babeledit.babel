@@ -1198,7 +1198,7 @@
                         <name>deposits</name>
                         <children>
                             <concept_node>
-                                <name>ftx-cta-label-disabled</name>
+                                <name>address-share-disclaimer</name>
                                 <definition_loaded>false</definition_loaded>
                                 <description/>
                                 <comment/>
@@ -1324,6 +1324,56 @@
                             </concept_node>
                             <concept_node>
                                 <name>move-from-polygon-cta-label</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
+                                <name>operation-cta-label-disabled</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
+                                <name>send-from-wallet-cta-label</name>
                                 <definition_loaded>false</definition_loaded>
                                 <description/>
                                 <comment/>
@@ -1600,6 +1650,81 @@
                                     <translation>
                                         <language>fr-FR</language>
                                         <approved>true</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
+                                <name>cta-close</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
+                                <name>cta-dismiss</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
+                                <name>cta-finish</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
                                     </translation>
                                     <translation>
                                         <language>pt-BR</language>
@@ -4420,81 +4545,6 @@
                             <folder_node>
                                 <name>status</name>
                                 <children>
-                                    <concept_node>
-                                        <name>cta-close</name>
-                                        <definition_loaded>false</definition_loaded>
-                                        <description/>
-                                        <comment/>
-                                        <default_text/>
-                                        <translations>
-                                            <translation>
-                                                <language>en-US</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>es-ES</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>fr-FR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>pt-BR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                        </translations>
-                                    </concept_node>
-                                    <concept_node>
-                                        <name>cta-dismiss</name>
-                                        <definition_loaded>false</definition_loaded>
-                                        <description/>
-                                        <comment/>
-                                        <default_text/>
-                                        <translations>
-                                            <translation>
-                                                <language>en-US</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>es-ES</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>fr-FR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>pt-BR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                        </translations>
-                                    </concept_node>
-                                    <concept_node>
-                                        <name>cta-finish</name>
-                                        <definition_loaded>false</definition_loaded>
-                                        <description/>
-                                        <comment/>
-                                        <default_text/>
-                                        <translations>
-                                            <translation>
-                                                <language>en-US</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>es-ES</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>fr-FR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>pt-BR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                        </translations>
-                                    </concept_node>
                                     <concept_node>
                                         <name>cta-view-stream</name>
                                         <definition_loaded>false</definition_loaded>
