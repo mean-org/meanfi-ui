@@ -258,7 +258,7 @@ export const SwapUi = () => {
   useEffect(() => {
 
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.wrapSol);
+      return await calculateActionFees(connection, MSP_ACTIONS.swapTokens);
     };
 
     if (!swapFees.blockchainFee) {
