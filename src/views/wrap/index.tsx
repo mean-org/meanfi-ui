@@ -77,7 +77,7 @@ export const WrapView = () => {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.wrapSol);
+      return await calculateActionFees(connection, MSP_ACTIONS.swapTokens);
     };
     if (!wrapFees.blockchainFee) {
       getTransactionFees().then((values) => {
