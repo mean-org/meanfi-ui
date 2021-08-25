@@ -14,16 +14,16 @@ export class AppConfigService {
         production: {
             streamProgramAddress: 'H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
-            influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
+            influxDbToken: 'AcVhBSCQ8XE9nTpR5cf2Gv8aU420BG-eKbxYDX-_PQ_qwyE4YS0oXeZFd8drfMkossPRs-fKqFMf7cbqxXatng==',
             influxDbOrg: 'meanops',
-            influxDbBucket: 'meanfi-dev'
+            influxDbBucket: 'meanfi-prod'
         },
         staging: {
             streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
-            influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
+            influxDbToken: 'T4-kVufYOioZNKsVvIeWrIcNlqdrQkc3gxvQSHxw7jZVgN7YOfF-1MpcSpcarKdt9ptkjkZGPl6VuA7s7WLXcw==',
             influxDbOrg: 'meanops',
-            influxDbBucket: 'meanfi-dev'
+            influxDbBucket: 'meanfi-stage'
         },
         // dev and local will have same config
         development: {
