@@ -17,6 +17,7 @@ import {
   IconExternalLink,
   IconIncomingPaused,
   IconOutgoingPaused,
+  IconRefresh,
   IconShare,
   IconUpload,
 } from "../../../Icons";
@@ -61,6 +62,7 @@ import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-
 import { calculateActionFees, getStream } from "money-streaming/lib/utils";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { useTranslation } from "react-i18next";
+import { defaultStreamStats, StreamStats } from "../../../models/streams";
 
 var dateFormat = require("dateformat");
 
@@ -95,6 +97,7 @@ export const Streams = () => {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
+  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
@@ -171,6 +174,7 @@ export const Streams = () => {
     setStreamDetail
   ]);
 
+  // Handle overflow-ellipsis-middle elements of resize
   useEffect(() => {
     const resizeListener = () => {
       var NUM_CHARS = 4;
@@ -322,9 +326,9 @@ export const Streams = () => {
     onExecuteWithdrawFundsTransaction(amount);
   };
 
-  const isInboundStream = (item: StreamInfo): boolean => {
+  const isInboundStream = useCallback((item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
-  }
+  }, [publicKey]);
 
   const isStreaming = (item: StreamInfo): boolean => {
     return item && item.escrowVestedAmount < (item.totalDeposits - item.totalWithdrawals) &&
@@ -488,6 +492,31 @@ export const Streams = () => {
     }
     return label;
   }
+
+  // Maintain stream stats
+  useEffect(() => {
+
+    const updateStats = () => {
+      if (streamList && streamList.length) {
+        const incoming = streamList.filter(s => isInboundStream(s));
+        const outgoing = streamList.filter(s => !isInboundStream(s));
+        const stats: StreamStats = {
+          incoming: incoming.length,
+          outgoing: outgoing.length
+        }
+        setStreamStats(stats);
+      } else {
+        setStreamStats(defaultStreamStats);
+      }
+    }
+
+    updateStats();
+    return () => {};
+  }, [
+    publicKey,
+    streamList,
+    isInboundStream]
+  );
 
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -1171,6 +1200,11 @@ export const Streams = () => {
     }
   }
 
+  const onRefreshStreamsClick = () => {
+    refreshStreamList(true);
+    setCustomStreamDocked(false);
+  };
+
   const getRateAmountDisplay = (item: StreamInfo): string => {
     let value = '';
     if (item && item.rateAmount && item.associatedToken) {
@@ -1800,7 +1834,30 @@ export const Streams = () => {
     <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
       {/* Left / top panel*/}
       <div className="streams-container">
-        <div className="streams-heading">{t('streams.screen-title')}</div>
+        <div className="streams-heading">
+          <span className="title">{t('streams.screen-title')}</span>
+          <Tooltip placement="bottom" title={t('account-area.streams-tooltip')}>
+            <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
+              <Spin size="small" />
+              {customStreamDocked ? (
+                <span className="transaction-legend neutral">
+                  <IconRefresh className="mean-svg-icons"/>
+                </span>
+              ) : (
+                <>
+                  <span className="transaction-legend incoming">
+                    <IconDownload className="mean-svg-icons"/>
+                    <span className="incoming-transactions-amout">{streamStats.incoming}</span>
+                  </span>
+                  <span className="transaction-legend outgoing">
+                    <IconUpload className="mean-svg-icons"/>
+                    <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
+                  </span>
+                </>
+              )}
+            </div>
+          </Tooltip>
+        </div>
         <div className="inner-container">
           {/* item block */}
           <div className="item-block vertical-scroll">
@@ -1853,7 +1910,7 @@ export const Streams = () => {
       {/* Right / down panel */}
       <div className="stream-details-container">
         <Divider className="streams-divider" plain></Divider>
-        <div className="streams-heading">{t('streams.stream-detail.heading')}</div>
+        <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
         <div className="inner-container">
           {connected && streamDetail ? (
             <>

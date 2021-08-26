@@ -1,80 +1,31 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Redirect } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
 import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
 import {
   IconCopy,
-  IconDownload,
   IconExternalLink,
-  IconRefresh,
-  IconUpload,
   IconWallet,
 } from "../../Icons";
-import { Button, Col, Modal, Row, Spin, Tooltip } from "antd";
+import { Button, Col, Modal, Row } from "antd";
 import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
-import { AppStateContext } from "../../contexts/appstate";
 import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
-
-interface StreamStats {
-  incoming: number;
-  outgoing: number;
-}
-
-const defaultStreamStats = {
-  incoming: 0,
-  outgoing: 0
-};
 
 export const CurrentUserBadge = (props: {}) => {
 
   const { t } = useTranslation("common");
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
-  const {
-    streamList,
-    loadingStreams,
-    customStreamDocked,
-    setCustomStreamDocked,
-    refreshStreamList,
-  } = useContext(AppStateContext);
-  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
-  const { wallet, publicKey, select } = useWallet();
+  const { wallet, select } = useWallet();
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
   );
-
-  useEffect(() => {
-
-    const isInboundStream = (item: StreamInfo): boolean => {
-      return item.beneficiaryAddress === publicKey?.toBase58();
-    }
-
-    const updateStats = () => {
-      if (streamList && streamList.length) {
-        const incoming = streamList.filter(s => isInboundStream(s));
-        const outgoing = streamList.filter(s => !isInboundStream(s));
-        const stats: StreamStats = {
-          incoming: incoming.length,
-          outgoing: outgoing.length
-        }
-        setStreamStats(stats);
-      } else {
-        setStreamStats(defaultStreamStats);
-      }
-    }
-
-    updateStats();
-    return () => {};
-  }, [publicKey, streamList]);
 
   const switchWallet = () => {
     setTimeout(() => {
@@ -97,12 +48,6 @@ export const CurrentUserBadge = (props: {}) => {
     }
   }
 
-  const onGoToStreamsClick = () => {
-    refreshStreamList(true);
-    setCustomStreamDocked(false);
-    setRedirect('/transfers');
-  };
-
   if (!wallet?.publicKey) {
     return null;
   }
@@ -113,32 +58,10 @@ export const CurrentUserBadge = (props: {}) => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
       <div className="wallet-wrapper">
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <Tooltip placement="bottom" title={getUiTranslation('streams-tooltip')}>
-          <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
-            <Spin size="small" />
-            {customStreamDocked ? (
-              <span className="transaction-legend neutral">
-                <IconRefresh className="mean-svg-icons"/>
-              </span>
-            ) : (
-              <>
-                <span className="transaction-legend incoming">
-                  <IconDownload className="mean-svg-icons"/>
-                  <span className="incoming-transactions-amout">{streamStats.incoming}</span>
-                </span>
-                <span className="transaction-legend outgoing">
-                  <IconUpload className="mean-svg-icons"/>
-                  <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
-                </span>
-              </>
-            )}
-          </div>
-        </Tooltip>
       </div>
       <Modal
         className="mean-modal"
