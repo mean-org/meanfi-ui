@@ -14,6 +14,7 @@ export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
 export const MEAN_FINANCE_ALLBRIDGE_URL = 'https://allbridge.io';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
+export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';
 export const MEAN_FINANCE_ABOUT_URL = 'https://about.meanfi.com/';
 export const MEAN_FINANCE_HOWTOS_URL = 'https://docs.meanfi.com/';
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/GMMS3whn';
