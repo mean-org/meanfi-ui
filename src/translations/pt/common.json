@@ -82,11 +82,7 @@
 		"current-wsol-balance": "Saldo wSOL atual",
 		"fund-cta": "Obtenha SOL",
 		"funding-amount": "Sua conta terá o saldo de",
-		"not-connected": "Sua carteira não está conectada, conecte sua carteira",
-		"wrap-sol-cta": "WRAP",
-		"wrap-sol-cta-toggle": "Wrap some SOL",
-		"wrap-transaction-fee": "Encargos para fazer Wrap",
-		"wrapped-amount": "Quantidade wrapped"
+		"not-connected": "Sua carteira não está conectada, conecte sua carteira"
 	},
 	"general": {
 		"app-background-disclaimer": "Este produto está em beta. Não deposite ou troque grandes quantias de fundos.",
