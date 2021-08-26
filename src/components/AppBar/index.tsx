@@ -85,6 +85,9 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
+      <Menu.Item key="deposits" onClick={showDepositOptionsModal}>
+        <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+      </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
         <Menu.Item key="/payroll">
           <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
@@ -103,9 +106,6 @@ export const AppBar = (props: { menuType: string }) => {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="deposits" onClick={showDepositOptionsModal}>
-        <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
-      </Menu.Item>
       <Menu.Item key="bridge">
         <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">Bridge</span>
@@ -166,6 +166,9 @@ export const AppBar = (props: { menuType: string }) => {
                 onClick={() => onGoToTransfersClick()}>
               <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
             </li>
+            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal}>
+              <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+            </li>
             <li key="services">
               <div className="mobile-submenu-title">{t('ui-menus.main-menu.services.submenu-title')}</div>
               <ul className="mobile-submenu">
@@ -187,9 +190,6 @@ export const AppBar = (props: { menuType: string }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal}>
-              <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
             </li>
             <li key="bridge" className="mobile-menu-item">
               <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">

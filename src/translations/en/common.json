@@ -73,6 +73,7 @@
 		"modal-title": "Deposit options",
 		"move-from-ethereum-cta-label": "Move assets from Ethereum",
 		"move-from-polygon-cta-label": "Move assets from Polygon",
+		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
 		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
 	},
@@ -81,11 +82,7 @@
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
-		"not-connected": "Your wallet is not connected, please connect your wallet",
-		"wrap-sol-cta": "WRAP",
-		"wrap-sol-cta-toggle": "Wrap some SOL",
-		"wrap-transaction-fee": "Wrap transaction fee",
-		"wrapped-amount": "Wrapped amount"
+		"not-connected": "Your wallet is not connected, please connect your wallet"
 	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",

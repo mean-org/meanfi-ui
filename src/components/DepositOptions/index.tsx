@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { IconCopy } from "../../Icons";
+import { IconCopy, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
 import "./style.less";
@@ -106,6 +106,9 @@ export const DepositOptions = (props: {
       <div className="deposit-selector">
         <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
+          {!connected && (
+            <p className="fg-error">{t('deposits.not-connected')}!</p>
+          )}
           <Row gutter={[24, 24]}>
             <Col span={24}>
               <Button
@@ -116,7 +119,8 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={handleFtxPayButtonClick}>
-                {connected ? t("deposits.ftx-cta-label-enabled") : t("deposits.operation-cta-label-disabled")}
+                <img src="assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t("deposits.ftx-cta-label-enabled")} />
+                {t("deposits.ftx-cta-label-enabled")}
               </Button>
             </Col>
             <Col span={24}>
@@ -128,7 +132,8 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={enableAddressSharing}>
-                {connected ? t("deposits.send-from-wallet-cta-label") : t("deposits.operation-cta-label-disabled")}
+                <IconSolana className="deposit-partner-icon"/>
+                {t("deposits.send-from-wallet-cta-label")}
               </Button>
             </Col>
             <Col span={24}>
@@ -139,6 +144,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromEthereumButtonClick}>
+                <img src="assets/deposit-partners/allbridge.ico" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
                 {t("deposits.move-from-ethereum-cta-label")}
               </Button>
             </Col>
@@ -150,6 +156,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromPolygonButtonClick}>
+                <img src="assets/deposit-partners/allbridge.ico" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
                 {t("deposits.move-from-polygon-cta-label")}
               </Button>
             </Col>

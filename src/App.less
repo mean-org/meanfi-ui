@@ -18,7 +18,7 @@
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
   --color-notify-error: #a61d24;
-  --font-color: #000000;
+  --text-color: #000000;
   --bg-color: #ffffff;
   
   /* Grays */
@@ -88,7 +88,7 @@
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
   --color-notify-error: #a61d24;
-  --font-color: #e1e1ff;
+  --text-color: #e1e1ff;
   --bg-color: #161625;
   
   /* Grays */
@@ -138,7 +138,7 @@
 }
 
 body {
-  color: var(--font-color);
+  color: var(--text-color);
   background-color: var(--bg-color);
   @media (min-width: 576px) {
     background: linear-gradient(to bottom, var(--gradStart), var(--gradEnd));
@@ -216,7 +216,7 @@ footer.ant-layout-footer {
   left: 0;
   width: 100%;
   z-index: 100;
-  color: var(--font-color);
+  color: var(--text-color);
   background-color: var(--bg-color);
   height: var(--footer-bar-height);
   @media (min-width: 1200px) {
@@ -263,54 +263,6 @@ footer.ant-layout-footer {
           padding: 0 6px;
           margin-left: -1px;
           cursor: pointer;
-        }
-        .wallet-balance {
-          position: relative;
-          font-size: 1rem;
-          font-weight: 600;
-          padding: 0 6px;
-          border-radius: 0.5rem;
-          display: flex;
-          align-items: center;
-          .effective-amount {
-            margin-right: 4px;
-          }
-          .ant-spin.ant-spin-sm.ant-spin-spinning {
-            position: absolute;
-            right: 13%;
-            line-height: 2;
-            width: 24px;
-            height: 24px;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-            .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
-              background-color: var(--color-primary-highlight);
-            }
-          }
-          .transaction-legend {
-            // @media (max-width: 767.98px) {
-            //   display: none;
-            // }
-            display: inline-flex;
-            align-items: center;
-            margin-left: 4px;
-            opacity: 1;
-            transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-            &.incoming {
-              color: var(--color-incoming-transaction);
-            }
-            &.outgoing {
-              color: var(--color-outgoing-transaction);
-            }
-          }
-          &.click-disabled {
-            .ant-spin.ant-spin-sm.ant-spin-spinning {
-              opacity: 1;
-            }
-            .transaction-legend {
-              opacity: 0;
-            }
-          }
         }
       }
     }
@@ -921,7 +873,7 @@ footer.ant-layout-footer {
   border-radius: var(--custom-border-radius);
   margin-right: 8px;
   height: 40px;
-  padding: 2px 4px;
+  padding: 2px;
   @media (max-width: 575.98px) {
     display: none;
   }
@@ -975,57 +927,6 @@ footer.ant-layout-footer {
       padding: 0 6px;
       margin-left: -1px;
       cursor: pointer;
-    }
-    .wallet-balance {
-      position: relative;
-      font-size: 1rem;
-      font-weight: 600;
-      padding: 0 6px;
-      border-radius: 0.5rem;
-      display: flex;
-      align-items: center;
-      .effective-amount {
-        margin-right: 4px;
-      }
-      .ant-spin.ant-spin-sm.ant-spin-spinning {
-        position: absolute;
-        right: 13%;
-        line-height: 2;
-        width: 24px;
-        height: 24px;
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
-          background-color: var(--color-primary-highlight);
-        }
-      }
-      .transaction-legend {
-        // @media (max-width: 767.98px) {
-        //   display: none;
-        // }
-        display: inline-flex;
-        align-items: center;
-        margin-left: 4px;
-        opacity: 1;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        &.incoming {
-          color: var(--color-incoming-transaction);
-        }
-        &.outgoing {
-          color: var(--color-outgoing-transaction);
-        }
-        &.neutral {
-          color: var(--color-almost-white);
-        }
-      }
-      &.click-disabled {
-        .ant-spin.ant-spin-sm.ant-spin-spinning {
-          opacity: 1;
-        }
-        .transaction-legend {
-          opacity: 0;
-        }
-      }
     }
   }
 }
@@ -1390,7 +1291,7 @@ section.content {
     .general-text-input {
       width: 100%;
       position: relative;
-      color: var(--font-color);
+      color: var(--text-color);
       font-weight: 500;
       outline: none;
       border: none;
@@ -1667,7 +1568,7 @@ section.content {
       width: 100%;
       height: auto;
       overflow: hidden;
-      color: var(--font-color);
+      color: var(--text-color);
       background-color: var(--bg-color);
       border-radius: var(--custom-border-radius);
       @media (max-width: 575.98px) {
@@ -1814,16 +1715,34 @@ section.content {
 .deposit-selector {
   .deposit-option {
     &.ant-btn.ant-btn-round {
-      height: var(--custom-control-height);
+      height: 48px;
       border-radius: var(--custom-border-radius);
       border-style: solid;
       border-width: 2px;
-      color: var(--font-color);
+      color: var(--text-color);
       background-color: var(--color-secondary-alpha-02);
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
       &:disabled {
         border-color: var(--color-secondary-alpha-20);
         color: var(--color-secondary-alpha-50);
         background-color: var(--color-secondary-alpha-05);
+        .deposit-partner-icon {
+          filter: grayscale(1);
+          opacity: 0.5;
+        }
+      }
+      .deposit-partner-icon {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 24px;
+        margin-right: 12px;
+        color: var(--text-color);
+      }
+      > span {
+        flex: 1 1 auto;
+        text-align: left;
       }
     }
   }
@@ -1845,13 +1764,64 @@ section.content {
   flex-wrap: wrap;
   width: 100%;
   .streams-heading {
-    font-size: 24px;
-    font-weight: 700;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     padding: 0 2.4rem 0 1.4rem;
-    text-transform: uppercase;
-    letter-spacing: -0.2px;
-    text-align: center;
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+    }
+    .transaction-stats {
+      position: relative;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0 6px;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      .ant-spin.ant-spin-sm.ant-spin-spinning {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 24px;
+        line-height: 2;
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
+          background-color: var(--color-primary-highlight);
+        }
+      }
+      .transaction-legend {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 4px;
+        opacity: 1;
+        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+        &.incoming {
+          color: var(--color-incoming-transaction);
+        }
+        &.outgoing {
+          color: var(--color-outgoing-transaction);
+        }
+        &.neutral {
+          color: var(--color-almost-white);
+        }
+      }
+      &.click-disabled {
+        .ant-spin.ant-spin-sm.ant-spin-spinning {
+          opacity: 1;
+        }
+        .transaction-legend {
+          opacity: 0;
+        }
+      }
+    }
   }
   .inner-container {
     position: relative;
@@ -1933,9 +1903,11 @@ section.content {
     flex-direction: column;
     .stream-details-container {
       .streams-heading {
-        padding: 0;
-        font-size: 20px;
-        letter-spacing: normal;
+        .title {
+          padding: 0;
+          font-size: 20px;
+          letter-spacing: normal;
+        }
       }
     }
   }
