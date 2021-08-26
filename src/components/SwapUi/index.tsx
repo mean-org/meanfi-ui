@@ -86,6 +86,7 @@ export const SwapUi = () => {
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
   const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
   const [fetchingToTokenBalance, setFetchingToTokenBalance] = useState(false);
+  const [toSwapAmount, setToSwapAmount] = useState("");
 
   const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
     if (!address) return 0;
@@ -268,14 +269,42 @@ export const SwapUi = () => {
       });
     }
 
+    return () => { }
+
   }, [
     connection,
     swapFees
   ]);
 
   const getFeeAmount = (amount: any): number => {
-    return getTxFeeAmount(swapFees, parseFloat(amount));
+    const feeAmount = getTxFeeAmount(swapFees, parseFloat(amount));
+    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+    const formattedAmount = parseFloat(formatAmount(feeAmount, fromDecimals));
+
+    return formattedAmount;
   };
+
+  // Update the swap receiving amount (from amount - swap fee)
+  useEffect(() => {
+
+    if (!fromAmount || !isValidNumber(fromAmount)) {
+      setToSwapAmount("");
+    }
+
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const toSwapAmount = (parseFloat(fromAmount) - getTxFeeAmount(swapFees, fromAmount)) / (fair || 1);
+    const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
+    setToSwapAmount(toSwapFormattedAmount);
+
+    return () => { }
+
+  }, [
+    fair, 
+    fromAmount, 
+    swapFees, 
+    toMint, 
+    tokenMap
+  ]);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -303,9 +332,15 @@ export const SwapUi = () => {
       setFromAmount("");
       setSmallAmount(0);
     } else if (isValidNumber(newValue)) {
-      setFromAmount(newValue, tokenMap.get(toMint.toBase58())?.decimals || 9);
+      const fromDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+      setFromAmount(newValue, fromDecimals);
+      const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+      const toSwapAmount = (parseFloat(newValue) - getFeeAmount(newValue)) / (fair || 1);
+      const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
+      setToSwapAmount(toSwapFormattedAmount);
       const minSwapSize = minimumSwapSize(parseFloat(newValue));
       setSmallAmount(minSwapSize);
+      console.log('fair => ', fair);
     }
   };
 
@@ -334,7 +369,7 @@ export const SwapUi = () => {
       fromMint &&
       fromAmount &&
       parseFloat(fromAmount) > 0 &&
-      parseFloat(fromAmount) >= smallAmount &&
+      parseFloat(fromAmount) >= getFeeAmount(fromAmount) + smallAmount &&
       parseFloat(fromAmount) > getFeeAmount(fromAmount) &&
       parseFloat(fromAmount) - getFeeAmount(fromAmount) <= fromMintTokenBalance
 
@@ -416,7 +451,7 @@ export const SwapUi = () => {
 
     const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
     const formattedResult = formatAmount(result, fromDecimals);
-    result = parseFloat(formattedResult);
+    result = parseFloat(formattedResult) + getFeeAmount(amount);
 
     return result;
   };
@@ -435,8 +470,6 @@ export const SwapUi = () => {
       throw new Error("Quote mint not found");
     }
 
-    const fees = getFeeAmount(fromAmount);
-
     return swap(
       swapClient,
       fromMint,
@@ -449,7 +482,7 @@ export const SwapUi = () => {
       quoteMint,
       quoteMintInfo,
       openOrders,
-      fees,
+      getFeeAmount(fromAmount),
       slippage,
       fair,
       isClosingNewAccounts,
@@ -468,7 +501,8 @@ export const SwapUi = () => {
             consoleOut("token selected:", token);
             const validAmount = !toAmount ? 0 : parseFloat(fromAmount);
             const amount = validAmount * (fair || 1);
-            setToAmount(amount ? amount.toString() : "", tokenMap.get(toMint.toBase58())?.decimals || 9);
+            const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 9;
+            setToAmount(amount ? amount.toString() : "", toDecimals);
             refreshFromTokenBalance(newMint);
             onCloseTokenSelector();
           };
@@ -833,7 +867,6 @@ export const SwapUi = () => {
           onMaxAmount={() => {
             setFromAmount(fromMintTokenBalance.toString());
             const minSwapSize = minimumSwapSize(fromMintTokenBalance);
-            console.log('minSwapSize => ', minSwapSize);
             setSmallAmount(minSwapSize);
           }}
           onSelectToken={() => {
@@ -898,7 +931,7 @@ export const SwapUi = () => {
                 (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
                 (
                   `${formatAmount(
-                    1 / fair, //getCurrentRate(),
+                    1 / fair,
                     (tokenMap.get(toMint.toBase58())?.decimals || 9)
                   )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
                 ),
@@ -932,7 +965,7 @@ export const SwapUi = () => {
               infoRow(
                 t("transactions.transaction-info.recipient-receives"),
                 formatAmount(
-                  parseFloat(toAmount) - getFeeAmount(toAmount),
+                  parseFloat(toSwapAmount), //parseFloat(toAmount) - getFeeAmount(toAmount),
                   (tokenMap.get(toMint.toBase58())?.decimals || 9)
                 ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
               )
