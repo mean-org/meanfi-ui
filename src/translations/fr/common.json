@@ -82,7 +82,11 @@
 		"current-wsol-balance": "Solde wSOL actuel",
 		"fund-cta": "Obtenez SOL",
 		"funding-amount": "Votre compte aura le solde de",
-		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille"
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Wrap transaction fee",
+		"wrapped-amount": "Wrapped amount"
 	},
 	"general": {
 		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez pas et n'échangez pas de grandes quantités de fonds.",
@@ -329,7 +333,8 @@
 				"faucet": "Faucet",
 				"payroll": "Paie",
 				"submenu-title": "Services",
-				"wallet-guide": "Guide du Portefeuille"
+				"wallet-guide": "Guide du Portefeuille",
+				"wrap": "Wrap"
 			},
 			"swap": "Échanger",
 			"transfers": "Transferts"

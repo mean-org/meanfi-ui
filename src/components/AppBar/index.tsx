@@ -104,6 +104,11 @@ export const AppBar = (props: { menuType: string }) => {
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
+        {connection.env !== 'mainnet-beta' && (
+          <Menu.Item key="/wrap">
+            <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+          </Menu.Item>
+        )}
       </SubMenu>
       <Menu.Item key="bridge">
         <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
@@ -178,6 +183,11 @@ export const AppBar = (props: { menuType: string }) => {
                 {connection.env !== 'mainnet-beta' && (
                   <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+                  </li>
+                )}
+                {connection.env !== 'mainnet-beta' && (
+                  <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                    <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
                   </li>
                 )}
                 <li key="wallet-guide" className="mobile-menu-item">

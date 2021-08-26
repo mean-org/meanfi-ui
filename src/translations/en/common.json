@@ -82,7 +82,11 @@
 		"current-wsol-balance": "Current Wrapped SOL balance",
 		"fund-cta": "Give me SOL",
 		"funding-amount": "Your account will be funded with",
-		"not-connected": "Your wallet is not connected, please connect your wallet"
+		"not-connected": "Your wallet is not connected, please connect your wallet",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Wrap transaction fee",
+		"wrapped-amount": "Wrapped amount"
 	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
@@ -329,7 +333,8 @@
 				"faucet": "Faucet",
 				"payroll": "Payroll",
 				"submenu-title": "Services",
-				"wallet-guide": "Wallet Guide"
+				"wallet-guide": "Wallet Guide",
+				"wrap": "Wrap"
 			},
 			"swap": "Swap",
 			"transfers": "Transfers"
