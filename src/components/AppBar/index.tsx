@@ -10,7 +10,6 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
-import { environment } from '../../environments/environment';
 import { MEANFI_METRICS_URL, MEAN_FINANCE_ALLBRIDGE_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
@@ -112,14 +111,12 @@ export const AppBar = (props: { menuType: string }) => {
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
       </Menu.Item>
-      {environment !== 'production' && (
-        <Menu.Item key="charts">
-          <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-            <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
-            &nbsp;<IconExternalLink className="mean-svg-icons link" />
-          </a>
-        </Menu.Item>
-      )}
+      <Menu.Item key="charts">
+        <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+          <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
+          &nbsp;<IconExternalLink className="mean-svg-icons link" />
+        </a>
+      </Menu.Item>
     </Menu>
   );
 
@@ -198,14 +195,12 @@ export const AppBar = (props: { menuType: string }) => {
               </a>
             </li>
             {/* Charts */}
-            {environment !== 'production' && (
-              <li key="charts" className="mobile-menu-item">
-                <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
-                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                </a>
-              </li>
-            )}
+            <li key="charts" className="mobile-menu-item">
+              <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+                <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
+                &nbsp;<IconExternalLink className="mean-svg-icons link" />
+              </a>
+            </li>
           </ul>
         </div>
         <DepositOptions isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'} key="deposit-modal2" handleClose={hideDepositOptionsModal} />

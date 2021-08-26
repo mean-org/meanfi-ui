@@ -17,6 +17,7 @@ import {
   disabledDate,
   getAmountWithTokenSymbol,
   getTransactionOperationDescription,
+  getTxFeeAmount,
   isToday,
   percentage
 } from "../../../utils/ui";
@@ -24,7 +25,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
@@ -337,9 +338,10 @@ export const OneTimePayment = () => {
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getComputedFees(otpFees);
+        const myApplicableFees = getTxFeeAmount(otpFees, fromCoinAmount);
         console.log('myApplicableFees:', myApplicableFees);
-        if (tokenBalance < myApplicableFees) {
+        console.log('Amount required:', amount + myApplicableFees);
+        if (tokenBalance < (amount + myApplicableFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure

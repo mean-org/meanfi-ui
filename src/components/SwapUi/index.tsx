@@ -87,6 +87,7 @@ export const SwapUi = () => {
   const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
   const [fetchingToTokenBalance, setFetchingToTokenBalance] = useState(false);
   const [toSwapAmount, setToSwapAmount] = useState("");
+  const [shouldRefreshToAmount, setShouldRefreshToAmount] = useState(false);
 
   const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
     if (!address) return 0;
@@ -255,7 +256,6 @@ export const SwapUi = () => {
     mspPercentFee: 0,
   });
 
-  // TODO: Update code to obtain the SWAP fees
   useEffect(() => {
 
     const getTransactionFees = async (): Promise<TransactionFees> => {
@@ -296,14 +296,23 @@ export const SwapUi = () => {
     const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
     setToSwapAmount(toSwapFormattedAmount);
 
+    if (shouldRefreshToAmount) {
+      const toValue = parseFloat(fromAmount) / (fair || 1);
+      const toValueFormatted = formatAmount(toValue, toDecimals);
+      setToAmount(toValueFormatted);
+    }
+
     return () => { }
 
   }, [
-    fair, 
-    fromAmount, 
-    swapFees, 
-    toMint, 
-    tokenMap
+    fair,
+    fromAmount,
+    shouldRefreshToAmount,
+    swapFees,
+    toMint,
+    fromMint,
+    tokenMap,
+    setToAmount
   ]);
 
   // Token selection modal
@@ -325,6 +334,16 @@ export const SwapUi = () => {
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
   const [swapRateFlipped, setSwapRateFlipped] = useState(false);
 
+  const setToAmountFromSourceAmount = (value: any) => {
+    const validFromAmount = !value ? 0 : parseFloat(value);
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const toSwapAmount = (validFromAmount - getFeeAmount(validFromAmount)) / (fair || 1);
+    const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
+    setToSwapAmount(toSwapFormattedAmount);
+    const minSwapSize = minimumSwapSize(validFromAmount);
+    setSmallAmount(minSwapSize);
+  }
+
   // Event handling
   const handleSwapFromAmountChange = (e: any) => {
     const newValue = e.target.value;
@@ -334,22 +353,7 @@ export const SwapUi = () => {
     } else if (isValidNumber(newValue)) {
       const fromDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
       setFromAmount(newValue, fromDecimals);
-      const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-      const toSwapAmount = (parseFloat(newValue) - getFeeAmount(newValue)) / (fair || 1);
-      const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
-      setToSwapAmount(toSwapFormattedAmount);
-      const minSwapSize = minimumSwapSize(parseFloat(newValue));
-      setSmallAmount(minSwapSize);
-      console.log('fair => ', fair);
-    }
-  };
-
-  const handleSwapToAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setToAmount("");
-    } else if (isValidNumber(e.target.value)) {
-      setToAmount(newValue, tokenMap.get(fromMint.toBase58())?.decimals || 6);
+      setToAmountFromSourceAmount(newValue);
     }
   };
 
@@ -417,8 +421,12 @@ export const SwapUi = () => {
     const oldTo = toMint;
     swapToFromMints();
     setSwapRateFlipped(!swapRateFlipped);
+    setShouldRefreshToAmount(true);
     refreshFromTokenBalance(oldTo);
     refreshToTokenBalance(oldFrom);
+    setTimeout(() => {
+      setShouldRefreshToAmount(false);
+    }, 2000);
   }
 
   const minimumSwapSize = (amount: number) => {
@@ -496,13 +504,14 @@ export const SwapUi = () => {
       {tokens ? (
         tokens.map((token, index) => {
           const onClick = () => {
+            // const currentAmount = fromAmount;
             const newMint = new PublicKey(token.address);
             setFromMint(newMint);
             consoleOut("token selected:", token);
-            const validAmount = !toAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount * (fair || 1);
-            const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 9;
-            setToAmount(amount ? amount.toString() : "", toDecimals);
+            setShouldRefreshToAmount(true);
+            setTimeout(() => {
+              setShouldRefreshToAmount(false);
+            }, 2000);
             refreshFromTokenBalance(newMint);
             onCloseTokenSelector();
           };
@@ -552,15 +561,18 @@ export const SwapUi = () => {
       {tokens ? (
         tokens.map((token, index) => {
           const onClick = () => {
+            // const currentAmount = fromAmount;
             const newMint = new PublicKey(token.address);
             setToMint(newMint);
             consoleOut("token selected:", token);
-            const validAmount = !fromAmount ? 0 : parseFloat(fromAmount);
-            const amount = validAmount / (fair || 1);
-            setFromAmount(amount ? amount.toString() : "", tokenMap.get(fromMint.toBase58())?.decimals || 6);
+            setShouldRefreshToAmount(true);
+            setTimeout(() => {
+              setShouldRefreshToAmount(false);
+            }, 2000);
             refreshToTokenBalance(newMint);
             onCloseTokenSelector();
           };
+
           return (
             <div
               key={index + 100}
@@ -888,7 +900,7 @@ export const SwapUi = () => {
           tokenBalance={toMintTokenBalance}
           tokenAmount={toAmount}
           readonly={true}
-          onInputChange={handleSwapToAmountChange}
+          onInputChange={() => {}}
           onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
           onSelectToken={() => {
             setSubjectTokenSelection("destination");
@@ -965,7 +977,7 @@ export const SwapUi = () => {
               infoRow(
                 t("transactions.transaction-info.recipient-receives"),
                 formatAmount(
-                  parseFloat(toSwapAmount), //parseFloat(toAmount) - getFeeAmount(toAmount),
+                  parseFloat(toSwapAmount),
                   (tokenMap.get(toMint.toBase58())?.decimals || 9)
                 ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
               )

@@ -37,6 +37,7 @@ import {
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
   getTransactionOperationDescription,
+  getTxFeeAmount,
 } from "../../../utils/ui";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
@@ -614,9 +615,10 @@ export const Streams = () => {
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getComputedFees(transactionFees);
+        const myApplicableFees = getTxFeeAmount(transactionFees, addAmount);
         console.log('myApplicableFees:', myApplicableFees);
-        if (tokenBalance < myApplicableFees) {
+        console.log('Amount required:', amount + myApplicableFees);
+        if (tokenBalance < (amount + myApplicableFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -816,7 +818,7 @@ export const Streams = () => {
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getComputedFees(transactionFees);
+        const myApplicableFees = getTxFeeAmount(transactionFees);
         console.log('myApplicableFees:', myApplicableFees);
         if (tokenBalance < myApplicableFees) {
           setTransactionStatus({
@@ -1007,7 +1009,7 @@ export const Streams = () => {
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getComputedFees(transactionFees);
+        const myApplicableFees = getTxFeeAmount(transactionFees);
         console.log('myApplicableFees:', myApplicableFees);
         if (tokenBalance < myApplicableFees) {
           setTransactionStatus({

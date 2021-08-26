@@ -26,6 +26,7 @@ import {
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionOperationDescription,
+  getTxFeeAmount,
   isToday,
   PaymentRateTypeOption,
   percentage
@@ -569,9 +570,10 @@ export const RepeatingPayment = () => {
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getComputedFees(repeatingPaymentFees);
+        const myApplicableFees = getTxFeeAmount(repeatingPaymentFees, fromCoinAmount);
         console.log('myApplicableFees:', myApplicableFees);
-        if (tokenBalance < myApplicableFees) {
+        console.log('Amount required:', amount + myApplicableFees);
+        if (tokenBalance < (amount + myApplicableFees)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure

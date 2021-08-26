@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useAsync } from "react-async-hook";
 import { PublicKey } from "@solana/web3.js";
 import { Token, ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -85,10 +85,10 @@ export function SwapContextProvider(props: any) {
   const swapToFromMints = () => {
     const oldFrom = fromMint;
     const oldTo = toMint;
-    const oldToAmount = toAmount;
+    // const oldToAmount = toAmount;
     setFromMint(oldTo);
     setToMint(oldFrom);
-    setFromAmount(oldToAmount);
+    // setFromAmount(oldToAmount);
   };
 
   const setFromAmount = (amount: string, decimals: number = 6) => {
@@ -101,7 +101,7 @@ export function SwapContextProvider(props: any) {
     // If o or no amount or no fair price, get out
     if (!amount || fair === undefined) { return; }
     // Calculate the corresponding TO amount
-    const formattedAmount = formatAmount(parseFloat(amount) / fair, decimals);    
+    const formattedAmount = formatAmount(parseFloat(amount) / fair, decimals);
     _setToAmount(formattedAmount);
   };
 
@@ -112,11 +112,6 @@ export function SwapContextProvider(props: any) {
     if (amount === '') {
       _setFromAmount("");
     }
-    // If o or no amount or no fair price, get out
-    if (!amount || fair === undefined) { return; }
-    // Calculate the corresponding FROM amount
-    const formattedAmount = formatAmount(parseFloat(amount) * fair, decimals); 
-    _setFromAmount(formattedAmount);
   };
 
   return (
