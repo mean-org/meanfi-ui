@@ -73,6 +73,7 @@
 		"modal-title": "Opções de depósito",
 		"move-from-ethereum-cta-label": "",
 		"move-from-polygon-cta-label": "",
+		"move-from-renbridge-cta-label": "",
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "",
 		"send-from-wallet-cta-label": ""

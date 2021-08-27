@@ -1,7 +1,7 @@
 import { Button, Col, Modal, Row } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MEAN_FINANCE_APP_ALLBRIDGE_URL } from "../../constants";
+import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconSolana } from "../../Icons";
@@ -49,6 +49,11 @@ export const DepositOptions = (props: {
       MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=POL&to=SOL&asset=USDT',
       '_blank','noreferrer'
     );
+    props.handleClose();
+  }
+
+  const handleBridgeFromRenButtonClick = () => {
+    window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
     props.handleClose();
   }
 
@@ -144,7 +149,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromEthereumButtonClick}>
-                <img src="assets/deposit-partners/allbridge.ico" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
+                <img src="assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
                 {t("deposits.move-from-ethereum-cta-label")}
               </Button>
             </Col>
@@ -156,8 +161,20 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromPolygonButtonClick}>
-                <img src="assets/deposit-partners/allbridge.ico" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
+                <img src="assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
                 {t("deposits.move-from-polygon-cta-label")}
+              </Button>
+            </Col>
+            <Col span={24}>
+              <Button
+                block
+                className="deposit-option"
+                type="default"
+                shape="round"
+                size="middle"
+                onClick={handleBridgeFromRenButtonClick}>
+                <img src="assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
+                {t("deposits.move-from-renbridge-cta-label")}
               </Button>
             </Col>
           </Row>
