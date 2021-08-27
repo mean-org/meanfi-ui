@@ -262,14 +262,14 @@
 			"tx-send-operation-success": "fue enviado exitosamente",
 			"tx-sign": "Esperando confirmación",
 			"tx-start": "Recolectando datos",
-			"tx-start-failure": "",
-			"tx-swap-operation": "",
-			"tx-swap-operation-success": "",
+			"tx-start-failure": "El saldo de su cuenta {{accountBalance}} es menor que el monto de la tarifa {{feeAmount}} requerida para pagar las tarifas de la red",
+			"tx-swap-operation": "Intercambiando {{fromAmount}} a {{toAmount}}",
+			"tx-swap-operation-success": "La operación de intercambio se completó con éxito",
 			"tx-wait": "Trabajando, por favor espere",
 			"tx-withdraw-operation": "Retirar",
-			"tx-withdraw-operation-success": "Fondos retirados con éxito",
-			"tx-wrap-operation": "Envolviendo",
-			"tx-wrap-operation-success": "La operación de envoltura se completó con éxito"
+			"tx-withdraw-operation-success": "Fondos retirados exitosamente",
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "La operación de wrap se completó exitosamente"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Hora de entrada / salida",

@@ -262,14 +262,14 @@
 			"tx-send-operation-success": "a été envoyé avec succès",
 			"tx-sign": "En attente de confirmation",
 			"tx-start": "La collecte de données",
-			"tx-start-failure": "",
-			"tx-swap-operation": "",
-			"tx-swap-operation-success": "",
+			"tx-start-failure": "Le solde de votre compte {{accountBalance}} est inférieur au montant des frais de {{feeAmount}} requis pour payer les frais de réseau",
+			"tx-swap-operation": "Échange de {{fromAmount}} à {{toAmount}}",
+			"tx-swap-operation-success": "Opération d'échange terminée avec succès",
 			"tx-wait": "Fonctionne, veuillez patienter",
 			"tx-withdraw-operation": "Se désister",
 			"tx-withdraw-operation-success": "Fonds retirés avec succès",
-			"tx-wrap-operation": "Emballage",
-			"tx-wrap-operation-success": "Opération de bouclage terminée avec succès"
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "Opération de wrap terminée avec succès"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Pointage d'entrée / Pointage de sortie",

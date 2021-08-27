@@ -260,16 +260,16 @@
 			"tx-send-failure-smallamount": "Falha ao enviar a transação. Quantidade muito pequena",
 			"tx-send-operation": "Enviando",
 			"tx-send-operation-success": "foi enviado com sucesso",
-			"tx-sign": "",
-			"tx-start": "",
-			"tx-start-failure": "",
-			"tx-swap-operation": "",
-			"tx-swap-operation-success": "",
-			"tx-wait": "",
-			"tx-withdraw-operation": "",
-			"tx-withdraw-operation-success": "",
-			"tx-wrap-operation": "",
-			"tx-wrap-operation-success": ""
+			"tx-sign": "Aguardando confirmação",
+			"tx-start": "Coletando dados",
+			"tx-start-failure": "O saldo de sua conta {{accountBalance}} é menor que o valor da taxa {{feeAmount}} necessária para pagar as taxas de rede",
+			"tx-swap-operation": "Trocando {{fromAmount}} para {{toAmount}}",
+			"tx-swap-operation-success": "Operação de troca concluída com sucesso",
+			"tx-wait": "Trabalhando, por favor aguarde",
+			"tx-withdraw-operation": "Retirar",
+			"tx-withdraw-operation-success": "Fundos retirados com sucesso",
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "A operação de empacotamento foi concluída com sucesso"
 		},
 		"timeshift-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
@@ -324,7 +324,7 @@
 			"switch-language": "Idioma",
 			"switch-theme": "Troque para",
 			"theme-dark": "Modo escuro",
-			"theme-light": ""
+			"theme-light": "Modo de luz"
 		},
 		"main-menu": {
 			"charts": "Gráfico",
