@@ -71,14 +71,8 @@
 		"ftx-cta-label-enabled": "Depósito de FTX",
 		"heading": "Deposite desde su Tarjeta, Cuenta Bancaria o desde otra Blockchain directamente en su Monedero Solana.\nSeleccione una de las opciones siguientes",
 		"modal-title": "Opciones de depósito",
-<<<<<<< Updated upstream
-		"move-from-ethereum-cta-label": "",
-		"move-from-polygon-cta-label": "",
-		"move-from-renbridge-cta-label": "",
-=======
 		"move-from-ethereum-cta-label": "Mover activos de Ethereum",
 		"move-from-polygon-cta-label": "Mover activos de Polygon",
->>>>>>> Stashed changes
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
 		"send-from-wallet-cta-label": "Enviar desde Billetera / Exchange"
@@ -109,7 +103,7 @@
 		"today": "hoy",
 		"week": "semana",
 		"year": "año",
-		"you": "tú"
+		"you": "usted"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",

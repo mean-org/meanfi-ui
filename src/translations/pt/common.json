@@ -71,14 +71,8 @@
 		"ftx-cta-label-enabled": "Depósito da FTX",
 		"heading": "Deposite de seu cartão, conta bancária ou de outro Blockchain diretamente em sua Carteira Solana.\nSelecione uma das seguintes opções",
 		"modal-title": "Opções de depósito",
-<<<<<<< Updated upstream
-		"move-from-ethereum-cta-label": "",
-		"move-from-polygon-cta-label": "",
-		"move-from-renbridge-cta-label": "",
-=======
 		"move-from-ethereum-cta-label": "Mova ativos do Ethereum",
 		"move-from-polygon-cta-label": "Mover ativos de polígono",
->>>>>>> Stashed changes
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
 		"send-from-wallet-cta-label": "Enviar da Carteira / Troca"
