@@ -187,7 +187,7 @@
 			"title-paused-to": "Transferencia pausada",
 			"title-pending-from": "Pendiente ejecutar",
 			"title-pending-to": "Pendiente ejecutar",
-			"title-receiving-from": "Recibiendo de",
+			"title-receiving-from": "Recibiendo desde",
 			"title-sending-to": "Enviando a"
 		}
 	},
@@ -227,27 +227,27 @@
 			"label": "Destinatario",
 			"placeholder": "Dirección pública o ENS",
 			"qr-scan-title": "Obtener dirección desde código QR",
-			"recipient-is-own-account": "No se puede enviar a su propia cuenta"
+			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},
 		"send-amount": {
 			"label": "Enviar",
-			"label-right": "Balance"
+			"label-right": "Saldo"
 		},
 		"send-date": {
 			"label": "Enviar en",
 			"placeholder": "Elige una fecha"
 		},
 		"status": {
-			"cta-view-stream": "Ver Flujo de dinero",
+			"cta-view-stream": "Ver Transferencia de dinero",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
-			"modal-title-transaction-completed": "Transacción Completada",
+			"modal-title-transaction-completed": "Transacción Completa",
 			"stream-started-post": "se inició con éxito",
-			"stream-started-pre": "Tu flujo de dinero por",
-			"tx-add-funds-operation": "Agregando fondos con",
-			"tx-add-funds-operation-success": "Fondos agregados con éxito",
-			"tx-close-operation": "Cerrar la operación de flujo",
-			"tx-close-operation-success": "Transmisión cerrada con éxito",
+			"stream-started-pre": "Tu transferencia de dinero por",
+			"tx-add-funds-operation": "Adicionando fondos con",
+			"tx-add-funds-operation-success": "Fondos adicionados con éxito",
+			"tx-close-operation": "Cerrar la operación",
+			"tx-close-operation-success": "Transferencia cerrada con éxito",
 			"tx-completed": "Operación completada",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",

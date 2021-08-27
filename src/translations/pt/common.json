@@ -187,8 +187,8 @@
 			"title-paused-to": "Transferência pausada",
 			"title-pending-from": "Pendente de execução",
 			"title-pending-to": "Pendente de execução",
-			"title-receiving-from": "",
-			"title-sending-to": ""
+			"title-receiving-from": "Recebendo de",
+			"title-sending-to": "Enviando para"
 		}
 	},
 	"swap": {
@@ -220,34 +220,34 @@
 				"per-week": "por semana",
 				"per-year": "por ano"
 			},
-			"rate-label": "",
-			"token-label": ""
+			"rate-label": "Taxa e frequência",
+			"token-label": "O destinatário recebe"
 		},
 		"recipient": {
-			"label": "",
-			"placeholder": "",
-			"qr-scan-title": "",
-			"recipient-is-own-account": ""
+			"label": "Destinatário",
+			"placeholder": "Endereço público ou ENS",
+			"qr-scan-title": "Obter endereço do código QR",
+			"recipient-is-own-account": "Não é possível enviar para a mesma conta"
 		},
 		"send-amount": {
-			"label": "",
-			"label-right": ""
+			"label": "Mandar",
+			"label-right": "Saldo"
 		},
 		"send-date": {
-			"label": "",
-			"placeholder": ""
+			"label": "Enviar",
+			"placeholder": "Escolha uma data"
 		},
 		"status": {
-			"cta-view-stream": "",
-			"instructions": "",
-			"modal-title-executing-transaction": "",
-			"modal-title-transaction-completed": "",
-			"stream-started-post": "",
-			"stream-started-pre": "",
-			"tx-add-funds-operation": "",
-			"tx-add-funds-operation-success": "",
-			"tx-close-operation": "",
-			"tx-close-operation-success": "",
+			"cta-view-stream": "Veja Transferência de Dinheiro",
+			"instructions": "Confirme esta transação em sua carteira",
+			"modal-title-executing-transaction": "Executando transação",
+			"modal-title-transaction-completed": "Transação Completa",
+			"stream-started-post": "começou com sucesso",
+			"stream-started-pre": "Sua transferência de dinheiro para",
+			"tx-add-funds-operation": "Adicionando fundos com",
+			"tx-add-funds-operation-success": "Fundos adicionados com sucesso",
+			"tx-close-operation": "Feche a negociação",
+			"tx-close-operation-success": "Transferência fechada com sucesso",
 			"tx-completed": "",
 			"tx-confirm": "",
 			"tx-confirm-failure": "",
