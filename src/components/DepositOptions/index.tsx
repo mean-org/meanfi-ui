@@ -32,28 +32,36 @@ export const DepositOptions = (props: {
   }
 
   const handleFtxPayButtonClick = () => {
-    window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
+    setTimeout(() => {
+      window.open(getFtxPayLink(), 'newwindow','noreferrer,resizable,width=360,height=600');
+    }, 500);
     props.handleClose();
   }
 
   const handleBridgeFromEthereumButtonClick = () => {
-    window.open(
-      MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=ETH&to=SOL&asset=USDT',
-      '_blank','noreferrer'
-    );
+    setTimeout(() => {
+      window.open(
+        MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=ETH&to=SOL&asset=USDT',
+        '_blank','noreferrer'
+      );
+    }, 500);
     props.handleClose();
   }
 
   const handleBridgeFromPolygonButtonClick = () => {
-    window.open(
-      MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=POL&to=SOL&asset=USDT',
-      '_blank','noreferrer'
-    );
+    setTimeout(() => {
+      window.open(
+        MEAN_FINANCE_APP_ALLBRIDGE_URL + '/bridge?from=POL&to=SOL&asset=USDT',
+        '_blank','noreferrer'
+      );
+    }, 500);
     props.handleClose();
   }
 
   const handleBridgeFromRenButtonClick = () => {
-    window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
+    setTimeout(() => {
+      window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
+    }, 500);
     props.handleClose();
   }
 
