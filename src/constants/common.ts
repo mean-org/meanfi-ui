@@ -12,7 +12,6 @@ export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
 export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
-export const MEAN_FINANCE_ALLBRIDGE_URL = 'https://allbridge.io';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
 export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';
 export const MEAN_FINANCE_ABOUT_URL = 'https://about.meanfi.com/';

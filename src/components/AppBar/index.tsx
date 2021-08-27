@@ -10,7 +10,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
-import { MEANFI_METRICS_URL, MEAN_FINANCE_ALLBRIDGE_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
+import { MEANFI_METRICS_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 
@@ -110,12 +110,6 @@ export const AppBar = (props: { menuType: string }) => {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="bridge">
-        <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">Bridge</span>
-          &nbsp;<IconExternalLink className="mean-svg-icons link" />
-        </a>
-      </Menu.Item>
       <Menu.Item key="charts">
         <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
@@ -197,12 +191,6 @@ export const AppBar = (props: { menuType: string }) => {
                   </a>
                 </li>
               </ul>
-            </li>
-            <li key="bridge" className="mobile-menu-item">
-              <a href={MEAN_FINANCE_ALLBRIDGE_URL} target="_blank" rel="noopener noreferrer">
-                <span className="menu-item-text">Bridge</span>
-                &nbsp;<IconExternalLink className="mean-svg-icons link" />
-              </a>
             </li>
             {/* Charts */}
             <li key="charts" className="mobile-menu-item">
