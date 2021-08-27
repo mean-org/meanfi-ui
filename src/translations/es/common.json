@@ -73,6 +73,7 @@
 		"modal-title": "Opciones de depósito",
 		"move-from-ethereum-cta-label": "Mover activos de Ethereum",
 		"move-from-polygon-cta-label": "Mover activos de Polygon",
+		"move-from-renbridge-cta-label": "Mover activos de RenBridge",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
 		"send-from-wallet-cta-label": "Enviar desde Billetera / Exchange"

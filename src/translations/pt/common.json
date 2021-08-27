@@ -72,7 +72,8 @@
 		"heading": "Deposite de seu cartão, conta bancária ou de outro Blockchain diretamente em sua Carteira Solana.\nSelecione uma das seguintes opções",
 		"modal-title": "Opções de depósito",
 		"move-from-ethereum-cta-label": "Mova ativos do Ethereum",
-		"move-from-polygon-cta-label": "Mover ativos de polígono",
+		"move-from-polygon-cta-label": "Mover ativos de Polygon",
+		"move-from-renbridge-cta-label": "Mover ativos de RenBridge",
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
 		"send-from-wallet-cta-label": "Enviar da Carteira / Troca"
