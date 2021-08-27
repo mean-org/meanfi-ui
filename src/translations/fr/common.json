@@ -67,16 +67,21 @@
 		}
 	},
 	"deposits": {
-		"address-share-disclaimer": "",
-		"ftx-cta-label-enabled": "",
-		"heading": "",
+		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL dans Solana.",
+		"ftx-cta-label-enabled": "Dépôt de FTX",
+		"heading": "Déposez depuis votre carte, votre compte bancaire ou depuis une autre blockchain directement dans votre portefeuille Solana.\nSélectionnez l'une des options suivantes",
 		"modal-title": "Options de dépôt",
+<<<<<<< Updated upstream
 		"move-from-ethereum-cta-label": "",
 		"move-from-polygon-cta-label": "",
 		"move-from-renbridge-cta-label": "",
+=======
+		"move-from-ethereum-cta-label": "Déplacer des actifs d'Ethereum",
+		"move-from-polygon-cta-label": "Déplacer les ressources de polygone",
+>>>>>>> Stashed changes
 		"not-connected": "Veuillez connecter votre portefeuille",
-		"operation-cta-label-disabled": "",
-		"send-from-wallet-cta-label": ""
+		"operation-cta-label-disabled": "Portefeuille déconnecté",
+		"send-from-wallet-cta-label": "Envoyer depuis Portefeuille/Exchange"
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
