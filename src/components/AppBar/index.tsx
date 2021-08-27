@@ -26,14 +26,25 @@ export const AppBar = (props: { menuType: string }) => {
 
   // Deposits modal
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const showDepositOptionsModal = useCallback((e) => setIsDepositOptionsModalVisibility(true), []);
+  const showDepositOptionsModal = useCallback((e) => {
+    setIsDepositOptionsModalVisibility(true);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      setTimeout(() => {
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
+      }, 300);
+    }
+  }, []);
   const hideDepositOptionsModal = useCallback(() => {
     setIsDepositOptionsModalVisibility(false);
     const depositMenuItem = document.getElementById("deposits-menu-item");
     if (depositMenuItem) {
-      console.log('got deposits-menu-item');
       setTimeout(() => {
-        depositMenuItem.classList.remove('ant-menu-item-active');
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
       }, 300);
     }
   }, []);
