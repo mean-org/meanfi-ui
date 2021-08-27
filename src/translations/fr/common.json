@@ -67,16 +67,15 @@
 		}
 	},
 	"deposits": {
-		"address-share-disclaimer": "",
-		"ftx-cta-label-enabled": "",
-		"heading": "",
+		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL dans Solana.",
+		"ftx-cta-label-enabled": "Dépôt de FTX",
+		"heading": "Déposez depuis votre carte, votre compte bancaire ou depuis une autre blockchain directement dans votre portefeuille Solana.\nSélectionnez l'une des options suivantes",
 		"modal-title": "Options de dépôt",
-		"move-from-ethereum-cta-label": "",
-		"move-from-polygon-cta-label": "",
-		"move-from-renbridge-cta-label": "",
+		"move-from-ethereum-cta-label": "Déplacer des actifs d'Ethereum",
+		"move-from-polygon-cta-label": "Déplacer les ressources de polygone",
 		"not-connected": "Veuillez connecter votre portefeuille",
-		"operation-cta-label-disabled": "",
-		"send-from-wallet-cta-label": ""
+		"operation-cta-label-disabled": "Portefeuille déconnecté",
+		"send-from-wallet-cta-label": "Envoyer depuis Portefeuille/Exchange"
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
@@ -122,9 +121,9 @@
 		"invalid-publickey-message": "Clé publique non valide. Veuillez vérifier la saisie",
 		"invalid-streamid-message": "ID de transfert erroné",
 		"streamid-copied-message": "Le compte de transfert a été copié avec succès dans le clipboard",
-		"streamid-not-copied-message": "",
+		"streamid-not-copied-message": "Impossible de copier l'adresse de transfert",
 		"success-account-funded-message": "Compte financé",
-		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
+		"success-loading-stream-message": "Le transfert a été chargé avec l'ID {{streamId}}",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
 		"wallet-disconnect-message": "Déconnecté du portefeuille"
@@ -153,7 +152,7 @@
 		"stream-detail": {
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
-			"close-money-stream-menu-item": "Fermer le flux d'argent",
+			"close-money-stream-menu-item": "Fermer le transfert d'argent",
 			"heading": "Détails du transfert",
 			"label-amount": "Solde",
 			"label-funds-available-to-withdraw": "Fonds disponibles pour un retrait immédiat",
@@ -168,8 +167,8 @@
 			"label-start-date-scheduled": "Prévu",
 			"label-start-date-scheduled-otp": "Livraison programmée",
 			"label-start-date-started": "Commencé",
-			"label-total-deposits": "Montant total que vous avez déposé depuis le début du flux",
-			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du flux",
+			"label-total-deposits": "Montant total que vous avez déposé depuis le début du transfert",
+			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du transfert",
 			"no-stream": "Veuillez sélectionner ou rechercher un flux pour afficher les détails",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
