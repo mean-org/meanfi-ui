@@ -93,13 +93,13 @@ export const AppContextMenu = () => {
         </a>
       </Menu.Item>
       <Menu.Item key="5">
-        <a href={MEAN_FINANCE_DEVELOPERS_URL}>
+        <a href={MEAN_FINANCE_DEVELOPERS_URL} target="_blank" rel="noopener noreferrer">
           <IconBookOpen className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.developers')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="6">
-        <a href={MEAN_FINANCE_GITHUBORG_URL}>
+        <a href={MEAN_FINANCE_GITHUBORG_URL} target="_blank" rel="noopener noreferrer">
           <IconCodeBlock className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
         </a>
