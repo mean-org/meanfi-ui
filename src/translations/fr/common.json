@@ -92,7 +92,7 @@
 	"general": {
 		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez pas et n'échangez pas de grandes quantités de fonds.",
 		"cta-close": "Fermer",
-		"cta-dismiss": "Rejeter",
+		"cta-dismiss": "Annuler",
 		"cta-finish": "Terminer",
 		"day": "journée",
 		"hour": "heure",
@@ -192,8 +192,8 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Swapper pour (estimé)",
-		"input-label-source": "Swapper depuis",
+		"input-label-destination": "Échanger pour (estimé)",
+		"input-label-source": "Échanger depuis",
 		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
 		"token-select-destination": "Sélectionnez un jeton",
 		"token-select-source": "Sélectionnez un jeton"

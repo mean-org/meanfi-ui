@@ -192,8 +192,8 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Swap to (Estimate)",
-		"input-label-source": "Swap from",
+		"input-label-destination": "Exchange to (Estimate)",
+		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
 		"token-select-source": "Select token"
@@ -337,7 +337,7 @@
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"
 			},
-			"swap": "Swap",
+			"swap": "Exchange",
 			"transfers": "Transfers"
 		}
 	},

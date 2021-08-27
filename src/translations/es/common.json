@@ -92,7 +92,7 @@
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
 		"cta-close": "Cerrar",
-		"cta-dismiss": "Retirar",
+		"cta-dismiss": "Cancelar",
 		"cta-finish": "Terminar",
 		"day": "día",
 		"hour": "hora",
@@ -337,7 +337,7 @@
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},
-			"swap": "Canjear",
+			"swap": "Intercambiar",
 			"transfers": "Transferencias"
 		}
 	},
