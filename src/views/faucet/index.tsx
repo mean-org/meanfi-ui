@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -23,6 +23,7 @@ export const FaucetView = () => {
     refreshTokenBalance
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
   useEffect(() => {
 
@@ -42,6 +43,15 @@ export const FaucetView = () => {
     setSelectedToken,
     refreshTokenBalance
   ]);
+
+  useEffect(() => {
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [account, previousBalance, refreshTokenBalance]);
 
   const getFaucetAmount = (): number => {
     if (environment === 'staging') {

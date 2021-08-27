@@ -15,7 +15,6 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../utils/utils";
-import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from "money-streaming/lib/utils";
@@ -30,13 +29,13 @@ import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
+import { useNativeAccount } from "../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const WrapView = () => {
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
-  const { account } = useNativeAccount();
   const {
     tokenList,
     selectedToken,
@@ -54,6 +53,22 @@ export const WrapView = () => {
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
+
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+
+  useEffect(() => {
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [account, previousBalance, refreshTokenBalance]);
+
+  const getAccountBalance = (): number => {
+    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+  }
 
   // Transaction execution modal
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -365,8 +380,9 @@ export const WrapView = () => {
                       {`${
                         selectedToken && tokenBalance
                           ? getTokenAmountAndSymbolByTokenAddress(
-                              tokenBalance,
+                              getAccountBalance(),
                               WRAPPED_SOL_MINT_ADDRESS,
+                              true,
                               true
                             )
                           : "0"

@@ -285,12 +285,12 @@ const UseNativeAccount = () => {
       return;
     }
 
-    // connection.getAccountInfo(publicKey).then((acc) => {
-    //   if (acc) {
-    //     updateCache(acc);
-    //     setNativeAccount(acc);
-    //   }
-    // });
+    connection.getAccountInfo(publicKey).then((acc) => {
+      if (acc) {
+        updateCache(acc);
+        setNativeAccount(acc);
+      }
+    });
 
     const listener = connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
