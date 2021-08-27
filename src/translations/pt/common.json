@@ -103,7 +103,7 @@
 		"today": "hoje",
 		"week": "semana",
 		"year": "ano",
-		"you": ""
+		"you": "tu"
 	},
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
@@ -121,12 +121,12 @@
 		"invalid-publickey-message": "Chave pública inválida. Verifique a senha e tente novamente",
 		"invalid-streamid-message": "ID de transferência errado",
 		"streamid-copied-message": "A conta de transferência foi copiada com sucesso para el clipboard",
-		"streamid-not-copied-message": "",
-		"success-account-funded-message": "",
-		"success-loading-stream-message": "",
-		"wallet-connect-message": "",
-		"wallet-connection-event-title": "",
-		"wallet-disconnect-message": ""
+		"streamid-not-copied-message": "Não foi possível copiar o endereço de transferência",
+		"success-account-funded-message": "Conta financiada",
+		"success-loading-stream-message": "A transferência foi carregada com o ID {{streamId}}",
+		"wallet-connect-message": "Conectado à carteira {{address}}",
+		"wallet-connection-event-title": "Atualização da carteira",
+		"wallet-disconnect-message": "Desconectado da carteira"
 	},
 	"open-stream": {
 		"label-streamid-input": "Insira a id de transferência",

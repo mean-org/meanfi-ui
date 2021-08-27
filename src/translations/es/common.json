@@ -121,9 +121,9 @@
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
-		"streamid-not-copied-message": "No se pudo copiar dirección de la transmisión al portapapeles",
+		"streamid-not-copied-message": "No se pudo copiar dirección de la transferencia",
 		"success-account-funded-message": "Cuenta financiada",
-		"success-loading-stream-message": "Se cargó la transmisión con el ID {{streamId}}",
+		"success-loading-stream-message": "Se cargó la transferencia con el ID {{streamId}}",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
 		"wallet-disconnect-message": "Desconectado de la billetera"

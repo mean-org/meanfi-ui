@@ -121,9 +121,9 @@
 		"invalid-publickey-message": "Clé publique non valide. Veuillez vérifier la saisie",
 		"invalid-streamid-message": "ID de transfert erroné",
 		"streamid-copied-message": "Le compte de transfert a été copié avec succès dans le clipboard",
-		"streamid-not-copied-message": "",
+		"streamid-not-copied-message": "Impossible de copier l'adresse de transfert",
 		"success-account-funded-message": "Compte financé",
-		"success-loading-stream-message": "Le flux avec l'ID {{streamId}} a été chargé",
+		"success-loading-stream-message": "Le transfert a été chargé avec l'ID {{streamId}}",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
 		"wallet-disconnect-message": "Déconnecté du portefeuille"
