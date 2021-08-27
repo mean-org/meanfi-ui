@@ -314,13 +314,12 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
-			"about": "Sur",
 			"code": "Code",
 			"developers": "Développeurs",
 			"disconnect": "Déconnecter le portefeuille",
 			"discord": "Discord",
 			"faucet": "Faucet",
-			"how-to-use": "Comment utiliser",
+			"how-to-use": "Documents",
 			"switch-language": "La langue",
 			"switch-theme": "Basculer vers",
 			"theme-dark": "Mode Sombre",

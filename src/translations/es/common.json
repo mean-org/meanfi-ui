@@ -314,13 +314,12 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
-			"about": "Acerca de",
 			"code": "Código",
 			"developers": "Desarrolladores",
 			"disconnect": "Desconectar billetera",
 			"discord": "Discord",
 			"faucet": "Faucet",
-			"how-to-use": "Cómo utilizar",
+			"how-to-use": "Docs",
 			"switch-language": "Idioma",
 			"switch-theme": "Cambiar a",
 			"theme-dark": "Modo Oscuro",
