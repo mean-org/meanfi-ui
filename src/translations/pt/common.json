@@ -186,8 +186,8 @@
 			"title-paused-to": "Transferência pausada",
 			"title-pending-from": "Pendente de execução",
 			"title-pending-to": "Pendente de execução",
-			"title-receiving-from": "",
-			"title-sending-to": ""
+			"title-receiving-from": "Recebendo de",
+			"title-sending-to": "Enviando para"
 		}
 	},
 	"swap": {
@@ -219,7 +219,7 @@
 				"per-week": "por semana",
 				"per-year": "por ano"
 			},
-			"rate-label": "",
+			"rate-label": "Taxa e frequência",
 			"token-label": ""
 		},
 		"recipient": {
