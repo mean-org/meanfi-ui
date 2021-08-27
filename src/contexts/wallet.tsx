@@ -22,29 +22,46 @@ export const WALLET_PROVIDERS = [
     url: "https://phantom.app/",
     icon: `https://raydium.io/_nuxt/img/phantom.d9e3c61.png`,
     adapter: PhantomWalletAdapter,
+    hasExtension: true
   },
   {
     name: "Solong",
     url: "https://solongwallet.com",
     icon: `${ASSETS_URL}solong.png`,
     adapter: SolongWalletAdapter,
-  },
-  {
-    name: "Sollet",
-    url: "https://www.sollet.io",
-    icon: `${ASSETS_URL}sollet.svg`,
+    hasExtension: true
   },
   {
     name: "Solflare",
     url: "https://solflare.com/access-wallet",
     icon: `${ASSETS_URL}solflare.svg`,
+    hasExtension: false
   },
   {
     name: "MathWallet",
     url: "https://mathwallet.org",
     icon: `${ASSETS_URL}mathwallet.svg`,
+    hasExtension: true
   },
 ];
+
+const getIsProviderAvailable = (provider: any): boolean => {
+
+  if (provider.hasExtension) {
+    const isSolong = !!(window as any).solong;
+    const isPhantom = !!(window as any).solana?.isPhantom;
+    const isMathWallet = !!(window as any).solana?.isMathWallet;
+    switch (provider.name) {
+      case 'Phantom':
+        return isPhantom;
+      case 'Solong':
+        return isSolong;
+      case 'MathWallet':
+        return isMathWallet;
+    }
+  }
+  return false;
+}
 
 // export interface WalletAdapter extends EventEmitter {
 //   publicKey: PublicKey | null;
@@ -169,12 +186,17 @@ export function WalletProvider({ children = null as any }) {
         width={400}>
         <div className="wallet-providers">
           {WALLET_PROVIDERS.map((provider, index) => {
+            const isProviderAvailable = getIsProviderAvailable(provider);
             const onClick = function () {
-              if (wallet) {
-                wallet.disconnect();
+              if (isProviderAvailable) {
+                if (wallet) {
+                  wallet.disconnect();
+                }
+                setProviderUrl(provider.url);
+                setAutoConnect(true);
+              } else {
+                window.open(provider.url, '_blank', 'noreferrer');
               }
-              setProviderUrl(provider.url);
-              setAutoConnect(true);
               close();
             };
 
@@ -201,7 +223,7 @@ export function WalletProvider({ children = null as any }) {
                   textAlign: "left",
                   marginBottom: 8,
                 }}>
-                {provider.name}
+                {!provider.hasExtension ? provider.name : isProviderAvailable ? provider.name : t('wallet-selector.install-label', {provider: provider.name})}
               </Button>
             );
           })}
