@@ -152,7 +152,7 @@
 		"stream-detail": {
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
-			"close-money-stream-menu-item": "Fermer le flux d'argent",
+			"close-money-stream-menu-item": "Fermer le transfert d'argent",
 			"heading": "Détails du transfert",
 			"label-amount": "Solde",
 			"label-funds-available-to-withdraw": "Fonds disponibles pour un retrait immédiat",
@@ -167,8 +167,8 @@
 			"label-start-date-scheduled": "Prévu",
 			"label-start-date-scheduled-otp": "Livraison programmée",
 			"label-start-date-started": "Commencé",
-			"label-total-deposits": "Montant total que vous avez déposé depuis le début du flux",
-			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du flux",
+			"label-total-deposits": "Montant total que vous avez déposé depuis le début du transfert",
+			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du transfert",
 			"no-stream": "Veuillez sélectionner ou rechercher un flux pour afficher les détails",
 			"withdraw-funds-cta": "Retirer des fonds"
 		},
