@@ -342,7 +342,6 @@
 		}
 	},
 	"wallet-selector": {
-		"install-label": "Install {{provider}}",
 		"primary-action": "Select"
 	},
 	"withdraw-funds": {

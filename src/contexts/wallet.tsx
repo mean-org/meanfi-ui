@@ -223,7 +223,7 @@ export function WalletProvider({ children = null as any }) {
                   textAlign: "left",
                   marginBottom: 8,
                 }}>
-                {!provider.hasExtension ? provider.name : isProviderAvailable ? provider.name : t('wallet-selector.install-label', {provider: provider.name})}
+                {provider.name}
               </Button>
             );
           })}
