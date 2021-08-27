@@ -6,6 +6,7 @@ import { WalletProvider } from "./contexts/wallet";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
+  AccountsView,
   CustodyView,
   FaucetView,
   PayrollView,
@@ -13,6 +14,7 @@ import {
   TransfersView,
   WrapView
 } from "./views";
+import { environment } from "./environments/environment";
 
 export function Routes() {
   return (
@@ -27,8 +29,9 @@ export function Routes() {
                     <Switch>
                       {/* <Route path="/" component={() => <HomeView />} /> */}
                       <Route exact path="/">
-                        <Redirect to="/swap" />
+                        <Redirect to={environment === 'development' ? '/accounts' : '/swap'} />
                       </Route>
+                      <Route exact path="/accounts" children={<AccountsView />} />
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />

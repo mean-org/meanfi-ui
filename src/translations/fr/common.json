@@ -326,6 +326,7 @@
 			"theme-light": "Mode lumière"
 		},
 		"main-menu": {
+			"accounts": "Comptes",
 			"charts": "Graphiques",
 			"deposits": "Dépôts",
 			"services": {
