@@ -227,18 +227,18 @@
 			"label": "Destinatario",
 			"placeholder": "Dirección pública o ENS",
 			"qr-scan-title": "Obtener dirección desde código QR",
-			"recipient-is-own-account": "No se puede enviar a su propia cuenta"
+			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},
 		"send-amount": {
 			"label": "Enviar",
-			"label-right": "Balance"
+			"label-right": "Saldo"
 		},
 		"send-date": {
 			"label": "Enviar en",
 			"placeholder": "Elige una fecha"
 		},
 		"status": {
-			"cta-view-stream": "Ver Flujo de dinero",
+			"cta-view-stream": "Ver Transferencia de dinero",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completada",

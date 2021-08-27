@@ -221,25 +221,25 @@
 				"per-year": "por ano"
 			},
 			"rate-label": "Taxa e frequência",
-			"token-label": ""
+			"token-label": "O destinatário recebe"
 		},
 		"recipient": {
-			"label": "",
-			"placeholder": "",
-			"qr-scan-title": "",
-			"recipient-is-own-account": ""
+			"label": "Destinatário",
+			"placeholder": "Endereço público ou ENS",
+			"qr-scan-title": "Obter endereço do código QR",
+			"recipient-is-own-account": "Não é possível enviar para a mesma conta"
 		},
 		"send-amount": {
-			"label": "",
-			"label-right": ""
+			"label": "Mandar",
+			"label-right": "Saldo"
 		},
 		"send-date": {
-			"label": "",
-			"placeholder": ""
+			"label": "Enviar",
+			"placeholder": "Escolha uma data"
 		},
 		"status": {
-			"cta-view-stream": "",
-			"instructions": "",
+			"cta-view-stream": "Veja Transferência de Dinheiro",
+			"instructions": "Confirme esta transação em sua carteira",
 			"modal-title-executing-transaction": "",
 			"modal-title-transaction-completed": "",
 			"stream-started-post": "",
