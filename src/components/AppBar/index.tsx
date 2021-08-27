@@ -26,8 +26,17 @@ export const AppBar = (props: { menuType: string }) => {
 
   // Deposits modal
   const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const showDepositOptionsModal = useCallback(() => setIsDepositOptionsModalVisibility(true), []);
-  const hideDepositOptionsModal = useCallback(() => setIsDepositOptionsModalVisibility(false), []);
+  const showDepositOptionsModal = useCallback((e) => setIsDepositOptionsModalVisibility(true), []);
+  const hideDepositOptionsModal = useCallback(() => {
+    setIsDepositOptionsModalVisibility(false);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      console.log('got deposits-menu-item');
+      setTimeout(() => {
+        depositMenuItem.classList.remove('ant-menu-item-active');
+      }, 300);
+    }
+  }, []);
 
   const onGoToTransfersClick = () => {
     refreshStreamList(true);
@@ -84,7 +93,7 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
-      <Menu.Item key="deposits" onClick={showDepositOptionsModal}>
+      <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
@@ -144,7 +153,10 @@ export const AppBar = (props: { menuType: string }) => {
             <AppContextMenu />
           </div>
         </div>
-        <DepositOptions isVisible={isDepositOptionsModalVisible && props.menuType === 'desktop'} key="deposit-modal1" handleClose={hideDepositOptionsModal} />
+        <DepositOptions
+          isVisible={isDepositOptionsModalVisible && props.menuType === 'desktop'}
+          key="deposit-modal1"
+          handleClose={hideDepositOptionsModal} />
       </>
     );
   } else {
@@ -201,7 +213,10 @@ export const AppBar = (props: { menuType: string }) => {
             </li>
           </ul>
         </div>
-        <DepositOptions isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'} key="deposit-modal2" handleClose={hideDepositOptionsModal} />
+        <DepositOptions
+          isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'}
+          key="deposit-modal2"
+          handleClose={hideDepositOptionsModal} />
       </div>
     );
   }
