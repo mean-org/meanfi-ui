@@ -12,7 +12,6 @@ import {
   SwapView,
   TransfersView,
   WrapView
-  
 } from "./views";
 
 export function Routes() {

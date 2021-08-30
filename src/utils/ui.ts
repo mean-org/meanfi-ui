@@ -319,15 +319,15 @@ export const isToday = (someDate: string): boolean => {
       inputDate.getFullYear() === today.getFullYear()
 }
 
-export const getTxFeeAmount = (fees: TransactionFees, amount: any): number => {
+export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
     let inputAmount = amount ? parseFloat(amount) : 0;
     if (fees) {
       if (fees.mspPercentFee) {
         fee = percentage(fees.mspPercentFee, inputAmount);
       } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee;
+        fee = fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
       }
     }
     return fee;
-  };
+};

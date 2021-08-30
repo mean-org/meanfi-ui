@@ -13,6 +13,7 @@ import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
 
 export const AppConfig = new AppConfigService(process.env.REACT_APP_ENV);
+console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
 console.log(`%cProgramId:`, 'color:brown', AppConfig.getConfig().streamProgramAddress);
 

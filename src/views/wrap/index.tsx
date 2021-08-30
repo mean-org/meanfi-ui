@@ -15,7 +15,6 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../utils/utils";
-import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from "money-streaming/lib/utils";
@@ -30,13 +29,13 @@ import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
+import { useNativeAccount } from "../../contexts/accounts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const WrapView = () => {
   const connection = useConnection();
   const { publicKey, wallet } = useWallet();
-  const { account } = useNativeAccount();
   const {
     tokenList,
     selectedToken,
@@ -53,6 +52,29 @@ export const WrapView = () => {
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
+
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
+
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [
+    account,
+    previousBalance,
+    refreshTokenBalance
+  ]);
 
   // Transaction execution modal
   const [transactionCancelled, setTransactionCancelled] = useState(false);
@@ -87,10 +109,6 @@ export const WrapView = () => {
     }
   }, [connection, wrapFees]);
 
-  const getAccountBalance = (): number => {
-    return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-  };
-
   const onTransactionStart = async () => {
     let transaction: Transaction;
     let signature: string;
@@ -108,7 +126,7 @@ export const WrapView = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (getAccountBalance() < getComputedFees(wrapFees)) {
+        if (nativeBalance < wrapFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure,
@@ -291,8 +309,7 @@ export const WrapView = () => {
   const isValidInput = (): boolean => {
     return wrapAmount &&
       parseFloat(wrapAmount) > (wrapFees?.blockchainFee || 0) &&
-      parseFloat(wrapAmount) <=
-        getAccountBalance() - (wrapFees?.blockchainFee || 0)
+      parseFloat(wrapAmount) <= nativeBalance - (wrapFees?.blockchainFee || 0)
       ? true
       : false;
   };
@@ -366,11 +383,11 @@ export const WrapView = () => {
                   <span className="field-label-right">
                     <span>{t("faucet.current-sol-balance")}:</span>
                     <span className="balance-amount">
-                      {`${
-                        selectedToken && getAccountBalance()
+                      {`${nativeBalance
                           ? getTokenAmountAndSymbolByTokenAddress(
-                              getAccountBalance(),
+                              nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
+                              true,
                               true
                             )
                           : "0"
@@ -399,22 +416,20 @@ export const WrapView = () => {
                   </span>
                   <div className="addon-right">
                     <div className="token-group">
-                      {selectedToken && (
-                        <div className="token-max simplelink"
-                          onClick={() => {
-                            setValue(
-                              getTokenAmountAndSymbolByTokenAddress(
-                                getAccountBalance() - wrapFees.blockchainFee,
-                                WRAPPED_SOL_MINT_ADDRESS,
-                                true,
-                                true
-                              )
-                            );
-                          }}
-                        >
-                          MAX
-                        </div>
-                      )}
+                      <div className="token-max simplelink"
+                        onClick={() => {
+                          setValue(
+                            getTokenAmountAndSymbolByTokenAddress(
+                              nativeBalance - wrapFees.blockchainFee,
+                              WRAPPED_SOL_MINT_ADDRESS,
+                              true,
+                              true
+                            )
+                          );
+                        }}
+                      >
+                        MAX
+                      </div>
                       {selectedToken && (
                         <div className="token-selector p-0">
                           <div className="token-icon">
@@ -442,8 +457,7 @@ export const WrapView = () => {
                 </div>
                 <div className="transaction-field-row">
                   <span className="field-label-left">
-                    {parseFloat(wrapAmount) >
-                    getAccountBalance() - (wrapFees?.blockchainFee || 0) ? (
+                    {parseFloat(wrapAmount) > nativeBalance - (wrapFees?.blockchainFee || 0) ? (
                       <span className="fg-red">
                         {t("transactions.validation.amount-sol-high")}
                       </span>
@@ -472,7 +486,7 @@ export const WrapView = () => {
                     <p className="localdev-label">
                       balance - fee:{" "}
                       {getTokenAmountAndSymbolByTokenAddress(
-                        getAccountBalance() - wrapFees.blockchainFee,
+                        nativeBalance - wrapFees.blockchainFee,
                         WRAPPED_SOL_MINT_ADDRESS
                       )}
                     </p>
@@ -578,7 +592,7 @@ export const WrapView = () => {
                         <h4 className="mb-4">
                           {t("transactions.status.tx-start-failure", {
                             accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                              getAccountBalance(),
+                              nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
                               true
                             )} SOL`,

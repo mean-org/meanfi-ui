@@ -15,6 +15,7 @@ import { notify } from "../utils/notifications";
 import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
+import { Connection } from "@solana/web3.js";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -316,7 +317,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!loadingStreamActivity) {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
+      const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
+      listStreamActivity(newConnection, getEndpointByRuntimeEnv(), streamPublicKey)
         .then(value => {
           console.log('activity:', value);
           setStreamActivity(value);
@@ -330,7 +332,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
   }, [
-    connection,
     connected,
     loadingStreamActivity
   ]);

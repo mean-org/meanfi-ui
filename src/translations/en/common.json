@@ -15,6 +15,7 @@
 		"modal-title": "Add funds"
 	},
 	"close-stream": {
+		"available-funds": "Available funds",
 		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
@@ -73,6 +74,8 @@
 		"modal-title": "Deposit options",
 		"move-from-ethereum-cta-label": "Move assets from Ethereum",
 		"move-from-polygon-cta-label": "Move assets from Polygon",
+		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
+		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
 		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
 	},
@@ -190,8 +193,8 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Swap to (Estimate)",
-		"input-label-source": "Swap from",
+		"input-label-destination": "Exchange to (Estimate)",
+		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
 		"token-select-source": "Select token"
@@ -261,8 +264,8 @@
 			"tx-sign": "Waiting for confirmation",
 			"tx-start": "Collecting data",
 			"tx-start-failure": "Your account balance {{accountBalance}} is lower than the fee amount {{feeAmount}} required to pay for network fees",
-			"tx-swap-operation": "Swapping {{fromAmount}} to {{toAmount}}",
-			"tx-swap-operation-success": "Swap operation completed successfully",
+			"tx-swap-operation": "Exchanging {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Exchange operation completed successfully",
 			"tx-wait": "Working, please wait",
 			"tx-withdraw-operation": "Withdraw",
 			"tx-withdraw-operation-success": "Funds withdrawn successfully",
@@ -312,13 +315,12 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
-			"about": "About",
 			"code": "Code",
 			"developers": "Developers",
 			"disconnect": "Disconnect wallet",
 			"discord": "Discord",
 			"faucet": "Faucet",
-			"how-to-use": "How to use",
+			"how-to-use": "Docs",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
 			"theme-dark": "Dark Mode",
@@ -332,9 +334,10 @@
 				"faucet": "Faucet",
 				"payroll": "Payroll",
 				"submenu-title": "Services",
-				"wallet-guide": "Wallet Guide"
+				"wallet-guide": "Wallet Guide",
+				"wrap": "Wrap"
 			},
-			"swap": "Swap",
+			"swap": "Exchange",
 			"transfers": "Transfers"
 		}
 	},

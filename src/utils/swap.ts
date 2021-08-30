@@ -6,6 +6,7 @@ import { findATokenAddress } from "money-streaming/lib/utils";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "./ids";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
+import { PublicKeys } from "money-streaming/lib/types";
 
 export const swap = async(
   client: Swap,
@@ -81,7 +82,7 @@ export const swapRequest = async(
     wallet: client.program.provider.wallet    
   };
   
-  const amount = new BN(fromAmount * 10 ** fromMintInfo.decimals);
+  const amount = new BN((fromAmount - fees) * 10 ** fromMintInfo.decimals);
   const swapFees = new BN(fees * 10 ** fromMintInfo.decimals);
   const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
   const isWrap = fromMint.equals(NATIVE_SOL_MINT) && toMint.equals(WRAPPED_SOL_MINT);
@@ -92,7 +93,7 @@ export const swapRequest = async(
   const quoteWallet = await findATokenAddress(wallet.publicKey, quoteMint);
   const quoteWalletInfo = await connection.getAccountInfo(quoteWallet);
 
-  const fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
+  let fromWalletAddr = fromMint.equals(NATIVE_SOL_MINT)
     ? wrappedAccount.publicKey
     : fromWallet;
       
@@ -104,7 +105,7 @@ export const swapRequest = async(
     ? quoteWallet
     : undefined;
 
-  let swapTxs: SendTxRequest = { 
+  let request: SendTxRequest = { 
     tx: new Transaction(), 
     signers: new Array<Signer>() 
   };
@@ -114,7 +115,7 @@ export const swapRequest = async(
     connection,
     wallet,
     wrappedAccount,
-    amount,
+    amount.add(swapFees),
     isFromMint,
     isWrap
   );
@@ -127,13 +128,13 @@ export const swapRequest = async(
   );
 
   if (isWrap) {
-    swapTxs.tx.add(wrapTx);
-    swapTxs.signers.push(...wrapSigners)
+    request.tx.add(wrapTx);
+    request.signers.push(...wrapSigners);
   } else if (isUnwrap) {
-    swapTxs.tx.add(unwrapTx);
-    swapTxs.signers.push(...unwrapSigners);
+    request.tx.add(unwrapTx);
+    request.signers.push(...unwrapSigners);
   } else {
-    swapTxs = await swapTxRequest(
+    let swapTxs = await swapTxRequest(
       client,
       fromMint,
       fromMintInfo,
@@ -148,7 +149,6 @@ export const swapRequest = async(
       fromWalletAddr,
       toWalletAddr,
       openOrders,
-      swapFees,
       slippage,
       fair,
       close,
@@ -156,31 +156,61 @@ export const swapRequest = async(
       strict
     );
 
+    const tx = new Transaction();
+
     if (isSol) {
-      swapTxs.tx.add(
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          wrappedAccount.publicKey,
-          wallet.publicKey,
-          wallet.publicKey,
-          []
-        )
-      );
-      const tx = new Transaction().add(wrapTx, swapTxs.tx);  
-      swapTxs.tx = tx;
-      swapTxs.signers.push(...wrapSigners);
+      tx.add(wrapTx);
+      request.signers.push(...wrapSigners);
     }
+
+    tx.add(swapTxs.tx);
+    request.tx = tx;
+  }
+   
+  if (isWrap) {
+    fromWalletAddr = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      WRAPPED_SOL_MINT,
+      wallet.publicKey
+    );
   }
 
-  swapTxs.tx.feePayer = wallet.publicKey;
+  // meanfi fees tx 
+  const mint = fromMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromMint;
+  const { tx: feesTxs, signers: feesSigners } = await feesTxRequest(
+    connection,
+    wallet.publicKey,
+    fromWalletAddr,
+    mint,
+    swapFees
+  );
+
+  request.tx.add(feesTxs);
+  request.signers.push(...feesSigners);
+
+  // Finally close the temp wrapped acount if there was a temp wrap Ix
+  if (isSol) {
+    request.tx.add(
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedAccount.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
+    );
+  }
+
+  request.tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash(client.program.provider.connection.commitment);
-  swapTxs.tx.recentBlockhash = blockhash;
+  request.tx.recentBlockhash = blockhash;
 
-  if (swapTxs.signers.length) {
-    swapTxs.tx.partialSign(...swapTxs.signers as Signer[]);
+  if (request.signers.length) {
+    request.tx.partialSign(...request.signers as Signer[]);
   }
 
-  return swapTxs;
+  return request;
 }
 
 export const wrap = async (
@@ -245,7 +275,6 @@ export const wrapRequest = async (
     );
 
     const atokenAccountInfo = await connection.getAccountInfo(atokenKey);
-    console.log('atokenAccountInfo => ', atokenAccountInfo);
 
     if (!atokenAccountInfo) {
       tx.add(
@@ -268,13 +297,6 @@ export const wrapRequest = async (
         wallet.publicKey,
         [],
         amount.toNumber()
-      ),
-      Token.createCloseAccountInstruction(
-        TOKEN_PROGRAM_ID,
-        account.publicKey,
-        wallet.publicKey,
-        wallet.publicKey,
-        []
       )
     );
   }
@@ -348,7 +370,6 @@ const swapTxRequest = async (
   fromWallet: PublicKey | undefined,
   toWallet: PublicKey | undefined,
   openOrders: Map<string, OpenOrders[]>,
-  fees: BN,
   slippage: number,
   fair: number,
   close: boolean,
@@ -361,7 +382,6 @@ const swapTxRequest = async (
     fromMint = WRAPPED_SOL_MINT;
   }
 
-  const fromAmount = amount.sub(fees);
   const minExchangeRate = {
     rate: new BN(10 ** toMintInfo.decimals / fair)
       .muln(100 - slippage)
@@ -378,12 +398,12 @@ const swapTxRequest = async (
   const toOpenOrders = toMarket
     ? openOrders.get(toMarket?.address.toBase58())
     : undefined;
-  
+      
   const swapParams = {
     fromMint,
     toMint,
     quoteMint,
-    amount: fromAmount,
+    amount,
     minExchangeRate,
     referral,
     fromMarket: fromMarket as Market,
@@ -397,4 +417,52 @@ const swapTxRequest = async (
   };
 
   return (await client.swapTxs(swapParams))[0];
+}
+
+const feesTxRequest = async (
+  connection: Connection,
+  payer: PublicKey,
+  from: PublicKey,
+  mint: PublicKey,
+  amount: BN  
+
+): Promise<SendTxRequest> => {
+
+  let tx = new Transaction();
+  const signers = new Array<Signer>();
+  const mspOpsKey = PublicKeys.MSP_OPS_KEY['mainnet-beta'];
+  const mspOpsTokenKey = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    mspOpsKey
+  );
+
+  const mspOpsTokenAccountInfo = await connection.getAccountInfo(mspOpsTokenKey);
+
+  if (!mspOpsTokenAccountInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        mspOpsTokenKey,
+        mspOpsKey,
+        payer
+      )
+    );
+  }
+
+  tx.add(
+    Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      from,
+      mspOpsTokenKey,
+      payer,
+      [],
+      amount.toNumber()
+    )
+  )
+
+  return { tx, signers };
 }

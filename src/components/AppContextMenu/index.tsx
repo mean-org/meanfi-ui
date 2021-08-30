@@ -4,7 +4,6 @@ import {
   IconBookOpen,
   IconChat,
   IconCodeBlock,
-  IconInfoCircle,
   IconLogout,
   IconMoon,
   IconSettings,
@@ -13,7 +12,7 @@ import {
 import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_ABOUT_URL, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_HOWTOS_URL } from "../../constants";
+import { MEAN_FINANCE_DEVELOPERS_URL, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_GITHUBORG_URL, MEAN_FINANCE_DOCS_URL } from "../../constants";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 
@@ -87,26 +86,20 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}</span>
       </Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="3">
-        <a href={MEAN_FINANCE_ABOUT_URL} target="_blank" rel="noopener noreferrer">
-          <IconInfoCircle className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.about')}</span>
-        </a>
-      </Menu.Item>
       <Menu.Item key="4">
-        <a href={MEAN_FINANCE_HOWTOS_URL} target="_blank" rel="noopener noreferrer">
+        <a href={MEAN_FINANCE_DOCS_URL} target="_blank" rel="noopener noreferrer">
           <IconUniversity className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="5">
-        <a href="https://www.someplace.com">
+        <a href={MEAN_FINANCE_DEVELOPERS_URL} target="_blank" rel="noopener noreferrer">
           <IconBookOpen className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.developers')}</span>
         </a>
       </Menu.Item>
       <Menu.Item key="6">
-        <a href="https://www.someplace.com">
+        <a href={MEAN_FINANCE_GITHUBORG_URL} target="_blank" rel="noopener noreferrer">
           <IconCodeBlock className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
         </a>

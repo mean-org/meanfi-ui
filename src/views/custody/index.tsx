@@ -1,9 +1,14 @@
-import { CustomerServiceOutlined, HddOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
+import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
 import { Avatar, Button, Col, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
+import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from "../../constants";
 import { environment } from "../../environments/environment";
 
 export const CustodyView = () => {
+
+  const onApplyToMeanfiCustody = () => {
+    window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank','noreferrer');
+  }
 
   return (
     <div className="solid-bg">
@@ -16,7 +21,7 @@ export const CustodyView = () => {
           type="primary"
           shape="round"
           size="large"
-          onClick={() => {}}>
+          onClick={() => onApplyToMeanfiCustody()}>
           Apply to MeanFi Custody
         </Button>
       </div>
@@ -70,7 +75,7 @@ export const CustodyView = () => {
         </div>
       </section>
 
-      <section className="flex-center contrast-section min-section-height">
+      <section className="content flex-center contrast-section min-section-height">
         <div className="container">
           <div className="highlight-box text-center">
             <h2 className="highlight-title">WHY MEANFI CUSTODY</h2>
@@ -81,18 +86,24 @@ export const CustodyView = () => {
         </div>
       </section>
 
-      {environment === 'development' && (
-        <section className="content flex-center min-section-height">
-          <div className="container">
-            <div className="highlight-box text-center">
-              <h2 className="highlight-title">Supported Assets</h2>
-              <div className="text-container">
-                <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Vitae libero nemo quo mollitia! Temporibus officia corrupti laboriosam nulla pariatur? Qui facilis tempore optio neque quam provident. Adipisci officiis, voluptas illum quod, sapiente eligendi maxime vel vitae architecto dolorum tempora eaque dolor? Incidunt sit facere ad, quos ducimus dolorum nemo magni libero impedit, hic similique possimus soluta ex deserunt quaerat inventore temporibus ullam ea, doloremque veritatis eius? Numquam dolores a saepe ea nulla vitae totam delectus ipsum itaque provident cumque, sunt possimus deserunt quis fuga rerum animi fugit voluptate recusandae veniam minima facilis quas labore.</p>
-              </div>
+      <section className="content flex-center min-section-height">
+        <div className="container">
+          <div className="highlight-box text-center">
+            <h2 className="highlight-title">Supported Assets</h2>
+            <div className="text-container">
+              <p className="highlight-text">MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch.</p>
+              <Button
+                className="main-cta"
+                type="primary"
+                shape="round"
+                size="large"
+                onClick={() => onApplyToMeanfiCustody()}>
+                Apply to MeanFi Custody
+              </Button>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
 {/* 
       <section className="content">

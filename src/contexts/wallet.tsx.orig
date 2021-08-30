@@ -42,8 +42,11 @@ export const WALLET_PROVIDERS = [
     name: "MathWallet",
     url: "https://mathwallet.org",
     icon: `${ASSETS_URL}mathwallet.svg`,
-    adapter: MathWalletWalletAdapter,
+<<<<<<< HEAD
+    adapter: MathWalletWalletAdapter
+=======
     hasExtension: true
+>>>>>>> develop
   },
 ];
 
