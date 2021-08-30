@@ -21,7 +21,7 @@ export const MEAN_FINANCE_GITHUBORG_URL = 'https://github.com/mean-code';
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/GMMS3whn';
 export const MEAN_FINANCE_WALLET_GUIDE_URL = 'https://bearemet.gitbook.io/meanfi/wallet-guide';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
-export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1&var-meanfi_env=meanfi-dev&refresh=5m&kiosk=tv';
+export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 
 export const LANGUAGES: Language[] = [
     {
