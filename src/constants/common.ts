@@ -26,18 +26,22 @@ export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi
 export const LANGUAGES: Language[] = [
     {
         code: 'en',
+        name: 'English',
         flag: 'assets/flags/us.svg'
     },
     {
         code: 'es',
+        name: 'Español',
         flag: 'assets/flags/es.svg'
     },
     {
         code: 'fr',
+        name: 'Français',
         flag: 'assets/flags/fr.svg'
     },
     {
         code: 'pt',
+        name: 'Português',
         flag: 'assets/flags/br.svg'
     },
 ];

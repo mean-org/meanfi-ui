@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Divider, Modal, Radio, Space } from "antd";
+import { Button, Divider, Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../../constants";
 import "./style.less";
@@ -13,19 +13,20 @@ export const LanguageSelector = (props: {
   const [selectedLanguage] = useState<string>(i18n.language);
   const [language, setLanguage] = useState<string>("");
 
-  const onChange = (e: any) => {
-    setLanguage(e.target.value);
-  };
+  const changeLanguageByCode = (code: string) => {
+    if (language === code) {
+      props.handleClose();
+    } else {
+      setLanguage(code);
+      props.handleOk(code);
+    }
+  }
 
   useEffect(() => {
     if (!language && selectedLanguage) {
       setLanguage(getLanguageCode(selectedLanguage));
     }
   }, [language, selectedLanguage]);
-
-  const onAcceptLanguageSelection = () => {
-    props.handleOk(language);
-  };
 
   const getLanguageCode = (fullCode: string): string => {
     if (!fullCode) {
@@ -50,29 +51,22 @@ export const LanguageSelector = (props: {
       onCancel={props.handleClose}
       width={300}>
       <div className="language-select">
-        <Radio.Group onChange={onChange} value={language}>
-          <Space direction="vertical">
-            {LANGUAGES && LANGUAGES.map(item => {
-                return (
-                    <Radio key={item.code} value={item.code}>
-                      <span className="flag-wrapper">
-                        <img src={item.flag} alt={getLanguageCode(item.code)} />
-                      </span>
-                      {t(`ui-language.${getLanguageCode(item.code)}`)}
-                    </Radio>
-                );
-            })}
-          </Space>
-        </Radio.Group>
-        <Divider plain></Divider>
-        <div className="text-center mt-3">
-            <Button
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onAcceptLanguageSelection}>
-            {t("language-selector.primary-action")}
-            </Button>
+        <div className="item-list-body medium">
+          {LANGUAGES && LANGUAGES.map(item => {
+            return (
+              <div
+                key={item.code}
+                className={item.code === language ? 'item-list-row selected' : 'item-list-row simplelink'}
+                onClick={() => changeLanguageByCode(item.code)}>
+                <div className="std-table-cell first-cell">
+                  <span className="flag-wrapper">
+                    <img src={item.flag} alt={getLanguageCode(item.code)} />
+                  </span>
+                </div>
+                <div className="std-table-cell responsive-cell">{item.name}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </Modal>
