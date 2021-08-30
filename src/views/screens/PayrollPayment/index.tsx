@@ -10,7 +10,6 @@ import { useConnection, useConnectionConfig } from "../../../contexts/connection
 import { IconCaretDown, IconSort } from "../../../Icons";
 import {
   formatAmount,
-  getComputedFees,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../../utils/utils";
@@ -27,7 +26,6 @@ import {
   getRateIntervalInSeconds,
   getTimesheetRequirementOptionLabel,
   getTransactionOperationDescription,
-  getTxFeeAmount,
   isToday,
   PaymentRateTypeOption,
   percentage
@@ -36,7 +34,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
@@ -92,15 +90,26 @@ export const PayrollPayment = () => {
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
     if (account?.lamports !== previousBalance) {
       // Refresh token balance
       refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
       // Update previous balance
       setPreviousBalance(account.lamports);
     }
-  }, [account, previousBalance, refreshTokenBalance]);
+  }, [
+    account,
+    previousBalance,
+    refreshTokenBalance
+  ]);
 
   const [payrollFees, setPayrollFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -595,11 +604,9 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getTxFeeAmount(payrollFees, fromCoinAmount);
-        console.log('myApplicableFees:', myApplicableFees);
-        console.log('Amount required:', amount + myApplicableFees);
-        if (tokenBalance < (amount + myApplicableFees)) {
+        console.log('nativeBalance:', nativeBalance);
+        console.log('blockchainFee:', payrollFees.blockchainFee);
+        if (nativeBalance < payrollFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1153,8 +1160,8 @@ export const PayrollPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(tokenBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getComputedFees(payrollFees), WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>
               ) : (
