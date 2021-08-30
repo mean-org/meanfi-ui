@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
@@ -35,7 +36,7 @@ import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
 import { AppStateContext } from "../../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useNativeAccount } from "../../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
@@ -115,7 +116,7 @@ export const RepeatingPayment = () => {
 
   const getFeeAmount = (amount: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (repeatingPaymentFees) {
       if (repeatingPaymentFees.mspPercentFee) {
         fee = percentage(repeatingPaymentFees.mspPercentFee, inputAmount);
@@ -191,13 +192,13 @@ export const RepeatingPayment = () => {
     setRecipientNote(e.target.value);
   }
 
-  const handleRecipientAddressFocusIn = (e: any) => {
+  const handleRecipientAddressFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
   }
 
-  const handleRecipientAddressFocusOut = (e: any) => {
+  const handleRecipientAddressFocusOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -225,8 +226,6 @@ export const RepeatingPayment = () => {
         setDestinationToken(selectedToken);
       }
     }
-
-    return () => {};
   }, [
     tokenList,
     selectedToken,
@@ -259,12 +258,12 @@ export const RepeatingPayment = () => {
 
   useEffect(() => {
     const resizeListener = () => {
-      var NUM_CHARS = 6;
-      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (var i = 0; i < ellipsisElements.length; ++i){
-        var e = ellipsisElements[i] as HTMLElement;
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
-          var text = e.textContent;
+          const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
       }
@@ -543,7 +542,7 @@ export const RepeatingPayment = () => {
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
-        let fromParsedDate = new Date(parsedDate);
+        const fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         console.log('Local time added to parsed date!');
@@ -631,7 +630,7 @@ export const RepeatingPayment = () => {
           signedTransactions = signed;
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -690,7 +689,7 @@ export const RepeatingPayment = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure

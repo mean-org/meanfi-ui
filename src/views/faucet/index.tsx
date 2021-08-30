@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -35,8 +36,6 @@ export const FaucetView = () => {
         setSelectedToken(myToken as TokenInfo);
       }
     }
-
-    return () => {};
   }, [
     tokenList,
     selectedToken,

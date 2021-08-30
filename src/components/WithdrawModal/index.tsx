@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import {
@@ -74,7 +75,7 @@ export const WithdrawModal = (props: {
 
   const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (fees) {
       if (fees.mspPercentFee) {
         fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;

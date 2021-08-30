@@ -86,8 +86,6 @@ export const AppLayout = React.memo((props: any) => {
       setChain(connectionConfig.env);
       console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
     }
-
-    return () => {};
   }, [
     previousChain,
     connectionConfig
@@ -134,8 +132,6 @@ export const AppLayout = React.memo((props: any) => {
         });
       }
     }
-
-    return () => {};
   }, [
     location,
     connection,

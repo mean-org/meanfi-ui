@@ -1,8 +1,8 @@
+import React from 'react';
 import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
 import { Avatar, Button, Col, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from "../../constants";
-import { environment } from "../../environments/environment";
 
 export const CustodyView = () => {
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { IconCaretDown } from "../../Icons";
@@ -9,7 +10,7 @@ export const CoinInput = (props: {
   tokenBalance: number;
   tokenAmount: string;
   onSelectToken: any;
-  onInputChange: any;
+  onInputChange?: any;
   onMaxAmount: any;
   translationId: string;
   readonly?: boolean;

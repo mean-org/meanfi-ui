@@ -1,4 +1,5 @@
-import { Modal, Tabs, Button } from "antd";
+import React from 'react';
+import { Modal, Button } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
 import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";

@@ -1,4 +1,5 @@
-import { useTranslation } from "react-i18next";
+import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export const PreFooter = () => {
   const { t } = useTranslation('common');
@@ -6,7 +7,7 @@ export const PreFooter = () => {
   return (
     <div className="pre-footer-notice">
       <div className="footer-left">
-        {t(`general.app-background-disclaimer`)}
+        {t('general.app-background-disclaimer')}
       </div>
       <div className="footer-right">
         Powered by the Solana Network

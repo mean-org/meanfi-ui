@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";

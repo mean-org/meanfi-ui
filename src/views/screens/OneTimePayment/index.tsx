@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
@@ -101,7 +102,7 @@ export const OneTimePayment = () => {
 
   const getFeeAmount = (amount: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (otpFees) {
       if (otpFees.mspPercentFee) {
         fee = percentage(otpFees.mspPercentFee, inputAmount);
@@ -176,13 +177,13 @@ export const OneTimePayment = () => {
     setRecipientNote(e.target.value);
   }
 
-  const handleRecipientAddressFocusIn = (e: any) => {
+  const handleRecipientAddressFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
   }
 
-  const handleRecipientAddressFocusOut = (e: any) => {
+  const handleRecipientAddressFocusOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -214,12 +215,12 @@ export const OneTimePayment = () => {
 
   useEffect(() => {
     const resizeListener = () => {
-      var NUM_CHARS = 4;
-      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (var i = 0; i < ellipsisElements.length; ++i){
-        var e = ellipsisElements[i] as HTMLElement;
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
-          var text = e.textContent;
+          const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
       }
@@ -309,7 +310,7 @@ export const OneTimePayment = () => {
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         console.log('Parsed paymentStartDate:', parsedDate);
-        let fromParsedDate = new Date(parsedDate);
+        const fromParsedDate = new Date(parsedDate);
         if (fromParsedDate.getDate() === now.getDate()) {
           setIsScheduledPayment(false);
         } else {
@@ -396,7 +397,7 @@ export const OneTimePayment = () => {
           signedTransactions = signed;
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -455,7 +456,7 @@ export const OneTimePayment = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure

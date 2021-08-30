@@ -1,5 +1,4 @@
-import { Connection, PublicKey, ConfirmedTransaction, TransactionInstruction } from "@solana/web3.js";
-import { MEMO_PROGRAM_ID } from "./ids";
+import { Connection, PublicKey, ConfirmedTransaction } from "@solana/web3.js";
 
 export class TransactionWithSignature {
     constructor(
@@ -13,6 +12,7 @@ export async function getTransactions(
     address: PublicKey
 ): Promise<Array<TransactionWithSignature>> {
     const transSignatures = await connection.getConfirmedSignaturesForAddress2(address);
+    console.log('transSignatures:', transSignatures);
 
     const transactions = new Array<TransactionWithSignature>();
     for (let i = 0; i < transSignatures.length; i++) {
@@ -29,12 +29,4 @@ export async function getTransactions(
         }
     }
     return transactions;
-}
-
-export function memoInstruction(memo: string) {
-    return new TransactionInstruction({
-        keys: [],
-        data: Buffer.from(memo, 'utf-8'),
-        programId: MEMO_PROGRAM_ID
-    })
 }

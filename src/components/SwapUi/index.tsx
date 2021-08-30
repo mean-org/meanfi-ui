@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
@@ -181,11 +182,8 @@ export const SwapUi = () => {
     } else {
       setFromMintTokenBalance(0);
     }
-    
+
     setFetchingFromTokenBalance(false);
-
-    return () => { }
-
   }, [
     publicKey,
     accounts,
@@ -207,9 +205,6 @@ export const SwapUi = () => {
     }
 
     setFetchingToTokenBalance(false);
-
-    return () => { }
-
   }, [
     publicKey,
     accounts,
@@ -237,9 +232,6 @@ export const SwapUi = () => {
       setToMintTokenBalance(0);
       setPreviousWalletConnectState(false);
     }
-
-    return () => { };
-
   }, [
     connected, 
     publicKey, 
@@ -268,9 +260,6 @@ export const SwapUi = () => {
         console.log("swapFees:", values);
       });
     }
-
-    return () => { }
-
   }, [
     connection,
     swapFees
@@ -301,9 +290,6 @@ export const SwapUi = () => {
       const toValueFormatted = formatAmount(toValue, toDecimals);
       setToAmount(toValueFormatted);
     }
-
-    return () => { }
-
   }, [
     fair,
     fromAmount,
@@ -740,7 +726,7 @@ export const SwapUi = () => {
             signedTransaction = signed;
             return true;
           })
-          .catch((error) => {
+          .catch(() => {
             console.log("Signing transaction failed!");
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
@@ -773,7 +759,7 @@ export const SwapUi = () => {
             signature = sig;
             return true;
           })
-          .catch(error => {
+          .catch(() => {
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -800,7 +786,7 @@ export const SwapUi = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -841,7 +827,7 @@ export const SwapUi = () => {
     }
   };
 
-  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+  const infoRow = (caption: string, value: string, separator = '≈') => {
     return (
       <Row>
         <Col span={10} className="text-right">
@@ -900,7 +886,6 @@ export const SwapUi = () => {
           tokenBalance={toMintTokenBalance}
           tokenAmount={toAmount}
           readonly={true}
-          onInputChange={() => {}}
           onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
           onSelectToken={() => {
             setSubjectTokenSelection("destination");
@@ -947,8 +932,7 @@ export const SwapUi = () => {
                     (tokenMap.get(toMint.toBase58())?.decimals || 9)
                   )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
                 ),
-                '≈',
-                true
+                '≈'
               )
             }
             {/* {fair &&
