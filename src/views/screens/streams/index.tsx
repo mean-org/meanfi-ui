@@ -25,7 +25,6 @@ import { AppStateContext } from "../../../contexts/appstate";
 import { useWallet } from "../../../contexts/wallet";
 import {
   formatAmount,
-  getComputedFees,
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   getTokenSymbol,
@@ -52,7 +51,7 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
 } from "../../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
 import { notify } from "../../../utils/notifications";
 import { AddFundsModal } from "../../../components/AddFundsModal";
