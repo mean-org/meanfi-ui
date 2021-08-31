@@ -7,8 +7,8 @@ import { MintInfo, AccountInfo as TokenAccount, Token, TOKEN_PROGRAM_ID } from "
 import { getOwnedAssociatedTokenAccounts, parseTokenAccountData } from "../utils/utils";
 import { useWallet } from "./wallet";
 import { useConnection } from "./connection";
-import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import * as assert from "assert";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 
 // Cache storing all token accounts for the connected wallet provider.
 const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
@@ -151,7 +151,7 @@ export function useOwnedTokenAccount(mint?: PublicKey): {
     // SOL is special cased since it's not an SPL token.
     if (tokenAccount && isSol) {
       listener = provider.connection.onAccountChange(
-        wallet.publicKey,
+        wallet.publicKey as PublicKey,
         (info: { lamports: number }) => {
           const token = {
             amount: new BN(info.lamports),
