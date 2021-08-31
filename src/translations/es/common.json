@@ -330,7 +330,7 @@
 			"charts": "Gráficos",
 			"deposits": "Depósitos",
 			"services": {
-				"custody": "Custodia",
+				"custody": "Custody",
 				"faucet": "Faucet",
 				"payroll": "Nómina de sueldos",
 				"submenu-title": "Servicios",
