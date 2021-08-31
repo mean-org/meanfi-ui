@@ -1,3 +1,4 @@
+import Wallet from "@project-serum/sol-wallet-adapter";
 import { Button, Modal } from "antd";
 import React, {
   useCallback,
@@ -17,6 +18,7 @@ import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
 import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { useConnectionConfig } from "./connection";
 
 const ICONS_URL = "/assets/wallets/";
 export const WALLET_PROVIDERS = [
@@ -24,48 +26,41 @@ export const WALLET_PROVIDERS = [
     name: WalletName.Phantom,
     url: 'https://www.phantom.app',
     icon: `${ICONS_URL}/phantom.svg`,
-    adapter: PhantomWalletAdapter,
-    hasExtension: true
+    adapter: PhantomWalletAdapter
   },
   {
     name: WalletName.Coin98,
     url: 'https://coin98.com',
     icon: `${ICONS_URL}/coin98.svg`,
-    adapter: Coin98WalletAdapter,
-    hasExtension: true
+    adapter: Coin98WalletAdapter
   },
   {
     name: WalletName.Solong,
     url: 'https://solongwallet.com',
     icon: `${ICONS_URL}/solong.png`,
-    adapter: SolongWalletAdapter,
-    hasExtension: true
+    adapter: SolongWalletAdapter
   },
   {
     name: WalletName.Solflare,
     url: "https://solflare.com/access-wallet",
     icon: `${ICONS_URL}/solflare.svg`,
-    adapter: SolflareWalletAdapter,
-    hasExtension: true
   },
   {
     name: WalletName.MathWallet,
     url: 'https://mathwallet.org',
     icon: `${ICONS_URL}/mathwallet.svg`,
-    adapter: MathWalletWalletAdapter,
-    hasExtension: true
+    adapter: MathWalletWalletAdapter
   },
   {
     name: WalletName.WalletConnect,
     url: 'https://walletconnect.org',
     icon: `${ICONS_URL}/walletconnect.svg`,
-    adapter: WalletConnectWalletAdapter,
-    hasExtension: true
+    adapter: WalletConnectWalletAdapter
   },
 ];
 
-const getIsProviderAvailable = (provider: any): boolean => {
-  if (provider.hasExtension) {
+const getIsProviderInstalled = (provider: any): boolean => {
+  if (provider.adapter) {
     switch (provider.name) {
       case WalletName.Phantom:
         return !!(window as any).solana?.isPhantom;
@@ -79,9 +74,11 @@ const getIsProviderAvailable = (provider: any): boolean => {
         return !!(window as any).solflare?.isSolflare;
       case WalletName.WalletConnect:
         return true;
+      default:
+        return false;
     }
   }
-  return false;
+  return true;
 }
 
 const WalletContext = React.createContext<{
@@ -100,6 +97,7 @@ const WalletContext = React.createContext<{
 
 export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
+  const { endpoint } = useConnectionConfig();
 
   const [autoConnect, setAutoConnect] = useState(false);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
@@ -116,10 +114,21 @@ export function WalletProvider({ children = null as any }) {
   const wallet = useMemo(
     function () {
       if (provider) {
-        return new (provider.adapter)() as WalletAdapter;
+        if (provider.adapter) {
+          return new (provider.adapter)() as WalletAdapter;
+        } else {
+          return new Wallet(
+            providerUrl,
+            endpoint
+          ) as WalletAdapter;
+        }
       }
     },
-    [provider]
+    [
+      provider,
+      endpoint,
+      providerUrl,
+    ]
   );
 
   const [connected, setConnected] = useState(false);
@@ -196,22 +205,22 @@ export function WalletProvider({ children = null as any }) {
         width={400}>
         <div className="wallet-providers">
           {WALLET_PROVIDERS.map((provider, index) => {
-            const isProviderAvailable = getIsProviderAvailable(provider);
+            const isInstalled = getIsProviderInstalled(provider);
             const onClick = function () {
-              if (isProviderAvailable) {
-                if (wallet) {
-                  wallet.disconnect();
-                }
-                setProviderUrl(provider.url);
-                setAutoConnect(true);
-              } else {
-                window.open(provider.url, 'newwindow','resizable');
+              if (wallet) {
+                wallet.disconnect();
               }
+              setProviderUrl(provider.url);
+              setAutoConnect(true);
               close();
+              if (!isInstalled) {
+                window.open(provider.url, '_blank');
+              }
             };
 
             return (
               <Button
+                block
                 size="large"
                 className="wallet-provider"
                 shape="round"
@@ -226,13 +235,7 @@ export function WalletProvider({ children = null as any }) {
                     src={provider.icon}
                     style={{ marginRight: 8 }}
                   />
-                }
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  marginBottom: 8,
-                }}>
+                }>
                 {provider.name}
               </Button>
             );
