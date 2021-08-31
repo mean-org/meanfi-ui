@@ -1,5 +1,5 @@
 import {
-    BaseMessageSignerWalletAdapter,
+    BaseSignerWalletAdapter,
     EventEmitter,
     pollUntilReady,
     WalletAccountError,
@@ -9,47 +9,43 @@ import {
     WalletNotConnectedError,
     WalletPublicKeyError,
     WalletSignTransactionError,
-    WalletWindowClosedError,
 } from '@solana/wallet-adapter-base';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import { notify } from '../../utils/notifications';
-import { consoleOut } from '../../utils/ui';
 
-interface PhantomWalletEvents {
+interface SolflareWalletEvents {
     connect(...args: unknown[]): unknown;
     disconnect(...args: unknown[]): unknown;
 }
 
-interface PhantomWallet extends EventEmitter<PhantomWalletEvents> {
-    isPhantom?: boolean;
+interface SolflareWallet extends EventEmitter<SolflareWalletEvents> {
+    isSolflare?: boolean;
     publicKey?: { toBytes(): Uint8Array };
     isConnected: boolean;
     autoApprove: boolean;
     signTransaction(transaction: Transaction): Promise<Transaction>;
     signAllTransactions(transactions: Transaction[]): Promise<Transaction[]>;
-    signMessage(message: Uint8Array): Promise<{ signature: Uint8Array }>;
-    connect(): Promise<void>;
-    disconnect(): Promise<void>;
-    _handleDisconnect(...args: unknown[]): unknown;
+    connect(): Promise<boolean>;
+    disconnect(): Promise<boolean>;
 }
 
-interface PhantomWindow extends Window {
-    solana?: PhantomWallet;
+interface SolflareWindow extends Window {
+    solflare?: SolflareWallet;
 }
 
-declare const window: PhantomWindow;
+declare const window: SolflareWindow;
 
-export interface PhantomWalletAdapterConfig {
+export interface SolflareWalletAdapterConfig {
     pollInterval?: number;
     pollCount?: number;
 }
 
-export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
+export class SolflareWalletAdapter extends BaseSignerWalletAdapter {
     private _connecting: boolean;
-    private _wallet: PhantomWallet | null;
+    private _wallet: SolflareWallet | null;
     private _publicKey: PublicKey | null;
 
-    constructor(config: PhantomWalletAdapterConfig = {}) {
+    constructor(config: SolflareWalletAdapterConfig = {}) {
         super();
         this._connecting = false;
         this._wallet = null;
@@ -63,7 +59,7 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
     }
 
     get ready(): boolean {
-        return typeof window !== 'undefined' && !!window.solana?.isPhantom;
+        return typeof window !== 'undefined' && !!window.solflare?.isSolflare;
     }
 
     get connecting(): boolean {
@@ -83,45 +79,24 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = typeof window !== 'undefined' && window.solana;
-            if (!wallet || !wallet.isPhantom) {
+            const wallet = typeof window !== 'undefined' && window.solflare;
+
+            if (!wallet || !wallet.isSolflare) {
                 notify({
-                    message: "Phantom Error",
-                    description: "Please install Phantom wallet extension",
+                    message: "Solflare Error",
+                    description: "Please install Solflare wallet extension",
                     type: 'error'
                 });
                 return;
             }
             // if (!wallet) throw new WalletNotFoundError();
-            // if (!wallet.isPhantom) throw new WalletNotInstalledError();
+            // if (!wallet.isSolflare) throw new WalletNotInstalledError();
 
             if (!wallet.isConnected) {
-                // HACK: Phantom doesn't reject or emit an event if the popup is closed
-                const disconnect = wallet._handleDisconnect;
                 try {
-                    await new Promise<void>((resolve, reject) => {
-                        const connect = () => {
-                            wallet.off('connect', connect);
-                            resolve();
-                        };
-
-                        wallet._handleDisconnect = (...args: unknown[]) => {
-                            wallet.off('connect', connect);
-                            reject(new WalletWindowClosedError());
-                            return disconnect.apply(wallet, args);
-                        };
-
-                        wallet.on('connect', connect);
-
-                        wallet.connect().catch((reason: any) => {
-                            wallet.off('connect', connect);
-                            reject(reason);
-                        });
-                    });
+                    await wallet.connect();
                 } catch (error: any) {
                     throw new WalletConnectionError(error?.message, error);
-                } finally {
-                    wallet._handleDisconnect = disconnect;
                 }
             }
 
@@ -147,9 +122,7 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
             this.emit('connect');
         } catch (error: any) {
             this.emit('error', error);
-            consoleOut(error?.message, error);
-            // throw error;
-            return;
+            throw error;
         } finally {
             this._connecting = false;
         }
@@ -196,23 +169,6 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
 
             try {
                 return await wallet.signAllTransactions(transactions);
-            } catch (error: any) {
-                throw new WalletSignTransactionError(error?.message, error);
-            }
-        } catch (error: any) {
-            this.emit('error', error);
-            throw error;
-        }
-    }
-
-    async signMessage(message: Uint8Array): Promise<Uint8Array> {
-        try {
-            const wallet = this._wallet;
-            if (!wallet) throw new WalletNotConnectedError();
-
-            try {
-                const { signature } = await wallet.signMessage(message);
-                return Uint8Array.from(signature);
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }

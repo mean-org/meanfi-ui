@@ -1,4 +1,3 @@
-import Wallet from "@project-serum/sol-wallet-adapter";
 import { Button, Modal } from "antd";
 import React, {
   useCallback,
@@ -8,69 +7,82 @@ import React, {
   useState,
 } from "react";
 import { notify } from "./../utils/notifications";
-import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
+import { WalletName } from "../wallet-adapters/wallets";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { MathWalletWalletAdapter } from "../wallet-adapters/mathwallet";
-import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { SolflareWalletAdapter } from "../wallet-adapters/solflare";
+import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
+import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 
-const ASSETS_URL = "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
+const ICONS_URL = "/assets/wallets/";
 export const WALLET_PROVIDERS = [
   {
-    name: "Phantom",
-    url: "https://phantom.app/",
-    icon: `https://raydium.io/_nuxt/img/phantom.d9e3c61.png`,
+    name: WalletName.Phantom,
+    url: 'https://www.phantom.app',
+    icon: `${ICONS_URL}/phantom.svg`,
     adapter: PhantomWalletAdapter,
     hasExtension: true
   },
   {
-    name: "Solong",
-    url: "https://solongwallet.com",
-    icon: `${ASSETS_URL}solong.png`,
+    name: WalletName.Coin98,
+    url: 'https://coin98.com',
+    icon: `${ICONS_URL}/coin98.svg`,
+    adapter: Coin98WalletAdapter,
+    hasExtension: true
+  },
+  {
+    name: WalletName.Solong,
+    url: 'https://solongwallet.com',
+    icon: `${ICONS_URL}/solong.png`,
     adapter: SolongWalletAdapter,
     hasExtension: true
   },
   {
-    name: "Solflare",
+    name: WalletName.Solflare,
     url: "https://solflare.com/access-wallet",
-    icon: `${ASSETS_URL}solflare.svg`,
-    hasExtension: false
+    icon: `${ICONS_URL}/solflare.svg`,
+    adapter: SolflareWalletAdapter,
+    hasExtension: true
   },
   {
-    name: "MathWallet",
-    url: "https://mathwallet.org",
-    icon: `${ASSETS_URL}mathwallet.svg`,
+    name: WalletName.MathWallet,
+    url: 'https://mathwallet.org',
+    icon: `${ICONS_URL}/mathwallet.svg`,
     adapter: MathWalletWalletAdapter,
+    hasExtension: true
+  },
+  {
+    name: WalletName.WalletConnect,
+    url: 'https://walletconnect.org',
+    icon: `${ICONS_URL}/walletconnect.svg`,
+    adapter: WalletConnectWalletAdapter,
     hasExtension: true
   },
 ];
 
 const getIsProviderAvailable = (provider: any): boolean => {
-
   if (provider.hasExtension) {
-    const isSolong = !!(window as any).solong;
-    const isPhantom = !!(window as any).solana?.isPhantom;
-    const isMathWallet = !!(window as any).solana?.isMathWallet;
     switch (provider.name) {
-      case 'Phantom':
-        return isPhantom;
-      case 'Solong':
-        return isSolong;
-      case 'MathWallet':
-        return isMathWallet;
+      case WalletName.Phantom:
+        return !!(window as any).solana?.isPhantom;
+      case WalletName.Solong:
+        return !!(window as any).solong;
+      case WalletName.MathWallet:
+        return !!(window as any).solana?.isMathWallet;
+      case WalletName.Coin98:
+        return !!(window as any).coin98;
+      case WalletName.Solflare:
+        return !!(window as any).solflare?.isSolflare;
+      case WalletName.WalletConnect:
+        return true;
     }
   }
   return false;
 }
-
-// export interface WalletAdapter extends EventEmitter {
-//   publicKey: PublicKey | null;
-//   signTransaction: (transaction: Transaction) => Promise<Transaction>;
-//   connect: () => any;
-//   disconnect: () => any;
-// }
 
 const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
@@ -87,7 +99,6 @@ const WalletContext = React.createContext<{
 });
 
 export function WalletProvider({ children = null as any }) {
-  const { endpoint } = useConnectionConfig();
   const { t } = useTranslation("common");
 
   const [autoConnect, setAutoConnect] = useState(false);
@@ -105,13 +116,10 @@ export function WalletProvider({ children = null as any }) {
   const wallet = useMemo(
     function () {
       if (provider) {
-        return new (provider.adapter || Wallet)(
-          providerUrl,
-          endpoint
-        ) as WalletAdapter;
+        return new (provider.adapter)() as WalletAdapter;
       }
     },
-    [provider, providerUrl, endpoint]
+    [provider]
   );
 
   const [connected, setConnected] = useState(false);
