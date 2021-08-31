@@ -205,7 +205,7 @@ export function WalletProvider({ children = null as any }) {
                 setProviderUrl(provider.url);
                 setAutoConnect(true);
               } else {
-                window.open(provider.url, '_blank', 'noreferrer');
+                window.open(provider.url, 'newwindow','resizable');
               }
               close();
             };
