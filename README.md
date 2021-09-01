@@ -1,5 +1,5 @@
-# MeanFi Dapp
-This is MeanFi, a Solana DeFi app for continuous, self-governing, trustless payments from anyone to anyone.  
+# MeanFi - The DeFi financial equalizer
+This is MeanFi (https://app.meanfi.com), a Solana DeFi app for continuous, self-governing, trustless payments from anyone to anyone.  
 It uses the Money Streaming Program to facilitate money streaming between two or more parties.
 
 Looking for the Money Streaming Program?
