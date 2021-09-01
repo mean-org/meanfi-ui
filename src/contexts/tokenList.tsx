@@ -1,151 +1,161 @@
-import React, { useContext, useMemo } from "react";
-import { TokenInfo, TokenListContainer } from "@solana/spl-token-registry";
-import { NATIVE_SOL } from "../utils/tokens";
+import React, { useContext, useEffect, useMemo, useState } from "react";
+// import { TokenInfo, TokenListContainer, TokenListProvider } from "@solana/spl-token-registry";
+// import { NATIVE_SOL, TOKENS } from "../utils/tokens";
+// import { cloneDeep } from "lodash-es";
 
-type TokenListContextState = {
-  container: TokenListContainer;
-  tokenMap: Map<string, TokenInfo>;
-  wormholeMap: Map<string, TokenInfo>;
-  solletMap: Map<string, TokenInfo>;
-  swappableTokens: TokenInfo[];
-  swappableTokensSollet: TokenInfo[];
-  swappableTokensWormhole: TokenInfo[];
-};
+// type TokenListContextState = {
+//   container: TokenListContainer | undefined;
+//   tokenMap: Map<string, TokenInfo>;
+//   wormholeMap: Map<string, TokenInfo>;
+//   solletMap: Map<string, TokenInfo>;
+//   swappableTokens: TokenInfo[];
+//   swappableTokensSollet: TokenInfo[];
+//   swappableTokensWormhole: TokenInfo[];
+// };
 
-export const TokenListContext = React.createContext<null | TokenListContextState>(null);
-export const SPL_REGISTRY_WORM_TAG = "wormhole";
-export const SPL_REGISTRY_SOLLET_TAG = "wrapped-sollet";
+// export const TokenListContext = React.createContext<null | TokenListContextState>(null);
+// export const SPL_REGISTRY_WORM_TAG = "wormhole";
+// export const SPL_REGISTRY_SOLLET_TAG = "wrapped-sollet";
 
-// Token List Context Provider
-export function TokenListContextProvider(props: any) {
+// // Token List Context Provider
+// export function TokenListContextProvider(props: any) {
 
-  const tokenList = useMemo(() => {
-    const list = props.container.filterByClusterSlug("mainnet-beta").getList();
-    
-    for (let token of list) {
-      if (token.symbol === 'SOL') {
-        token.symbol = 'wSOL';
-        break;
-      }
-    }
-    
-    list.push(NATIVE_SOL);
-    
-    return list;
-    
-  }, [props.container]);
+//   const [container, setContainer] = useState<TokenListContainer>();
 
-  // Token map for quick lookup.
-  const tokenMap = useMemo(() => {
-    const tokenMap = new Map();
-    tokenList.forEach((t: TokenInfo) => {
-      tokenMap.set(t.address, t);
-    });
-    
-    return tokenMap;
-    
-  }, [tokenList]);
+//   useEffect(() => {
 
-  // Tokens with USD(x) quoted markets.
-  const swappableTokens = useMemo(() => {
-    const tokens = tokenList.filter((t: TokenInfo) => {
-      const isUsdxQuoted = t.extensions?.serumV3Usdt || t.extensions?.serumV3Usdc;
-      return isUsdxQuoted;
-    });
+//     new TokenListProvider()
+//       .resolve()
+//       .then(setContainer);
     
-    tokens.sort((a: TokenInfo, b: TokenInfo) =>
-      a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
-    );
-    
-    return tokens;
-    
-  }, [tokenList]);
-    
-  // Wormhole wrapped tokens.
-  const [swappableTokensWormhole, wormholeMap] = useMemo(() => {
-    const tokens = tokenList.filter((t: TokenInfo) => {
-      const isSollet = t.tags?.includes(SPL_REGISTRY_WORM_TAG);
-      return isSollet;
-    });
-    
-    tokens.sort((a: TokenInfo, b: TokenInfo) =>
-      a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
-    );
-    
-    return [
-      tokens,
-      new Map<string, TokenInfo>(tokens.map((t: TokenInfo) => [t.address, t])),
-    ];
-    
-  }, [tokenList]);
+//   }, [setContainer]);
 
-  // Sollet wrapped tokens.
-  const [swappableTokensSollet, solletMap] = useMemo(() => {
-    const tokens = tokenList.filter((t: TokenInfo) => {
-      const isSollet = t.tags?.includes(SPL_REGISTRY_SOLLET_TAG);
-      return isSollet;
-    });
+//   const tokenList = useMemo(() => {
+//     let list = [];
+//     const symbols = Object.keys(TOKENS);
     
-    tokens.sort((a: TokenInfo, b: TokenInfo) =>
-      a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
-    );
+//     for (let key of symbols) {
+//       let token = cloneDeep(TOKENS[key]);
+//       list.push(token);
+//     }
     
-    return [
-      tokens,
-      new Map<string, TokenInfo>(tokens.map((t: TokenInfo) => [t.address, t])),
-    ];
+//     list.push(NATIVE_SOL);
     
-  }, [tokenList]);
+//     return list;
+    
+//   }, []);
 
-  return (
-    <TokenListContext.Provider
-      value={{
-        container: props.container,
-        tokenMap,
-        wormholeMap,
-        solletMap,
-        swappableTokens,
-        swappableTokensWormhole,
-        swappableTokensSollet,
-      }}
-    >
-      {props.children}
-    </TokenListContext.Provider>
-  );
-}
+//   // Token map for quick lookup.
+//   const tokenMap = useMemo(() => {
+//     const tokenMap = new Map();
+//     tokenList.forEach((t: TokenInfo) => {
+//       tokenMap.set(t.address, t);
+//     });
+    
+//     return tokenMap;
+    
+//   }, [tokenList]);
 
-export function useTokenListContext(): TokenListContextState {
-  const ctx = useContext(TokenListContext);
+//   // Tokens with USD(x) quoted markets.
+//   const swappableTokens = useMemo(() => {
+//     const tokens = tokenList.filter((t: TokenInfo) => {
+//       const isUsdxQuoted = t.extensions?.serumV3Usdt || t.extensions?.serumV3Usdc;
+//       return isUsdxQuoted;
+//     });
+    
+//     tokens.sort((a: TokenInfo, b: TokenInfo) =>
+//       a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
+//     );
+    
+//     return tokens;
+    
+//   }, [tokenList]);
+    
+//   // Wormhole wrapped tokens.
+//   const [swappableTokensWormhole, wormholeMap] = useMemo(() => {
+//     const tokens = tokenList.filter((t: TokenInfo) => {
+//       const isSollet = t.tags?.includes(SPL_REGISTRY_WORM_TAG);
+//       return isSollet;
+//     });
+    
+//     tokens.sort((a: TokenInfo, b: TokenInfo) =>
+//       a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
+//     );
+    
+//     return [
+//       tokens,
+//       new Map<string, TokenInfo>(tokens.map((t: TokenInfo) => [t.address, t])),
+//     ];
+    
+//   }, [tokenList]);
+
+//   // Sollet wrapped tokens.
+//   const [swappableTokensSollet, solletMap] = useMemo(() => {
+//     const tokens = tokenList.filter((t: TokenInfo) => {
+//       const isSollet = t.tags?.includes(SPL_REGISTRY_SOLLET_TAG);
+//       return isSollet;
+//     });
+    
+//     tokens.sort((a: TokenInfo, b: TokenInfo) =>
+//       a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0
+//     );
+    
+//     return [
+//       tokens,
+//       new Map<string, TokenInfo>(tokens.map((t: TokenInfo) => [t.address, t])),
+//     ];
+    
+//   }, [tokenList]);
+
+//   return (
+//     <TokenListContext.Provider
+//       value={{
+//         container,
+//         tokenMap,
+//         wormholeMap,
+//         solletMap,
+//         swappableTokens,
+//         swappableTokensWormhole,
+//         swappableTokensSollet,
+//       }}
+//     >
+//       {props.children}
+//     </TokenListContext.Provider>
+//   );
+// }
+
+// export function useTokenListContext(): TokenListContextState {
+//   const ctx = useContext(TokenListContext);
   
-  if (ctx === null) {
-    throw new Error("Context not available");
-  }
+//   if (ctx === null) {
+//     throw new Error("Context not available");
+//   }
   
-  return ctx;
-}
+//   return ctx;
+// }
 
-export function useTokenListcontainer() : TokenListContainer {
-  let { container } = useTokenListContext();
-  return container;
-}
+// export function useTokenListcontainer() : TokenListContainer | undefined {
+//   let { container } = useTokenListContext();
+//   return container;
+// }
 
-export function useTokenMap(): Map<string, TokenInfo> {
-  const { tokenMap } = useTokenListContext();
-  return tokenMap;
-}
+// export function useTokenMap(): Map<string, TokenInfo> {
+//   const { tokenMap } = useTokenListContext();
+//   return tokenMap;
+// }
 
-export function useSwappableTokens() {
-  const { 
-    swappableTokens,
-    swappableTokensWormhole,
-    swappableTokensSollet
+// export function useSwappableTokens() {
+//   const { 
+//     swappableTokens,
+//     swappableTokensWormhole,
+//     swappableTokensSollet
     
-  } = useTokenListContext();
+//   } = useTokenListContext();
   
-  return { 
-    swappableTokens, 
-    swappableTokensWormhole, 
-    swappableTokensSollet 
-  };
-}
+//   return { 
+//     swappableTokens, 
+//     swappableTokensWormhole, 
+//     swappableTokensSollet 
+//   };
+// }
 
