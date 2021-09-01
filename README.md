@@ -1,5 +1,5 @@
-# Mean Pay Dapp
-This is Mean Pay, a Solana DeFi app for continuous, self-governing, trustless payments from anyone to anyone.  
+# MeanFi Dapp
+This is MeanFi, a Solana DeFi app for continuous, self-governing, trustless payments from anyone to anyone.  
 It uses the Money Streaming Program to facilitate money streaming between two or more parties.
 
 Looking for the Money Streaming Program?
