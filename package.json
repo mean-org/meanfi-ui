@@ -1,8 +1,9 @@
 {
   "name": "meanfi-webapp",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
   "scripts": {
+    "clean": "rm -rf build/*",
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
@@ -24,6 +25,10 @@
     "postbuild": "node iisConfig/copyIISConfig.js",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
   "browserslist": {
     "production": [
       ">0.2%",
@@ -54,8 +59,10 @@
     "@solana/spl-token": "^0.1.6",
     "@solana/spl-token-registry": "^0.2.215",
     "@solana/spl-token-swap": "^0.1.0",
+    "@solana/wallet-adapter-base": "^0.5.1",
     "@solana/web3.js": "^1.24.1",
-    "@walletconnect/client": "2.0.0-beta.17",
+    "@walletconnect/client": "2.0.0-beta.16",
+    "@walletconnect/qrcode-modal": "2.0.0-alpha.20",
     "antd": "^4.16.6",
     "bignumber.js": "^9.0.1",
     "bn.js": "^5.2.0",
@@ -97,11 +104,13 @@
     "@types/lodash-es": "^4.17.4",
     "@types/mz": "^2.7.3",
     "@types/node": "^16.0.0",
+    "@types/pino": "^6.3.11",
     "@types/react": "^17.0.13",
     "@types/react-dom": "^17.0.8",
     "@types/react-router-dom": "^5.1.7",
     "@typescript-eslint/eslint-plugin": "^4.29.3",
     "@typescript-eslint/parser": "^4.29.3",
+    "@walletconnect/types": "2.0.0-beta.16",
     "arweave-deploy": "^1.9.1",
     "eslint": "^7.32.0",
     "eslint-config-airbnb": "^18.2.1",

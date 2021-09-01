@@ -18,7 +18,10 @@ export const CloseStreamModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { streamDetail } = useContext(AppStateContext);
+  const {
+    tokenBalance,
+    streamDetail
+  } = useContext(AppStateContext);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
@@ -81,6 +84,10 @@ export const CloseStreamModal = (props: {
         {streamDetail && streamDetail.associatedToken && (
           <div className="p-2 mb-2">
             {infoRow(
+              t('close-stream.available-funds') + ':',
+              getTokenAmountAndSymbolByTokenAddress(tokenBalance || 0, streamDetail.associatedToken as string)
+            )}
+            {infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
               `${feeAmount
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
@@ -103,8 +110,9 @@ export const CloseStreamModal = (props: {
               type="primary"
               shape="round"
               size="large"
+              disabled={tokenBalance < (feeAmount || 0)}
               onClick={props.handleOk}>
-              {t('close-stream.primary-cta')}
+              {tokenBalance >= (feeAmount || 0) ? t('close-stream.primary-cta') : t('transactions.validation.amount-low')}
           </Button>
         </div>
       </div>

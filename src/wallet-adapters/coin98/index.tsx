@@ -7,32 +7,41 @@ import {
     WalletSignTransactionError,
 } from '@solana/wallet-adapter-base';
 import { PublicKey, Transaction } from '@solana/web3.js';
+import bs58 from 'bs58';
 import { notify } from '../../utils/notifications';
 import { consoleOut } from '../../utils/ui';
 
-interface SolongWallet {
-    currentAccount?: string | null;
-    selectAccount(): Promise<string>;
+interface Coin98Wallet {
+    isCoin98?: boolean;
     signTransaction(transaction: Transaction): Promise<Transaction>;
+    isConnected(): boolean;
+    connect(): Promise<string[]>;
+    disconnect(): Promise<void>;
+    request(params: { method: string; params: string | string[] | unknown }): Promise<{
+        signature: string;
+        publicKey: string;
+    }>;
 }
 
-interface SolongWindow extends Window {
-    solong?: SolongWallet;
+interface Coin98Window extends Window {
+    coin98?: {
+        sol?: Coin98Wallet;
+    };
 }
 
-declare const window: SolongWindow;
+declare const window: Coin98Window;
 
-export interface SolongWalletAdapterConfig {
+export interface Coin98WalletAdapterConfig {
     pollInterval?: number;
     pollCount?: number;
 }
 
-export class SolongWalletAdapter extends BaseSignerWalletAdapter {
+export class Coin98WalletAdapter extends BaseSignerWalletAdapter {
     private _connecting: boolean;
-    private _wallet: SolongWallet | null;
+    private _wallet: Coin98Wallet | null;
     private _publicKey: PublicKey | null;
 
-    constructor(config: SolongWalletAdapterConfig = {}) {
+    constructor(config: Coin98WalletAdapterConfig = {}) {
         super();
         this._connecting = false;
         this._wallet = null;
@@ -46,7 +55,7 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get ready(): boolean {
-        return typeof window !== 'undefined' && !!window.solong;
+        return typeof window !== 'undefined' && !!window.coin98;
     }
 
     get connecting(): boolean {
@@ -54,7 +63,7 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     get connected(): boolean {
-        return !!this._wallet?.currentAccount;
+        return !!this._wallet?.isConnected();
     }
 
     get autoApprove(): boolean {
@@ -66,20 +75,21 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = typeof window !== 'undefined' && window.solong;
-            if (!wallet) {
+            const wallet = typeof window !== 'undefined' && window.coin98?.sol;
+            if (!wallet || !wallet.isCoin98) {
                 notify({
-                    message: "Solong Error",
-                    description: "Please install solong wallet extension",
+                    message: "Coin98 Error",
+                    description: "Please install Coin98 wallet extension",
                     type: 'error'
                 });
                 return;
             }
             // if (!wallet) throw new WalletNotFoundError();
+            // if (!wallet.isCoin98) throw new WalletNotInstalledError();
 
             let account: string;
             try {
-                account = await wallet.selectAccount();
+                [account] = await wallet.connect();
             } catch (error: any) {
                 throw new WalletAccountError(error?.message, error);
             }
@@ -107,9 +117,9 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
 
     async disconnect(): Promise<void> {
         if (this._wallet) {
+            this._wallet.disconnect();
             this._wallet = null;
             this._publicKey = null;
-
             this.emit('disconnect');
         }
     }
@@ -120,7 +130,13 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                return await wallet.signTransaction(transaction);
+                const response = await wallet.request({ method: 'sol_sign', params: [transaction] });
+
+                const publicKey = new PublicKey(response.publicKey);
+                const signature = bs58.decode(response.signature);
+
+                transaction.addSignature(publicKey, signature);
+                return transaction;
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }
@@ -136,7 +152,7 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                return await Promise.all(transactions.map((transaction) => wallet.signTransaction(transaction)));
+                return await Promise.all(transactions.map((transaction) => this.signTransaction(transaction)));
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }

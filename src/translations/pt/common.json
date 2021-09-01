@@ -15,6 +15,7 @@
 		"modal-title": "Adicionar fundos"
 	},
 	"close-stream": {
+		"available-funds": "Available funds",
 		"context-beneficiary": "Conclua esta transferência de dinheiro e ({{amount}}) será enviado para sua conta ({{beneficiary}}) e o fluxo de dinheiro será interrompido imediatamente.",
 		"context-treasurer-multiple-beneficiaries": "Após a conclusão desta transferência de dinheiro, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}) e os fundos pendentes serão devolvidos à conta original  ({{treasury}}) ",
 		"context-treasurer-single-beneficiary": "Na conclusão desta transferência monetária, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}), e os fundos pendentes serão devolvidos ao contribuinte original.",
@@ -330,7 +331,7 @@
 			"charts": "Gráfico",
 			"deposits": "Deposits",
 			"services": {
-				"custody": "Custódia",
+				"custody": "Custody",
 				"faucet": "Faucet",
 				"payroll": "Folha de pagamentos",
 				"submenu-title": "Serviços",

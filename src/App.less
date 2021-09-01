@@ -1624,6 +1624,7 @@ section.content {
 // Account
 .wallet-providers {
   .wallet-provider {
+    text-align: left;
     margin-bottom: 1rem !important;
   }
 }
@@ -1786,6 +1787,7 @@ section.content {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: -0.2px;
+      text-align: center;
     }
     .transaction-stats {
       position: relative;
@@ -2216,6 +2218,18 @@ section.content {
       }
     }
   }
+  &.medium {
+    .item-list-row {
+      height: auto;
+      border: none !important;
+      background-color: transparent;
+      .std-table-cell {
+        color: var(--color-secondary-alpha-60);
+        font-weight: 400;
+        padding: 4px;
+      }
+    }
+  }
   .item-list-row {
     -webkit-box-sizing: border-box;
     box-sizing: border-box;
@@ -2225,6 +2239,13 @@ section.content {
     -webkit-transition: .1s all;
     transition: .1s all;
     width: 100%;
+    &.selected {
+      background-color: var(--color-secondary-alpha-05);
+    }
+    &:not(.selected):hover,
+    &:not(.selected):focus {
+      background-color: var(--color-secondary-alpha-02);
+    }
     &:hover {
       .std-table-cell {
         color: var(--color-secondary-alpha-85);
@@ -4061,7 +4082,7 @@ section.content {
         background-color: var(--color-secondary-alpha-05);
       }
     }
-    &.ant-btn-primary {
+    &.ant-btn-primary:not(:disabled) {
       color: var(--color-white);
       background-color: var(--color-primary);
       &:hover {

@@ -14,7 +14,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
-import { environment } from '../../environments/environment';
+import { AppConfigService, environment } from '../../environments/environment';
 
 const { SubMenu } = Menu;
 
@@ -61,6 +61,12 @@ export const AppBar = (props: { menuType: string }) => {
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
     }
+  }
+
+  const getChartsLink = (): string => {
+    const config = new AppConfigService();
+    const bucket = config.getConfig().influxDbBucket;
+    return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
   }
 
   useEffect(() => {
@@ -138,7 +144,7 @@ export const AppBar = (props: { menuType: string }) => {
         )}
       </SubMenu>
       <Menu.Item key="charts">
-        <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+        <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
@@ -229,7 +235,7 @@ export const AppBar = (props: { menuType: string }) => {
             </li>
             {/* Charts */}
             <li key="charts" className="mobile-menu-item">
-              <a href={MEANFI_METRICS_URL} target="_blank" rel="noopener noreferrer">
+              <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
                 <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
                 &nbsp;<IconExternalLink className="mean-svg-icons link" />
               </a>

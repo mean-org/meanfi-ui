@@ -87,32 +87,26 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}</span>
       </Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="4">
+      <Menu.Item key="3">
         <a href={MEAN_FINANCE_DOCS_URL} target="_blank" rel="noopener noreferrer">
-          <IconUniversity className="mean-svg-icons" />
+          <IconBookOpen className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.how-to-use')}</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="5">
-        <a href={MEAN_FINANCE_DEVELOPERS_URL}>
-          <IconBookOpen className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.developers')}</span>
-        </a>
-      </Menu.Item>
-      <Menu.Item key="6">
-        <a href={MEAN_FINANCE_GITHUBORG_URL}>
+      <Menu.Item key="4">
+        <a href={MEAN_FINANCE_GITHUBORG_URL} target="_blank" rel="noopener noreferrer">
           <IconCodeBlock className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.code')}</span>
         </a>
       </Menu.Item>
-      <Menu.Item key="7">
+      <Menu.Item key="5">
         <a href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">
           <IconChat className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       </Menu.Item>
       {connected && (
-        <Menu.Item key="9" onClick={onDisconnectWallet}>
+        <Menu.Item key="6" onClick={onDisconnectWallet}>
           <IconLogout className="mean-svg-icons" />
           <span className="menu-item-text">{t('ui-menus.app-context-menu.disconnect')}</span>
         </Menu.Item>

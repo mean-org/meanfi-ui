@@ -1,12 +1,30 @@
 .ant-radio-group,
 .ant-radio-wrapper {
-    color: inherit;
+  color: inherit;
 }
 .flag-wrapper {
-    margin-right: 0.5rem;
-    vertical-align: 2px;
-    > img {
-        width: 28px;
-        height: auto;
+  margin-right: 0.5rem;
+  vertical-align: 2px;
+  > img {
+    width: 28px;
+    height: auto;
+  }
+}
+
+.item-list-body.medium {
+  .item-list-row {
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    &.selected {
+      background-color: var(--color-secondary-alpha-10);
     }
+    &:not(.selected):hover,
+    &:not(.selected):focus {
+      background-color: var(--color-secondary-alpha-05);
+    }
+    .std-table-cell.first-cell {
+      width: 36px;
+    }
+  }
 }
