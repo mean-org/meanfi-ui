@@ -1,10 +1,15 @@
 import { TokenAmount } from './safe-math';
 import { cloneDeep } from 'lodash-es';
-import { NATIVE_SOL_MINT } from './ids';
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
 
 interface Tokens {
   [key: string]: any
   [index: number]: any
+}
+
+export const TOKENS_TAGS: { [key: string]: { mustShow: boolean; show: boolean; outName: string } } = {
+  raydium: { mustShow: true, show: true, outName: 'Raydium Default List' },
+  solana: { mustShow: false, show: false, outName: 'Solana Token List' },
 }
 
 export interface TokenInfo {
@@ -18,7 +23,9 @@ export interface TokenInfo {
   docs?: object
   socials?: object
   tokenAccountAddress?: string
-  balance?: TokenAmount
+  balance?: TokenAmount,
+  readonly logoURI?: string;
+  tags: string[]
 }
 
 /**
@@ -67,478 +74,64 @@ export function getTokenByMintAddress(address: string): TokenInfo | null {
   return token
 }
 
-export const NATIVE_SOL = {
-  chainId: 101,
-  address: NATIVE_SOL_MINT.toBase58(),
-  name: "Native SOL",
+export const NATIVE_SOL: TokenInfo = {
+  symbol: 'SOL',
+  name: 'Native SOL',
+  address: NATIVE_SOL_MINT.toString(),
   decimals: 9,
-  symbol: "SOL",
-  logoURI: "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png",
-  tags: [],
-  extensions: {
-    website: "https://solana.com/",
-    serumV3Usdc: "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT",
-    serumV3Usdt: "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1",
-    coingeckoId: "solana",
-    waterfallbot: "https://t.me/SOLwaterfall",
-  },
-};
+  logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+  tags: ['raydium']
+}
 
 export const TOKENS: Tokens = {
   WSOL: {
     symbol: 'WSOL',
-    name: 'Wrapped Solana',
-    address: 'So11111111111111111111111111111111111111112',
+    name: 'Wrapped SOL',
+    address: WRAPPED_SOL_MINT.toBase58(),
     decimals: 9,
-    referrer: 'HTcarLHe7WRxBQCWvhVB8AP56pnEtJUV2jDGvcpY3xo5'
+    referrer: 'HTcarLHe7WRxBQCWvhVB8AP56pnEtJUV2jDGvcpY3xo5',
+    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
+    tags: ['raydium']
   },
   BTC: {
     symbol: 'BTC',
     name: 'Wrapped Bitcoin',
     address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
     decimals: 6,
-    referrer: 'GZpS8cY8Nt8HuqxzJh6PXTdSxc38vFUjBmi7eEUkkQtG'
+    referrer: 'GZpS8cY8Nt8HuqxzJh6PXTdSxc38vFUjBmi7eEUkkQtG',
+    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png",
+    tags: ['raydium']
   },
   ETH: {
     symbol: 'ETH',
     name: 'Wrapped Ethereum',
     address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
     decimals: 6,
-    referrer: 'CXPTcSxxh4AT38gtv3SPbLS7oZVgXzLbMb83o4ziXjjN'
+    referrer: 'CXPTcSxxh4AT38gtv3SPbLS7oZVgXzLbMb83o4ziXjjN',
+    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png",
+    tags: ['raydium']
   },
   USDT: {
     symbol: 'USDT',
     name: 'USDT',
     address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
     decimals: 6,
-    referrer: '8DwwDNagph8SdwMUdcXS5L9YAyutTyDJmK6cTKrmNFk3'
-  },
-  WUSDT: {
-    symbol: 'WUSDT',
-    name: 'Wrapped USDT',
-    address: 'BQcdHdAQW1hczDbBi9hiegXAR7A98Q9jx3X3iBBBDiq4',
-    decimals: 6,
-    referrer: 'CA98hYunCLKgBuD6N8MJSgq1GbW9CXdksLf5mw736tS3'
+    referrer: '8DwwDNagph8SdwMUdcXS5L9YAyutTyDJmK6cTKrmNFk3',
+    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg",
+    tags: ['raydium']
   },
   USDC: {
     symbol: 'USDC',
     name: 'USDC',
     address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     decimals: 6,
-    referrer: '92vdtNjEg6Zth3UU1MgPgTVFjSEzTHx66aCdqWdcRkrg'
+    referrer: '92vdtNjEg6Zth3UU1MgPgTVFjSEzTHx66aCdqWdcRkrg',
+    logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+    tags: ['raydium']
   },
-  WUSDC: {
-    symbol: 'WUSDC',
-    name: 'Wrapped USDC',
-    address: 'BXXkv6z8ykpG1yuvUDPgh732wzVHB69RnB9YgSYh3itW',
-    decimals: 6
-  },
-  YFI: {
-    symbol: 'YFI',
-    name: 'Wrapped YFI',
-    address: '3JSf5tPeuscJGtaCp5giEiDhv51gQ4v3zWg8DGgyLfAB',
-    decimals: 6,
-    referrer: 'DZjgzKfYzZBBSTo5vytMYvGdNF933DvuX8TftDMrThrb'
-  },
-  LINK: {
-    symbol: 'LINK',
-    name: 'Wrapped Chainlink',
-    address: 'CWE8jPTUYhdCTZYWPTe1o5DFqfdjzWKc9WKz6rSjQUdG',
-    decimals: 6,
-    referrer: 'DRSKKsYZaPEFkRgGywo7KWBGZikf71R9aDr8tjtpr41V'
-  },
-  XRP: {
-    symbol: 'XRP',
-    name: 'Wrapped XRP',
-    address: 'Ga2AXHpfAF6mv2ekZwcsJFqu7wB4NV331qNH7fW9Nst8',
-    decimals: 6,
-    referrer: '6NeHPXG142tAE2Ej3gHgT2N66i1KH6PFR6PBZw6RyrwH'
-  },
-  SUSHI: {
-    symbol: 'SUSHI',
-    name: 'Wrapped SUSHI',
-    address: 'AR1Mtgh7zAtxuxGd2XPovXPVjcSdY3i4rQYisNadjfKy',
-    decimals: 6,
-    referrer: '59QxHeHgb28tDc3gStnrW8FNKC9qWuRmRZHBaAqCerJX'
-  },
-  ALEPH: {
-    symbol: 'ALEPH',
-    name: 'Wrapped ALEPH',
-    address: 'CsZ5LZkDS7h9TDKjrbL7VAwQZ9nsRu8vJLhRYfmGaN8K',
-    decimals: 6,
-    referrer: '8FKAKrenJMDd7V6cxnM5BsymHTjqxgodtHbLwZReMnWW'
-  },
-  SXP: {
-    symbol: 'SXP',
-    name: 'Wrapped SXP',
-    address: 'SF3oTvfWzEP3DTwGSvUXRrGTvr75pdZNnBLAH9bzMuX',
-    decimals: 6,
-    referrer: '97Vyotr284UM2Fyq9gbfQ3azMYtgf7cjnsf8pN1PFfY9'
-  },
-  HGET: {
-    symbol: 'HGET',
-    name: 'Wrapped HGET',
-    address: 'BtZQfWqDGbk9Wf2rXEiWyQBdBY1etnUUn6zEphvVS7yN',
-    decimals: 6,
-    referrer: 'AGY2wy1ANzLM2jJLSkVxPUYAY5iAYXYsLMQkoQsAhucj'
-  },
-  CREAM: {
-    symbol: 'CREAM',
-    name: 'Wrapped CREAM',
-    address: '5Fu5UUgbjpUvdBveb3a1JTNirL8rXtiYeSMWvKjtUNQv',
-    decimals: 6,
-    referrer: '7WPzEiozJ69MQe8bfbss1t2unR6bHR4S7FimiUVRgu7P'
-  },
-  UBXT: {
-    symbol: 'UBXT',
-    name: 'Wrapped UBXT',
-    address: '873KLxCbz7s9Kc4ZzgYRtNmhfkQrhfyWGZJBmyCbC3ei',
-    decimals: 6,
-    referrer: '9aocFzNkSVj9TCS6cJk2uYyuzEpXPWT7xoBBF9JcZ879'
-  },
-  HNT: {
-    symbol: 'HNT',
-    name: 'Wrapped HNT',
-    address: 'HqB7uswoVg4suaQiDP3wjxob1G5WdZ144zhdStwMCq7e',
-    decimals: 6,
-    referrer: 'B61oHrGCFh8P75Z2cRDiw2nbEwbMyhVfZhMWiwxU2qCV'
-  },
-  FRONT: {
-    symbol: 'FRONT',
-    name: 'Wrapped FRONT',
-    address: '9S4t2NEAiJVMvPdRYKVrfJpBafPBLtvbvyS3DecojQHw',
-    decimals: 6,
-    referrer: 'FnasnCc7c43hd2nanSmRjh9Sf9Cgz6aEvNj6wpDznS5h'
-  },
-  AKRO: {
-    symbol: 'AKRO',
-    name: 'Wrapped AKRO',
-    address: '6WNVCuxCGJzNjmMZoKyhZJwvJ5tYpsLyAtagzYASqBoF',
-    decimals: 6,
-    referrer: 'FihBmWJbiLSEvq4QZpPPdjokdMgxqq6pESZ7oMkE1qJH'
-  },
-  HXRO: {
-    symbol: 'HXRO',
-    name: 'Wrapped HXRO',
-    address: 'DJafV9qemGp7mLMEn5wrfqaFwxsbLgUsGVS16zKRk9kc',
-    decimals: 6,
-    referrer: '4NgrGZDRCzyqiwYvKPEePTKfQXtWzKmSDBoZJjRw6wNC'
-  },
-  UNI: {
-    symbol: 'UNI',
-    name: 'Wrapped UNI',
-    address: 'DEhAasscXF4kEGxFgJ3bq4PpVGp5wyUxMRvn6TzGVHaw',
-    decimals: 6,
-    referrer: '4ntxDv95ajBbXfZyGy3UhcQDx8xmH1yJ6eKvuNNH466x'
-  },
-  SRM: {
-    symbol: 'SRM',
-    name: 'Serum',
-    address: 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt',
-    decimals: 6,
-    referrer: 'HYxa4Ea1dz7ya17Cx18rEGUA1WbCvKjXjFKrnu8CwugH'
-  },
-  FTT: {
-    symbol: 'FTT',
-    name: 'Wrapped FTT',
-    address: 'AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3',
-    decimals: 6,
-    referrer: 'CafpgSh8KGL2GPTjdXfctD3vXngNZDJ3Q92FTfV71Hmt'
-  },
-  MSRM: {
-    symbol: 'MSRM',
-    name: 'MegaSerum',
-    address: 'MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L',
-    decimals: 0,
-    referrer: 'Ge5q9x8gDUNYqqLA1MdnCzWNJGsbj3M15Yxse2cDbw9z'
-  },
-  TOMO: {
-    symbol: 'TOMO',
-    name: 'Wrapped TOMO',
-    address: 'GXMvfY2jpQctDqZ9RoU3oWPhufKiCcFEfchvYumtX7jd',
-    decimals: 6,
-    referrer: '9fexfN3eZomF5gfenG5L9ydbKRQkPhq6x74rb5iLrvXP'
-  },
-  KARMA: {
-    symbol: 'KARMA',
-    name: 'Wrapped KARMA',
-    address: 'EcqExpGNFBve2i1cMJUTR4bPXj4ZoqmDD2rTkeCcaTFX',
-    decimals: 4
-  },
-  LUA: {
-    symbol: 'LUA',
-    name: 'Wrapped LUA',
-    address: 'EqWCKXfs3x47uVosDpTRgFniThL9Y8iCztJaapxbEaVX',
-    decimals: 6,
-    referrer: 'HuZwNApjVFuFSDgrwZA8GP2JD7WMby4qt6rkWDnaMo7j'
-  },
-  MATH: {
-    symbol: 'MATH',
-    name: 'Wrapped MATH',
-    address: 'GeDS162t9yGJuLEHPWXXGrb1zwkzinCgRwnT8vHYjKza',
-    decimals: 6,
-    referrer: 'C9K1M8sJX8WMdsnFT7DuzdiHHunEj79EsLuz4DixQYGm'
-  },
-  KEEP: {
-    symbol: 'KEEP',
-    name: 'Wrapped KEEP',
-    address: 'GUohe4DJUA5FKPWo3joiPgsB7yzer7LpDmt1Vhzy3Zht',
-    decimals: 6
-  },
-  SWAG: {
-    symbol: 'SWAG',
-    name: 'Wrapped SWAG',
-    address: '9F9fNTT6qwjsu4X4yWYKZpsbw5qT7o6yR2i57JF2jagy',
-    decimals: 6
-  },
-  FIDA: {
-    symbol: 'FIDA',
-    name: 'Bonfida',
-    address: 'EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp',
-    decimals: 6,
-    referrer: 'AeAsG75UmyPDB271c6NHonHxXAPXfkvhcf2xjfJhReS8'
-  },
-  KIN: {
-    symbol: 'KIN',
-    name: 'KIN',
-    address: 'kinXdEcpDQeHPEuQnqmUgtYykqKGVFq6CeVX5iAHJq6',
-    decimals: 5,
-    referrer: 'AevFXmApVxN2yk1iemSxXc6Wy7Z1udUEfST11kuYKmr9'
-  },
-  MAPS: {
-    symbol: 'MAPS',
-    name: 'MAPS',
-    address: 'MAPS41MDahZ9QdKXhVa4dWB9RuyfV4XqhyAZ8XcYepb',
-    decimals: 6
-  },
-  OXY: {
-    symbol: 'OXY',
-    name: 'OXY',
-    address: 'z3dn17yLaGMKffVogeFHQ9zWVcXgqgf3PQnDsNs2g6M',
-    decimals: 6
-  },
-  RAY: {
-    symbol: 'RAY',
-    name: 'Raydium',
-    address: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
-    decimals: 6,
-    referrer: '33XpMmMQRf6tSPpmYyzpwU4uXpZHkFwCZsusD9dMYkjy'
-  },
-  xCOPE: {
-    symbol: 'xCOPE',
-    name: 'xCOPE',
-    address: '3K6rftdAaQYMPunrtNRHgnK2UAtjm2JwyT2oCiTDouYE',
-    decimals: 0,
-    referrer: '8DTehuES4tfnd2SrqcjN52XofxWXGjiLZRgM12U9pB6f'
-  },
-  COPE: {
-    symbol: 'COPE',
-    name: 'COPE',
-    address: '8HGyAAB1yoM1ttS7pXjHMa3dukTFGQggnFFH3hJZgzQh',
-    decimals: 6,
-    referrer: 'G7UYwWhkmgeL57SUKFF45K663V9TdXZw6Ho6ZLQ7p4p'
-  },
-  STEP: {
-    symbol: 'STEP',
-    name: 'STEP',
-    address: 'StepAscQoEioFxxWGnh2sLBDFp9d8rvKz2Yp39iDpyT',
-    decimals: 9,
-    referrer: 'EFQVX1S6dFroDDhJDAnMTX4fCfjt4fJXHdk1eEtJ2uRY'
-  },
-  MEDIA: {
-    symbol: 'MEDIA',
-    name: 'MEDIA',
-    address: 'ETAtLmCmsoiEEKfNrHKJ2kYy3MoABhU6NQvpSfij5tDs',
-    decimals: 6,
-    referrer: 'AYnaG3AidNWFzjq9U3BJSsQ9DShE8g7FszriBDtRFvsx',
-
-    details:
-      'Media Network is a new protocol that bypasses traditional CDN providers’ centralized approach for a self-governed and open source solution where everyone can participate. Media Network creates a distributed bandwidth market that enables service providers such as media platforms to hire resources from the network and dynamically come and go as the demand for last-mile data delivery shifts. It allows anyone to organically serve content without introducing any trust assumptions or pre-authentication requirements. Participants earn MEDIA rewards for their bandwidth contributions, a fixed supply SPL token minted on Solana’s Blockchain.',
-    docs: {
-      website: 'https://media.network/',
-      whitepaper: 'https://media.network/whitepaper.pdf'
-    },
-    socials: {
-      Twitter: 'https://twitter.com/Media_FDN',
-      Telegram: 'https://t.me/Media_FDN',
-      Medium: 'https://mediafoundation.medium.com/'
-    }
-  },
-  ROPE: {
-    symbol: 'ROPE',
-    name: 'ROPE',
-    address: '8PMHT4swUMtBzgHnh5U564N5sjPSiUz2cjEQzFnnP1Fo',
-    decimals: 9,
-    referrer: '5sGVVniBSPLTwRHDETShovq7STRH2rJwbvdvvH3NcVTF'
-  },
-  MER: {
-    symbol: 'MER',
-    name: 'Mercurial',
-    address: 'MERt85fc5boKw3BW1eYdxonEuJNvXbiMbs6hvheau5K',
-    decimals: 6,
-    referrer: '36F4ryvqaNW2yKQsAry4ZHCZ3j7tz3gtEz7NEwv7pSRu',
-
-    details:
-      'Mercurial Finance\nMercurial is building DeFi’s first dynamic vaults for stable assets on Solana, providing the technical tools for users to easily deposit, swap and mint stable assets.\n\nInnovations\nMercurial will be introducing several key new technical innovations, including on-chain algorithms to regulate the flow of assets and dynamic fees that tap on the market and price data to assist LPs in optimizing performance. We will also be developing a unique pricing curve that will be the first to combine high efficiency, multi-token support, and generalizability for all types of token sets.\n\nMaximizing Capital Utlilization\nMercurial vaults will dynamically utilize assets for a wide range of use cases, like low slippage swaps, lending, flash loans, and external third-party decentralized protocols. To increase pegged assets availability on Solana, we will allow the creation of synthetics, like mUSD or mBTC, which can be added to our vaults to improve liquidity for other stables and facilitate interaction with other third-party decentralized protocols.\n\nStarting with a vault for the most common stables, for example, USDC, USDT, wUSDC, and wDAI, we will be facilitating low slippage swaps with dynamic fees. Features will be added as key technical and ecosystem pieces become available on Solana, i.e. inter-program composability, price oracles, etc.\n\nMER\nThe MER token will be used to accrue value for the holder via fees from swaps, commission from yield farms, and as collateral for synthetic stables like mUSD. MER will also be intrinsically linked to the governance and growth of Mercurial, playing a crucial role in regulating the system across governance, insurance, and bootstrapping.',
-    docs: {
-      website: 'https://www.mercurial.finance/',
-      whitepaper: 'https://www.mercurial.finance/Mercurial-Lite-Paper-v1.pdf'
-    },
-    socials: {
-      Twitter: 'https://twitter.com/MercurialFi',
-      Telegram: 'https://t.me/MercurialFi',
-      Medium: 'https://mercurialfi.medium.com/'
-    }
-  }
 }
 
 export const LP_TOKENS: Tokens = {
-  'RAY-WUSDT': {
-    symbol: 'RAY-WUSDT',
-    name: 'RAY-WUSDT V2 LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.WUSDT },
-
-    address: 'CzPDyvotTcxNqtPne32yUiEVQ6jk42HZi1Y3hUu7qf7f',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-SOL': {
-    symbol: 'RAY-SOL',
-    name: 'RAY-SOL LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...NATIVE_SOL },
-
-    address: '134Cct3CSdRCbYgq5SkwmHgfwjJ7EM5cG9PzqffWqECx',
-    decimals: TOKENS.RAY.decimals
-  },
-  'LINK-WUSDT': {
-    symbol: 'LINK-WUSDT',
-    name: 'LINK-WUSDT LP',
-    coin: { ...TOKENS.LINK },
-    pc: { ...TOKENS.WUSDT },
-
-    address: 'EVDmwajM5U73PD34bYPugwiA4Eqqbrej4mLXXv15Z5qR',
-    decimals: TOKENS.LINK.decimals
-  },
-  'ETH-WUSDT': {
-    symbol: 'ETH-WUSDT',
-    name: 'ETH-WUSDT LP',
-    coin: { ...TOKENS.ETH },
-    pc: { ...TOKENS.WUSDT },
-
-    address: 'KY4XvwHy7JPzbWYAbk23jQvEb4qWJ8aCqYWREmk1Q7K',
-    decimals: TOKENS.ETH.decimals
-  },
-  'RAY-USDC': {
-    symbol: 'RAY-USDC',
-    name: 'RAY-USDC LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.USDC },
-
-    address: 'FgmBnsF5Qrnv8X9bomQfEtQTQjNNiBCWRKGpzPnE5BDg',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-SRM': {
-    symbol: 'RAY-SRM',
-    name: 'RAY-SRM LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.SRM },
-
-    address: '5QXBMXuCL7zfAk39jEVVEvcrz1AvBGgT9wAhLLHLyyUJ',
-    decimals: TOKENS.RAY.decimals
-  },
-  // v3
-  'RAY-WUSDT-V3': {
-    symbol: 'RAY-WUSDT',
-    name: 'RAY-WUSDT V3 LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.WUSDT },
-
-    address: 'FdhKXYjCou2jQfgKWcNY7jb8F2DPLU1teTTTRfLBD2v1',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-USDC-V3': {
-    symbol: 'RAY-USDC',
-    name: 'RAY-USDC LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.USDC },
-
-    address: 'BZFGfXMrjG2sS7QT2eiCDEevPFnkYYF7kzJpWfYxPbcx',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-SRM-V3': {
-    symbol: 'RAY-SRM',
-    name: 'RAY-SRM LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.SRM },
-
-    address: 'DSX5E21RE9FB9hM8Nh8xcXQfPK6SzRaJiywemHBSsfup',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-SOL-V3': {
-    symbol: 'RAY-SOL',
-    name: 'RAY-SOL LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...NATIVE_SOL },
-
-    address: 'F5PPQHGcznZ2FxD9JaxJMXaf7XkaFFJ6zzTBcW8osQjw',
-    decimals: TOKENS.RAY.decimals
-  },
-  'RAY-ETH-V3': {
-    symbol: 'RAY-ETH',
-    name: 'RAY-ETH LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.ETH },
-
-    address: '8Q6MKy5Yxb9vG1mWzppMtMb2nrhNuCRNUkJTeiE3fuwD',
-    decimals: TOKENS.RAY.decimals
-  },
-  // v4
-  'FIDA-RAY-V4': {
-    symbol: 'FIDA-RAY',
-    name: 'FIDA-RAY LP',
-    coin: { ...TOKENS.FIDA },
-    pc: { ...TOKENS.RAY },
-
-    address: 'DsBuznXRTmzvEdb36Dx3aVLVo1XmH7r1PRZUFugLPTFv',
-    decimals: TOKENS.FIDA.decimals
-  },
-  'OXY-RAY-V4': {
-    symbol: 'OXY-RAY',
-    name: 'OXY-RAY LP',
-    coin: { ...TOKENS.OXY },
-    pc: { ...TOKENS.RAY },
-
-    address: 'FwaX9W7iThTZH5MFeasxdLpxTVxRcM7ZHieTCnYog8Yb',
-    decimals: TOKENS.OXY.decimals
-  },
-  'MAPS-RAY-V4': {
-    symbol: 'MAPS-RAY',
-    name: 'MAPS-RAY LP',
-    coin: { ...TOKENS.MAPS },
-    pc: { ...TOKENS.RAY },
-
-    address: 'CcKK8srfVdTSsFGV3VLBb2YDbzF4T4NM2C3UEjC39RLP',
-    decimals: TOKENS.MAPS.decimals
-  },
-  'KIN-RAY-V4': {
-    symbol: 'KIN-RAY',
-    name: 'KIN-RAY LP',
-    coin: { ...TOKENS.KIN },
-    pc: { ...TOKENS.RAY },
-
-    address: 'CHT8sft3h3gpLYbCcZ9o27mT5s3Z6VifBVbUiDvprHPW',
-    decimals: 6
-  },
-  'RAY-USDT-V4': {
-    symbol: 'RAY-USDT',
-    name: 'RAY-USDT LP',
-    coin: { ...TOKENS.RAY },
-    pc: { ...TOKENS.USDT },
-
-    address: 'C3sT1R3nsw4AVdepvLTLKr5Gvszr7jufyBWUCvy4TUvT',
-    decimals: TOKENS.RAY.decimals
-  },
   'SOL-USDC-V4': {
     symbol: 'SOL-USDC',
     name: 'SOL-USDC LP',
@@ -547,33 +140,6 @@ export const LP_TOKENS: Tokens = {
 
     address: '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu',
     decimals: NATIVE_SOL.decimals
-  },
-  'YFI-USDC-V4': {
-    symbol: 'YFI-USDC',
-    name: 'YFI-USDC LP',
-    coin: { ...TOKENS.YFI },
-    pc: { ...TOKENS.USDC },
-
-    address: '865j7iMmRRycSYUXzJ33ZcvLiX9JHvaLidasCyUyKaRE',
-    decimals: TOKENS.YFI.decimals
-  },
-  'SRM-USDC-V4': {
-    symbol: 'SRM-USDC',
-    name: 'SRM-USDC LP',
-    coin: { ...TOKENS.SRM },
-    pc: { ...TOKENS.USDC },
-
-    address: '9XnZd82j34KxNLgQfz29jGbYdxsYznTWRpvZE3SRE7JG',
-    decimals: TOKENS.SRM.decimals
-  },
-  'FTT-USDC-V4': {
-    symbol: 'FTT-USDC',
-    name: 'FTT-USDC LP',
-    coin: { ...TOKENS.FTT },
-    pc: { ...TOKENS.USDC },
-
-    address: '75dCoKfUHLUuZ4qEh46ovsxfgWhB4icc3SintzWRedT9',
-    decimals: TOKENS.FTT.decimals
   },
   'BTC-USDC-V4': {
     symbol: 'BTC-USDC',
@@ -584,33 +150,6 @@ export const LP_TOKENS: Tokens = {
     address: '2hMdRdVWZqetQsaHG8kQjdZinEMBz75vsoWTCob1ijXu',
     decimals: TOKENS.BTC.decimals
   },
-  'SUSHI-USDC-V4': {
-    symbol: 'SUSHI-USDC',
-    name: 'SUSHI-USDC LP',
-    coin: { ...TOKENS.SUSHI },
-    pc: { ...TOKENS.USDC },
-
-    address: '2QVjeR9d2PbSf8em8NE8zWd8RYHjFtucDUdDgdbDD2h2',
-    decimals: TOKENS.SUSHI.decimals
-  },
-  'TOMO-USDC-V4': {
-    symbol: 'TOMO-USDC',
-    name: 'TOMO-USDC LP',
-    coin: { ...TOKENS.TOMO },
-    pc: { ...TOKENS.USDC },
-
-    address: 'CHyUpQFeW456zcr5XEh4RZiibH8Dzocs6Wbgz9aWpXnQ',
-    decimals: TOKENS.TOMO.decimals
-  },
-  'LINK-USDC-V4': {
-    symbol: 'LINK-USDC',
-    name: 'LINK-USDC LP',
-    coin: { ...TOKENS.LINK },
-    pc: { ...TOKENS.USDC },
-
-    address: 'BqjoYjqKrXtfBKXeaWeAT5sYCy7wsAYf3XjgDWsHSBRs',
-    decimals: TOKENS.LINK.decimals
-  },
   'ETH-USDC-V4': {
     symbol: 'ETH-USDC',
     name: 'ETH-USDC LP',
@@ -619,15 +158,6 @@ export const LP_TOKENS: Tokens = {
 
     address: '13PoKid6cZop4sj2GfoBeujnGfthUbTERdE5tpLCDLEY',
     decimals: TOKENS.ETH.decimals
-  },
-  'xCOPE-USDC-V4': {
-    symbol: 'xCOPE-USDC',
-    name: 'xCOPE-USDC LP',
-    coin: { ...TOKENS.xCOPE },
-    pc: { ...TOKENS.USDC },
-
-    address: '2Vyyeuyd15Gp8aH6uKE72c4hxc8TVSLibxDP9vzspQWG',
-    decimals: TOKENS.xCOPE.decimals
   },
   'SOL-USDT-V4': {
     symbol: 'SOL-USDT',
@@ -638,33 +168,6 @@ export const LP_TOKENS: Tokens = {
     address: 'Epm4KfTj4DMrvqn6Bwg2Tr2N8vhQuNbuK8bESFp4k33K',
     decimals: NATIVE_SOL.decimals
   },
-  'YFI-USDT-V4': {
-    symbol: 'YFI-USDT',
-    name: 'YFI-USDT LP',
-    coin: { ...TOKENS.YFI },
-    pc: { ...TOKENS.USDT },
-
-    address: 'FA1i7fej1pAbQbnY8NbyYUsTrWcasTyipKreDgy1Mgku',
-    decimals: TOKENS.YFI.decimals
-  },
-  'SRM-USDT-V4': {
-    symbol: 'SRM-USDT',
-    name: 'SRM-USDT LP',
-    coin: { ...TOKENS.SRM },
-    pc: { ...TOKENS.USDT },
-
-    address: 'HYSAu42BFejBS77jZAZdNAWa3iVcbSRJSzp3wtqCbWwv',
-    decimals: TOKENS.SRM.decimals
-  },
-  'FTT-USDT-V4': {
-    symbol: 'FTT-USDT',
-    name: 'FTT-USDT LP',
-    coin: { ...TOKENS.FTT },
-    pc: { ...TOKENS.USDT },
-
-    address: '2cTCiUnect5Lap2sk19xLby7aajNDYseFhC9Pigou11z',
-    decimals: TOKENS.FTT.decimals
-  },
   'BTC-USDT-V4': {
     symbol: 'BTC-USDT',
     name: 'BTC-USDT LP',
@@ -673,33 +176,6 @@ export const LP_TOKENS: Tokens = {
 
     address: 'DgGuvR9GSHimopo3Gc7gfkbKamLKrdyzWkq5yqA6LqYS',
     decimals: TOKENS.BTC.decimals
-  },
-  'SUSHI-USDT-V4': {
-    symbol: 'SUSHI-USDT',
-    name: 'SUSHI-USDT LP',
-    coin: { ...TOKENS.SUSHI },
-    pc: { ...TOKENS.USDT },
-
-    address: 'Ba26poEYDy6P2o95AJUsewXgZ8DM9BCsmnU9hmC9i4Ki',
-    decimals: TOKENS.SUSHI.decimals
-  },
-  'TOMO-USDT-V4': {
-    symbol: 'TOMO-USDT',
-    name: 'TOMO-USDT LP',
-    coin: { ...TOKENS.TOMO },
-    pc: { ...TOKENS.USDT },
-
-    address: 'D3iGro1vn6PWJXo9QAPj3dfta6dKkHHnmiiym2EfsAmi',
-    decimals: TOKENS.TOMO.decimals
-  },
-  'LINK-USDT-V4': {
-    symbol: 'LINK-USDT',
-    name: 'LINK-USDT LP',
-    coin: { ...TOKENS.LINK },
-    pc: { ...TOKENS.USDT },
-
-    address: 'Dr12Sgt9gkY8WU5tRkgZf1TkVWJbvjYuPAhR3aDCwiiX',
-    decimals: TOKENS.LINK.decimals
   },
   'ETH-USDT-V4': {
     symbol: 'ETH-USDT',
@@ -710,121 +186,105 @@ export const LP_TOKENS: Tokens = {
     address: 'nPrB78ETY8661fUgohpuVusNCZnedYCgghzRJzxWnVb',
     decimals: TOKENS.ETH.decimals
   },
-  'YFI-SRM-V4': {
-    symbol: 'YFI-SRM',
-    name: 'YFI-SRM LP',
-    coin: { ...TOKENS.YFI },
-    pc: { ...TOKENS.SRM },
+}
 
-    address: 'EGJht91R7dKpCj8wzALkjmNdUUUcQgodqWCYweyKcRcV',
-    decimals: TOKENS.YFI.decimals
-  },
-  'FTT-SRM-V4': {
-    symbol: 'FTT-SRM',
-    name: 'FTT-SRM LP',
-    coin: { ...TOKENS.FTT },
-    pc: { ...TOKENS.SRM },
-
-    address: 'AsDuPg9MgPtt3jfoyctUCUgsvwqAN6RZPftqoeiPDefM',
-    decimals: TOKENS.FTT.decimals
-  },
-  'BTC-SRM-V4': {
-    symbol: 'BTC-SRM',
-    name: 'BTC-SRM LP',
-    coin: { ...TOKENS.BTC },
-    pc: { ...TOKENS.SRM },
-
-    address: 'AGHQxXb3GSzeiLTcLtXMS2D5GGDZxsB2fZYZxSB5weqB',
-    decimals: TOKENS.BTC.decimals
-  },
-  'SUSHI-SRM-V4': {
-    symbol: 'SUSHI-SRM',
-    name: 'SUSHI-SRM LP',
-    coin: { ...TOKENS.SUSHI },
-    pc: { ...TOKENS.SRM },
-
-    address: '3HYhUnUdV67j1vn8fu7ExuVGy5dJozHEyWvqEstDbWwE',
-    decimals: TOKENS.SUSHI.decimals
-  },
-  'TOMO-SRM-V4': {
-    symbol: 'TOMO-SRM',
-    name: 'TOMO-SRM LP',
-    coin: { ...TOKENS.TOMO },
-    pc: { ...TOKENS.SRM },
-
-    address: 'GgH9RnKrQpaMQeqmdbMvs5oo1A24hERQ9wuY2pSkeG7x',
-    decimals: TOKENS.TOMO.decimals
-  },
-  'LINK-SRM-V4': {
-    symbol: 'LINK-SRM',
-    name: 'LINK-SRM LP',
-    coin: { ...TOKENS.LINK },
-    pc: { ...TOKENS.SRM },
-
-    address: 'GXN6yJv12o18skTmJXaeFXZVY1iqR18CHsmCT8VVCmDD',
-    decimals: TOKENS.LINK.decimals
-  },
-  'ETH-SRM-V4': {
-    symbol: 'ETH-SRM',
-    name: 'ETH-SRM LP',
-    coin: { ...TOKENS.ETH },
-    pc: { ...TOKENS.SRM },
-
-    address: '9VoY3VERETuc2FoadMSYYizF26mJinY514ZpEzkHMtwG',
-    decimals: TOKENS.ETH.decimals
-  },
-  'SRM-SOL-V4': {
-    symbol: 'SRM-SOL',
-    name: 'SRM-SOL LP',
-    coin: { ...TOKENS.SRM },
-    pc: { ...NATIVE_SOL },
-
-    address: 'AKJHspCwDhABucCxNLXUSfEzb7Ny62RqFtC9uNjJi4fq',
-    decimals: TOKENS.SRM.decimals
-  },
-  'STEP-USDC-V4': {
-    symbol: 'STEP-USDC',
-    name: 'STEP-USDC LP',
-    coin: { ...TOKENS.STEP },
-    pc: { ...TOKENS.USDC },
-
-    address: '3k8BDobgihmk72jVmXYLE168bxxQUhqqyESW4dQVktqC',
-    decimals: TOKENS.STEP.decimals
-  },
-  'MEDIA-USDC-V4': {
-    symbol: 'MEDIA-USDC',
-    name: 'MEDIA-USDC LP',
-    coin: { ...TOKENS.MEDIA },
-    pc: { ...TOKENS.USDC },
-
-    address: 'A5zanvgtioZGiJMdEyaKN4XQmJsp1p7uVxaq2696REvQ',
-    decimals: TOKENS.MEDIA.decimals
-  },
-  'ROPE-USDC-V4': {
-    symbol: 'ROPE-USDC',
-    name: 'ROPE-USDC LP',
-    coin: { ...TOKENS.ROPE },
-    pc: { ...TOKENS.USDC },
-
-    address: 'Cq4HyW5xia37tKejPF2XfZeXQoPYW6KfbPvxvw5eRoUE',
-    decimals: TOKENS.ROPE.decimals
-  },
-  'MER-USDC-V4': {
-    symbol: 'MER-USDC',
-    name: 'MER-USDC LP',
-    coin: { ...TOKENS.MER },
-    pc: { ...TOKENS.USDC },
-
-    address: '3H9NxvaZoxMZZDZcbBDdWMKbrfNj7PCF5sbRwDr7SdDW',
-    decimals: TOKENS.MER.decimals
-  },
-  'COPE-USDC-V4': {
-    symbol: 'COPE-USDC',
-    name: 'COPE-USDC LP',
-    coin: { ...TOKENS.COPE },
-    pc: { ...TOKENS.USDC },
-
-    address: 'Cz1kUvHw98imKkrqqu95GQB9h1frY8RikxPojMwWKGXf',
-    decimals: TOKENS.COPE.decimals
+function addUserLocalCoinMint() {
+  const localMintStr = window.localStorage.user_add_coin_mint
+  const localMintList = (localMintStr ?? '').split('---')
+  if (localMintList.length % 3 !== 0) {
+    window.localStorage.removeItem('user_add_coin_mint')
+  } else {
+    for (let index = 0; index < Math.floor(localMintList.length / 3); index += 1) {
+      const name = localMintList[index * 3 + 0]
+      const address = localMintList[index * 3 + 1]
+      const decimals = localMintList[index * 3 + 2]
+      if (!Object.values(TOKENS).find((item) => item.address === address)) {
+        TOKENS[name + address + 'unofficialUserAdd'] = {
+          name,
+          symbol: name,
+          decimals: parseInt(decimals),
+          address,
+          tags: ['userAdd']
+        }
+      } else if (
+        !Object.values(TOKENS)
+          .find((item) => item.address === address)
+          .tags.includes('userAdd')
+      ) {
+        TOKENS[name].tags.push('userAdd')
+      }
+    }
   }
 }
+
+function addTokensSolana() {
+  fetch('https://api.raydium.io/cache/solana-token-list')
+    .then(async (response) => {
+      addTokensSolanaFunc((await response.json()).tokens)
+    })
+    .catch(() => {
+      fetch('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json')
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (myJson) {
+          addTokensSolanaFunc(myJson.tokens)
+        })
+    })
+}
+
+function addTokensSolanaFunc(tokens: any[]) {
+  tokens.forEach((itemToken: any) => {
+    if (itemToken.tags && itemToken.tags.includes('lp-token')) {
+      return
+    }
+    if (!Object.values(TOKENS).find((item) => item.address === itemToken.address)) {
+      TOKENS[itemToken.symbol + itemToken.address + 'solana'] = {
+        symbol: itemToken.symbol,
+        name: itemToken.name,
+        address: itemToken.address,
+        decimals: itemToken.decimals,
+        picUrl: itemToken.logoURI,
+        tags: ['solana']
+      }
+    } else {
+      const token = Object.values(TOKENS).find((item) => item.address === itemToken.address)
+      if (token.symbol !== itemToken.symbol && !token.tags.includes('raydium')) {
+        token.symbol = itemToken.symbol
+        token.name = itemToken.name
+        token.decimals = itemToken.decimals
+        token.tags.push('solana')
+      }
+      const picToken = Object.values(TOKENS).find((item) => item.address === itemToken.address)
+      if (picToken) {
+        picToken.picUrl = itemToken.logoURI
+      }
+    }
+  })
+
+  if (window.localStorage.addSolanaCoin) {
+    window.localStorage.addSolanaCoin.split('---').forEach((itemMint: string) => {
+      if (itemMint === NATIVE_SOL.address) NATIVE_SOL.tags.push('userAdd')
+      else
+        Object.keys(TOKENS).forEach((item) => {
+          if (TOKENS[item].address === itemMint) {
+            TOKENS[item].tags.push('userAdd')
+          }
+        })
+    })
+  }
+}
+
+function updateTokenTagsChange() {
+  const userSelectSource = window.localStorage.userSelectSource ?? ''
+  const userSelectSourceList: string[] = userSelectSource.split('---')
+  for (const itemSource of userSelectSourceList) {
+    if (TOKENS_TAGS[itemSource] && !TOKENS_TAGS[itemSource].mustShow) {
+      TOKENS_TAGS[itemSource].show = true
+    }
+  }
+}
+
+addUserLocalCoinMint()
+addTokensSolana()
+updateTokenTagsChange()
