@@ -15,11 +15,10 @@ export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
 export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
 export const MEAN_FINANCE_APP_RENBRIDGE_URL = 'https://bridge.renproject.io/mint';
 export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';
-export const MEAN_FINANCE_DOCS_URL = 'https://docs.meanfi.com/';
-export const MEAN_FINANCE_DEVELOPERS_URL = 'https://developers.meanfi.com/';
-export const MEAN_FINANCE_GITHUBORG_URL = 'https://github.com/mean-code';
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/GMMS3whn';
-export const MEAN_FINANCE_WALLET_GUIDE_URL = 'https://bearemet.gitbook.io/meanfi/wallet-guide';
+export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
+export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
+export const HELP_URI_WALLET_GUIDE = '/tutorials/wallet-guide';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 

@@ -11,7 +11,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
-import { MEANFI_METRICS_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
+import { MEANFI_METRICS_URL, HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { AppConfigService, environment } from '../../environments/environment';
@@ -128,7 +128,7 @@ export const AppBar = (props: { menuType: string }) => {
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
         <Menu.Item key="wallet-guide">
-          <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+          <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
           </a>
         </Menu.Item>
@@ -226,7 +226,7 @@ export const AppBar = (props: { menuType: string }) => {
                   </li>
                 )}
                 <li key="wallet-guide" className="mobile-menu-item">
-                  <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                  <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                     <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                     &nbsp;<IconExternalLink className="mean-svg-icons link" />
                   </a>
