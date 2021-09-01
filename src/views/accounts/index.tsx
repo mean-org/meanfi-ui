@@ -7,6 +7,9 @@ import { TransactionItemView } from '../../components/TransactionItemView';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TransactionWithSignature } from '../../utils/transactions';
+import { TransactionStats } from '../../models/transactions';
+
+const defaultTransactionStats = new TransactionStats();
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
@@ -17,9 +20,11 @@ export const AccountsView = () => {
   const [abortSignalReceived, setAbortSignalReceived] = useState(false);
   const [transactions, setTransactions] = useState<Array<TransactionWithSignature>>([]);
 
+  const [transactionStats, setTransactionStats] = useState<TransactionStats>(defaultTransactionStats);
+
   const abortSwitch = () => setAbortSignalReceived(abortSignalReceived => !abortSignalReceived);
 
-  const loadTransactions = useCallback(async () => {
+  const loadTransactionSignatures = useCallback(async () => {
 
     if (!shouldLoadTxs) { return; }
 
@@ -58,6 +63,45 @@ export const AccountsView = () => {
     publicKey
   ]);
 
+  // const loadTransactions = useCallback(async () => {
+
+  //   if (!shouldLoadTxs) { return; }
+
+  //   if (customConnection && publicKey && !loadingTransactions) {
+  //     setLoadingTransactions(true);
+  //     const transSignatures = await customConnection.getConfirmedSignaturesForAddress2(publicKey);
+  //     console.log('transSignatures:', transSignatures);
+
+  //     const transactions = new Array<TransactionWithSignature>();
+
+  //     for (const item of transSignatures) {
+  //       console.log('abortSignalReceived:', abortSignalReceived);
+  //       if (abortSignalReceived) {
+  //         setLoadingTransactions(false);
+  //         return;
+  //       } else {
+  //         const signature = item.signature;
+  //         const confirmedTransaction = await customConnection.getConfirmedTransaction(signature);
+  //         if (confirmedTransaction) {
+  //           const transWithSignature = new TransactionWithSignature(
+  //             signature,
+  //             confirmedTransaction
+  //           );
+  //           transactions.push(transWithSignature);
+  //           setTransactions(transactions => [...transactions, transWithSignature]);
+  //         }
+  //       }
+  //     }
+  //     setLoadingTransactions(false);
+  //   }
+  // }, [
+  //   abortSignalReceived,
+  //   shouldLoadTxs,
+  //   customConnection,
+  //   loadingTransactions,
+  //   publicKey
+  // ]);
+
   // First load
   useEffect(() => {
     if (!customConnection) {
@@ -67,7 +111,7 @@ export const AccountsView = () => {
     if (shouldLoadTxs && customConnection && publicKey) {
       setAbortSignalReceived(false);
       setShouldLoadTxs(false);
-      loadTransactions();
+      loadTransactionSignatures();
     }
   }, [
     connection.endpoint,
