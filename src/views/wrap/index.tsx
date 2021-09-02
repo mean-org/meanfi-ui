@@ -61,15 +61,15 @@ export const WrapView = () => {
   useEffect(() => {
 
     const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+      return (account.lamports || 0) / LAMPORTS_PER_SOL;
     }
 
-    if (account?.lamports !== previousBalance) {
+    if (account?.lamports !== previousBalance || !nativeBalance) {
       // Refresh token balance
       refreshTokenBalance();
       setNativeBalance(getAccountBalance());
       // Update previous balance
-      setPreviousBalance(account.lamports);
+      setPreviousBalance(account?.lamports);
     }
   }, [
     account,

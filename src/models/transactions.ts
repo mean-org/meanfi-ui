@@ -1,4 +1,9 @@
+import { TokenInfo } from "@solana/spl-token-registry";
 import { type } from "../utils/store-types";
+
+export interface UserTokenAccount extends TokenInfo {
+    balance?: number;
+}
 
 export interface Action {
     type: string;

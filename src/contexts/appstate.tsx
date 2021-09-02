@@ -155,7 +155,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   if (!streamProgramAddress) {
     const config = new AppConfigService();
-    console.log('config => ', config.getConfig());
     setStreamProgramAddress(config.getConfig().streamProgramAddress);
   }
 
