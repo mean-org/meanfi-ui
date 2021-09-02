@@ -3,5 +3,5 @@ This is MeanFi (https://app.meanfi.com), a Solana DeFi app for continuous, self-
 It uses the Money Streaming Program to facilitate money streaming between two or more parties.
 
 Looking for the Money Streaming Program?
-* Money Streaming Program: https://github.com/mean-code/money-streaming-program
+* Money Streaming Program: https://github.com/mean-dao/mean-core
 * Money Streaming Protocol Paper: https://docs.google.com/document/d/19W5V2B8eyFIocccgSP4orn6Wi1El07LQSyaT7yw6hMQ/edit?usp=sharing
