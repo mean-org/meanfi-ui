@@ -1,0 +1,354 @@
+{
+	"account-area": {
+		"connect-button": "Connect wallet account",
+		"copy-address": "Copy Address",
+		"explorer-link": "View on Solana Explorer",
+		"modal-title": "Account",
+		"network-unknown": "Unknown",
+		"streams-tooltip": "Click to reload streams",
+		"wallet-change": "Change",
+		"wallet-provider": "Connected with"
+	},
+	"add-funds": {
+		"label": "Amount",
+		"label-right": "Balance",
+		"modal-title": "Add funds"
+	},
+	"close-stream": {
+		"available-funds": "Available funds",
+		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"modal-title": "Close stream",
+		"primary-cta": "Close stream",
+		"secondary-cta": "Cancel"
+	},
+	"contract-selector": {
+		"donation-fund": {
+			"description": "Create an account where anyone can donate with the peace of mind that the funds will be used for the right cause.",
+			"name": "Donation Fund"
+		},
+		"fundraising": {
+			"description": "Looking to raise funds your Seed, Series, ICOs, DAICOs, Private Rounds? Look no further than a Fundraising Contract.",
+			"name": "Fundraising"
+		},
+		"modal-title": "Select type of transfer",
+		"otp": {
+			"description": "Send money or schedule a payment to another person just one time. Use this option to pay for anything you like.",
+			"name": "One-Time Payment"
+		},
+		"payroll": {
+			"description": "Setup payroll for an employee or contractor, anywhere in the world without the overhead of traditional banking services.",
+			"name": "Payroll"
+		},
+		"pension-fund": {
+			"description": "For employers setting up pension plans that pay employees upon qualifying events, such as reaching retirement age.",
+			"name": "Pension Fund"
+		},
+		"primary-action": "Next",
+		"real-estate-sale-escrow": {
+			"description": "Setup the escrow account for a Real Estate transaction. Seller and buyer get direct access and full auditing for free.",
+			"name": "Real Estate Sale (Escrow)"
+		},
+		"rent-collection": {
+			"description": "Setup rent collection for your tenants. Get paid in real time for every minute they occupy your property.",
+			"name": "Rent Collection"
+		},
+		"repeating": {
+			"description": "Send money to anyone at a fixed flow rate over time. Great for family remmitances, child allowances and more.",
+			"name": "Repeating Payment"
+		},
+		"setup-everything": {
+			"description": "Recommended for professionals that want to setup a contract with unique terms, not commonly used.",
+			"name": "Setup everything (Advanced)"
+		},
+		"subscription": {
+			"description": "Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.",
+			"name": "Subscription"
+		}
+	},
+	"deposits": {
+		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
+		"ftx-cta-label-enabled": "Deposit from FTX",
+		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
+		"modal-title": "Deposit options",
+		"move-from-ethereum-cta-label": "Move assets from Ethereum",
+		"move-from-polygon-cta-label": "Move assets from Polygon",
+		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
+		"not-connected": "Please connect your wallet first",
+		"operation-cta-label-disabled": "Wallet not connected",
+		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
+	},
+	"faucet": {
+		"current-sol-balance": "Current SOL balance",
+		"current-wsol-balance": "Current Wrapped SOL balance",
+		"fund-cta": "Give me SOL",
+		"funding-amount": "Your account will be funded with",
+		"not-connected": "Your wallet is not connected, please connect your wallet",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Wrap transaction fee",
+		"wrapped-amount": "Wrapped amount"
+	},
+	"general": {
+		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
+		"cta-close": "Close",
+		"cta-dismiss": "Dismiss",
+		"cta-finish": "Finish",
+		"day": "day",
+		"hour": "hour",
+		"loading": "Loading",
+		"minute": "minute",
+		"month": "month",
+		"not-connected": "Your wallet is not connected, please connect your wallet",
+		"not-implemented": "Not implemented",
+		"today": "today",
+		"week": "week",
+		"year": "year",
+		"you": "you"
+	},
+	"language-selector": {
+		"modal-title": "Language selector",
+		"primary-action": "Select",
+		"secondary-action": "Cancel"
+	},
+	"notifications": {
+		"account-address-copied-message": "Account Address successfully copied",
+		"account-address-not-copied-message": "Could not copy Account Address",
+		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
+		"error-cannot-fund-account-message": "Could not fund your account, please try again later",
+		"error-ledger-title": "Ledger Error",
+		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
+		"error-title": "Error",
+		"invalid-publickey-message": "Invalid public key. Please check input",
+		"invalid-streamid-message": "Invalid stream id",
+		"streamid-copied-message": "Stream address successfully copied to clipboard",
+		"streamid-not-copied-message": "Could not copy stream Address",
+		"success-account-funded-message": "Account funded",
+		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
+		"wallet-connect-message": "Connected to wallet {{address}}",
+		"wallet-connection-event-title": "Wallet update",
+		"wallet-disconnect-message": "Disconnected from wallet"
+	},
+	"open-stream": {
+		"label-streamid-input": "Stream id to open",
+		"modal-title": "Open money stream",
+		"streamid-empty": "Missing stream id",
+		"streamid-open-cta": "Open stream",
+		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"streams": {
+		"back-to-my-streams-cta": "Back to My Streams",
+		"create-new-stream-cta": "Create new money stream",
+		"lookup-stream-cta-tooltip": "Lookup a stream",
+		"screen-title": "My Money Streams",
+		"stream-activity": {
+			"action-deposit": "Deposit",
+			"action-withdraw": "Withdraw",
+			"heading": "Activity",
+			"label-action": "Action",
+			"label-amount": "Amount",
+			"label-date": "Date",
+			"no-activity": "No activity so far"
+		},
+		"stream-detail": {
+			"add-funds-cta": "Top up (add funds)",
+			"amount-funded-date": "funded on",
+			"close-money-stream-menu-item": "Close money stream",
+			"heading": "Stream details",
+			"label-amount": "Amount",
+			"label-funds-available-to-withdraw": "Funds available to withdraw now",
+			"label-funds-left-in-account": "Funds left in account",
+			"label-funds-runout": "will run out by",
+			"label-funds-runout-today": "will run out today",
+			"label-funds-sent": "Funds sent to recipient",
+			"label-payment-rate": "Payment Rate",
+			"label-receiving-from": "Receiving from",
+			"label-sending-to": "Sending to",
+			"label-start-date-default": "Start Date",
+			"label-start-date-scheduled": "Scheduled",
+			"label-start-date-scheduled-otp": "Scheduled delivery",
+			"label-start-date-started": "Started",
+			"label-total-deposits": "Total amount you have deposited since stream started",
+			"label-total-withdrawals": "Total amount you have withdrawn since stream started",
+			"no-stream": "Please select or lookup a stream to view details",
+			"withdraw-funds-cta": "Withdraw funds"
+		},
+		"stream-list": {
+			"no-streams": "No streams available",
+			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
+			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
+			"subtitle-pending-inbound": "This contract is pending your approval",
+			"subtitle-pending-outbound": "This contract is pending beneficiary approval",
+			"subtitle-running-inbound": "Receiving money since",
+			"subtitle-running-outbound": "Sending money since",
+			"subtitle-scheduled-inbound": "Set to receive money on",
+			"subtitle-scheduled-outbound": "Set to start on",
+			"title-paused-from": "Paused stream from",
+			"title-paused-to": "Paused stream to",
+			"title-pending-from": "Pending execution from",
+			"title-pending-to": "Pending execution to",
+			"title-receiving-from": "Receiving from",
+			"title-sending-to": "Sending to"
+		}
+	},
+	"swap": {
+		"input-label-destination": "Exchange to (Estimate)",
+		"input-label-source": "Exchange from",
+		"insufficient-liquidity": "Insufficient liquidity for this trade",
+		"token-select-destination": "Select token",
+		"token-select-source": "Select token"
+	},
+	"token-selector": {
+		"modal-title": "Select a token",
+		"search-input-placeholder": "Search token by name, symbol or address"
+	},
+	"transactions": {
+		"memo": {
+			"label": "Memo",
+			"placeholder": "Add an optional note"
+		},
+		"memo2": {
+			"label": "Memo / Subject",
+			"placeholder": "What is this payment for?"
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "per day",
+				"per-hour": "per hour",
+				"per-minute": "per minute",
+				"per-month": "per month",
+				"per-week": "per week",
+				"per-year": "per year"
+			},
+			"rate-label": "Rate and frequency",
+			"token-label": "Recipient receives"
+		},
+		"recipient": {
+			"label": "Recipient",
+			"placeholder": "Public address or ENS",
+			"qr-scan-title": "Get address from QR code",
+			"recipient-is-own-account": "Cannot send to your own account"
+		},
+		"send-amount": {
+			"label": "Send",
+			"label-right": "Balance"
+		},
+		"send-date": {
+			"label": "Send on",
+			"placeholder": "Please pick a date"
+		},
+		"status": {
+			"cta-view-stream": "View Stream",
+			"instructions": "Confirm this transaction in your wallet",
+			"modal-title-executing-transaction": "Executing transaction",
+			"modal-title-transaction-completed": "Transaction completed",
+			"stream-started-post": "was started successfully",
+			"stream-started-pre": "Your money stream for",
+			"tx-add-funds-operation": "Funding stream with",
+			"tx-add-funds-operation-success": "Funds added successfully",
+			"tx-close-operation": "Close stream operation",
+			"tx-close-operation-success": "Stream successfully closed",
+			"tx-completed": "Operation completed",
+			"tx-confirm": "Confirming transaction",
+			"tx-confirm-failure": "The transaction could not be confirmed",
+			"tx-idle": "Idle",
+			"tx-init": "Initialize transaction",
+			"tx-init-failure": "Could not initialize transaction",
+			"tx-rejected": "Transaction rejected",
+			"tx-send": "Sending transaction",
+			"tx-send-failure": "Failure submitting transaction",
+			"tx-send-failure-smallamount": "Failure submitting transaction. Swap amount too small",
+			"tx-send-operation": "Sending",
+			"tx-send-operation-success": "was sent successfully",
+			"tx-sign": "Waiting for confirmation",
+			"tx-start": "Collecting data",
+			"tx-start-failure": "Your account balance {{accountBalance}} is lower than the fee amount {{feeAmount}} required to pay for network fees",
+			"tx-swap-operation": "Exchanging {{fromAmount}} to {{toAmount}}",
+			"tx-swap-operation-success": "Exchange operation completed successfully",
+			"tx-wait": "Working, please wait",
+			"tx-withdraw-operation": "Withdraw",
+			"tx-withdraw-operation-success": "Funds withdrawn successfully",
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "Wrap operation completed successfully"
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "Clock-in / Clock-out",
+			"label": "Timesheet requirement",
+			"not-required": "Not required (streams 24/7)",
+			"submit-timesheets": "Submit timesheets"
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "You must add funds to start a payroll",
+			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
+			"beneficiary-receives": "Beneficiary receives",
+			"min-recommended-amount": "Recommended minimum amount",
+			"recipient-receives": "Recipient receives",
+			"transaction-fee": "Transaction fee",
+			"you-receive": "You receive"
+		},
+		"validation": {
+			"amount-high": "Amount exceeds your balance",
+			"amount-low": "Not enough balance",
+			"amount-lt-fee": "Amount has to be greater than the transaction fee",
+			"amount-sol-high": "Amount exceeds your SOL balance",
+			"amount-withdraw-high": "Amount is greater than the available funds",
+			"invalid-amount": "Invalid amount",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
+			"no-amount": "Enter amount",
+			"no-balance": "No balance",
+			"no-payment-rate": "Add payment rate",
+			"no-recipient": "Select recipient",
+			"no-valid-date": "Set a valid date",
+			"not-connected": "Connect your wallet",
+			"payment-rate-high": "Payment rate exceeds your balance",
+			"valid-approve": "Approve on your wallet",
+			"valid-start-funding": "Start funding",
+			"valid-start-withdrawal": "Start withdrawal"
+		}
+	},
+	"ui-language": {
+		"en": "English",
+		"es": "Spanish",
+		"fr": "French",
+		"pt": "Portuguese"
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"code": "Code",
+			"developers": "Developers",
+			"disconnect": "Disconnect wallet",
+			"discord": "Discord",
+			"faucet": "Faucet",
+			"how-to-use": "Docs",
+			"switch-language": "Language",
+			"switch-theme": "Switch to",
+			"theme-dark": "Dark Mode",
+			"theme-light": "Light Mode"
+		},
+		"main-menu": {
+			"accounts": "Accounts",
+			"charts": "Charts",
+			"deposits": "Deposits",
+			"services": {
+				"custody": "Custody",
+				"faucet": "Faucet",
+				"payroll": "Payroll",
+				"submenu-title": "Services",
+				"wallet-guide": "Wallet Guide",
+				"wrap": "Wrap"
+			},
+			"swap": "Exchange",
+			"transfers": "Transfers"
+		}
+	},
+	"wallet-selector": {
+		"primary-action": "Select"
+	},
+	"withdraw-funds": {
+		"label-available-amount": "Funds available to withdraw now",
+		"label-input-amount": "Enter amount to withdraw",
+		"label-input-right": "By percentual preset",
+		"modal-title": "Withdraw funds"
+	}
+}

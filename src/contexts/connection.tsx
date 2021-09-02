@@ -1,20 +1,14 @@
-import { useLocalStorageState } from "./../utils/utils";
-import {
-  Account,
-  clusterApiUrl,
-  Connection,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-} from "@solana/web3.js";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { notify } from "./../utils/notifications";
 import { ExplorerLink } from "../components/ExplorerLink";
 import { setProgramIds } from "../utils/ids";
-import { WalletAdapter } from "./wallet";
 import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { environment } from "../environments/environment";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { useLocalStorageState } from "./../utils/utils";
+import { Account, clusterApiUrl, Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 
 export type ENV =
   | "mainnet-beta"
@@ -25,7 +19,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: "mainnet-beta" as ENV,
-    endpoint: "https://solana-api.projectserum.com/",
+    endpoint: clusterApiUrl("mainnet-beta"),
     chainID: ChainID.MainnetBeta,
   },
   {
@@ -48,9 +42,34 @@ export const ENDPOINTS = [
 const DEFAULT = ENDPOINTS[0].endpoint;
 const DEFAULT_SLIPPAGE = 0.25;
 
+export const getEndpointByRuntimeEnv = (): string => {
+  switch (environment) {
+    case 'local':
+    case 'development':
+      return ENDPOINTS[2].endpoint;
+    case 'staging':
+      return ENDPOINTS[1].endpoint;
+    case 'production':
+    default:
+      return ENDPOINTS[0].endpoint;
+  }
+}
+
+export const getSolanaExplorerClusterParam = (): string => {
+  switch (environment) {
+    case 'development':
+      return '?cluster=devnet';
+    case 'staging':
+      return '?cluster=testnet';
+    default:
+      return '';
+  }
+}
+
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;
+  swapConnection: Connection;
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
@@ -70,14 +89,12 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
+  swapConnection: new Connection(ENDPOINTS[0].endpoint, "confirmed")
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
-  const [endpoint, setEndpoint] = useLocalStorageState(
-    "connectionEndpts",
-    ENDPOINTS[0].endpoint
-  );
 
+  const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
     DEFAULT_SLIPPAGE.toString()
@@ -86,45 +103,52 @@ export function ConnectionProvider({ children = undefined as any }) {
   const connection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
+
   const sendConnection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
 
-  const chain =
-    ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
-  const env = chain.name;
+  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].endpoint, "confirmed"), []);
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
+  const chain = ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
+  const env = chain.name;
+
   useEffect(() => {
     cache.clear();
     // fetch token files
     (async () => {
-      // const res = await new TokenListProvider().resolve();
-      // const list = res
-      //   .filterByChainId(chain.chainID)
-      //   .excludeByTag("nft")
-      //   .getList();
-      //
-      const list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
+      let list: TokenInfo[];
+      // if (environment === 'production') {
+      //   const res = await new TokenListProvider().resolve();
+      //   list = res
+      //     .filterByChainId(chain.chainID)
+      //     .excludeByTag("nft")
+      //     .getList();
+      // }
+      list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;
       }, new Map<string, TokenInfo>());
 
-      const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'single');
+      const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'recent');
       accounts.keys.forEach((key, index) => {
         const account = accounts.array[index];
         if(!account) {
           return;
         }
-
         cache.add(new PublicKey(key), account, MintParser);
       })
 
       setTokenMap(knownMints);
       setTokens(list);
+
     })();
+
+    return () => { }
+
   }, [connection, chain]);
 
   setProgramIds(env);
@@ -175,6 +199,7 @@ export function ConnectionProvider({ children = undefined as any }) {
         tokens,
         tokenMap,
         env,
+        swapConnection
       }}
     >
       {children}
@@ -184,6 +209,10 @@ export function ConnectionProvider({ children = undefined as any }) {
 
 export function useConnection() {
   return useContext(ConnectionContext).connection as Connection;
+}
+
+export function useSwapConnection() {
+  return useContext(ConnectionContext).swapConnection as Connection;
 }
 
 export function useSendConnection() {

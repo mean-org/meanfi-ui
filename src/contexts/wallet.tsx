@@ -1,9 +1,5 @@
-import type { PublicKey } from "@solana/web3.js";
-
 import Wallet from "@project-serum/sol-wallet-adapter";
-import { Transaction } from "@solana/web3.js";
 import { Button, Modal } from "antd";
-import EventEmitter from "eventemitter3";
 import React, {
   useCallback,
   useContext,
@@ -12,55 +8,77 @@ import React, {
   useState,
 } from "react";
 import { notify } from "./../utils/notifications";
-import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
-import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
+import { WalletName } from "../wallet-adapters/wallets";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
+import { MathWalletWalletAdapter } from "../wallet-adapters/mathwallet";
+import { SolflareWalletAdapter } from "../wallet-adapters/solflare";
+import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
+import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
+import { useTranslation } from "react-i18next";
+import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { useConnectionConfig } from "./connection";
 
-const ASSETS_URL =
-  "https://raw.githubusercontent.com/solana-labs/oyster/main/assets/wallets/";
+const ICONS_URL = "/assets/wallets/";
 export const WALLET_PROVIDERS = [
   {
-    name: "Sollet",
-    url: "https://www.sollet.io",
-    icon: `${ASSETS_URL}sollet.svg`,
+    name: WalletName.Phantom,
+    url: 'https://www.phantom.app',
+    icon: `${ICONS_URL}/phantom.svg`,
+    adapter: PhantomWalletAdapter
   },
   {
-    name: "Solong",
-    url: "https://solongwallet.com",
-    icon: `${ASSETS_URL}solong.png`,
-    adapter: SolongWalletAdapter,
+    name: WalletName.Coin98,
+    url: 'https://coin98.com',
+    icon: `${ICONS_URL}/coin98.svg`,
+    adapter: Coin98WalletAdapter
   },
   {
-    name: "Solflare",
+    name: WalletName.Solong,
+    url: 'https://solongwallet.com',
+    icon: `${ICONS_URL}/solong.png`,
+    adapter: SolongWalletAdapter
+  },
+  {
+    name: WalletName.Solflare,
     url: "https://solflare.com/access-wallet",
-    icon: `${ASSETS_URL}solflare.svg`,
+    icon: `${ICONS_URL}/solflare.svg`,
   },
   {
-    name: "MathWallet",
-    url: "https://mathwallet.org",
-    icon: `${ASSETS_URL}mathwallet.svg`,
+    name: WalletName.MathWallet,
+    url: 'https://mathwallet.org',
+    icon: `${ICONS_URL}/mathwallet.svg`,
+    adapter: MathWalletWalletAdapter
   },
   {
-    name: "Ledger",
-    url: "https://www.ledger.com",
-    icon: `${ASSETS_URL}ledger.svg`,
-    adapter: LedgerWalletAdapter,
-  },
-  {
-    name: "Phantom",
-    url: "https://phantom.app/",
-    icon: `https://raydium.io/_nuxt/img/phantom.d9e3c61.png`,
-    adapter: PhantomWalletAdapter,
+    name: WalletName.WalletConnect,
+    url: 'https://walletconnect.org',
+    icon: `${ICONS_URL}/walletconnect.svg`,
+    adapter: WalletConnectWalletAdapter
   },
 ];
 
-export interface WalletAdapter extends EventEmitter {
-  publicKey: PublicKey | null;
-  signTransaction: (transaction: Transaction) => Promise<Transaction>;
-  connect: () => any;
-  disconnect: () => any;
+const getIsProviderInstalled = (provider: any): boolean => {
+  if (provider.adapter) {
+    switch (provider.name) {
+      case WalletName.Phantom:
+        return !!(window as any).solana?.isPhantom;
+      case WalletName.Solong:
+        return !!(window as any).solong;
+      case WalletName.MathWallet:
+        return !!(window as any).solana?.isMathWallet;
+      case WalletName.Coin98:
+        return !!(window as any).coin98;
+      case WalletName.Solflare:
+        return !!(window as any).solflare?.isSolflare;
+      case WalletName.WalletConnect:
+        return true;
+      default:
+        return false;
+    }
+  }
+  return true;
 }
 
 const WalletContext = React.createContext<{
@@ -68,18 +86,25 @@ const WalletContext = React.createContext<{
   connected: boolean;
   select: () => void;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
+  resetWalletProvider: () => void;
 }>({
   wallet: undefined,
   connected: false,
   select() {},
   provider: undefined,
+  resetWalletProvider: () => {},
 });
 
 export function WalletProvider({ children = null as any }) {
+  const { t } = useTranslation("common");
   const { endpoint } = useConnectionConfig();
 
   const [autoConnect, setAutoConnect] = useState(false);
   const [providerUrl, setProviderUrl] = useLocalStorageState("walletProvider");
+
+  const resetWalletProvider = () => {
+    setProviderUrl(null);
+  }
 
   const provider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
@@ -89,13 +114,21 @@ export function WalletProvider({ children = null as any }) {
   const wallet = useMemo(
     function () {
       if (provider) {
-        return new (provider.adapter || Wallet)(
-          providerUrl,
-          endpoint
-        ) as WalletAdapter;
+        if (provider.adapter) {
+          return new (provider.adapter)() as WalletAdapter;
+        } else {
+          return new Wallet(
+            providerUrl,
+            endpoint
+          ) as WalletAdapter;
+        }
       }
     },
-    [provider, providerUrl, endpoint]
+    [
+      provider,
+      endpoint,
+      providerUrl,
+    ]
   );
 
   const [connected, setConnected] = useState(false);
@@ -118,18 +151,15 @@ export function WalletProvider({ children = null as any }) {
               : walletPublicKey;
 
           notify({
-            message: "Wallet update",
-            description: "Connected to wallet " + keyToDisplay,
+            message: t('notifications.wallet-connection-event-title'),
+            description: t('notifications.wallet-connect-message', {address: keyToDisplay}),
+            type: 'info'
           });
         }
       });
 
       wallet.on("disconnect", () => {
         setConnected(false);
-        notify({
-          message: "Wallet update",
-          description: "Disconnected from wallet",
-        });
       });
     }
 
@@ -162,12 +192,12 @@ export function WalletProvider({ children = null as any }) {
         connected,
         select,
         provider,
-      }}
-    >
+        resetWalletProvider,
+      }}>
       {children}
       <Modal
         className="mean-modal"
-        title="Select Wallet"
+        title={t(`wallet-selector.primary-action`)}
         okText="Connect"
         visible={isModalVisible}
         footer={null}
@@ -175,14 +205,22 @@ export function WalletProvider({ children = null as any }) {
         width={400}>
         <div className="wallet-providers">
           {WALLET_PROVIDERS.map((provider, index) => {
+            const isInstalled = getIsProviderInstalled(provider);
             const onClick = function () {
+              if (wallet) {
+                wallet.disconnect();
+              }
               setProviderUrl(provider.url);
               setAutoConnect(true);
               close();
+              if (!isInstalled) {
+                window.open(provider.url, '_blank');
+              }
             };
 
             return (
               <Button
+                block
                 size="large"
                 className="wallet-provider"
                 shape="round"
@@ -197,13 +235,7 @@ export function WalletProvider({ children = null as any }) {
                     src={provider.icon}
                     style={{ marginRight: 8 }}
                   />
-                }
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  marginBottom: 8,
-                }}>
+                }>
                 {provider.name}
               </Button>
             );
@@ -215,12 +247,14 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, select } = useContext(WalletContext);
+  const { wallet, connected, provider, select, resetWalletProvider } = useContext(WalletContext);
+
   return {
     wallet,
     connected,
     provider,
     select,
+    resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {
       wallet ? wallet.connect() : select();

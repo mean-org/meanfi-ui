@@ -1,9 +1,46 @@
+import { Language } from "../models/languages";
+
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
 export const POSITIVE_NUMBER_PATTERN = /^([0]*?([1-9]\d*)(\.0{1,2})?)$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
-export const STREAM_MINIMUM_DATE_FORMAT = 'MMM Do';
-export const STREAM_SHORT_DATE_FORMAT = 'MMM d, hh:mm A z';
-export const STREAM_LONG_DATE_FORMAT = 'MMM Do, YYYY [at] HH:mm A z';
-export const SOLANA_EXPLORER_URI = 'https://explorer.solana.com/address/';
+export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
+export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';
+export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
+export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
+export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
+export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
+export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
+export const MEAN_FINANCE_APP_ALLBRIDGE_URL = 'https://app.allbridge.io';
+export const MEAN_FINANCE_APP_RENBRIDGE_URL = 'https://bridge.renproject.io/mint';
+export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR44YFGQxVX57';
+export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/qBKDgm49js';
+export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
+export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
+export const HELP_URI_WALLET_GUIDE = '/tutorials/wallet-guide';
+export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
+export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
+
+export const LANGUAGES: Language[] = [
+    {
+        code: 'en',
+        name: 'English',
+        flag: 'assets/flags/us.svg'
+    },
+    {
+        code: 'es',
+        name: 'Español',
+        flag: 'assets/flags/es.svg'
+    },
+    {
+        code: 'fr',
+        name: 'Français',
+        flag: 'assets/flags/fr.svg'
+    },
+    {
+        code: 'pt',
+        name: 'Português',
+        flag: 'assets/flags/br.svg'
+    },
+];

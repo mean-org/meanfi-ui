@@ -1,361 +1,552 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import { MINT_TO_MARKET } from "./../models/marketOverrides";
-import { STABLE_COINS } from "./../utils/utils";
-import { useConnectionConfig } from "./connection";
-import { cache, getMultipleAccounts } from "./accounts";
-import { Market, MARKETS, Orderbook, TOKEN_MINTS } from "@project-serum/serum";
-import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
-import { useMemo } from "react";
-import { EventEmitter } from "./../utils/eventEmitter";
+// import React, { useContext, useState, useEffect } from "react";
+import * as assert from "assert";
+// import { useAsync } from "react-async-hook";
+// import { MintLayout } from "@solana/spl-token";
+// import * as anchor from "@project-serum/anchor";
+// import { Orderbook as OrderbookSide } from "@project-serum/serum";
+// import { Bbo, MARKET_CACHE, Orderbook, ORDERBOOK_CACHE, RouteKind, wormholeSwapMarket } from "../utils/wormhole";
+// import { Market, OpenOrders } from "@project-serum/serum";
+// import { DEX_PROGRAM_ID, NATIVE_SOL_MINT, SOL_MINT, WRAPPED_SOL_MINT } from '../utils/ids';
+// import { useTokenMap, useTokenListContext } from "./tokenList";
+// import { setMintCache } from "./token";
+// import { PublicKey } from "@solana/web3.js";
 
-import { DexMarketParser } from "./../models/dex";
-import { useUserAccounts } from "../hooks";
+// export const BASE_TAKER_FEE_BPS = 0.0022;
+// export const FEE_MULTIPLIER = 1 - BASE_TAKER_FEE_BPS;
 
-export const BONFIDA_POOL_INTERVAL = 30 * 60_000; // 30 min
+// type MarketContextState = {
+//   baseVault: PublicKey | null;
+//   quoteVault: PublicKey | null;
+//   requestQueue: PublicKey | null;
+//   eventQueue: PublicKey | null;
+//   bids: PublicKey | null;
+//   asks: PublicKey | null;
+//   baseLotSize: number;
+//   quoteLotSize: number;
+//   _decoded: any;
+//   quoteMint: PublicKey | null;
+//   baseMint: PublicKey | null;
+// };
 
-// interface RecentPoolData {
-//   pool_identifier: string;
-//   volume24hA: number;
+// const MarketContext = React.createContext<MarketContextState | null>(null);
+
+// export function MarketContextProvider(props: any) {
+//   // const container = useTokenListcontainer();  
+//   // const { provider } = useTokenContext();
+//   // const [swapClient, ] = useState<Swap>(new Swap(provider, container));
+//   const [ooAccounts, setOoAccounts] = useState<Map<string, Array<OpenOrders>>>(
+//     new Map<string, Array<OpenOrders>>()
+//   );
+
+//   const [shouldFetchOpenOrders, setShouldFetchOpenOrders] = useState(true);
+//   const [fetchingOpenOrders, setFetchingOpenOrders] = useState(false);
+
+//   // Removes the given open orders from the context.
+//   const closeOpenOrders = async (openOrder: OpenOrders) => {
+//     const newOoAccounts = new Map(ooAccounts);
+//     const openOrders = newOoAccounts
+//       .get(openOrder.market.toString())
+//       ?.filter((oo: OpenOrders) => !oo.address.equals(openOrder.address));
+      
+//     if (openOrders && openOrders.length > 0) {
+//       newOoAccounts.set(openOrder.market.toString(), openOrders);
+//     } else {
+//       newOoAccounts.delete(openOrder.market.toString());
+//     }
+    
+//     setOoAccounts(newOoAccounts);
+//   };
+
+//   // Three operations:
+//   //
+//   // 1. Fetch all open orders accounts for the connected wallet.
+//   // 2. Batch fetch all market accounts for those open orders.
+//   // 3. Batch fetch all mints associated with the markets.
+//   useEffect(() => {
+
+//     if (!swapClient || 
+//         !swapClient.program || 
+//         !swapClient.program.provider ||
+//         !swapClient.program.provider.wallet || 
+//         !swapClient.program.provider.wallet.publicKey) 
+//     {
+//       setOoAccounts(new Map<string, Array<OpenOrders>>());
+
+//       if (!shouldFetchOpenOrders) {
+//         setShouldFetchOpenOrders(true);
+//       }
+      
+//       return;
+//     }
+
+//     if (shouldFetchOpenOrders && !fetchingOpenOrders) {
+//       setFetchingOpenOrders(true);
+//       setTimeout(() => {
+//         OpenOrders.findForOwner(
+//           swapClient.program.provider.connection,
+//           swapClient.program.provider.wallet.publicKey,
+//           DEX_PROGRAM_ID
+    
+//         ).then(async (openOrders) => {
+          
+//           const newOoAccounts = new Map<string, Array<OpenOrders>>();
+//           let markets = new Set<string>();
+          
+//           openOrders.forEach((oo) => {
+//             markets.add(oo.market.toString());
+//             const ooAcc = newOoAccounts.get(oo.market.toString());
+//             if (ooAcc) {
+//               ooAcc.push(oo);
+//             } else {
+//               newOoAccounts.set(oo.market.toString(), [oo]);
+//             }
+//           });
+    
+//           if (markets.size > 100) {
+//             throw new Error("Too many markets. Please file an issue to update this");
+//           }
+    
+//           const multipleMarkets = await anchor.utils.rpc.getMultipleAccounts(
+//             swapClient.program.provider.connection,
+//             Array.from(markets.values()).map((m) => new PublicKey(m))
+//           );
+    
+//           const marketClients = multipleMarkets.map((programAccount) => {
+//             return {
+//               publicKey: programAccount?.publicKey,
+//               account: new Market(
+//                 Market.getLayout(DEX_PROGRAM_ID).decode(programAccount?.account.data),
+//                 -1, // Set below so that we can batch fetch mints.
+//                 -1, // Set below so that we can batch fetch mints.
+//                 swapClient.program.provider.opts,
+//                 DEX_PROGRAM_ID
+//               ),
+//             };
+//           });
+    
+//           setOoAccounts(newOoAccounts);
+    
+//           // Batch fetch all the mints, since we know we'll need them at some
+//           // point.
+//           const mintPubkeys = Array.from(
+//             new Set<string>(
+//               marketClients
+//                 .map((m) => [
+//                   m.account.baseMintAddress.toString(),
+//                   m.account.quoteMintAddress.toString(),
+//                 ])
+//                 .flat()
+//             ).values()
+//           ).map((pk) => new PublicKey(pk));
+    
+//           if (mintPubkeys.length > 100) {
+//             throw new Error("Too many mints. Please file an issue to update this");
+//           }
+    
+//           const mints = await anchor.utils.rpc.getMultipleAccounts(
+//             swapClient.program.provider.connection,
+//             mintPubkeys
+//           );
+    
+//           const mintInfos = mints.map((mint) => {
+//             const mintInfo = MintLayout.decode(mint!.account.data);
+//             setMintCache(mint!.publicKey, mintInfo);
+//             return { publicKey: mint!.publicKey, mintInfo };
+//           });
+    
+//           marketClients.forEach((m) => {
+//             const baseMintInfo = mintInfos.filter((mint: any) =>
+//               mint.publicKey.equals(m.account.baseMintAddress)
+//             )[0];
+//             const quoteMintInfo = mintInfos.filter((mint: any) =>
+//               mint.publicKey.equals(m.account.quoteMintAddress)
+//             )[0];
+//             assert.ok(baseMintInfo && quoteMintInfo);
+//             // @ts-ignore
+//             m.account._baseSplTokenDecimals = baseMintInfo.mintInfo.decimals;
+//             // @ts-ignore
+//             m.account._quoteSplTokenDecimals = quoteMintInfo.mintInfo.decimals;
+//             MARKET_CACHE.set(
+//               m.publicKey!.toString(),
+//               new Promise<Market>((resolve) => resolve(m.account))
+//             );
+//           });
+
+//           setShouldFetchOpenOrders(false);
+//           setFetchingOpenOrders(false);
+          
+//         });
+//       }, 500);
+//     }
+
+//     return () => {
+//       clearTimeout();
+//     };
+
+//   },  [
+//     swapClient.program.provider.connection,
+//     swapClient.program.provider.opts,
+//     swapClient.program.provider.wallet?.publicKey,
+//     fetchingOpenOrders,
+//     shouldFetchOpenOrders, 
+//     swapClient
+//   ]);
+  
+//   return (
+//     <MarketContext.Provider
+//       value={{
+//         openOrders: ooAccounts,
+//         closeOpenOrders,
+//         swapClient,
+//         fetchingOpenOrders
+//       }}>
+//       {props.children}
+//     </MarketContext.Provider>
+//   );
 // }
 
-export interface MarketsContextState {
-  midPriceInUSD: (mint: string) => number;
-  marketEmitter: EventEmitter;
-  accountsToObserve: Map<string, number>;
-  marketByMint: Map<string, SerumMarket>;
-
-  subscribeToMarket: (mint: string) => () => void;
-
-  precacheMarkets: (mints: string[]) => void;
-}
-
-const REFRESH_INTERVAL = 30_000;
-
-const MarketsContext = React.createContext<MarketsContextState | null>(null);
-
-const marketEmitter = new EventEmitter();
-
-export function MarketProvider({ children = null as any }) {
-  const { endpoint } = useConnectionConfig();
-  const accountsToObserve = useMemo(() => new Map<string, number>(), []);
-  const [marketMints, setMarketMints] = useState<string[]>([]);
-  const { userAccounts } = useUserAccounts();
-
-  const connection = useMemo(() => new Connection(endpoint, "recent"), [
-    endpoint,
-  ]);
-
-  const marketByMint = useMemo(() => {
-    return [...new Set(marketMints).values()].reduce((acc, key) => {
-      const mintAddress = key;
-
-      const SERUM_TOKEN = TOKEN_MINTS.find(
-        (a) => a.address.toBase58() === mintAddress
-      );
-
-      const marketAddress = MINT_TO_MARKET[mintAddress];
-      const marketInfo = MARKETS.filter(m => !m.deprecated).find(
-        (m) => m.name === `${SERUM_TOKEN?.name}/USDC` || 
-               m.name === `${SERUM_TOKEN?.name}/USDT` || 
-               m.address.toBase58() === marketAddress
-      );
-
-      if (marketInfo) {
-        acc.set(mintAddress, {
-          marketInfo,
-        });
-      }
-
-      return acc;
-    }, new Map<string, SerumMarket>()) as Map<string, SerumMarket>;
-  }, [marketMints]);
-
-  useEffect(() => {
-    let timer = 0;
-
-    const updateData = async () => {
-      await refreshAccounts(connection, [...accountsToObserve.keys()]);
-      marketEmitter.raiseMarketUpdated(new Set([...marketByMint.keys()]));
-
-      timer = window.setTimeout(() => updateData(), REFRESH_INTERVAL);
-    };
-
-    const initalQuery = async () => {
-      const reverseSerumMarketCache = new Map<string, string>();
-      [...marketByMint.keys()].forEach((mint) => {
-        const m = marketByMint.get(mint);
-        if (m) {
-          reverseSerumMarketCache.set(m.marketInfo.address.toBase58(), mint);
-        }
-      });
-
-      const allMarkets = [...marketByMint.values()].map((m) => {
-        return m.marketInfo.address.toBase58();
-      });
-
-      await getMultipleAccounts(
-        connection,
-        // only query for markets that are not in cahce
-        allMarkets.filter((a) => cache.get(a) === undefined),
-        "single"
-      ).then(({ keys, array }) => {
-        allMarkets.forEach(() => {});
-
-        return array.map((item, index) => {
-          const marketAddress = keys[index];
-          const mintAddress = reverseSerumMarketCache.get(marketAddress);
-          if (mintAddress) {
-            const market = marketByMint.get(mintAddress);
-
-            if (market) {
-              const id = market.marketInfo.address;
-              cache.add(id, item, DexMarketParser);
-            }
-          }
-
-          return item;
-        });
-      });
-
-      const toQuery = new Set<string>();
-      allMarkets.forEach((m) => {
-        const market = cache.get(m);
-        if (!market) {
-          return;
-        }
-
-        const decoded = market;
-
-        if (!cache.get(decoded.info.baseMint)) {
-          toQuery.add(decoded.info.baseMint.toBase58());
-        }
-
-        if (!cache.get(decoded.info.baseMint)) {
-          toQuery.add(decoded.info.quoteMint.toBase58());
-        }
-
-        toQuery.add(decoded.info.bids.toBase58());
-        toQuery.add(decoded.info.asks.toBase58());
-      });
-
-      await refreshAccounts(connection, [...toQuery.keys()]);
-
-      marketEmitter.raiseMarketUpdated(new Set([...marketByMint.keys()]));
-
-      // start update loop
-      updateData();
-    };
-
-    initalQuery();
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [marketByMint, accountsToObserve, connection]);
-
-  const midPriceInUSD = useCallback(
-    (mintAddress: string) => {
-      return getMidPrice(
-        marketByMint.get(mintAddress)?.marketInfo.address.toBase58(),
-        mintAddress
-      );
-    },
-    [marketByMint]
-  );
-
-  const subscribeToMarket = useCallback(
-    (mintAddress: string) => {
-      const info = marketByMint.get(mintAddress);
-      const market = cache.get(info?.marketInfo.address.toBase58() || "");
-      if (!market) {
-        return () => {};
-      }
-
-      // TODO: get recent volume
-
-      const bid = market.info.bids.toBase58();
-      const ask = market.info.asks.toBase58();
-      accountsToObserve.set(bid, (accountsToObserve.get(bid) || 0) + 1);
-      accountsToObserve.set(ask, (accountsToObserve.get(ask) || 0) + 1);
-
-      // TODO: add event queue to query for last trade
-
-      return () => {
-        accountsToObserve.set(bid, (accountsToObserve.get(bid) || 0) - 1);
-        accountsToObserve.set(ask, (accountsToObserve.get(ask) || 0) - 1);
-
-        // cleanup
-        [...accountsToObserve.keys()].forEach((key) => {
-          if ((accountsToObserve.get(key) || 0) <= 0) {
-            accountsToObserve.delete(key);
-          }
-        });
-      };
-    },
-    [marketByMint, accountsToObserve]
-  );
-
-  const precacheMarkets = useCallback(
-    (mints: string[]) => {
-      const newMints = [...new Set([...marketMints, ...mints]).values()];
-
-      if (marketMints.length !== newMints.length) {
-        setMarketMints(newMints);
-      }
-    },
-    [setMarketMints, marketMints]
-  );
-
-  useEffect(() => {
-    precacheMarkets(userAccounts.map(a => a.info.mint.toBase58()));
-  }, [userAccounts, precacheMarkets]);
-
-  return (
-    <MarketsContext.Provider
-      value={{
-        midPriceInUSD,
-        marketEmitter,
-        accountsToObserve,
-        marketByMint,
-        subscribeToMarket,
-        precacheMarkets,
-      }}
-    >
-      {children}
-    </MarketsContext.Provider>
-  );
-}
-
-export const useMarkets = () => {
-  const context = useContext(MarketsContext);
-  return context as MarketsContextState;
-};
-
-export const useMidPriceInUSD = (mint: string) => {
-  const { midPriceInUSD, subscribeToMarket, marketEmitter } = useContext(
-    MarketsContext
-  ) as MarketsContextState;
-  const [price, setPrice] = useState<number>(0);
-
-  useEffect(() => {
-    let subscription = subscribeToMarket(mint);
-    const update = () => {
-      if (midPriceInUSD) {
-        setPrice(midPriceInUSD(mint));
-      }
-    };
-
-    update();
-    console.log('Just before update');
-    const dispose = marketEmitter.onMarket(update);
-
-    return () => {
-      subscription();
-      dispose();
-    };
-  }, [midPriceInUSD, mint, marketEmitter, subscribeToMarket]);
-
-  return { price, isBase: price === 1.0 };
-};
-
-export const usePrecacheMarket = () => {
-  const context = useMarkets();
-  return context.precacheMarkets;
-};
-
-const bbo = (bidsBook: Orderbook, asksBook: Orderbook) => {
-  const bestBid = bidsBook.getL2(1);
-  const bestAsk = asksBook.getL2(1);
-
-  if (bestBid.length > 0 && bestAsk.length > 0) {
-    return (bestBid[0][0] + bestAsk[0][0]) / 2.0;
-  }
-
-  return 0;
-};
-
-const getMidPrice = (marketAddress?: string, mintAddress?: string) => {
-  const SERUM_TOKEN = TOKEN_MINTS.find(
-    (a) => a.address.toBase58() === mintAddress
-  );
-
-  if (STABLE_COINS.has(SERUM_TOKEN?.name || "")) {
-    return 1.0;
-  }
-
-  if (!marketAddress) {
-    return 0.0;
-  }
-
-  const marketInfo = cache.get(marketAddress);
-  if (!marketInfo) {
-    return 0.0;
-  }
-
-  const decodedMarket = marketInfo.info;
-
-  const baseMintDecimals =
-    cache.get(decodedMarket.baseMint)?.info.decimals || 0;
-  const quoteMintDecimals =
-    cache.get(decodedMarket.quoteMint)?.info.decimals || 0;
-
-  const market = new Market(
-    decodedMarket,
-    baseMintDecimals,
-    quoteMintDecimals,
-    undefined,
-    decodedMarket.programId
-  );
-
-  const bids = cache.get(decodedMarket.bids)?.info;
-  const asks = cache.get(decodedMarket.asks)?.info;
-
-  if (bids && asks) {
-    const bidsBook = new Orderbook(market, bids.accountFlags, bids.slab);
-    const asksBook = new Orderbook(market, asks.accountFlags, asks.slab);
-
-    return bbo(bidsBook, asksBook);
-  }
-
-  return 0;
-};
-
-const refreshAccounts = async (connection: Connection, keys: string[]) => {
-  if (keys.length === 0) {
-    return [];
-  }
-
-  return getMultipleAccounts(connection, keys, "single").then(
-    ({ keys, array }) => {
-      return array.map((item, index) => {
-        const address = keys[index];
-        return cache.add(new PublicKey(address), item);
-      });
-    }
-  );
-};
-
-interface SerumMarket {
-  marketInfo: {
-    address: PublicKey;
-    name: string;
-    programId: PublicKey;
-    deprecated: boolean;
-  };
-
-  // 1st query
-  marketAccount?: AccountInfo<Buffer>;
-
-  // 2nd query
-  mintBase?: AccountInfo<Buffer>;
-  mintQuote?: AccountInfo<Buffer>;
-  bidAccount?: AccountInfo<Buffer>;
-  askAccount?: AccountInfo<Buffer>;
-  eventQueue?: AccountInfo<Buffer>;
-
-  swap?: {
-    dailyVolume: number;
-  };
-
-  midPrice?: (mint?: PublicKey) => number;
-}
+// export function useMarketContext(): MarketContextState {
+//   const ctx = useContext(MarketContext);
+  
+//   if (ctx === null) {
+//     throw new Error("Context not available");
+//   }
+  
+//   return ctx;
+// }
+
+// export function useOpenOrders(): Map<string, Array<OpenOrders>> {
+//   const ctx = useMarketContext();
+//   return ctx.openOrders;
+// }
+
+// export function useMarket(market?: PublicKey): Market | undefined {    
+//   const { swapClient } = useMarketContext();
+//   const asyncMarket = useAsync(async () => {
+
+//     if (!market) {
+//       return undefined;
+//     }
+
+//     if (MARKET_CACHE.get(market.toString())) {
+//       return MARKET_CACHE.get(market.toString());
+//     }
+
+//     const marketClient = new Promise<Market>(async (resolve) => {
+//       const marketClient = await Market.load(
+//         swapClient.program.provider.connection,
+//         market,
+//         swapClient.program.provider.opts,
+//         DEX_PROGRAM_ID
+//       );
+//       resolve(marketClient);
+//     });
+
+//     MARKET_CACHE.set(market.toString(), marketClient);
+
+//     return marketClient;
+    
+//   }, [
+//       swapClient.program.provider.connection,
+//       market
+//   ]);
+
+//   if (asyncMarket.result) {
+//     return asyncMarket.result;
+//   }
+
+//   return undefined;
+// }
+
+// export function useOrderbook(market?: PublicKey): Orderbook | undefined {
+//   const { swapClient } = useMarketContext();
+//   const marketClient = useMarket(market);
+//   const [refresh, setRefresh] = useState(0);
+  
+//   const asyncOrderbook = useAsync(async () => {
+    
+//     if (!market || !marketClient) {
+//       return undefined;
+//     }
+
+//     if (ORDERBOOK_CACHE.get(market.toString())) {
+//       return ORDERBOOK_CACHE.get(market.toString());
+//     }
+
+//     const orderbook = new Promise<Orderbook>(async (resolve) => {
+//       const [bids, asks] = await Promise.all([
+//         marketClient.loadBids(swapClient.program.provider.connection),
+//         marketClient.loadAsks(swapClient.program.provider.connection),
+//       ]);
+
+//       resolve({
+//         bids,
+//         asks,
+//       });
+//     });
+
+//     ORDERBOOK_CACHE.set(market.toString(), orderbook);
+
+//     return orderbook;
+    
+//   }, [
+//       refresh,
+//       market,
+//       marketClient,
+//       swapClient.program.provider.connection
+//   ]);
+
+//   // Stream in bids updates.
+//   useEffect(() => {
+
+//     let listener: number | undefined;
+
+//     if (marketClient?.bidsAddress) {
+//       listener = swapClient.program.provider.connection.onAccountChange(
+//         marketClient?.bidsAddress,
+//         async (info) => {
+//           const bids = OrderbookSide.decode(marketClient, info.data);
+//           const orderbook = await ORDERBOOK_CACHE.get(
+//             marketClient.address.toString()
+//           );
+//           const oldBestBid = orderbook?.bids.items(true).next().value;
+//           const newBestBid = bids.items(true).next().value;
+//           if (
+//             orderbook &&
+//             oldBestBid &&
+//             newBestBid &&
+//             oldBestBid.price !== newBestBid.price
+//           ) {
+//             orderbook.bids = bids;
+//             setRefresh((r) => r + 1);
+//           }
+//         }
+//       );
+//     }
+
+//     return () => {
+//       if (listener) {
+//         swapClient.program.provider.connection.removeAccountChangeListener(
+//           listener
+//         );
+//       }
+//     };
+
+//   }, [
+//     marketClient,
+//     marketClient?.bidsAddress,
+//     swapClient.program.provider.connection,
+//   ]);
+
+//   // Stream in asks updates.
+//   useEffect(() => {
+
+//     let listener: number | undefined;
+
+//     if (marketClient?.asksAddress) {
+//       listener = swapClient.program.provider.connection.onAccountChange(
+//         marketClient?.asksAddress,
+//         async (info) => {
+//           const asks = OrderbookSide.decode(marketClient, info.data);
+//           const orderbook = await ORDERBOOK_CACHE.get(
+//             marketClient.address.toString()
+//           );
+//           const oldBestOffer = orderbook?.asks.items(false).next().value;
+//           const newBestOffer = asks.items(false).next().value;
+//           if (
+//             orderbook &&
+//             oldBestOffer &&
+//             newBestOffer &&
+//             oldBestOffer.price !== newBestOffer.price
+//           ) {
+//             orderbook.asks = asks;
+//             setRefresh((r) => r + 1);
+//           }
+//         }
+//       );
+//     }
+
+//     return () => {
+//       if (listener) {
+//         swapClient.program.provider.connection.removeAccountChangeListener(
+//           listener
+//         );
+//       }
+//     };
+
+//   }, [
+//     marketClient,
+//     marketClient?.bidsAddress,
+//     swapClient.program.provider.connection,
+//   ]);
+
+//   if (asyncOrderbook.result) {
+//     return asyncOrderbook.result;
+//   }
+
+//   return undefined;
+// }
+
+// export function useMarketName(market: PublicKey): string | null {
+//   const tokenMap = useTokenMap();
+//   const marketClient = useMarket(market);
+  
+//   if (!marketClient) {
+//     return null;
+//   }
+  
+//   const baseTicker = marketClient
+//     ? tokenMap.get(marketClient?.baseMintAddress.toString())?.symbol
+//     : "-";
+    
+//   const quoteTicker = marketClient
+//     ? tokenMap.get(marketClient?.quoteMintAddress.toString())?.symbol
+//     : "-";
+    
+//   const name = `${baseTicker} / ${quoteTicker}`;
+  
+//   return name;
+// }
+
+// // Fair price for a given market, as defined by the mid.
+// export function useBbo(market?: PublicKey): Bbo | undefined {
+//   const orderbook = useOrderbook(market);
+  
+//   if (orderbook === undefined) {
+//     return undefined;
+//   }
+  
+//   const bestBid = orderbook.bids.items(true).next().value;
+//   const bestOffer = orderbook.asks.items(false).next().value;
+  
+//   if (!bestBid && !bestOffer) {
+//     return {};
+//   }
+  
+//   if (!bestBid) {
+//     return { bestOffer: bestOffer.price };
+//   }
+  
+//   if (!bestOffer) {
+//     return { bestBid: bestBid.price };
+//   }
+  
+//   const mid = (bestBid.price + bestOffer.price) / 2.0;
+  
+//   return { bestBid: bestBid.price, bestOffer: bestOffer.price, mid };
+// }
+
+// // Fair price for a theoretical toMint/fromMint market. I.e., the number
+// // of `fromMint` tokens to purchase a single `toMint` token. Aggregates
+// // across a trade route, if needed.
+// export function useFairRoute(
+//   fromMint: PublicKey,
+//   toMint: PublicKey
+  
+// ): number | undefined {
+//   const route = useRoute(fromMint, toMint);
+//   const fromBbo = useBbo(route ? route[0] : undefined);
+//   const fromMarket = useMarket(route ? route[0] : undefined);
+//   const toBbo = useBbo(route ? route[1] : undefined);
+
+//   if (route === null) {
+//     return undefined;
+//   }
+
+//   if (route.length === 1 && fromBbo !== undefined) {
+//     if (fromMarket === undefined) {
+//       return undefined;
+//     }
+    
+//     if (fromMarket?.baseMintAddress.equals(fromMint) ||
+//        (fromMarket?.baseMintAddress.equals(WRAPPED_SOL_MINT) && 
+//         fromMint.equals(NATIVE_SOL_MINT))
+//     ) {
+//       return fromBbo.bestBid && 1.0 / fromBbo.bestBid;
+//     } else {
+//       return fromBbo.bestOffer && fromBbo.bestOffer;
+//     }
+//   }
+  
+//   if (fromBbo === undefined ||
+//     fromBbo.bestBid === undefined ||
+//     toBbo === undefined ||
+//     toBbo.bestOffer === undefined
+//   ) {
+//     return undefined;
+//   }
+  
+//   return toBbo.bestOffer / fromBbo.bestBid;
+// }
+
+// export function useRoute(
+//   fromMint: PublicKey,
+//   toMint: PublicKey
+  
+// ): Array<PublicKey> | null {
+
+//   const route = useRouteVerbose(fromMint, toMint);
+  
+//   if (route === null) {
+//     return null;
+//   }
+  
+//   return route.markets;
+// }
+
+// // Types of routes.
+// //
+// // 1. Direct trades on USDC quoted markets.
+// // 2. Transitive trades across two USDC qutoed markets.
+// // 3. Wormhole <-> Sollet one-to-one swap markets.
+// // 4. Wormhole <-> Native one-to-one swap markets.
+// //
+// export function useRouteVerbose(
+//   fromMint: PublicKey,
+//   toMint: PublicKey
+  
+// ): { markets: Array<PublicKey>; kind: RouteKind } | null {
+
+//   const { swapClient } = useMarketContext();
+//   const { wormholeMap, solletMap } = useTokenListContext();
+
+//   const asyncRoute = useAsync(async () => {
+      
+//     const swapMarket = await wormholeSwapMarket(
+//       swapClient.program.provider.connection,
+//       fromMint,
+//       toMint,
+//       wormholeMap,
+//       solletMap
+//     );
+    
+//     if (swapMarket !== null) {
+//       const [wormholeMarket, kind] = swapMarket;
+//       return { markets: [wormholeMarket], kind };
+//     }
+    
+//     const markets = swapClient.route(
+//       fromMint.equals(SOL_MINT) ? WRAPPED_SOL_MINT : fromMint,
+//       toMint.equals(SOL_MINT) ? WRAPPED_SOL_MINT : toMint
+//     );
+    
+//     if (markets === null) {
+//       return null;
+//     }
+    
+//     const kind: RouteKind = "usdx";
+    
+//     return { markets, kind };
+    
+//   }, [
+//       fromMint,
+//       toMint,
+//       swapClient
+//   ]);
+
+//   if (asyncRoute.result) {
+//     return asyncRoute.result;
+//   }
+  
+//   return null;
+// }

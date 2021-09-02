@@ -12,8 +12,8 @@ export const TokenDisplay = (props: {
   const tokenMint = useMint(mintAddress);
   const tokenAccount = useAccountByMint(mintAddress);
 
-  let balance: number = 0;
-  let hasBalance: boolean = false;
+  let balance = 0;
+  let hasBalance = false;
   if (showBalance) {
     if (tokenAccount && tokenMint) {
       balance =

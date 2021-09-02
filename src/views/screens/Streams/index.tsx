@@ -1,9 +1,11 @@
+import React from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu } from "antd";
+import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip } from "antd";
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
-  ExclamationCircleOutlined,
   LoadingOutlined,
   SearchOutlined,
   WarningOutlined,
@@ -13,25 +15,57 @@ import {
   IconClock,
   IconDocument,
   IconDownload,
-  IconExit,
-  IconPause,
+  IconExternalLink,
+  IconIncomingPaused,
+  IconOutgoingPaused,
+  IconRefresh,
   IconShare,
   IconUpload,
 } from "../../../Icons";
 import { AppStateContext } from "../../../contexts/appstate";
-import { MoneyStreaming, StreamInfo } from "../../../money-streaming/money-streaming";
 import { useWallet } from "../../../contexts/wallet";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from "../../../utils/utils";
-import { getIntervalFromSeconds, getTransactionOperationDescription } from "../../../utils/ui";
-import { SOLANA_EXPLORER_URI } from "../../../constants";
+import {
+  formatAmount,
+  getTokenAmountAndSymbolByTokenAddress,
+  getTokenByMintAddress,
+  getTokenSymbol,
+  shortenAddress
+} from "../../../utils/utils";
+import {
+  consoleOut,
+  copyText,
+  getFormattedNumberToLocale,
+  getIntervalFromSeconds,
+  getTransactionOperationDescription,
+  getTxFeeAmount,
+} from "../../../utils/ui";
 import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../../components/OpenStreamModal';
 import { WithdrawModal } from '../../../components/WithdrawModal';
-import _ from "lodash";
-import { useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import { listStreams } from "../../../money-streaming/utils";
+import {
+  SIMPLE_DATE_FORMAT,
+  SIMPLE_DATE_TIME_FORMAT,
+  VERBOSE_DATE_FORMAT,
+  VERBOSE_DATE_TIME_FORMAT,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  WRAPPED_SOL_MINT_ADDRESS,
+} from "../../../constants";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
+import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../../models/enums";
+import { notify } from "../../../utils/notifications";
+import { AddFundsModal } from "../../../components/AddFundsModal";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { CloseStreamModal } from "../../../components/CloseStreamModal";
+import { useNativeAccount } from "../../../contexts/accounts";
+import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/lib/types";
+import { calculateActionFees, getStream } from "money-streaming/lib/utils";
+import { MoneyStreaming } from "money-streaming/lib/money-streaming";
+import { useTranslation } from "react-i18next";
+import { defaultStreamStats, StreamStats } from "../../../models/streams";
+
+const dateFormat = require("dateformat");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -42,48 +76,88 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
+    selectedToken,
+    tokenBalance,
+    loadingStreams,
+    loadingStreamActivity,
+    streamActivity,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
+    customStreamDocked,
+    setSelectedToken,
     setCurrentScreen,
-    setLoadingStreams,
-    setStreamList,
     setStreamDetail,
     setSelectedStream,
+    refreshStreamList,
     setTransactionStatus,
     openStreamById,
-    setDtailsPanelOpen
+    setDtailsPanelOpen,
+    refreshTokenBalance,
+    setCustomStreamDocked
   } = useContext(AppStateContext);
-  const { confirm } = Modal;
+  const { t } = useTranslation('common');
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
-    if (!connected) {
-      setCurrentScreen("contract");
-    } else {
-      if (streamList && streamList.length === 0) {
-        setCurrentScreen("contract");
-      }
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
     }
+
+    if (account?.lamports !== previousBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account.lamports);
+    }
+  }, [
+    account,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
+  const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
-  // Data live calculation
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
+
+  // Live data calculation
   useEffect(() => {
-    let updateDateTimer: any;
 
-    const updateData = () => {
-      if (streamDetail) {
-        const clonedDetail = _.cloneDeep(streamDetail);
+    const updateData = async () => {
+      if (streamDetail && streamDetail.escrowUnvestedAmount) {
+        const clonedDetail = Object.assign({}, streamDetail);
+        const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
+        const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
+        let escrowVestedAmount = 0.0;
+        let rateAmount = clonedDetail.rateAmount;
+        let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
 
-        let startDateUtc = new Date(clonedDetail.startUtc as string);
-        let utcNow = new Date();
-        const rate = clonedDetail.rateAmount / clonedDetail.rateIntervalInSeconds;
-        const elapsedTime = (utcNow.getTime() - startDateUtc.getTime()) / 1000;
+        if (rateIntervalInSeconds === 0) {
+          rateIntervalInSeconds = 1;
+        }
 
-        let escrowVestedAmount = 0;
+        let rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
 
-        if (utcNow.getTime() >= startDateUtc.getTime()) {
-          escrowVestedAmount = rate * elapsedTime;;
+        if (rateAmount === 0) {
+            rateAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
+            rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds) : 0;
+        }
 
+        const slot = await connection.getSlot();
+        const currentBlockTime = await connection.getBlockTime(slot) as number;
+        const elapsedTime = currentBlockTime - lastTimeSnap;
+        if (currentBlockTime >= lastTimeSnap) {
+          escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
           if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
             escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
           }
@@ -96,9 +170,9 @@ export const Streams = () => {
     };
 
     // Install the timer
-    updateDateTimer = window.setInterval(() => {
+    const updateDateTimer = window.setInterval(() => {
       updateData();
-    }, 150);
+    }, 1000);
 
     // Return callback to run on unmount.
     return () => {
@@ -106,7 +180,37 @@ export const Streams = () => {
         window.clearInterval(updateDateTimer);
       }
     };
-  }, [streamDetail, setStreamDetail]);
+  }, [
+    connection,
+    streamDetail,
+    setStreamDetail
+  ]);
+
+  // Handle overflow-ellipsis-middle elements of resize
+  useEffect(() => {
+    const resizeListener = () => {
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          const text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
@@ -114,7 +218,23 @@ export const Streams = () => {
   const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
   const onAcceptContractSelector = () => {
     setCurrentScreen("contract");
+    setCustomStreamDocked(false);
     closeContractSelectorModal();
+  };
+
+  // Close stream modal
+  const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
+  const showCloseStreamModal = useCallback(() => {
+    getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+      setTransactionFees(value);
+      setIsCloseStreamModalVisibility(true)
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFees]);
+  const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
+  const onAcceptCloseStream = () => {
+    hideCloseStreamModal();
+    onExecuteCloseStreamTransaction();
   };
 
   // Open stream modal
@@ -125,23 +245,119 @@ export const Streams = () => {
     openStreamById(e);
     closeOpenStreamModal();
   };
+  const handleCancelCustomStreamClick = () => {
+    setCustomStreamDocked(false);
+    refreshStreamList(true);
+  }
+
+  // Add funds modal
+  const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
+  const showAddFundsModal = useCallback(() => {
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string)
+    console.log("selected token:", token?.symbol);
+    if (token) {
+      setOldSelectedToken(selectedToken);
+      setSelectedToken(token);
+    }
+    getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+      setTransactionFees(value);
+      setIsAddFundsModalVisibility(true)
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [
+    selectedToken,
+    streamDetail,
+    setSelectedToken,
+    getTransactionFees
+  ]);
+  const closeAddFundsModal = useCallback(() => {
+    if (oldSelectedToken) {
+      setSelectedToken(oldSelectedToken);
+    }
+    setIsAddFundsModalVisibility(false);
+  }, [oldSelectedToken, setSelectedToken]);
+  const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
+  const onAcceptAddFunds = (amount: any) => {
+    closeAddFundsModal();
+    console.log('AddFunds amount:', parseFloat(amount));
+    onExecuteAddFundsTransaction(amount);
+  };
 
   // Withdraw funds modal
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
-  const showWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(true), []);
+  const showWithdrawModal = useCallback(async () => {
+    let streamPublicKey: PublicKey;
+    const streamId = streamDetail?.id;
+    try {
+      streamPublicKey = new PublicKey(streamId as string);
+      try {
+        const detail = await getStream(connection, streamPublicKey);
+        if (detail) {
+          console.log('detail', detail);
+          setLastStreamDetail(detail);
+          getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+            setTransactionFees(value);
+            setIsWithdrawModalVisibility(true)
+            consoleOut('transactionFees:', value, 'orange');
+          });
+        } else {
+          notify({
+            message: t('notifications.error-title'),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            type: "error"
+          });
+        }
+      } catch (error) {
+        console.log(error);
+        notify({
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          type: "error"
+        });
+      }
+    } catch (error) {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('notifications.invalid-streamid-message') + '!',
+        type: "error"
+      });
+    }
+  }, [
+    connection,
+    streamDetail,
+    t,
+    getTransactionFees
+  ]);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
+  const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
     console.log('Withdraw amount:', parseFloat(amount));
     onExecuteWithdrawFundsTransaction(amount);
   };
 
-  const isInboundStream = (item: StreamInfo): boolean => {
+  const isInboundStream = useCallback((item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
+  }, [publicKey]);
+
+  const isStreaming = (item: StreamInfo): boolean => {
+    return item && item.escrowVestedAmount < (item.totalDeposits - item.totalWithdrawals) &&
+           item.streamResumedBlockTime >= item.escrowVestedAmountSnapBlockTime
+           ? true
+           : false;
   }
 
-  const getAmountWithSymbol = (amount: any, address: string, onlyValue = false) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address, onlyValue);
+  const isAuthority = (): boolean => {
+    return streamDetail && wallet && wallet.publicKey &&
+           (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
+            streamDetail?.beneficiaryAddress === wallet.publicKey.toBase58())
+           ? true : false;
+  }
+
+  const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
+    return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
   }
 
   const getStreamIcon = (item: StreamInfo) => {
@@ -154,7 +370,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconPause className="mean-svg-icons paused" />
+          <IconIncomingPaused className="mean-svg-icons incoming" />
         );
       } else {
         return (
@@ -168,7 +384,7 @@ export const Streams = () => {
         );
       } else if (!item.isStreaming) {
         return (
-          <IconPause className="mean-svg-icons paused" />
+          <IconOutgoingPaused className="mean-svg-icons outgoing" />
         );
       } else {
         return (
@@ -178,10 +394,22 @@ export const Streams = () => {
     }
   }
 
-  const getReadableDate = (date: string): string => {
+  const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
-    return localDate.toLocaleString();
+    return dateFormat(
+      localDate,
+      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+    );
+  }
+
+  const getReadableDate = (date: string, includeTime = false): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(
+      localDate,
+      includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+    );
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
@@ -191,32 +419,33 @@ export const Streams = () => {
       : '';
 
     if (date > today) {
-      return '(will run out today)';
+      return `(${t('streams.stream-detail.label-funds-runout-today')})`;
     } else if (date < today) {
       return '';
     } else {
-      return `(will run out by ${miniDate})`;
+      return `(${t('streams.stream-detail.label-funds-runout')} ${miniDate})`;
     }
   }
 
   const getTransactionTitle = (item: StreamInfo): string => {
     let title = '';
     const isInbound = isInboundStream(item);
+
     if (isInbound) {
       if (item.isUpdatePending) {
-        title = `Pending execution from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else if (!item.isStreaming) {
-        title = `Paused stream from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else {
-        title = `Receiving from (${shortenAddress(`${item.treasurerAddress}`)})`;
+        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       }
     } else {
       if (item.isUpdatePending) {
-        title = `Pending execution to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else if (!item.isStreaming) {
-        title = `Paused stream to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
-        title = `Sending to (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       }
     }
     return title;
@@ -225,50 +454,84 @@ export const Streams = () => {
   const getTransactionSubTitle = (item: StreamInfo): string => {
     let title = '';
     const isInbound = isInboundStream(item);
+    const now = new Date();
+    const streamStartDate = new Date(item.startUtc as string);
     if (isInbound) {
       if (item.isUpdatePending) {
-        title = `This contract is pending your approval`;
+        title = t('streams.stream-list.subtitle-pending-inbound');
       } else if (!item.isStreaming) {
-        title = `This stream is paused due to the lack of funds`;
+        title = t('streams.stream-list.subtitle-paused-inbound');
       } else {
-        title = `Receiving money since ${getReadableDate(item.startUtc as string)}`;
+        if (streamStartDate > now) {
+          title = t('streams.stream-list.subtitle-scheduled-inbound');
+        } else {
+          title = t('streams.stream-list.subtitle-running-inbound');
+        }
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
-        title = `This contract is pending beneficiary approval`;
+        title = t('streams.stream-list.subtitle-pending-outbound');
       } else if (!item.isStreaming) {
-        title = `This stream is paused due to the lack of funds`;
+        title = t('streams.stream-list.subtitle-paused-outbound');
       } else {
-        title = `Sending money since ${getReadableDate(item.startUtc as string)}`;
+        if (streamStartDate > now) {
+          title = t('streams.stream-list.subtitle-scheduled-outbound');
+        } else {
+          title = t('streams.stream-list.subtitle-running-outbound');
+        }
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     }
     return title;
   }
 
+  const getStartDateLabel = (): string => {
+    let label = t('streams.stream-detail.label-start-date-default');
+    if (streamDetail) {
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
+      const streamStartDate = new Date(streamDetail?.startUtc as string);
+      if (streamStartDate > nowUtc) {
+        if (isOtp()) {
+          label = t('streams.stream-detail.label-start-date-scheduled-otp');
+        } else {
+          label = t('streams.stream-detail.label-start-date-scheduled');
+        }
+      } else {
+        label = t('streams.stream-detail.label-start-date-started');
+      }
+    }
+    return label;
+  }
+
+  // Maintain stream stats
+  useEffect(() => {
+
+    const updateStats = () => {
+      if (streamList && streamList.length) {
+        const incoming = streamList.filter(s => isInboundStream(s));
+        const outgoing = streamList.filter(s => !isInboundStream(s));
+        const stats: StreamStats = {
+          incoming: incoming.length,
+          outgoing: outgoing.length
+        }
+        setStreamStats(stats);
+      } else {
+        setStreamStats(defaultStreamStats);
+      }
+    }
+
+    updateStats();
+  }, [
+    publicKey,
+    streamList,
+    isInboundStream]
+  );
+
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-
-  const refreshStreamList = () => {
-    if (publicKey) {
-      const programId = new PublicKey(streamProgramAddress);
-
-      setTimeout(() => {
-        setLoadingStreams(true);
-        listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-          .then(async streams => {
-            setStreamList(streams);
-            setLoadingStreams(false);
-            console.log('streamList:', streamList);
-            setSelectedStream(streams[0]);
-            setStreamDetail(streams[0]);
-            hideWithdrawFundsTransactionModal();
-            hideCloseStreamTransactionModal();
-            setCurrentScreen("streams");
-          });
-      }, 1000);
-    }
-  };
 
   const resetTransactionStatus = () => {
     setTransactionStatus({
@@ -280,13 +543,13 @@ export const Streams = () => {
   const getTransactionModalTitle = () => {
     let title: any;
     if (isBusy) {
-      title = 'Executing transaction';
+      title = t('transactions.status.modal-title-executing-transaction');
     } else {
       if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
           transactionStatus.currentOperation === TransactionStatus.Iddle) {
         title = null;
       } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = 'Transaction completed'
+        title = t('transactions.status.modal-title-transaction-completed');
       } else {
         title = null;
       }
@@ -294,80 +557,105 @@ export const Streams = () => {
     return title;
   }
 
-  const isSuccess = () => {
+  const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
 
-  const isError = () => {
-    return transactionStatus.currentOperation === TransactionStatus.CreateTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-           transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-           ? true
-           : false;
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
   }
 
-  // Withdraw funds Transaction execution modal
-  const [isWithdrawFundsTransactionModalVisible, setWithdrawFundsTransactionModalVisibility] = useState(false);
-  const showWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(true), []);
-  const hideWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(false), []);
+  // Add funds Transaction execution modal
+  const [isAddFundsTransactionModalVisible, setAddFundsTransactionModalVisibility] = useState(false);
+  const showAddFundsTransactionModal = useCallback(() => setAddFundsTransactionModalVisibility(true), []);
+  const hideAddFundsTransactionModal = useCallback(() => setAddFundsTransactionModalVisibility(false), []);
 
-  const onWithdrawFundsTransactionFinished = () => {
+  const onAddFundsTransactionFinished = () => {
     resetTransactionStatus();
-    refreshStreamList();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    if (customStreamDocked) {
+      openStreamById(streamDetail?.id as string);
+    } else {
+      refreshStreamList(false);
+    }
   };
 
-  const onAfterWithdrawFundsTransactionModalClosed = () => {
+  const onAfterAddFundsTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList();
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
     }
   }
 
-  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
+  const onExecuteAddFundsTransaction = async (addAmount: string) => {
+    let transactions: Transaction[];
+    let signedTransactions: Transaction[];
+    let signatures: any[];
 
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
+
         const stream = new PublicKey(streamDetail.id as string);
-        const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
-        const amount = parseFloat(withdrawAmount);
+        const contributorMint = new PublicKey(streamDetail.associatedToken as string);
+        const amount = parseFloat(addAmount);
+        setAddFundsAmount(amount);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        console.log('nativeBalance:', nativeBalance);
+        console.log('blockchainFee:', transactionFees.blockchainFee);
+        if (nativeBalance < transactionFees.blockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
 
         // Create a transaction
-        return await moneyStream.getWithdrawTransaction(
+        return await moneyStream.addFunds(
+          wallet,
           stream,
-          beneficiary,
+          contributorMint,                                  // contributorMint
           amount
         )
         .then(value => {
-          console.log('getWithdrawTransaction returned transaction:', value);
+          console.log('addFundsTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transactions = value;
           return true;
         })
         .catch(error => {
-          console.log('closeStreamTransaction error:', error);
+          console.log('addFundsTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -378,18 +666,18 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransactions = signed;
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -409,15 +697,15 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendSignedTransactions(...signedTransactions)
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signatures = sig;
             return true;
           })
           .catch(error => {
@@ -438,9 +726,9 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransaction(signature)
+      return await moneyStream.confirmTransactions(...signatures)
         .then(result => {
-          console.log('confirmTransaction result:', result);
+          console.log('confirmTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -448,7 +736,208 @@ export const Streams = () => {
           });
           return true;
         })
+        .catch(() => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
+        });
+    }
+
+    if (wallet && streamDetail) {
+      showAddFundsTransactionModal();
+      const create = await createTx();
+      console.log('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        console.log('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          console.log('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            console.log('confirmed:', confirmed);
+            if (confirmed) {
+              // Save signature to the state
+              setIsBusy(false);
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
+  // Withdraw funds Transaction execution modal
+  const [isWithdrawFundsTransactionModalVisible, setWithdrawFundsTransactionModalVisibility] = useState(false);
+  const showWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(true), []);
+  const hideWithdrawFundsTransactionModal = useCallback(() => setWithdrawFundsTransactionModalVisibility(false), []);
+
+  const onWithdrawFundsTransactionFinished = () => {
+    resetTransactionStatus();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    refreshStreamList(false);
+  };
+
+  const onAfterWithdrawFundsTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      refreshStreamList(false);
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
+    }
+  }
+
+  const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
+    let transaction: Transaction;
+    let signedTransactions: Transaction[];
+    let signatures: any[];
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    // Init a streaming operation
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && streamDetail) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+        const stream = new PublicKey(streamDetail.id as string);
+        const beneficiary = new PublicKey(streamDetail.beneficiaryAddress as string);
+        const amount = parseFloat(withdrawAmount);
+        setWithdrawFundsAmount(amount);
+
+        const data = {
+          stream: stream,
+          beneficiary: beneficiary,
+          amount: amount
+        };
+        consoleOut('withdraw params:', data, 'brown');
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getTxFeeAmount(transactionFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
+        // Create a transaction
+        return await moneyStream.withdraw(
+          stream,
+          beneficiary,
+          amount
+        )
+        .then(value => {
+          console.log('withdrawTransaction returned transaction:', value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transaction = value;
+          return true;
+        })
         .catch(error => {
+          console.log('closeStreamTransaction error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          return false;
+        });
+      }
+      return false;
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        console.log('Signing transaction...');
+        return await moneyStream.signTransactions(wallet, [transaction])
+        .then(signed => {
+          console.log('signTransactions returned a signed transaction array:', signed);
+          // Stage 2 completed - The transaction was signed
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          signedTransactions = signed;
+          return true;
+        })
+        .catch(() => {
+          console.log('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          return false;
+        });
+      } else {
+        console.log('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return moneyStream.sendSignedTransactions(...signedTransactions)
+          .then(sig => {
+            console.log('sendSignedTransaction returned a signature:', sig);
+            // Stage 3 completed - The transaction was sent and a signature was returned
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signatures = sig;
+            return true;
+          })
+          .catch(error => {
+            console.log(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            return false;
+          });
+      } else {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await moneyStream.confirmTransactions(...signatures)
+        .then(result => {
+          console.log('confirmTransactions result:', result);
+          // Stage 4 completed - The transaction was confirmed!
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+            currentOperation: TransactionStatus.TransactionFinished
+          });
+          return true;
+        })
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -488,7 +977,10 @@ export const Streams = () => {
 
   const onCloseStreamTransactionFinished = () => {
     resetTransactionStatus();
-    refreshStreamList();
+    hideWithdrawFundsTransactionModal();
+    hideCloseStreamTransactionModal();
+    hideAddFundsTransactionModal();
+    refreshStreamList(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -496,7 +988,10 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList();
+      refreshStreamList(true);
+      hideWithdrawFundsTransactionModal();
+      hideCloseStreamTransactionModal();
+      hideAddFundsTransactionModal();
     }
   }
 
@@ -509,35 +1004,49 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.endpoint, streamProgramAddress);
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.CreateTransaction
+          currentOperation: TransactionStatus.InitTransaction
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        console.log('tokenBalance:', tokenBalance);
+        const myApplicableFees = getTxFeeAmount(transactionFees);
+        console.log('myApplicableFees:', myApplicableFees);
+        if (tokenBalance < myApplicableFees) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          return false;
+        }
+
         // Create a transaction
-        return await moneyStream.closeStreamTransaction(
+        return await moneyStream.closeStream(
           streamPublicKey,                                  // Stream ID
           publicKey as PublicKey                            // Initializer public key
         )
         .then(value => {
-          console.log('closeStreamTransaction returned transaction:', value);
+          console.log('closeStream returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
-            lastOperation: TransactionStatus.CreateTransactionSuccess,
+            lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transaction = value;
           return true;
         })
         .catch(error => {
-          console.log('closeStreamTransaction error:', error);
+          console.log('closeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.CreateTransactionFailure
+            currentOperation: TransactionStatus.InitTransactionFailure
           });
           return false;
         });
@@ -548,18 +1057,18 @@ export const Streams = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         console.log('Signing transaction...');
-        return await moneyStream.signTransaction(wallet, transaction)
+        return await moneyStream.signTransactions(wallet, [transaction])
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          console.log('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          signedTransaction = signed[0];
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -579,7 +1088,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransaction(signedTransaction)
+        return moneyStream.sendSignedTransactions(signedTransaction)
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -587,7 +1096,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signature = sig;
+            signature = sig[0];
             return true;
           })
           .catch(error => {
@@ -608,9 +1117,9 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransaction(signature)
+      return await moneyStream.confirmTransactions(signature)
         .then(result => {
-          console.log('confirmTransaction result:', result);
+          console.log('confirmTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -618,7 +1127,7 @@ export const Streams = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -651,68 +1160,142 @@ export const Streams = () => {
 
   };
 
-  const getStreamClosureMessage = (): string => {
+  const getStreamClosureMessage = () => {
     let message = '';
 
     if (publicKey && streamDetail && streamList) {
 
       const me = publicKey.toBase58();
-      const treasury = streamDetail.treasuryAddress;
-      const treasurer = streamDetail.treasurerAddress;
-      const beneficiary = streamDetail.beneficiaryAddress;
+      const treasury = streamDetail.treasuryAddress as string;
+      const treasurer = streamDetail.treasurerAddress as string;
+      const beneficiary = streamDetail.beneficiaryAddress as string;
       const withdrawAmount = getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string);
       // TODO: Account for multiple beneficiaries funded by the same treasury (only 1 right now)
       const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
 
       if (treasurer === me) {  // If I am the treasurer
         if (numTreasuryBeneficiaries > 1) {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amounts back to the original treasury (${shortenAddress(treasury as string)}).\nAre you sure you want to do this?`
+          message = t('close-stream.context-treasurer-multiple-beneficiaries', {
+            beneficiary: shortenAddress(beneficiary),
+            treasury: shortenAddress(treasury)
+          });
         } else {
-          message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (${shortenAddress(beneficiary as string)}), and return the unvested amount back to the contributor.\nAre you sure you want to do this?`
+          message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
         }
       } else if (beneficiary === me)  {  // If I am the beneficiary
-        message = `Closing a stream will send ~${withdrawAmount} to your account (${shortenAddress(beneficiary)}) and stop the flow of money immediately.\nAre you sure you want to do this?`;
+        message = t('close-stream.context-beneficiary', {
+          amount: `~${withdrawAmount}`,
+          beneficiary: shortenAddress(beneficiary)
+        });
       }
 
     }
-    // If ( I am the treasurer )
-    // {
-    //   If ( Number of Beneficiaries benefiting from Treasury > 1 )
-    //   {
-    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amounts back to the original treasury (TR3…SU81). Are you sure you want to do this?`
-    //   }
-    //   else
-    //   {
-    //     message = `Closing a stream will stop the flow of money, send the vested amount to the beneficiary (AB5…HYU89), and return the unvested amount back to the contributor (HnH…B4CF). Are you sure you want to do this?`
-    //   }
-    // }
-    // Else if ( I am the beneficiary )
-    // {
-    //   message = Closing a stream will send ~$66.98 to your account (AC4…UIUI8) and stop the flow of money immediately. Are you sure you want to do this?
-    // }
 
-    return message;
+    return (
+      <div>{message}</div>
+    );
   }
 
-  const showCloseStreamConfirm = () => {
-    confirm({
-      title: 'Close stream',
-      icon: <ExclamationCircleOutlined />,
-      content: getStreamClosureMessage(),
-      okText: 'CLOSE STREAM',
-      okType: 'danger',
-      cancelText: 'CANCEL',
-      onOk() {
-        onExecuteCloseStreamTransaction();
-      },
-      onCancel() {},
-    });
+  const onCopyStreamAddress = (data: any) => {
+    if (copyText(data.toString())) {
+      notify({
+        description: t('notifications.streamid-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.streamid-not-copied-message'),
+        type: "error"
+      });
+    }
+  }
+
+  const onRefreshStreamsClick = () => {
+    refreshStreamList(true);
+    setCustomStreamDocked(false);
+  };
+
+  const getRateAmountDisplay = (item: StreamInfo): string => {
+    let value = '';
+    if (item && item.rateAmount && item.associatedToken) {
+      value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
+  const getDepositAmountDisplay = (item: StreamInfo): string => {
+    let value = '';
+    if (item && item.rateAmount === 0 && item.totalDeposits > 0) {
+      value += getFormattedNumberToLocale(formatAmount(item.totalDeposits, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
+  const isOtp = (): boolean => {
+    return streamDetail?.rateAmount === 0 ? true : false;
+  }
+
+  const getActivityIcon = (item: StreamActivity) => {
+    if (isInboundStream(streamDetail as StreamInfo)) {
+      if (item.action === 'withdrew') {
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+          );
+        } else {
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+          );
+      }
+    } else {
+      if (item.action === 'withdrew') {
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+        );
+      } else {
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        );
+      }
+    }
+  }
+
+  const isAddressMyAccount = (addr: string): boolean => {
+    return wallet && addr && wallet.publicKey && addr === wallet.publicKey.toBase58()
+           ? true
+           : false;
+  }
+
+  const getActivityActor = (item: StreamActivity): string => {
+    return isAddressMyAccount(item.initializer) ? t('general.you') : shortenAddress(item.initializer);
+  }
+
+  const getActivityAction = (item: StreamActivity): string => {
+    const actionText = item.action === 'deposited'
+      ? t('streams.stream-activity.action-deposit')
+      : t('streams.stream-activity.action-withdraw');
+    return actionText;
+  }
+
+  const isScheduledOtp = (): boolean => {
+    if (streamDetail && streamDetail.rateAmount === 0) {
+      const now = new Date().toUTCString();
+      const nowUtc = new Date(now);
+      const streamStartDate = new Date(streamDetail.startUtc as string);
+      if (streamStartDate > nowUtc) {
+        return true;
+      }
+    }
+    return false;
   }
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={showCloseStreamConfirm}>
-        <span className="menu-item-text">Close money stream</span>
+      <Menu.Item key="1" onClick={showCloseStreamModal} disabled={!isAuthority()}>
+        <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
       </Menu.Item>
     </Menu>
   );
@@ -722,192 +1305,247 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconDownload className="mean-svg-icons incoming" />
     </div>
-    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
-      <div className="stream-background">
-        <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
-      </div>
-      ) : null
-    }
-    <div className="stream-details-data-wrapper">
+    <div className="stream-details-data-wrapper vertical-scroll">
 
-      {/* Sender */}
-      <Row className="mb-3">
-        <Col span={12}>
-          <div className="info-label">Sender</div>
-          <div className="transaction-detail-row">
-            <span className="info-icon">
-              <IconShare className="mean-svg-icons" />
-            </span>
-            <span className="info-data">
-              {streamDetail && (
-                <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${streamDetail.treasurerAddress}`} target="_blank" rel="noopener noreferrer">
-                  {shortenAddress(`${streamDetail.treasurerAddress}`)}
-                </a>
+      <Spin spinning={loadingStreams}>
+        <div className="stream-fields-container">
+          {/* Background animation */}
+          {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
+            <div className="stream-background">
+              <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
+            </div>
+            ) : null
+          }
+
+          {/* Sender */}
+          <Row className="mb-3">
+            <Col span={12}>
+              <div className="info-label">{t('streams.stream-detail.label-receiving-from')}</div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconShare className="mean-svg-icons" />
+                </span>
+                <span className="info-data">
+                  {streamDetail && (
+                    <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                      href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.treasurerAddress}${getSolanaExplorerClusterParam()}`}>
+                      {shortenAddress(`${streamDetail.treasurerAddress}`)}
+                    </a>
+                  )}
+                </span>
+              </div>
+            </Col>
+            <Col span={12}>
+              {isOtp() ? (
+                null
+              ) : (
+                <>
+                <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
+                <div className="transaction-detail-row">
+                  <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
+                      : '--'
+                    }
+                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}
+                  </span>
+                </div>
+                </>
               )}
-            </span>
+            </Col>
+          </Row>
+
+          {/* Amount for OTPs */}
+          {isOtp() ? (
+            <div className="mb-3">
+              <div className="info-label">
+                {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(streamDetail?.fundedOnUtc as string)})
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconDownload className="mean-svg-icons" />
+                </span>
+                {streamDetail ?
+                  (
+                    <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data">&nbsp;</span>
+                  )}
+              </div>
+            </div>
+          ) : (
+            null
+          )}
+
+          {/* Started date */}
+          <div className="mb-3">
+            <div className="info-label">{getStartDateLabel()}</div>
+            <div className="transaction-detail-row">
+              <span className="info-icon">
+                <IconClock className="mean-svg-icons" />
+              </span>
+              <span className="info-data">
+                {getReadableDate(streamDetail?.startUtc as string)}
+              </span>
+            </div>
           </div>
-        </Col>
-        <Col span={12}>
-          <div className="info-label">Payment Rate</div>
-          <div className="transaction-detail-row">
-            <span className="info-data">
-              {streamDetail && streamDetail.rateAmount && isValidNumber(streamDetail.rateAmount.toString())
-                ? formatAmount(streamDetail.rateAmount as number, 2)
-                : '--'}
-              &nbsp;
-              {streamDetail && streamDetail.associatedToken
-                ? getTokenSymbol(streamDetail.associatedToken as string)
+
+          {/* Funds left (Total Unvested) */}
+          {isOtp() ? (
+            null
+          ) : (
+            <div className="mb-3">
+              <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {streamDetail
+                ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
                 : ''}
-              {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
-            </span>
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconBank className="mean-svg-icons" />
+                </span>
+                {streamDetail ? (
+                  <span className="info-data">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+                    : '--'}
+                  </span>
+                ) : (
+                  <span className="info-data">&nbsp;</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Show only if the stream is not a scheduled Otp */}
+          {!isScheduledOtp() && (
+            <>
+              {/* Amount withdrawn */}
+              <div className="mb-3">
+                <div className="info-label">{t('streams.stream-detail.label-total-withdrawals')}</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconDownload className="mean-svg-icons" />
+                  </span>
+                  {streamDetail ? (
+                    <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data">&nbsp;</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Funds available to withdraw now (Total Vested) */}
+              <div className="mb-3">
+                <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconUpload className="mean-svg-icons" />
+                  </span>
+                  {streamDetail ? (
+                    <span className="info-data large">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data large">&nbsp;</span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Withdraw button */}
+          <div className="mt-3 mb-3 withdraw-container">
+            <Button
+              block
+              className="withdraw-cta"
+              type="text"
+              shape="round"
+              size="small"
+              disabled={isScheduledOtp() || !streamDetail?.escrowVestedAmount || publicKey?.toBase58() !== streamDetail?.beneficiaryAddress}
+              onClick={showWithdrawModal}>
+              {t('streams.stream-detail.withdraw-funds-cta')}
+            </Button>
+            {!customStreamDocked && (
+              <Dropdown overlay={menu} trigger={["click"]}>
+                <Button
+                  shape="round"
+                  type="text"
+                  size="small"
+                  className="ant-btn-shaded"
+                  onClick={(e) => e.preventDefault()}
+                  icon={<EllipsisOutlined />}>
+                </Button>
+              </Dropdown>
+            )}
           </div>
-        </Col>
-      </Row>
-
-      {/* Started date */}
-      <div className="mb-3">
-        <div className="info-label">Started</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconClock className="mean-svg-icons" />
-          </span>
-          <span className="info-data">
-            {getReadableDate(streamDetail?.startUtc as string)}
-          </span>
         </div>
-      </div>
-
-      {/* Funds left (Total Unvested) */}
-      <div className="mb-3">
-        <div className="info-label text-truncate">Funds left in account {streamDetail
-          ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
-          : ''}
-        </div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconBank className="mean-svg-icons" />
-          </span>
-          {/* {streamDetail ? (
-            <span className="info-data">
-              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-              ? (
-                <>
-                <CountUp
-                  delay={0}
-                  duration={500}
-                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
-                  end={streamDetail?.escrowUnvestedAmount || 0} />
-                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                </>
-              )
-              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
-              }
-            </span>
-          ) : (
-            <span className="info-data">&nbsp;</span>
-          )} */}
-          {streamDetail ? (
-            <span className="info-data">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          ) : (
-            <span className="info-data">&nbsp;</span>
-          )}
-        </div>
-      </div>
-
-      {/* Amount withdrawn */}
-      <div className="mb-3">
-        <div className="info-label">Total amount you have withdrawn since stream started</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconDownload className="mean-svg-icons" />
-          </span>
-          {streamDetail ? (
-            <span className="info-data">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          ) : (
-            <span className="info-data">&nbsp;</span>
-          )}
-        </div>
-      </div>
-
-      {/* Funds available to withdraw now (Total Vested) */}
-      <div className="mb-3">
-        <div className="info-label">Funds available to withdraw now</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconUpload className="mean-svg-icons" />
-          </span>
-          {/* {streamDetail ? (
-            <span className="info-data large">
-              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-              ? (
-                <>
-                <CountUp
-                  delay={0}
-                  duration={500}
-                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                  start={previousStreamDetail?.escrowVestedAmount || 0}
-                  end={streamDetail?.escrowVestedAmount || 0} />
-                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                </>
-              )
-              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              }
-            </span>
-          ) : (
-            <span className="info-data large">&nbsp;</span>
-          )} */}
-          {streamDetail ? (
-            <span className="info-data large">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          ) : (
-            <span className="info-data large">&nbsp;</span>
-          )}
-        </div>
-      </div>
-
-      {/* Withdraw button */}
-      <div className="mt-3 mb-3 withdraw-container">
-        <Button
-          block
-          className="withdraw-cta"
-          type="text"
-          shape="round"
-          size="small"
-          disabled={!streamDetail ||
-                    !streamDetail.escrowVestedAmount ||
-                    publicKey?.toBase58() !== streamDetail.beneficiaryAddress}
-          onClick={showWithdrawModal}>
-          Withdraw funds
-        </Button>
-        <Dropdown overlay={menu} trigger={["click"]}>
-          <Button
-            shape="round"
-            type="text"
-            size="small"
-            className="ant-btn-shaded"
-            onClick={(e) => e.preventDefault()}
-            icon={<EllipsisOutlined />}>
-          </Button>
-        </Dropdown>
-      </div>
+      </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">Activity</div>
-      <p>No activity so far.</p>
-
+      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
+      {!streamActivity || streamActivity.length === 0 ? (
+        <p>{t('streams.stream-activity.no-activity')}.</p>
+      ) : (
+        <div className="activity-list">
+          <Spin spinning={loadingStreamActivity}>
+            {streamActivity && (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                    <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
+                  </div>
+                </div>
+                <div className="item-list-body compact">
+                  {streamActivity.map((item, index) => {
+                    return (
+                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                        <div className="std-table-cell fixed-width-80">
+                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getActivityAction(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-120" >
+                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Spin>
+        </div>
+      )}
     </div>
+    {streamDetail && (
+      <div className="stream-share-ctas">
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
+        <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
+           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
+          <IconExternalLink className="mean-svg-icons" />
+        </a>
+      </div>
+    )}
   </>
   );
 
@@ -916,269 +1554,380 @@ export const Streams = () => {
     <div className="stream-type-indicator">
       <IconUpload className="mean-svg-icons outgoing" />
     </div>
-    {streamDetail && streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0 ? (
-      <div className="stream-background">
-        <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
-      </div>
-      ) : null
-    }
-    <div className="stream-details-data-wrapper">
-      {/* Beneficiary */}
-      <Row className="mb-3">
-        <Col span={12}>
-          <div className="info-label">Recipient</div>
-          <div className="transaction-detail-row">
-            <span className="info-icon">
-              <IconShare className="mean-svg-icons" />
-            </span>
-            <span className="info-data">
-              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${streamDetail?.beneficiaryAddress}`} target="_blank" rel="noopener noreferrer">
-                {shortenAddress(`${streamDetail?.beneficiaryAddress}`)}
-              </a>
-            </span>
-          </div>
-        </Col>
-        <Col span={12}>
-          <div className="info-label">Payment Rate</div>
-          <div className="transaction-detail-row">
-            <span className="info-data">
-              {streamDetail && streamDetail.rateAmount && isValidNumber(streamDetail.rateAmount.toString())
-                ? formatAmount(streamDetail.rateAmount as number, 2)
-                : '--'}
-              &nbsp;
-              {streamDetail && streamDetail.associatedToken
-                ? getTokenSymbol(streamDetail.associatedToken as string)
-                : '0'}
-              {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true)}
-            </span>
-          </div>
-        </Col>
-      </Row>
+    <div className="stream-details-data-wrapper vertical-scroll">
 
-      {/* Started date */}
-      <div className="mb-3">
-        <div className="info-label">Started</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconClock className="mean-svg-icons" />
-          </span>
-          <span className="info-data">
-            {getReadableDate(streamDetail?.startUtc as string)}
-          </span>
-        </div>
-      </div>
+      <Spin spinning={loadingStreams}>
+        <div className="stream-fields-container">
+          {/* Background animation */}
+          {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) ? (
+            <div className="stream-background">
+              <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
+            </div>
+            ) : null
+          }
 
-      {/* Total deposit */}
-      <div className="mb-3">
-        <div className="info-label">Total amount you have deposited since stream started</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconDownload className="mean-svg-icons" />
-          </span>
-          {streamDetail ? (
-            <span className="info-data">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-            ) : (
-              <span className="info-data">&nbsp;</span>
+          {/* Beneficiary */}
+          <Row className="mb-3">
+            <Col span={12}>
+              <div className="info-label">{t('streams.stream-detail.label-sending-to')}</div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconShare className="mean-svg-icons" />
+                </span>
+                <span className="info-data">
+                  <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail?.beneficiaryAddress}${getSolanaExplorerClusterParam()}`}>
+                    {shortenAddress(`${streamDetail?.beneficiaryAddress}`)}
+                  </a>
+                </span>
+              </div>
+            </Col>
+            <Col span={12}>
+              {isOtp() ? (
+                null
+              ) : (
+                <>
+                <div className="info-label">{t('streams.stream-detail.label-payment-rate')}</div>
+                <div className="transaction-detail-row">
+                  <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.rateAmount, streamDetail.associatedToken as string)
+                      : '--'
+                    }
+                    {getIntervalFromSeconds(streamDetail?.rateIntervalInSeconds as number, true, t)}
+                  </span>
+                </div>
+                </>
+              )}
+            </Col>
+          </Row>
+
+          {/* Amount for OTPs */}
+          {isOtp() ? (
+            <div className="mb-3">
+              <div className="info-label">
+                {t('streams.stream-detail.label-amount')}&nbsp;({t('streams.stream-detail.amount-funded-date')} {getReadableDate(streamDetail?.fundedOnUtc as string)})
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconUpload className="mean-svg-icons" />
+                </span>
+                {streamDetail ?
+                  (
+                    <span className="info-data">
+                    {streamDetail
+                      ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                      : '--'}
+                    </span>
+                  ) : (
+                    <span className="info-data">&nbsp;</span>
+                  )}
+              </div>
+            </div>
+          ) : (
+            null
+          )}
+
+          {/* Start date */}
+          <div className="mb-3">
+            <div className="info-label">{getStartDateLabel()}</div>
+            <div className="transaction-detail-row">
+              <span className="info-icon">
+                <IconClock className="mean-svg-icons" />
+              </span>
+              <span className="info-data">
+                {getReadableDate(streamDetail?.startUtc as string)}
+              </span>
+            </div>
+          </div>
+
+          {/* Total deposit */}
+          {isOtp() ? (
+            null
+          ) : (
+            <div className="mb-3">
+              <div className="info-label">{t('streams.stream-detail.label-total-deposits')}</div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconDownload className="mean-svg-icons" />
+                </span>
+                {streamDetail ? (
+                  <span className="info-data">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                    : '--'}
+                  </span>
+                  ) : (
+                    <span className="info-data">&nbsp;</span>
+                  )}
+              </div>
+            </div>
+          )}
+
+          {/* Funds sent (Total Vested) */}
+          {isOtp() ? (
+            null
+          ) : (
+            <div className="mb-3">
+              <div className="info-label">{t('streams.stream-detail.label-funds-sent')}</div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconUpload className="mean-svg-icons" />
+                </span>
+                {streamDetail ? (
+                  <span className="info-data">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                    : '--'}
+                  </span>
+                ) : (
+                  <span className="info-data">&nbsp;</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Funds left (Total Unvested) */}
+          {isOtp() ? (
+            null
+          ) : (
+            <div className="mb-3">
+              <div className="info-label text-truncate">{streamDetail && !streamDetail?.escrowUnvestedAmount
+                ? t('streams.stream-detail.label-funds-left-in-account')
+                : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
+                  ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())
+                  : ''})`}
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconBank className="mean-svg-icons" />
+                </span>
+                {streamDetail ? (
+                  <span className="info-data large">
+                  {streamDetail
+                    ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+                    : '--'}
+                  </span>
+                ) : (
+                  <span className="info-data large">&nbsp;</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Top up (add funds) button */}
+          <div className="mt-3 mb-3 withdraw-container">
+            <Button
+              block
+              className="withdraw-cta"
+              type="text"
+              shape="round"
+              size="small"
+              disabled={isOtp()}
+              onClick={showAddFundsModal}>
+              {t('streams.stream-detail.add-funds-cta')}
+            </Button>
+            {!customStreamDocked && (
+              <Dropdown overlay={menu} trigger={["click"]}>
+                <Button
+                  shape="round"
+                  type="text"
+                  size="small"
+                  className="ant-btn-shaded"
+                  onClick={(e) => e.preventDefault()}
+                  icon={<EllipsisOutlined />}>
+                </Button>
+              </Dropdown>
             )}
+          </div>
         </div>
-      </div>
-
-      {/* Funds sent (Total Vested) */}
-      <div className="mb-3">
-        <div className="info-label">Funds sent to recepient</div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconUpload className="mean-svg-icons" />
-          </span>
-          {/* {streamDetail ? (
-            <span className="info-data">
-              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-              ? (
-                <>
-                <CountUp
-                  delay={0}
-                  duration={500}
-                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                  start={previousStreamDetail?.escrowVestedAmount || 0}
-                  end={streamDetail?.escrowVestedAmount || 0} />
-                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                </>
-              )
-              : getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              }
-            </span>
-          ) : (
-            <span className="info-data">&nbsp;</span>
-          )} */}
-          {streamDetail ? (
-            <span className="info-data">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          ) : (
-            <span className="info-data">&nbsp;</span>
-          )}
-        </div>
-      </div>
-
-      {/* Funds left (Total Unvested) */}
-      <div className="mb-3">
-        <div className="info-label text-truncate">{streamDetail && !streamDetail?.escrowUnvestedAmount
-          ? `Funds left in account`
-          : `Funds left in account (will run out by ${streamDetail && streamDetail.escrowEstimatedDepletionUtc
-            ? getReadableDate(streamDetail.escrowEstimatedDepletionUtc.toString())
-            : ''})`}
-        </div>
-        <div className="transaction-detail-row">
-          <span className="info-icon">
-            <IconBank className="mean-svg-icons" />
-          </span>
-          {/* {streamDetail ? (
-            <span className="info-data large">
-              {streamDetail.isStreaming && streamDetail.escrowUnvestedAmount > 0
-              ? (
-                <>
-                <CountUp
-                  delay={0}
-                  duration={500}
-                  decimals={getTokenDecimals(streamDetail.associatedToken as string)}
-                  start={previousStreamDetail?.escrowUnvestedAmount || 0}
-                  end={streamDetail?.escrowUnvestedAmount || 0} />
-                <span>{getTokenSymbol(streamDetail.associatedToken as string)}</span>
-                </>
-              )
-              : getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
-              }
-            </span>
-          ) : (
-            <span className="info-data large">&nbsp;</span>
-          )} */}
-          {streamDetail ? (
-            <span className="info-data large">
-            {streamDetail
-              ? getAmountWithSymbol(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
-              : '--'}
-            </span>
-          ) : (
-            <span className="info-data large">&nbsp;</span>
-          )}
-        </div>
-      </div>
-
-      {/* Top up (add funds) */}
-      <div className="mt-3 mb-3 withdraw-container">
-        <Button
-          block
-          className="withdraw-cta"
-          type="text"
-          shape="round"
-          size="small"
-          onClick={() => {}}>
-          Top up (add funds)
-        </Button>
-        <Dropdown overlay={menu} trigger={["click"]}>
-          <Button
-            shape="round"
-            type="text"
-            size="small"
-            className="ant-btn-shaded"
-            onClick={(e) => e.preventDefault()}
-            icon={<EllipsisOutlined />}>
-          </Button>
-        </Dropdown>
-      </div>
+      </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">Activity</div>
-      <p>No activity so far.</p>
-
+      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
+      {!streamActivity || streamActivity.length === 0 ? (
+        <p>{t('streams.stream-activity.no-activity')}.</p>
+      ) : (
+        <div className="activity-list">
+          <Spin spinning={loadingStreamActivity}>
+            {streamActivity && (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                    <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                    <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
+                  </div>
+                </div>
+                <div className="item-list-body compact">
+                  {streamActivity.map((item, index) => {
+                    return (
+                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                        <div className="std-table-cell fixed-width-80">
+                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getActivityAction(item)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-60">
+                          <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-120" >
+                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Spin>
+        </div>
+      )}
     </div>
+    {streamDetail && (
+      <div className="stream-share-ctas">
+        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
+        <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
+           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
+          <IconExternalLink className="mean-svg-icons" />
+        </a>
+      </div>
+    )}
   </>
+  );
+
+  const renderStreamList = (
+    <>
+    {streamList && streamList.length ? (
+      streamList.map((item, index) => {
+        const onStreamClick = () => {
+          console.log('selected stream:', item);
+          setSelectedStream(item);
+          setDtailsPanelOpen(true);
+        };
+        return (
+          <div key={`${index + 50}`} onClick={onStreamClick}
+            className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
+            <div className="icon-cell">
+              {getStreamIcon(item)}
+            </div>
+            <div className="description-cell">
+              <div className="title text-truncate">{item.memo || getTransactionTitle(item)}</div>
+              <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">
+                {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
+              </div>
+              {item && item.rateAmount > 0 && (
+                <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
+              )}
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <>
+      <p>{t('streams.stream-list.no-streams')}</p>
+      </>
+    )}
+
+    </>
   );
 
   return (
     <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
       {/* Left / top panel*/}
       <div className="streams-container">
-        <div className="streams-heading">My Money Streams</div>
+        <div className="streams-heading">
+          <span className="title">{t('streams.screen-title')}</span>
+          <Tooltip placement="bottom" title={t('account-area.streams-tooltip')}>
+            <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
+              <Spin size="small" />
+              {customStreamDocked ? (
+                <span className="transaction-legend neutral">
+                  <IconRefresh className="mean-svg-icons"/>
+                </span>
+              ) : (
+                <>
+                  <span className="transaction-legend incoming">
+                    <IconDownload className="mean-svg-icons"/>
+                    <span className="incoming-transactions-amout">{streamStats.incoming}</span>
+                  </span>
+                  <span className="transaction-legend outgoing">
+                    <IconUpload className="mean-svg-icons"/>
+                    <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
+                  </span>
+                </>
+              )}
+            </div>
+          </Tooltip>
+        </div>
         <div className="inner-container">
           {/* item block */}
           <div className="item-block vertical-scroll">
-            {streamList && streamList.length ? (
-              streamList.map((item, index) => {
-                const onStreamClick = () => {
-                  console.log('selected stream:', item);
-                  setSelectedStream(item);
-                  setDtailsPanelOpen(true);
-                };
-                return (
-                  <div key={`${index + 50}`} onClick={onStreamClick}
-                    className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
-                    <div className="icon-cell">
-                      {getStreamIcon(item)}
-                    </div>
-                    <div className="description-cell">
-                      <div className="title text-truncate">{item.memo || getTransactionTitle(item)}</div>
-                      <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
-                    </div>
-                    <div className="rate-cell">
-                      <div className="rate-amount">
-                        {item && item.rateAmount && isValidNumber(item.rateAmount.toString()) ? formatAmount(item.rateAmount, 2) : '--'}
-                        &nbsp;
-                        {item && item.associatedToken ? getTokenSymbol(item.associatedToken as string) : ''}
-                      </div>
-                      <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds)}</div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <>
-              <p>No streams available</p>
-              </>
-            )}
+            <Spin spinning={loadingStreams}>
+              {renderStreamList}
+            </Spin>
           </div>
           {/* Bottom CTA */}
           <div className="bottom-ctas">
-            <div className="create-stream">
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="small"
-                onClick={showContractSelectorModal}>
-                Create new money stream
-              </Button>
-            </div>
-            <div className="open-stream">
-              <Button
-                shape="round"
-                type="text"
-                size="small"
-                className="ant-btn-shaded"
-                onClick={showOpenStreamModal}
-                icon={<SearchOutlined />}>
-              </Button>
-            </div>
+            {customStreamDocked ? (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={handleCancelCustomStreamClick}>
+                  {t('streams.back-to-my-streams-cta')}
+                </Button>
+              </div>
+            ) : (
+              <div className="create-stream">
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="small"
+                  onClick={showContractSelectorModal}>
+                  {t('streams.create-new-stream-cta')}
+                </Button>
+              </div>
+            )}
+            {!customStreamDocked && (
+              <div className="open-stream">
+                <Tooltip title={t('streams.lookup-stream-cta-tooltip')}>
+                  <Button
+                    shape="round"
+                    type="text"
+                    size="small"
+                    className="ant-btn-shaded"
+                    onClick={showOpenStreamModal}
+                    icon={<SearchOutlined />}>
+                  </Button>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </div>
       </div>
       {/* Right / down panel */}
       <div className="stream-details-container">
         <Divider className="streams-divider" plain></Divider>
-        <div className="streams-heading">Stream details</div>
+        <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
         <div className="inner-container">
           {connected && streamDetail ? (
             <>
             {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
             </>
           ) : (
-            <p>Please select a stream to view details</p>
+            <p>{t('streams.stream-detail.no-stream')}</p>
           )}
         </div>
       </div>
@@ -1190,10 +1939,85 @@ export const Streams = () => {
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}
         handleClose={closeOpenStreamModal} />
+      <CloseStreamModal
+        isVisible={isCloseStreamModalVisible}
+        transactionFees={transactionFees}
+        handleOk={onAcceptCloseStream}
+        handleClose={hideCloseStreamModal}
+        content={getStreamClosureMessage()} />
+      <AddFundsModal
+        isVisible={isAddFundsModalVisible}
+        transactionFees={transactionFees}
+        handleOk={onAcceptAddFunds}
+        handleClose={closeAddFundsModal} />
       <WithdrawModal
+        startUpData={lastStreamDetail}
+        transactionFees={transactionFees}
         isVisible={isWithdrawModalVisible}
         handleOk={onAcceptWithdraw}
         handleClose={closeWithdrawModal} />
+      {/* Add funds transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterAddFundsTransactionModalClosed}
+        visible={isAddFundsTransactionModalVisible}
+        title={getTransactionModalTitle()}
+        onCancel={hideAddFundsTransactionModal}
+        width={280}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onAddFundsTransactionFinished}>
+                {t('general.cta-close')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideAddFundsTransactionModal}>
+                {t('general.cta-dismiss')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
       {/* Withdraw funds transaction execution modal */}
       <Modal
         className="mean-modal no-full-screen"
@@ -1209,40 +2033,49 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">{`Withdraw ${streamDetail && getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)}`}</h5>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Funds withdrawn successfuly!</p>
+              <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={onWithdrawFundsTransactionFinished}>
-                Finish
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={hideWithdrawFundsTransactionModal}>
-                Dismiss
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>
@@ -1262,44 +2095,54 @@ export const Streams = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <h5 className="operation">Close stream operation</h5>
-              <div className="indication">Confirm this transaction in your wallet</div>
+              <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
-              <p className="operation">Stream successfully closed!</p>
+              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={onCloseStreamTransactionFinished}>
-                Finish
+                {t('general.cta-finish')}
               </Button>
             </>
           ) : isError() ? (
             <>
               <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
               <Button
                 block
                 type="primary"
                 shape="round"
                 size="middle"
                 onClick={hideCloseStreamTransactionModal}>
-                Dismiss
+                {t('general.cta-dismiss')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-4 text-uppercase">Working, please wait...</h4>
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
             </>
           )}
         </div>
       </Modal>
     </div>
   );
+
 };
