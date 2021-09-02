@@ -1401,10 +1401,9 @@ export const SwapUi = () => {
                   </h4>
                 ) : (
                   <h4 className="font-bold mb-1 text-uppercase">
-                    {!smallAmount && getTransactionOperationDescription(transactionStatus, t)}
-                    {
-                      smallAmount && 
-                      (t('transactions.status.tx-send-failure-smallamount') || 'Failure submitting transaction. Swap amount too small')
+                    {smallAmount
+                      ? t('transactions.status.tx-send-failure-smallamount')
+                      : getTransactionOperationDescription(transactionStatus, t)
                     }
                   </h4>
                 )}
