@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
@@ -25,7 +26,7 @@ export const CloseStreamModal = (props: {
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
     let fee = 0;
-    const isAddressMyAccount = (addr: string): Boolean => {
+    const isAddressMyAccount = (addr: string): boolean => {
       return publicKey && addr && addr === publicKey.toBase58() ? true : false;
     }
     // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used

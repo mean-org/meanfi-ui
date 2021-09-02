@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
@@ -93,8 +94,6 @@ export const WrapView = () => {
         setSelectedToken(myToken as TokenInfo);
       }
     }
-
-    return () => {};
   }, [tokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
 
   useEffect(() => {
@@ -178,7 +177,7 @@ export const WrapView = () => {
             });
             return true;
           })
-          .catch((error) => {
+          .catch(() => {
             console.log("Signing transaction failed!");
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
@@ -241,7 +240,7 @@ export const WrapView = () => {
           });
           return true;
         })
-        .catch((error) => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure,

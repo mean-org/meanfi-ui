@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
@@ -10,10 +11,10 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
-import { MEANFI_METRICS_URL, MEAN_FINANCE_WALLET_GUIDE_URL } from '../../constants';
+import { MEANFI_METRICS_URL, HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
-import { AppConfigService } from '../../environments/environment';
+import { AppConfigService, environment } from '../../environments/environment';
 
 const { SubMenu } = Menu;
 
@@ -105,6 +106,11 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
+      {environment === 'development' && (
+        <Menu.Item key="/accounts">
+          <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+        </Menu.Item>
+      )}
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
@@ -122,7 +128,7 @@ export const AppBar = (props: { menuType: string }) => {
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
         <Menu.Item key="wallet-guide">
-          <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+          <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
           </a>
         </Menu.Item>
@@ -184,6 +190,11 @@ export const AppBar = (props: { menuType: string }) => {
         <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
         <div id="overlay">
           <ul onClick={dismissMenu}>
+            {environment === 'development' && (
+              <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+              </li>
+            )}
             <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
               <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
             </li>
@@ -215,7 +226,7 @@ export const AppBar = (props: { menuType: string }) => {
                   </li>
                 )}
                 <li key="wallet-guide" className="mobile-menu-item">
-                  <a href={MEAN_FINANCE_WALLET_GUIDE_URL} target="_blank" rel="noopener noreferrer">
+                  <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                     <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                     &nbsp;<IconExternalLink className="mean-svg-icons link" />
                   </a>

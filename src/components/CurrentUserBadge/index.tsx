@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useMemo, useState } from "react";
 import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
@@ -14,7 +15,7 @@ import { copyText } from "../../utils/ui";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { useTranslation } from "react-i18next";
 
-export const CurrentUserBadge = (props: {}) => {
+export const CurrentUserBadge = () => {
 
   const { t } = useTranslation("common");
   const [isModalVisible, setIsModalVisible] = useState(false);

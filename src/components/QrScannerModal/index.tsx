@@ -1,3 +1,4 @@
+import React from 'react';
 import { useContext, useEffect } from "react";
 import { Modal } from "antd";
 import { AppStateContext } from "../../contexts/appstate";
@@ -35,7 +36,7 @@ export const QrScannerModal = (props: {
         };
 
         // Optional callback for error, can be ignored.
-        const onScanError = (qrCodeError: any) => {
+        const onScanError = () => {
           // This callback would be called in case of qr code scan error or setup error.
           // You can avoid this callback completely, as it can be very verbose in nature.
         };

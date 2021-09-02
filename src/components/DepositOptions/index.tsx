@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Col, Modal, Row } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,7 @@ import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
 import "./style.less";
 
-var QRCode = require('qrcode.react');
+const QRCode = require('qrcode.react');
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -81,12 +82,12 @@ export const DepositOptions = (props: {
 
   useEffect(() => {
     const resizeListener = () => {
-      var NUM_CHARS = 4;
-      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (var i = 0; i < ellipsisElements.length; ++i){
-        var e = ellipsisElements[i] as HTMLElement;
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
-          var text = e.textContent;
+          const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
       }

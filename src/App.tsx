@@ -1,5 +1,6 @@
-import "./App.less";
+import React from 'react';
 import { Routes } from "./routes";
+import "./App.less";
 
 function App() {
   return <Routes />;

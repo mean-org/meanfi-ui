@@ -254,6 +254,8 @@ export const getFairPercentForInterval = (frequency: PaymentRateType): number =>
     return value / 100;
 }
 
+export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
 // Get a percentual value that partialValue represents in total
 export const percentual = (partialValue: number, total: number): number => {
     return (100 * partialValue) / total;

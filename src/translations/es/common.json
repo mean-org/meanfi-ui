@@ -327,6 +327,7 @@
 			"theme-light": "Modo Claro"
 		},
 		"main-menu": {
+			"accounts": "Cuentas",
 			"charts": "Gráficos",
 			"deposits": "Depósitos",
 			"services": {

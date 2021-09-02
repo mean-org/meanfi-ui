@@ -1,3 +1,4 @@
+import React from 'react';
 import { PreFooter } from "../../components/PreFooter";
 
 export const HomeView = () => {

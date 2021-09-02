@@ -1,3 +1,4 @@
+import React from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { IconSort } from "../../Icons";
@@ -37,7 +38,7 @@ export const AddFundsModal = (props: {
 
   const getFeeAmount = (amount?: any): number => {
     let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
     if (props && props.transactionFees) {
       if (props.transactionFees.mspPercentFee) {
         fee = percentage(props.transactionFees.mspPercentFee, inputAmount);

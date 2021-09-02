@@ -1,3 +1,4 @@
+import React from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip } from "antd";
 import {
@@ -64,7 +65,7 @@ import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../../models/streams";
 
-var dateFormat = require("dateformat");
+const dateFormat = require("dateformat");
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -131,7 +132,6 @@ export const Streams = () => {
 
   // Live data calculation
   useEffect(() => {
-    let updateDateTimer: any;
 
     const updateData = async () => {
       if (streamDetail && streamDetail.escrowUnvestedAmount) {
@@ -170,7 +170,7 @@ export const Streams = () => {
     };
 
     // Install the timer
-    updateDateTimer = window.setInterval(() => {
+    const updateDateTimer = window.setInterval(() => {
       updateData();
     }, 1000);
 
@@ -189,12 +189,12 @@ export const Streams = () => {
   // Handle overflow-ellipsis-middle elements of resize
   useEffect(() => {
     const resizeListener = () => {
-      var NUM_CHARS = 4;
-      var ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (var i = 0; i < ellipsisElements.length; ++i){
-        var e = ellipsisElements[i] as HTMLElement;
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
         if (e.offsetWidth < e.scrollWidth){
-          var text = e.textContent;
+          const text = e.textContent;
           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
         }
       }
@@ -232,7 +232,7 @@ export const Streams = () => {
     });
   }, [getTransactionFees]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = (e: any) => {
+  const onAcceptCloseStream = () => {
     hideCloseStreamModal();
     onExecuteCloseStreamTransaction();
   };
@@ -523,7 +523,6 @@ export const Streams = () => {
     }
 
     updateStats();
-    return () => {};
   }, [
     publicKey,
     streamList,
@@ -678,7 +677,7 @@ export const Streams = () => {
           signedTransactions = signed;
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -737,7 +736,7 @@ export const Streams = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -879,7 +878,7 @@ export const Streams = () => {
           signedTransactions = signed;
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -938,7 +937,7 @@ export const Streams = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -1069,7 +1068,7 @@ export const Streams = () => {
           signedTransaction = signed[0];
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           console.log('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
@@ -1128,7 +1127,7 @@ export const Streams = () => {
           });
           return true;
         })
-        .catch(error => {
+        .catch(() => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -1264,7 +1263,7 @@ export const Streams = () => {
     }
   }
 
-  const isAddressMyAccount = (addr: string): Boolean => {
+  const isAddressMyAccount = (addr: string): boolean => {
     return wallet && addr && wallet.publicKey && addr === wallet.publicKey.toBase58()
            ? true
            : false;
