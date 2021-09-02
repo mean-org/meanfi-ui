@@ -69,6 +69,7 @@ export const getSolanaExplorerClusterParam = (): string => {
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;
+  swapConnection: Connection;
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
@@ -88,6 +89,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   env: ENDPOINTS[0].name,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
+  swapConnection: new Connection(ENDPOINTS[0].endpoint, "confirmed")
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
@@ -105,6 +107,8 @@ export function ConnectionProvider({ children = undefined as any }) {
   const sendConnection = useMemo(() => new Connection(endpoint, "recent"), [
     endpoint,
   ]);
+
+  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].endpoint, "confirmed"), []);
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
@@ -195,6 +199,7 @@ export function ConnectionProvider({ children = undefined as any }) {
         tokens,
         tokenMap,
         env,
+        swapConnection
       }}
     >
       {children}
@@ -204,6 +209,10 @@ export function ConnectionProvider({ children = undefined as any }) {
 
 export function useConnection() {
   return useContext(ConnectionContext).connection as Connection;
+}
+
+export function useSwapConnection() {
+  return useContext(ConnectionContext).swapConnection as Connection;
 }
 
 export function useSendConnection() {

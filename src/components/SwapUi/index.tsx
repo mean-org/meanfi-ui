@@ -1,6 +1,6 @@
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useConnection } from "../../contexts/connection";
+import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
@@ -40,7 +40,7 @@ export const SwapUi = () => {
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
-  const connection = useConnection();  
+  const connection = useSwapConnection();
   const {
     // coinPrices,
     transactionStatus,
