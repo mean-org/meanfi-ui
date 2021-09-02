@@ -77,7 +77,7 @@
 		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
-		"send-from-wallet-cta-label": "Enviar da Carteira / Troca"
+		"send-from-wallet-cta-label": "Enviar da Carteira/Troca"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",

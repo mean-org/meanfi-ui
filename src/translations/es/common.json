@@ -77,7 +77,7 @@
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
-		"send-from-wallet-cta-label": "Enviar desde Billetera / Exchange"
+		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
@@ -276,7 +276,7 @@
 			"clock-in-out": "Hora de entrada / salida",
 			"label": "Requisito del parte de horas",
 			"not-required": "Innecesario (transmisiones 24/7)",
-			"submit-timesheets": "Enviar hojas de horas"
+			"submit-timesheets": "Enviar planilla de horas"
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
