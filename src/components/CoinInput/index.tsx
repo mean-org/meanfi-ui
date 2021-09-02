@@ -6,7 +6,7 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { Identicon } from "../Identicon";
 
 export const CoinInput = (props: {
-  token: TokenInfo;
+  token: TokenInfo | undefined;
   tokenBalance: number;
   tokenAmount: string;
   onSelectToken: any;

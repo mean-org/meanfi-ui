@@ -11,7 +11,7 @@
     "start:local": "REACT_APP_ENV=local npm start",
     "start:local:win": "set 'REACT_APP_ENV=local' && npm start",
     "start:dev": "REACT_APP_ENV=development npm start",
-    "start:dev:win": "set 'REACT_APP_ENV=development' && npm start",
+    "start:dev:win": "set \"REACT_APP_ENV=development\" && npm start",
     "start:prod": "REACT_APP_ENV=production npm start",
     "start:prod:win": "set 'REACT_APP_ENV=production' && npm start",
     "start:staging": "REACT_APP_ENV=staging npm start",

@@ -1,6 +1,5 @@
-import React from 'react';
 import { Button, Modal, Row, Col, Spin } from "antd";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
@@ -9,23 +8,31 @@ import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useAccountsContext } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees, findATokenAddress } from "money-streaming/lib/utils";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
-import { useSwappableTokens, useTokenMap } from "../../contexts/tokenList";
-import { useMarket, useMarketContext, useRouteVerbose } from "../../contexts/market";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT } from "../../utils/ids";
-import { useReferral, useSwapContext, useSwapFair } from "../../contexts/swap";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
-import { swap } from "../../utils/swap";
+import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, unwrap, wrap } from "../../utils/swap";
 import "./style.less";
-import { useMint } from "../../contexts/token";
+import { LiquidityPoolInfo } from "../../utils/pools";
+import { NATIVE_SOL, TOKENS } from "../../utils/tokens";
+import { cloneDeep } from "lodash-es";
+import useLocalStorage from "../../hooks/useLocalStorage";
+import { Market } from "../../models/market";
+import BN from "bn.js";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getLiquidityPools } from "../../utils/liquidity";
+import { TokenAmount } from "../../utils/safe-math";
+import { getMarkets } from "../../utils/markets";
+import { getMultipleAccounts } from "../../utils/accounts";
+import { Orderbook } from "@project-serum/serum";
+import * as base64 from "base64-js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -33,9 +40,9 @@ export const SwapUi = () => {
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
-  const connection = useConnection();
-  const accounts = useAccountsContext();
+  const connection = useConnection();  
   const {
+    // coinPrices,
     transactionStatus,
     previousWalletConnectState,
     setTransactionStatus,
@@ -43,204 +50,43 @@ export const SwapUi = () => {
 
   } = useContext(AppStateContext);
 
-  const {
-    fromMint,
-    toMint,
-    fromAmount,
-    toAmount,
-    slippage,
-    isStrict,
-    isClosingNewAccounts,
-    setFromMint,
-    setToMint,
-    setFromAmount,
-    setToAmount,
-    swapToFromMints
-
-  } = useSwapContext();
-
-  const { swapClient, openOrders } = useMarketContext();
-  const route = useRouteVerbose(fromMint, toMint);  
-  const fromMintInfo = useMint(fromMint);
-  const toMintInfo = useMint(toMint);
-  const fromMarket = useMarket(route && route.markets ? route.markets[0] : undefined);
-  const toMarket = useMarket(route && route.markets ? route.markets[1] : undefined);
-  const tokenMap = useTokenMap();
-  const referral = useReferral(fromMarket);
-  const fair = useSwapFair();
-  const quoteMint = fromMarket && fromMarket.quoteMintAddress ? fromMarket.quoteMintAddress : undefined;
-  const quoteMintInfo = useMint(quoteMint);
-  const { swappableTokens } = useSwappableTokens();
-  const [tokenFilter, setTokenFilter] = useState("");
-  const filter = tokenFilter.toLowerCase();
-  const tokens = tokenFilter === ""
-      ? swappableTokens
-      : swappableTokens.filter((t) =>
-          t.symbol.toLowerCase().startsWith(filter) ||
-          t.name.toLowerCase().startsWith(filter) ||
-          t.address.toLowerCase().startsWith(filter)        
-      );
-
   // Added by YAF (Token balance)
   const [smallAmount, setSmallAmount] = useState(0);
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
-  const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
-  const [fetchingToTokenBalance, setFetchingToTokenBalance] = useState(false);
+  const [isUpdatingPools, setIsUpdatingPools] = useState(false);
+  const [isUpdatingMarkets, setIsUpdatingMarkets] = useState(false);
   const [toSwapAmount, setToSwapAmount] = useState("");
-  const [shouldRefreshToAmount, setShouldRefreshToAmount] = useState(false);
-
-  const getTokenAccountBalanceByAddress = useCallback(async (address: string): Promise<number> => {
-    if (!address) return 0;
-    const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-    if (!accountInfo) return 0;
-    if (address === publicKey?.toBase58()) {
-      return accountInfo.lamports / LAMPORTS_PER_SOL;
-    }
-    const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
-    return tokenAmount.uiAmount || 0;
-    
-  }, [
-    publicKey,
-    connection
-  ])
-
-  // Refresh fromMint token balance
-  const refreshFromTokenBalance = useCallback(async (mint?: PublicKey) => {
-    setFetchingFromTokenBalance(true);
-    const targetMint = mint || fromMint;
-    if (targetMint.equals(NATIVE_SOL_MINT)) {
-      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => {
-          setFromMintTokenBalance(balance || 0);
-          setFetchingFromTokenBalance(false);
-        })
-        .catch(() => setFetchingFromTokenBalance(false));
-    } else {
-      findATokenAddress(publicKey as PublicKey, targetMint)
-        .then(value => {
-          if (value) {
-            getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => {
-                setFromMintTokenBalance(balance);
-                setFetchingFromTokenBalance(false);
-              })
-              .catch(() => setFetchingFromTokenBalance(false));
-          } else {
-            setFetchingFromTokenBalance(false);
-          }
-        })
-        .catch(() => setFetchingFromTokenBalance(false));
-    }
-  }, [
-    fromMint, 
-    publicKey, 
-    getTokenAccountBalanceByAddress
-  ]);
-
-  // Refresh toMint token balance
-  const refreshToTokenBalance = useCallback(async (mint?: PublicKey) => {
-    setFetchingToTokenBalance(true);
-    const targetMint = mint || toMint;
-    if (targetMint.equals(NATIVE_SOL_MINT)) {
-      getTokenAccountBalanceByAddress(publicKey?.toBase58() as string)
-        .then(balance => {
-          setToMintTokenBalance(balance);
-          setFetchingToTokenBalance(false);
-        })
-        .catch(() => setFetchingToTokenBalance(false));
-    } else {
-      findATokenAddress(publicKey as PublicKey, targetMint)
-        .then(value => {
-          if (value) {
-            getTokenAccountBalanceByAddress(value.toBase58())
-              .then(balance => {
-                setToMintTokenBalance(balance);
-                setFetchingToTokenBalance(false);
-              })
-              .catch(() => setFetchingToTokenBalance(false));
-          } else {
-            setFetchingToTokenBalance(false);
-          }
-        })
-        .catch(() => setFetchingToTokenBalance(false));
-    }
-  }, [
-    toMint,
-    publicKey,
-    getTokenAccountBalanceByAddress
-  ]);
-
-  // Automatically update fromMint token balance once
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (fromMint) {
-      refreshFromTokenBalance(fromMint);
-    } else {
-      setFromMintTokenBalance(0);
-    }
-
-    setFetchingFromTokenBalance(false);
-  }, [
-    publicKey,
-    accounts,
-    fromMint,
-    fetchingFromTokenBalance,
-    refreshFromTokenBalance
-  ]);
-
-  // Automatically update toMint token balance once
-  useEffect(() => {
-    if (!publicKey || !accounts || !accounts.tokenAccounts || !accounts.tokenAccounts.length) {
-      return;
-    }
-
-    if (toMint) {
-      refreshToTokenBalance(toMint);
-    } else {
-      setToMintTokenBalance(0);
-    }
-
-    setFetchingToTokenBalance(false);
-  }, [
-    publicKey,
-    accounts,
-    toMint,
-    fetchingToTokenBalance,
-    refreshToTokenBalance
-  ]);
-
-  // Hook on the wallet connect/disconnect
-  useEffect(() => {
-
-    if (previousWalletConnectState === connected) {
-      return;
-    }
-
-    // User is connecting
-    if (!previousWalletConnectState && connected) {
-      consoleOut('Refreshing balances...', '', 'blue');
-      refreshFromTokenBalance();
-      refreshToTokenBalance();
-      setPreviousWalletConnectState(true);
-    } else if (previousWalletConnectState && !connected) {
-      consoleOut('User is disconnecting...', '', 'blue');
-      setFromMintTokenBalance(0);
-      setToMintTokenBalance(0);
-      setPreviousWalletConnectState(false);
-    }
-  }, [
-    connected, 
-    publicKey, 
-    previousWalletConnectState, 
-    refreshToTokenBalance, 
-    refreshFromTokenBalance, 
-    setPreviousWalletConnectState
-  ]);
-
+  //
+  // Get them from the localStorage and set defaults if they are not already stored
+  const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
+  // const [lastSwapToMint, setLastSwapToMint] = useLocalStorage('lastSwapToMint', NATIVE_SOL_MINT.toBase58());
+  // Work with our swap From/To subjects
+  const [fromMint, setFromMint] = useState<PublicKey | undefined>(new PublicKey(lastSwapFromMint));
+  const [toMint, setToMint] = useState<PublicKey | undefined>(); //useState(new PublicKey(lastSwapToMint));
+  // Continue normal flow
+  const [fromAmount, setFromAmount] = useState("");
+  const [toAmount, setToAmount] = useState("");
+  const [isWrap, setIsWrap] = useState(false);
+  const [isUnwrap, setIsUnwrap] = useState(false);
+  const [outToPrice, setOutToPrice] = useState("");
+  const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
+  const [market, setMarket] = useState<Market>();
+  const [orderbooks, setOrderbooks]= useState<any>([]);
+  const [pool, setPool] = useState<LiquidityPoolInfo>();
+  const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map<string, TokenInfo>());
+  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
+  // Transaction execution modal
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
+  const [swapRateFlipped, setSwapRateFlipped] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
   // FEES
   const [swapFees, setSwapFees] = useState<TransactionFees>({
     blockchainFee: 0,
@@ -248,61 +94,404 @@ export const SwapUi = () => {
     mspPercentFee: 0,
   });
 
-  useEffect(() => {
+  // Get Tx fees
+  useMemo(() => {
 
-    const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.swapTokens);
-    };
+    calculateActionFees(connection, MSP_ACTIONS.swapTokens)
+      .then(values => setSwapFees(values))
+      .catch(_error => { });
 
-    if (!swapFees.blockchainFee) {
-      getTransactionFees().then((values) => {
-        setSwapFees(values);
-        console.log("swapFees:", values);
-      });
-    }
   }, [
-    connection,
-    swapFees
+    connection
   ]);
 
-  const getFeeAmount = (amount: any): number => {
-    const feeAmount = getTxFeeAmount(swapFees, parseFloat(amount));
-    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
-    const formattedAmount = parseFloat(formatAmount(feeAmount, fromDecimals));
+  // Updates isWrap/isUnwrap
+  useMemo(() => {
 
-    return formattedAmount;
-  };
+    if (!fromMint || !toMint) {
+      return;
+    }
 
-  // Update the swap receiving amount (from amount - swap fee)
+    setIsWrap(
+      fromMint &&
+      toMint &&
+      fromMint.equals(NATIVE_SOL_MINT) && 
+      toMint.equals(WRAPPED_SOL_MINT)
+    );
+
+    setIsUnwrap(
+      fromMint &&
+      toMint &&
+      fromMint.equals(WRAPPED_SOL_MINT) && 
+      toMint.equals(NATIVE_SOL_MINT)
+    );
+    
+  }, [
+    fromMint, 
+    toMint
+  ]);
+
+  // Updates the token list everytime is filtered
   useEffect(() => {
 
-    if (!fromAmount || !isValidNumber(fromAmount)) {
-      setToSwapAmount("");
+    let list = [];
+    const symbols = Object.keys(TOKENS);
+    list.push(NATIVE_SOL);
+    
+    for (let key of symbols) {
+      let token = cloneDeep(TOKENS[key]);
+      if (token.logoURI) {
+        list.push(token);
+      }
     }
+        
+    list = !tokenFilter ? list : list.filter((t: TokenInfo) =>
+      t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+      t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+      t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+    );  
+    
+    setTokenList(list);
 
-    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-    const toSwapAmount = (parseFloat(fromAmount) - getTxFeeAmount(swapFees, fromAmount)) / (fair || 1);
-    const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
-    setToSwapAmount(toSwapFormattedAmount);
-
-    if (shouldRefreshToAmount) {
-      const toValue = parseFloat(fromAmount) / (fair || 1);
-      const toValueFormatted = formatAmount(toValue, toDecimals);
-      setToAmount(toValueFormatted);
-    }
+    return () => { }
+    
   }, [
-    fair,
-    fromAmount,
-    shouldRefreshToAmount,
-    swapFees,
-    toMint,
+    tokenFilter, 
+    tokenList.length
+  ]);
+
+  // Token map for quick lookup.
+  useMemo(() => {
+
+    const map = new Map<string, TokenInfo>();
+    tokenList.forEach((t: TokenInfo) => {
+      map.set(t.address, t);
+    });
+    
+    setTokenMap(map);
+    
+  }, [
+    tokenList
+  ]);
+
+  // Updates the amounts from pool
+  useEffect(() => {
+
+    if (!fromMint || !toMint || !pool) { return; }
+
+    let outAmount = '';
+    let outWithSlippageAmount = '';
+    let price = '';
+
+    const amount = fromAmount ? fromAmount : '1';
+    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const { amountOut, amountOutWithSlippage } = getSwapOutAmount(
+      pool,
+      fromMint.toBase58(),
+      toMint.toBase58(),
+      amount,
+      slippage
+    );
+
+    if (!amountOut.isNullOrZero()) {
+      outAmount = fromAmount ? amountOut.fixed() : '';
+      outWithSlippageAmount = fromAmount ? amountOutWithSlippage.fixed() : '';
+      const outPrice = +new TokenAmount(
+        parseFloat(amountOut.fixed()) / parseFloat(amount),
+        fromDecimals,
+        false
+      ).fixed();
+      price = formatAmount(outPrice, toDecimals);
+    }
+
+    setOutToPrice(price);
+    setToAmount(outAmount);
+    setToSwapAmount(outWithSlippageAmount);
+    
+  }, [
     fromMint,
-    tokenMap,
-    setToAmount
+    toMint,
+    pool,
+    fromAmount, 
+    slippage, 
+    tokenMap
+  ]);
+
+  // Updates the amounts from serum markets
+  useEffect(() => {
+
+    if (!fromMint || !toMint || !market || orderbooks.length < 2) { 
+      return; 
+    }
+
+    let outAmount = '';
+    let outWithSlippageAmount = '';
+    let price = '';
+
+    const amount = fromAmount ? fromAmount : '1';
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const bids = (orderbooks.filter((ob: any) => ob.isBids)[0]).slab;
+    const asks = (orderbooks.filter((ob: any) => !ob.isBids)[0]).slab;
+    console.log('orderbooks', orderbooks);
+    console.log('bids', bids);
+    console.log('asks', asks);
+    const { amountOut, amountOutWithSlippage } = getOutAmount(
+      market,
+      asks,
+      bids,
+      fromMint.toBase58(),
+      toMint.toBase58(),
+      amount,
+      slippage
+    );
+    
+    // console.log('slippage', slippage);
+    const out = new TokenAmount(amountOut, toDecimals, false);
+    const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
+
+    if (!out.isNullOrZero()) {
+      if (!toSwapAmount || parseFloat(toSwapAmount) <= parseFloat(outWithSlippage.fixed())) {
+        outAmount = fromAmount ? out.fixed() : '';
+        outWithSlippageAmount = fromAmount ? outWithSlippage.fixed() : '';
+        const outPrice = +new TokenAmount(
+          parseFloat(out.fixed()) / parseFloat(amount),
+          toDecimals,
+          false
+        ).fixed();
+        price = formatAmount(outPrice, toDecimals);
+      }
+    }
+
+    setOutToPrice(price);
+    setToAmount(outAmount);
+    setToSwapAmount(outWithSlippageAmount);
+
+  }, [
+    fromMint,
+    toMint,
+    market,
+    orderbooks,
+    fromAmount, 
+    slippage, 
+    toSwapAmount, 
+    tokenMap
+  ]);
+
+  // Updates orderbooks (bids/asks)
+  const updateOrderBooks = useCallback(async (
+    from: PublicKey | undefined, 
+    to: PublicKey | undefined,
+    market: Market
+  ) => {
+
+    if (!from || !to || !market || !market.bids || !market.asks) { 
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return; 
+    }
+
+    const accounts = await getMultipleAccounts(
+      connection, 
+      [
+        market.bids, 
+        market.asks
+      ], 
+      connection.commitment
+    );
+
+    const orderBooks = [];
+
+    for (let info of accounts) {
+      if (info) {
+        const data = info.account.data;
+        const orderbook = Orderbook.decode(market, data);
+        orderBooks.push(orderbook);
+      }        
+    }
+
+    setOrderbooks(orderBooks);
+    setIsUpdatingPools(false);
+    setIsUpdatingMarkets(false);
+
+  }, [
+    connection,
+    setIsUpdatingMarkets
+  ]);
+
+  // Updates market
+  const updateMarkets = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
+
+    if (!from || !to) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    const marketInfos = await getMarkets(connection);
+
+    if (!marketInfos) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    for(let address in marketInfos) {
+      
+      let info = marketInfos[address];
+      let fromAddress = from.toBase58();
+      let toAddress = to.toBase58();
+
+      if (fromAddress === NATIVE_SOL_MINT.toBase58()) {
+        fromAddress = WRAPPED_SOL_MINT.toBase58();
+      }
+
+      if (toAddress === NATIVE_SOL_MINT.toBase58()) {
+        toAddress = WRAPPED_SOL_MINT.toBase58();
+      }
+
+      if (
+        (info.baseMint.toBase58() === fromAddress && info.quoteMint.toBase58() === toAddress) ||
+        (info.baseMint.toBase58() === toAddress && info.quoteMint.toBase58() === fromAddress)
+      ) {
+
+        const marketInfo = await Market.load(
+          connection, 
+          new PublicKey(address),
+          { }, 
+          new PublicKey(SERUM_PROGRAM_ID_V3)
+        );
+
+        setMarket(marketInfo);
+
+        await updateOrderBooks(
+          new PublicKey(fromAddress),
+          new PublicKey(toAddress),
+          marketInfo
+        );
+
+        break;
+      }
+    }
+
+    setIsUpdatingPools(false);
+    setIsUpdatingMarkets(false);
+
+  },[
+    connection, 
+    updateOrderBooks
+  ]);
+
+  // Updates liquidity pool info
+  const updatePools = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
+
+    if (!from || !to) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    const poolInfos = await getLiquidityPools(connection, from, to);
+    const poolInfo = Object.values(poolInfos).filter((lp: any) => {
+      return (lp.coin.address === from.toBase58() && lp.pc.address === to.toBase58()) || 
+             (lp.pc.address === from.toBase58() && lp.coin.address === to.toBase58());
+        
+    })[0] as LiquidityPoolInfo;
+
+    if (poolInfo) {
+      setMarket(undefined);
+      setPool(poolInfo);
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+    } else {
+      setPool(undefined);
+      updateMarkets(from, to);
+    }
+    
+  }, [
+    connection,
+    updateMarkets,
+    setIsUpdatingPools
+  ]);  
+
+  // Automatically update fromMint token balance once
+  const updateFromTokenBalance = useCallback((from: PublicKey) => {
+    
+    if (isFlipping || !publicKey || !from) {
+      if (!isFlipping) {
+        setFromMintTokenBalance(0);
+      }
+      return;
+    }
+
+    if (from.equals(NATIVE_SOL_MINT)) {
+      connection.getAccountInfo(publicKey).then(info => {
+        let balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
+        setFromMintTokenBalance(balance);
+      })
+      .catch(_error => { });
+    } else {
+      Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        from,
+        publicKey
+
+      ).then(addr => {
+        if (addr) {
+          connection.getTokenAccountBalance(addr).then(info => {
+            let balance = info && info.value ? (info.value.uiAmount || 0) : 0;
+            setFromMintTokenBalance(balance);
+          }).catch(_error => { });
+        }
+      });
+    }
+
+  }, [
+    isFlipping,
+    connection, 
+    publicKey
+  ]);
+
+  // Automatically update toMint token balance once
+  const updateToTokenBalance = useCallback((to: PublicKey) => {
+    
+    if (isFlipping || !publicKey || !to) {
+      if (!isFlipping) {
+        setToMintTokenBalance(0);
+      }
+      return;
+    }
+
+    if (to.equals(NATIVE_SOL_MINT)) {
+      connection.getAccountInfo(publicKey).then(info => {
+        let balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
+        setToMintTokenBalance(balance);
+      }).catch(_error => { });
+    } else {
+      Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        to,
+        publicKey
+
+      ).then(addr => {
+        if (addr) {
+          connection.getTokenAccountBalance(addr).then(info => {
+            let balance = info && info.value ? (info.value.uiAmount || 0) : 0;
+            setToMintTokenBalance(balance);
+          }).catch(_error => { });
+        }
+      });
+    }
+
+  }, [
+    isFlipping,
+    connection, 
+    publicKey
   ]);
 
   // Token selection modal
-  const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(true);
     setTimeout(() => {
@@ -316,30 +505,54 @@ export const SwapUi = () => {
   const onCloseTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(false);
     setTokenFilter('');
-  }, []);
-  const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
-  const [swapRateFlipped, setSwapRateFlipped] = useState(false);
 
-  const setToAmountFromSourceAmount = (value: any) => {
-    const validFromAmount = !value ? 0 : parseFloat(value);
-    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-    const toSwapAmount = (validFromAmount - getFeeAmount(validFromAmount)) / (fair || 1);
-    const toSwapFormattedAmount = formatAmount(toSwapAmount, toDecimals);
-    setToSwapAmount(toSwapFormattedAmount);
-    const minSwapSize = minimumSwapSize(validFromAmount);
-    setSmallAmount(minSwapSize);
-  }
+  }, []);
+
+  // Hook on the wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState === connected) {
+      return;
+    }
+
+    // User is connecting
+    if (!previousWalletConnectState && connected) {
+      consoleOut('Refreshing balances...', '', 'blue');
+      setFromMint(new PublicKey(lastSwapFromMint));
+      setPreviousWalletConnectState(true);
+      updateFromTokenBalance(fromMint as PublicKey);
+      updateToTokenBalance(toMint as PublicKey);
+
+    } else if (previousWalletConnectState && !connected) {
+      consoleOut('User is disconnecting...', '', 'blue');
+      setLastSwapFromMint(fromMint!.toString());
+      setPreviousWalletConnectState(false);
+    }
+
+    return () => { };
+
+  }, [
+    connected, 
+    publicKey, 
+    previousWalletConnectState, 
+    fromMint, 
+    toMint, 
+    lastSwapFromMint, 
+    setLastSwapFromMint, 
+    setPreviousWalletConnectState,
+    updateFromTokenBalance,
+    updateToTokenBalance
+  ]);
 
   // Event handling
   const handleSwapFromAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount("");
+      setToAmount("");
       setSmallAmount(0);
     } else if (isValidNumber(newValue)) {
-      const fromDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-      setFromAmount(newValue, fromDecimals);
-      setToAmountFromSourceAmount(newValue);
+      setFromAmount(newValue);
     }
   };
 
@@ -349,26 +562,49 @@ export const SwapUi = () => {
   }
 
   // Validation
+  const getFeeAmount = useCallback((amount: any): number => {
+    const feeAmount = getTxFeeAmount(swapFees, parseFloat(amount));
+    const fromDecimals = tokenMap.get(fromMint!.toBase58())?.decimals || 6;
+    const formattedAmount = parseFloat(formatAmount(feeAmount, fromDecimals));
+
+    return formattedAmount;
+
+  },[
+    fromMint, 
+    swapFees, 
+    tokenMap
+  ]);
+
+  const isValidBalance = useCallback(() => {
+    return fromMint && NATIVE_SOL_MINT.equals(fromMint)
+      ? (parseFloat(fromAmount) - getFeeAmount(fromAmount) < fromMintTokenBalance)
+      : (fromMintTokenBalance > getFeeAmount(fromAmount));
+  }, [
+    fromAmount, 
+    fromMint, 
+    fromMintTokenBalance, 
+    getFeeAmount
+  ])
 
   // TODO: Review validation
   const isSwapAmountValid = (): boolean => {
+
     return (
       connected &&
-      fair &&
       fromMintTokenBalance &&
       fromMint &&
       fromAmount &&
       parseFloat(fromAmount) > 0 &&
-      parseFloat(fromAmount) >= getFeeAmount(fromAmount) + smallAmount &&
       parseFloat(fromAmount) > getFeeAmount(fromAmount) &&
-      parseFloat(fromAmount) - getFeeAmount(fromAmount) <= fromMintTokenBalance
+      parseFloat(fromAmount) > getFeeAmount(fromAmount) &&
+      isValidBalance()
 
     ) ? true : false;
   };
 
   const getMinimumSwapAmountLabel = () => {
-    const from = tokenMap.get(fromMint.toBase58());
-    const toSymbol = tokenMap.get(toMint.toBase58())?.symbol;
+    const from = tokenMap.get(fromMint!.toBase58());
+    const toSymbol = tokenMap.get(toMint!.toBase58())?.symbol;
 
     return `${t('transactions.validation.minimum-swap-amount', {
       mintAmount: `${smallAmount} ${from?.symbol}`,
@@ -403,102 +639,161 @@ export const SwapUi = () => {
   }
 
   const flipMints = () => {
+    setIsFlipping(true);
     const oldFrom = fromMint;
     const oldTo = toMint;
-    swapToFromMints();
+    const oldToAmount = toAmount;
+    // const oldFromAmount = fromAmount;
+    const oldToBalance = toMintTokenBalance;
+    const oldFromBalance = fromMintTokenBalance;
+    setFromMint(oldTo);
+    setToMint(oldFrom);
+    setFromAmount(oldToAmount);
+    // setToAmount(oldFromAmount);
+    setFromMintTokenBalance(oldToBalance);
+    setToMintTokenBalance(oldFromBalance);
     setSwapRateFlipped(!swapRateFlipped);
-    setShouldRefreshToAmount(true);
-    refreshFromTokenBalance(oldTo);
-    refreshToTokenBalance(oldFrom);
-    setTimeout(() => {
-      setShouldRefreshToAmount(false);
-    }, 2000);
   }
 
   const minimumSwapSize = (amount: number) => {
     
-    if (!fromMarket) {
+    if (!market) {
       return 0;
     }
 
     let result = 0;
-    const fairAmount = fair || 1;
-    const isSol = fromMint.equals(NATIVE_SOL_MINT) || toMint.equals(NATIVE_SOL_MINT);
+    const fairAmount = 1;
+    const isSol = fromMint?.equals(NATIVE_SOL_MINT) || toMint?.equals(NATIVE_SOL_MINT);
     const isUSDX = 
-      fromMint.equals(USDC_MINT) || 
-      fromMint.equals(USDT_MINT) || 
-      toMint.equals(USDC_MINT) || 
-      toMint.equals(USDT_MINT);
+      fromMint?.equals(USDC_MINT) || 
+      fromMint?.equals(USDT_MINT) || 
+      toMint?.equals(USDC_MINT) || 
+      toMint?.equals(USDT_MINT);
 
     if (isSol) {
-      result = fromMint.equals(NATIVE_SOL_MINT) ? fromMarket.minOrderSize : fromMarket.minOrderSize * fairAmount;
+      result = fromMint?.equals(NATIVE_SOL_MINT) ? market.minOrderSize : market.minOrderSize * fairAmount;
     } else if (isUSDX) {
-      const market = toMarket ? toMarket : fromMarket;
-      result = amount < (market.minOrderSize * fairAmount) ? (market.minOrderSize * fairAmount) : 0;
+      result = amount < (market.minOrderSize/* * fairAmount*/) ? (market.minOrderSize * fairAmount) : 0;
     } else {
-      if (toMarket) {
-        result = amount < (toMarket.minOrderSize * fairAmount) ? (toMarket.minOrderSize * fairAmount) : 0;
-      } else {
-        result = amount < (fromMarket.minOrderSize * fairAmount) ? (fromMarket.minOrderSize * fairAmount) : 0;
-      }
+      // if (toMarket) {
+      //   result = amount < (toMarket.minOrderSize * fairAmount) ? (toMarket.minOrderSize * fairAmount) : 0;
+      // } else {
+      //   result = amount < (fromMarket.minOrderSize * fairAmount) ? (fromMarket.minOrderSize * fairAmount) : 0;
+      // }
     }
 
-    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+    const fromDecimals = tokenMap.get(fromMint!.toBase58())?.decimals || 6;
     const formattedResult = formatAmount(result, fromDecimals);
     result = parseFloat(formattedResult) + getFeeAmount(amount);
 
     return result;
   };
 
-  const getSwap = async () => {
+  const getSwap = useCallback(async () => {
 
-    if (!fromMint || !toMint || !fromMintInfo || !toMintInfo) {
+    if (!fromMint || !toMint || !wallet) {
       throw new Error("Unable to calculate mint decimals");
     }
 
-    if (!fair) {
-      throw new Error("Invalid fair");
+    if (isWrap) {
+
+      return wrap(
+        connection,
+        wallet,
+        Keypair.generate(),
+        new BN(parseFloat(fromAmount) * LAMPORTS_PER_SOL)
+      );
+
+    } else if (isUnwrap) {
+
+      return unwrap(
+        connection,
+        wallet,
+        Keypair.generate(),
+        new BN(parseFloat(fromAmount) * LAMPORTS_PER_SOL)
+      );
+
+    } else {
+
+      const fromAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        wallet.publicKey
+      );
+
+      const toAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        toMint,
+        wallet.publicKey
+      );
+
+      if (pool) {
+
+        return swap(
+          connection,
+          wallet,
+          pool,
+          fromMint.toBase58(),
+          toMint.toBase58(),
+          fromAccount,
+          toAccount,
+          fromAmount,
+          toSwapAmount
+        );
+
+      } else {
+
+        const bids = (orderbooks.filter((ob: any) => ob.isBids)[0]).slab;
+        const asks = (orderbooks.filter((ob: any) => !ob.isBids)[0]).slab;
+
+        return place(
+          connection,
+          wallet,
+          market as Market,
+          asks,
+          bids,
+          fromMint.toBase58(),
+          toMint.toBase58(),
+          fromAccount,
+          toAccount,
+          fromAmount,
+          slippage
+        );
+      }
     }
 
-    if (!quoteMint || !quoteMintInfo) {
-      throw new Error("Quote mint not found");
-    }
-
-    return swap(
-      swapClient,
-      fromMint,
-      fromMintInfo,
-      fromMarket,
-      parseFloat(fromAmount),
-      toMint,
-      toMintInfo,
-      toMarket,
-      quoteMint,
-      quoteMintInfo,
-      openOrders,
-      getFeeAmount(fromAmount),
-      slippage,
-      fair,
-      isClosingNewAccounts,
-      referral,
-      isStrict
-    );
-  };
+  },[
+    connection,
+    fromMint,
+    toMint,
+    fromAmount, 
+    isUnwrap, 
+    isWrap, 
+    market, 
+    orderbooks,
+    pool, 
+    slippage, 
+    toSwapAmount, 
+    wallet
+  ]);
 
   const renderSourceTokenList = (
     <>
-      {tokens ? (
-        tokens.map((token, index) => {
+      {tokenList.length ? (
+        tokenList.map((token, index) => {
           const onClick = () => {
-            // const currentAmount = fromAmount;
             const newMint = new PublicKey(token.address);
+            setIsFlipping(false);
             setFromMint(newMint);
-            consoleOut("token selected:", token);
-            setShouldRefreshToAmount(true);
+            setLastSwapFromMint(newMint.toBase58());
+            setIsUpdatingPools(true);
+            setIsUpdatingMarkets(true);
             setTimeout(() => {
-              setShouldRefreshToAmount(false);
-            }, 2000);
-            refreshFromTokenBalance(newMint);
+              updateFromTokenBalance(newMint);
+              updatePools(newMint, toMint);
+            });
             onCloseTokenSelector();
           };
 
@@ -509,7 +804,7 @@ export const SwapUi = () => {
               className={`token-item ${
                 fromMint && fromMint.toBase58() === token.address
                   ? "selected"
-                  : areSameTokens(token, tokenMap.get(toMint?.toBase58() || USDC_MINT.toBase58()) as TokenInfo)
+                  : areSameTokens(token, (toMint ? tokenMap.get(toMint.toBase58()) : undefined) as TokenInfo)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -544,18 +839,19 @@ export const SwapUi = () => {
 
   const renderDestinationTokenList = (
     <>
-      {tokens ? (
-        tokens.map((token, index) => {
+      {tokenList.length ? (
+        tokenList.map((token, index) => {
           const onClick = () => {
-            // const currentAmount = fromAmount;
+            console.log('token.address', token.address);
             const newMint = new PublicKey(token.address);
+            setIsFlipping(false);
             setToMint(newMint);
-            consoleOut("token selected:", token);
-            setShouldRefreshToAmount(true);
+            setIsUpdatingPools(true);
+            setIsUpdatingMarkets(true);
             setTimeout(() => {
-              setShouldRefreshToAmount(false);
-            }, 2000);
-            refreshToTokenBalance(newMint);
+              updateToTokenBalance(newMint);
+              updatePools(fromMint, newMint);
+            });
             onCloseTokenSelector();
           };
 
@@ -598,13 +894,6 @@ export const SwapUi = () => {
       )}
     </>
   );
-
-  // Transaction execution modal
-  const [isBusy, setIsBusy] = useState(false);
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
   const getTransactionModalTitle = () => {
     let title: any;
@@ -658,176 +947,231 @@ export const SwapUi = () => {
       setFromAmount("");
       setToAmount("");
       hideTransactionModal();
-      refreshFromTokenBalance();
-      refreshToTokenBalance();
     }
   };
 
-  const onTransactionStart = async () => {
+  const createTx = useCallback(async () => {
+    if (!wallet) {       
+      return false; 
+    }
+    
+    setTransactionStatus({
+      lastOperation: TransactionStatus.TransactionStart,
+      currentOperation: TransactionStatus.InitTransaction,
+    });
 
-    consoleOut("Starting swap...", "", "orange");
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: string;
+    // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+    // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+    if (!isValidBalance()) {
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.TransactionStartFailure,
+      });
+      return false;
+    }
+
+    try {
+      const tx = await getSwap();
+
+      if (tx) {
+        console.log("SWAP returned transaction:", tx);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.InitTransactionSuccess,
+          currentOperation: TransactionStatus.SignTransaction,
+        });
+        return tx;
+      }
+    } catch(error) {
+      console.log("SWAP transaction init error:", error);
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.InitTransactionFailure,
+      });
+      return undefined;
+    }
+    
+  },[
+    getSwap, 
+    isValidBalance, 
+    setTransactionStatus, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
+  const signTx = useCallback(async (currentTx: Transaction) => {
+
+    if (!wallet) {
+      console.log("Cannot sign transaction! Wallet not found!");
+      setTransactionStatus({
+        lastOperation: TransactionStatus.SignTransaction,
+        currentOperation: TransactionStatus.SignTransactionFailure,
+      });
+      return undefined;
+    }
+
+    console.log("Signing transaction...");
+
+    try {
+      const signedTx = await wallet.signTransaction(currentTx);
+
+      if (signedTx) {
+        console.log("signTransaction returned a signed transaction:", signedTx);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SendTransaction,
+        });
+        return signedTx;
+      }
+
+    } catch(error) {
+      console.log("Signing transaction failed!", error);
+      setTransactionStatus({
+        lastOperation: TransactionStatus.SignTransaction,
+        currentOperation: TransactionStatus.SignTransactionFailure,
+      });
+      return undefined;
+    }
+  }, [
+    setTransactionStatus, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
+  const sendTx = useCallback(async (currentTx: Transaction) => {
+    if (!wallet) {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.SendTransaction,
+        currentOperation: TransactionStatus.SendTransactionFailure
+      });
+      return undefined;
+    }
+    
+    try {
+      const serializedTx = currentTx.serialize();
+      const encodedTx = base64.fromByteArray(serializedTx);
+      console.log('tx serialized => ', encodedTx);
+      const sig = await connection.sendRawTransaction(serializedTx);
+
+      if (sig) {
+        console.log('sendSignedTransaction returned a signature:', sig);
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.SendTransactionSuccess
+        });
+        return sig;
+      }
+
+      return undefined;
+
+    } catch(error) {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.SendTransaction,
+        currentOperation: TransactionStatus.SendTransactionFailure
+      });
+      return undefined;
+    }    
+  },[
+    connection, 
+    setTransactionStatus, 
+    transactionStatus.currentOperation, 
+    wallet
+  ]);
+
+  const confirmTx = useCallback(async (signature: string) => {
+
+    try {
+
+      const confirmed = await connection.confirmTransaction(signature, 'confirmed');
+
+      if (confirmed && confirmed.value && !confirmed.value.err) {
+        console.log('confirmTransaction result:', confirmed.value);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.TransactionFinished
+        });
+        return confirmed.value;
+
+      } else if (confirmed && confirmed.value && confirmed.value.err) {
+        console.log('Error: ', confirmed.value.err);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return undefined;
+      }
+    } catch(error) {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.ConfirmTransaction,
+        currentOperation: TransactionStatus.ConfirmTransactionFailure
+      });
+      return undefined;
+    }
+  },[
+    connection, 
+    setTransactionStatus
+  ]);
+
+  const onTransactionStart = useCallback(async () => {
+
+    consoleOut("Starting swap...");
     setTransactionCancelled(false);
     setIsBusy(true);
-
-    const createTx = async (): Promise<boolean> => {
-      if (wallet) {
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction,
-        });
-
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (fromMintTokenBalance < getComputedFees(swapFees)) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
-          });
-          return false;
-        }
-
-        return await getSwap()
-          .then((value) => {
-            console.log("SWAP returned transaction:", value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transaction = value;
-            return true;
-          })
-          .catch((error) => {
-            console.log("SWAP transaction init error:", error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            return false;
-          });
-      }
-      return false;
-    };
-
-    const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        console.log("Signing transaction...");
-        return await swapClient.program.provider.wallet
-          .signTransaction(transaction)
-          .then((signed) => {
-            console.log("signTransaction returned a signed transaction:", signed);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransaction,
-            });
-            signedTransaction = signed;
-            return true;
-          })
-          .catch(() => {
-            console.log("Signing transaction failed!");
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure,
-            });
-            return false;
-          });
-      } else {
-        console.log("Cannot sign transaction! Wallet not found!");
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.SignTransactionFailure,
-        });
-        return false;
-      }
-    };
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        const serializedTx = signedTransaction.serialize();
-        console.log('tx serialized => ', encode(serializedTx));
-        return await swapClient.program.provider.connection
-          .sendRawTransaction(serializedTx)
-          .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.SendTransactionSuccess
-            });
-            signature = sig;
-            return true;
-          })
-          .catch(() => {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            return false;
-          });
-      } else {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
-        });
-        return false;
-      }
-    }
-
-    const confirmTx = async (): Promise<boolean> => {
-      return await swapClient.program.provider.connection
-        .confirmTransaction(signature, 'confirmed')
-        .then(result => {
-          console.log('confirmTransaction result:', result);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return false;
-        });
-    }
 
     if (wallet) {
 
       showTransactionModal();
       const swapTxs = await createTx();
       console.log("initialized:", swapTxs);
-      if (swapTxs && !transactionCancelled) {
-        const sign = await signTx();
-        console.log("signed:", sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          console.log("sent:", sent);
-          if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            console.log("confirmed:", confirmed);
-            if (confirmed) {
-              // Save signature to the state
-              setIsBusy(false);
-            } else {
-              setIsBusy(false);
-            }
-          } else {
-            setIsBusy(false);
-          }
+
+      if (!swapTxs || transactionCancelled) {
+        setIsBusy(false);
+      } else {
+        const signedTx = await signTx(swapTxs);
+        console.log("signed:", signedTx);
+
+        if (!signedTx || transactionCancelled) {
+          setIsBusy(false);
         } else {
+          const signature = await sendTx(signedTx);
+
+          if (!signature || transactionCancelled) {
+            setIsBusy(false);
+            return;
+          }
+
+          const confirmed = await confirmTx(signature);
+          
+          if (!confirmed) {
+            setIsBusy(false);
+            return;
+          }
+
+          console.log("confirmed:", signature); // put this in a link in the UI
+          // Save signature to the state
+          setFromAmount('');
+          updateFromTokenBalance(fromMint as PublicKey);
+          updateToTokenBalance(toMint as PublicKey);
           setIsBusy(false);
         }
-      } else {
-        setIsBusy(false);
-      }
+      }      
     }
-  };
+    
+  }, [
+    confirmTx, 
+    createTx, 
+    sendTx, 
+    showTransactionModal, 
+    signTx, 
+    updateFromTokenBalance,
+    updateToTokenBalance,
+    setFromAmount,
+    transactionCancelled, 
+    wallet,
+    fromMint,
+    toMint
+  ]);
 
-  const infoRow = (caption: string, value: string, separator = '≈') => {
+  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
     return (
       <Row>
         <Col span={10} className="text-right">
@@ -854,11 +1198,11 @@ export const SwapUi = () => {
   };
 
   return (
-    <Spin spinning={isBusy || fetchingFromTokenBalance || fetchingToTokenBalance}>
+    <Spin spinning={isBusy || (isUpdatingPools && isUpdatingMarkets && !isFlipping)}>
       <div className="swap-wrapper">
         {/* Source token / amount */}
         <CoinInput
-          token={tokenMap.get(fromMint.toBase58()) as TokenInfo}
+          token={fromMint ? (tokenMap.get(fromMint.toBase58()) as TokenInfo) : undefined}
           tokenBalance={fromMintTokenBalance}
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
@@ -882,10 +1226,11 @@ export const SwapUi = () => {
 
         {/* Destination token / amount */}
         <CoinInput
-          token={tokenMap.get(toMint.toBase58()) as TokenInfo}
+          token={toMint && tokenMap.get(toMint.toBase58()) as TokenInfo}
           tokenBalance={toMintTokenBalance}
           tokenAmount={toAmount}
           readonly={true}
+          onInputChange={() => {}}
           onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
           onSelectToken={() => {
             setSubjectTokenSelection("destination");
@@ -921,48 +1266,45 @@ export const SwapUi = () => {
 
         {/* Info */}
         {
-          fair ? (
+          fromMint && toMint ? (
           <div className="p-2 mb-2">
-            {fair &&
-            infoRow(
-                (fromMarket ? `1 ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}` : "--"),
-                (
-                  `${formatAmount(
-                    1 / fair,
-                    (tokenMap.get(toMint.toBase58())?.decimals || 9)
-                  )} ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
-                ),
-                '≈'
-              )
+            { 
+              isWrap
+                ? infoRow(
+                  `1 ${tokenMap.get(fromMint.toBase58())?.symbol}`,
+                  `1 ${tokenMap.get(toMint.toBase58())?.symbol}`,
+                  '=',
+                  true
+                )
+                : (
+                  outToPrice &&
+                  infoRow(
+                    `1 ${tokenMap.get(fromMint.toBase58())?.symbol}`,
+                    `${outToPrice} ${tokenMap.get(toMint.toBase58())?.symbol}`,
+                    '≈',
+                    true
+                  )
+                )
             }
-            {/* {fair &&
-            infoRow(
-                (fromMarket ? `1 ${tokenMap.get(toMint.toBase58())?.symbol || "USDC"}` : "--"),
-                (
-                  `${formatAmount(
-                    fair,
-                    (tokenMap.get(fromMint.toBase58())?.decimals || 9)
-                  )} ${tokenMap.get(fromMint.toBase58())?.symbol || "SOL"}`
-                ),
-                '≈',
-                true
-              )
-            } */}
-            {isSwapAmountValid() &&
+            {
+              isSwapAmountValid() &&
               infoRow(
                 t("transactions.transaction-info.transaction-fee"),
                 formatAmount(
-                  getFeeAmount(fromAmount),
-                  (tokenMap.get(fromMint.toBase58())?.decimals || 6)
+                  getFeeAmount(fromAmount), 
+                  tokenMap.get(fromMint.toBase58())?.decimals
+
                 ) + ` ${tokenMap.get(fromMint.toBase58())?.symbol || "USDC"}`
               )
             }
-            {isSwapAmountValid() &&
+            {
+              isSwapAmountValid() &&
               infoRow(
                 t("transactions.transaction-info.recipient-receives"),
                 formatAmount(
                   parseFloat(toSwapAmount),
-                  (tokenMap.get(toMint.toBase58())?.decimals || 9)
+                  tokenMap.get(toMint.toBase58())?.decimals
+
                 ) + ` ${tokenMap.get(toMint.toBase58())?.symbol || "SOL"}`
               )
             }
@@ -1006,8 +1348,8 @@ export const SwapUi = () => {
                 </h4>
                 <p className="operation">
                   {t("transactions.status.tx-swap-operation", {
-                    fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint.toBase58()),
-                    toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint.toBase58())
+                    fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint!.toBase58()),
+                    toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint!.toBase58())
                     })
                   }
                 </p>

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React from 'react';
+import { useEffect, useState } from "react";
+=======
+>>>>>>> feature/amm-aggregator
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
 // import { TokenListContextProvider } from "../../contexts/tokenList";
