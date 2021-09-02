@@ -85,7 +85,7 @@ export const NATIVE_SOL: TokenInfo = {
 
 export const TOKENS: Tokens = {
   WSOL: {
-    symbol: 'WSOL',
+    symbol: 'wSOL',
     name: 'Wrapped SOL',
     address: WRAPPED_SOL_MINT.toBase58(),
     decimals: 9,

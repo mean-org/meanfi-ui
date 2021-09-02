@@ -161,7 +161,7 @@ export function forecastBuy(market: any, orderBook: any, pcIn: any, slippage: nu
     }
   }
 
-  coinOut = coinOut * 0.993;
+  // coinOut = coinOut * 0.993;
   const priceImpact = ((worstPrice - bestPrice) / bestPrice) * 100;
   worstPrice = (worstPrice * (100 + slippage)) / 100;
   const amountOutWithSlippage = (coinOut * (100 - slippage)) / 100;
@@ -204,7 +204,7 @@ export function forecastSell(market: any, orderBook: any, coinIn: any, slippage:
     }
   }
 
-  pcOut = pcOut * 0.993;
+  // pcOut = pcOut * 0.993;
   const priceImpact = ((bestPrice - worstPrice) / bestPrice) * 100;
   worstPrice = (worstPrice * (100 - slippage)) / 100;
   const amountOutWithSlippage = (pcOut * (100 - slippage)) / 100;

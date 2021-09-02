@@ -1,7 +1,7 @@
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useConnection } from "../../contexts/connection";
-import { formatAmount, getComputedFees, getOwnedAssociatedTokenAccounts, getTokenAmountAndSymbolByTokenAddress, isValidNumber, parseTokenAccountData } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
@@ -9,10 +9,10 @@ import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees, getTokenAccount } from "money-streaming/lib/utils";
+import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
-import { AccountInfo, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { encode } from "money-streaming/lib/utils";
 import { TransactionStatus } from "../../models/enums";
@@ -22,7 +22,7 @@ import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, 
 import "./style.less";
 import { LiquidityPoolInfo } from "../../utils/pools";
 import { NATIVE_SOL, TOKENS } from "../../utils/tokens";
-import { cloneDeep, get } from "lodash-es";
+import { cloneDeep } from "lodash-es";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { Market } from "../../models/market";
 import BN from "bn.js";
@@ -32,6 +32,7 @@ import { TokenAmount } from "../../utils/safe-math";
 import { getMarkets } from "../../utils/markets";
 import { getMultipleAccounts } from "../../utils/accounts";
 import { Orderbook } from "@project-serum/serum";
+import * as base64 from "base64-js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -53,8 +54,6 @@ export const SwapUi = () => {
   const [smallAmount, setSmallAmount] = useState(0);
   const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
   const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
-  const [fetchingFromTokenBalance, setFetchingFromTokenBalance] = useState(false);
-  const [fetchingToTokenBalance, setFetchingToTokenBalance] = useState(false);
   const [isUpdatingPools, setIsUpdatingPools] = useState(false);
   const [isUpdatingMarkets, setIsUpdatingMarkets] = useState(false);
   const [toSwapAmount, setToSwapAmount] = useState("");
@@ -65,7 +64,6 @@ export const SwapUi = () => {
   // Work with our swap From/To subjects
   const [fromMint, setFromMint] = useState<PublicKey | undefined>(new PublicKey(lastSwapFromMint));
   const [toMint, setToMint] = useState<PublicKey | undefined>(); //useState(new PublicKey(lastSwapToMint));
-  const [userTokenAccounts, setUserTokenAccounts] = useState<any>([]);
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
   const [toAmount, setToAmount] = useState("");
@@ -74,184 +72,27 @@ export const SwapUi = () => {
   const [outToPrice, setOutToPrice] = useState("");
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [market, setMarket] = useState<Market>();
-  const [pools, setPools] = useState<LiquidityPoolInfo[]>()
-  const [markets, setMarkets] = useState<any>();
-  const [marketAddress, setMarketAddress] = useState("");
-  const [userNeedAmmIdOrMarket, setUserNeedAmmIdOrMarket] = useState('');
-  const [ammId, setAmmId] = useState("");
+  const [orderbooks, setOrderbooks]= useState<any>([]);
   const [pool, setPool] = useState<LiquidityPoolInfo>();
-  const [ammIdSelectList, setAmmIdSelectList] = useState<LiquidityPoolInfo[]>([]);
-  const [lpMintAddress, setLpMintAddress] = useState('');
   const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map<string, TokenInfo>());
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   // Transaction execution modal
+  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
+  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
   const [swapRateFlipped, setSwapRateFlipped] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
-  const [asks, setAsks] = useState<any>();
-  const [bids, setBids] = useState<any>();
   // FEES
   const [swapFees, setSwapFees] = useState<TransactionFees>({
     blockchainFee: 0,
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
-
-  const updateOrderBooks = useCallback(async (
-    from: PublicKey | undefined, 
-    to: PublicKey | undefined,
-    market: Market
-  ) => {
-
-    if (!from || !to || !market || !market.bids || !market.asks) { 
-      setIsUpdatingPools(false);
-      setIsUpdatingMarkets(false);
-      return; 
-    }
-
-    const accounts = await getMultipleAccounts(
-      connection, 
-      [
-        market.bids, 
-        market.asks
-      ], 
-      connection.commitment
-    );
-
-    for (let info of accounts) {
-      if (info) {
-        const data = info.account.data;
-        const orderbook = Orderbook.decode(market, data);
-        const { isBids, slab } = orderbook;
-
-        if (isBids) {
-          setBids(slab);
-        } else {
-          setAsks(slab);
-        }
-      }        
-    }
-
-    setIsUpdatingPools(false);
-    setIsUpdatingMarkets(false);
-
-  }, [
-    connection,
-    setIsUpdatingMarkets
-  ]);
-
-  const updateMarkets = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
-
-    if (!from || !to) {
-      setIsUpdatingPools(false);
-      setIsUpdatingMarkets(false);
-      return;
-    }
-
-    const marketInfos = await getMarkets(connection);
-    console.log('marketInfos', marketInfos.map((m: any) => { 
-      return { 
-        from: m.baseMintAddress.toBase58(), 
-        to: m.quoteMintAddress.toBase58() 
-      }
-    }));
-    setMarkets(marketInfos);
-
-    if (!marketInfos) {
-      setIsUpdatingPools(false);
-      setIsUpdatingMarkets(false);
-      return;
-    }
-
-    for(let address in marketInfos) {
-      
-      let info = marketInfos[address];
-      let fromAddress = from.toBase58();
-      let toAddress = to.toBase58();
-
-      if (fromAddress === NATIVE_SOL_MINT.toBase58()) {
-        fromAddress = WRAPPED_SOL_MINT.toBase58();
-      }
-
-      if (toAddress === NATIVE_SOL_MINT.toBase58()) {
-        toAddress = WRAPPED_SOL_MINT.toBase58();
-      }
-
-      if (
-        (info.baseMint.toBase58() === fromAddress && info.quoteMint.toBase58() === toAddress) ||
-        (info.baseMint.toBase58() === toAddress && info.quoteMint.toBase58() === fromAddress)
-      ) {
-        setMarketAddress(address);
-
-        const marketInfo = await Market.load(
-          connection, 
-          new PublicKey(address),
-          { }, 
-          new PublicKey(SERUM_PROGRAM_ID_V3)
-        );
-
-        setMarket(marketInfo);
-
-        await updateOrderBooks(
-          new PublicKey(fromAddress),
-          new PublicKey(toAddress),
-          marketInfo
-        );
-
-        break;
-      }
-    }
-
-    setIsUpdatingPools(false);
-    setIsUpdatingMarkets(false);
-
-  },[
-    connection, 
-    updateOrderBooks
-  ]);
-
-  const updatePools = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
-
-    if (!from || !to) {
-      setIsUpdatingPools(false);
-      setIsUpdatingMarkets(false);
-      return;
-    }
-
-    const poolInfos = await getLiquidityPools(connection, from, to);
-    setPools(poolInfos);
-
-    const poolInfo = Object.values(poolInfos).filter((lp: any) => {
-      return (lp.coin.address === from.toBase58() && lp.pc.address === to.toBase58()) || 
-             (lp.pc.address === from.toBase58() && lp.coin.address === to.toBase58());
-        
-    })[0] as LiquidityPoolInfo;
-
-    if (poolInfo) {
-      setMarket(undefined);
-      setMarketAddress('');
-      setPool(poolInfo);
-      setAmmId(poolInfo ? poolInfo.ammId : '');
-      setIsUpdatingPools(false);
-      setIsUpdatingMarkets(false);
-    } else {
-      setPool(undefined);
-      setAmmId('');
-      updateMarkets(from, to);
-    }
-    
-  }, [
-    connection,
-    updateMarkets,
-    setIsUpdatingPools
-  ]);  
 
   // Get Tx fees
   useMemo(() => {
@@ -333,6 +174,246 @@ export const SwapUi = () => {
     tokenList
   ]);
 
+  // Updates the amounts from pool
+  useEffect(() => {
+
+    if (!fromMint || !toMint || !pool) { return; }
+
+    let outAmount = '';
+    let outWithSlippageAmount = '';
+    let price = '';
+
+    const amount = fromAmount ? fromAmount : '1';
+    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const { amountOut, amountOutWithSlippage } = getSwapOutAmount(
+      pool,
+      fromMint.toBase58(),
+      toMint.toBase58(),
+      amount,
+      slippage
+    );
+
+    if (!amountOut.isNullOrZero()) {
+      outAmount = fromAmount ? amountOut.fixed() : '';
+      outWithSlippageAmount = fromAmount ? amountOutWithSlippage.fixed() : '';
+      const outPrice = +new TokenAmount(
+        parseFloat(amountOut.fixed()) / parseFloat(amount),
+        fromDecimals,
+        false
+      ).fixed();
+      price = formatAmount(outPrice, toDecimals);
+    }
+
+    setOutToPrice(price);
+    setToAmount(outAmount);
+    setToSwapAmount(outWithSlippageAmount);
+    
+  }, [
+    fromMint,
+    toMint,
+    pool,
+    fromAmount, 
+    slippage, 
+    tokenMap
+  ]);
+
+  // Updates the amounts from serum markets
+  useEffect(() => {
+
+    if (!fromMint || !toMint || !market || orderbooks.length < 2) { 
+      return; 
+    }
+
+    let outAmount = '';
+    let outWithSlippageAmount = '';
+    let price = '';
+
+    const amount = fromAmount ? fromAmount : '1';
+    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
+    const bids = (orderbooks.filter((ob: any) => ob.isBids)[0]).slab;
+    const asks = (orderbooks.filter((ob: any) => !ob.isBids)[0]).slab;
+    console.log('orderbooks', orderbooks);
+    console.log('bids', bids);
+    console.log('asks', asks);
+    const { amountOut, amountOutWithSlippage } = getOutAmount(
+      market,
+      asks,
+      bids,
+      fromMint.toBase58(),
+      toMint.toBase58(),
+      amount,
+      slippage
+    );
+    
+    // console.log('slippage', slippage);
+    const out = new TokenAmount(amountOut, toDecimals, false);
+    const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
+
+    if (!out.isNullOrZero()) {
+      if (!toSwapAmount || parseFloat(toSwapAmount) <= parseFloat(outWithSlippage.fixed())) {
+        outAmount = fromAmount ? out.fixed() : '';
+        outWithSlippageAmount = fromAmount ? outWithSlippage.fixed() : '';
+        const outPrice = +new TokenAmount(
+          parseFloat(out.fixed()) / parseFloat(amount),
+          toDecimals,
+          false
+        ).fixed();
+        price = formatAmount(outPrice, toDecimals);
+      }
+    }
+
+    setOutToPrice(price);
+    setToAmount(outAmount);
+    setToSwapAmount(outWithSlippageAmount);
+
+  }, [
+    fromMint,
+    toMint,
+    market,
+    orderbooks,
+    fromAmount, 
+    slippage, 
+    toSwapAmount, 
+    tokenMap
+  ]);
+
+  // Updates orderbooks (bids/asks)
+  const updateOrderBooks = useCallback(async (
+    from: PublicKey | undefined, 
+    to: PublicKey | undefined,
+    market: Market
+  ) => {
+
+    if (!from || !to || !market || !market.bids || !market.asks) { 
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return; 
+    }
+
+    const accounts = await getMultipleAccounts(
+      connection, 
+      [
+        market.bids, 
+        market.asks
+      ], 
+      connection.commitment
+    );
+
+    const orderBooks = [];
+
+    for (let info of accounts) {
+      if (info) {
+        const data = info.account.data;
+        const orderbook = Orderbook.decode(market, data);
+        orderBooks.push(orderbook);
+      }        
+    }
+
+    setOrderbooks(orderBooks);
+    setIsUpdatingPools(false);
+    setIsUpdatingMarkets(false);
+
+  }, [
+    connection,
+    setIsUpdatingMarkets
+  ]);
+
+  // Updates market
+  const updateMarkets = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
+
+    if (!from || !to) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    const marketInfos = await getMarkets(connection);
+
+    if (!marketInfos) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    for(let address in marketInfos) {
+      
+      let info = marketInfos[address];
+      let fromAddress = from.toBase58();
+      let toAddress = to.toBase58();
+
+      if (fromAddress === NATIVE_SOL_MINT.toBase58()) {
+        fromAddress = WRAPPED_SOL_MINT.toBase58();
+      }
+
+      if (toAddress === NATIVE_SOL_MINT.toBase58()) {
+        toAddress = WRAPPED_SOL_MINT.toBase58();
+      }
+
+      if (
+        (info.baseMint.toBase58() === fromAddress && info.quoteMint.toBase58() === toAddress) ||
+        (info.baseMint.toBase58() === toAddress && info.quoteMint.toBase58() === fromAddress)
+      ) {
+
+        const marketInfo = await Market.load(
+          connection, 
+          new PublicKey(address),
+          { }, 
+          new PublicKey(SERUM_PROGRAM_ID_V3)
+        );
+
+        setMarket(marketInfo);
+
+        await updateOrderBooks(
+          new PublicKey(fromAddress),
+          new PublicKey(toAddress),
+          marketInfo
+        );
+
+        break;
+      }
+    }
+
+    setIsUpdatingPools(false);
+    setIsUpdatingMarkets(false);
+
+  },[
+    connection, 
+    updateOrderBooks
+  ]);
+
+  // Updates liquidity pool info
+  const updatePools = useCallback(async (from: PublicKey | undefined, to: PublicKey | undefined) => {
+
+    if (!from || !to) {
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+      return;
+    }
+
+    const poolInfos = await getLiquidityPools(connection, from, to);
+    const poolInfo = Object.values(poolInfos).filter((lp: any) => {
+      return (lp.coin.address === from.toBase58() && lp.pc.address === to.toBase58()) || 
+             (lp.pc.address === from.toBase58() && lp.coin.address === to.toBase58());
+        
+    })[0] as LiquidityPoolInfo;
+
+    if (poolInfo) {
+      setMarket(undefined);
+      setPool(poolInfo);
+      setIsUpdatingPools(false);
+      setIsUpdatingMarkets(false);
+    } else {
+      setPool(undefined);
+      updateMarkets(from, to);
+    }
+    
+  }, [
+    connection,
+    updateMarkets,
+    setIsUpdatingPools
+  ]);  
+
   // Automatically update fromMint token balance once
   const updateFromTokenBalance = useCallback((from: PublicKey) => {
     
@@ -410,130 +491,6 @@ export const SwapUi = () => {
     publicKey
   ]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const updateAmmAmounts = (
-    fromMint: PublicKey, 
-    toMint: PublicKey, 
-    pool: LiquidityPoolInfo
-
-  ) => {
-
-    let outAmount = '';
-    let outWithSlippageAmount = '';
-    let price = '';
-
-    const amount = fromAmount ? fromAmount : '1';
-    const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
-    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-    const { amountOut, amountOutWithSlippage } = getSwapOutAmount(
-      pool,
-      fromMint.toBase58(),
-      toMint.toBase58(),
-      amount,
-      slippage
-    );
-
-    if (!amountOut.isNullOrZero()) {
-      outAmount = fromAmount ? amountOut.fixed() : '';
-      outWithSlippageAmount = fromAmount ? amountOutWithSlippage.fixed() : '';
-      const outPrice = +new TokenAmount(
-        parseFloat(amountOut.fixed()) / parseFloat(amount),
-        fromDecimals,
-        false
-      ).fixed();
-      price = formatAmount(outPrice, toDecimals);
-    }
-
-    return {
-      price,
-      outAmount,
-      outWithSlippageAmount
-    };
-  }
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const updateSerumAmounts = (
-    fromMint: PublicKey, 
-    toMint: PublicKey, 
-    market: Market,
-    bids: any,
-    asks: any
-
-  ) => {
-
-    let outAmount = '';
-    let outWithSlippageAmount = '';
-    let price = '';
-
-    const amount = fromAmount ? fromAmount : '1';
-    const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-    const { amountOut, amountOutWithSlippage } = getOutAmount(
-      market,
-      asks,
-      bids,
-      fromMint.toBase58(),
-      toMint.toBase58(),
-      amount,
-      slippage
-    );
-    
-    // console.log('slippage', slippage);
-    const out = new TokenAmount(amountOut, toDecimals, false);
-    const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
-
-    if (!out.isNullOrZero()) {
-      if (!toSwapAmount || parseFloat(toSwapAmount) <= parseFloat(outWithSlippage.fixed())) {
-        outAmount = fromAmount ? out.fixed() : '';
-        outWithSlippageAmount = fromAmount ? outWithSlippage.fixed() : '';
-        const outPrice = +new TokenAmount(
-          parseFloat(out.fixed()) / parseFloat(amount),
-          toDecimals,
-          false
-        ).fixed();
-        price = formatAmount(outPrice, toDecimals);
-      }
-    }
-
-    return {
-      price,
-      outAmount,
-      outWithSlippageAmount
-    };
-  }
-
-  // Updates the amounts
-  useEffect(() => {
-    
-    if (!fromMint || !toMint) { return; }
-
-    let values = { price: '', outAmount: '', outWithSlippageAmount: '' };
-
-    if (pool) {
-      console.log('pool', pool);
-      values = updateAmmAmounts(fromMint, toMint, pool);
-    } else if(market && bids && asks) {
-      console.log('market', market);
-      values = updateSerumAmounts(fromMint, toMint, market, asks, bids);
-    }
-
-    setOutToPrice(values.price);
-    setToAmount(values.outAmount);
-    setToSwapAmount(values.outWithSlippageAmount);
-
-    return () => { }
-
-  },[
-    asks, 
-    bids, 
-    // fromAmount, 
-    fromMint, 
-    market, 
-    pool, 
-    toMint, 
-    updateAmmAmounts, 
-    updateSerumAmounts
-  ]);
-
   // Token selection modal
   const showTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(true);
@@ -562,14 +519,13 @@ export const SwapUi = () => {
     if (!previousWalletConnectState && connected) {
       consoleOut('Refreshing balances...', '', 'blue');
       setFromMint(new PublicKey(lastSwapFromMint));
-      // setToMint(new PublicKey(lastSwapToMint));
       setPreviousWalletConnectState(true);
       updateFromTokenBalance(fromMint as PublicKey);
+      updateToTokenBalance(toMint as PublicKey);
 
     } else if (previousWalletConnectState && !connected) {
       consoleOut('User is disconnecting...', '', 'blue');
       setLastSwapFromMint(fromMint!.toString());
-      // setLastSwapToMint(toMint!.toString());
       setPreviousWalletConnectState(false);
     }
 
@@ -582,11 +538,10 @@ export const SwapUi = () => {
     fromMint, 
     toMint, 
     lastSwapFromMint, 
-    // lastSwapToMint, 
     setLastSwapFromMint, 
-    // setLastSwapToMint,
     setPreviousWalletConnectState,
-    updateFromTokenBalance
+    updateFromTokenBalance,
+    updateToTokenBalance
   ]);
 
   // Event handling
@@ -601,24 +556,12 @@ export const SwapUi = () => {
     }
   };
 
-  // const handleSwapToAmountChange = (e: any) => {
-  //   const newValue = e.target.value;
-  //   if (newValue === null || newValue === undefined || newValue === "") {
-  //     setToAmount("");
-  //   } else if (isValidNumber(e.target.value)) {
-  //     // const toDecimals = tokenMap.get(fromMint!.toBase58())?.decimals || 6;
-  //     // const formattedAmount = formatAmount(parseFloat(newValue), toDecimals);
-  //     // setToAmount(formattedAmount);
-  //   }
-  // };
-
   const onTokenSearchInputChange = (e: any) => {
     const newValue = e.target.value as string;
     setTokenFilter(newValue.trim());
   }
 
   // Validation
-
   const getFeeAmount = useCallback((amount: any): number => {
     const feeAmount = getTxFeeAmount(swapFees, parseFloat(amount));
     const fromDecimals = tokenMap.get(fromMint!.toBase58())?.decimals || 6;
@@ -772,20 +715,20 @@ export const SwapUi = () => {
 
     } else {
 
-      const result_1 = await Promise.all([
-        Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMint,
-          wallet.publicKey
-        ),
-        Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          toMint,
-          wallet.publicKey
-        )
-      ]);
+      const fromAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        wallet.publicKey
+      );
+
+      const toAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        toMint,
+        wallet.publicKey
+      );
+
       if (pool) {
 
         return swap(
@@ -794,13 +737,16 @@ export const SwapUi = () => {
           pool,
           fromMint.toBase58(),
           toMint.toBase58(),
-          result_1[0],
-          result_1[1],
+          fromAccount,
+          toAccount,
           fromAmount,
           toSwapAmount
         );
 
       } else {
+
+        const bids = (orderbooks.filter((ob: any) => ob.isBids)[0]).slab;
+        const asks = (orderbooks.filter((ob: any) => !ob.isBids)[0]).slab;
 
         return place(
           connection,
@@ -810,8 +756,8 @@ export const SwapUi = () => {
           bids,
           fromMint.toBase58(),
           toMint.toBase58(),
-          result_1[0],
-          result_1[1],
+          fromAccount,
+          toAccount,
           fromAmount,
           slippage
         );
@@ -819,17 +765,16 @@ export const SwapUi = () => {
     }
 
   },[
-    asks, 
-    bids, 
-    connection, 
+    connection,
+    fromMint,
+    toMint,
     fromAmount, 
-    fromMint, 
     isUnwrap, 
     isWrap, 
     market, 
+    orderbooks,
     pool, 
     slippage, 
-    toMint, 
     toSwapAmount, 
     wallet
   ]);
@@ -847,7 +792,7 @@ export const SwapUi = () => {
             setIsUpdatingMarkets(true);
             setTimeout(() => {
               updateFromTokenBalance(newMint);
-              updatePools(newMint, toMint);     
+              updatePools(newMint, toMint);
             });
             onCloseTokenSelector();
           };
@@ -1002,8 +947,6 @@ export const SwapUi = () => {
       setFromAmount("");
       setToAmount("");
       hideTransactionModal();
-      // refreshTokenBalance(fromMint);
-      // refreshTokenBalance(toMint);
     }
   };
 
@@ -1105,7 +1048,8 @@ export const SwapUi = () => {
     
     try {
       const serializedTx = currentTx.serialize();
-      console.log('tx serialized => ', encode(serializedTx));
+      const encodedTx = base64.fromByteArray(serializedTx);
+      console.log('tx serialized => ', encodedTx);
       const sig = await connection.sendRawTransaction(serializedTx);
 
       if (sig) {
@@ -1114,7 +1058,6 @@ export const SwapUi = () => {
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.SendTransactionSuccess
         });
-        console.log("sent:", sig);
         return sig;
       }
 
@@ -1137,24 +1080,31 @@ export const SwapUi = () => {
   const confirmTx = useCallback(async (signature: string) => {
 
     try {
-      const confirmed = await connection.confirmTransaction(signature, 'processed');
 
-      if (confirmed) {
-        console.log('confirmTransaction result:', confirmed);
+      const confirmed = await connection.confirmTransaction(signature, 'confirmed');
+
+      if (confirmed && confirmed.value && !confirmed.value.err) {
+        console.log('confirmTransaction result:', confirmed.value);
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
           currentOperation: TransactionStatus.TransactionFinished
         });
-        return true;
-      }
-      return false;
+        return confirmed.value;
 
+      } else if (confirmed && confirmed.value && confirmed.value.err) {
+        console.log('Error: ', confirmed.value.err);
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return undefined;
+      }
     } catch(error) {
       setTransactionStatus({
         lastOperation: TransactionStatus.ConfirmTransaction,
         currentOperation: TransactionStatus.ConfirmTransactionFailure
       });
-      return false;
+      return undefined;
     }
   },[
     connection, 
@@ -1163,10 +1113,7 @@ export const SwapUi = () => {
 
   const onTransactionStart = useCallback(async () => {
 
-    consoleOut("Starting swap...", "", "orange");
-    // let transaction = new Transaction();
-    // let signedTransaction = new Transaction();
-    // let signature: string;
+    consoleOut("Starting swap...");
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -1192,15 +1139,19 @@ export const SwapUi = () => {
             return;
           }
 
-          const confirmed = await confirmTx(signature as string)
-          console.log("confirmed:", confirmed);
-          setTimeout(() => {
-            // Save signature to the state
-            updateFromTokenBalance(fromMint as PublicKey);
-            updateToTokenBalance(toMint as PublicKey);
+          const confirmed = await confirmTx(signature);
+          
+          if (!confirmed) {
             setIsBusy(false);
+            return;
+          }
 
-          }, 2000);
+          console.log("confirmed:", signature); // put this in a link in the UI
+          // Save signature to the state
+          setFromAmount('');
+          updateFromTokenBalance(fromMint as PublicKey);
+          updateToTokenBalance(toMint as PublicKey);
+          setIsBusy(false);
         }
       }      
     }
@@ -1213,6 +1164,7 @@ export const SwapUi = () => {
     signTx, 
     updateFromTokenBalance,
     updateToTokenBalance,
+    setFromAmount,
     transactionCancelled, 
     wallet,
     fromMint,
