@@ -105,3 +105,4 @@ build
 
 # TernJS port file
 .tern-port
+.vscode/launch.json
