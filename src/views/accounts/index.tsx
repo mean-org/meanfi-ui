@@ -1,23 +1,49 @@
 import React, { useContext, useReducer } from 'react';
 import { CheckCircleOutlined, SyncOutlined } from '@ant-design/icons';
-import { ConfirmedSignatureInfo, Connection } from '@solana/web3.js';
+import { ConfirmedSignatureInfo, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useCallback, useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
-import { useConnectionConfig } from '../../contexts/connection';
+import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import { TransactionWithSignature } from '../../utils/transactions';
 import {
   ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction,
-  ResetStatsAction, MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats
+  ResetStatsAction, MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
+import { getMultipleAccounts } from '../../contexts/accounts';
+import { TokenListProvider } from '@solana/spl-token-registry';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { useUserAccounts } from '../../hooks';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
+  const { userAccounts } = useUserAccounts();
   const { previousWalletConnectState } = useContext(AppStateContext);
+
+  const chain = ENDPOINTS[0];
+  const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
+  const [userTokens, setUserTokens] = useState<UserTokenAccount[]>();
+
+  // Load Solana SPL Token List
+  useEffect(() => {
+    (async () => {
+      let list: UserTokenAccount[];
+      const res = await new TokenListProvider().resolve();
+      list = res
+        .filterByChainId(chain.chainID)
+        .excludeByTag("nft")
+        .getList();
+      setTokens(list);
+    })();
+
+    return () => { }
+
+  }, []);
 
   // Flow control
   const [shouldGetTxDetails, setShouldGetTxDetails] = useState(false);
@@ -94,20 +120,75 @@ export const AccountsView = () => {
     publicKey
   ]);
 
-  // First load
+  const getTokenBalance = useCallback(async (tokenPk: PublicKey) => {
+    if (tokenPk.equals(NATIVE_SOL_MINT)) {
+      const info = await customConnection?.getAccountInfo(publicKey as PublicKey);
+      const balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
+      return balance;
+    } else {
+      const associatedTokenAddress = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        tokenPk,
+        publicKey as PublicKey
+      );
+      if (associatedTokenAddress) {
+        const info = await customConnection?.getTokenAccountBalance(associatedTokenAddress);
+        const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
+        return balance;
+      } else {
+        return 0;
+      }
+    }
+  }, [
+    customConnection, 
+    publicKey
+  ]);
+
+  const loadUserTokens = async () => {
+    if (customConnection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
+      console.log('userAccounts:', userAccounts);
+      // Filter tokens based on user available Token Accounts
+      const myTokens = new Array<UserTokenAccount>();
+      for (let i = 0; i < userAccounts.length; i++) {
+        const item = userAccounts[i];
+        const token = tokens.find(i => i.address === item.info.mint.toBase58());
+        console.log('Found token:', token);
+        if (token) {
+          // token.balance = await getTokenBalance(item.pubkey);
+          myTokens.push(token);
+        }
+      }
+      setUserTokens(myTokens || []);
+      console.log('myTokens:', myTokens);
+    }
+  }
+
+  // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
     if (!customConnection) {
       setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
     }
-
-    // auto execute if wallet already connected
-    if (customConnection && publicKey) {
-      setAbortSignalReceived(false);
-      loadTransactionSignatures();
-    }
   }, [
     connection.endpoint,
     customConnection
+  ]);
+
+  // Auto execute if wallet already connected
+  useEffect(() => {
+
+    if (customConnection && publicKey) {
+      if (!userTokens) {
+        console.log('Calling loadUserTokens() on startup...');
+        loadUserTokens();
+      }
+      // setAbortSignalReceived(false);
+      // loadTransactionSignatures();
+    }
+  }, [
+    connection.endpoint,
+    customConnection,
+    userTokens
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -116,18 +197,22 @@ export const AccountsView = () => {
       if (!previousWalletConnectState && connected) {
         console.log('Fetching account stats...');
         if (customConnection) {
-          setAbortSignalReceived(false);
-          loadTransactionSignatures();
+          console.log('Calling loadUserTokens() on wallet connect...');
+          loadUserTokens();
+          // setAbortSignalReceived(false);
+          // loadTransactionSignatures();
         }
       } else if (previousWalletConnectState && !connected) {
         console.log('Deactivating account stats...');
         setAbortSignalReceived(true);
         setShouldGetTxDetails(false);
         setLoadingTransactions(false);
+        setUserTokens([]);
       }
     }
   }, [
     connected,
+    userTokens,
     customConnection,
     previousWalletConnectState
   ]);
