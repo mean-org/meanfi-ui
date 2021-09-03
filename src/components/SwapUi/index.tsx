@@ -414,7 +414,7 @@ export const SwapUi = () => {
     setIsUpdatingPools
   ]);  
 
-  // Automatically update fromMint token balance once
+  // Update fromMint token balance once
   const updateFromTokenBalance = useCallback((from: PublicKey) => {
     
     if (isFlipping || !publicKey || !from) {
@@ -453,7 +453,7 @@ export const SwapUi = () => {
     publicKey
   ]);
 
-  // Automatically update toMint token balance once
+  // Update toMint token balance once
   const updateToTokenBalance = useCallback((to: PublicKey) => {
     
     if (isFlipping || !publicKey || !to) {
@@ -490,6 +490,21 @@ export const SwapUi = () => {
     connection, 
     publicKey
   ]);
+
+  // Automatically update balances on entering feature
+  // Do not remove please
+  useEffect(() => {
+    if (publicKey) {
+      if (fromMint) {
+        console.log('Updating [from] balance...');
+        updateFromTokenBalance(fromMint as PublicKey);
+      }
+      if (toMint) {
+        console.log('Updating [to] balance...');
+        updateToTokenBalance(toMint as PublicKey);
+      }
+    }
+  }, []);
 
   // Token selection modal
   const showTokenSelector = useCallback(() => {
