@@ -68,7 +68,7 @@
 		}
 	},
 	"deposits": {
-		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des jetons SOL et SPL dans Solana.",
+		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
 		"ftx-cta-label-enabled": "Dépôt de FTX",
 		"heading": "Déposez depuis votre carte, votre compte bancaire ou depuis une autre blockchain directement dans votre portefeuille Solana.\nSélectionnez l'une des options suivantes",
 		"modal-title": "Options de dépôt",
@@ -196,12 +196,12 @@
 		"input-label-destination": "Échanger pour (estimé)",
 		"input-label-source": "Échanger depuis",
 		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
-		"token-select-destination": "Sélectionnez un jeton",
-		"token-select-source": "Sélectionnez un jeton"
+		"token-select-destination": "Sélectionnez un token",
+		"token-select-source": "Sélectionnez un token"
 	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un token",
-		"search-input-placeholder": "Rechercher un jeton par nom, symbole ou adresse"
+		"search-input-placeholder": "Rechercher un token par nom, symbole ou adresse"
 	},
 	"transactions": {
 		"memo": {
