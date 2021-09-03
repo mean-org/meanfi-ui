@@ -12,32 +12,79 @@ import {
   ResetStatsAction, MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
-import { getMultipleAccounts } from '../../contexts/accounts';
 import { TokenListProvider } from '@solana/spl-token-registry';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useUserAccounts } from '../../hooks';
+import { useTranslation } from 'react-i18next';
+import { environment } from '../../environments/environment';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { Identicon } from '../../components/Identicon';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import _ from 'lodash';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { useNativeAccount } from '../../contexts/accounts';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
+  const chain = ENDPOINTS.find((end) => end.endpoint === connection.endpoint) || ENDPOINTS[0];
   const { userAccounts } = useUserAccounts();
-  const { previousWalletConnectState } = useContext(AppStateContext);
+  const { account } = useNativeAccount();
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
 
-  const chain = ENDPOINTS[0];
+  // Setup custom connection with 'confirmed' commitment
+  useEffect(() => {
+    if (!customConnection) {
+      setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
+    }
+  }, [
+    connection.endpoint,
+    customConnection
+  ]);
+
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    previousBalance
+  ]);
+
+  const {
+    detailsPanelOpen,
+    previousWalletConnectState,
+    setDtailsPanelOpen
+  } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
+
   const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
   const [userTokens, setUserTokens] = useState<UserTokenAccount[]>();
 
   // Load Solana SPL Token List
   useEffect(() => {
     (async () => {
-      let list: UserTokenAccount[];
-      const res = await new TokenListProvider().resolve();
-      list = res
-        .filterByChainId(chain.chainID)
-        .excludeByTag("nft")
-        .getList();
+      let list = new Array<UserTokenAccount>();
+      if (environment === 'production') {
+        const res = await new TokenListProvider().resolve();
+        list = res
+          .filterByChainId(chain.chainID)
+          .excludeByTag("nft")
+          .getList();
+      } else {
+        list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
+      }
       setTokens(list);
     })();
 
@@ -49,6 +96,7 @@ export const AccountsView = () => {
   const [shouldGetTxDetails, setShouldGetTxDetails] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [abortSignalReceived, setAbortSignalReceived] = useState(false);
+  const [shouldLoadBalances, setShouldLoadBalances] = useState(false);
 
   // Data
   const [signatures, setSignatures] = useState<Array<ConfirmedSignatureInfo>>([]);
@@ -145,40 +193,75 @@ export const AccountsView = () => {
     publicKey
   ]);
 
-  const loadUserTokens = async () => {
-    if (customConnection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
+  const loadUserTokens = () => {
+    console.log('tokens?', tokens && tokens.length > 0 ? true : false);
+    console.log('publicKey?', publicKey ? true : false);
+    console.log('connection?', connection ? true : false);
+    console.log('userAccounts?', userAccounts && userAccounts.length > 0 ? true : false);
+    if (connection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
+      console.log('tokens:', tokens);
       console.log('userAccounts:', userAccounts);
-      // Filter tokens based on user available Token Accounts
       const myTokens = new Array<UserTokenAccount>();
+      myTokens.push(NATIVE_SOL as UserTokenAccount);
       for (let i = 0; i < userAccounts.length; i++) {
         const item = userAccounts[i];
-        const token = tokens.find(i => i.address === item.info.mint.toBase58());
-        console.log('Found token:', token);
-        if (token) {
-          // token.balance = await getTokenBalance(item.pubkey);
+        let token: UserTokenAccount | undefined;
+        const mintAddress = item.info.mint.toBase58();
+        console.log(`Account ${i + 1} of ${userAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
+        token = tokens.find(i => i.address === mintAddress);
+        if (!token) {
+          token = {
+            chainId: chain.chainID,
+            address: mintAddress,
+            symbol: '-',
+            name: 'Unknown token',
+            decimals: 6
+          };
+        }
+
+        // Add the token only if not already exists
+        if (!myTokens.some(t => t.address === token?.address)) {
           myTokens.push(token);
         }
       }
-      setUserTokens(myTokens || []);
+
       console.log('myTokens:', myTokens);
+      setTimeout(() => {
+        setShouldLoadBalances(true);
+        setUserTokens(myTokens);
+      }, 10);
     }
   }
 
-  // Setup custom connection with 'confirmed' commitment
+  // Automatically update the balances when the list of tokens change
   useEffect(() => {
-    if (!customConnection) {
-      setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
+
+    const getBalances = async (tokenList: UserTokenAccount[]) => {
+      if (tokenList && tokenList.length > 0 && userAccounts && userAccounts.length > 0) {
+        const tokenListCopy = _.cloneDeep(tokenList);
+        tokenListCopy[0].balance = nativeBalance;
+        for (let i = 1; i < tokenListCopy.length; i++) {
+          const tokenAddress = tokenListCopy[i].address;
+          const tokenMint = userAccounts.find(m => m.info.mint.toBase58() === tokenAddress);
+          if (tokenMint) {
+            tokenListCopy[i].balance = await getTokenBalance(tokenMint.info.mint);
+          }
+        }
+        setUserTokens(tokenListCopy);
+        setShouldLoadBalances(false);
+      }
     }
-  }, [
-    connection.endpoint,
-    customConnection
-  ]);
+  
+    if (userTokens && userTokens.length && shouldLoadBalances) {
+      getBalances(userTokens);
+    }
+  }, [userTokens]);
 
   // Auto execute if wallet already connected
   useEffect(() => {
 
-    if (customConnection && publicKey) {
-      if (!userTokens) {
+    if (customConnection && publicKey && userAccounts?.length > 0) {
+      if (!userTokens || userTokens.length === 0) {
         console.log('Calling loadUserTokens() on startup...');
         loadUserTokens();
       }
@@ -186,8 +269,9 @@ export const AccountsView = () => {
       // loadTransactionSignatures();
     }
   }, [
-    connection.endpoint,
+    publicKey,
     customConnection,
+    userAccounts,
     userTokens
   ]);
 
@@ -196,7 +280,7 @@ export const AccountsView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected) {
         console.log('Fetching account stats...');
-        if (customConnection) {
+        if (customConnection && publicKey && userAccounts?.length > 0) {
           console.log('Calling loadUserTokens() on wallet connect...');
           loadUserTokens();
           // setAbortSignalReceived(false);
@@ -207,17 +291,19 @@ export const AccountsView = () => {
         setAbortSignalReceived(true);
         setShouldGetTxDetails(false);
         setLoadingTransactions(false);
-        setUserTokens([]);
+        setUserTokens(undefined);
       }
     }
   }, [
     connected,
-    userTokens,
+    publicKey,
+    userAccounts,
     customConnection,
     previousWalletConnectState
   ]);
 
   // Get transaction detail for each signature if not already loaded
+  /*
   useEffect(() => {
 
     if (shouldGetTxDetails && customConnection && publicKey && !abortSignalReceived) {
@@ -225,19 +311,14 @@ export const AccountsView = () => {
       // Process current signature (signatures[stats.index].signature)
       // if its corresponding detail is not loaded into the transactions array
       const currentSignature = signatures[stats.index];
-      // console.log('currentSignature:', currentSignature);
       const needFetching = signatures.length > 0 &&
                            (!transactions || transactions.length === 0 ||
                             !transactions.some(tx => tx.signature === currentSignature.signature));
-      // console.log('needFetching:', needFetching);
-      // console.log('stats.index:', stats.index);
-      // console.log('signatures.length:', signatures.length);
 
       // If no need to fetch the Tx detail and the signature is the last one in the list
       if (!needFetching && stats.index >= (signatures.length - 1)) {
         // Set the state to stop and finish the whole process
         setLoadingTransactions(false);
-        // TODO: update stats
         return;
       }
 
@@ -253,7 +334,6 @@ export const AccountsView = () => {
               // Increment index to select next signature
               dispatch(new IncrementTransactionIndexAction());
               setShouldGetTxDetails(true);
-              // TODO: update stats
             }
           })
       } else {
@@ -261,7 +341,6 @@ export const AccountsView = () => {
         dispatch(new IncrementTransactionIndexAction());
         // Set state to load next Tx details
         setShouldGetTxDetails(true);
-        // TODO: update stats
       }
     }
   }, [
@@ -273,8 +352,10 @@ export const AccountsView = () => {
     shouldGetTxDetails,
     abortSignalReceived,
   ]);
+  */
 
   // Keep stats in sync when transaction's list changes
+  /*
   useEffect(() => {
     if (publicKey && transactions) {
       const incoming = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[1].pubkey.toBase58() === publicKey.toBase58());
@@ -289,6 +370,56 @@ export const AccountsView = () => {
     publicKey,
     transactions
   ]);
+  */
+
+  const renderTokenList = (
+    <>
+    {userTokens && userTokens.length ? (
+      userTokens.map((token, index) => {
+        const onTokenAccountClick = () => {
+          console.log('selected token account:', token);
+          // TODO: Actually set the address of the token for scanning transactions
+          setDtailsPanelOpen(true);
+        };
+        return (
+          <div key={`${index + 50}`} onClick={onTokenAccountClick} className={`transaction-list-row`}>
+            <div className="icon-cell">
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img
+                    alt={`${token.name}`}
+                    width={30}
+                    height={30}
+                    src={token.logoURI}
+                  />
+                ) : (
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "30", display: "inline-flex" }}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="description-cell pl-2">
+              <div className="title text-truncate">{token.symbol}</div>
+              <div className="subtitle text-truncate">{token.name}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">
+                {getTokenAmountAndSymbolByTokenAddress(token.balance || 0, token.address, true)}
+              </div>
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <>
+      <p>{t('streams.stream-list.no-streams')}</p>
+      </>
+    )}
+
+    </>
+  );
 
   const renderTransactions = () => {
     return transactions?.map((trans) => {
@@ -296,10 +427,45 @@ export const AccountsView = () => {
     });
   };
 
+  // const myTokens: UserTokenAccount[]
+
   return (
     <>
       <div className="container main-container">
+
         <div className="interaction-area">
+
+          <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+
+            {/* Left / top panel*/}
+            <div className="streams-container">
+              <div className="streams-heading">
+                <span className="title">{t('streams.screen-title')}</span>
+              </div>
+              <div className="inner-container">
+                <div className="item-block vertical-scroll">
+                  {renderTokenList}
+                </div>
+              </div>
+            </div>
+
+            {/* Right / down panel */}
+            <div className="stream-details-container">
+              <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
+              <div className="inner-container">
+                {connected ? (
+                  <p>Here goes the list of transactions</p>
+                ) : (
+                  <p>{t('streams.stream-detail.no-stream')}</p>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* <div>
           <p>Activity:&nbsp;{loadingTransactions ? (
             <>
               <SyncOutlined spin />
@@ -312,7 +478,7 @@ export const AccountsView = () => {
           <p>Abort signal received: {abortSignalReceived ? 'true' : 'false'}</p>
           <p>Tx: {stats.total ? stats.index + 1 : 0} of {stats.total} | incoming: {stats.incoming} outgoing: {stats.outgoing}</p>
           <div>{renderTransactions()}</div>
-        </div>
+        </div> */}
       </div>
       <PreFooter />
     </>

@@ -7,7 +7,7 @@ import { notify } from "../../utils/notifications";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button } from "antd";
 import { environment } from "../../environments/environment";
-import { formatNumber, getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AppStateContext } from "../../contexts/appstate";
 import { TokenInfo } from "@solana/spl-token-registry";
