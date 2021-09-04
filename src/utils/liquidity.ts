@@ -13,24 +13,24 @@ import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_ma
 
 export const getLiquidityPools = async (
   connection: Connection,
-  fromMint: PublicKey,
-  toMint: PublicKey
+  // fromMint: PublicKey,
+  // toMint: PublicKey
 ) => {
   
   let liquidityPools = {} as any;
   let ammAll: any = []; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
   let marketAll: any = []; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 
-  let filteredPools = LIQUIDITY_POOLS.filter(lp => {
-    return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
-      (lp.coin.address === toMint.toBase58() && lp.pc.address === fromMint.toBase58());
-  });
+  // let LIQUIDITY_POOLS = LIQUIDITY_POOLS.filter(lp => {
+  //   return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
+  //     (lp.coin.address === toMint.toBase58() && lp.pc.address === fromMint.toBase58());
+  // });
 
   await Promise.all([
     await (async () => {
       ammAll = await getMultipleAccounts(
         connection,
-        filteredPools.map(p => new PublicKey(p.ammId)),
+        LIQUIDITY_POOLS.map(p => new PublicKey(p.ammId)),
         connection.commitment
       )
     })(),
@@ -182,23 +182,23 @@ export const getLiquidityPools = async (
       official: false
     };
     
-    if (!filteredPools.find((item) => item.ammId === itemLiquidity.ammId)) {
-      filteredPools.push(itemLiquidity);
+    if (!LIQUIDITY_POOLS.find((item) => item.ammId === itemLiquidity.ammId)) {
+      LIQUIDITY_POOLS.push(itemLiquidity);
     } else {
-      for (let itemIndex = 0; itemIndex < filteredPools.length; itemIndex += 1) {
+      for (let itemIndex = 0; itemIndex < LIQUIDITY_POOLS.length; itemIndex += 1) {
         if (
-          filteredPools[itemIndex].ammId === itemLiquidity.ammId &&
-          filteredPools[itemIndex].name !== itemLiquidity.name &&
-          !filteredPools[itemIndex].official
+          LIQUIDITY_POOLS[itemIndex].ammId === itemLiquidity.ammId &&
+          LIQUIDITY_POOLS[itemIndex].name !== itemLiquidity.name &&
+          !LIQUIDITY_POOLS[itemIndex].official
         ) {
-          filteredPools[itemIndex] = itemLiquidity;
+          LIQUIDITY_POOLS[itemIndex] = itemLiquidity;
         }
       }
     }
 
     const publicKeys = [] as any;
 
-    filteredPools.forEach((pool) => {
+    LIQUIDITY_POOLS.forEach((pool) => {
       const { 
         poolCoinTokenAccount, 
         poolPcTokenAccount, 
@@ -208,8 +208,6 @@ export const getLiquidityPools = async (
         pc, 
         lp 
       } = pool;
-
-      console.log('pool', filteredPools.length, pool);
 
       publicKeys.push(
         new PublicKey(poolCoinTokenAccount),

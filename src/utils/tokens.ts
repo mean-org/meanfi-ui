@@ -285,6 +285,6 @@ function updateTokenTagsChange() {
   }
 }
 
-addUserLocalCoinMint()
-addTokensSolana()
-updateTokenTagsChange()
+addUserLocalCoinMint();
+addTokensSolana();
+updateTokenTagsChange();
