@@ -14,6 +14,12 @@
 		"label-right": "Solde",
 		"modal-title": "Ajouter des fonds"
 	},
+	"assets": {
+		"history-panel-title": "Transactions d'actifs",
+		"no-asset-selected": "Veuillez sélectionner un actif pour afficher l'historique des transactions",
+		"no-transactions": "Aucune transaction pour l'actif sélectionné",
+		"screen-title": "Soldes des actifs"
+	},
 	"close-stream": {
 		"available-funds": "Available funds",
 		"context-beneficiary": "Veuillez compléter ce transfert d'argent et ce montant ({{amount}}) sera envoyé sur votre compte ({{beneficiary}}) et le flux d'argent s'arrêtera immédiatement.",

@@ -45,6 +45,7 @@ export const AccountsView = () => {
     customConnection
   ]);
 
+  // Keep track of native account balance
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -194,34 +195,21 @@ export const AccountsView = () => {
   ]);
 
   const loadUserTokens = () => {
-    console.log('tokens?', tokens && tokens.length > 0 ? true : false);
-    console.log('publicKey?', publicKey ? true : false);
-    console.log('connection?', connection ? true : false);
-    console.log('userAccounts?', userAccounts && userAccounts.length > 0 ? true : false);
     if (connection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
-      console.log('tokens:', tokens);
-      console.log('userAccounts:', userAccounts);
       const myTokens = new Array<UserTokenAccount>();
       myTokens.push(NATIVE_SOL as UserTokenAccount);
       for (let i = 0; i < userAccounts.length; i++) {
         const item = userAccounts[i];
         let token: UserTokenAccount | undefined;
         const mintAddress = item.info.mint.toBase58();
-        console.log(`Account ${i + 1} of ${userAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
+        // console.log(`Account ${i + 1} of ${userAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
         token = tokens.find(i => i.address === mintAddress);
-        if (!token) {
-          token = {
-            chainId: chain.chainID,
-            address: mintAddress,
-            symbol: '-',
-            name: 'Unknown token',
-            decimals: 6
-          };
-        }
 
-        // Add the token only if not already exists
-        if (!myTokens.some(t => t.address === token?.address)) {
-          myTokens.push(token);
+        // Add the token only if matches one of the user's token account and it is not already in the list
+        if (token) {
+          if (!myTokens.some(t => t.address === token?.address)) {
+            myTokens.push(token);
+          }
         }
       }
 
@@ -257,12 +245,11 @@ export const AccountsView = () => {
     }
   }, [userTokens]);
 
-  // Auto execute if wallet already connected
+  // Auto execute if wallet is connected
   useEffect(() => {
 
     if (customConnection && publicKey && userAccounts?.length > 0) {
       if (!userTokens || userTokens.length === 0) {
-        console.log('Calling loadUserTokens() on startup...');
         loadUserTokens();
       }
       // setAbortSignalReceived(false);
@@ -275,18 +262,10 @@ export const AccountsView = () => {
     userTokens
   ]);
 
-  // Hook on the wallet connect/disconnect
+  // Hook on wallet disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
-      if (!previousWalletConnectState && connected) {
-        console.log('Fetching account stats...');
-        if (customConnection && publicKey && userAccounts?.length > 0) {
-          console.log('Calling loadUserTokens() on wallet connect...');
-          loadUserTokens();
-          // setAbortSignalReceived(false);
-          // loadTransactionSignatures();
-        }
-      } else if (previousWalletConnectState && !connected) {
+      if (previousWalletConnectState && !connected) {
         console.log('Deactivating account stats...');
         setAbortSignalReceived(true);
         setShouldGetTxDetails(false);
@@ -414,7 +393,7 @@ export const AccountsView = () => {
       })
     ) : (
       <>
-      <p>{t('streams.stream-list.no-streams')}</p>
+      <p>{t('general.not-connected')}</p>
       </>
     )}
 
@@ -427,8 +406,6 @@ export const AccountsView = () => {
     });
   };
 
-  // const myTokens: UserTokenAccount[]
-
   return (
     <>
       <div className="container main-container">
@@ -440,7 +417,7 @@ export const AccountsView = () => {
             {/* Left / top panel*/}
             <div className="streams-container">
               <div className="streams-heading">
-                <span className="title">{t('streams.screen-title')}</span>
+                <span className="title">{t('assets.screen-title')}</span>
               </div>
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
@@ -451,12 +428,18 @@ export const AccountsView = () => {
 
             {/* Right / down panel */}
             <div className="stream-details-container">
-              <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
+              <div className="streams-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
               <div className="inner-container">
                 {connected ? (
-                  <p>Here goes the list of transactions</p>
+                  transactions && transactions.length ? (
+                    renderTransactions()
+                  ) : loadingTransactions ? (
+                    <p>Loading transactions...</p>
+                  ) : (
+                    <p>No transactions</p>
+                  )
                 ) : (
-                  <p>{t('streams.stream-detail.no-stream')}</p>
+                  <p>{t('general.not-connected')}</p>
                 )}
               </div>
             </div>

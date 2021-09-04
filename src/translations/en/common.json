@@ -14,6 +14,12 @@
 		"label-right": "Balance",
 		"modal-title": "Add funds"
 	},
+	"assets": {
+		"history-panel-title": "Asset transactions",
+		"no-asset-selected": "Please select an asset to view the transaction history",
+		"no-transactions": "No transactions for the selected asset",
+		"screen-title": "Asset balances"
+	},
 	"close-stream": {
 		"available-funds": "Available funds",
 		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
