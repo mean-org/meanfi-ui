@@ -1,39 +1,35 @@
 import React, { useContext, useReducer } from 'react';
 import { CheckCircleOutlined, SyncOutlined } from '@ant-design/icons';
-import { ConfirmedSignatureInfo, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { useCallback, useEffect, useState } from 'react';
+import { ConfirmedSignatureInfo, Connection } from '@solana/web3.js';
+import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
-import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { TransactionWithSignature } from '../../utils/transactions';
 import {
-  ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction,
-  ResetStatsAction, MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount
+  ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction, ResetStatsAction,
+  MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount,
+  TransactionWithSignature, Timestamp
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
-import { TokenListProvider } from '@solana/spl-token-registry';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useUserAccounts } from '../../hooks';
 import { useTranslation } from 'react-i18next';
-import { environment } from '../../environments/environment';
-import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import _ from 'lodash';
-import { NATIVE_SOL } from '../../utils/tokens';
-import { useNativeAccount } from '../../contexts/accounts';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
-  const chain = ENDPOINTS.find((end) => end.endpoint === connection.endpoint) || ENDPOINTS[0];
-  const { userAccounts } = useUserAccounts();
-  const { account } = useNativeAccount();
-  const [nativeBalance, setNativeBalance] = useState(0);
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const {
+    userTokens,
+    transactions,
+    detailsPanelOpen,
+    previousWalletConnectState,
+    setDtailsPanelOpen,
+    setTransactions
+  } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -45,63 +41,14 @@ export const AccountsView = () => {
     customConnection
   ]);
 
-  // Keep track of native account balance
-  useEffect(() => {
-
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      // Refresh token balance
-      setNativeBalance(getAccountBalance());
-      // Update previous balance
-      setPreviousBalance(account?.lamports);
-    }
-  }, [
-    account,
-    previousBalance
-  ]);
-
-  const {
-    detailsPanelOpen,
-    previousWalletConnectState,
-    setDtailsPanelOpen
-  } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
-
-  const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
-  const [userTokens, setUserTokens] = useState<UserTokenAccount[]>();
-
-  // Load Solana SPL Token List
-  useEffect(() => {
-    (async () => {
-      let list = new Array<UserTokenAccount>();
-      if (environment === 'production') {
-        const res = await new TokenListProvider().resolve();
-        list = res
-          .filterByChainId(chain.chainID)
-          .excludeByTag("nft")
-          .getList();
-      } else {
-        list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
-      }
-      setTokens(list);
-    })();
-
-    return () => { }
-
-  }, []);
-
   // Flow control
   const [shouldGetTxDetails, setShouldGetTxDetails] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [abortSignalReceived, setAbortSignalReceived] = useState(false);
-  const [shouldLoadBalances, setShouldLoadBalances] = useState(false);
 
   // Data
+  const [selectedAsset, setSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const [signatures, setSignatures] = useState<Array<ConfirmedSignatureInfo>>([]);
-  const [transactions, setTransactions] = useState<Array<TransactionWithSignature>>([]);
   const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
     switch (action.type) {
       case ActionTypes.SET_STATS:
@@ -117,172 +64,82 @@ export const AccountsView = () => {
     }
   }, defaultTransactionStats);
 
-  // Methods
   const abortSwitch = () => {
-    setAbortSignalReceived(abortSignalReceived => !abortSignalReceived);
+    setAbortSignalReceived(value => !value);
     setShouldGetTxDetails(false);
     setLoadingTransactions(false);
     dispatch(new MoveTxIndexToEndAction());
   }
 
-  const loadTransactionSignatures = useCallback(() => {
-
+  const loadTransactionSignatures = async () => {
     if (customConnection && publicKey && !loadingTransactions) {
       setLoadingTransactions(true);
-      customConnection.getConfirmedSignaturesForAddress2(publicKey)
-        .then(sigs => {
-          setSignatures(sigs);
-          const newStats = new TransactionStats();
-          newStats.index = 0;
-          newStats.total = sigs.length;
-          dispatch(new SetStatsAction(newStats));
-          console.log('transSignatures:', signatures);
-          console.log('stats:', newStats);
-          if (sigs.length > 0) {
-            setShouldGetTxDetails(true);
-          } else {
-            setTransactions([]);
-            dispatch(new ResetStatsAction());
-            setLoadingTransactions(false);
-          }
-        })
-        .catch(error => {
-          console.error(error.message, error);
-          setSignatures([]);
-          setShouldGetTxDetails(false);
+      try {
+        const sigs = await customConnection.getConfirmedSignaturesForAddress2(publicKey);
+        setSignatures(sigs);
+        const newStats = new TransactionStats();
+        newStats.index = 0;
+        newStats.total = sigs.length;
+        dispatch(new SetStatsAction(newStats));
+        console.log('transSignatures:', signatures);
+        if (sigs.length > 0) {
+          setShouldGetTxDetails(true);
+        } else {
+          setTransactions([]);
           dispatch(new ResetStatsAction());
           setLoadingTransactions(false);
-        });
-    }
-
-    // Cleanup
-    return () => {
-      setLoadingTransactions(false);
-      setSignatures([]);
-      setTransactions([]);
-      dispatch(new ResetStatsAction());
-    }
-  }, [
-    stats,
-    customConnection,
-    loadingTransactions,
-    publicKey
-  ]);
-
-  const getTokenBalance = useCallback(async (tokenPk: PublicKey) => {
-    if (tokenPk.equals(NATIVE_SOL_MINT)) {
-      const info = await customConnection?.getAccountInfo(publicKey as PublicKey);
-      const balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
-      return balance;
-    } else {
-      const associatedTokenAddress = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        tokenPk,
-        publicKey as PublicKey
-      );
-      if (associatedTokenAddress) {
-        const info = await customConnection?.getTokenAccountBalance(associatedTokenAddress);
-        const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
-        return balance;
-      } else {
-        return 0;
-      }
-    }
-  }, [
-    customConnection, 
-    publicKey
-  ]);
-
-  const loadUserTokens = () => {
-    if (connection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
-      const myTokens = new Array<UserTokenAccount>();
-      myTokens.push(NATIVE_SOL as UserTokenAccount);
-      for (let i = 0; i < userAccounts.length; i++) {
-        const item = userAccounts[i];
-        let token: UserTokenAccount | undefined;
-        const mintAddress = item.info.mint.toBase58();
-        // console.log(`Account ${i + 1} of ${userAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
-        token = tokens.find(i => i.address === mintAddress);
-
-        // Add the token only if matches one of the user's token account and it is not already in the list
-        if (token) {
-          if (!myTokens.some(t => t.address === token?.address)) {
-            myTokens.push(token);
-          }
         }
+      } catch (error) {
+        console.error(error.message, error);
+        setSignatures([]);
+        setShouldGetTxDetails(false);
+        dispatch(new ResetStatsAction());
+        setLoadingTransactions(false);
       }
-
-      console.log('myTokens:', myTokens);
-      setTimeout(() => {
-        setShouldLoadBalances(true);
-        setUserTokens(myTokens);
-      }, 10);
     }
   }
-
-  // Automatically update the balances when the list of tokens change
-  useEffect(() => {
-
-    const getBalances = async (tokenList: UserTokenAccount[]) => {
-      if (tokenList && tokenList.length > 0 && userAccounts && userAccounts.length > 0) {
-        const tokenListCopy = _.cloneDeep(tokenList);
-        tokenListCopy[0].balance = nativeBalance;
-        for (let i = 1; i < tokenListCopy.length; i++) {
-          const tokenAddress = tokenListCopy[i].address;
-          const tokenMint = userAccounts.find(m => m.info.mint.toBase58() === tokenAddress);
-          if (tokenMint) {
-            tokenListCopy[i].balance = await getTokenBalance(tokenMint.info.mint);
-          }
-        }
-        setUserTokens(tokenListCopy);
-        setShouldLoadBalances(false);
-      }
-    }
-  
-    if (userTokens && userTokens.length && shouldLoadBalances) {
-      getBalances(userTokens);
-    }
-  }, [userTokens]);
 
   // Auto execute if wallet is connected
   useEffect(() => {
 
-    if (customConnection && publicKey && userAccounts?.length > 0) {
-      if (!userTokens || userTokens.length === 0) {
-        loadUserTokens();
-      }
-      // setAbortSignalReceived(false);
-      // loadTransactionSignatures();
+    if (customConnection && publicKey) {
+      setAbortSignalReceived(false);
+      loadTransactionSignatures();
+    }
+
+    return () => {
+      setSelectedAsset(undefined);
     }
   }, [
     publicKey,
-    customConnection,
-    userAccounts,
-    userTokens
+    customConnection
   ]);
 
   // Hook on wallet disconnect
   useEffect(() => {
+
     if (previousWalletConnectState !== connected) {
-      if (previousWalletConnectState && !connected) {
-        console.log('Deactivating account stats...');
-        setAbortSignalReceived(true);
-        setShouldGetTxDetails(false);
-        setLoadingTransactions(false);
-        setUserTokens(undefined);
+      // Connection changed
+      if (!previousWalletConnectState && connected) {
+        // Connecting
+        console.log('Execute on wallet connect...');
+        // setAbortSignalReceived(false);
+        // loadTransactionSignatures();
+      } else if (previousWalletConnectState && !connected) {
+        // disconnecting
+        console.log('Execute on wallet disconnect...');
+        // setAbortSignalReceived(true);
+        // setShouldGetTxDetails(false);
+        // setLoadingTransactions(false);
+        // setSelectedAsset(undefined);
       }
     }
   }, [
     connected,
-    publicKey,
-    userAccounts,
-    customConnection,
     previousWalletConnectState
   ]);
 
   // Get transaction detail for each signature if not already loaded
-  /*
   useEffect(() => {
 
     if (shouldGetTxDetails && customConnection && publicKey && !abortSignalReceived) {
@@ -290,6 +147,7 @@ export const AccountsView = () => {
       // Process current signature (signatures[stats.index].signature)
       // if its corresponding detail is not loaded into the transactions array
       const currentSignature = signatures[stats.index];
+      if (!currentSignature) { return; }
       const needFetching = signatures.length > 0 &&
                            (!transactions || transactions.length === 0 ||
                             !transactions.some(tx => tx.signature === currentSignature.signature));
@@ -307,12 +165,24 @@ export const AccountsView = () => {
             if (confirmedTx) {
               const transWithSignature = new TransactionWithSignature(
                 currentSignature.signature,
-                confirmedTx
+                confirmedTx,
+                0
               );
-              setTransactions(items => [...items, transWithSignature]);
-              // Increment index to select next signature
-              dispatch(new IncrementTransactionIndexAction());
-              setShouldGetTxDetails(true);
+              let timestamp: Timestamp = "unavailable";
+              customConnection.getBlockTime(confirmedTx.slot)
+                .then(bTime => {
+                  timestamp = bTime !== null ? bTime : "unavailable";
+                })
+                .catch(error => {
+                  console.error(error, { slot: `${confirmedTx.slot}` });
+                })
+                .finally(() => {
+                  transWithSignature.timestamp = timestamp;
+                  setTransactions([...transactions, transWithSignature]);
+                  // Increment index to select next signature
+                  dispatch(new IncrementTransactionIndexAction());
+                  setShouldGetTxDetails(true);
+                });
             }
           })
       } else {
@@ -331,7 +201,6 @@ export const AccountsView = () => {
     shouldGetTxDetails,
     abortSignalReceived,
   ]);
-  */
 
   // Keep stats in sync when transaction's list changes
   /*
@@ -356,8 +225,8 @@ export const AccountsView = () => {
     {userTokens && userTokens.length ? (
       userTokens.map((token, index) => {
         const onTokenAccountClick = () => {
-          console.log('selected token account:', token);
-          // TODO: Actually set the address of the token for scanning transactions
+          console.log(`Selected: ${token.symbol} (${token.name}) =>`, shortenAddress(token.address));
+          setSelectedAsset(token);
           setDtailsPanelOpen(true);
         };
         return (
@@ -402,7 +271,7 @@ export const AccountsView = () => {
 
   const renderTransactions = () => {
     return transactions?.map((trans) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} />;
+      return <TransactionItemView key={trans.signature} transaction={trans} publicKey={publicKey} />;
     });
   };
 
@@ -430,17 +299,41 @@ export const AccountsView = () => {
             <div className="stream-details-container">
               <div className="streams-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
               <div className="inner-container">
-                {connected ? (
-                  transactions && transactions.length ? (
-                    renderTransactions()
-                  ) : loadingTransactions ? (
-                    <p>Loading transactions...</p>
-                  ) : (
-                    <p>No transactions</p>
-                  )
-                ) : (
-                  <p>{t('general.not-connected')}</p>
-                )}
+                <div className="stats-row">
+                  <span>Activity:&nbsp;{loadingTransactions ? (
+                    <>
+                      <SyncOutlined spin />
+                      &nbsp;<span role="link" className="secondary-link" onClick={abortSwitch}>Stop</span>
+                    </>
+                    ) : (
+                      <CheckCircleOutlined className="fg-success" />
+                    )}
+                  </span>
+                </div>
+                <div className="stream-details-data-wrapper vertical-scroll">
+                  <div className="activity-list">
+                    <div className="item-list-header compact">
+                      <div className="header-row">
+                        <div className="std-table-cell first-cell">&nbsp;</div>
+                        <div className="std-table-cell responsive-cell">Src/Dst</div>
+                        <div className="std-table-cell fixed-width-120">Amount</div>
+                        <div className="std-table-cell fixed-width-150">Post Balance</div>
+                        <div className="std-table-cell fixed-width-80">Date</div>
+                      </div>
+                    </div>
+                    {connected && (
+                      transactions && transactions.length ? (
+                        <div className="item-list-body compact">
+                          {renderTransactions()}
+                        </div>
+                      ) : loadingTransactions ? (
+                        <p>Loading transactions...</p>
+                      ) : (
+                        <p>No transactions</p>
+                      )
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

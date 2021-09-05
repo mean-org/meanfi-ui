@@ -2207,6 +2207,9 @@ section.content {
         font-weight: 400;
         font-size: 0.66rem !important;
         padding: 0px 0px 0px 4px;
+        &:not(:last-of-type) {
+          padding: 0px 4px;
+        }
         .mean-svg-icons {
           &.incoming {
             color: var(--color-incoming-transaction);
@@ -2786,7 +2789,9 @@ section.content {
 .font-size-200 {
   font-size: 2rem !important;
 }
-
+.text-monospace {
+  font-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace!important;
+}
 // Letter spacing (tracking)
 .reset-tracking {
   letter-spacing: normal;
