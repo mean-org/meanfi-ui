@@ -66,6 +66,7 @@ export const SwapUi = () => {
   const [isWrap, setIsWrap] = useState(false);
   const [isUnwrap, setIsUnwrap] = useState(false);
   const [outToPrice, setOutToPrice] = useState("");
+  const [priceImpact, setPriceImpact] = useState("");
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [feeAmount, setFeeAmount] = useState(0);
   const [market, setMarket] = useState<Market>();
@@ -76,6 +77,8 @@ export const SwapUi = () => {
   const [toTokenList, setToTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map<string, TokenInfo>());
+  const [tokenBalances, setTokenBalances] = useState<Map<string, string>>(new Map<string, string>());
+  const [needUpdateBalances, setNeedUpdateBalances] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
@@ -199,10 +202,12 @@ export const SwapUi = () => {
     });
     
     setTokenMap(map);
+    setNeedUpdateBalances(true);
     
   }, [
   ]);
 
+  // Updates the amounts when is wrap or unwrap
   useEffect(() => { 
 
     if (!isWrap && !isUnwrap) { return; }
@@ -212,6 +217,7 @@ export const SwapUi = () => {
       const fromAmountValid = fromAmount && parseFloat(fromAmount);
       const amount = fromAmountValid ? parseFloat(fromAmount) : 1;
       setOutToPrice('1');
+      setPriceImpact('0.00');
       const amountOut = amount * priceAmount;
       const amountWithFee = amountOut - feeAmount;
       setToAmount(fromAmountValid ? amountWithFee.toString() : '');      
@@ -238,7 +244,7 @@ export const SwapUi = () => {
 
     const timeout = setTimeout(() => {
       let outAmount = 0;
-      let outWithSlippageAmount = 0;
+      let outWithSlippageAndFeesAmount = 0;
       let price = 0;
       const priceAmount = 1;
       const fromAmountValid = fromAmount && parseFloat(fromAmount);
@@ -246,7 +252,7 @@ export const SwapUi = () => {
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
       const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
       // always calculate the price based on the unit
-      const { amountOut, amountOutWithSlippage } = getSwapOutAmount(
+      const { amountOut, amountOutWithSlippage, priceImpact } = getSwapOutAmount(
         pool,
         fromMint.toBase58(),
         toMint.toBase58(),
@@ -255,12 +261,13 @@ export const SwapUi = () => {
       );
 
       if (!amountOut.isNullOrZero()) {
-        outAmount = +amountOut.fixed() * amount;
-        outWithSlippageAmount = +amountOutWithSlippage.fixed() * amount;
-        price = +amountOut.fixed();  
-        setOutToPrice(price.toFixed(toDecimals));
-        setToAmount(fromAmountValid ? outAmount.toFixed(toDecimals) : '');
-        setToSwapAmount(fromAmountValid ? outWithSlippageAmount.toFixed(toDecimals) : '');
+        outAmount = parseFloat((+amountOut.fixed() * amount).toFixed(toDecimals));
+        outWithSlippageAndFeesAmount = parseFloat((+amountOutWithSlippage.fixed() * amount - feeAmount).toFixed(toDecimals));
+        price = +amountOut.fixed();
+        setPriceImpact(priceImpact.toFixed(2));
+        setOutToPrice(price.toString());
+        setToAmount(fromAmountValid ? outAmount.toString() : '');
+        setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount.toString() : '');
       }
     });
 
@@ -276,19 +283,20 @@ export const SwapUi = () => {
     slippage, 
     tokenMap, 
     isWrap, 
-    isUnwrap
+    isUnwrap,
+    feeAmount
   ]);
 
   // Updates the amounts from serum markets
   useEffect(() => {
 
-    if (!fromMint || !toMint || !market || orderbooks.length < 2 || isWrap || isUnwrap) { 
-      return; 
+    if (!fromMint || !toMint || isWrap || isUnwrap || !market || !orderbooks.length) { 
+      return;
     }
 
     const timeout = setTimeout(() => {
       let outAmount = 0;
-      let outWithSlippageAmount = 0;
+      let outWithSlippageAndFeesAmount = 0;
       let price = 0;
       const priceAmount = 1;
       const fromAmountValid = fromAmount && parseFloat(fromAmount);
@@ -298,7 +306,7 @@ export const SwapUi = () => {
       const bids = (orderbooks.filter((ob: any) => ob.isBids)[0]).slab;
       const asks = (orderbooks.filter((ob: any) => !ob.isBids)[0]).slab;
 
-      const { amountOut, amountOutWithSlippage } = getOutAmount(
+      const { amountOut, amountOutWithSlippage, priceImpact } = getOutAmount(
         market,
         asks,
         bids,
@@ -312,14 +320,15 @@ export const SwapUi = () => {
       const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
 
       if (!out.isNullOrZero()) {
-        outAmount = +out.fixed() * amount;
-        outWithSlippageAmount = +outWithSlippage.fixed() * amount;
+        outAmount = parseFloat((+out.fixed() * amount).toFixed(toDecimals));
+        outWithSlippageAndFeesAmount = parseFloat((+outWithSlippage.fixed() * amount - feeAmount).toFixed(toDecimals));
         price = +out.fixed();
       }
 
-      setOutToPrice(price.toFixed(toDecimals));
-      setToAmount(fromAmountValid ? outAmount.toFixed(toDecimals) : '');
-      setToSwapAmount(fromAmountValid ? outWithSlippageAmount.toFixed(toDecimals) : '');
+      setPriceImpact(priceImpact.toFixed(2));
+      setOutToPrice(price.toString());
+      setToAmount(fromAmountValid ? outAmount.toString() : '');
+      setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount.toString() : '');
     });
 
     return () => {
@@ -336,7 +345,8 @@ export const SwapUi = () => {
     toSwapAmount, 
     tokenMap,
     isWrap,
-    isUnwrap
+    isUnwrap,
+    feeAmount
   ]);
 
   // Updates liquidity pool info
@@ -356,14 +366,15 @@ export const SwapUi = () => {
           const poolInfo = Object.values(poolInfos).filter((lp: any) => {
             return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
                     (lp.pc.address === fromMint.toBase58() && lp.coin.address === toMint.toBase58());            
-          })[0] as LiquidityPoolInfo;
+          })[0] as LiquidityPoolInfo | undefined;
       
-          console.log('poolInfo', poolInfo);
+          console.log('pool', poolInfo);
+          setPool(poolInfo);
       
           if (poolInfo) {
-            setPool(poolInfo);
+            setMarket(undefined);
             setRefreshing(false);
-          } else {
+          } else {            
             getMarkets(connection)
               .then((marketInfos) => {
 
@@ -393,6 +404,7 @@ export const SwapUi = () => {
                 }
 
                 if (!newMarketKey) {
+                  setRefreshing(false);
                   return;
                 }
 
@@ -401,30 +413,41 @@ export const SwapUi = () => {
                 Market.load(connection, newMarketKey, { commitment: 'recent' }, serumProgramKey)
                   .then((marketInfo) => {
 
-                    if (marketInfo && marketInfo.asks && marketInfo.bids) {
+                    setMarket(marketInfo);
 
-                      getMultipleAccounts(connection, [marketInfo.bids, marketInfo.asks], connection.commitment)
-                        .then((accounts) => {
-                          const orderBooks = [];
-
-                          for (let info of accounts) {
-                            if (info) {
-                              const data = info.account.data;
-                              const orderbook = Orderbook.decode(marketInfo, data);
-                              orderBooks.push(orderbook);
-                            }        
-                          }
-
-                          setOrderbooks(orderBooks);
-                          setMarket(marketInfo);
-                          console.log('marketInfo', marketInfo);
-                          setRefreshing(false);
-                        })
-                        .catch(_error => { 
-                          console.log(_error);
-                          setRefreshing(false);
-                        });
+                    if (!marketInfo || !marketInfo.bids || !marketInfo.asks) {
+                      setRefreshing(false);
+                      return;
                     }
+
+                    getMultipleAccounts(connection, [marketInfo.bids, marketInfo.asks], connection.commitment)
+                      .then((accounts) => {
+
+                        if (!accounts || accounts.length < 2) {
+                          setOrderbooks([]);
+                          setRefreshing(false);
+                          return;
+                        }
+
+                        const orderBooks = [];
+
+                        for (let info of accounts) {
+                          if (info) {
+                            const data = info.account.data;
+                            const orderbook = Orderbook.decode(marketInfo, data);
+                            orderBooks.push(orderbook);
+                          }        
+                        }
+                        
+                        setOrderbooks(orderBooks);
+                        setMarket(marketInfo);
+                        console.log('marketInfo', marketInfo);
+                        setRefreshing(false);
+                      })
+                      .catch(_error => { 
+                        console.log(_error);
+                        setRefreshing(false);
+                      });
                   })
                   .catch(_error => { 
                     console.log(_error);
@@ -453,7 +476,58 @@ export const SwapUi = () => {
     toMint,
     isWrap,
     isUnwrap
-  ]);  
+  ]);
+
+  // Automatically update all tokens balance
+  useEffect(() => {
+    
+    if (!connected || !publicKey || !tokenMap || !needUpdateBalances) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      let balancesMap = new Map<string, string>();
+      for (let item of tokenMap.values()) {
+        if (item.address === NATIVE_SOL_MINT.toBase58()) {
+          connection.getAccountInfo(publicKey).then(info => {
+            let balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
+            balancesMap.set(item.address, balance.toString());
+          })
+          .catch(_error => { console.log(_error); });
+        } else {
+          Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            new PublicKey(item.address),
+            publicKey
+    
+          ).then(addr => {
+            if (addr) {
+              connection.getTokenAccountBalance(addr).then(info => {
+                let balance = info && info.value ? (info.value.uiAmount || 0) : 0;
+                balancesMap.set(item.address, balance.toString());
+              }).catch(_error => { 
+                balancesMap.set(item.address, '');
+              });
+            }
+          });
+        }
+      }
+      setTokenBalances(balancesMap);
+      setNeedUpdateBalances(false);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connected, 
+    connection, 
+    publicKey, 
+    tokenMap,
+    needUpdateBalances
+  ]);
 
   // Automatically update fromMint token balance once
   useEffect(() => {
@@ -582,7 +656,8 @@ export const SwapUi = () => {
     if (!fromMint || !fromAmount) { return; }
 
     const timeout = setTimeout(() => {
-      const amount = getTxFeeAmount(swapFees, parseFloat(fromAmount));
+      const fromAmountValid = fromAmount && parseFloat(fromAmount) ? parseFloat(fromAmount) : 0; 
+      const amount = getTxFeeAmount(swapFees, fromAmountValid);
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
       const formattedAmount = parseFloat(formatAmount(amount, fromDecimals));
 
@@ -968,6 +1043,16 @@ export const SwapUi = () => {
                 <div className="token-symbol">{token.symbol}</div>
                 <div className="token-name">{token.name}</div>
               </div>
+              {
+                connected && token && tokenBalances.get(token.address) &&
+                (
+                  <div className="token-balance">
+                    {
+                      parseFloat(tokenBalances.get(token.address) || '0')
+                    }
+                  </div>
+                )
+              }
             </div>
           );
         })
@@ -1018,6 +1103,16 @@ export const SwapUi = () => {
                 <div className="token-symbol">{token.symbol}</div>
                 <div className="token-name">{token.name}</div>
               </div>
+              {
+                connected && token && tokenBalances.get(token.address) &&
+                (
+                  <div className="token-balance">
+                    {
+                      parseFloat(tokenBalances.get(token.address) || '0')
+                    }
+                  </div>
+                )
+              }
             </div>
           );
         })
@@ -1321,33 +1416,6 @@ export const SwapUi = () => {
     );
   };
 
-  // Automatically format all outputs
-  // const parseOutputs = (
-  //   fromMint: PublicKey | undefined,
-  //   toMint: PublicKey | undefined
-  // ) => {
-
-  //   if (!fromMint || !toMint) { return; }
-
-  //   const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
-  //   const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
-  //   const parsedFeeAmount = parseFloat(feeAmount.toFixed(fromDecimals));
-
-  //   const parsedAmount = parseFloat(toAmount) 
-  //     ? parseFloat(toAmount).toFixed(toDecimals)
-  //     : '';
-
-  //   const parsedSwapAmount = parseFloat(toAmount) 
-  //     ? parseFloat(toSwapAmount).toFixed(toDecimals)
-  //     : '';
-
-  //   return {
-  //     fee: parsedFeeAmount,
-  //     toAmount: parsedAmount,
-  //     toSwapAmount: parsedSwapAmount
-  //   };
-  // };
-
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
@@ -1379,7 +1447,7 @@ export const SwapUi = () => {
         <CoinInput
           token={toMint && tokenMap.get(toMint.toBase58()) as TokenInfo}
           tokenBalance={toMintTokenBalance}
-          tokenAmount={fromAmount /*parseOutputs(fromMint, toMint) ? toAmount : ''*/}
+          tokenAmount={toAmount/*parseOutputs(fromMint, toMint) ? toAmount : ''*/}
           readonly={true}
           onInputChange={() => {}}
           onMaxAmount={() => setToAmount(toMintTokenBalance.toString())}
@@ -1428,17 +1496,31 @@ export const SwapUi = () => {
               )
             }
             {
+              !refreshing && isValidSwapAmount && slippage &&
+              infoRow(
+                t("transactions.transaction-info.slippage"),
+                `${slippage.toFixed(1)}%`
+              )
+            }
+            {
               !refreshing && isValidSwapAmount && fromAmount &&
               infoRow(
                 t("transactions.transaction-info.transaction-fee"),
-                feeAmount + ` ${tokenMap.get(fromMint.toBase58())?.symbol}`
+                `${feeAmount} ${tokenMap.get(fromMint.toBase58())?.symbol}`
               )
             }
             {
               !refreshing && isValidSwapAmount && toSwapAmount &&
               infoRow(
                 t("transactions.transaction-info.recipient-receives"),                
-                toSwapAmount + ` ${tokenMap.get(toMint.toBase58())?.symbol}`
+                `${toSwapAmount} ${tokenMap.get(toMint.toBase58())?.symbol}`
+              )
+            }
+            {
+              !refreshing && isValidSwapAmount && priceImpact &&
+              infoRow(
+                t("transactions.transaction-info.price-impact"),                
+                `${priceImpact}%`
               )
             }
           </div>

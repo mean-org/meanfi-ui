@@ -283,9 +283,11 @@
 			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
 			"beneficiary-receives": "Beneficiary receives",
 			"min-recommended-amount": "Recommended minimum amount",
-			"recipient-receives": "Recipient receives",
+			"recipient-receives": "Minimum received",
 			"transaction-fee": "Transaction fee",
-			"you-receive": "You receive"
+			"you-receive": "You receive",
+			"price-impact": "Price impact",
+			"slippage": "Slippage"
 		},
 		"validation": {
 			"amount-high": "Amount exceeds your balance",
