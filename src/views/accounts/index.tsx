@@ -1,5 +1,5 @@
 import React, { useContext, useReducer } from 'react';
-import { CheckCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import { ConfirmedSignatureInfo, Connection } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import _ from 'lodash';
+import { Progress } from 'antd';
+import { percentual } from '../../utils/ui';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
@@ -68,7 +70,18 @@ export const AccountsView = () => {
     setAbortSignalReceived(value => !value);
     setShouldGetTxDetails(false);
     setLoadingTransactions(false);
-    dispatch(new MoveTxIndexToEndAction());
+    // dispatch(new MoveTxIndexToEndAction());
+  }
+
+  const resumeSwitch = () => {
+    setAbortSignalReceived(false);
+    setShouldGetTxDetails(true);
+    setLoadingTransactions(true);
+  }
+
+  const reloadSwitch = () => {
+    setAbortSignalReceived(false);
+    loadTransactionSignatures();
   }
 
   const loadTransactionSignatures = async () => {
@@ -230,7 +243,8 @@ export const AccountsView = () => {
           setDtailsPanelOpen(true);
         };
         return (
-          <div key={`${index + 50}`} onClick={onTokenAccountClick} className={`transaction-list-row`}>
+          <div key={`${index + 50}`} onClick={onTokenAccountClick}
+               className={selectedAsset && selectedAsset.address == token.address ? 'transaction-list-row selected' : 'transaction-list-row'}>
             <div className="icon-cell">
               <div className="token-icon">
                 {token.logoURI ? (
@@ -248,7 +262,7 @@ export const AccountsView = () => {
                 )}
               </div>
             </div>
-            <div className="description-cell pl-2">
+            <div className="description-cell">
               <div className="title text-truncate">{token.symbol}</div>
               <div className="subtitle text-truncate">{token.name}</div>
             </div>
@@ -281,11 +295,11 @@ export const AccountsView = () => {
 
         <div className="interaction-area">
 
-          <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+          <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
             {/* Left / top panel*/}
-            <div className="streams-container">
-              <div className="streams-heading">
+            <div className="tokens-container">
+              <div className="transactions-heading">
                 <span className="title">{t('assets.screen-title')}</span>
               </div>
               <div className="inner-container">
@@ -296,31 +310,44 @@ export const AccountsView = () => {
             </div>
 
             {/* Right / down panel */}
-            <div className="stream-details-container">
-              <div className="streams-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+            <div className="transaction-list-container">
+              <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
               <div className="inner-container">
                 <div className="stats-row">
-                  <span>Activity:&nbsp;{loadingTransactions ? (
+                  <div className="fetch-proggress">
+                    <Progress percent={Math.round(percentual(stats.index + 1, stats.total))} size="small"
+                              status={loadingTransactions ? "active" : "normal"} />
+                  </div>
+                  <div className="fetch-control">{loadingTransactions ? (
                     <>
-                      <SyncOutlined spin />
-                      &nbsp;<span role="link" className="secondary-link" onClick={abortSwitch}>Stop</span>
+                      <SyncOutlined spin />&nbsp;
+                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={abortSwitch}>Stop</span>
+                    </>
+                    ) : stats.index < stats.total ? (
+                    <>
+                      <PauseCircleOutlined className="fg-dark-active" />&nbsp;
+                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={resumeSwitch}>Resume</span>
                     </>
                     ) : (
-                      <CheckCircleOutlined className="fg-success" />
+                    <>
+                      <CheckCircleOutlined className="fg-success" />&nbsp;
+                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={reloadSwitch}>Reload</span>
+                    </>
                     )}
-                  </span>
-                </div>
-                <div className="stream-details-data-wrapper vertical-scroll">
-                  <div className="activity-list">
-                    <div className="item-list-header compact">
-                      <div className="header-row">
-                        <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Src/Dst</div>
-                        <div className="std-table-cell fixed-width-120">Amount</div>
-                        <div className="std-table-cell fixed-width-150">Post Balance</div>
-                        <div className="std-table-cell fixed-width-80">Date</div>
-                      </div>
+                  </div>
+                  {/*  */}
+                  <div className="item-list-header compact">
+                    <div className="header-row">
+                      <div className="std-table-cell first-cell">&nbsp;</div>
+                      <div className="std-table-cell responsive-cell">Src/Dst</div>
+                      <div className="std-table-cell fixed-width-120">Amount</div>
+                      <div className="std-table-cell fixed-width-150">Post Balance</div>
+                      <div className="std-table-cell fixed-width-80">Date</div>
                     </div>
+                  </div>
+                </div>
+                <div className="transaction-list-data-wrapper vertical-scroll">
+                  <div className="activity-list">
                     {connected && (
                       transactions && transactions.length ? (
                         <div className="item-list-body compact">
@@ -341,20 +368,6 @@ export const AccountsView = () => {
 
         </div>
 
-        {/* <div>
-          <p>Activity:&nbsp;{loadingTransactions ? (
-            <>
-              <SyncOutlined spin />
-              &nbsp;<span role="link" className="secondary-link" onClick={abortSwitch}>Stop</span>
-            </>
-          ) : (
-            <CheckCircleOutlined className="fg-success" />
-          )}
-          </p>
-          <p>Abort signal received: {abortSignalReceived ? 'true' : 'false'}</p>
-          <p>Tx: {stats.total ? stats.index + 1 : 0} of {stats.total} | incoming: {stats.incoming} outgoing: {stats.outgoing}</p>
-          <div>{renderTransactions()}</div>
-        </div> */}
       </div>
       <PreFooter />
     </>
