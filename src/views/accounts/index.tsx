@@ -1,49 +1,47 @@
 import React, { useContext, useReducer } from 'react';
-import { CheckCircleOutlined, SyncOutlined } from '@ant-design/icons';
-import { ConfirmedSignatureInfo, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { useCallback, useEffect, useState } from 'react';
+import { CheckCircleOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { ConfirmedSignatureInfo, Connection } from '@solana/web3.js';
+import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
-import { ENDPOINTS, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { TransactionWithSignature } from '../../utils/transactions';
 import {
-  ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction,
-  ResetStatsAction, MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount
+  ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction, ResetStatsAction,
+  MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount,
+  TransactionWithSignature, Timestamp
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
-import { getMultipleAccounts } from '../../contexts/accounts';
-import { TokenListProvider } from '@solana/spl-token-registry';
-import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useUserAccounts } from '../../hooks';
+import { useTranslation } from 'react-i18next';
+import { Identicon } from '../../components/Identicon';
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import _ from 'lodash';
+import { Progress } from 'antd';
+import { percentual } from '../../utils/ui';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
-  const { userAccounts } = useUserAccounts();
-  const { previousWalletConnectState } = useContext(AppStateContext);
+  const {
+    userTokens,
+    transactions,
+    detailsPanelOpen,
+    previousWalletConnectState,
+    setDtailsPanelOpen,
+    setTransactions
+  } = useContext(AppStateContext);
+  const { t } = useTranslation('common');
 
-  const chain = ENDPOINTS[0];
-  const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
-  const [userTokens, setUserTokens] = useState<UserTokenAccount[]>();
-
-  // Load Solana SPL Token List
+  // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
-    (async () => {
-      let list: UserTokenAccount[];
-      const res = await new TokenListProvider().resolve();
-      list = res
-        .filterByChainId(chain.chainID)
-        .excludeByTag("nft")
-        .getList();
-      setTokens(list);
-    })();
-
-    return () => { }
-
-  }, []);
+    if (!customConnection) {
+      setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
+    }
+  }, [
+    connection.endpoint,
+    customConnection
+  ]);
 
   // Flow control
   const [shouldGetTxDetails, setShouldGetTxDetails] = useState(false);
@@ -51,8 +49,8 @@ export const AccountsView = () => {
   const [abortSignalReceived, setAbortSignalReceived] = useState(false);
 
   // Data
+  const [selectedAsset, setSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const [signatures, setSignatures] = useState<Array<ConfirmedSignatureInfo>>([]);
-  const [transactions, setTransactions] = useState<Array<TransactionWithSignature>>([]);
   const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
     switch (action.type) {
       case ActionTypes.SET_STATS:
@@ -68,152 +66,89 @@ export const AccountsView = () => {
     }
   }, defaultTransactionStats);
 
-  // Methods
   const abortSwitch = () => {
-    setAbortSignalReceived(abortSignalReceived => !abortSignalReceived);
+    setAbortSignalReceived(value => !value);
     setShouldGetTxDetails(false);
     setLoadingTransactions(false);
-    dispatch(new MoveTxIndexToEndAction());
+    // dispatch(new MoveTxIndexToEndAction());
   }
 
-  const loadTransactionSignatures = useCallback(() => {
+  const resumeSwitch = () => {
+    setAbortSignalReceived(false);
+    setShouldGetTxDetails(true);
+    setLoadingTransactions(true);
+  }
 
+  const reloadSwitch = () => {
+    setAbortSignalReceived(false);
+    loadTransactionSignatures();
+  }
+
+  const loadTransactionSignatures = async () => {
     if (customConnection && publicKey && !loadingTransactions) {
       setLoadingTransactions(true);
-      customConnection.getConfirmedSignaturesForAddress2(publicKey)
-        .then(sigs => {
-          setSignatures(sigs);
-          const newStats = new TransactionStats();
-          newStats.index = 0;
-          newStats.total = sigs.length;
-          dispatch(new SetStatsAction(newStats));
-          console.log('transSignatures:', signatures);
-          console.log('stats:', newStats);
-          if (sigs.length > 0) {
-            setShouldGetTxDetails(true);
-          } else {
-            setTransactions([]);
-            dispatch(new ResetStatsAction());
-            setLoadingTransactions(false);
-          }
-        })
-        .catch(error => {
-          console.error(error.message, error);
-          setSignatures([]);
-          setShouldGetTxDetails(false);
+      try {
+        const sigs = await customConnection.getConfirmedSignaturesForAddress2(publicKey);
+        setSignatures(sigs);
+        const newStats = new TransactionStats();
+        newStats.index = 0;
+        newStats.total = sigs.length;
+        dispatch(new SetStatsAction(newStats));
+        console.log('transSignatures:', signatures);
+        if (sigs.length > 0) {
+          setShouldGetTxDetails(true);
+        } else {
+          setTransactions([]);
           dispatch(new ResetStatsAction());
           setLoadingTransactions(false);
-        });
-    }
-
-    // Cleanup
-    return () => {
-      setLoadingTransactions(false);
-      setSignatures([]);
-      setTransactions([]);
-      dispatch(new ResetStatsAction());
-    }
-  }, [
-    stats,
-    customConnection,
-    loadingTransactions,
-    publicKey
-  ]);
-
-  const getTokenBalance = useCallback(async (tokenPk: PublicKey) => {
-    if (tokenPk.equals(NATIVE_SOL_MINT)) {
-      const info = await customConnection?.getAccountInfo(publicKey as PublicKey);
-      const balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
-      return balance;
-    } else {
-      const associatedTokenAddress = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        tokenPk,
-        publicKey as PublicKey
-      );
-      if (associatedTokenAddress) {
-        const info = await customConnection?.getTokenAccountBalance(associatedTokenAddress);
-        const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
-        return balance;
-      } else {
-        return 0;
-      }
-    }
-  }, [
-    customConnection, 
-    publicKey
-  ]);
-
-  const loadUserTokens = async () => {
-    if (customConnection && publicKey && tokens && userAccounts && userAccounts.length > 0) {
-      console.log('userAccounts:', userAccounts);
-      // Filter tokens based on user available Token Accounts
-      const myTokens = new Array<UserTokenAccount>();
-      for (let i = 0; i < userAccounts.length; i++) {
-        const item = userAccounts[i];
-        const token = tokens.find(i => i.address === item.info.mint.toBase58());
-        console.log('Found token:', token);
-        if (token) {
-          // token.balance = await getTokenBalance(item.pubkey);
-          myTokens.push(token);
         }
+      } catch (error) {
+        console.error(error.message, error);
+        setSignatures([]);
+        setShouldGetTxDetails(false);
+        dispatch(new ResetStatsAction());
+        setLoadingTransactions(false);
       }
-      setUserTokens(myTokens || []);
-      console.log('myTokens:', myTokens);
     }
   }
 
-  // Setup custom connection with 'confirmed' commitment
-  useEffect(() => {
-    if (!customConnection) {
-      setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
-    }
-  }, [
-    connection.endpoint,
-    customConnection
-  ]);
-
-  // Auto execute if wallet already connected
+  // Auto execute if wallet is connected
   useEffect(() => {
 
     if (customConnection && publicKey) {
-      if (!userTokens) {
-        console.log('Calling loadUserTokens() on startup...');
-        loadUserTokens();
-      }
-      // setAbortSignalReceived(false);
-      // loadTransactionSignatures();
+      setAbortSignalReceived(false);
+      loadTransactionSignatures();
+    }
+
+    return () => {
+      setSelectedAsset(undefined);
     }
   }, [
-    connection.endpoint,
-    customConnection,
-    userTokens
+    publicKey,
+    customConnection
   ]);
 
-  // Hook on the wallet connect/disconnect
+  // Hook on wallet disconnect
   useEffect(() => {
+
     if (previousWalletConnectState !== connected) {
+      // Connection changed
       if (!previousWalletConnectState && connected) {
-        console.log('Fetching account stats...');
-        if (customConnection) {
-          console.log('Calling loadUserTokens() on wallet connect...');
-          loadUserTokens();
-          // setAbortSignalReceived(false);
-          // loadTransactionSignatures();
-        }
+        // Connecting
+        console.log('Execute on wallet connect...');
+        // setAbortSignalReceived(false);
+        // loadTransactionSignatures();
       } else if (previousWalletConnectState && !connected) {
-        console.log('Deactivating account stats...');
-        setAbortSignalReceived(true);
-        setShouldGetTxDetails(false);
-        setLoadingTransactions(false);
-        setUserTokens([]);
+        // disconnecting
+        console.log('Execute on wallet disconnect...');
+        // setAbortSignalReceived(true);
+        // setShouldGetTxDetails(false);
+        // setLoadingTransactions(false);
+        // setSelectedAsset(undefined);
       }
     }
   }, [
     connected,
-    userTokens,
-    customConnection,
     previousWalletConnectState
   ]);
 
@@ -225,19 +160,15 @@ export const AccountsView = () => {
       // Process current signature (signatures[stats.index].signature)
       // if its corresponding detail is not loaded into the transactions array
       const currentSignature = signatures[stats.index];
-      // console.log('currentSignature:', currentSignature);
+      if (!currentSignature) { return; }
       const needFetching = signatures.length > 0 &&
                            (!transactions || transactions.length === 0 ||
                             !transactions.some(tx => tx.signature === currentSignature.signature));
-      // console.log('needFetching:', needFetching);
-      // console.log('stats.index:', stats.index);
-      // console.log('signatures.length:', signatures.length);
 
       // If no need to fetch the Tx detail and the signature is the last one in the list
       if (!needFetching && stats.index >= (signatures.length - 1)) {
         // Set the state to stop and finish the whole process
         setLoadingTransactions(false);
-        // TODO: update stats
         return;
       }
 
@@ -247,13 +178,24 @@ export const AccountsView = () => {
             if (confirmedTx) {
               const transWithSignature = new TransactionWithSignature(
                 currentSignature.signature,
-                confirmedTx
+                confirmedTx,
+                0
               );
-              setTransactions(items => [...items, transWithSignature]);
-              // Increment index to select next signature
-              dispatch(new IncrementTransactionIndexAction());
-              setShouldGetTxDetails(true);
-              // TODO: update stats
+              let timestamp: Timestamp = "unavailable";
+              customConnection.getBlockTime(confirmedTx.slot)
+                .then(bTime => {
+                  timestamp = bTime !== null ? bTime : "unavailable";
+                })
+                .catch(error => {
+                  console.error(error, { slot: `${confirmedTx.slot}` });
+                })
+                .finally(() => {
+                  transWithSignature.timestamp = timestamp;
+                  setTransactions([...transactions, transWithSignature]);
+                  // Increment index to select next signature
+                  dispatch(new IncrementTransactionIndexAction());
+                  setShouldGetTxDetails(true);
+                });
             }
           })
       } else {
@@ -261,7 +203,6 @@ export const AccountsView = () => {
         dispatch(new IncrementTransactionIndexAction());
         // Set state to load next Tx details
         setShouldGetTxDetails(true);
-        // TODO: update stats
       }
     }
   }, [
@@ -275,6 +216,7 @@ export const AccountsView = () => {
   ]);
 
   // Keep stats in sync when transaction's list changes
+  /*
   useEffect(() => {
     if (publicKey && transactions) {
       const incoming = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[1].pubkey.toBase58() === publicKey.toBase58());
@@ -289,30 +231,147 @@ export const AccountsView = () => {
     publicKey,
     transactions
   ]);
+  */
+
+  const renderTokenList = (
+    <>
+    {userTokens && userTokens.length ? (
+      userTokens.map((token, index) => {
+        const onTokenAccountClick = () => {
+          console.log(`Selected: ${token.symbol} (${token.name}) =>`, shortenAddress(token.address));
+          setSelectedAsset(token);
+          setDtailsPanelOpen(true);
+        };
+        return (
+          <div key={`${index + 50}`} onClick={onTokenAccountClick}
+               className={selectedAsset && selectedAsset.address == token.address ? 'transaction-list-row selected' : 'transaction-list-row'}>
+            <div className="icon-cell">
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img
+                    alt={`${token.name}`}
+                    width={30}
+                    height={30}
+                    src={token.logoURI}
+                  />
+                ) : (
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "30", display: "inline-flex" }}
+                  />
+                )}
+              </div>
+            </div>
+            <div className="description-cell">
+              <div className="title text-truncate">{token.symbol}</div>
+              <div className="subtitle text-truncate">{token.name}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">
+                {getTokenAmountAndSymbolByTokenAddress(token.balance || 0, token.address, true)}
+              </div>
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <>
+      <p>{t('general.not-connected')}</p>
+      </>
+    )}
+
+    </>
+  );
 
   const renderTransactions = () => {
     return transactions?.map((trans) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} />;
+      return <TransactionItemView key={trans.signature} transaction={trans} publicKey={publicKey} />;
     });
   };
 
   return (
     <>
       <div className="container main-container">
+
         <div className="interaction-area">
-          <p>Activity:&nbsp;{loadingTransactions ? (
-            <>
-              <SyncOutlined spin />
-              &nbsp;<span role="link" className="secondary-link" onClick={abortSwitch}>Stop</span>
-            </>
+
+          {publicKey ? (
+            <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+
+              {/* Left / top panel*/}
+              <div className="tokens-container">
+                <div className="transactions-heading">
+                  <span className="title">{t('assets.screen-title')}</span>
+                </div>
+                <div className="inner-container">
+                  <div className="item-block vertical-scroll">
+                    {renderTokenList}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right / down panel */}
+              <div className="transaction-list-container">
+                <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                <div className="inner-container">
+                  <div className="stats-row">
+                    <div className="fetch-proggress">
+                      <Progress percent={Math.round(percentual(stats.index + 1, stats.total))} size="small"
+                                status={loadingTransactions ? "active" : "normal"} />
+                    </div>
+                    <div className="fetch-control">{loadingTransactions ? (
+                      <>
+                        <SyncOutlined spin />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={abortSwitch}>Stop</span>
+                      </>
+                      ) : stats.index < stats.total ? (
+                      <>
+                        <PauseCircleOutlined className="fg-dark-active" />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={resumeSwitch}>Resume</span>
+                      </>
+                      ) : (
+                      <>
+                        <CheckCircleOutlined className="fg-success" />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={reloadSwitch}>Reload</span>
+                      </>
+                      )}
+                    </div>
+                    {/*  */}
+                    <div className="item-list-header compact">
+                      <div className="header-row">
+                        <div className="std-table-cell first-cell">&nbsp;</div>
+                        <div className="std-table-cell responsive-cell">Src/Dst</div>
+                        <div className="std-table-cell fixed-width-120">Amount</div>
+                        <div className="std-table-cell fixed-width-150">Post Balance</div>
+                        <div className="std-table-cell fixed-width-80">Date</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="transaction-list-data-wrapper vertical-scroll">
+                    <div className="activity-list">
+                      {connected && (
+                        transactions && transactions.length ? (
+                          <div className="item-list-body compact">
+                            {renderTransactions()}
+                          </div>
+                        ) : loadingTransactions ? (
+                          <p>Loading transactions...</p>
+                        ) : (
+                          <p>No transactions</p>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           ) : (
-            <CheckCircleOutlined className="fg-success" />
+            <p>{t("general.not-connected")}.</p>
           )}
-          </p>
-          <p>Abort signal received: {abortSignalReceived ? 'true' : 'false'}</p>
-          <p>Tx: {stats.total ? stats.index + 1 : 0} of {stats.total} | incoming: {stats.incoming} outgoing: {stats.outgoing}</p>
-          <div>{renderTransactions()}</div>
+
         </div>
+
       </div>
       <PreFooter />
     </>

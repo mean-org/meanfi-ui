@@ -61,7 +61,7 @@ export const WrapView = () => {
   useEffect(() => {
 
     const getAccountBalance = (): number => {
-      return (account.lamports || 0) / LAMPORTS_PER_SOL;
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
     }
 
     if (account?.lamports !== previousBalance || !nativeBalance) {
@@ -422,7 +422,7 @@ export const WrapView = () => {
                               nativeBalance - wrapFees.blockchainFee,
                               WRAPPED_SOL_MINT_ADDRESS,
                               true,
-                              true
+                              false
                             )
                           );
                         }}
@@ -513,9 +513,11 @@ export const WrapView = () => {
                           getTokenAmountAndSymbolByTokenAddress(
                             parseFloat(wrapAmount) >=
                               (wrapFees.blockchainFee as number)
-                              ? parseFloat(wrapAmount) - wrapFees.blockchainFee
+                              ? parseFloat(wrapAmount)
                               : 0,
-                            WRAPPED_SOL_MINT_ADDRESS
+                            WRAPPED_SOL_MINT_ADDRESS,
+                            false,
+                            true
                           )
                         : "0"
                     }`

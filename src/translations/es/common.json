@@ -14,6 +14,12 @@
 		"label-right": "Saldo",
 		"modal-title": "Añadir fondos"
 	},
+	"assets": {
+		"history-panel-title": "Transacciones de activos",
+		"no-asset-selected": "Seleccione un activo para ver el historial de transacciones",
+		"no-transactions": "No hay transacciones para el activo seleccionado",
+		"screen-title": "Saldos de activos"
+	},
 	"close-stream": {
 		"available-funds": "Available funds",
 		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",

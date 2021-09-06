@@ -1,12 +1,19 @@
 import { TokenInfo } from "@solana/spl-token-registry";
+import { ConfirmedTransaction } from "@solana/web3.js";
 import { type } from "../utils/store-types";
+
+export type Timestamp = number | "unavailable";
+
+export class TransactionWithSignature {
+    constructor(
+        public signature: string,
+        public confirmedTransaction: ConfirmedTransaction,
+        public timestamp: Timestamp
+    ) { }
+}
 
 export interface UserTokenAccount extends TokenInfo {
     balance?: number;
-}
-
-export interface Action {
-    type: string;
 }
 
 export class TransactionStats {
@@ -23,6 +30,9 @@ export class TransactionStats {
 }
 
 export const defaultTransactionStats = new TransactionStats();
+export interface Action {
+    type: string;
+}
 
 export const ActionTypes = {
     RESET_STATS:                    type('[Accounts] Reset Tx stats'),

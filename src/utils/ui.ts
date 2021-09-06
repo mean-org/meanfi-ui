@@ -321,6 +321,27 @@ export const isToday = (someDate: string): boolean => {
       inputDate.getFullYear() === today.getFullYear()
 }
 
+export function displayTimestamp(
+    unixTimestamp: number,
+    shortTimeZoneName = false
+): string {
+    const expireDate = new Date(unixTimestamp);
+    const dateString = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(expireDate);
+    const timeString = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hourCycle: "h23",
+      timeZoneName: shortTimeZoneName ? "short" : "long",
+    }).format(expireDate);
+
+    return `${dateString} at ${timeString}`;
+}
+
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
     let inputAmount = amount ? parseFloat(amount) : 0;
