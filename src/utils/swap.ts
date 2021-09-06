@@ -1,4 +1,4 @@
-import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Market, OpenOrders, _OPEN_ORDERS_LAYOUT_V2 } from '@project-serum/serum/lib/market';
 import { NATIVE_SOL, TOKENS, getTokenByMintAddress } from './tokens';
 import { TokenAmount } from '../utils/safe-math';
@@ -14,6 +14,7 @@ import {
 } from './utils';
 import BN from 'bn.js';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { Constants, PublicKeys } from 'money-streaming/lib/types';
 
 const BufferLayout = require('buffer-layout');
 
@@ -221,76 +222,17 @@ export function forecastSell(market: any, orderBook: any, coinIn: any, slippage:
   };
 }
 
-// export async function wrap(
-//   axios: any,
-//   connection: Connection,
-//   wallet: any,
-//   fromCoinMint: string,
-//   toCoinMint: string,
-//   fromTokenAccount: string,
-//   toTokenAccount: string,
-//   amount: string
-
-// ) {
-//   const transaction = new Transaction();
-//   const signers: Account[] = [];
-//   const owner = wallet.publicKey;
-//   const fromCoin = getTokenByMintAddress(fromCoinMint);
-//   const amountOut = new TokenAmount(amount, fromCoin?.decimals, false);
-
-//   const newFromTokenAccount = await createAssociatedTokenAccountIfNotExist(
-//     fromTokenAccount,
-//     owner,
-//     fromCoinMint,
-//     transaction
-//   );
-
-//   const newToTokenAccount = await createAssociatedTokenAccountIfNotExist(
-//     toTokenAccount, 
-//     owner, 
-//     toCoinMint, 
-//     transaction
-//   );
-
-//   const solletRes = await axios.post('https://swap.sollet.io/api/swap_to', {
-//     address: newToTokenAccount.toString(),
-//     blockchain: 'sol',
-//     coin: toCoinMint,
-//     size: 1,
-//     wusdtToUsdt: true
-//   });
-
-//   const { address, maxSize } = solletRes.result;
-
-//   if (!address) {
-//     throw new Error('Unwrap not available now');
-//   }
-
-//   if (parseFloat(amount) > maxSize) {
-//     throw new Error(`Max allow ${maxSize}`);
-//   }
-
-//   transaction.add(
-//     transfer({
-//       source: newFromTokenAccount, 
-//       destination: new PublicKey(address), 
-//       owner, 
-//       amount: parseFloat(amountOut.fixed())
-//     })
-//   );
-
-//   return await sendTransaction(connection, wallet, transaction, signers);
-// }
-
 export const wrap = async (
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: BN
+  amount: BN,
+  feeAccount: PublicKey,
+  fee: BN
 
 ): Promise<Transaction> => {
 
-  const signers = new Array<Signer>(...[account]);
+  const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   
   const tx = new Transaction().add(
@@ -320,14 +262,18 @@ export const wrap = async (
 
   if (!atokenAccountInfo) {
     tx.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        atokenKey,
-        wallet.publicKey,
-        wallet.publicKey          
-      )
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: atokenKey, isSigner: false, isWritable: true },
+          { pubkey: feeAccount, isSigner: false, isWritable: false },
+          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
     );
   }
 
@@ -339,6 +285,44 @@ export const wrap = async (
       wallet.publicKey,
       [],
       amount.toNumber()
+    )
+  );
+
+  const feeAccountToken = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    WRAPPED_SOL_MINT,
+    feeAccount,
+  );
+
+  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
+
+  if (!feeAccountTokenInfo) {
+    tx.add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
+          { pubkey: feeAccount, isSigner: false, isWritable: false },
+          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+  }
+  
+  tx.add(
+    // Transfer fees
+    Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      atokenKey,
+      feeAccountToken, // msp ops token account
+      wallet.publicKey,
+      [],
+      fee.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
@@ -347,7 +331,7 @@ export const wrap = async (
       wallet.publicKey,
       []
     )
-  );
+  )
 
   tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
@@ -364,11 +348,13 @@ export const unwrap = async(
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: BN
+  amount: BN,
+  feeAccount: PublicKey,
+  fee: BN
   
 ): Promise<Transaction> => {
 
-  const signers = new Array<Signer>(...[account]);
+  const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   const atokenKey = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -376,6 +362,8 @@ export const unwrap = async(
     WRAPPED_SOL_MINT,
     wallet.publicKey
   );
+
+  const unwrapAcount = amount.sub(fee);
 
   const tx = new Transaction().add(
     SystemProgram.createAccount({
@@ -397,7 +385,44 @@ export const unwrap = async(
       account.publicKey,
       wallet.publicKey,
       [],
-      amount.toNumber()
+      unwrapAcount.toNumber()
+    )
+  );
+
+  const feeAccountToken = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    WRAPPED_SOL_MINT,
+    feeAccount,
+  );
+
+  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
+
+  if (!feeAccountTokenInfo) {
+    tx.add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
+          { pubkey: feeAccount, isSigner: false, isWritable: false },
+          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+  }
+
+  tx.add(
+    Token.createTransferInstruction(
+      TOKEN_PROGRAM_ID,
+      atokenKey,
+      feeAccountToken,
+      wallet.publicKey,
+      [],
+      fee.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
