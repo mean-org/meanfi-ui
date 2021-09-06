@@ -295,76 +295,80 @@ export const AccountsView = () => {
 
         <div className="interaction-area">
 
-          <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+          {publicKey ? (
+            <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-            {/* Left / top panel*/}
-            <div className="tokens-container">
-              <div className="transactions-heading">
-                <span className="title">{t('assets.screen-title')}</span>
-              </div>
-              <div className="inner-container">
-                <div className="item-block vertical-scroll">
-                  {renderTokenList}
+              {/* Left / top panel*/}
+              <div className="tokens-container">
+                <div className="transactions-heading">
+                  <span className="title">{t('assets.screen-title')}</span>
+                </div>
+                <div className="inner-container">
+                  <div className="item-block vertical-scroll">
+                    {renderTokenList}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right / down panel */}
-            <div className="transaction-list-container">
-              <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
-              <div className="inner-container">
-                <div className="stats-row">
-                  <div className="fetch-proggress">
-                    <Progress percent={Math.round(percentual(stats.index + 1, stats.total))} size="small"
-                              status={loadingTransactions ? "active" : "normal"} />
+              {/* Right / down panel */}
+              <div className="transaction-list-container">
+                <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                <div className="inner-container">
+                  <div className="stats-row">
+                    <div className="fetch-proggress">
+                      <Progress percent={Math.round(percentual(stats.index + 1, stats.total))} size="small"
+                                status={loadingTransactions ? "active" : "normal"} />
+                    </div>
+                    <div className="fetch-control">{loadingTransactions ? (
+                      <>
+                        <SyncOutlined spin />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={abortSwitch}>Stop</span>
+                      </>
+                      ) : stats.index < stats.total ? (
+                      <>
+                        <PauseCircleOutlined className="fg-dark-active" />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={resumeSwitch}>Resume</span>
+                      </>
+                      ) : (
+                      <>
+                        <CheckCircleOutlined className="fg-success" />&nbsp;
+                        <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={reloadSwitch}>Reload</span>
+                      </>
+                      )}
+                    </div>
+                    {/*  */}
+                    <div className="item-list-header compact">
+                      <div className="header-row">
+                        <div className="std-table-cell first-cell">&nbsp;</div>
+                        <div className="std-table-cell responsive-cell">Src/Dst</div>
+                        <div className="std-table-cell fixed-width-120">Amount</div>
+                        <div className="std-table-cell fixed-width-150">Post Balance</div>
+                        <div className="std-table-cell fixed-width-80">Date</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="fetch-control">{loadingTransactions ? (
-                    <>
-                      <SyncOutlined spin />&nbsp;
-                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={abortSwitch}>Stop</span>
-                    </>
-                    ) : stats.index < stats.total ? (
-                    <>
-                      <PauseCircleOutlined className="fg-dark-active" />&nbsp;
-                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={resumeSwitch}>Resume</span>
-                    </>
-                    ) : (
-                    <>
-                      <CheckCircleOutlined className="fg-success" />&nbsp;
-                      <span role="link" className="secondary-link font-size-60 text-uppercase" onClick={reloadSwitch}>Reload</span>
-                    </>
-                    )}
-                  </div>
-                  {/*  */}
-                  <div className="item-list-header compact">
-                    <div className="header-row">
-                      <div className="std-table-cell first-cell">&nbsp;</div>
-                      <div className="std-table-cell responsive-cell">Src/Dst</div>
-                      <div className="std-table-cell fixed-width-120">Amount</div>
-                      <div className="std-table-cell fixed-width-150">Post Balance</div>
-                      <div className="std-table-cell fixed-width-80">Date</div>
+                  <div className="transaction-list-data-wrapper vertical-scroll">
+                    <div className="activity-list">
+                      {connected && (
+                        transactions && transactions.length ? (
+                          <div className="item-list-body compact">
+                            {renderTransactions()}
+                          </div>
+                        ) : loadingTransactions ? (
+                          <p>Loading transactions...</p>
+                        ) : (
+                          <p>No transactions</p>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="transaction-list-data-wrapper vertical-scroll">
-                  <div className="activity-list">
-                    {connected && (
-                      transactions && transactions.length ? (
-                        <div className="item-list-body compact">
-                          {renderTransactions()}
-                        </div>
-                      ) : loadingTransactions ? (
-                        <p>Loading transactions...</p>
-                      ) : (
-                        <p>No transactions</p>
-                      )
-                    )}
-                  </div>
-                </div>
               </div>
-            </div>
 
-          </div>
+            </div>
+          ) : (
+            <p>{t("general.not-connected")}.</p>
+          )}
 
         </div>
 
