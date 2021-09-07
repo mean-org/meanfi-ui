@@ -26,9 +26,9 @@ import {
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionOperationDescription,
+  getTxFeeAmount,
   isToday,
-  PaymentRateTypeOption,
-  percentage
+  PaymentRateTypeOption
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -123,19 +123,6 @@ export const RepeatingPayment = () => {
       });
     }
   }, [connection, repeatingPaymentFees]);
-
-  const getFeeAmount = (amount: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (repeatingPaymentFees) {
-      if (repeatingPaymentFees.mspPercentFee) {
-        fee = percentage(repeatingPaymentFees.mspPercentFee, inputAmount);
-      } else if (repeatingPaymentFees.mspFlatFee) {
-        fee = repeatingPaymentFees.mspFlatFee;
-      }
-    }
-    return fee;
-  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -304,8 +291,8 @@ export const RepeatingPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           // parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
-           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
+           // parseFloat(fromCoinAmount) <= tokenBalance - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
             ? true
             : false;
   }
@@ -339,7 +326,7 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getFeeAmount(fromCoinAmount)
+      : tokenBalance < getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
       ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -1050,14 +1037,14 @@ export const RepeatingPayment = () => {
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}

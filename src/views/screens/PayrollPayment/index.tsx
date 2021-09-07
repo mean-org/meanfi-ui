@@ -27,9 +27,9 @@ import {
   getRateIntervalInSeconds,
   getTimesheetRequirementOptionLabel,
   getTransactionOperationDescription,
+  getTxFeeAmount,
   isToday,
-  PaymentRateTypeOption,
-  percentage
+  PaymentRateTypeOption
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -108,6 +108,7 @@ export const PayrollPayment = () => {
     }
   }, [
     account,
+    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
@@ -127,19 +128,6 @@ export const PayrollPayment = () => {
       });
     }
   }, [connection, payrollFees]);
-
-  const getFeeAmount = (amount: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (payrollFees) {
-      if (payrollFees.mspPercentFee) {
-        fee = percentage(payrollFees.mspPercentFee, inputAmount);
-      } else if (payrollFees.mspFlatFee) {
-        fee = payrollFees.mspFlatFee;
-      }
-    }
-    return fee;
-  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -309,8 +297,8 @@ export const PayrollPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           // parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
-           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
+           // parseFloat(fromCoinAmount) <= tokenBalance - getTxFeeAmount(payrollFees, fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getTxFeeAmount(payrollFees, fromCoinAmount)
             ? true
             : false;
   }
@@ -344,7 +332,7 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getFeeAmount(fromCoinAmount)
+      : tokenBalance < getTxFeeAmount(payrollFees, fromCoinAmount)
       ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -1096,14 +1084,14 @@ export const PayrollPayment = () => {
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}

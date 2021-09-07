@@ -245,7 +245,7 @@ function wrapNativeAccount(
       address: pubkey,
       mint: WRAPPED_SOL_MINT,
       owner: pubkey,
-      amount: new u64(account.lamports),
+      amount: new u64(account.lamports || 0),
       delegate: null,
       delegatedAmount: new u64(0),
       isInitialized: true,
