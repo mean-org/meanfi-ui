@@ -116,6 +116,7 @@ export const Streams = () => {
     }
   }, [
     account,
+    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
@@ -135,6 +136,11 @@ export const Streams = () => {
 
     const updateData = async () => {
       if (streamDetail && streamDetail.escrowUnvestedAmount) {
+
+        if (isStreamScheduled(streamDetail.startUtc as string)) {
+          return;
+        }
+
         const clonedDetail = Object.assign({}, streamDetail);
         const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
         const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
@@ -486,13 +492,17 @@ export const Streams = () => {
     return title;
   }
 
+  const isStreamScheduled = (startUtc: string): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const streamStartDate = new Date(startUtc);
+    return streamStartDate > nowUtc ? true : false;
+  }
+
   const getStartDateLabel = (): string => {
     let label = t('streams.stream-detail.label-start-date-default');
     if (streamDetail) {
-      const now = new Date().toUTCString();
-      const nowUtc = new Date(now);
-      const streamStartDate = new Date(streamDetail?.startUtc as string);
-      if (streamStartDate > nowUtc) {
+      if (isStreamScheduled(streamDetail.startUtc as string)) {
         if (isOtp()) {
           label = t('streams.stream-detail.label-start-date-scheduled-otp');
         } else {

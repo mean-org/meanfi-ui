@@ -103,6 +103,7 @@ export const RepeatingPayment = () => {
     }
   }, [
     account,
+    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
