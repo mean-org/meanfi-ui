@@ -13,6 +13,7 @@ export class TransactionWithSignature {
 }
 
 export interface UserTokenAccount extends TokenInfo {
+    ataAddress?: string;    // Associated Token Account Address
     balance?: number;
 }
 
@@ -61,5 +62,16 @@ export class MoveTxIndexToEndAction implements Action {
     payload = null;
 }
 
-export type TransactionActions = ResetStatsAction | SetStatsAction | IncrementTransactionIndexAction
-                                | MoveTxIndexToEndAction;
+export type TransactionActions = ResetStatsAction | SetStatsAction | IncrementTransactionIndexAction | MoveTxIndexToEndAction;
+
+
+export const isNativeSolAccountUsed = (transaction: TransactionWithSignature): boolean => {
+  const meta = transaction.confirmedTransaction.meta;
+  if (meta) {
+    return (!meta.preTokenBalances || meta.preTokenBalances.length === 0) &&
+           (!meta.postTokenBalances || meta.postTokenBalances.length === 0)
+      ? true
+      : false;
+  }
+  return false;
+}

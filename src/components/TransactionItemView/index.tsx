@@ -2,7 +2,7 @@ import React from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
-import { getSolanaExplorerClusterParam, useConnection } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { Timestamp, TransactionWithSignature } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
@@ -15,7 +15,6 @@ export const TransactionItemView = (props: {
   publicKey: PublicKey | undefined;
   transaction: TransactionWithSignature;
 }) => {
-  const connection = useConnection();
 
   const isInbound = (): boolean => {
     const trans = props.transaction.confirmedTransaction.transaction;
@@ -64,8 +63,8 @@ export const TransactionItemView = (props: {
   const getTransactionItems = () => {
     const signature = props.transaction.signature?.toString();
     const meta = props.transaction.confirmedTransaction.meta;
-    const trans = props.transaction.confirmedTransaction.transaction;
-    const slot = props.transaction.confirmedTransaction.slot;
+    // const trans = props.transaction.confirmedTransaction.transaction;
+    // const slot = props.transaction.confirmedTransaction.slot;
     let amount = 0;
     let postBalance = 0;
     const preTokenBalance = meta && meta.preTokenBalances && meta.preTokenBalances.length

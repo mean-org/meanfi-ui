@@ -1,6 +1,6 @@
-import React, { useContext, useReducer } from 'react';
+import React, { useCallback, useContext, useReducer } from 'react';
 import { CheckCircleOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
-import { ConfirmedSignatureInfo, Connection } from '@solana/web3.js';
+import { ConfirmedSignatureInfo, Connection, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -8,16 +8,16 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import {
   ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction, ResetStatsAction,
-  MoveTxIndexToEndAction, SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount,
+  SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount,
   TransactionWithSignature, Timestamp
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import _ from 'lodash';
 import { Progress } from 'antd';
 import { percentual } from '../../utils/ui';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
@@ -27,7 +27,6 @@ export const AccountsView = () => {
     userTokens,
     transactions,
     detailsPanelOpen,
-    previousWalletConnectState,
     setDtailsPanelOpen,
     setTransactions
   } = useContext(AppStateContext);
@@ -46,6 +45,7 @@ export const AccountsView = () => {
   // Flow control
   const [shouldGetTxDetails, setShouldGetTxDetails] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [shouldLoadTransactions, setShouldLoadTransactions] = useState(true);
   const [abortSignalReceived, setAbortSignalReceived] = useState(false);
 
   // Data
@@ -67,10 +67,10 @@ export const AccountsView = () => {
   }, defaultTransactionStats);
 
   const abortSwitch = () => {
-    setAbortSignalReceived(value => !value);
-    setShouldGetTxDetails(false);
+    setAbortSignalReceived(true);
     setLoadingTransactions(false);
-    // dispatch(new MoveTxIndexToEndAction());
+    setShouldGetTxDetails(false);
+    setShouldLoadTransactions(false);
   }
 
   const resumeSwitch = () => {
@@ -81,45 +81,68 @@ export const AccountsView = () => {
 
   const reloadSwitch = () => {
     setAbortSignalReceived(false);
-    loadTransactionSignatures();
+    setLoadingTransactions(true);
+    setShouldLoadTransactions(true);
   }
 
-  const loadTransactionSignatures = async () => {
-    if (customConnection && publicKey && !loadingTransactions) {
-      setLoadingTransactions(true);
-      // TODO: instead of my wallet address, to fetch Txs from a particular token
-      //       Use the associated token account address
-      // TODO: Convert try -> catch to std Promise .then -> catch
-      try {
-        const sigs = await customConnection.getConfirmedSignaturesForAddress2(publicKey);
-        setSignatures(sigs);
-        const newStats = new TransactionStats();
-        newStats.index = 0;
-        newStats.total = sigs.length;
-        dispatch(new SetStatsAction(newStats));
-        console.log('transSignatures:', signatures);
-        if (sigs.length > 0) {
-          setShouldGetTxDetails(true);
-        } else {
-          setTransactions([]);
+  const selectAsset = (asset: UserTokenAccount) => {
+    console.log(`${asset.symbol} (${asset.name}) =>`, shortenAddress(asset.ataAddress || asset.address, 8));
+    setSelectedAsset(asset);
+    setDtailsPanelOpen(true);
+    if (loadingTransactions) {
+      abortSwitch();
+    }
+    setTimeout(() => {
+      reloadSwitch();
+    }, 100);
+  }
+
+  const loadTransactionSignatures = useCallback(async () => {
+    if (customConnection && publicKey && shouldLoadTransactions && !loadingTransactions) {
+      setShouldLoadTransactions(false);
+      const pk = selectedAsset &&
+                 selectedAsset.ataAddress &&
+                 selectedAsset.ataAddress !== NATIVE_SOL_MINT.toBase58()
+        ? new PublicKey(selectedAsset.ataAddress)
+        : publicKey
+      customConnection.getConfirmedSignaturesForAddress2(pk)
+        .then(sigs => {
+          setSignatures(sigs);
+          const newStats = new TransactionStats();
+          newStats.index = 0;
+          newStats.total = sigs.length;
+          dispatch(new SetStatsAction(newStats));
+          if (sigs.length > 0) {
+            setShouldGetTxDetails(true);
+          } else {
+            setTransactions([]);
+            dispatch(new ResetStatsAction());
+            setLoadingTransactions(false);
+          }
+          console.log('transSignatures:', sigs);
+        })
+        .catch(error => {
+          console.error(error.message, error);
+          setSignatures([]);
+          setShouldGetTxDetails(false);
           dispatch(new ResetStatsAction());
           setLoadingTransactions(false);
-        }
-      } catch (error) {
-        console.error(error.message, error);
-        setSignatures([]);
-        setShouldGetTxDetails(false);
-        dispatch(new ResetStatsAction());
-        setLoadingTransactions(false);
-      }
+        });
     }
-  }
+  }, [
+    publicKey,
+    selectedAsset,
+    customConnection,
+    loadingTransactions,
+    shouldLoadTransactions,
+    setTransactions,
+  ])
 
   // Auto execute if wallet is connected
   useEffect(() => {
 
-    if (customConnection && publicKey) {
-      setAbortSignalReceived(false);
+    if (customConnection && publicKey && shouldLoadTransactions) {
+      setLoadingTransactions(true);
       loadTransactionSignatures();
     }
 
@@ -129,42 +152,23 @@ export const AccountsView = () => {
   }, [
     publicKey,
     customConnection,
-    
-  ]);
-
-  // Hook on wallet disconnect
-  useEffect(() => {
-
-    if (previousWalletConnectState !== connected) {
-      // Connection changed
-      if (!previousWalletConnectState && connected) {
-        // Connecting
-        console.log('Execute on wallet connect...');
-        // setAbortSignalReceived(false);
-        // loadTransactionSignatures();
-      } else if (previousWalletConnectState && !connected) {
-        // disconnecting
-        console.log('Execute on wallet disconnect...');
-        // setAbortSignalReceived(true);
-        // setShouldGetTxDetails(false);
-        // setLoadingTransactions(false);
-        // setSelectedAsset(undefined);
-      }
-    }
-  }, [
-    connected,
-    previousWalletConnectState
+    shouldLoadTransactions,
+    loadTransactionSignatures
   ]);
 
   // Get transaction detail for each signature if not already loaded
   useEffect(() => {
+    if (!shouldGetTxDetails || !customConnection || !publicKey || abortSignalReceived) {
+      return;
+    }
 
-    if (shouldGetTxDetails && customConnection && publicKey && !abortSignalReceived) {
-      setShouldGetTxDetails(false);
-      // Process current signature (signatures[stats.index].signature)
-      // if its corresponding detail is not loaded into the transactions array
+    const timeout = setTimeout(() => {
       const currentSignature = signatures[stats.index];
-      if (!currentSignature) { return; }
+      if (!currentSignature) {
+        setShouldGetTxDetails(false);
+        setLoadingTransactions(false);
+        return;
+      }
       const needFetching = signatures.length > 0 &&
                            (!transactions || transactions.length === 0 ||
                             !transactions.some(tx => tx.signature === currentSignature.signature));
@@ -172,6 +176,7 @@ export const AccountsView = () => {
       // If no need to fetch the Tx detail and the signature is the last one in the list
       if (!needFetching && stats.index >= (signatures.length - 1)) {
         // Set the state to stop and finish the whole process
+        setShouldGetTxDetails(false);
         setLoadingTransactions(false);
         return;
       }
@@ -200,14 +205,19 @@ export const AccountsView = () => {
                   dispatch(new IncrementTransactionIndexAction());
                   setShouldGetTxDetails(true);
                 });
+            } else {
+              dispatch(new IncrementTransactionIndexAction());
+              setShouldGetTxDetails(true);
             }
           })
       } else {
-        // Increment index to select next signature
         dispatch(new IncrementTransactionIndexAction());
-        // Set state to load next Tx details
         setShouldGetTxDetails(true);
       }
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
   }, [
     stats,
@@ -217,6 +227,7 @@ export const AccountsView = () => {
     customConnection,
     shouldGetTxDetails,
     abortSignalReceived,
+    setTransactions
   ]);
 
   // Keep stats in sync when transaction's list changes
@@ -242,13 +253,11 @@ export const AccountsView = () => {
     {userTokens && userTokens.length ? (
       userTokens.map((token, index) => {
         const onTokenAccountClick = () => {
-          console.log(`Selected: ${token.symbol} (${token.name}) =>`, shortenAddress(token.address));
-          setSelectedAsset(token);
-          setDtailsPanelOpen(true);
+          selectAsset(token);
         };
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}
-               className={selectedAsset && selectedAsset.address == token.address ? 'transaction-list-row selected' : 'transaction-list-row'}>
+               className={selectedAsset && selectedAsset.symbol === token.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>
             <div className="icon-cell">
               <div className="token-icon">
                 {token.logoURI ? (
@@ -366,6 +375,12 @@ export const AccountsView = () => {
                       )}
                     </div>
                   </div>
+                  {selectedAsset && (
+                    <div className="stream-share-ctas font-size-70">
+                      <span className="fg-secondary-70 font-light mr-1">asset:</span><span className="font-bold fg-black mr-1">{selectedAsset.symbol}</span>
+                      <span className="fg-secondary-70 font-light mr-1">address:</span><span className="font-bold fg-black">{selectedAsset.ataAddress}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
