@@ -38,6 +38,7 @@ export interface Action {
 export const ActionTypes = {
     RESET_STATS:                    type('[Accounts] Reset Tx stats'),
     SET_STATS:                      type('[Accounts] Set new Tx stats'),
+    RESET_INDEX:                    type('[Accounts] Reset Tx index to start'),
     INCREMENT_INDEX:                type('[Accounts] Increment transaction index'),
     ROLL_INDEX:                     type('[Accounts] Move Tx index to end'),
 };
@@ -57,12 +58,19 @@ export class IncrementTransactionIndexAction implements Action {
     payload = null;
 }
 
+export class MoveTxIndexToStartAction implements Action {
+    type = ActionTypes.RESET_INDEX;
+    payload = null;
+}
+
 export class MoveTxIndexToEndAction implements Action {
     type = ActionTypes.ROLL_INDEX;
     payload = null;
 }
 
-export type TransactionActions = ResetStatsAction | SetStatsAction | IncrementTransactionIndexAction | MoveTxIndexToEndAction;
+export type TransactionActions = ResetStatsAction
+    | SetStatsAction | IncrementTransactionIndexAction
+    | MoveTxIndexToStartAction | MoveTxIndexToEndAction;
 
 
 export const isNativeSolAccountUsed = (transaction: TransactionWithSignature): boolean => {
