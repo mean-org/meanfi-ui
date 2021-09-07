@@ -8,7 +8,9 @@ import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
+// import transakSDK from '@transak/transak-sdk';
 import "./style.less";
+import { AppConfig, AppConfigService, environment } from '../../environments/environment';
 
 const QRCode = require('qrcode.react');
 
@@ -20,12 +22,32 @@ export const DepositOptions = (props: {
   const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [isSharingAddress, setIsSharingAddress] = useState(false);
+  const [isTransakActive, setIsTransakActive] = useState(false);
+
+  // Get App config
+  const [currentConfig, setCurrentConfig] = useState<AppConfig | null>(null);
+  if (!currentConfig) {
+    const config = new AppConfigService();
+    setCurrentConfig(config.getConfig());
+  }
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 250);
+  }
+
+  const enableTransak = () => {
+    setIsTransakActive(true);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 250);
+  }
+
+  const closePanels = () => {
+    setIsSharingAddress(false);
+    setIsTransakActive(false);
   }
 
   const getFtxPayLink = (): string => {
@@ -80,6 +102,25 @@ export const DepositOptions = (props: {
     }
   }
 
+  // const renderTransak = () => {
+  //   if (publicKey && currentConfig) {
+  //     const transak = new transakSDK({
+  //       apiKey: currentConfig.transakApiKey,  // Your API Key
+  //       environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
+  //       defaultCryptoCurrency: 'SOL',
+  //       walletAddress: publicKey.toBase58(), // Your customer's wallet address
+  //       themeColor: theme === 'light' ? '000000' : 'ffffff', // App theme color
+  //       fiatCurrency: 'EUR',
+  //       email: '', // Your customer's email address
+  //       redirectURL: '',
+  //       hostURL: window.location.origin,
+  //       widgetHeight: '550px',
+  //       widgetWidth: '270px'
+  //     });
+  //     transak.init();
+  //   }
+  // };
+
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -115,10 +156,10 @@ export const DepositOptions = (props: {
       visible={props.isVisible}
       onOk={props.handleClose}
       onCancel={props.handleClose}
-      afterClose={() => setIsSharingAddress(false)}
-      width={320}>
+      afterClose={closePanels}
+      width={400}>
       <div className="deposit-selector">
-        <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
+        <div className={isSharingAddress || isTransakActive ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
           {!connected && (
             <p className="fg-error">{t('deposits.not-connected')}!</p>
@@ -150,6 +191,22 @@ export const DepositOptions = (props: {
                 {t("deposits.send-from-wallet-cta-label")}
               </Button>
             </Col>
+
+            <Col span={24}>
+              <Button
+                block
+                className="deposit-option"
+                type="default"
+                shape="round"
+                size="middle"
+                disabled={!connected}
+                onClick={enableTransak}>
+                <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
+                transak
+                {t("deposits.transak-cta-label")}
+              </Button>
+            </Col>
+
             <Col span={24}>
               <Button
                 block
@@ -188,7 +245,7 @@ export const DepositOptions = (props: {
             </Col>
           </Row>
         </div>
-        <div className={isSharingAddress ? "address-share show" : "address-share hide"} id="address-share">
+        <div className={isSharingAddress ? "option-detail-panel show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -199,7 +256,6 @@ export const DepositOptions = (props: {
                   renderAs="svg"/>
               )}
             </div>
-
             <div className="transaction-field medium">
               <div className="transaction-field-row main-row">
                 <span className="input-left recipient-field-wrapper">
@@ -214,15 +270,29 @@ export const DepositOptions = (props: {
                 </div>
               </div>
             </div>
-
             <p className="font-light font-size-75 px-4 mb-3">{t('deposits.address-share-disclaimer')}</p>
-
             <Button
               className="deposit-option"
               type="default"
               shape="round"
               size="middle"
               onClick={() => setIsSharingAddress(false)}>
+              {t('general.cta-finish')}
+            </Button>
+          </div>
+        </div>
+        <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
+          <div className="mb-3">
+            {/* {renderTransak()} */}
+            Transak options will display here
+          </div>
+          <div className="text-center">
+            <Button
+              className="deposit-option"
+              type="default"
+              shape="round"
+              size="middle"
+              onClick={() => setIsTransakActive(false)}>
               {t('general.cta-finish')}
             </Button>
           </div>

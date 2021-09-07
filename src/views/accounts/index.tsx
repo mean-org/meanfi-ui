@@ -87,6 +87,9 @@ export const AccountsView = () => {
   const loadTransactionSignatures = async () => {
     if (customConnection && publicKey && !loadingTransactions) {
       setLoadingTransactions(true);
+      // TODO: instead of my wallet address, to fetch Txs from a particular token
+      //       Use the associated token account address
+      // TODO: Convert try -> catch to std Promise .then -> catch
       try {
         const sigs = await customConnection.getConfirmedSignaturesForAddress2(publicKey);
         setSignatures(sigs);
@@ -125,7 +128,8 @@ export const AccountsView = () => {
     }
   }, [
     publicKey,
-    customConnection
+    customConnection,
+    
   ]);
 
   // Hook on wallet disconnect

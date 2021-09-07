@@ -83,7 +83,8 @@
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
-		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange"
+		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
+		"transak-cta-label": "Transak"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
@@ -289,7 +290,9 @@
 			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
 			"beneficiary-receives": "El beneficiario recibe",
 			"min-recommended-amount": "Cantidad mínima recomendada",
+			"price-impact": "Price impact",
 			"recipient-receives": "El destinatario recibe",
+			"slippage": "Slippage",
 			"transaction-fee": "Tarifa de transacción",
 			"you-receive": "Recibes"
 		},
