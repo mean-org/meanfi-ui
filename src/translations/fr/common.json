@@ -5,7 +5,7 @@
 		"explorer-link": "Voir dans Solana Explorer",
 		"modal-title": "Compte",
 		"network-unknown": "Inconnu",
-		"streams-tooltip": "Cliquez pour mettre à jour les transferts",
+		"streams-tooltip": "Click pour mettre à jour les transferts",
 		"wallet-change": "Changement",
 		"wallet-provider": "Connecté avec"
 	},
@@ -148,7 +148,7 @@
 		"back-to-my-streams-cta": "Retour à Mes transferts",
 		"create-new-stream-cta": "Créer un nouveau transfert",
 		"lookup-stream-cta-tooltip": "Recherche de transfert",
-		"screen-title": "Mes transferts d'argent",
+		"screen-title": "Mes Transferts d'argent",
 		"stream-activity": {
 			"action-deposit": "Dépôt",
 			"action-withdraw": "Retirer",
@@ -292,7 +292,7 @@
 			"min-recommended-amount": "Montant minimum recommandé",
 			"price-impact": "Price impact",
 			"recipient-receives": "Le destinataire reçoit",
-			"slippage": "Slippage",
+			"slippage": "Tolérance de slippage",
 			"transaction-fee": "Frais de transaction",
 			"you-receive": "Vous recevez"
 		},

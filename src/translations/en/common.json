@@ -84,7 +84,7 @@
 		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
 		"send-from-wallet-cta-label": "Send from Wallet/Exchange",
-		"transak-cta-label": "Transak"
+		"transak-cta-label": "Buy Crypto with Transak"
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
@@ -292,7 +292,7 @@
 			"min-recommended-amount": "Recommended minimum amount",
 			"price-impact": "Price impact",
 			"recipient-receives": "Minimum received",
-			"slippage": "Slippage",
+			"slippage": "Slippage tolerance",
 			"transaction-fee": "Transaction fee",
 			"you-receive": "You receive"
 		},

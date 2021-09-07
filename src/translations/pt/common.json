@@ -148,7 +148,7 @@
 		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
 		"create-new-stream-cta": "Criar nova transferência",
 		"lookup-stream-cta-tooltip": "Transferência de pesquisa",
-		"screen-title": "Minhas transferências de dinheiro",
+		"screen-title": "Minhas Transferências de dinheiro",
 		"stream-activity": {
 			"action-deposit": "Deposita",
 			"action-withdraw": "Retirar",
@@ -292,7 +292,7 @@
 			"min-recommended-amount": "Quantidade mínima recomendada",
 			"price-impact": "Price impact",
 			"recipient-receives": "O destinatário recebe",
-			"slippage": "Slippage",
+			"slippage": "Tolerância de Deslizamento",
 			"transaction-fee": "Taxa de transação",
 			"you-receive": "Tu recebes"
 		},
