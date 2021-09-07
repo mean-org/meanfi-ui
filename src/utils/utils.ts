@@ -2,7 +2,7 @@ import BN from 'bn.js';
 import { useCallback, useState } from "react";
 import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, PublicKey, Signer, SimulatedTransactionResponse, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
+import { Account, Connection, Keypair, PublicKey, Signer, SimulatedTransactionResponse, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
@@ -613,7 +613,7 @@ export async function createProgramAccountIfNotExist(
   lamports: number | null,
   layout: any,
   transaction: Transaction,
-  signer: Array<Signer>
+  signer: Signer[]
 
 ) {
 
@@ -622,7 +622,7 @@ export async function createProgramAccountIfNotExist(
   if (account) {
     publicKey = new PublicKey(account);
   } else {
-    const newAccount = new Account();
+    const newAccount = Keypair.generate();
     publicKey = newAccount.publicKey;
 
     transaction.add(

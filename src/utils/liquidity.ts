@@ -11,15 +11,11 @@ import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
 import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_markets'
 
-export const getLiquidityPools = async (
-  connection: Connection,
-  // fromMint: PublicKey,
-  // toMint: PublicKey
-) => {
+export const getLiquidityPools = async (connection: Connection) => {
   
   let liquidityPools = {} as any;
-  let ammAll: any = []; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-  let marketAll: any = []; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
+  let ammAll: any; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
+  let marketAll: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 
   // let LIQUIDITY_POOLS = LIQUIDITY_POOLS.filter(lp => {
   //   return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
@@ -286,6 +282,8 @@ export const getLiquidityPools = async (
       }
     });
   }
+
+  console.log(liquidityPools);
 
   return liquidityPools;
 };
