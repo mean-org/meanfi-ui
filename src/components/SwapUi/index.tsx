@@ -11,7 +11,7 @@ import { Constants, MSP_ACTIONS, PublicKeys, TransactionFees } from "money-strea
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SignatureStatus, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
@@ -98,16 +98,22 @@ export const SwapUi = () => {
   });
 
   // Get Tx fees
-  useMemo(() => {
+  useEffect(() => {
 
     if (!connection) { return; }
 
-    calculateActionFees(connection, MSP_ACTIONS.swapTokens)
+    const timeout = setTimeout(() => {
+      calculateActionFees(connection, MSP_ACTIONS.swapTokens)
       .then(values => {
         setSwapFees(values);
         console.log('fees', values);
       })
       .catch(_error => { console.log(_error); });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
 
   }, [
     connection
@@ -401,25 +407,8 @@ export const SwapUi = () => {
                       (info.quoteMint.toBase58() === fromAddress && info.baseMint.toBase58() === toAddress)
                     ) {
                       newMarketKey = new PublicKey(address);
-                      break;
                     }  
                   }
-                }
-
-                const liquidityListV4 = getPoolListByTokenMintAddresses(
-                  fromMint.equals(WRAPPED_SOL_MINT) ? NATIVE_SOL_MINT.toBase58() : fromMint.toBase58(),
-                  toMint.equals(WRAPPED_SOL_MINT) ? NATIVE_SOL_MINT.toBase58() : toMint.toBase58(),
-                  undefined
-                );
-
-                // console.log('liquidityListV4', liquidityListV4);
-
-                if (liquidityListV4.length === 1 && liquidityListV4[0].official) {
-                  newMarketKey = new PublicKey(liquidityListV4[0].serumMarket);
-                } else if (liquidityListV4.length > 1) {
-                  const marketAddress = poolInfos.filter((item: LiquidityPoolInfo) =>
-                    liquidityListV4.find((liquidityItem) => liquidityItem.ammId === item.ammId)).serumMarket;
-                  newMarketKey = new PublicKey(marketAddress);
                 }
  
                 if (!newMarketKey) {
@@ -439,7 +428,7 @@ export const SwapUi = () => {
                       return;
                     }
 
-                    getMultipleAccounts(connection, [marketInfo.bids, marketInfo.asks], connection.commitment)
+                    getMultipleAccounts(connection, [marketInfo.bids, marketInfo.asks], 'confirmed')
                       .then((accounts) => {
 
                         if (!accounts || accounts.length < 2) {
@@ -448,26 +437,12 @@ export const SwapUi = () => {
                           return;
                         }
 
-                        const asks: number[] = [];
-                        const bids: number[] = [];
                         const orderBooks = [];
 
                         for (let info of accounts) {
                           if (info) {
                             const data = info.account.data;
                             const orderbook = Orderbook.decode(marketInfo, data);
-                            const { isBids, slab } = orderbook;
-
-                            if (isBids) {
-                              for (const item of slab.items(true)) {
-                                bids.push(marketInfo.priceLotsToNumber(item.key.ushrn(64)) || 0)
-                              }
-                            } else {
-                              for (const item of slab.items(false)) {
-                                asks.push(marketInfo.priceLotsToNumber(item.key.ushrn(64)) || 0)
-                              }
-                            }
-                            
                             orderBooks.push(orderbook);
                           }        
                         }
@@ -1394,24 +1369,16 @@ export const SwapUi = () => {
 
   const confirmTx = useCallback(async (signature: string) => {
 
-    return connection.confirmTransaction(signature, 'confirmed')
-      .then((response) => {
-        if (response && response.value && !response.value.err) {
-          console.log('confirmTransaction result:', response.value);
+    return connection.getSignatureStatus(signature)
+      .then((status) => { 
+        if(status.value && status.value.confirmationStatus === 'confirmed') {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
           });
-          return response.value;
-  
-        } else if (response && response.value && response.value.err) {
-          console.log('Error: ', response.value.err);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return undefined;
+          return signature;
         }
+        return undefined;
       })
       .catch(_error => {
         setTransactionStatus({
@@ -1420,6 +1387,33 @@ export const SwapUi = () => {
         });
         return undefined;
       });
+
+    // return connection.confirmTransaction(signature, 'confirmed')
+    //   .then((response) => {
+    //     if (response && response.value && !response.value.err) {
+    //       console.log('confirmTransaction result:', response.value);
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //         currentOperation: TransactionStatus.TransactionFinished
+    //       });
+    //       return response.value;
+  
+    //     } else if (response && response.value && response.value.err) {
+    //       console.log('Error: ', response.value.err);
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       return undefined;
+    //     }
+    //   })
+    //   .catch(_error => {
+    //     setTransactionStatus({
+    //       lastOperation: TransactionStatus.ConfirmTransaction,
+    //       currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //     });
+    //     return undefined;
+    //   });
 
   },[
     connection, 
@@ -1454,14 +1448,20 @@ export const SwapUi = () => {
             return;
           }
 
-          const confirmed = await confirmTx(signature);
-          
-          if (!confirmed) {
-            setIsBusy(false);
-            return;
-          }
+          // let count = 1;
+          let confirmed = await confirmTx(signature);
 
-          console.log("confirmed:", signature); // put this in a link in the UI
+          while (!confirmed) {
+            // console.log('count', count);
+            confirmed = await confirmTx(signature);
+          }
+          
+          // if (!confirmed) {
+          //   setIsBusy(false);
+          //   return;
+          // }
+
+          console.log("confirmed:", confirmed); // put this in a link in the UI
           // Save signature to the state
           setFromAmount('');
           setNeedUpdateBalances(true);

@@ -28,6 +28,7 @@ import {
 } from '@solana/web3.js';
 
 import BN from 'bn.js';
+import { DexInstructions } from '@project-serum/serum';
 
 const BufferLayout = require('buffer-layout');
 
@@ -672,8 +673,8 @@ export async function place(
 
   const tx = new Transaction();
   const signers: Signer[] = [];
-  const from = getTokenByMintAddress(fromCoinMint.toBase58());
-  const swapAmount = fromAmount.sub(fee).toNumber() / 10 ** (from?.decimals || 6);
+  const swapAmount = fromAmount.sub(fee).toNumber() / 10 ** 6;
+  
   const forecastConfig = getOutAmount(
     market, 
     asks, 
@@ -684,16 +685,16 @@ export async function place(
     slippage
   );
 
-  // console.log('forecastConfig', forecastConfig);
-
-  
+  const serumProgramId = new PublicKey(SERUM_PROGRAM_ID_V3);
+  // const fills = await market.loadFills(connection);
+  // console.log('fills', fills);
   const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(connection, wallet.publicKey, 0);
   let openOrdersAddress: PublicKey;
 
   if (openOrdersAccounts.length > 0) {
     openOrdersAddress = openOrdersAccounts[0].address;
   } else {
-    const openOrderNewAccount = Keypair.generate();
+    const openOrderNewAccount = new Account();//Keypair.generate();
     openOrdersAddress = openOrderNewAccount.publicKey;
 
     tx.add(
@@ -702,7 +703,7 @@ export async function place(
         newAccountPubkey: openOrdersAddress,
         lamports: await connection.getMinimumBalanceForRentExemption(_OPEN_ORDERS_LAYOUT_V2.span),
         space: _OPEN_ORDERS_LAYOUT_V2.span,
-        programId: new PublicKey(SERUM_PROGRAM_ID_V3)
+        programId: serumProgramId
       })
     );
 
@@ -715,19 +716,18 @@ export async function place(
     let lamports;
 
     if (forecastConfig.side === 'buy') {
-      lamports = forecastConfig.worstPrice * forecastConfig.amountOut * 1.01 * LAMPORTS_PER_SOL;
+      lamports = forecastConfig.worstPrice * parseFloat(forecastConfig.amountOut.toFixed(6)) * 1.01 * LAMPORTS_PER_SOL;
       if (openOrdersAccounts.length > 0) {
-        lamports -= openOrdersAccounts[0].quoteTokenFree.toNumber();
+        lamports -= openOrdersAccounts[0].baseTokenFree.toNumber();
       }
     } else {
-      lamports = forecastConfig.maxInAllow * LAMPORTS_PER_SOL;
+      lamports = parseFloat(forecastConfig.maxInAllow.toFixed(6)) * LAMPORTS_PER_SOL;
       if (openOrdersAccounts.length > 0) {
         lamports -= openOrdersAccounts[0].baseTokenFree.toNumber();
       }
     }
 
     lamports += (fee.toNumber() + 1e7);
-    // console.log('lamports', lamports);
 
     wrappedSolAccount = await createTokenAccountIfNotExist(
       connection,
@@ -740,7 +740,13 @@ export async function place(
     );
   }
 
-  console.log('market.minOrderSize', market.minOrderSize);
+  const sizeAmount = forecastConfig.side === 'buy'
+    ? parseFloat(forecastConfig.amountOut.toFixed(6))
+    : forecastConfig.maxInAllow
+    ? parseFloat(forecastConfig.maxInAllow.toFixed(6))
+    : parseFloat(swapAmount.toFixed(6));
+
+  // console.log('size', sizeAmount, forecastConfig.side);
 
   tx.add(
     market.makePlaceOrderInstruction(connection, {
@@ -748,13 +754,11 @@ export async function place(
       payer: wrappedSolAccount ?? fromTokenAccount,
       side: forecastConfig.side === 'buy' ? 'buy' : 'sell',
       price: forecastConfig.worstPrice,
-      size:
-        forecastConfig.side === 'buy'
-          ? parseFloat(forecastConfig.amountOut.toString())
-          : parseFloat((forecastConfig.maxInAllow || swapAmount).toString()),
-
+      size: sizeAmount,
       orderType: 'ioc',
-      openOrdersAddressKey: openOrdersAddress
+      openOrdersAddressKey: openOrdersAddress,
+      programId: serumProgramId,
+      selfTradeBehavior: 'decrementTake'
     })
   );
 
@@ -827,7 +831,7 @@ export async function place(
 
   const settleTx = await market.makeSettleFundsTransaction(
     connection,
-    new OpenOrders(openOrdersAddress, { owner: wallet.publicKey }, new PublicKey(SERUM_PROGRAM_ID_V3)),
+    new OpenOrders(openOrdersAddress, { owner: wallet.publicKey }, serumProgramId),
     baseTokenAccount,
     quoteTokenAccount,
     referrerQuoteWallet
