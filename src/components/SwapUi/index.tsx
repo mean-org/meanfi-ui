@@ -17,12 +17,12 @@ import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, unwrap, wrap } from "../../utils/swap";
-import { LiquidityPoolInfo } from "../../utils/pools";
+import { getLpListByTokenMintAddresses, getPoolListByTokenMintAddresses, isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
 import { NATIVE_SOL, TOKENS } from "../../utils/tokens";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cloneDeep } from "lodash-es";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { Market } from "../../models/market";
+import { getMarket, Market } from "../../models/market";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getLiquidityPools } from "../../utils/liquidity";
 import { TokenAmount } from "../../utils/safe-math";
@@ -219,8 +219,8 @@ export const SwapUi = () => {
       const amount = fromAmountValid ? parseFloat(fromAmount) : 1;
       setOutToPrice('1');
       setPriceImpact('0.00');
-      const amountOut = parseFloat((amount * priceAmount).toFixed(9));
-      const amountWithFee = parseFloat((amount * priceAmount - feeAmount).toFixed(9));
+      const amountOut = parseFloat(((amount - feeAmount) * priceAmount).toFixed(9));
+      const amountWithFee = parseFloat(((amount - feeAmount) * priceAmount).toFixed(9));
       setToAmount(fromAmountValid ? amountOut.toString() : '');      
       setToSwapAmount(fromAmountValid ? amountWithFee.toString() : '');
     });
@@ -262,8 +262,8 @@ export const SwapUi = () => {
       );
 
       if (!amountOut.isNullOrZero()) {
-        outAmount = parseFloat((+amountOut.fixed() * amount).toFixed(toDecimals));
-        outWithSlippageAndFeesAmount = parseFloat((+amountOutWithSlippage.fixed() * amount - feeAmount).toFixed(toDecimals));
+        outAmount = parseFloat((+amountOut.fixed() * (amount - feeAmount)).toFixed(toDecimals));
+        outWithSlippageAndFeesAmount = parseFloat((+amountOutWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals));
         price = +amountOut.fixed();
         setPriceImpact(priceImpact.toFixed(2));
         setOutToPrice(price.toString());
@@ -321,8 +321,8 @@ export const SwapUi = () => {
       const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
 
       if (!out.isNullOrZero()) {
-        outAmount = parseFloat((+out.fixed() * amount).toFixed(toDecimals));
-        outWithSlippageAndFeesAmount = parseFloat((+outWithSlippage.fixed() * amount - feeAmount).toFixed(toDecimals));
+        outAmount = parseFloat((+out.fixed() * (amount - feeAmount)).toFixed(toDecimals));
+        outWithSlippageAndFeesAmount = parseFloat((+outWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals));
         price = +out.fixed();
       }
 
@@ -382,28 +382,46 @@ export const SwapUi = () => {
                 let newMarketKey;
 
                 for(let address in marketInfos) {
-              
-                  let info = marketInfos[address];
-                  let fromAddress = fromMint.toBase58();
-                  let toAddress = toMint.toBase58();
 
-                  if (fromAddress === NATIVE_SOL_MINT.toBase58()) {
-                    fromAddress = WRAPPED_SOL_MINT.toBase58();
-                  }
+                  if (isOfficalMarket(address)) {
+                    let info = cloneDeep(marketInfos[address]);
+                    let fromAddress = fromMint.toBase58();
+                    let toAddress = toMint.toBase58();
 
-                  if (toAddress === NATIVE_SOL_MINT.toBase58()) {
-                    toAddress = WRAPPED_SOL_MINT.toBase58();
-                  }
+                    if (fromAddress === NATIVE_SOL_MINT.toBase58()) {
+                      fromAddress = WRAPPED_SOL_MINT.toBase58();
+                    }
 
-                  if (
-                    (info.baseMint.toBase58() === fromAddress && info.quoteMint.toBase58() === toAddress) ||
-                    (info.quoteMint.toBase58() === fromAddress && info.baseMint.toBase58() === toAddress)
-                  ) {
-                    newMarketKey = new PublicKey(address);
-                    break;
+                    if (toAddress === NATIVE_SOL_MINT.toBase58()) {
+                      toAddress = WRAPPED_SOL_MINT.toBase58();
+                    }
+
+                    if (
+                      (info.baseMint.toBase58() === fromAddress && info.quoteMint.toBase58() === toAddress) ||
+                      (info.quoteMint.toBase58() === fromAddress && info.baseMint.toBase58() === toAddress)
+                    ) {
+                      newMarketKey = new PublicKey(address);
+                      break;
+                    }  
                   }
                 }
 
+                const liquidityListV4 = getPoolListByTokenMintAddresses(
+                  fromMint.equals(WRAPPED_SOL_MINT) ? NATIVE_SOL_MINT.toBase58() : fromMint.toBase58(),
+                  toMint.equals(WRAPPED_SOL_MINT) ? NATIVE_SOL_MINT.toBase58() : toMint.toBase58(),
+                  undefined
+                );
+
+                // console.log('liquidityListV4', liquidityListV4);
+
+                if (liquidityListV4.length === 1 && liquidityListV4[0].official) {
+                  newMarketKey = new PublicKey(liquidityListV4[0].serumMarket);
+                } else if (liquidityListV4.length > 1) {
+                  const marketAddress = poolInfos.filter((item: LiquidityPoolInfo) =>
+                    liquidityListV4.find((liquidityItem) => liquidityItem.ammId === item.ammId)).serumMarket;
+                  newMarketKey = new PublicKey(marketAddress);
+                }
+ 
                 if (!newMarketKey) {
                   setRefreshing(false);
                   return;
@@ -411,7 +429,7 @@ export const SwapUi = () => {
 
                 const serumProgramKey = new PublicKey(SERUM_PROGRAM_ID_V3);
 
-                Market.load(connection, newMarketKey, { commitment: 'recent' }, serumProgramKey)
+                Market.load(connection, newMarketKey, {}, serumProgramKey)
                   .then((marketInfo) => {
 
                     setMarket(marketInfo);
@@ -430,12 +448,26 @@ export const SwapUi = () => {
                           return;
                         }
 
+                        const asks: number[] = [];
+                        const bids: number[] = [];
                         const orderBooks = [];
 
                         for (let info of accounts) {
                           if (info) {
                             const data = info.account.data;
                             const orderbook = Orderbook.decode(marketInfo, data);
+                            const { isBids, slab } = orderbook;
+
+                            if (isBids) {
+                              for (const item of slab.items(true)) {
+                                bids.push(marketInfo.priceLotsToNumber(item.key.ushrn(64)) || 0)
+                              }
+                            } else {
+                              for (const item of slab.items(false)) {
+                                asks.push(marketInfo.priceLotsToNumber(item.key.ushrn(64)) || 0)
+                              }
+                            }
+                            
                             orderBooks.push(orderbook);
                           }        
                         }
@@ -542,8 +574,6 @@ export const SwapUi = () => {
       return;
     }
 
-    if(!needUpdateBalances) { return; }
-
     const timeout = setTimeout(() => {  
       if (fromMint.equals(NATIVE_SOL_MINT)) {
         connection.getAccountInfo(publicKey).then(info => {
@@ -590,8 +620,6 @@ export const SwapUi = () => {
       setToMintTokenBalance(0);
       return;
     }
-
-    if(!needUpdateBalances) { return; }
 
     const timeout = setTimeout(() => {
       if (toMint.equals(NATIVE_SOL_MINT)) {
@@ -673,12 +701,12 @@ export const SwapUi = () => {
     const timeout = setTimeout(() => {
       const fromAmountValid = fromAmount && parseFloat(fromAmount) 
         ? parseFloat(fromAmount) 
-        : fromMintTokenBalance;
+        : 0;
 
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
       const amount = getTxFeeAmount(swapFees, fromAmountValid);
       
-      if (!amount) { return; }
+      // if (!amount) { return; }
 
       const formattedAmount = parseFloat(amount.toFixed(fromDecimals));
       setFeeAmount(formattedAmount);
@@ -918,7 +946,6 @@ export const SwapUi = () => {
 
   const flipMintsCallback = useCallback(() => {
 
-    setNeedUpdateBalances(true);
     const oldFrom = fromMint;
     const oldTo = toMint;
     const oldToAmount = toAmount;
@@ -972,7 +999,6 @@ export const SwapUi = () => {
       throw new Error("Unable to calculate mint decimals");
     }
 
-    // const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
     const mspOpsAccount = PublicKeys.MSP_OPS_KEY[Constants.MAINNET_BETA_SLUG];
 
     if (isWrap) {
@@ -999,17 +1025,19 @@ export const SwapUi = () => {
 
     } else {
 
+      const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
       const fromAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        fromMint,
+        fromMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromMint,
         wallet.publicKey
       );
 
+      const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
       const toAccount = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        toMint,
+        toMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toMint,
         wallet.publicKey
       );
 
@@ -1019,12 +1047,14 @@ export const SwapUi = () => {
           connection,
           wallet,
           pool,
-          fromMint.toBase58(),
-          toMint.toBase58(),
+          fromMint,
+          toMint,
           fromAccount,
           toAccount,
-          fromAmount,
-          toSwapAmount
+          new BN(parseFloat(fromAmount) * 10 ** fromDecimals),
+          new BN(parseFloat(toSwapAmount) * 10 ** toDecimals),
+          mspOpsAccount,
+          new BN(feeAmount * 10 ** fromDecimals)
         );
 
       } else {
@@ -1038,30 +1068,33 @@ export const SwapUi = () => {
           market as Market,
           asks,
           bids,
-          fromMint.toBase58(),
-          toMint.toBase58(),
+          fromMint,
+          toMint,
           fromAccount,
           toAccount,
-          fromAmount,
-          slippage
+          new BN(parseFloat(fromAmount) * 10 ** fromDecimals),
+          slippage,
+          mspOpsAccount,
+          new BN(feeAmount * 10 ** fromDecimals)
         );
       }
     }
 
   },[
-    fromMint, 
-    toMint, 
-    wallet, 
-    isWrap, 
-    isUnwrap, 
     connection, 
-    fromAmount, 
     feeAmount, 
-    pool, 
-    toSwapAmount, 
-    orderbooks, 
+    fromAmount, 
+    fromMint, 
+    isUnwrap, 
+    isWrap, 
     market, 
-    slippage
+    orderbooks, 
+    pool, 
+    slippage, 
+    toMint, 
+    toSwapAmount, 
+    tokenMap, 
+    wallet
   ]);
 
   const renderSourceTokenList = (
