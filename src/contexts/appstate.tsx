@@ -60,6 +60,7 @@ interface AppStateConfig {
   // Transactions
   tokens: UserTokenAccount[];
   userTokens: UserTokenAccount[];
+  selectedAsset: UserTokenAccount | undefined;
   transactions: TransactionWithSignature[];
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
@@ -91,6 +92,7 @@ interface AppStateConfig {
   setReferral: (token: TokenInfo | undefined) => void;
   // Transactions
   setTransactions: (tx: TransactionWithSignature[]) => void;
+  setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -127,6 +129,7 @@ const contextDefaultValues: AppStateConfig = {
   // Transactions
   tokens: [],
   userTokens: [],
+  selectedAsset: undefined,
   transactions: [],
   setTheme: () => {},
   setCurrentScreen: () => {},
@@ -157,7 +160,8 @@ const contextDefaultValues: AppStateConfig = {
   setCustomStreamDocked: () => { },
   setReferral: () => {},
   // Transactions
-  setTransactions: () => {}
+  setTransactions: () => {},
+  setSelectedAsset: () => {}
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -639,12 +643,22 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   // Added to support transaction history
-  const [transactions, setTransactions] = useState<Array<TransactionWithSignature>>([]);
+  const [transactions, updateTransactions] = useState<Array<TransactionWithSignature>>([]);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
   const [userTokens, setUserTokens] = useState<UserTokenAccount[]>([]);
   const [loadingUserTokens, setLoadingUserTokens] = useState(false);
   const [shouldLoadBalances, setShouldLoadBalances] = useState(false);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
+
+  const setTransactions = (tx: TransactionWithSignature[]) => {
+    updateTransactions(tx);
+  }
+
+  const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
+    updateTransactions([]);
+    updateSelectedAsset(asset);
+  }
 
   // Load a Token list for use in accounts page
   useEffect(() => {
@@ -795,6 +809,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         referral,
         tokens,
         userTokens,
+        selectedAsset,
         transactions,
         setTheme,
         setCurrentScreen,
@@ -824,7 +839,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         getStreamActivity,
         setCustomStreamDocked,
         setReferral,
-        setTransactions
+        setTransactions,
+        setSelectedAsset
       }}>
       {children}
     </AppStateContext.Provider>
