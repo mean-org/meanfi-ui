@@ -283,8 +283,6 @@ export const getLiquidityPools = async (connection: Connection) => {
     });
   }
 
-  console.log(liquidityPools);
-
   return liquidityPools;
 };
 
