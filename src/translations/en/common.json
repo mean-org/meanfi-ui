@@ -83,7 +83,8 @@
 		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
 		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
-		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
+		"send-from-wallet-cta-label": "Send from Wallet/Exchange",
+		"transak-cta-label": "Buy Crypto with Transak"
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
@@ -289,11 +290,11 @@
 			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
 			"beneficiary-receives": "Beneficiary receives",
 			"min-recommended-amount": "Recommended minimum amount",
-			"recipient-receives": "Minimum received",
-			"transaction-fee": "Transaction fee",
-			"you-receive": "You receive",
 			"price-impact": "Price impact",
-			"slippage": "Slippage"
+			"recipient-receives": "Minimum received",
+			"slippage": "Slippage tolerance",
+			"transaction-fee": "Transaction fee",
+			"you-receive": "You receive"
 		},
 		"validation": {
 			"amount-high": "Amount exceeds your balance",

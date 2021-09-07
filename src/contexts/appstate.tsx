@@ -646,7 +646,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadBalances, setShouldLoadBalances] = useState(false);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
-  // Load a Token list only for accounts page
+  // Load a Token list for use in accounts page
   useEffect(() => {
     (async () => {
       let list = new Array<UserTokenAccount>();
@@ -668,15 +668,18 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Filter down the token list against the user token accounts
   useEffect(() => {
-    if (connection && publicKey && tokens && accounts && accounts.tokenAccounts && accounts.tokenAccounts.length > 0 && !loadingUserTokens) {
-      setLoadingUserTokens(true);
+    if (!publicKey || !tokens || !accounts || !accounts.tokenAccounts || accounts.tokenAccounts.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
       const myTokens = new Array<UserTokenAccount>();
       myTokens.push(NATIVE_SOL as UserTokenAccount);
       for (let i = 0; i < accounts.tokenAccounts.length; i++) {
         const item = accounts.tokenAccounts[i];
         let token: UserTokenAccount | undefined;
         const mintAddress = item.info.mint.toBase58();
-        console.log(`Account ${i + 1} of ${accounts.tokenAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
+        // console.log(`Account ${i + 1} of ${accounts.tokenAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
         token = tokens.find(i => i.address === mintAddress);
 
         // Add the token only if matches one of the user's token account and it is not already in the list
@@ -690,12 +693,16 @@ const AppStateProvider: React.FC = ({ children }) => {
       setUserTokens(myTokens);
       setLoadingUserTokens(false);
       setShouldLoadBalances(true);
+    });
+
+    return () => {
+      clearTimeout(timeout);
     }
   }, [
-    connection,
     publicKey,
     tokens,
-    accounts.tokenAccounts
+    accounts,
+    loadingUserTokens
   ]);
 
   const getTokenBalance = useCallback(async (tokenPk: PublicKey) => {
@@ -704,19 +711,9 @@ const AppStateProvider: React.FC = ({ children }) => {
       const balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
       return balance;
     } else {
-      const associatedTokenAddress = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        tokenPk,
-        publicKey as PublicKey
-      );
-      if (associatedTokenAddress) {
-        const info = await connection?.getTokenAccountBalance(associatedTokenAddress);
-        const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
-        return balance;
-      } else {
-        return 0;
-      }
+      const info = await connection?.getTokenAccountBalance(tokenPk);
+      const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
+      return balance;
     }
   }, [
     connection, 
@@ -737,7 +734,14 @@ const AppStateProvider: React.FC = ({ children }) => {
           const tokenAddress = tokenListCopy[i].address;
           const tokenMint = userAccounts.find(m => m.info.mint.toBase58() === tokenAddress);
           if (tokenMint) {
-            tokenListCopy[i].balance = await getTokenBalance(tokenMint.info.mint);
+            const associatedTokenAddress = await Token.getAssociatedTokenAddress(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TOKEN_PROGRAM_ID,
+              tokenMint.info.mint,
+              publicKey as PublicKey
+            );
+            tokenListCopy[i].ataAddress = associatedTokenAddress.toBase58();
+            tokenListCopy[i].balance = await getTokenBalance(associatedTokenAddress);
           }
         }
         setUserTokens(tokenListCopy);
@@ -753,7 +757,10 @@ const AppStateProvider: React.FC = ({ children }) => {
     connection,
     publicKey,
     userTokens,
-    accounts.tokenAccounts
+    accounts,
+    account?.lamports,
+    shouldLoadBalances,
+    getTokenBalance
   ]);
 
   return (

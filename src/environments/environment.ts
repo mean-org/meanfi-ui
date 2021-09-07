@@ -1,6 +1,7 @@
 export let environment: string;
 
 export interface AppConfig {
+    transakApiKey: string;
     streamProgramAddress: string;
     influxDbUrl: string;
     influxDbToken: string;
@@ -12,6 +13,7 @@ export class AppConfigService {
 
     private readonly CONFIG: { [env: string]: AppConfig } = {
         production: {
+            transakApiKey: 'ba0eae8b-fed1-4c2f-8e62-2b8a69ac60d0',
             streamProgramAddress: 'H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'AcVhBSCQ8XE9nTpR5cf2Gv8aU420BG-eKbxYDX-_PQ_qwyE4YS0oXeZFd8drfMkossPRs-fKqFMf7cbqxXatng==',
@@ -19,6 +21,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-prod'
         },
         staging: {
+            transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'T4-kVufYOioZNKsVvIeWrIcNlqdrQkc3gxvQSHxw7jZVgN7YOfF-1MpcSpcarKdt9ptkjkZGPl6VuA7s7WLXcw==',
@@ -27,6 +30,7 @@ export class AppConfigService {
         },
         // dev and local will have same config
         development: {
+            transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',
@@ -34,6 +38,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev'
         },
         local: {
+            transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
             influxDbToken: 'TJZtqtjU7WWWXs6OOP4xXqBB2O1G7bew53NJbU5nhbxou_Oo6TGw5owVwSxsBJbrJ70zeusJydAUwhr8L5mB-A==',

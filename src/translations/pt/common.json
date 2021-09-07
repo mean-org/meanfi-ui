@@ -83,7 +83,8 @@
 		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
-		"send-from-wallet-cta-label": "Enviar da Carteira/Troca"
+		"send-from-wallet-cta-label": "Enviar da Carteira/Troca",
+		"transak-cta-label": "Transak"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",
@@ -147,7 +148,7 @@
 		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
 		"create-new-stream-cta": "Criar nova transferência",
 		"lookup-stream-cta-tooltip": "Transferência de pesquisa",
-		"screen-title": "Minhas transferências de dinheiro",
+		"screen-title": "Minhas Transferências de dinheiro",
 		"stream-activity": {
 			"action-deposit": "Deposita",
 			"action-withdraw": "Retirar",
@@ -289,7 +290,9 @@
 			"add-funds-repeating-payment-advice": "Você deve adicionar fundos para iniciar o pagamento repetido",
 			"beneficiary-receives": "Beneficiário recebe",
 			"min-recommended-amount": "Quantidade mínima recomendada",
+			"price-impact": "Price impact",
 			"recipient-receives": "O destinatário recebe",
+			"slippage": "Tolerância de Deslizamento",
 			"transaction-fee": "Taxa de transação",
 			"you-receive": "Tu recebes"
 		},

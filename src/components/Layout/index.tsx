@@ -99,13 +99,13 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
           sendConnectionMetric(publicKey.toBase58());
-          const programId = new PublicKey(streamProgramAddress);
-          setLoadingStreams(true);
-          listStreams(connection, programId, publicKey, publicKey)
-            .then(async streams => {
-              setStreamList(streams);
-              setLoadingStreams(false);
-              if (location.pathname === '/transfers') {
+          if (location.pathname === '/transfers') {
+            const programId = new PublicKey(streamProgramAddress);
+            setLoadingStreams(true);
+            listStreams(connection, programId, publicKey, publicKey)
+              .then(async streams => {
+                setStreamList(streams);
+                setLoadingStreams(false);
                 console.log('Layout -> streamList:', streams);
                 setSelectedStream(streams[0]);
                 setStreamDetail(streams[0]);
@@ -113,8 +113,8 @@ export const AppLayout = React.memo((props: any) => {
                   consoleOut('streams are available, opening streams...', '', 'blue');
                   setCurrentScreen('streams');
                 }
-              }
-            });
+              });
+          }
         }
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
