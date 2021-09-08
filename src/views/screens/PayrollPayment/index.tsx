@@ -297,7 +297,6 @@ export const PayrollPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           // parseFloat(fromCoinAmount) <= tokenBalance - getTxFeeAmount(payrollFees, fromCoinAmount) &&
            parseFloat(fromCoinAmount) > getTxFeeAmount(payrollFees, fromCoinAmount)
             ? true
             : false;
@@ -591,9 +590,8 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('nativeBalance:', nativeBalance);
-        console.log('blockchainFee:', payrollFees.blockchainFee);
-        if (nativeBalance < payrollFees.blockchainFee) {
+        const myFees = getTxFeeAmount(payrollFees, amount);
+        if (nativeBalance < payrollFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1147,8 +1145,16 @@ export const PayrollPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      payrollFees.blockchainFee + getTxFeeAmount(payrollFees, fromCoinAmount) - nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`})
                   }
                 </h4>
               ) : (

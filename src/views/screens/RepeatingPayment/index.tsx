@@ -291,7 +291,6 @@ export const RepeatingPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           // parseFloat(fromCoinAmount) <= tokenBalance - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) &&
            parseFloat(fromCoinAmount) > getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
             ? true
             : false;
@@ -565,9 +564,8 @@ export const RepeatingPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('nativeBalance:', nativeBalance);
-        console.log('blockchainFee:', repeatingPaymentFees.blockchainFee);
-        if (nativeBalance < repeatingPaymentFees.blockchainFee) {
+        const myFees = getTxFeeAmount(repeatingPaymentFees, amount);
+        if (nativeBalance < repeatingPaymentFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1100,8 +1098,16 @@ export const RepeatingPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      repeatingPaymentFees.blockchainFee + getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) - nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`})
                   }
                 </h4>
               ) : (

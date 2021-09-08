@@ -77,7 +77,6 @@ export const Streams = () => {
     streamList,
     streamDetail,
     selectedToken,
-    tokenBalance,
     loadingStreams,
     loadingStreamActivity,
     streamActivity,
@@ -634,9 +633,8 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('nativeBalance:', nativeBalance);
-        console.log('blockchainFee:', transactionFees.blockchainFee);
-        if (nativeBalance < transactionFees.blockchainFee) {
+        const myFees = getTxFeeAmount(transactionFees, amount);
+        if (nativeBalance < transactionFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -835,10 +833,8 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getTxFeeAmount(transactionFees);
-        console.log('myApplicableFees:', myApplicableFees);
-        if (tokenBalance < myApplicableFees) {
+        const myFees = getTxFeeAmount(transactionFees, amount);
+        if (nativeBalance < transactionFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1026,10 +1022,8 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        console.log('tokenBalance:', tokenBalance);
-        const myApplicableFees = getTxFeeAmount(transactionFees);
-        console.log('myApplicableFees:', myApplicableFees);
-        if (tokenBalance < myApplicableFees) {
+        const myFees = getTxFeeAmount(transactionFees);
+        if (nativeBalance < transactionFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -2004,8 +1998,16 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      transactionFees.blockchainFee + getTxFeeAmount(transactionFees, addFundsAmount) - nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`})
                   }
                 </h4>
               ) : (
@@ -2066,8 +2068,16 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      transactionFees.blockchainFee + getTxFeeAmount(transactionFees, withdrawFundsAmount) - nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`})
                   }
                 </h4>
               ) : (
@@ -2128,8 +2138,16 @@ export const Streams = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      transactionFees.blockchainFee + getTxFeeAmount(transactionFees) - nativeBalance,
+                      WRAPPED_SOL_MINT_ADDRESS,
+                      true
+                    )} SOL`})
                   }
                 </h4>
               ) : (
