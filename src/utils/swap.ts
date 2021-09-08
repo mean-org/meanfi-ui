@@ -686,8 +686,6 @@ export async function place(
   );
 
   const serumProgramId = new PublicKey(SERUM_PROGRAM_ID_V3);
-  // const fills = await market.loadFills(connection);
-  // console.log('fills', fills);
   const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(connection, wallet.publicKey, 0);
   let openOrdersAddress: PublicKey;
 
@@ -746,8 +744,6 @@ export async function place(
     ? parseFloat(forecastConfig.maxInAllow.toFixed(6))
     : parseFloat(swapAmount.toFixed(6));
 
-  // console.log('size', sizeAmount, forecastConfig.side);
-
   tx.add(
     market.makePlaceOrderInstruction(connection, {
       owner: wallet.publicKey,
@@ -755,6 +751,7 @@ export async function place(
       side: forecastConfig.side === 'buy' ? 'buy' : 'sell',
       price: forecastConfig.worstPrice,
       size: sizeAmount,
+
       orderType: 'ioc',
       openOrdersAddressKey: openOrdersAddress,
       programId: serumProgramId,

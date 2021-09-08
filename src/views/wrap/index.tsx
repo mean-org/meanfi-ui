@@ -72,8 +72,9 @@ export const WrapView = () => {
       setPreviousBalance(account?.lamports);
     }
   }, [
-    account,
-    previousBalance,
+    account, 
+    nativeBalance, 
+    previousBalance, 
     refreshTokenBalance
   ]);
 
@@ -98,7 +99,7 @@ export const WrapView = () => {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.swapTokens);
+      return await calculateActionFees(connection, MSP_ACTIONS.wrap);
     };
     if (!wrapFees.blockchainFee) {
       getTransactionFees().then((values) => {

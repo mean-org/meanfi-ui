@@ -2,8 +2,8 @@ import { Connection, PublicKey } from "@solana/web3.js"
 import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_markets'
 import { LIQUIDITY_POOLS } from './pools'
 import { SERUM_PROGRAM_ID_V3 } from './ids'
-import { MARKET_STATE_LAYOUT_V2, MARKET_STATE_LAYOUT_V3 } from "@project-serum/serum/lib/market";
-import { getFilteredProgramAccounts, getMultipleAccounts } from "./accounts";
+import { getMultipleAccounts } from "./accounts";
+import { MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
 
 export const MARKETS: Array<string> = [];
 
@@ -40,7 +40,7 @@ export async function getMarkets(connection: Connection) {
       const data = marketInfo.account.data;
 
       if (address && data) {
-        const decoded = MARKET_STATE_LAYOUT_V3.decode(data);
+        const decoded = MARKET_STATE_LAYOUT_V2.decode(data);
         markets[address] = decoded;
       }
     }
