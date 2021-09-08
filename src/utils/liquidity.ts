@@ -23,32 +23,46 @@ export const getLiquidityPools = async (connection: Connection) => {
   // });
 
   await Promise.all([
+    // await (async () => {
+    //   ammAll = await getMultipleAccounts(
+    //     connection,
+    //     LIQUIDITY_POOLS.map(p => new PublicKey(p.ammId)),
+    //     connection.commitment
+    //   )
+    // })(),
+    // await (async () => {
+    //   marketAll = await getMultipleAccounts(
+    //     connection, 
+    //     SERUM_MARKETS.map(m => m.address),
+    //     connection.commitment
+    //   )
+    // })()
     await (async () => {
-      ammAll = await getMultipleAccounts(
-        connection,
-        LIQUIDITY_POOLS.map(p => new PublicKey(p.ammId)),
-        connection.commitment
-      )
+      ammAll = await getFilteredProgramAccountsCache(connection, new PublicKey(LIQUIDITY_POOL_PROGRAM_ID_V4), [
+        {
+          dataSize: AMM_INFO_LAYOUT_V4.span
+        }
+      ])
     })(),
     await (async () => {
-      marketAll = await getMultipleAccounts(
-        connection, 
-        SERUM_MARKETS.map(m => m.address),
-        connection.commitment
-      )
+      marketAll = await getFilteredProgramAccountsCache(connection, new PublicKey(SERUM_PROGRAM_ID_V3), [
+        {
+          dataSize: MARKET_STATE_LAYOUT_V2.span
+        }
+      ])
     })()
   ]);
 
   const marketToLayout: { [name: string]: any } = {};
 
   marketAll.forEach((item: any) => {
-    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.account.data)
+    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.accountInfo.data)
   });
 
   const lpMintAddressList: string[] = [];
 
   ammAll.forEach((item: any) => {
-    const ammLayout = AMM_INFO_LAYOUT_V4.decode(Buffer.from(item.account.data));
+    const ammLayout = AMM_INFO_LAYOUT_V4.decode(Buffer.from(item.accountInfo.data));
 
     if (
       ammLayout.pcMintAddress.toString() === ammLayout.serumMarket.toString() ||
@@ -63,7 +77,7 @@ export const getLiquidityPools = async (connection: Connection) => {
   const lpMintListDecimls = await getLpMintListDecimals(connection, lpMintAddressList);
 
   for (let indexAmmInfo = 0; indexAmmInfo < ammAll.length; indexAmmInfo += 1) {
-    const ammInfo = AMM_INFO_LAYOUT_V4.decode(Buffer.from(ammAll[indexAmmInfo].account.data))
+    const ammInfo = AMM_INFO_LAYOUT_V4.decode(Buffer.from(ammAll[indexAmmInfo].accountInfo.data))
   
     if (
       !Object.keys(lpMintListDecimls).includes(ammInfo.lpMintAddress.toString()) ||

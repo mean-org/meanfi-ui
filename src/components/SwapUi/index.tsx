@@ -11,24 +11,24 @@ import { Constants, MSP_ACTIONS, PublicKeys, TransactionFees } from "money-strea
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SignatureStatus, Transaction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, unwrap, wrap } from "../../utils/swap";
-import { getLpListByTokenMintAddresses, getPoolListByTokenMintAddresses, isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
+import {  isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
 import { NATIVE_SOL, TOKENS } from "../../utils/tokens";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cloneDeep } from "lodash-es";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { getMarket, Market } from "../../models/market";
+import { Market } from "../../models/market";
+import { Orderbook } from "@project-serum/serum";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getLiquidityPools } from "../../utils/liquidity";
 import { TokenAmount } from "../../utils/safe-math";
 import { getMarkets } from "../../utils/markets";
 import { getMultipleAccounts } from "../../utils/accounts";
-import { Orderbook } from "@project-serum/serum";
 import * as base64 from "base64-js";
 import BN from "bn.js";
 import "./style.less";
@@ -370,6 +370,8 @@ export const SwapUi = () => {
       getLiquidityPools(connection)
         .then((poolInfos) => {
 
+          console.log('pools', poolInfos);
+
           const poolInfo = Object.values(poolInfos).filter((lp: any) => {
             return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
                     (lp.pc.address === fromMint.toBase58() && lp.coin.address === toMint.toBase58());            
@@ -384,6 +386,8 @@ export const SwapUi = () => {
           } else {            
             getMarkets(connection)
               .then((marketInfos) => {
+
+                console.log('markets', marketInfos);
 
                 let newMarketKey;
 
