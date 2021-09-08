@@ -1,6 +1,6 @@
 import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
 import { LIQUIDITY_POOL_PROGRAM_ID_V4, NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT } from "./ids";
-import { Market, MARKET_STATE_LAYOUT_V2, OpenOrders } from "@project-serum/serum/lib/market";
+import { MARKET_STATE_LAYOUT_V2, OpenOrders } from "@project-serum/serum/lib/market";
 import { ACCOUNT_LAYOUT, AMM_INFO_LAYOUT, AMM_INFO_LAYOUT_V3, AMM_INFO_LAYOUT_V4, MINT_LAYOUT } from "./layouts";
 import { getFilteredProgramAccountsCache, getMultipleAccounts } from "./accounts";
 import { LP_TOKENS, TokenInfo, TOKENS } from "./tokens";
@@ -9,18 +9,13 @@ import { createAmmAuthority } from "./utils";
 import { getAddressForWhat, LiquidityPoolInfo, LIQUIDITY_POOLS } from "./pools";
 import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
-import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_markets'
+import { getMarkets } from "./markets";
 
 export const getLiquidityPools = async (connection: Connection) => {
   
   let liquidityPools = {} as any;
   let ammAll: any; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-  let marketAll: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-
-  // let LIQUIDITY_POOLS = LIQUIDITY_POOLS.filter(lp => {
-  //   return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
-  //     (lp.coin.address === toMint.toBase58() && lp.pc.address === fromMint.toBase58());
-  // });
+  let marketToLayout: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 
   await Promise.all([
     await (async () => {
@@ -31,19 +26,9 @@ export const getLiquidityPools = async (connection: Connection) => {
       )
     })(),
     await (async () => {
-      marketAll = await getMultipleAccounts(
-        connection, 
-        SERUM_MARKETS.map(m => m.address),
-        connection.commitment
-      )
+      marketToLayout = (await getMarkets(connection))
     })()
   ]);
-
-  const marketToLayout: { [name: string]: any } = {};
-
-  marketAll.forEach((item: any) => {
-    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.account.data)
-  });
 
   const lpMintAddressList: string[] = [];
 

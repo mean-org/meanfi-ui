@@ -342,15 +342,6 @@ export function displayTimestamp(
     return `${dateString} at ${timeString}`;
 }
 
-export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
-    let fee = 0;
-    let inputAmount = amount ? parseFloat(amount) : 0;
-    if (fees && fees.mspPercentFee) {
-        fee = percentage(fees.mspPercentFee, inputAmount);
-    }
-    return fee;
-}
-
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
     let inputAmount = amount ? parseFloat(amount) : 0;

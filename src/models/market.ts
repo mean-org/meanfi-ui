@@ -114,7 +114,7 @@ export async function getMarket(
       quoteMintDecimals 
     };
 
-  } catch (error) {
+  } catch (error: any) {
     if (error.message === 'Non-base58 character') {
       return { market: null, price: null, msg: 'market input error', baseMintDecimals: 0, quoteMintDecimals: 0 };
     } else {

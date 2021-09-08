@@ -18,8 +18,8 @@ import {
   disabledDate,
   getAmountWithTokenSymbol,
   getTransactionOperationDescription,
-  getTxFeeAmount,
-  isToday
+  isToday,
+  percentage
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -90,7 +90,6 @@ export const OneTimePayment = () => {
     }
   }, [
     account,
-    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
@@ -110,6 +109,19 @@ export const OneTimePayment = () => {
       });
     }
   }, [connection, otpFees]);
+
+  const getFeeAmount = (amount: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (otpFees) {
+      if (otpFees.mspPercentFee) {
+        fee = percentage(otpFees.mspPercentFee, inputAmount);
+      } else if (otpFees.mspFlatFee) {
+        fee = otpFees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -249,7 +261,7 @@ export const OneTimePayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(otpFees, fromCoinAmount)
+           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
             ? true
             : false;
   }
@@ -270,7 +282,7 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(otpFees, fromCoinAmount)
+      : tokenBalance < getFeeAmount(fromCoinAmount)
       ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -335,8 +347,9 @@ export const OneTimePayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(otpFees, amount);
-        if (nativeBalance < otpFees.blockchainFee + myFees) {
+        console.log('nativeBalance:', nativeBalance);
+        console.log('blockchainFee:', otpFees.blockchainFee);
+        if (nativeBalance < otpFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -788,14 +801,14 @@ export const OneTimePayment = () => {
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}

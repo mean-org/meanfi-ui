@@ -1,7 +1,7 @@
 import { Button, Modal, Row, Col, Spin } from "antd";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
@@ -11,24 +11,24 @@ import { Constants, MSP_ACTIONS, PublicKeys, TransactionFees } from "money-strea
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
 import { CoinInput } from "../CoinInput";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SignatureStatus, Transaction } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, unwrap, wrap } from "../../utils/swap";
-import { getLpListByTokenMintAddresses, getPoolListByTokenMintAddresses, isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
+import {  isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
 import { NATIVE_SOL, TOKENS } from "../../utils/tokens";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { cloneDeep } from "lodash-es";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { getMarket, Market } from "../../models/market";
+import { Market } from "../../models/market";
+import { Orderbook } from "@project-serum/serum";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { getLiquidityPools } from "../../utils/liquidity";
 import { TokenAmount } from "../../utils/safe-math";
 import { getMarkets } from "../../utils/markets";
 import { getMultipleAccounts } from "../../utils/accounts";
-import { Orderbook } from "@project-serum/serum";
 import * as base64 from "base64-js";
 import BN from "bn.js";
 import "./style.less";
@@ -91,7 +91,7 @@ export const SwapUi = () => {
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
   // FEES
-  const [swapFees, setSwapFees] = useState<TransactionFees>({
+  const [txFees, setTxFees] = useState<TransactionFees>({
     blockchainFee: 0,
     mspFlatFee: 0,
     mspPercentFee: 0,
@@ -103,12 +103,13 @@ export const SwapUi = () => {
     if (!connection) { return; }
 
     const timeout = setTimeout(() => {
-      calculateActionFees(connection, MSP_ACTIONS.swap)
-      .then(values => {
-        setSwapFees(values);
-        console.log('fees', values);
-      })
-      .catch(_error => { console.log(_error); });
+      const action = isWrap || isUnwrap ? MSP_ACTIONS.wrap : MSP_ACTIONS.swap;
+      calculateActionFees(connection, action)
+        .then(values => {
+          setTxFees(values);
+          console.log('fees', values);
+        })
+        .catch(_error => { console.log(_error); });
     });
 
     return () => {
@@ -116,7 +117,9 @@ export const SwapUi = () => {
     }
 
   }, [
-    connection
+    connection, 
+    isUnwrap, 
+    isWrap
   ]);
 
   // Updates isWrap/isUnwrap
@@ -370,6 +373,8 @@ export const SwapUi = () => {
       getLiquidityPools(connection)
         .then((poolInfos) => {
 
+          // console.log('pools', poolInfos);
+
           const poolInfo = Object.values(poolInfos).filter((lp: any) => {
             return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
                     (lp.pc.address === fromMint.toBase58() && lp.coin.address === toMint.toBase58());            
@@ -384,6 +389,8 @@ export const SwapUi = () => {
           } else {            
             getMarkets(connection)
               .then((marketInfos) => {
+
+                // console.log('markets', marketInfos);
 
                 let newMarketKey;
 
@@ -671,7 +678,7 @@ export const SwapUi = () => {
   // Automatically updates the fee amount
   useEffect(() => {
 
-    if (!fromMint || !swapFees) { return; }
+    if (!fromMint || !txFees) { return; }
 
     const timeout = setTimeout(() => {
       const fromAmountValid = fromAmount && parseFloat(fromAmount) 
@@ -679,7 +686,7 @@ export const SwapUi = () => {
         : 0;
 
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
-      const amount = getTxFeeAmount(swapFees, fromAmountValid);
+      const amount = getTxFeeAmount(txFees, fromAmountValid);
       
       // if (!amount) { return; }
 
@@ -694,7 +701,7 @@ export const SwapUi = () => {
   },[
     fromMint,
     fromAmount, 
-    swapFees, 
+    txFees, 
     tokenMap,
     fromMintTokenBalance
   ]);
@@ -709,7 +716,7 @@ export const SwapUi = () => {
       let maxAmount = 0;
 
       if (fromMint.equals(NATIVE_SOL_MINT)) {
-        maxAmount = parseFloat((fromMintTokenBalance - swapFees.blockchainFee).toFixed(9));
+        maxAmount = parseFloat((fromMintTokenBalance - txFees.blockchainFee).toFixed(9));
       } else {
         const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
         maxAmount = parseFloat(fromMintTokenBalance.toFixed(fromDecimals));
@@ -726,7 +733,7 @@ export const SwapUi = () => {
     connected, 
     fromMint, 
     fromMintTokenBalance, 
-    swapFees.blockchainFee, 
+    txFees.blockchainFee, 
     tokenMap
   ]);
 
@@ -933,40 +940,6 @@ export const SwapUi = () => {
     toAmount, 
     toMint, 
   ]);
-
-  const minimumSwapSize = (amount: number) => {
-    
-    if (!market) {
-      return 0;
-    }
-
-    let result = 0;
-    const fairAmount = 1;
-    const isSol = fromMint?.equals(NATIVE_SOL_MINT) || toMint?.equals(NATIVE_SOL_MINT);
-    const isUSDX = 
-      fromMint?.equals(USDC_MINT) || 
-      fromMint?.equals(USDT_MINT) || 
-      toMint?.equals(USDC_MINT) || 
-      toMint?.equals(USDT_MINT);
-
-    if (isSol) {
-      result = fromMint?.equals(NATIVE_SOL_MINT) ? market.minOrderSize : market.minOrderSize * fairAmount;
-    } else if (isUSDX) {
-      result = amount < (market.minOrderSize/* * fairAmount*/) ? (market.minOrderSize * fairAmount) : 0;
-    } else {
-      // if (toMarket) {
-      //   result = amount < (toMarket.minOrderSize * fairAmount) ? (toMarket.minOrderSize * fairAmount) : 0;
-      // } else {
-      //   result = amount < (fromMarket.minOrderSize * fairAmount) ? (fromMarket.minOrderSize * fairAmount) : 0;
-      // }
-    }
-
-    const fromDecimals = tokenMap.get(fromMint!.toBase58())?.decimals || 6;
-    const formattedResult = formatAmount(result, fromDecimals);
-    result = parseFloat(formattedResult) + feeAmount;
-
-    return result;
-  };
 
   const getSwap = useCallback(async () => {
 
@@ -1701,7 +1674,7 @@ export const SwapUi = () => {
                         true
                       )} SOL`,
                       feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        getComputedFees(swapFees),
+                        getComputedFees(txFees),
                         WRAPPED_SOL_MINT_ADDRESS,
                         true
                       )} SOL`

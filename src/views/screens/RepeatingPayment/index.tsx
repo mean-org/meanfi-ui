@@ -26,9 +26,9 @@ import {
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionOperationDescription,
-  getTxFeeAmount,
   isToday,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  percentage
 } from "../../../utils/ui";
 import moment from "moment";
 import { useWallet } from "../../../contexts/wallet";
@@ -103,7 +103,6 @@ export const RepeatingPayment = () => {
     }
   }, [
     account,
-    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
@@ -123,6 +122,19 @@ export const RepeatingPayment = () => {
       });
     }
   }, [connection, repeatingPaymentFees]);
+
+  const getFeeAmount = (amount: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (repeatingPaymentFees) {
+      if (repeatingPaymentFees.mspPercentFee) {
+        fee = percentage(repeatingPaymentFees.mspPercentFee, inputAmount);
+      } else if (repeatingPaymentFees.mspFlatFee) {
+        fee = repeatingPaymentFees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -291,7 +303,8 @@ export const RepeatingPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
+           // parseFloat(fromCoinAmount) <= tokenBalance - getFeeAmount(fromCoinAmount) &&
+           parseFloat(fromCoinAmount) > getFeeAmount(fromCoinAmount)
             ? true
             : false;
   }
@@ -325,7 +338,7 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
+      : tokenBalance < getFeeAmount(fromCoinAmount)
       ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -564,8 +577,9 @@ export const RepeatingPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(repeatingPaymentFees, amount);
-        if (nativeBalance < repeatingPaymentFees.blockchainFee + myFees) {
+        console.log('nativeBalance:', nativeBalance);
+        console.log('blockchainFee:', repeatingPaymentFees.blockchainFee);
+        if (nativeBalance < repeatingPaymentFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1035,14 +1049,14 @@ export const RepeatingPayment = () => {
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getFeeAmount(fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
@@ -1098,16 +1112,8 @@ export const RepeatingPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                      nativeBalance,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      repeatingPaymentFees.blockchainFee + getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) - nativeBalance,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
                   }
                 </h4>
               ) : (
