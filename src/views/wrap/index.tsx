@@ -10,7 +10,6 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { environment } from "../../environments/environment";
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
@@ -96,7 +95,7 @@ export const WrapView = () => {
   // Get fees
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.swapTokens);
+      return await calculateActionFees(connection, MSP_ACTIONS.wrap);
     };
     if (!wrapFees.blockchainFee) {
       getTransactionFees().then((values) => {

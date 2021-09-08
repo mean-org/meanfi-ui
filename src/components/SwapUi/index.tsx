@@ -103,7 +103,7 @@ export const SwapUi = () => {
     if (!connection) { return; }
 
     const timeout = setTimeout(() => {
-      calculateActionFees(connection, MSP_ACTIONS.swapTokens)
+      calculateActionFees(connection, MSP_ACTIONS.swap)
       .then(values => {
         setSwapFees(values);
         console.log('fees', values);
