@@ -15,9 +15,15 @@
 		"modal-title": "Adicionar fundos"
 	},
 	"assets": {
+		"account-add-cta-label": "Ir!",
+		"account-add-heading": "Veja os detalhes da conta para qualquer endereço em",
+		"account-address-label": "Endereço da conta",
+		"account-address-placeholder": "Insira o endereço da sua conta",
+		"create-account-help": "Não tem uma conta ainda? Obtenha um GRATUITO com alguns cliques",
 		"history-panel-title": "Transações de ativos",
 		"no-asset-selected": "Selecione um ativo para visualizar o histórico de transações",
 		"no-transactions": "Nenhuma transação para o ativo selecionado",
+		"qr-scan-title": "Obter endereço do código QR",
 		"screen-title": "Saldos de ativos"
 	},
 	"close-stream": {

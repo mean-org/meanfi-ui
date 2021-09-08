@@ -223,6 +223,7 @@ export const OneTimePayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;

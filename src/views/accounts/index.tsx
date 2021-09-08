@@ -1,23 +1,34 @@
-import React, { useContext, useReducer } from 'react';
-import { CheckCircleOutlined, PauseCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import React, { useCallback, useContext, useReducer } from 'react';
+import { CheckCircleOutlined, PauseCircleOutlined, QrcodeOutlined, SyncOutlined } from '@ant-design/icons';
 import { ConfirmedSignatureInfo, Connection, PublicKey } from '@solana/web3.js';
+import { AccountInfo as TokenAccount } from "@solana/spl-token";
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction, ResetStatsAction,
-  SetStatsAction, TransactionActions, TransactionStats, UserTokenAccount,
+  SetStatsAction, TransactionActions, TransactionStats,
   TransactionWithSignature, Timestamp, MoveTxIndexToStartAction
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Progress } from 'antd';
-import { percentual } from '../../utils/ui';
+import { getOwnedAssociatedTokenAccounts, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { Button, Progress } from 'antd';
+import { consoleOut, percentual } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { QrScannerModal } from '../../components/QrScannerModal';
+import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
+import { BN } from '@project-serum/anchor';
+
+// Cache storing all token accounts for the user account
+const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
+  publicKey: PublicKey;
+  account: TokenAccount;
+}> = [];
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
@@ -28,11 +39,27 @@ export const AccountsView = () => {
     transactions,
     selectedAsset,
     detailsPanelOpen,
-    setDtailsPanelOpen,
-    setSelectedAsset,
+    previousWalletConnectState,
     setTransactions,
+    setSelectedAsset,
+    setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const [, setRefresh] = useState(0);
+
+  // User account address to use
+  const [accountAddress, setAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
+  const [accountAddressInput, setAccountAddressInput] = useState<string>('');
+  const [loadingTokens, setLoadingTokens] = useState(false);
+
+  // QR scan modal
+  const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
+  const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
+  const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
+  const onAcceptQrScannerModal = () => {
+    triggerWindowResize();
+    closeQrScannerModal();
+  };
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -42,6 +69,59 @@ export const AccountsView = () => {
   }, [
     connection.endpoint,
     customConnection
+  ]);
+
+  // Fetch all the owned token accounts for the wallet.
+  useEffect(() => {
+
+    if (!customConnection || !accountAddress) {
+      OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
+      setRefresh((r) => r + 1);
+      return;
+    }
+
+    // setLoadingTokens(true);
+    const pk = new PublicKey(accountAddress);
+
+    // Fetch SOL balance.
+    customConnection
+      .getAccountInfo(pk)
+      .then((acc) => {
+        if (acc) {
+          OWNED_TOKEN_ACCOUNTS_CACHE.push({
+            publicKey: pk,
+            // @ts-ignore
+            account: {
+              amount: new BN(acc.lamports),
+              mint: NATIVE_SOL_MINT,
+            },
+          });
+          setRefresh((r) => r + 1);
+          console.log('tokenAccounts cache 1:', OWNED_TOKEN_ACCOUNTS_CACHE);
+        }
+      });
+
+    // Fetch SPL tokens.
+    getOwnedAssociatedTokenAccounts(customConnection, pk)
+      .then((accs: any) => {
+        if (accs) {
+          OWNED_TOKEN_ACCOUNTS_CACHE.push(...accs);
+          setRefresh((r) => r + 1);
+          console.log('tokenAccounts cache 2:', OWNED_TOKEN_ACCOUNTS_CACHE);
+        }
+      });
+
+    return () => {
+      if (!customConnection || !accountAddress) {
+        OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
+        setRefresh((r) => r + 1);
+        return;
+      }
+    };
+
+  }, [
+    customConnection,
+    accountAddress
   ]);
 
   // Flow control
@@ -90,21 +170,54 @@ export const AccountsView = () => {
     setShouldLoadTransactions(true);
   }
 
-  // Auto execute if wallet is connected
+  const onAddAccountAddress = () => {
+    console.log('Address:', accountAddressInput);
+    setAccountAddress(accountAddressInput);
+  }
+
+  // Hook on the wallet connect/disconnect
   useEffect(() => {
-    if (!customConnection || !publicKey || !shouldLoadTransactions || loadingTransactions) {
+
+    if (!publicKey || previousWalletConnectState === connected) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      // User is connecting
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('Reading account address...', publicKey.toBase58(), 'blue');
+        setAccountAddress(publicKey.toBase58());
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
+      }
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    };
+
+  }, [
+    connected,
+    previousWalletConnectState,
+    publicKey,
+    setAccountAddress
+  ]);
+
+  // Auto execute if we have an address already stored
+  useEffect(() => {
+    if (!customConnection || !accountAddress || !shouldLoadTransactions || loadingTransactions) {
       return;
     }
 
     const loadTransactionSignatures = async () => {
-      if (customConnection && publicKey && shouldLoadTransactions && !loadingTransactions) {
+      if (customConnection && accountAddress && shouldLoadTransactions && !loadingTransactions) {
         setShouldLoadTransactions(false);
         console.log('selectedAsset:', selectedAsset);
         const pk = selectedAsset &&
                    selectedAsset.ataAddress &&
                    selectedAsset.ataAddress !== NATIVE_SOL_MINT.toBase58()
           ? new PublicKey(selectedAsset.ataAddress)
-          : publicKey
+          : new PublicKey(accountAddress);
         console.log('pk:', pk.toBase58());
 
         customConnection.getConfirmedSignaturesForAddress2(pk)
@@ -143,8 +256,8 @@ export const AccountsView = () => {
     }
 
   }, [
-    publicKey,
     selectedAsset,
+    accountAddress,
     customConnection,
     loadingTransactions,
     shouldLoadTransactions,
@@ -153,7 +266,7 @@ export const AccountsView = () => {
 
   // Get transaction detail for each signature if not already loaded
   useEffect(() => {
-    if (!shouldGetTxDetails || !customConnection || !publicKey || abortSignalReceived) {
+    if (!shouldGetTxDetails || !customConnection|| abortSignalReceived) {
       return;
     }
 
@@ -220,7 +333,6 @@ export const AccountsView = () => {
     }
   }, [
     stats,
-    publicKey,
     signatures,
     transactions,
     customConnection,
@@ -232,9 +344,9 @@ export const AccountsView = () => {
   // Keep stats in sync when transaction's list changes
   /*
   useEffect(() => {
-    if (publicKey && transactions) {
-      const incoming = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[1].pubkey.toBase58() === publicKey.toBase58());
-      const outgoing = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[0].pubkey.toBase58() === publicKey.toBase58());
+    if (accountAddress && transactions) {
+      const incoming = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[1].pubkey.toBase58() === accountAddress);
+      const outgoing = transactions.filter(tx => tx.confirmedTransaction.transaction.instructions[0].keys[0].pubkey.toBase58() === accountAddress);
       const newStats = Object.assign({}, stats, {
         incoming: incoming.length,
         outgoing: outgoing.length
@@ -242,10 +354,56 @@ export const AccountsView = () => {
       dispatch(new SetStatsAction(newStats));
     }
   }, [
-    publicKey,
+    accountAddress,
     transactions
   ]);
   */
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  const handleRecipientAddressChange = (e: any) => {
+    setAccountAddressInput(e.target.value);
+  }
+
+  const handleRecipientAddressFocusIn = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
+  const handleRecipientAddressFocusOut = () => {
+    setTimeout(() => {
+      triggerWindowResize();
+    }, 10);
+  }
+
+  // Window resize listener
+  useEffect(() => {
+    const resizeListener = () => {
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          const text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
 
   const renderTokenList = (
     <>
@@ -254,7 +412,7 @@ export const AccountsView = () => {
         const onTokenAccountClick = () => {
           setSelectedAsset(asset);
           console.log(`${asset.symbol} (${asset.name}) =>`, asset.ataAddress || asset.address);
-          // setDtailsPanelOpen(true);
+          setDtailsPanelOpen(true);
           abortSwitch();
           setTimeout(() => {
             setSignatures([]);
@@ -306,9 +464,13 @@ export const AccountsView = () => {
     </>
   );
 
+  const renderSolanaIcon = (
+    <img className="token-icon" src="solana-logo.png" alt="Solana logo" />
+  );
+
   const renderTransactions = () => {
     return transactions?.map((trans) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} publicKey={publicKey} />;
+      return <TransactionItemView key={trans.signature} transaction={trans} accountAddress={accountAddress} />;
     });
   };
 
@@ -316,9 +478,9 @@ export const AccountsView = () => {
     <>
       <div className="container main-container">
 
-        <div className="interaction-area">
+        <div className={accountAddress ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
-          {publicKey ? (
+          {accountAddress ? (
             <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
               {/* Left / top panel*/}
@@ -372,7 +534,7 @@ export const AccountsView = () => {
                   </div>
                   <div className="transaction-list-data-wrapper vertical-scroll">
                     <div className="activity-list">
-                      {connected && (
+                      {
                         transactions && transactions.length ? (
                           <div className="item-list-body compact">
                             {renderTransactions()}
@@ -382,7 +544,7 @@ export const AccountsView = () => {
                         ) : (
                           <p>No transactions</p>
                         )
-                      )}
+                      }
                     </div>
                   </div>
                   {stats && (
@@ -396,7 +558,65 @@ export const AccountsView = () => {
 
             </div>
           ) : (
-            <p>{t("general.not-connected")}.</p>
+            <>
+              <div className="boxed-area">
+                <h2 className="text-center mb-3 px-3">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+                <div className="flexible-left mb-3">
+                  <div className="transaction-field">
+                    <div className="transaction-field-row">
+                      <span className="field-label-left">{t('assets.account-address-label')}</span>
+                      <span className="field-label-right">&nbsp;</span>
+                    </div>
+                    <div className="transaction-field-row main-row">
+                      <span className="input-left recipient-field-wrapper">
+                        <input id="payment-recipient-field"
+                          className="w-100 general-text-input"
+                          autoComplete="on"
+                          autoCorrect="off"
+                          type="text"
+                          onFocus={handleRecipientAddressFocusIn}
+                          onChange={handleRecipientAddressChange}
+                          onBlur={handleRecipientAddressFocusOut}
+                          placeholder={t('assets.account-address-placeholder')}
+                          required={true}
+                          spellCheck="false"
+                          value={accountAddressInput}/>
+                        <span id="payment-recipient-static-field"
+                              className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                          {accountAddressInput || t('assets.account-address-placeholder')}
+                        </span>
+                      </span>
+                      <div className="addon-right simplelink" onClick={showQrScannerModal}>
+                        <QrcodeOutlined />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Go button */}
+                  <Button
+                    className="main-cta"
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    onClick={onAddAccountAddress}
+                    disabled={!accountAddressInput}>
+                    {t('assets.account-add-cta-label')}
+                  </Button>
+                </div>
+                <div className="text-center">
+                  {t('assets.create-account-help')}<br />
+                  <a className="primary-link font-medium text-uppercase" href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                    {t('ui-menus.main-menu.services.wallet-guide')}
+                  </a>
+                </div>
+              </div>
+              {/* QR scan modal */}
+              {isQrScannerModalVisible && (
+                <QrScannerModal
+                  isVisible={isQrScannerModalVisible}
+                  handleOk={onAcceptQrScannerModal}
+                  handleClose={closeQrScannerModal}/>
+              )}
+            </>
           )}
 
         </div>

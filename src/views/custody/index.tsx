@@ -159,14 +159,6 @@ export const CustodyView = () => {
           </Row>
         </div>
       </section>
-
-      <section className="content">
-        <div className="container">
-          <div className="boxed-area align-center">
-            <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Optio harum fuga libero, tempore, error aspernatur iure similique vero deserunt quas, reprehenderit eum corporis magni expedita. Libero ut deserunt dolores aliquid mollitia corporis cum sint in pariatur eveniet dicta, quo dignissimos ducimus obcaecati quasi repudiandae, saepe maiores molestiae autem reprehenderit hic!</div>
-          </div>
-        </div>
-      </section>
  */}
 
       <PreFooter />

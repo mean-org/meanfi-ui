@@ -15,9 +15,15 @@
 		"modal-title": "Add funds"
 	},
 	"assets": {
+		"account-add-cta-label": "Go!",
+		"account-add-heading": "View account details for any address in",
+		"account-address-label": "Account address",
+		"account-address-placeholder": "Enter your account address",
+		"create-account-help": "Don’t have an account yet? Get one for FREE in a couple of clicks",
 		"history-panel-title": "Asset transactions",
 		"no-asset-selected": "Please select an asset to view the transaction history",
 		"no-transactions": "No transactions for the selected asset",
+		"qr-scan-title": "Get address from QR code",
 		"screen-title": "Asset balances"
 	},
 	"close-stream": {

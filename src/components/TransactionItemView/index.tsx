@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
@@ -12,13 +12,13 @@ import { Tooltip } from "antd";
 const dateFormat = require("dateformat");
 
 export const TransactionItemView = (props: {
-  publicKey: PublicKey | undefined;
+  accountAddress: string;
   transaction: TransactionWithSignature;
 }) => {
 
   const isInbound = (): boolean => {
     const trans = props.transaction.confirmedTransaction.transaction;
-    return trans.instructions[0].keys[1].pubkey.toBase58() === props?.publicKey?.toBase58() ? true : false;
+    return trans.instructions[0].keys[1].pubkey.toBase58() === props?.accountAddress ? true : false;
   }
 
   const getTxIcon = () => {
