@@ -14,6 +14,7 @@ import { MINT_CACHE } from '../contexts/token';
 import { TOKENS } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
+import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -332,6 +333,26 @@ export const truncateFloat = (value: any, decimals = 2): string => {
 
 export const getComputedFees = (fees: TransactionFees): number => {
   return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
+}
+
+export async function fetchAccountTokens(
+  pubkey: PublicKey,
+  cluster: string,
+) {
+  let data;
+  try {
+    const { value } = await new Connection(
+      cluster,
+      "processed"
+    ).getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
+    data = value.map((accountInfo) => {
+      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
+      return { parsedInfo, pubkey: accountInfo.pubkey };
+    });
+    return data as AccountTokenParsedInfo[];
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 export async function getOwnedAssociatedTokenAccounts(

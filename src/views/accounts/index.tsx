@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useReducer } from 'react';
 import { CheckCircleOutlined, PauseCircleOutlined, QrcodeOutlined, SyncOutlined } from '@ant-design/icons';
-import { ConfirmedSignatureInfo, Connection, PublicKey } from '@solana/web3.js';
-import { AccountInfo as TokenAccount } from "@solana/spl-token";
+import { ConfirmedSignatureInfo, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -11,30 +10,25 @@ import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   ActionTypes, defaultTransactionStats, IncrementTransactionIndexAction, ResetStatsAction,
   SetStatsAction, TransactionActions, TransactionStats,
-  TransactionWithSignature, Timestamp, MoveTxIndexToStartAction
+  TransactionWithSignature, Timestamp, MoveTxIndexToStartAction, UserTokenAccount
 } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { getOwnedAssociatedTokenAccounts, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { Button, Progress } from 'antd';
+import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { Button, Empty, Progress } from 'antd';
 import { consoleOut, percentual } from '../../utils/ui';
+import { NATIVE_SOL } from '../../utils/tokens';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { QrScannerModal } from '../../components/QrScannerModal';
 import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
-import { BN } from '@project-serum/anchor';
-
-// Cache storing all token accounts for the user account
-const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{
-  publicKey: PublicKey;
-  account: TokenAccount;
-}> = [];
+import { QrScannerModal } from '../../components/QrScannerModal';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
+    tokens,
     userTokens,
     transactions,
     selectedAsset,
@@ -45,12 +39,13 @@ export const AccountsView = () => {
     setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const [, setRefresh] = useState(0);
 
   // User account address to use
   const [accountAddress, setAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  const [loadingTokens, setLoadingTokens] = useState(false);
+  const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
+  const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [tokenDisplayList, setTokenDisplayList] = useState<UserTokenAccount[]>([]);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -71,57 +66,84 @@ export const AccountsView = () => {
     customConnection
   ]);
 
-  // Fetch all the owned token accounts for the wallet.
+  // Fetch all the owned token accounts
   useEffect(() => {
 
-    if (!customConnection || !accountAddress) {
-      OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
-      setRefresh((r) => r + 1);
-      return;
+    if (connection && customConnection && accountAddress && shouldLoadTokens && tokens) {
+      setShouldLoadTokens(false);
+
+      const pk = new PublicKey(accountAddress);
+      let nativeBalance = 0;
+
+      // Fetch SOL balance.
+      customConnection.getBalance(pk)
+        .then(value => nativeBalance = value || 0);
+
+      fetchAccountTokens(pk, connection.endpoint)
+        .then(accTks => {
+          if (accTks) {
+            const myTokens = new Array<UserTokenAccount>();
+            myTokens.push(NATIVE_SOL as UserTokenAccount);
+            myTokens[0].balance = nativeBalance / LAMPORTS_PER_SOL;
+            myTokens[0].ataAddress = accountAddress;
+
+            for (let i = 0; i < accTks.length; i++) {
+              const item = accTks[i];
+              const token = tokens.find(i => i.address === item.parsedInfo.mint);
+              // Add the token only if matches one of the user's token account and it is not already in the list
+              if (token) {
+                token.ataAddress = item.pubkey.toBase58();
+                token.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                if (!myTokens.some(t => t.address === token?.address)) {
+                  myTokens.push(token);
+                }
+              }
+            }
+
+            // Report in the console for debugging
+            const tokenTable: any[] = [];
+            myTokens.forEach(item => {
+              tokenTable.push({
+                pubAddr: shortenAddress(item.ataAddress || '-', 8),
+                mintAddr: shortenAddress(item.address, 8),
+                balance: item.balance
+              });
+            });
+            console.table(tokenTable);
+            console.log(accTks);
+            setAccountTokens(myTokens);
+          } else {
+            console.log('could not get account tokens');
+            setAccountTokens([]);
+          }
+        })
+        .catch(error => {
+          setAccountTokens([]);
+          console.error(error);
+        });
     }
 
-    // setLoadingTokens(true);
-    const pk = new PublicKey(accountAddress);
-
-    // Fetch SOL balance.
-    customConnection
-      .getAccountInfo(pk)
-      .then((acc) => {
-        if (acc) {
-          OWNED_TOKEN_ACCOUNTS_CACHE.push({
-            publicKey: pk,
-            // @ts-ignore
-            account: {
-              amount: new BN(acc.lamports),
-              mint: NATIVE_SOL_MINT,
-            },
-          });
-          setRefresh((r) => r + 1);
-          console.log('tokenAccounts cache 1:', OWNED_TOKEN_ACCOUNTS_CACHE);
-        }
-      });
-
-    // Fetch SPL tokens.
-    getOwnedAssociatedTokenAccounts(customConnection, pk)
-      .then((accs: any) => {
-        if (accs) {
-          OWNED_TOKEN_ACCOUNTS_CACHE.push(...accs);
-          setRefresh((r) => r + 1);
-          console.log('tokenAccounts cache 2:', OWNED_TOKEN_ACCOUNTS_CACHE);
-        }
-      });
-
-    return () => {
-      if (!customConnection || !accountAddress) {
-        OWNED_TOKEN_ACCOUNTS_CACHE.length = 0;
-        setRefresh((r) => r + 1);
-        return;
-      }
-    };
-
   }, [
+    tokens,
+    connection,
     customConnection,
+    shouldLoadTokens,
     accountAddress
+  ]);
+
+  // Decide which list to use for tokenDisplayList
+  useEffect(() => {
+    if (publicKey && userTokens) {
+      setTokenDisplayList(userTokens);
+      console.log('Switch to use userTokens');
+    } else if (!publicKey && accountTokens) {
+      setTokenDisplayList(accountTokens);
+      console.log('Switch to use accountTokens');
+    }
+  }, [
+    accountTokens,
+    publicKey,
+    userTokens
   ]);
 
   // Flow control
@@ -173,28 +195,28 @@ export const AccountsView = () => {
   const onAddAccountAddress = () => {
     console.log('Address:', accountAddressInput);
     setAccountAddress(accountAddressInput);
+    setShouldLoadTokens(true);
+    reloadSwitch();
+    setTimeout(() => {
+      setAccountAddressInput('');
+    }, 100);
   }
 
   // Hook on the wallet connect/disconnect
   useEffect(() => {
 
-    if (!publicKey || previousWalletConnectState === connected) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
+    if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Reading account address...', publicKey.toBase58(), 'blue');
         setAccountAddress(publicKey.toBase58());
+        reloadSwitch();
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
+        setShouldLoadTokens(true);
+        reloadSwitch();
       }
-    });
-
-    return () => { 
-      clearTimeout(timeout);
-    };
+    }
 
   }, [
     connected,
@@ -247,6 +269,9 @@ export const AccountsView = () => {
     }
 
     const timeout = setTimeout(() => {
+      if (!publicKey) {
+        setShouldLoadTokens(true);
+      }
       setLoadingTransactions(true);
       loadTransactionSignatures();
     });
@@ -256,6 +281,7 @@ export const AccountsView = () => {
     }
 
   }, [
+    publicKey,
     selectedAsset,
     accountAddress,
     customConnection,
@@ -363,17 +389,17 @@ export const AccountsView = () => {
     window.dispatchEvent(new Event('resize'));
   }
 
-  const handleRecipientAddressChange = (e: any) => {
+  const handleAccountAddressInputChange = (e: any) => {
     setAccountAddressInput(e.target.value);
   }
 
-  const handleRecipientAddressFocusIn = () => {
+  const handleAccountAddressInputFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
   }
 
-  const handleRecipientAddressFocusOut = () => {
+  const handleAccountAddressInputFocusOut = () => {
     setTimeout(() => {
       triggerWindowResize();
     }, 10);
@@ -407,8 +433,8 @@ export const AccountsView = () => {
 
   const renderTokenList = (
     <>
-    {userTokens && userTokens.length ? (
-      userTokens.map((asset, index) => {
+    {tokenDisplayList && tokenDisplayList.length ? (
+      tokenDisplayList.map((asset, index) => {
         const onTokenAccountClick = () => {
           setSelectedAsset(asset);
           console.log(`${asset.symbol} (${asset.name}) =>`, asset.ataAddress || asset.address);
@@ -429,17 +455,9 @@ export const AccountsView = () => {
             <div className="icon-cell">
               <div className="token-icon">
                 {asset.logoURI ? (
-                  <img
-                    alt={`${asset.name}`}
-                    width={30}
-                    height={30}
-                    src={asset.logoURI}
-                  />
+                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} />
                 ) : (
-                  <Identicon
-                    address={asset.address}
-                    style={{ width: "30", display: "inline-flex" }}
-                  />
+                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
                 )}
               </div>
             </div>
@@ -456,9 +474,9 @@ export const AccountsView = () => {
         );
       })
     ) : (
-      <>
-      <p>{t('general.not-connected')}</p>
-      </>
+      <div className="h-75 flex-center">
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      </div>
     )}
 
     </>
@@ -574,9 +592,9 @@ export const AccountsView = () => {
                           autoComplete="on"
                           autoCorrect="off"
                           type="text"
-                          onFocus={handleRecipientAddressFocusIn}
-                          onChange={handleRecipientAddressChange}
-                          onBlur={handleRecipientAddressFocusOut}
+                          onFocus={handleAccountAddressInputFocusIn}
+                          onChange={handleAccountAddressInputChange}
+                          onBlur={handleAccountAddressInputFocusOut}
                           placeholder={t('assets.account-address-placeholder')}
                           required={true}
                           spellCheck="false"

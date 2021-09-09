@@ -2696,6 +2696,9 @@ section.content {
     .inner-container {
       .item-block {
         padding-bottom: 1rem;
+        .ant-empty.ant-empty-normal {
+          color: var(--color-secondary-alpha-50);
+        }
       }
       @media (min-width: 768px) {
         display: flex;
@@ -2706,7 +2709,8 @@ section.content {
         transform: translateX(0.5rem);
         .item-block {
           width: 100%;
-          height: calc(100% - 5.4vh);
+          height: 100%;
+          padding: 0;
           .transaction-list-row {
             padding-right: 0.8rem;
             .description-cell {
@@ -2747,6 +2751,9 @@ section.content {
         .fetch-proggress {
           flex: 0 0 calc(100% - 90px);
           padding-right: 6px;
+          .ant-progress.ant-progress-line .ant-progress-text {
+            color: var(--color-secondary-alpha-70);
+          }
         }
         .fetch-control {
           flex: 0 0 70px;
