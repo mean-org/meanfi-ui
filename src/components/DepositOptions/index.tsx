@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Col, Modal, Row } from "antd";
+import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
@@ -10,15 +10,15 @@ import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
 import { AppConfig, AppConfigService } from '../../environments/environment';
 import "./style.less";
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const QRCode = require('qrcode.react');
 const transakWidgetStyle = {
   display: 'block',
-  height: '600px',
+  height: '628px',
   width: '100%',
-  maxHeight: '550px',
   borderWidth: '0px',
-  //maxWidth: '450px';
+  maxWidth: '450px'
 }
 
 export const DepositOptions = (props: {
@@ -142,9 +142,23 @@ export const DepositOptions = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className="mean-modal simple-modal multi-step"
       title={
+        <>
+        {(isSharingAddress || isTransakActive) && (
+          <div className="back-button ant-modal-close">
+            <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
+              <Button
+                type="default"
+                shape="circle"
+                icon={<ArrowLeftOutlined />}
+                onClick={closePanels}
+              />
+            </Tooltip>
+          </div>
+        )}
         <div className="modal-title">{t("deposits.modal-title")}</div>
+        </>
       }
       footer={null}
       visible={props.isVisible}
@@ -236,7 +250,7 @@ export const DepositOptions = (props: {
             </Col>
           </Row>
         </div>
-        <div className={isSharingAddress ? "option-detail-panel show" : "option-detail-panel hide"}>
+        <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -261,39 +275,18 @@ export const DepositOptions = (props: {
                 </div>
               </div>
             </div>
-            <p className="font-light font-size-75 px-4 mb-3">{t('deposits.address-share-disclaimer')}</p>
-            <Button
-              className="deposit-option"
-              type="default"
-              shape="round"
-              size="middle"
-              onClick={() => setIsSharingAddress(false)}>
-              {t('general.cta-finish')}
-            </Button>
+            <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
         <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
-          <div className="mb-3">
-            {/* https://global.transak.com/?networks=polygon&cryptoCurrencyCode=USDC&apiKey=YOUR_API_KEY */}
-            {publicKey && currentConfig && (
-              <div>
-                <iframe title="Transak On/Off Ramp Widget (Website)"
-                        frameBorder="no"
-                        style = {transakWidgetStyle}
-                        src={getTransakWidgetUrl()}></iframe>
-              </div>
-            )}
-          </div>
-          <div className="text-center">
-            <Button
-              className="deposit-option"
-              type="default"
-              shape="round"
-              size="middle"
-              onClick={() => setIsTransakActive(false)}>
-              {t('general.cta-finish')}
-            </Button>
-          </div>
+          {publicKey && currentConfig && (
+            <div>
+              <iframe title="Transak On/Off Ramp Widget (Website)"
+                      frameBorder="no"
+                      style = {transakWidgetStyle}
+                      src={getTransakWidgetUrl()}></iframe>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
