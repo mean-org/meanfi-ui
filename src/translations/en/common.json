@@ -90,7 +90,7 @@
 		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
 		"send-from-wallet-cta-label": "Send from Wallet/Exchange",
-		"transak-cta-label": "Buy Crypto with Transak"
+		"transak-cta-label": "Buy with debit/credit card"
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",

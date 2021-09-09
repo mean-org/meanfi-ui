@@ -90,7 +90,7 @@
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
 		"send-from-wallet-cta-label": "Enviar da Carteira/Troca",
-		"transak-cta-label": "Transak"
+		"transak-cta-label": "Compre com cartão de débito/crédito"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo SOL atual",

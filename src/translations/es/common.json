@@ -90,7 +90,7 @@
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
 		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
-		"transak-cta-label": "Transak"
+		"transak-cta-label": "Compre con tarjeta de débito/crédito"
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
