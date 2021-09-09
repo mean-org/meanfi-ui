@@ -112,6 +112,7 @@ export const AccountsView = () => {
             console.table(tokenTable);
             console.log(accTks);
             setAccountTokens(myTokens);
+            setTokenDisplayList(myTokens);
           } else {
             console.log('could not get account tokens');
             setAccountTokens([]);
@@ -184,13 +185,15 @@ export const AccountsView = () => {
     setLoadingTransactions(true);
   }
 
-  const reloadSwitch = () => {
+  const reloadSwitch = useCallback(() => {
     dispatch(new ResetStatsAction());
     dispatch(new MoveTxIndexToStartAction());
+    setSignatures([]);
+    setTransactions([]);
     setAbortSignalReceived(false);
     setLoadingTransactions(false);
     setShouldLoadTransactions(true);
-  }
+  }, [setTransactions])
 
   const onAddAccountAddress = () => {
     console.log('Address:', accountAddressInput);
@@ -222,6 +225,7 @@ export const AccountsView = () => {
     connected,
     previousWalletConnectState,
     publicKey,
+    reloadSwitch,
     setAccountAddress
   ]);
 
@@ -302,7 +306,7 @@ export const AccountsView = () => {
       setShouldGetTxDetails(false);
 
       // Are we beyond the list index boundary ? Abort
-      if (stats.index >= (signatures.length - 1)) {
+      if (stats.index > (signatures.length - 1)) {
         setLoadingTransactions(false);
         return;
       }
@@ -436,18 +440,14 @@ export const AccountsView = () => {
     {tokenDisplayList && tokenDisplayList.length ? (
       tokenDisplayList.map((asset, index) => {
         const onTokenAccountClick = () => {
+          setAbortSignalReceived(true);
+          setShouldGetTxDetails(false);
           setSelectedAsset(asset);
           console.log(`${asset.symbol} (${asset.name}) =>`, asset.ataAddress || asset.address);
           setDtailsPanelOpen(true);
-          abortSwitch();
           setTimeout(() => {
-            setSignatures([]);
-            setTransactions([]);
-            dispatch(new ResetStatsAction());
-            setTimeout(() => {
-              reloadSwitch();
-            }, 50);
-          }, 50);
+            reloadSwitch();
+          }, 100);
         };
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}

@@ -24,7 +24,7 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { getTransactionOperationDescription } from "../../utils/ui";
+import { getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -97,6 +97,7 @@ export const WrapView = () => {
     }
   }, [tokenList, selectedToken, setSelectedToken, refreshTokenBalance]);
 
+  // Get fees
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.wrap);
@@ -108,6 +109,11 @@ export const WrapView = () => {
       });
     }
   }, [connection, wrapFees]);
+
+  const getMaxPossibleAmount = () => {
+    const fee = wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, nativeBalance);
+    return nativeBalance - fee;
+  }
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -126,10 +132,11 @@ export const WrapView = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        if (nativeBalance < wrapFees.blockchainFee) {
+        const myFees = getTxFeeAmount(wrapFees, amount);
+        if (nativeBalance < wrapFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure,
+            currentOperation: TransactionStatus.TransactionStartFailure
           });
           return false;
         }
@@ -308,8 +315,9 @@ export const WrapView = () => {
 
   const isValidInput = (): boolean => {
     return wrapAmount &&
-      parseFloat(wrapAmount) > (wrapFees?.blockchainFee || 0) &&
-      parseFloat(wrapAmount) <= nativeBalance - (wrapFees?.blockchainFee || 0)
+      parseFloat(wrapAmount) > 0 &&
+      parseFloat(wrapAmount) > (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) &&
+      parseFloat(wrapAmount) <= getMaxPossibleAmount()
       ? true
       : false;
   };
@@ -416,20 +424,21 @@ export const WrapView = () => {
                   </span>
                   <div className="addon-right">
                     <div className="token-group">
-                      <div className="token-max simplelink"
-                        onClick={() => {
-                          setValue(
-                            getTokenAmountAndSymbolByTokenAddress(
-                              nativeBalance - wrapFees.blockchainFee,
-                              WRAPPED_SOL_MINT_ADDRESS,
-                              true,
-                              false
-                            )
-                          );
-                        }}
-                      >
-                        MAX
-                      </div>
+                      {getMaxPossibleAmount() > 0 && (
+                        <div className="token-max simplelink"
+                          onClick={() => {
+                            setValue(
+                              getTokenAmountAndSymbolByTokenAddress(
+                                getMaxPossibleAmount(),
+                                WRAPPED_SOL_MINT_ADDRESS,
+                                true,
+                                true
+                              )
+                            );
+                          }}>
+                          MAX
+                        </div>
+                      )}
                       {selectedToken && (
                         <div className="token-selector p-0">
                           <div className="token-icon">
@@ -457,12 +466,15 @@ export const WrapView = () => {
                 </div>
                 <div className="transaction-field-row">
                   <span className="field-label-left">
-                    {parseFloat(wrapAmount) > nativeBalance - (wrapFees?.blockchainFee || 0) ? (
+                    {nativeBalance <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees)) ? (
+                      <span className="fg-red">
+                        {t("transactions.validation.amount-low")}
+                      </span>
+                    ) : parseFloat(wrapAmount) > getMaxPossibleAmount() ? (
                       <span className="fg-red">
                         {t("transactions.validation.amount-sol-high")}
                       </span>
-                    ) : parseFloat(wrapAmount) <=
-                      (wrapFees?.blockchainFee || 0) ? (
+                    ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
                       <span className="fg-red">
                         {t("transactions.validation.amount-lt-fee")}
                       </span>
@@ -474,24 +486,6 @@ export const WrapView = () => {
                 </div>
               </div>
               <div className="p-2 mb-2">
-                {environment === "local" && (
-                  <>
-                    <p className="localdev-label">
-                      network fee:{" "}
-                      {getTokenAmountAndSymbolByTokenAddress(
-                        wrapFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS
-                      )}
-                    </p>
-                    <p className="localdev-label">
-                      balance - fee:{" "}
-                      {getTokenAmountAndSymbolByTokenAddress(
-                        nativeBalance - wrapFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS
-                      )}
-                    </p>
-                  </>
-                )}
                 {infoRow(
                   t("faucet.wrap-transaction-fee") + ":",
                   `${
@@ -599,7 +593,7 @@ export const WrapView = () => {
                               true
                             )} SOL`,
                             feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                              getComputedFees(wrapFees),
+                              wrapFees.blockchainFee + getTxFeeAmount(wrapFees, wrapAmount) - nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
                               true
                             )} SOL`,

@@ -2762,11 +2762,27 @@ section.content {
           flex: 0 0 100%;
           width: 100%;
           margin-top: 10px;
+          &.compact {
+            .header-row {
+              height: 20px;
+              .std-table-cell {
+                font-size: 0.7rem !important;
+              }
+            }
+          }
         }
       }
       .transaction-list-data-wrapper {
         max-height: calc(100% - 3.6rem);
         z-index: 3;
+        .item-list-body.compact {
+          .item-list-row {
+            height: 20px;
+            .std-table-cell {
+              font-size: 0.7rem !important;
+            }
+          }
+        }
       }
       .stream-fields-container {
         position: relative;
@@ -4522,7 +4538,7 @@ section.content {
     box-shadow: none;
     transition: none;
     height: 40px;
-    &.ant-btn-default {
+    &:not(.ant-btn-primary) {
       color: var(--color-secondary);
       background-color: transparent;
       &:hover {

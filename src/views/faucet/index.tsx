@@ -60,6 +60,7 @@ export const FaucetView = () => {
     }
   }, [
     account,
+    nativeBalance,
     previousBalance,
     refreshTokenBalance
   ]);
