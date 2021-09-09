@@ -8,11 +8,18 @@ import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
-// import transakSDK from '@transak/transak-sdk';
+import { AppConfig, AppConfigService } from '../../environments/environment';
 import "./style.less";
-import { AppConfig, AppConfigService, environment } from '../../environments/environment';
 
 const QRCode = require('qrcode.react');
+const transakWidgetStyle = {
+  display: 'block',
+  height: '600px',
+  width: '100%',
+  maxHeight: '550px',
+  borderWidth: '0px',
+  //maxWidth: '450px';
+}
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -102,24 +109,11 @@ export const DepositOptions = (props: {
     }
   }
 
-  // const renderTransak = () => {
-  //   if (publicKey && currentConfig) {
-  //     const transak = new transakSDK({
-  //       apiKey: currentConfig.transakApiKey,  // Your API Key
-  //       environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
-  //       defaultCryptoCurrency: 'SOL',
-  //       walletAddress: publicKey.toBase58(), // Your customer's wallet address
-  //       themeColor: theme === 'light' ? '000000' : 'ffffff', // App theme color
-  //       fiatCurrency: 'EUR',
-  //       email: '', // Your customer's email address
-  //       redirectURL: '',
-  //       hostURL: window.location.origin,
-  //       widgetHeight: '550px',
-  //       widgetWidth: '270px'
-  //     });
-  //     transak.init();
-  //   }
-  // };
+  const getTransakWidgetUrl = () => {
+    // Also try ?networks=polygon&cryptoCurrencyCode=USDC&apiKey=YOUR_API_KEY
+    const widgetUrl = `${currentConfig?.transakUrl}?apiKey=${currentConfig?.transakApiKey}`;
+    return widgetUrl;
+  }
 
   useEffect(() => {
     const resizeListener = () => {
@@ -191,7 +185,6 @@ export const DepositOptions = (props: {
                 {t("deposits.send-from-wallet-cta-label")}
               </Button>
             </Col>
-
             <Col span={24}>
               <Button
                 block
@@ -202,11 +195,9 @@ export const DepositOptions = (props: {
                 disabled={!connected}
                 onClick={enableTransak}>
                 <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
-                transak
                 {t("deposits.transak-cta-label")}
               </Button>
             </Col>
-
             <Col span={24}>
               <Button
                 block
@@ -283,8 +274,15 @@ export const DepositOptions = (props: {
         </div>
         <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
           <div className="mb-3">
-            {/* {renderTransak()} */}
-            Transak options will display here
+            {/* https://global.transak.com/?networks=polygon&cryptoCurrencyCode=USDC&apiKey=YOUR_API_KEY */}
+            {publicKey && currentConfig && (
+              <div>
+                <iframe title="Transak On/Off Ramp Widget (Website)"
+                        frameBorder="no"
+                        style = {transakWidgetStyle}
+                        src={getTransakWidgetUrl()}></iframe>
+              </div>
+            )}
           </div>
           <div className="text-center">
             <Button

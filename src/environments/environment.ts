@@ -1,6 +1,7 @@
 export let environment: string;
 
 export interface AppConfig {
+    transakUrl: string;
     transakApiKey: string;
     streamProgramAddress: string;
     influxDbUrl: string;
@@ -13,6 +14,7 @@ export class AppConfigService {
 
     private readonly CONFIG: { [env: string]: AppConfig } = {
         production: {
+            transakUrl: 'https://global.transak.com',
             transakApiKey: 'ba0eae8b-fed1-4c2f-8e62-2b8a69ac60d0',
             streamProgramAddress: 'H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
@@ -21,6 +23,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-prod'
         },
         staging: {
+            transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
@@ -30,6 +33,7 @@ export class AppConfigService {
         },
         // dev and local will have same config
         development: {
+            transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
@@ -38,6 +42,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev'
         },
         local: {
+            transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
             influxDbUrl: 'https://metrics.meanfi.com:8086',
