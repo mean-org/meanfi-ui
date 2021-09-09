@@ -319,7 +319,8 @@
 			"payment-rate-high": "Payment rate exceeds your balance",
 			"valid-approve": "Approve on your wallet",
 			"valid-start-funding": "Start funding",
-			"valid-start-withdrawal": "Start withdrawal"
+			"valid-start-withdrawal": "Start withdrawal",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee"
 		}
 	},
 	"ui-language": {
