@@ -29,6 +29,7 @@ import {
 
 import BN from 'bn.js';
 import { DexInstructions } from '@project-serum/serum';
+import { ACCOUNT_LAYOUT } from './layouts';
 
 const BufferLayout = require('buffer-layout');
 
@@ -280,7 +281,7 @@ export const wrap = async (
         keys: [
           { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
           { pubkey: atokenKey, isSigner: false, isWritable: true },
-          { pubkey: feeAccount, isSigner: false, isWritable: false },
+          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
           { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
           { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
           { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
@@ -473,40 +474,62 @@ export async function swap(
 
 ) {
 
-  const tx = new Transaction()
+  const tx = new Transaction();
   const signers = new Array<Signer>();
-  const from = getTokenByMintAddress(fromCoinMint.toBase58())
-  const to = getTokenByMintAddress(toCoinMint.toBase58())
+  const from = getTokenByMintAddress(fromCoinMint.toBase58());
+  const to = getTokenByMintAddress(toCoinMint.toBase58());
 
   if (!from || !to) {
-    throw new Error('Miss token info')
+    throw new Error('Miss token info');
   }
 
-  let wrappedSolAccount: PublicKey | null = null
-  let wrappedSolAccount2: PublicKey | null = null
+  let wrappedSolAccount: Keypair | null = null;
+  let wrappedSolAccount2: Keypair | null = null;
 
   if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
-    wrappedSolAccount = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount,
-      wallet.publicKey,
-      WRAPPED_SOL_MINT.toBase58(),
-      fromAmount.sub(fee).toNumber() + 1e7,
-      tx,
-      signers
+
+    wrappedSolAccount = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: wrappedSolAccount.publicKey,
+        lamports: fromAmount.sub(fee).toNumber() + 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount.publicKey,
+        wallet.publicKey
+      )
     );
+
+    signers.push(wrappedSolAccount);
   }
 
   if (toCoinMint.equals(NATIVE_SOL_MINT)) {
-    wrappedSolAccount2 = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount2,
-      wallet.publicKey,
-      WRAPPED_SOL_MINT.toBase58(),
-      1e7,
-      tx,
-      signers
+
+    wrappedSolAccount2 = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: wrappedSolAccount2.publicKey,
+        lamports: 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount2.publicKey,
+        wallet.publicKey
+      )
     );
+
+    signers.push(wrappedSolAccount2);
   }
 
   const fromMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
@@ -566,13 +589,13 @@ export async function swap(
       new PublicKey(poolInfo.serumCoinVaultAccount),
       new PublicKey(poolInfo.serumPcVaultAccount),
       new PublicKey(poolInfo.serumVaultSigner),
-      wrappedSolAccount ?? fromTokenAccount,
-      wrappedSolAccount2 ?? toTokenAccount,
+      wrappedSolAccount ? wrappedSolAccount.publicKey : fromTokenAccount,
+      wrappedSolAccount2 ? wrappedSolAccount2.publicKey : toTokenAccount,
       wallet.publicKey,
       fromAmount.sub(fee).toNumber(),
       toSwapAmount.toNumber()
     )
-  )
+  );
 
   // Transfer fees
   const feeAccountMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
@@ -606,17 +629,19 @@ export async function swap(
     tx.add(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
-        wrappedSolAccount,
+        wrappedSolAccount.publicKey,
         feeAccountToken,
         wallet.publicKey,
         [],
         fee.toNumber()
       ),
-      closeAccount({
-        source: wrappedSolAccount,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey
-      })
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
     );
   } else {
     tx.add(
@@ -633,11 +658,13 @@ export async function swap(
 
   if (wrappedSolAccount2) {
     tx.add(
-      closeAccount({
-        source: wrappedSolAccount2,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey
-      })
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount2.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
     );
   }
 

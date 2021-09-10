@@ -34,7 +34,8 @@ import BN from "bn.js";
 import "./style.less";
 
 import { AMM_POOLS, TOKENS } from "../../amms/data";
-import { TokenInfo } from "../../amms/types";
+import { AmmPoolInfo, Client, ORCA, TokenInfo } from "../../amms/types";
+import { getClient, getOptimalPool, getTokensPools } from "../../amms/utils";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -100,6 +101,10 @@ export const SwapUi = () => {
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
+
+  // AGGREGATOR
+  const [swapClient, setSwapClient] = useState<Client>();
+  const [optimalPool, setOptimalPool] = useState<AmmPoolInfo>();
 
   // Get Tx fees
   useEffect(() => {
@@ -380,26 +385,28 @@ export const SwapUi = () => {
 
     const timeout = setTimeout(() => {
 
-      const filteredPools = AMM_POOLS.filter((ammPool) => {
+      // const tokensPools = getTokensPools(
+      //   fromMint.toBase58(),
+      //   toMint.toBase58()
+      // );
 
-        let from = fromMint;
-        let to = toMint;
+      // console.log('tokensPools => ', tokensPools);
 
-        if (fromMint.equals(NATIVE_SOL_MINT)) {
-          from = WRAPPED_SOL_MINT;
-        }
-
-        if (toMint.equals(NATIVE_SOL_MINT)) {
-          to = WRAPPED_SOL_MINT;
-        }
-
-        return (
-          ammPool.tokenAddresses.includes(from.toBase58()) &&
-          ammPool.tokenAddresses.includes(to.toBase58())
-        );
-      });
-
-      console.log('filteredPools => ', filteredPools);
+      // if (tokensPools.length) {
+      //   // find the optimal pool and get the client for that pool
+      //   let optimalPool = getOptimalPool(tokensPools);
+      //   setOptimalPool(optimalPool);
+      //   let client = swapClient;
+        
+      //   if (!client || optimalPool.protocolAddress !== client.protocolAddress) {
+      //     client = getClient(connection, optimalPool.protocolAddress) as Client;
+      //     setSwapClient(client);
+      //   }
+        
+      // } else {
+      //   // just find a market
+        
+      // }
 
       getLiquidityPools(connection)
         .then((poolInfos) => {
@@ -418,8 +425,6 @@ export const SwapUi = () => {
           } else {            
             getMarkets(connection)
               .then((marketInfos) => {
-
-                // console.log('markets', marketInfos);
 
                 let newMarketKey;
 
@@ -511,6 +516,7 @@ export const SwapUi = () => {
     });
 
     return () => {
+      setRefreshing(false);
       clearTimeout(timeout);
     }
 
@@ -520,7 +526,9 @@ export const SwapUi = () => {
     toMint,
     isWrap,
     isUnwrap,
-    isFlipping
+    isFlipping,
+    // NEW
+    // swapClient
   ]);
 
   // Automatically update all tokens balance
@@ -577,7 +585,7 @@ export const SwapUi = () => {
   // Automatically update fromMint token balance once
   useEffect(() => {
     
-    if (!connected || !publicKey || !fromMint || isFlipping) {
+    if (!connected || !publicKey || !fromMint) {
       if (isFlipping) { setIsFlipping(false); }
       setFromMintTokenBalance(0);
       return;
@@ -626,7 +634,7 @@ export const SwapUi = () => {
   // Automatically update toMint token balance once
   useEffect(() => {
     
-    if (!connected || !publicKey || !toMint || isFlipping) {
+    if (!connected || !publicKey || !toMint) {
       if (isFlipping) { setIsFlipping(false); }
       setToMintTokenBalance(0);
       return;

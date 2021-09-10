@@ -1,3 +1,18 @@
+import { PublicKey, Transaction } from "@solana/web3.js"
+
+export const RAYDIUM = new PublicKey(
+  '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8'
+);
+
+export const ORCA = new PublicKey(
+  '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP'
+);
+
+export const SERUM = new PublicKey(
+  '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'
+);
+
+
 export type ChainInfo = {
   id: number;
   name: string;
@@ -15,7 +30,8 @@ export type TokenInfo = {
 export type ProtocolInfo = {
   address: string,
   name: string,
-  fee: number
+  txFee: number,
+  networkFee: number
 }
 
 export type AmmPoolInfo = {
@@ -27,16 +43,41 @@ export type AmmPoolInfo = {
   tokenAddresses: string[]  
 }
 
-export enum ProtocolAddress {
-  Raydium = '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
-  Orca = '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP'
-}
-
 export type ExchangeInfo = {
   outAmount: number,
   outMinimumAmount: number, // including the slippage
   outPrice: number,
   priceImpact: number,
-  ammPool: string,
-  route: string[]
+  networkFees: number,
+  protocolFees: number,
+  ammPool: string
+}
+
+export interface Client {
+
+  protocolAddress: string;
+
+  // getPoolInfo(address: string): Promise<any | undefined>
+
+  getExchangeInfo: (
+    from: string, 
+    to: string,
+    amount: number,
+    slippage: number
+
+  ) => Promise<ExchangeInfo>
+
+  getTokens(pool: AmmPoolInfo): Promise<Map<string, any>>
+
+  getSwap(
+    owner: PublicKey,
+    from: string, 
+    to: string, 
+    amountIn: number,
+    amountOut: number,
+    slippage: number,
+    feeAddress: string,
+    feeAmount: number
+
+  ): Promise<Transaction>
 }

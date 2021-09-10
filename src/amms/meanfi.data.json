@@ -59,12 +59,20 @@
     {
       "address": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
       "name": "Raydium LP Program V4",
-      "fee": 0
+      "txFee": 0.25,
+      "networkFee": 0
     },
     {
       "address": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
       "name": "Orca Token Swap Program",
-      "fee": 0
+      "txFee": 0.30,
+      "networkFee": 0.001
+    },
+    {
+      "address": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+      "name": "Serum DEX Program",
+      "txFee": 0.30,
+      "networkFee": 0
     }
   ],
   "AMM_POOLS": [
@@ -75,7 +83,7 @@
       "address": "8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu",
       "name": "SOL-USDC LP",
       "tokenAddresses": [
-        "11111111111111111111111111111111",
+        "So11111111111111111111111111111111111111112",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ]
     },
@@ -141,7 +149,7 @@
       "address": "Epm4KfTj4DMrvqn6Bwg2Tr2N8vhQuNbuK8bESFp4k33K",
       "name": "SOL-USDT LP",
       "tokenAddresses": [
-        "11111111111111111111111111111111",
+        "So11111111111111111111111111111111111111112",
         "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
       ]
     },
