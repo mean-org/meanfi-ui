@@ -385,28 +385,28 @@ export const SwapUi = () => {
 
     const timeout = setTimeout(() => {
 
-      const tokensPools = getTokensPools(
-        fromMint.toBase58(),
-        toMint.toBase58()
-      );
+      // const tokensPools = getTokensPools(
+      //   fromMint.toBase58(),
+      //   toMint.toBase58()
+      // );
 
-      console.log('tokensPools => ', tokensPools);
+      // console.log('tokensPools => ', tokensPools);
 
-      if (tokensPools.length) {
-        // find the optimal pool and get the client for that pool
-        let optimalPool = getOptimalPool(tokensPools);
-        setOptimalPool(optimalPool);
-        let client = swapClient;
+      // if (tokensPools.length) {
+      //   // find the optimal pool and get the client for that pool
+      //   let optimalPool = getOptimalPool(tokensPools);
+      //   setOptimalPool(optimalPool);
+      //   let client = swapClient;
         
-        if (!client || optimalPool.protocolAddress !== client.protocolAddress) {
-          client = getClient(connection, optimalPool.protocolAddress) as Client;
-          setSwapClient(client);
-        }
+      //   if (!client || optimalPool.protocolAddress !== client.protocolAddress) {
+      //     client = getClient(connection, optimalPool.protocolAddress) as Client;
+      //     setSwapClient(client);
+      //   }
         
-      } else {
-        // just find a market
-
-      }
+      // } else {
+      //   // just find a market
+        
+      // }
 
       getLiquidityPools(connection)
         .then((poolInfos) => {
@@ -425,8 +425,6 @@ export const SwapUi = () => {
           } else {            
             getMarkets(connection)
               .then((marketInfos) => {
-
-                // console.log('markets', marketInfos);
 
                 let newMarketKey;
 
@@ -518,6 +516,7 @@ export const SwapUi = () => {
     });
 
     return () => {
+      setRefreshing(false);
       clearTimeout(timeout);
     }
 
@@ -529,7 +528,7 @@ export const SwapUi = () => {
     isUnwrap,
     isFlipping,
     // NEW
-    swapClient
+    // swapClient
   ]);
 
   // Automatically update all tokens balance
@@ -586,7 +585,7 @@ export const SwapUi = () => {
   // Automatically update fromMint token balance once
   useEffect(() => {
     
-    if (!connected || !publicKey || !fromMint || isFlipping) {
+    if (!connected || !publicKey || !fromMint) {
       if (isFlipping) { setIsFlipping(false); }
       setFromMintTokenBalance(0);
       return;
@@ -635,7 +634,7 @@ export const SwapUi = () => {
   // Automatically update toMint token balance once
   useEffect(() => {
     
-    if (!connected || !publicKey || !toMint || isFlipping) {
+    if (!connected || !publicKey || !toMint) {
       if (isFlipping) { setIsFlipping(false); }
       setToMintTokenBalance(0);
       return;

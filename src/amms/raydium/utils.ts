@@ -16,11 +16,10 @@ import { NATIVE_SOL, TOKENS } from "./tokens";
 import { TokenInfo } from "./types";
 import { AMM_POOLS } from "../data";
 import { LIQUIDITY_POOLS } from "./pools";
-import { MARKETS, MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
+import { MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
 import { SERUM_PROGRAM_ID_V3 } from "../../utils/ids";
 import { getMultipleAccounts } from "../../utils/accounts";
-
-export const SERUM_MARKETS: string[] = [];
+import { MARKETS } from '@project-serum/serum/lib/tokens_and_markets';
 
 export const getTokenByMintAddress = (address: string): TokenInfo | null => {
 
@@ -156,22 +155,22 @@ export const createAmmAuthority = async (programId: PublicKey) => {
   return { publicKey, nonce };
 }
 
-export function startMarkets() { 
+const SERUM_MARKETS: any[] = [];
 
-  for (const market of MARKETS) {
-    if (!market.deprecated && !SERUM_MARKETS.includes(market.address.toBase58())) {
-      SERUM_MARKETS.push(market.address.toBase58())
-    }
-  }
+export function startMarkets() {
 
-  for (const market of LIQUIDITY_POOLS) {
-    if (market.serumProgramId === SERUM_PROGRAM_ID_V3 && !SERUM_MARKETS.includes(market.serumMarket) && market.official) {
-      SERUM_MARKETS.push(market.serumMarket)
+  for (const pool of LIQUIDITY_POOLS) {
+    if (
+      pool.serumProgramId === SERUM_PROGRAM_ID_V3 &&
+      !SERUM_MARKETS.includes(pool.serumMarket) &&
+      pool.official
+    ) {
+      SERUM_MARKETS.push(pool.serumMarket);
     }
   }
 }
 
-export async function getMarkets(connection: Connection) {
+export const getMarkets = async (connection: Connection) => {
 
   startMarkets();
 

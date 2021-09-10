@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { AccountInfo as TokenAccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Client, ExchangeInfo, RAYDIUM } from "../types";
 import { getSwapOutAmount, getSwapTx } from "./swap";
 import { createAmmAuthority, getLpMintDecimals, getTokenByMintAddress } from "./utils";
@@ -7,7 +7,7 @@ import { getTokensPools } from "../utils";
 import { PROTOCOLS } from "../data";
 import { AMM_INFO_LAYOUT_V4 } from "../../utils/layouts";
 import { LIQUIDITY_POOL_PROGRAM_ID_V4, NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { getMarkets } from "../../utils/markets";
+import { getMarkets } from "../serum/markets";
 import { LiquidityPoolInfo } from "./types";
 import { BN } from "bn.js";
 import { LP_TOKENS, TOKENS } from "../../utils/tokens";

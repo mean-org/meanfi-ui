@@ -187,7 +187,7 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
         case TransactionStatus.TransactionFinished:
             return trans ? trans('transactions.status.tx-completed') : 'Operation completed';
         default:
-            return trans ? trans('transactions.status.tx-idle') : 'Idle';
+            return ''; // trans ? trans('transactions.status.tx-idle') : 'Idle';
     }
 }
 
