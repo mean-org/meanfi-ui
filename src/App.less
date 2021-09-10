@@ -37,6 +37,7 @@
   --color-black: #000000;
 
   /* Black with alpha */
+  --color-secondary-alpha-01: rgba(0, 0, 0, 0.01);
   --color-secondary-alpha-02: rgba(0, 0, 0, 0.02);
   --color-secondary-alpha-05: rgba(0, 0, 0, 0.05);
   --color-secondary-alpha-10: rgba(0, 0, 0, 0.10);
@@ -109,6 +110,7 @@
   --color-black: #000000;
 
   /* Black with alpha */
+  --color-secondary-alpha-01: rgba(255, 255, 255, 0.01);
   --color-secondary-alpha-02: rgba(255, 255, 255, 0.02);
   --color-secondary-alpha-05: rgba(255, 255, 255, 0.05);
   --color-secondary-alpha-10: rgba(255, 255, 255, 0.10);
@@ -1239,6 +1241,12 @@ section.content {
     height: 56px;
     line-height: 20px;
     font-size: 20px;
+  }
+  .left {
+    flex: 1 1 auto;
+  }
+  .right {
+    flex: 0 0 auto;
   }
 }
 .transaction-field {
@@ -4604,4 +4612,41 @@ section.content {
 .ant-divider.ant-divider-horizontal {
   color: var(--color-secondary-alpha-40);
   border-top: 1px solid var(--color-secondary-alpha-05);
+}
+
+.ant-popover {
+  &::after {
+    background: var(--color-secondary-alpha-01);
+  }
+  .ant-popover-content {
+    color: var(--text-color);
+    .ant-popover-arrow {
+      .ant-popover-arrow-content {
+        background-color: var(--bg-color);
+      }
+    }
+    .ant-popover-inner {
+      background-color: var(--bg-color);
+      .ant-popover-title {
+        color: var(--color-secondary-alpha-70);
+        border-bottom: 1px solid var(--color-secondary-alpha-20);
+      }
+      .ant-popover-inner-content {
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        .ant-radio-group {
+          .ant-radio-button-wrapper {
+            color: var(--text-color);
+            background: var(--bg-color);
+            &.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+              color: var(--color-primary);
+            }
+            &:hover {
+              color: var(--color-primary-highlight);
+            }
+          }
+        }
+      }
+    }
+  }
 }

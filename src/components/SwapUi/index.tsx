@@ -18,8 +18,6 @@ import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { TextInput } from "../TextInput";
 import { DEFAULT_SLIPPAGE_PERCENT, getOutAmount, getSwapOutAmount, place, swap, unwrap, wrap } from "../../utils/swap";
 import { isOfficalMarket, LiquidityPoolInfo } from "../../utils/pools";
-// import { NATIVE_SOL } from "../../utils/tokens";
-// import { TokenInfo } from "@solana/spl-token-registry";
 import { cloneDeep } from "lodash-es";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { Market } from "../../models/market";
@@ -33,9 +31,9 @@ import * as base64 from "base64-js";
 import BN from "bn.js";
 import "./style.less";
 
-import { AMM_POOLS, TOKENS } from "../../amms/data";
-import { AmmPoolInfo, Client, ORCA, TokenInfo } from "../../amms/types";
-import { getClient, getOptimalPool, getTokensPools } from "../../amms/utils";
+import { TOKENS } from "../../amms/data";
+import { AmmPoolInfo, Client, TokenInfo } from "../../amms/types";
+import { SwapSettings } from "../SwapSettings";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1586,10 +1584,20 @@ export const SwapUi = () => {
     );
   };
 
+  const onSlippageChanged = (value: any) => {
+    setSlippage(value);
+  };
 
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
+
+        {/* Title bar with settings */}
+        <div className="swap-title-and-settings flexible-left">
+          <div className="left title">{t('ui-menus.main-menu.swap')}</div>
+          <div className="right"><SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/></div>
+        </div>
+
         {/* Source token / amount */}
         <CoinInput
           token={fromMint ? (tokenMap.get(fromMint.toBase58()) as TokenInfo) : undefined}

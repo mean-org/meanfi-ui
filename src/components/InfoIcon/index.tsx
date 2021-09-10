@@ -3,7 +3,7 @@ import React from "react";
 
 import { InfoCircleOutlined } from "@ant-design/icons";
 
-export const Info = (props: {
+export const InfoIcon = (props: {
   text: React.ReactElement;
   style?: React.CSSProperties;
 }) => {

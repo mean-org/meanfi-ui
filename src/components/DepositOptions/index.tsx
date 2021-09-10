@@ -13,13 +13,13 @@ import "./style.less";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const QRCode = require('qrcode.react');
-// const transakWidgetStyle = {
-//   display: 'block',
-//   height: '628px',
-//   width: '100%',
-//   borderWidth: '0px',
-//   maxWidth: '450px'
-// }
+const transakWidgetStyle = {
+  display: 'block',
+  height: '628px',
+  width: '100%',
+  borderWidth: '0px',
+  maxWidth: '450px'
+}
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -57,12 +57,12 @@ export const DepositOptions = (props: {
     }, 250);
   }
 
-  // const enableTransak = () => {
-  //   setIsTransakActive(true);
-  //   setTimeout(() => {
-  //     window.dispatchEvent(new Event('resize'));
-  //   }, 250);
-  // }
+  const enableTransak = () => {
+    setIsTransakActive(true);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 250);
+  }
 
   const closePanels = () => {
     setIsSharingAddress(false);
@@ -107,12 +107,12 @@ export const DepositOptions = (props: {
     props.handleClose();
   }
 
-  const handleTransakButtonClick = () => {
-    setTimeout(() => {
-      window.open(transakWidgetUrl, '_blank','noreferrer');
-    }, 500);
-    props.handleClose();
-  }
+  // const handleTransakButtonClick = () => {
+  //   setTimeout(() => {
+  //     window.open(transakWidgetUrl, '_blank','noreferrer');
+  //   }, 500);
+  //   props.handleClose();
+  // }
 
   const onCopyAddress = () => {
     if (publicKey && copyText(publicKey)) {
@@ -178,7 +178,7 @@ export const DepositOptions = (props: {
       onOk={props.handleClose}
       onCancel={props.handleClose}
       afterClose={closePanels}
-      width={400}>
+      width={450}>
       <div className="deposit-selector">
         <div className={isSharingAddress || isTransakActive ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
@@ -219,7 +219,7 @@ export const DepositOptions = (props: {
                 type="default"
                 shape="round"
                 size="middle"
-                onClick={handleTransakButtonClick}>
+                onClick={enableTransak}>
                 <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
                 {t("deposits.transak-cta-label")}
               </Button>
@@ -290,7 +290,7 @@ export const DepositOptions = (props: {
             <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
-        {/* <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
+        <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
           {transakWidgetUrl ? (
             <div>
               <iframe title="Transak On/Off Ramp Widget (Website)"
@@ -303,7 +303,7 @@ export const DepositOptions = (props: {
               <p>Loading transak widget</p>
             </div>
           )}
-        </div> */}
+        </div>
       </div>
     </Modal>
   );
