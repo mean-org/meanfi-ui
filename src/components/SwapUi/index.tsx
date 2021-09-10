@@ -34,7 +34,8 @@ import BN from "bn.js";
 import "./style.less";
 
 import { AMM_POOLS, TOKENS } from "../../amms/data";
-import { TokenInfo } from "../../amms/types";
+import { Client, ORCA, TokenInfo } from "../../amms/types";
+import { getClient, getOptimalPool, getTokensPools } from "../../amms/utils";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -100,6 +101,9 @@ export const SwapUi = () => {
     mspFlatFee: 0,
     mspPercentFee: 0,
   });
+
+  // AGGREGATOR
+  const [swapClient, setSwapClient] = useState<Client>();
 
   // Get Tx fees
   useEffect(() => {
@@ -380,26 +384,34 @@ export const SwapUi = () => {
 
     const timeout = setTimeout(() => {
 
-      const filteredPools = AMM_POOLS.filter((ammPool) => {
+      const tokensPools = getTokensPools(
+        fromMint.toBase58(),
+        toMint.toBase58()
+      );
 
-        let from = fromMint;
-        let to = toMint;
+      console.log('tokensPools => ', tokensPools);
 
-        if (fromMint.equals(NATIVE_SOL_MINT)) {
-          from = WRAPPED_SOL_MINT;
+      if (tokensPools.length) {
+        // find the optimal pool and get the client for that pool
+        let bestPool = getOptimalPool(tokensPools);
+        // setPool(bestPool);
+        let client = swapClient;
+        
+        if (!client || bestPool.protocolAddress !== client.protocolAddress) {
+          client = getClient(connection, bestPool.protocolAddress) as Client;
         }
 
-        if (toMint.equals(NATIVE_SOL_MINT)) {
-          to = WRAPPED_SOL_MINT;
-        }
+        client.getPoolInfo(bestPool.address)
+          .then((info: any) => { 
+            if (!info) { throw new Error('Liquidity Pool info not found'); }
+            console.log(info);
+          })
+          .catch((_error: any) => { console.log(_error); });
 
-        return (
-          ammPool.tokenAddresses.includes(from.toBase58()) &&
-          ammPool.tokenAddresses.includes(to.toBase58())
-        );
-      });
+      } else {
+        // just find a market
 
-      console.log('filteredPools => ', filteredPools);
+      }
 
       getLiquidityPools(connection)
         .then((poolInfos) => {
@@ -520,7 +532,9 @@ export const SwapUi = () => {
     toMint,
     isWrap,
     isUnwrap,
-    isFlipping
+    isFlipping,
+    // NEW
+    swapClient
   ]);
 
   // Automatically update all tokens balance
