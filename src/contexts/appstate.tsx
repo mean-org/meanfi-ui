@@ -215,7 +215,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     const applyTheme = (name?: string) => {
-      const theme = name || 'light';
+      const theme = name || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
       updateTheme(theme);
     }
