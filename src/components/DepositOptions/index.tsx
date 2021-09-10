@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Col, Modal, Row } from "antd";
+import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
@@ -8,11 +8,18 @@ import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
-// import transakSDK from '@transak/transak-sdk';
+import { AppConfig, AppConfigService } from '../../environments/environment';
 import "./style.less";
-import { AppConfig, AppConfigService, environment } from '../../environments/environment';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const QRCode = require('qrcode.react');
+const transakWidgetStyle = {
+  display: 'block',
+  height: '628px',
+  width: '100%',
+  borderWidth: '0px',
+  maxWidth: '450px'
+}
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -102,24 +109,11 @@ export const DepositOptions = (props: {
     }
   }
 
-  // const renderTransak = () => {
-  //   if (publicKey && currentConfig) {
-  //     const transak = new transakSDK({
-  //       apiKey: currentConfig.transakApiKey,  // Your API Key
-  //       environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
-  //       defaultCryptoCurrency: 'SOL',
-  //       walletAddress: publicKey.toBase58(), // Your customer's wallet address
-  //       themeColor: theme === 'light' ? '000000' : 'ffffff', // App theme color
-  //       fiatCurrency: 'EUR',
-  //       email: '', // Your customer's email address
-  //       redirectURL: '',
-  //       hostURL: window.location.origin,
-  //       widgetHeight: '550px',
-  //       widgetWidth: '270px'
-  //     });
-  //     transak.init();
-  //   }
-  // };
+  const getTransakWidgetUrl = () => {
+    // Also try ?networks=polygon&cryptoCurrencyCode=USDC&apiKey=YOUR_API_KEY
+    const widgetUrl = `${currentConfig?.transakUrl}?apiKey=${currentConfig?.transakApiKey}`;
+    return widgetUrl;
+  }
 
   useEffect(() => {
     const resizeListener = () => {
@@ -148,9 +142,23 @@ export const DepositOptions = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className="mean-modal simple-modal multi-step"
       title={
+        <>
+        {(isSharingAddress || isTransakActive) && (
+          <div className="back-button ant-modal-close">
+            <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
+              <Button
+                type="default"
+                shape="circle"
+                icon={<ArrowLeftOutlined />}
+                onClick={closePanels}
+              />
+            </Tooltip>
+          </div>
+        )}
         <div className="modal-title">{t("deposits.modal-title")}</div>
+        </>
       }
       footer={null}
       visible={props.isVisible}
@@ -191,7 +199,6 @@ export const DepositOptions = (props: {
                 {t("deposits.send-from-wallet-cta-label")}
               </Button>
             </Col>
-
             <Col span={24}>
               <Button
                 block
@@ -202,11 +209,9 @@ export const DepositOptions = (props: {
                 disabled={!connected}
                 onClick={enableTransak}>
                 <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
-                transak
                 {t("deposits.transak-cta-label")}
               </Button>
             </Col>
-
             <Col span={24}>
               <Button
                 block
@@ -245,7 +250,7 @@ export const DepositOptions = (props: {
             </Col>
           </Row>
         </div>
-        <div className={isSharingAddress ? "option-detail-panel show" : "option-detail-panel hide"}>
+        <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -270,32 +275,18 @@ export const DepositOptions = (props: {
                 </div>
               </div>
             </div>
-            <p className="font-light font-size-75 px-4 mb-3">{t('deposits.address-share-disclaimer')}</p>
-            <Button
-              className="deposit-option"
-              type="default"
-              shape="round"
-              size="middle"
-              onClick={() => setIsSharingAddress(false)}>
-              {t('general.cta-finish')}
-            </Button>
+            <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
         <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
-          <div className="mb-3">
-            {/* {renderTransak()} */}
-            Transak options will display here
-          </div>
-          <div className="text-center">
-            <Button
-              className="deposit-option"
-              type="default"
-              shape="round"
-              size="middle"
-              onClick={() => setIsTransakActive(false)}>
-              {t('general.cta-finish')}
-            </Button>
-          </div>
+          {publicKey && currentConfig && (
+            <div>
+              <iframe title="Transak On/Off Ramp Widget (Website)"
+                      frameBorder="no"
+                      style = {transakWidgetStyle}
+                      src={getTransakWidgetUrl()}></iframe>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

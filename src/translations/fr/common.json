@@ -81,6 +81,7 @@
 	},
 	"deposits": {
 		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
+		"back-to-deposit-options": "Back to Deposit options",
 		"ftx-cta-label-enabled": "Dépôt de FTX",
 		"heading": "Déposez depuis votre carte, votre compte bancaire ou depuis une autre blockchain directement dans votre portefeuille Solana.\nSélectionnez l'une des options suivantes",
 		"modal-title": "Options de dépôt",
@@ -308,6 +309,7 @@
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
+			"insufficient-balance-needed": "",
 			"invalid-amount": "Montant invalide",
 			"minimum-swap-amount": "Besoin d'au moins {{mintAmount}} pour échanger contre de {{toMint}}",
 			"no-amount": "Entrer le montant",
