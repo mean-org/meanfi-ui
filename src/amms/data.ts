@@ -39,7 +39,8 @@ const initialize = () => {
     PROTOCOLS.push({
       address: protocol.address,
       name: protocol.name,
-      fee: protocol.fee
+      txFee: protocol.txFee,
+      networkFee: protocol.networkFee
     });
   }
 

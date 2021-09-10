@@ -5,6 +5,7 @@ import { getTokensPools } from "../utils";
 import Decimal from "decimal.js";
 import { AccountInfo as TokenAccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { BN } from "bn.js";
+import { PROTOCOLS } from "../data";
 
 export class OrcaClient implements Client {
 
@@ -20,16 +21,6 @@ export class OrcaClient implements Client {
     return ORCA.toBase58(); 
   }  
 
-  public getPoolInfo = async (address: string): Promise<TokenAccountInfo | undefined> => {
-
-    const poolKey = new PublicKey(address);
-    const poolInfo = await this.connection.getAccountInfo(poolKey, this.connection.commitment);
-
-    if (!poolInfo) { return undefined; }
-
-    return deserializeAccount(poolInfo.data);
-  }
-
   public getExchangeInfo = async (
     from: string,
     to: string,
@@ -44,23 +35,22 @@ export class OrcaClient implements Client {
       throw new Error("Orca pool not found.");
     }
 
-    const address = pools[0].address;
-    const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === address)[0];
+    const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === pools[0].address)[0];
     const pool = this.orcaSwap.getPool(poolConfig[1]);
     const tokenA = pool.getTokenA();
     const decimalAmount = new Decimal(parseFloat(amount.toFixed(tokenA.scale)));
     const decimalSlippage = new Decimal(parseFloat(slippage.toFixed(2)));
-
+    const protocol = PROTOCOLS.filter(p => p.address === this.protocolAddress)[0];
     const quote = await pool.getQuote(tokenA, decimalAmount, decimalSlippage);
 
     const exchangeInfo: ExchangeInfo = {
-      ammPool: address,
+      ammPool: pools[0].address,
       outPrice: quote.getRate().toNumber(),
       priceImpact: quote.getPriceImpact().toNumber(),
       outAmount: quote.getExpectedOutputAmount().toNumber(),
       outMinimumAmount: quote.getMinOutputAmount().toNumber(),
-      networkFees: quote.getNetworkFees().toNumber(),
-      protocolFees: quote.getLPFees().toNumber()
+      networkFees: protocol.networkFee || quote.getNetworkFees().toNumber(),
+      protocolFees: protocol.txFee || quote.getLPFees().toNumber()
     };
 
     return exchangeInfo;
@@ -160,4 +150,14 @@ export class OrcaClient implements Client {
 
     return transaction;
   };
+
+  private getPoolInfo = async (address: string): Promise<TokenAccountInfo | undefined> => {
+
+    const poolKey = new PublicKey(address);
+    const poolInfo = await this.connection.getAccountInfo(poolKey, this.connection.commitment);
+
+    if (!poolInfo) { return undefined; }
+
+    return deserializeAccount(poolInfo.data);
+  }
 }

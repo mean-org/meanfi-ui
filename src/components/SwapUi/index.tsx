@@ -34,7 +34,7 @@ import BN from "bn.js";
 import "./style.less";
 
 import { AMM_POOLS, TOKENS } from "../../amms/data";
-import { Client, ORCA, TokenInfo } from "../../amms/types";
+import { AmmPoolInfo, Client, ORCA, TokenInfo } from "../../amms/types";
 import { getClient, getOptimalPool, getTokensPools } from "../../amms/utils";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -104,6 +104,7 @@ export const SwapUi = () => {
 
   // AGGREGATOR
   const [swapClient, setSwapClient] = useState<Client>();
+  const [optimalPool, setOptimalPool] = useState<AmmPoolInfo>();
 
   // Get Tx fees
   useEffect(() => {
@@ -393,21 +394,15 @@ export const SwapUi = () => {
 
       if (tokensPools.length) {
         // find the optimal pool and get the client for that pool
-        let bestPool = getOptimalPool(tokensPools);
-        // setPool(bestPool);
+        let optimalPool = getOptimalPool(tokensPools);
+        setOptimalPool(optimalPool);
         let client = swapClient;
         
-        if (!client || bestPool.protocolAddress !== client.protocolAddress) {
-          client = getClient(connection, bestPool.protocolAddress) as Client;
+        if (!client || optimalPool.protocolAddress !== client.protocolAddress) {
+          client = getClient(connection, optimalPool.protocolAddress) as Client;
+          setSwapClient(client);
         }
-
-        client.getPoolInfo(bestPool.address)
-          .then((info: any) => { 
-            if (!info) { throw new Error('Liquidity Pool info not found'); }
-            console.log(info);
-          })
-          .catch((_error: any) => { console.log(_error); });
-
+        
       } else {
         // just find a market
 

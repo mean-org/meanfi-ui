@@ -4,6 +4,7 @@ import { Connection, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Trans
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { createTokenAccountIfNotExist, getTokenByMintAddress } from "./utils";
 import BN from "bn.js";
+import { TokenAmount } from "../../utils/safe-math";
 
 const BufferLayout = require('buffer-layout');
 
@@ -99,7 +100,7 @@ export const getSwapTx = async (
   }
 
   tx.add(
-    swapInstruction(
+    getSwapIx(
       new PublicKey(poolInfo.programId),
       new PublicKey(poolInfo.ammId),
       new PublicKey(poolInfo.ammAuthority),
@@ -193,7 +194,7 @@ export const getSwapTx = async (
   return { transaction: tx, signers };
 }
 
-export function swapInstruction(
+export function getSwapIx(
   programId: PublicKey,
   // tokenProgramId: PublicKey,
   // amm
@@ -268,4 +269,89 @@ export function swapInstruction(
     programId,
     data
   });
+}
+
+export function getSwapOutAmount(
+  poolInfo: any,
+  fromCoinMint: string,
+  toCoinMint: string,
+  amount: string,
+  slippage: number
+
+) {
+  const { coin, pc, fees } = poolInfo;
+  const { swapFeeNumerator, swapFeeDenominator } = fees;
+
+  if (fromCoinMint === coin.address && toCoinMint === pc.address) {
+    // coin2pc
+    const fromAmount = new TokenAmount(amount, coin.decimals, false)
+    const fromAmountWithFee = fromAmount.wei
+      .multipliedBy(swapFeeDenominator - swapFeeNumerator)
+      .dividedBy(swapFeeDenominator);
+
+    const denominator = coin.balance.wei.plus(fromAmountWithFee);
+    const amountOut = pc.balance.wei.multipliedBy(fromAmountWithFee).dividedBy(denominator);
+    const amountOutWithSlippage = amountOut.dividedBy(1 + slippage / 100);
+    const outBalance = pc.balance.wei.minus(amountOut);
+
+    const beforePrice = new TokenAmount(
+      parseFloat(new TokenAmount(pc.balance.wei, pc.decimals).fixed()) /
+        parseFloat(new TokenAmount(coin.balance.wei, coin.decimals).fixed()),
+      pc.decimals,
+      false
+    );
+
+    const afterPrice = new TokenAmount(
+      parseFloat(new TokenAmount(outBalance, pc.decimals).fixed()) /
+        parseFloat(new TokenAmount(denominator, coin.decimals).fixed()),
+      pc.decimals,
+      false
+    );
+
+    const priceImpact = 
+        ((parseFloat(beforePrice.fixed()) - parseFloat(afterPrice.fixed())) / parseFloat(beforePrice.fixed())) * 100;
+
+    return {
+      amountIn: fromAmount,
+      amountOut: new TokenAmount(amountOut, pc.decimals),
+      amountOutWithSlippage: new TokenAmount(amountOutWithSlippage, pc.decimals),
+      priceImpact
+    };
+
+  } else {
+    // pc2coin
+    const fromAmount = new TokenAmount(amount, pc.decimals, false);
+    const fromAmountWithFee = fromAmount.wei
+      .multipliedBy(swapFeeDenominator - swapFeeNumerator)
+      .dividedBy(swapFeeDenominator);
+
+    const denominator = pc.balance.wei.plus(fromAmountWithFee);
+    const amountOut = coin.balance.wei.multipliedBy(fromAmountWithFee).dividedBy(denominator);
+    const amountOutWithSlippage = amountOut.dividedBy(1 + slippage / 100);
+    const outBalance = coin.balance.wei.minus(amountOut);
+
+    const beforePrice = new TokenAmount(
+      parseFloat(new TokenAmount(pc.balance.wei, pc.decimals).fixed()) /
+        parseFloat(new TokenAmount(coin.balance.wei, coin.decimals).fixed()),
+      pc.decimals,
+      false
+    );
+
+    const afterPrice = new TokenAmount(
+      parseFloat(new TokenAmount(denominator, pc.decimals).fixed()) /
+        parseFloat(new TokenAmount(outBalance, coin.decimals).fixed()),
+      pc.decimals,
+      false
+    );
+
+    const priceImpact =
+      ((parseFloat(afterPrice.fixed()) - parseFloat(beforePrice.fixed())) / parseFloat(beforePrice.fixed())) * 100;
+
+    return {
+      amountIn: fromAmount,
+      amountOut: new TokenAmount(amountOut, coin.decimals),
+      amountOutWithSlippage: new TokenAmount(amountOutWithSlippage, coin.decimals),
+      priceImpact
+    };
+  }
 }

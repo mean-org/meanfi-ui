@@ -11,9 +11,16 @@ import {
 import { initializeAccount } from "@project-serum/serum/lib/token-instructions";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { cloneDeep } from "lodash-es";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import { ACCOUNT_LAYOUT, MINT_LAYOUT } from "../../utils/layouts";
 import { NATIVE_SOL, TOKENS } from "./tokens";
 import { TokenInfo } from "./types";
+import { AMM_POOLS } from "../data";
+import { LIQUIDITY_POOLS } from "./pools";
+import { MARKETS, MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
+import { SERUM_PROGRAM_ID_V3 } from "../../utils/ids";
+import { getMultipleAccounts } from "../../utils/accounts";
+
+export const SERUM_MARKETS: string[] = [];
 
 export const getTokenByMintAddress = (address: string): TokenInfo | null => {
 
@@ -109,4 +116,83 @@ export const createProgramAccountIfNotExist = async (
   }
 
   return publicKey;
+}
+
+export const getLpMintDecimals = async (
+  connection: any,
+  mintAddress: string
+
+): Promise<number> => {
+
+  let decimals = 0;
+  let ammPoolInfo = Object.values(AMM_POOLS).find(
+    (itemLpToken) => itemLpToken.address === mintAddress
+  );
+
+  if (!ammPoolInfo) {
+    const mintAccountInfo = await connection.getAccountInfo(mintAddress);
+    const mintLayoutData = MINT_LAYOUT.decode(
+      Buffer.from(mintAccountInfo.account.data)
+    );
+    decimals = mintLayoutData.decimals;
+  }
+
+  return decimals;
+};
+
+export const createAmmAuthority = async (programId: PublicKey) => {
+
+  const seeds = [
+    new Uint8Array(
+      Buffer.from("amm authority".replace("\u00A0", " "), "utf-8")
+    ),
+  ];
+
+  const [publicKey, nonce] = await PublicKey.findProgramAddress(
+    seeds,
+    programId
+  );
+
+  return { publicKey, nonce };
+}
+
+export function startMarkets() { 
+
+  for (const market of MARKETS) {
+    if (!market.deprecated && !SERUM_MARKETS.includes(market.address.toBase58())) {
+      SERUM_MARKETS.push(market.address.toBase58())
+    }
+  }
+
+  for (const market of LIQUIDITY_POOLS) {
+    if (market.serumProgramId === SERUM_PROGRAM_ID_V3 && !SERUM_MARKETS.includes(market.serumMarket) && market.official) {
+      SERUM_MARKETS.push(market.serumMarket)
+    }
+  }
+}
+
+export async function getMarkets(connection: Connection) {
+
+  startMarkets();
+
+  let markets: any = [];
+  const marketInfos = await getMultipleAccounts(
+    connection, 
+    MARKETS.map(m => new PublicKey(m)), 
+    connection.commitment
+  );
+
+  marketInfos.forEach((marketInfo) => {
+    if (marketInfo) {
+      const address = marketInfo.publicKey.toBase58();
+      const data = marketInfo.account.data;
+
+      if (address && data) {
+        const decoded = MARKET_STATE_LAYOUT_V2.decode(data);
+        markets[address] = decoded;
+      }
+    }
+  });
+
+  return markets;
 }

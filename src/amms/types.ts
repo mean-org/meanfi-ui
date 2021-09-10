@@ -1,5 +1,4 @@
 import { PublicKey, Transaction } from "@solana/web3.js"
-import { AccountInfo as TokenAccountInfo } from "@solana/spl-token";
 
 export const RAYDIUM = new PublicKey(
   '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8'
@@ -8,6 +7,11 @@ export const RAYDIUM = new PublicKey(
 export const ORCA = new PublicKey(
   '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP'
 );
+
+export const SERUM = new PublicKey(
+  '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'
+);
+
 
 export type ChainInfo = {
   id: number;
@@ -26,7 +30,8 @@ export type TokenInfo = {
 export type ProtocolInfo = {
   address: string,
   name: string,
-  fee: number
+  txFee: number,
+  networkFee: number
 }
 
 export type AmmPoolInfo = {
@@ -52,7 +57,7 @@ export interface Client {
 
   protocolAddress: string;
 
-  getPoolInfo(address: string): Promise<TokenAccountInfo | undefined>
+  // getPoolInfo(address: string): Promise<any | undefined>
 
   getExchangeInfo: (
     from: string, 
