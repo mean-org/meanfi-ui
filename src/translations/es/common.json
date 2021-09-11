@@ -17,6 +17,7 @@
 	"assets": {
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
+		"account-address-change-cta": "Scan another address",
 		"account-address-label": "Dirección de cuenta",
 		"account-address-placeholder": "Ingrese la dirección de su cuenta",
 		"create-account-help": "¿Aún no tienes una cuenta? Obtenga una GRATIS en un par de clics",
@@ -310,8 +311,10 @@
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"amount-withdraw-high": "La cantidad es mayor que los fondos disponibles",
+			"insufficient-amount-needed": "",
 			"insufficient-balance-needed": "",
 			"invalid-amount": "Monto no válido",
+			"invalid-exchange": "",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",

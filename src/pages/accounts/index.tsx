@@ -1,10 +1,10 @@
 import React, { useCallback, useContext, useReducer } from 'react';
-import { CheckCircleOutlined, PauseCircleOutlined, QrcodeOutlined, SyncOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, CheckCircleOutlined, EditOutlined, PauseCircleOutlined, QrcodeOutlined, SyncOutlined } from '@ant-design/icons';
 import { ConfirmedSignatureInfo, Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
-import { useConnectionConfig } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
@@ -16,11 +16,11 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Button, Empty, Progress } from 'antd';
+import { Button, Empty, Progress, Tooltip } from 'antd';
 import { consoleOut, percentual } from '../../utils/ui';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
+import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 
 export const AccountsView = () => {
@@ -46,6 +46,7 @@ export const AccountsView = () => {
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [tokenDisplayList, setTokenDisplayList] = useState<UserTokenAccount[]>([]);
+  const [canShowAccountDetails, setCanShowAccountDetails] = useState(accountAddress ? true : false);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -198,11 +199,20 @@ export const AccountsView = () => {
   const onAddAccountAddress = () => {
     console.log('Address:', accountAddressInput);
     setAccountAddress(accountAddressInput);
+    setCanShowAccountDetails(true);
     setShouldLoadTokens(true);
     reloadSwitch();
     setTimeout(() => {
       setAccountAddressInput('');
     }, 100);
+  }
+
+  const handleScanAnotherAddressButtonClick = () => {
+    setCanShowAccountDetails(false);
+  }
+
+  const handleBackToAccountDetailsButtonClick = () => {
+    setCanShowAccountDetails(true);
   }
 
   // Hook on the wallet connect/disconnect
@@ -213,6 +223,7 @@ export const AccountsView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Reading account address...', publicKey.toBase58(), 'blue');
         setAccountAddress(publicKey.toBase58());
+        setCanShowAccountDetails(true);
         reloadSwitch();
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
@@ -496,15 +507,36 @@ export const AccountsView = () => {
     <>
       <div className="container main-container">
 
-        <div className={accountAddress ? 'interaction-area' : 'interaction-area flex-center h-75'}>
+        <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
-          {accountAddress ? (
+          {canShowAccountDetails && accountAddress ? (
             <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
               {/* Left / top panel*/}
               <div className="tokens-container">
                 <div className="transactions-heading">
                   <span className="title">{t('assets.screen-title')}</span>
+                  <div className="user-address">
+                    <span className="fg-secondary">
+                      (<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`}>
+                        {shortenAddress(accountAddress, 5)}
+                      </a>)
+                    </span>
+                    {!connected && (
+                      <span className="icon-button-container">
+                        <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<EditOutlined />}
+                            onClick={handleScanAnotherAddressButtonClick}
+                          />
+                        </Tooltip>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="inner-container">
                   <div className="item-block vertical-scroll">
@@ -578,6 +610,21 @@ export const AccountsView = () => {
           ) : (
             <>
               <div className="boxed-area">
+                {accountAddress && (
+                  <div className="back-button">
+                    <span className="icon-button-container">
+                      <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="middle"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={handleBackToAccountDetailsButtonClick}
+                        />
+                      </Tooltip>
+                    </span>
+                  </div>
+                )}
                 <h2 className="text-center mb-3 px-3">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
                 <div className="flexible-left mb-3">
                   <div className="transaction-field">
