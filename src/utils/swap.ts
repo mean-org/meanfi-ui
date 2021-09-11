@@ -266,29 +266,26 @@ export const wrap = async (
     )
   );
   
-  const atokenKey = await Token.getAssociatedTokenAddress(
+  const aTokenKey = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
-    wallet.publicKey
+    wallet.publicKey,
+    true
   );
 
-  const atokenAccountInfo = await connection.getAccountInfo(atokenKey);
+  const aTokenInfo = await connection.getAccountInfo(aTokenKey);
 
-  if (!atokenAccountInfo) {
+  if (!aTokenInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: atokenKey, isSigner: false, isWritable: true },
-          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
-          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        aTokenKey,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
@@ -296,7 +293,7 @@ export const wrap = async (
     Token.createTransferInstruction(
       TOKEN_PROGRAM_ID,
       account.publicKey,
-      atokenKey,
+      aTokenKey,
       wallet.publicKey,
       [],
       amount.toNumber()
@@ -308,24 +305,21 @@ export const wrap = async (
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     feeAccount,
+    true
   );
 
   const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
 
   if (!feeAccountTokenInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
-          { pubkey: feeAccount, isSigner: false, isWritable: false },
-          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        feeAccountToken,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
   
@@ -333,7 +327,7 @@ export const wrap = async (
     // Transfer fees
     Token.createTransferInstruction(
       TOKEN_PROGRAM_ID,
-      atokenKey,
+      aTokenKey,
       feeAccountToken, // msp ops token account
       wallet.publicKey,
       [],
@@ -409,24 +403,21 @@ export const unwrap = async(
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
     feeAccount,
+    true
   );
 
   const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
 
   if (!feeAccountTokenInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
-          { pubkey: feeAccount, isSigner: false, isWritable: false },
-          { pubkey: WRAPPED_SOL_MINT, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        feeAccountToken,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
@@ -474,13 +465,13 @@ export async function swap(
 
 ) {
 
-  const tx = new Transaction();
+  const tx = new Transaction()
   const signers = new Array<Signer>();
-  const from = getTokenByMintAddress(fromCoinMint.toBase58());
-  const to = getTokenByMintAddress(toCoinMint.toBase58());
+  const from = getTokenByMintAddress(fromCoinMint.toBase58())
+  const to = getTokenByMintAddress(toCoinMint.toBase58())
 
   if (!from || !to) {
-    throw new Error('Miss token info');
+    throw new Error('Miss token info')
   }
 
   let wrappedSolAccount: Keypair | null = null;
@@ -533,45 +524,38 @@ export async function swap(
   }
 
   const fromMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
+  const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
+
+  if (!fromTokenAccountInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        fromTokenAccount,
+        wallet.publicKey,
+        wallet.publicKey
+      )
+    );
+  }
+
   const toMint = toCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toCoinMint;
-  const fromAccountTokenInfo = await connection.getAccountInfo(fromTokenAccount);
+  const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
 
-  if (!fromAccountTokenInfo) {
+  if (!toTokenAccountInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
-          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
-          { pubkey: fromMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        toMint,
+        toTokenAccount,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
-  const toAccountTokenInfo = await connection.getAccountInfo(toTokenAccount);
-
-  if (!toAccountTokenInfo) {
-    tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
-          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
-          { pubkey: toMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-    );
-  }
-
+  // Swap ix
   tx.add(
     swapInstruction(
       new PublicKey(poolInfo.programId),
@@ -595,33 +579,29 @@ export async function swap(
       fromAmount.sub(fee).toNumber(),
       toSwapAmount.toNumber()
     )
-  );
+  )
 
   // Transfer fees
-  const feeAccountMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
   const feeAccountToken = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
-    feeAccountMint,
+    fromMint,
     feeAccount,
+    true
   );
 
   const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
 
   if (!feeAccountTokenInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
-          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
-          { pubkey: feeAccount, isSigner: false, isWritable: false },
-          { pubkey: feeAccountMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        feeAccountToken,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
@@ -671,8 +651,6 @@ export async function swap(
   tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
-
-  console.log('signers', signers);
 
   if (signers.length) {
     tx.partialSign(...signers);

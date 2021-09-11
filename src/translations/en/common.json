@@ -304,14 +304,15 @@
 			"you-receive": "You receive"
 		},
 		"validation": {
-			"amount-high": "Amount exceeds your balance",
+			"amount-high": "Amount exceeds your {{symbol}} balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
 			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
+			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
 			"invalid-amount": "Invalid amount",
-			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
+			"invalid-exchange": "Invalid exchange",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",

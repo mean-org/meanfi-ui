@@ -44,11 +44,11 @@ export type AmmPoolInfo = {
 }
 
 export type ExchangeInfo = {
-  outAmount: number,
-  outMinimumAmount: number, // including the slippage
-  outPrice: number,
+  outAmount: string,
+  outMinimumAmount: string, // including the slippage
+  outPrice: string,
   priceImpact: number,
-  networkFees: number,
+  networkFees: string,
   protocolFees: number,
   ammPool: string
 }

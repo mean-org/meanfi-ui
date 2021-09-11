@@ -55,11 +55,11 @@ export class RaydiumClient implements Client {
     const protocol = PROTOCOLS.filter(p => p.address === pool.protocolAddress)[0];
     const exchangeInfo: ExchangeInfo = {
       ammPool: pool.address,
-      outPrice: !amountOut.isNullOrZero() ? +amountOut.fixed() : 0,
+      outPrice: !amountOut.isNullOrZero() ? amountOut.fixed(): '0',
       priceImpact,
-      outAmount: +amountOut.fixed() * amount,
-      outMinimumAmount: +amountOutWithSlippage.fixed() * amount,
-      networkFees: protocol.networkFee,
+      outAmount: (+amountOut.fixed() * amount).toFixed(amountOut.decimals),
+      outMinimumAmount: (+amountOutWithSlippage.fixed() * amount).toFixed(amountOut.decimals),
+      networkFees: protocol.networkFee.toFixed(9),
       protocolFees: protocol.txFee
     };
 
@@ -96,12 +96,14 @@ export class RaydiumClient implements Client {
 
     const fromMintToken = getTokenByMintAddress(from);
     const toMintToken = getTokenByMintAddress(to);
-    const fromDecimals = fromMintToken ? fromMintToken.decimals : 6;
+    
+    const fromDecimals = fromMintToken ? fromMintToken.decimals : 6;    
     const fromAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       new PublicKey(from),
-      owner
+      owner,
+      true
     );
 
     const toDecimals = toMintToken ? toMintToken.decimals : 6;
@@ -109,7 +111,8 @@ export class RaydiumClient implements Client {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       new PublicKey(to),
-      owner
+      owner,
+      true
     );
 
     const toSwapAmount = amountOut * (100 - slippage) / 100;

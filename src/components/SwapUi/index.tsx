@@ -86,7 +86,7 @@ export const SwapUi = () => {
   const [isFlipping, setIsFlipping] = useState(false);
   const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const [isValidBalance, setIsValidBalance] = useState(true);
+  const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
   // Transaction execution modal
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
@@ -267,9 +267,9 @@ export const SwapUi = () => {
     }
 
     const timeout = setTimeout(() => {
-      let outAmount = 0;
-      let outWithSlippageAndFeesAmount = 0;
-      let price = 0;
+      let outAmount = '';
+      let outWithSlippageAndFeesAmount = '';
+      let price = '';
       const priceAmount = 1;
       const fromAmountValid = fromAmount && parseFloat(fromAmount);
       const amount = fromAmountValid ? parseFloat(fromAmount) : 1;
@@ -285,13 +285,13 @@ export const SwapUi = () => {
       );
 
       if (!amountOut.isNullOrZero()) {
-        outAmount = parseFloat((+amountOut.fixed() * (amount - feeAmount)).toFixed(toDecimals));
-        outWithSlippageAndFeesAmount = parseFloat((+amountOutWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals));
-        price = +amountOut.fixed();
+        outAmount = (+amountOut.fixed() * (amount - feeAmount)).toFixed(toDecimals);
+        outWithSlippageAndFeesAmount = (+amountOutWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals);
+        price = amountOut.fixed();
         setPriceImpact(priceImpact.toFixed(2));
-        setOutToPrice(price.toString());
-        setToAmount(fromAmountValid ? outAmount.toString() : '');
-        setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount.toString() : '');
+        setOutToPrice(price);
+        setToAmount(fromAmountValid ? outAmount : '');
+        setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount : '');
       }
     });
 
@@ -319,9 +319,9 @@ export const SwapUi = () => {
     }
 
     const timeout = setTimeout(() => {
-      let outAmount = 0;
-      let outWithSlippageAndFeesAmount = 0;
-      let price = 0;
+      let outAmount = '';
+      let outWithSlippageAndFeesAmount = '';
+      let price = '';
       const priceAmount = 1;
       const fromAmountValid = fromAmount && parseFloat(fromAmount);
       const amount = fromAmount && parseFloat(fromAmount) ? parseFloat(fromAmount) : 1;
@@ -344,15 +344,15 @@ export const SwapUi = () => {
       const outWithSlippage = new TokenAmount(amountOutWithSlippage, toDecimals, false);
 
       if (!out.isNullOrZero()) {
-        outAmount = parseFloat((+out.fixed() * (amount - feeAmount)).toFixed(toDecimals));
-        outWithSlippageAndFeesAmount = parseFloat((+outWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals));
-        price = +out.fixed();
+        outAmount = (+out.fixed() * (amount - feeAmount)).toFixed(toDecimals);
+        outWithSlippageAndFeesAmount = (+outWithSlippage.fixed() * (amount - feeAmount)).toFixed(toDecimals);
+        price = out.fixed();
       }
 
       setPriceImpact(priceImpact.toFixed(2));
-      setOutToPrice(price.toString());
-      setToAmount(fromAmountValid ? outAmount.toString() : '');
-      setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount.toString() : '');
+      setOutToPrice(price);
+      setToAmount(fromAmountValid ? outAmount : '');
+      setToSwapAmount(fromAmountValid ? outWithSlippageAndFeesAmount : '');
     });
 
     return () => {
@@ -381,8 +381,6 @@ export const SwapUi = () => {
       return;
     }
 
-    setRefreshing(true);
-
     const timeout = setTimeout(() => {
 
       // const tokensPools = getTokensPools(
@@ -407,6 +405,8 @@ export const SwapUi = () => {
       //   // just find a market
         
       // }
+
+      setRefreshing(true);
 
       getLiquidityPools(connection)
         .then((poolInfos) => {
@@ -516,12 +516,11 @@ export const SwapUi = () => {
     });
 
     return () => {
-      setRefreshing(false);
       clearTimeout(timeout);
     }
 
   }, [
-    connection, 
+    connection,
     fromMint, 
     toMint,
     isWrap,
@@ -534,20 +533,24 @@ export const SwapUi = () => {
   // Automatically update all tokens balance
   useEffect(() => {
     
-    if (!connected || !publicKey || !tokenMap || isFlipping) {
-      if (isFlipping) { setIsFlipping(false); }
+    if (!connected || !publicKey || !tokenMap) {
       return;
     }
 
     const timeout = setTimeout(() => {
+      
       let balancesMap = new Map<string, string>();
+
       for (let item of tokenMap.values()) {
         if (item.address === NATIVE_SOL_MINT.toBase58()) {
           connection.getAccountInfo(publicKey).then(info => {
             let balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
             balancesMap.set(item.address, balance.toString());
           })
-          .catch(_error => { console.log(_error); });
+          .catch(_error => { 
+            balancesMap.set(item.address, '');
+          });
+
         } else {
           Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -564,10 +567,14 @@ export const SwapUi = () => {
                 balancesMap.set(item.address, '');
               });
             }
+          }).catch(_error => {
+            balancesMap.set(item.address, '');
           });
         }
       }
+
       setTokenBalances(balancesMap);
+      setShouldUpdateBalances(false);
     });
 
     return () => {
@@ -578,16 +585,16 @@ export const SwapUi = () => {
     connected, 
     publicKey, 
     tokenMap, 
-    isFlipping, 
-    connection
+    connection,
+    shouldUpdateBalances
   ]);
 
   // Automatically update fromMint token balance once
   useEffect(() => {
     
     if (!connected || !publicKey || !fromMint) {
-      if (isFlipping) { setIsFlipping(false); }
       setFromMintTokenBalance(0);
+      setShouldUpdateBalances(false);
       return;
     }
 
@@ -598,7 +605,10 @@ export const SwapUi = () => {
           setFromMintTokenBalance(balance);
           setShouldUpdateBalances(false);
         })
-        .catch(_error => { console.log(_error); });
+        .catch(_error => { 
+          setFromMintTokenBalance(0);
+          setShouldUpdateBalances(false);
+        });
       } else {
         Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -612,7 +622,11 @@ export const SwapUi = () => {
               let balance = info && info.value ? (info.value.uiAmount || 0) : 0;
               setFromMintTokenBalance(balance);
               setShouldUpdateBalances(false);
-            }).catch(_error => { console.log(_error); });
+            }).catch(_error => { 
+              console.log(_error); 
+              setFromMintTokenBalance(0);
+              setShouldUpdateBalances(false);
+            });
           }
         });
       }
@@ -627,7 +641,6 @@ export const SwapUi = () => {
     fromMint,
     connection, 
     publicKey,
-    isFlipping,
     shouldUpdateBalances
   ]);
 
@@ -635,8 +648,8 @@ export const SwapUi = () => {
   useEffect(() => {
     
     if (!connected || !publicKey || !toMint) {
-      if (isFlipping) { setIsFlipping(false); }
       setToMintTokenBalance(0);
+      setShouldUpdateBalances(false);
       return;
     }
 
@@ -646,7 +659,10 @@ export const SwapUi = () => {
           let balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
           setToMintTokenBalance(balance);
           setShouldUpdateBalances(false);
-        }).catch(_error => { console.log(_error); });
+        }).catch(_error => { 
+          setToMintTokenBalance(0);
+          setShouldUpdateBalances(false);
+         });
       } else {
         Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -660,7 +676,11 @@ export const SwapUi = () => {
               let balance = info && info.value ? (info.value.uiAmount || 0) : 0;
               setToMintTokenBalance(balance);
               setShouldUpdateBalances(false);
-            }).catch(_error => { console.log(_error); });
+            }).catch(_error => { 
+              // console.log(_error);
+              setToMintTokenBalance(0);
+              setShouldUpdateBalances(false);
+             });
           }
         });
       }
@@ -675,7 +695,6 @@ export const SwapUi = () => {
     toMint,
     connection, 
     publicKey,
-    isFlipping,
     shouldUpdateBalances
   ]);
 
@@ -786,20 +805,31 @@ export const SwapUi = () => {
   useEffect(() => {
 
     if (!connected || !fromMint || !fromMintTokenBalance) {
+      setIsValidBalance(false);
       return; 
     }
-
+    
     const timeout = setTimeout(() => {
-      let valid = true;
 
-      if (fromMint.equals(NATIVE_SOL_MINT)) {
-        const txFee = getTxFeeAmount(txFees, (fromAmount || 0));
-        valid = fromMintTokenBalance > (txFee + txFees.blockchainFee) ? true : false;
+      const amount = fromAmount ? parseFloat(fromAmount) : 0;
+      const txFee = getTxFeeAmount(txFees, amount);
+
+      if (amount > fromMintTokenBalance) {
+        setIsValidBalance(false);
       } else {
+        let valid = false;
+        let amountWithfees = 0;
         const nativeBalance = parseFloat(tokenBalances.get(NATIVE_SOL_MINT.toBase58()) || '0');
-        valid = nativeBalance > txFees.blockchainFee ? true : false;
+
+        if (fromMint.equals(NATIVE_SOL_MINT)) {
+          amountWithfees = amount - txFee + txFees.blockchainFee;
+          valid = nativeBalance > amountWithfees ? true : false;
+        } else {
+          valid = nativeBalance > txFees.blockchainFee ? true : false;
+        }
+
+        setIsValidBalance(valid);
       }
-      setIsValidBalance(valid);
     });
 
     return () => {
@@ -808,11 +838,11 @@ export const SwapUi = () => {
 
   }, [
     connected, 
-    fromAmount,
+    fromAmount, 
     fromMint, 
     fromMintTokenBalance, 
-    txFees,
-    tokenBalances
+    tokenBalances, 
+    txFees
   ])
 
   // TODO: Review validation
@@ -821,14 +851,14 @@ export const SwapUi = () => {
 
     const timeout = setTimeout(() => {
       const valid = (
-        !fromMint ||
-        !toMint ||
-        !fromAmount ||
-        !toSwapAmount ||
-        !outToPrice ||
-        parseFloat(fromAmount) === 0
+        fromMint &&
+        toMint &&
+        fromAmount &&
+        toSwapAmount &&
+        outToPrice &&
+        parseFloat(fromAmount) > 0
   
-      ) ? false : true;
+      ) ? true : false;
   
       setIsValidSwapAmount(valid);
     });
@@ -964,51 +994,59 @@ export const SwapUi = () => {
     
   },[]);
 
-  // TODO: Review this
-  // const getMinimumSwapAmountLabel = () => {
-  //   const from = tokenMap.get(fromMint!.toBase58());
-  //   const toSymbol = tokenMap.get(toMint!.toBase58())?.symbol;
-
-  //   return `${t('transactions.validation.minimum-swap-amount', {
-  //     mintAmount: `${smallAmount} ${from?.symbol}`,
-  //     toMint: `${toSymbol}`
-  //   })}`;
-  // }
-
-  // TODO: Review this
-  // Gets the label of the Swap button
+  // Updates the label of the Swap button
   const getTransactionStartButtonLabel = (): string => {
 
-    if (connected && !isValidBalance) {
-      const needed = fromMint && fromMint.equals(NATIVE_SOL_MINT)
-        ? parseFloat((getTxFeeAmount(txFees, fromMintTokenBalance) + txFees.blockchainFee).toFixed(9))
-        : parseFloat(txFees.blockchainFee.toFixed(9));
+    let label = '';
 
-      return `${t('transactions.validation.insufficient-balance-needed', {
-        balance: `${needed}`
-      })}`;
+    if (!connected || !fromMintTokenBalance) {
+      label = t("transactions.validation.not-connected");
+    } else if (!fromAmount) {
+      label = t("transactions.validation.no-amount");
+    } else {
+      const amount = parseFloat(fromAmount);
+      const symbol = fromMint && fromMint.equals(NATIVE_SOL_MINT)
+        ? (tokenMap.get(fromMint.toBase58())?.symbol || '') : '';
+  
+      if (amount > fromMintTokenBalance) {
+        label = t('transactions.validation.amount-high', { symbol });
+      } else if (!isValidSwapAmount) {
+        label = t("transactions.validation.invalid-exchange");
+      } else if(isValidBalance) {
+        label = t("transactions.validation.valid-approve");
+      } else {
+        const nativeBalance = parseFloat(tokenBalances.get(NATIVE_SOL_MINT.toBase58()) || '0');
+        const txFee = getTxFeeAmount(txFees, amount);
+        
+        if (fromMint && fromMint.equals(NATIVE_SOL_MINT)) {
+          const amountWithFees = amount - txFee + txFees.blockchainFee;
+          const needed =  Math.abs(nativeBalance - amountWithFees);       
+          label = `${t('transactions.validation.insufficient-balance-needed', {
+            balance: `${(nativeBalance + needed).toFixed(9)}`
+          })}`; 
+        } else {
+          const amountWithFees = amount + txFees.blockchainFee;
+          const needed = Math.abs(nativeBalance - amountWithFees);
+          label = `${t('transactions.validation.insufficient-balance-needed', {
+            balance: `${(nativeBalance + needed).toFixed(9)}`
+          })}`;
+        }
+      }
     }
 
-    return !connected
-      ? t("transactions.validation.not-connected")
-      : !fromAmount
-      ? t("transactions.validation.no-amount")
-      : !isValidSwapAmount
-      ? t("transactions.validation.amount-high")
-      : t("transactions.validation.valid-approve")
+    return label;
   };
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
-    return  source && destination &&
-            source.name === destination.name &&
-            source.address === destination.address
-            ? true
-            : false;
+    return (
+      source &&
+      destination &&
+      source.name === destination.name &&
+      source.address === destination.address
+    ) ? true : false;
   }
 
   const flipMintsCallback = useCallback(() => {
-
-    setIsFlipping(true);
     
     const timeout = setTimeout(() => {
       const oldFrom = fromMint;
@@ -1072,7 +1110,8 @@ export const SwapUi = () => {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         fromMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromMint,
-        wallet.publicKey
+        wallet.publicKey,
+        true
       );
 
       const toDecimals = tokenMap.get(toMint.toBase58())?.decimals || 6;
@@ -1080,7 +1119,8 @@ export const SwapUi = () => {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         toMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toMint,
-        wallet.publicKey
+        wallet.publicKey,
+        true
       );
 
       if (pool) {
@@ -1475,33 +1515,6 @@ export const SwapUi = () => {
         return undefined;
       });
 
-    // return connection.confirmTransaction(signature, 'confirmed')
-    //   .then((response) => {
-    //     if (response && response.value && !response.value.err) {
-    //       console.log('confirmTransaction result:', response.value);
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-    //         currentOperation: TransactionStatus.TransactionFinished
-    //       });
-    //       return response.value;
-  
-    //     } else if (response && response.value && response.value.err) {
-    //       console.log('Error: ', response.value.err);
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransaction,
-    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //       });
-    //       return undefined;
-    //     }
-    //   })
-    //   .catch(_error => {
-    //     setTransactionStatus({
-    //       lastOperation: TransactionStatus.ConfirmTransaction,
-    //       currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //     });
-    //     return undefined;
-    //   });
-
   },[
     connection, 
     setTransactionStatus
@@ -1535,17 +1548,15 @@ export const SwapUi = () => {
             return;
           }
 
-          // let count = 1;
           let confirmed = await confirmTx(signature);
 
           while (!confirmed) {
-            // console.log('count', count);
             confirmed = await confirmTx(signature);
           }
 
           console.log("confirmed:", confirmed); // put this in a link in the UI
-          // Save signature to the state
-          setIsBusy(false);
+          setShouldUpdateBalances(true);
+          setTimeout(() => setIsBusy(false), 1000);
         }
       }      
     }
@@ -1671,7 +1682,7 @@ export const SwapUi = () => {
                 !refreshing && isValidSwapAmount && slippage &&
                 infoRow(
                   t("transactions.transaction-info.slippage"),
-                  `${slippage.toFixed(1)}%`
+                  `${slippage.toFixed(2)}%`
                 )
               }
               {
@@ -1729,9 +1740,13 @@ export const SwapUi = () => {
                   {getTransactionOperationDescription(transactionStatus, t)}
                 </h4>
                 <p className="operation">
-                  {t("transactions.status.tx-swap-operation", {
-                    fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint!.toBase58()),
-                    toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint!.toBase58())
+                  {
+                    fromMint && toMint &&
+                    t("transactions.status.tx-swap-operation", {
+                      // fromAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(fromAmount), fromMint!.toBase58()),
+                      fromAmount: `${fromAmount} ${tokenMap.get(fromMint.toBase58())?.symbol}`,
+                      // toAmount: getTokenAmountAndSymbolByTokenAddress(parseFloat(toAmount), toMint!.toBase58())
+                      toAmount: `${toAmount} ${tokenMap.get(toMint.toBase58())?.symbol}`
                     })
                   }
                 </p>

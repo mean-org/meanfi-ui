@@ -1,10 +1,10 @@
-import { closeAccount } from "@project-serum/serum/lib/token-instructions";
 import { Token } from "@solana/spl-token";
-import { Connection, PublicKey, Signer, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { createTokenAccountIfNotExist, getTokenByMintAddress } from "./utils";
-import BN from "bn.js";
+import { getTokenByMintAddress } from "./utils";
 import { TokenAmount } from "../../utils/safe-math";
+import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import BN from "bn.js";
 
 const BufferLayout = require('buffer-layout');
 
@@ -25,80 +25,95 @@ export const getSwapTx = async (
 
   const tx = new Transaction()
   const signers = new Array<Signer>();
-  const from = getTokenByMintAddress(fromCoinMint.toBase58());
-  const to = getTokenByMintAddress(toCoinMint.toBase58());
+  const from = getTokenByMintAddress(fromCoinMint.toBase58())
+  const to = getTokenByMintAddress(toCoinMint.toBase58())
 
   if (!from || !to) {
     throw new Error('Miss token info')
   }
 
-  let wrappedSolAccount: PublicKey | null = null
-  let wrappedSolAccount2: PublicKey | null = null
+  let wrappedSolAccount: Keypair | null = null;
+  let wrappedSolAccount2: Keypair | null = null;
 
   if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
-    wrappedSolAccount = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount,
-      owner,
-      WRAPPED_SOL_MINT.toBase58(),
-      fromAmount.toNumber() + 1e7,
-      tx,
-      signers
+
+    wrappedSolAccount = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: owner,
+        newAccountPubkey: wrappedSolAccount.publicKey,
+        lamports: fromAmount.sub(fee).toNumber() + 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount.publicKey,
+        owner
+      )
     );
+
+    signers.push(wrappedSolAccount);
   }
 
   if (toCoinMint.equals(NATIVE_SOL_MINT)) {
-    wrappedSolAccount2 = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount2,
-      owner,
-      WRAPPED_SOL_MINT.toBase58(),
-      1e7,
-      tx,
-      signers
+
+    wrappedSolAccount2 = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: owner,
+        newAccountPubkey: wrappedSolAccount2.publicKey,
+        lamports: 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount2.publicKey,
+        owner
+      )
     );
+
+    signers.push(wrappedSolAccount2);
   }
 
   const fromMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
+  const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
+
+  if (!fromTokenAccountInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        fromTokenAccount,
+        owner,
+        owner
+      )
+    );
+  }
+
   const toMint = toCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toCoinMint;
-  const fromAccountTokenInfo = await connection.getAccountInfo(fromTokenAccount);
+  const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
 
-  if (!fromAccountTokenInfo) {
+  if (!toTokenAccountInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: owner, isSigner: true, isWritable: true },
-          { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
-          { pubkey: owner, isSigner: false, isWritable: false },
-          { pubkey: fromMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        toMint,
+        toTokenAccount,
+        owner,
+        owner
+      )
     );
   }
 
-  const toAccountTokenInfo = await connection.getAccountInfo(toTokenAccount);
-
-  if (!toAccountTokenInfo) {
-    tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: owner, isSigner: true, isWritable: true },
-          { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
-          { pubkey: owner, isSigner: false, isWritable: false },
-          { pubkey: toMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-    );
-  }
-
+  // Swap ix
   tx.add(
     getSwapIx(
       new PublicKey(poolInfo.programId),
@@ -116,39 +131,35 @@ export const getSwapTx = async (
       new PublicKey(poolInfo.serumCoinVaultAccount),
       new PublicKey(poolInfo.serumPcVaultAccount),
       new PublicKey(poolInfo.serumVaultSigner),
-      wrappedSolAccount ?? fromTokenAccount,
-      wrappedSolAccount2 ?? toTokenAccount,
+      wrappedSolAccount ? wrappedSolAccount.publicKey : fromTokenAccount,
+      wrappedSolAccount2 ? wrappedSolAccount2.publicKey : toTokenAccount,
       owner,
-      fromAmount.toNumber(),
+      fromAmount.sub(fee).toNumber(),
       toSwapAmount.toNumber()
     )
   )
 
   // Transfer fees
-  const feeAccountMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
   const feeAccountToken = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
-    feeAccountMint,
+    fromMint,
     feeAccount,
+    true
   );
 
   const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
 
   if (!feeAccountTokenInfo) {
     tx.add(
-      new TransactionInstruction({
-        keys: [
-          { pubkey: owner, isSigner: true, isWritable: true },
-          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
-          { pubkey: feeAccount, isSigner: false, isWritable: false },
-          { pubkey: feeAccountMint, isSigner: false, isWritable: false },
-          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
-        ],
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        feeAccountToken,
+        owner,
+        owner
+      )
     );
   }
 
@@ -156,17 +167,19 @@ export const getSwapTx = async (
     tx.add(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
-        wrappedSolAccount,
+        wrappedSolAccount.publicKey,
         feeAccountToken,
         owner,
         [],
         fee.toNumber()
       ),
-      closeAccount({
-        source: wrappedSolAccount,
-        destination: owner,
-        owner: owner
-      })
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount.publicKey,
+        owner,
+        owner,
+        []
+      )
     );
   } else {
     tx.add(
@@ -183,11 +196,13 @@ export const getSwapTx = async (
 
   if (wrappedSolAccount2) {
     tx.add(
-      closeAccount({
-        source: wrappedSolAccount2,
-        destination: owner,
-        owner: owner
-      })
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount2.publicKey,
+        owner,
+        owner,
+        []
+      )
     );
   }
 

@@ -38,6 +38,7 @@ export class OrcaClient implements Client {
     const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === pools[0].address)[0];
     const pool = this.orcaSwap.getPool(poolConfig[1]);
     const tokenA = pool.getTokenA();
+    const tokenB = pool.getTokenB();
     const decimalAmount = new Decimal(parseFloat(amount.toFixed(tokenA.scale)));
     const decimalSlippage = new Decimal(parseFloat(slippage.toFixed(2)));
     const protocol = PROTOCOLS.filter(p => p.address === this.protocolAddress)[0];
@@ -45,11 +46,11 @@ export class OrcaClient implements Client {
 
     const exchangeInfo: ExchangeInfo = {
       ammPool: pools[0].address,
-      outPrice: quote.getRate().toNumber(),
+      outPrice: quote.getRate().toFixed(tokenB.scale),
       priceImpact: quote.getPriceImpact().toNumber(),
-      outAmount: quote.getExpectedOutputAmount().toNumber(),
-      outMinimumAmount: quote.getMinOutputAmount().toNumber(),
-      networkFees: protocol.networkFee || quote.getNetworkFees().toNumber(),
+      outAmount: quote.getExpectedOutputAmount().toDecimal().toFixed(tokenB.scale),
+      outMinimumAmount: quote.getMinOutputAmount().toDecimal().toFixed(tokenB.scale),
+      networkFees: (protocol.networkFee || quote.getNetworkFees().toDecimal()).toFixed(9),
       protocolFees: protocol.txFee || quote.getLPFees().toNumber()
     };
 
