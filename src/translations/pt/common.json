@@ -211,7 +211,8 @@
 		"input-label-source": "Trocar de",
 		"insufficient-liquidity": "Liquidez insuficiente para essa transação",
 		"token-select-destination": "Selecione um token",
-		"token-select-source": "Selecione um token"
+		"token-select-source": "Selecione um token",
+		"transaction-settings": "Transaction Settings"
 	},
 	"token-selector": {
 		"modal-title": "Selecione um token",
