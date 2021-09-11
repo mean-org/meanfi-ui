@@ -17,10 +17,10 @@ export const SwapSettings = (props: {
   const content = (
     <div>
       <Radio.Group defaultValue={props.currentValue} onChange={onChangeValue}>
-        <Radio.Button value={0.25}>0.1%</Radio.Button>
+        <Radio.Button value={0.25}>0.25%</Radio.Button>
         <Radio.Button value={0.5}>0.5%</Radio.Button>
         <Radio.Button value={1}>1%</Radio.Button>
-        <Radio.Button value={2}>3%</Radio.Button>
+        <Radio.Button value={2}>2%</Radio.Button>
       </Radio.Group>
     </div>
   );
