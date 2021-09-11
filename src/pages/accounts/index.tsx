@@ -571,10 +571,10 @@ export const AccountsView = () => {
                     <div className="item-list-header compact">
                       <div className="header-row">
                         <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Src/Dst</div>
-                        <div className="std-table-cell fixed-width-120">Amount</div>
-                        <div className="std-table-cell fixed-width-150">Post Balance</div>
-                        <div className="std-table-cell fixed-width-80">Date</div>
+                        <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                        <div className="std-table-cell fixed-width-120">{t('assets.history-table-amount')}</div>
+                        <div className="std-table-cell fixed-width-150">{t('assets.history-table-postbalance')}</div>
+                        <div className="std-table-cell fixed-width-80">{t('assets.history-table-date')}</div>
                       </div>
                     </div>
                   </div>
