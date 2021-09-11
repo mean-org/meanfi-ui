@@ -13,7 +13,7 @@ import {
   SwapView,
   TransfersView,
   WrapView
-} from "./views";
+} from "./pages";
 import { environment } from "./environments/environment";
 
 export function Routes() {

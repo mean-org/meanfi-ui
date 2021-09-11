@@ -28,17 +28,7 @@ export const DepositOptions = (props: {
   const { theme } = useContext(AppStateContext);
 
   // Load the Transak widget script asynchronously
-  const {library, status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`, 'TransakSDK');
-
-  useEffect(() => {
-    console.log('status:', status);
-    if (library) {
-      console.log('library:', library);
-    }
-  }, [
-    library,
-    status
-  ]);
+  const {library, status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
 
   const [isSharingAddress, setIsSharingAddress] = useState(false);
 
@@ -48,18 +38,6 @@ export const DepositOptions = (props: {
     const config = new AppConfigService();
     setCurrentConfig(config.getConfig());
   }
-
-  const [transakWidgetUrl, setTransakWidgetUrl] = useState('');
-  useEffect(() => {
-    if (currentConfig && !transakWidgetUrl) {
-      const widgetUrl = `${currentConfig.transakUrl}?defaultNetwork=solana&cryptoCurrency=SOL&apiKey=${encodeURI(currentConfig.transakApiKey)}`;
-      console.log('widgetUrl:', widgetUrl);
-      setTransakWidgetUrl(widgetUrl);
-    }
-  }, [
-    transakWidgetUrl,
-    currentConfig
-  ]);
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);

@@ -7,17 +7,17 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useConnection, useConnectionConfig } from "../../../contexts/connection";
-import { IconCaretDown, IconSort } from "../../../Icons";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { IconCaretDown, IconSort } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
   isValidNumber,
-} from "../../../utils/utils";
-import { Identicon } from "../../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../../constants";
-import { QrScannerModal } from "../../../components/QrScannerModal";
-import { PaymentRateType, TransactionStatus } from "../../../models/enums";
+} from "../../utils/utils";
+import { Identicon } from "../../components/Identicon";
+import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { QrScannerModal } from "../../components/QrScannerModal";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -25,31 +25,32 @@ import {
   getFairPercentForInterval,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
+  getTimesheetRequirementOptionLabel,
   getTransactionOperationDescription,
   getTxFeeAmount,
   isToday,
-  PaymentRateTypeOption,
-  percentage
-} from "../../../utils/ui";
+  PaymentRateTypeOption
+} from "../../utils/ui";
 import moment from "moment";
-import { useWallet } from "../../../contexts/wallet";
-import { AppStateContext } from "../../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
+import { AppStateContext } from "../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useNativeAccount } from "../../../contexts/accounts";
+import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
+import { ContractDefinition } from "../../models/contract-definition";
+import { Redirect } from "react-router-dom";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const RepeatingPayment = () => {
+export const PayrollPayment = () => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { connected, wallet } = useWallet();
   const {
-    contract,
     tokenList,
     selectedToken,
     tokenBalance,
@@ -62,6 +63,7 @@ export const RepeatingPayment = () => {
     paymentRateAmount,
     paymentRateFrequency,
     transactionStatus,
+    timeSheetRequirement,
     streamProgramAddress,
     previousWalletConnectState,
     setCurrentScreen,
@@ -76,13 +78,15 @@ export const RepeatingPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
+    setTimeSheetRequirement,
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-
+  const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
+  const [redirect, setRedirect] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();
@@ -109,7 +113,7 @@ export const RepeatingPayment = () => {
     refreshTokenBalance
   ]);
 
-  const [repeatingPaymentFees, setRepeatingPaymentFees] = useState<TransactionFees>({
+  const [payrollFees, setPayrollFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
@@ -117,13 +121,13 @@ export const RepeatingPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees.mspPercentFee) {
+    if (!payrollFees.mspPercentFee) {
       getTransactionFees().then(values => {
-        setRepeatingPaymentFees(values);
-        console.log("repeatingPaymentFees:", values);
+        setPayrollFees(values);
+        console.log("payrollFees:", values);
       });
     }
-  }, [connection, repeatingPaymentFees]);
+  }, [connection, payrollFees]);
 
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -161,8 +165,9 @@ export const RepeatingPayment = () => {
     resetContractValues();
     setSelectedStream(undefined);
     closeTransactionModal();
+    setCurrentScreen('streams');
+    setRedirect('/transfers');
     refreshStreamList(true);
-    setCurrentScreen("streams");
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -292,7 +297,7 @@ export const RepeatingPayment = () => {
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
+           parseFloat(fromCoinAmount) > getTxFeeAmount(payrollFees, fromCoinAmount)
             ? true
             : false;
   }
@@ -326,7 +331,7 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(repeatingPaymentFees, fromCoinAmount)
+      : tokenBalance < getTxFeeAmount(payrollFees, fromCoinAmount)
       ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -502,6 +507,26 @@ export const RepeatingPayment = () => {
     </>
   );
 
+  const timeSheetRequirementOptionsMenu = (
+    <Menu>
+      <Menu.Item
+        key={TimesheetRequirementOption[0]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired, t)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[1]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets, t)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[2]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout, t)}
+      </Menu.Item>
+    </Menu>
+  );
+
   // Main action
 
   const onTransactionStart = async () => {
@@ -559,14 +584,14 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-            fundingAmount: amount                                     // fundingAmount
+          fundingAmount: amount                                       // fundingAmount
         };
         console.log('data:', data);
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(repeatingPaymentFees, amount);
-        if (nativeBalance < repeatingPaymentFees.blockchainFee + myFees) {
+        const myFees = getTxFeeAmount(payrollFees, amount);
+        if (nativeBalance < payrollFees.blockchainFee + myFees) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -615,7 +640,7 @@ export const RepeatingPayment = () => {
         console.log('Signing transaction...');
         return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signAllTransactions returned a signed transaction:', signed);
+          console.log('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -759,6 +784,7 @@ export const RepeatingPayment = () => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       {/* Recipient */}
       <div className="transaction-field">
         <div className="transaction-field-row">
@@ -889,6 +915,26 @@ export const RepeatingPayment = () => {
         </div>
       </div>
 
+      {/* Timesheet requirement */}
+      <div className="transaction-field">
+        <div className="transaction-field-row">
+          <span className="field-label-left">{t('transactions.rate-and-frequency.rate-label')}</span>
+          <span className="field-label-right">&nbsp;</span>
+        </div>
+        <Dropdown
+          overlay={timeSheetRequirementOptionsMenu}
+          trigger={["click"]}>
+          <div className="transaction-field-row main-row simplelink">
+            <span className="field-select-left">
+              {getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}
+            </span>
+            <span className="field-caret-down">
+              <IconCaretDown className="mean-svg-icons" />
+            </span>
+          </div>
+        </Dropdown>
+      </div>
+
       {/* Send date */}
       <div className="transaction-field">
         <div className="transaction-field-row">
@@ -922,7 +968,7 @@ export const RepeatingPayment = () => {
       </div>
 
       <div className="mb-3 text-center">
-        <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
+        <div>{t('transactions.transaction-info.add-funds-payroll-advice')}.</div>
         <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
       </div>
 
@@ -1036,14 +1082,14 @@ export const RepeatingPayment = () => {
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
           {isSendAmountValid() && infoRow(
             t('transactions.transaction-info.recipient-receives') + ':',
             `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
               : '0'
             }`
           )}
@@ -1105,7 +1151,7 @@ export const RepeatingPayment = () => {
                       true
                     )} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      repeatingPaymentFees.blockchainFee + getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) - nativeBalance,
+                      payrollFees.blockchainFee + getTxFeeAmount(payrollFees, fromCoinAmount) - nativeBalance,
                       WRAPPED_SOL_MINT_ADDRESS,
                       true
                     )} SOL`})

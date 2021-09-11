@@ -7,7 +7,7 @@ export type ScriptControl = {
   status: Status;
 };
 
-function useScript(src: string, name: any): ScriptControl {
+function useScript(src: string, name?: any): ScriptControl {
 
   const [status, setStatus] = useState<Status>(src ? 'loading' : 'idle')
   const [library, setLib] = useState<any>();
@@ -39,7 +39,9 @@ function useScript(src: string, name: any): ScriptControl {
             'data-status',
             event.type === 'load' ? 'ready' : 'error',
           )
-          if (event.type === 'load') {
+          // library will contain a reference to the window object name apparently
+          // loaded by the script, but the user should know that name.
+          if (name && event.type === 'load') {
             setLib({ [name]: window[name] });
           }
         }
@@ -55,7 +57,7 @@ function useScript(src: string, name: any): ScriptControl {
       // Note: Even if the script already exists we still need to add
       // event handlers to update the state for *this* hook instance.
       const setStateFromEvent = (event: Event) => {
-        setStatus(event.type === 'load' ? 'ready' : 'error')
+        setStatus(event.type === 'load' ? 'ready' : 'error');
       }
 
       // Add event listeners

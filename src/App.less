@@ -1683,6 +1683,13 @@ section.content {
             justify-content: center;
             align-items: center;
             right: unset;
+            &.ant-modal-close button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+              background-color: inherit;
+              color: inherit;
+              &:hover {
+                background-color: var(--color-secondary-alpha-05);
+              }
+            }
           }
         }
       }
@@ -2533,8 +2540,6 @@ section.content {
   margin-bottom: 12px;
 }
 
-
-
 // Transactions
 .transactions-layout {
   display: flex;
@@ -2925,9 +2930,6 @@ section.content {
     }
   }
 }
-
-
-
 
 // Utilities
 .click-disabled {

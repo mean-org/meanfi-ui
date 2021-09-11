@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown } from "../../Icons";
-import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../screens";
+import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 
 export const TransfersView = () => {
