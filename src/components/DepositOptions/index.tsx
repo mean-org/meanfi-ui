@@ -8,18 +8,16 @@ import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
-import { AppConfig, AppConfigService } from '../../environments/environment';
+import { AppConfig, AppConfigService, environment } from '../../environments/environment';
 import "./style.less";
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import useScript from '../../hooks/useScript';
 
 const QRCode = require('qrcode.react');
-const transakWidgetStyle = {
-  display: 'block',
-  height: '628px',
-  width: '100%',
-  borderWidth: '0px',
-  maxWidth: '450px'
-}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const TransakSDK: any;
+let transak: any = undefined;
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -28,8 +26,21 @@ export const DepositOptions = (props: {
   const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
+
+  // Load the Transak widget script asynchronously
+  const {library, status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`, 'TransakSDK');
+
+  useEffect(() => {
+    console.log('status:', status);
+    if (library) {
+      console.log('library:', library);
+    }
+  }, [
+    library,
+    status
+  ]);
+
   const [isSharingAddress, setIsSharingAddress] = useState(false);
-  const [isTransakActive, setIsTransakActive] = useState(false);
 
   // Get App config
   const [currentConfig, setCurrentConfig] = useState<AppConfig | null>(null);
@@ -57,16 +68,8 @@ export const DepositOptions = (props: {
     }, 250);
   }
 
-  const enableTransak = () => {
-    setIsTransakActive(true);
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 250);
-  }
-
   const closePanels = () => {
     setIsSharingAddress(false);
-    setIsTransakActive(false);
   }
 
   const getFtxPayLink = (): string => {
@@ -107,12 +110,42 @@ export const DepositOptions = (props: {
     props.handleClose();
   }
 
-  // const handleTransakButtonClick = () => {
-  //   setTimeout(() => {
-  //     window.open(transakWidgetUrl, '_blank','noreferrer');
-  //   }, 500);
-  //   props.handleClose();
-  // }
+  useEffect(() => {
+    if (status === 'ready' && !transak) {
+      transak = new TransakSDK.default({
+        apiKey: currentConfig?.transakApiKey,  // Your API Key
+        environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
+        defaultCryptoCurrency: 'SOL',
+        networks: 'SOLANA',
+        hideMenu: true,
+        walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
+        themeColor: 'B7001C', // App theme color
+        fiatCurrency: '',
+        email: '', // Your customer's email address
+        redirectURL: '',
+        hostURL: window.location.origin,
+        widgetHeight: '634px',
+        widgetWidth: '100%'
+      });
+    }
+  }, [
+    currentConfig,
+    publicKey,
+    status
+  ]);
+
+  const handleTransakButtonClick = () => {
+    setTimeout(() => {
+      if (transak) {
+        transak.init();
+        // To get all the events
+        transak.on(transak.ALL_EVENTS, (data: any) => {
+          console.log(data);
+        });
+      }
+    }, 300);
+    props.handleClose();
+  }
 
   const onCopyAddress = () => {
     if (publicKey && copyText(publicKey)) {
@@ -158,7 +191,7 @@ export const DepositOptions = (props: {
       className="mean-modal simple-modal multi-step"
       title={
         <>
-        {(isSharingAddress || isTransakActive) && (
+        {isSharingAddress && (
           <div className="back-button ant-modal-close">
             <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
               <Button
@@ -180,7 +213,7 @@ export const DepositOptions = (props: {
       afterClose={closePanels}
       width={450}>
       <div className="deposit-selector">
-        <div className={isSharingAddress || isTransakActive ? "options-list hide" : "options-list show"} id="options-list">
+        <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
           {!connected && (
             <p className="fg-error">{t('deposits.not-connected')}!</p>
@@ -219,7 +252,8 @@ export const DepositOptions = (props: {
                 type="default"
                 shape="round"
                 size="middle"
-                onClick={enableTransak}>
+                disabled={status !== 'ready'}
+                onClick={handleTransakButtonClick}>
                 <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
                 {t("deposits.transak-cta-label")}
               </Button>
@@ -289,20 +323,6 @@ export const DepositOptions = (props: {
             </div>
             <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
-        </div>
-        <div className={isTransakActive ? "option-detail-panel show" : "option-detail-panel hide"}>
-          {transakWidgetUrl ? (
-            <div>
-              <iframe title="Transak On/Off Ramp Widget (Website)"
-                      frameBorder="no"
-                      style = {transakWidgetStyle}
-                      src={transakWidgetUrl}></iframe>
-            </div>
-          ) : (
-            <div className="h-75 flex-center">
-              <p>Loading transak widget</p>
-            </div>
-          )}
         </div>
       </div>
     </Modal>
