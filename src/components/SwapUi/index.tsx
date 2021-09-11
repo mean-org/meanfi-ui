@@ -997,8 +997,10 @@ export const SwapUi = () => {
 
     let label = '';
 
-    if (!connected || !fromMintTokenBalance) {
+    if (!connected) {
       label = t("transactions.validation.not-connected");
+    } else if(connected && !fromMintTokenBalance)  {
+      label = t("transactions.validation.amount-low");
     } else if (!fromAmount) {
       label = t("transactions.validation.no-amount");
     } else {
