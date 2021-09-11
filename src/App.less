@@ -169,6 +169,9 @@ h1, h2, h3, h4, h5, h6 {
 .solid-bg {
   background-color: var(--bg-color);
 }
+.fg-secondary {
+  color: var(--color-secondary);
+}
 .fg-secondary-70 {
   color: var(--color-secondary-alpha-70);
 }
@@ -1190,6 +1193,11 @@ section.content {
   &.align-center {
     margin: 0 auto;
   }
+  .back-button {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+  }
   @media (max-width: 575.98px) {
     padding: 0;
     border: none !important;
@@ -1683,9 +1691,39 @@ section.content {
             justify-content: center;
             align-items: center;
             right: unset;
+            &.ant-modal-close button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+              background-color: inherit;
+              color: inherit;
+              &:hover {
+                background-color: var(--color-secondary-alpha-05);
+              }
+            }
           }
         }
       }
+    }
+  }
+}
+
+.icon-button-container {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  color: inherit;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+  button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+    background-color: inherit;
+    color: inherit;
+    &:hover {
+      background-color: var(--color-secondary-alpha-05);
     }
   }
 }
@@ -2533,8 +2571,6 @@ section.content {
   margin-bottom: 12px;
 }
 
-
-
 // Transactions
 .transactions-layout {
   display: flex;
@@ -2548,58 +2584,21 @@ section.content {
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 0 2.4rem 0 1.4rem;
+    padding: 0.4rem 1rem;
     .title {
-      font-size: 24px;
+      font-size: 1rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: -0.2px;
       text-align: center;
     }
-    .transaction-stats {
+    .user-address {
       position: relative;
       font-size: 1rem;
       font-weight: 600;
       padding: 0 6px;
-      border-radius: 0.5rem;
       display: flex;
       align-items: center;
-      .ant-spin.ant-spin-sm.ant-spin-spinning {
-        position: absolute;
-        left: 0;
-        width: 100%;
-        height: 24px;
-        line-height: 2;
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
-          background-color: var(--color-primary-highlight);
-        }
-      }
-      .transaction-legend {
-        display: inline-flex;
-        align-items: center;
-        margin-left: 4px;
-        opacity: 1;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        &.incoming {
-          color: var(--color-incoming-transaction);
-        }
-        &.outgoing {
-          color: var(--color-outgoing-transaction);
-        }
-        &.neutral {
-          color: var(--color-almost-white);
-        }
-      }
-      &.click-disabled {
-        .ant-spin.ant-spin-sm.ant-spin-spinning {
-          opacity: 1;
-        }
-        .transaction-legend {
-          opacity: 0;
-        }
-      }
     }
   }
   .inner-container {
@@ -2926,9 +2925,6 @@ section.content {
   }
 }
 
-
-
-
 // Utilities
 .click-disabled {
   pointer-events: none;
@@ -2971,6 +2967,9 @@ section.content {
   }
   &:focus {
     outline: none;
+  }
+  &.underline-on-hover:hover {
+    text-decoration: underline !important;
   }
 }
 .primary-link {
@@ -4639,7 +4638,8 @@ section.content {
             color: var(--text-color);
             background: var(--bg-color);
             &.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-              color: var(--color-primary);
+              color: var(--color-dark);
+              font-weight: 600;
             }
             &:hover {
               color: var(--color-primary-highlight);

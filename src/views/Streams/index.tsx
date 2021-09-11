@@ -21,16 +21,16 @@ import {
   IconRefresh,
   IconShare,
   IconUpload,
-} from "../../../Icons";
-import { AppStateContext } from "../../../contexts/appstate";
-import { useWallet } from "../../../contexts/wallet";
+} from "../../Icons";
+import { AppStateContext } from "../../contexts/appstate";
+import { useWallet } from "../../contexts/wallet";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   getTokenSymbol,
   shortenAddress
-} from "../../../utils/utils";
+} from "../../utils/utils";
 import {
   consoleOut,
   copyText,
@@ -38,10 +38,10 @@ import {
   getIntervalFromSeconds,
   getTransactionOperationDescription,
   getTxFeeAmount,
-} from "../../../utils/ui";
-import { ContractSelectorModal } from '../../../components/ContractSelectorModal';
-import { OpenStreamModal } from '../../../components/OpenStreamModal';
-import { WithdrawModal } from '../../../components/WithdrawModal';
+} from "../../utils/ui";
+import { ContractSelectorModal } from '../../components/ContractSelectorModal';
+import { OpenStreamModal } from '../../components/OpenStreamModal';
+import { WithdrawModal } from '../../components/WithdrawModal';
 import {
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
@@ -50,20 +50,20 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
-} from "../../../constants";
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../../contexts/connection";
+} from "../../constants";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { TransactionStatus } from "../../../models/enums";
-import { notify } from "../../../utils/notifications";
-import { AddFundsModal } from "../../../components/AddFundsModal";
+import { TransactionStatus } from "../../models/enums";
+import { notify } from "../../utils/notifications";
+import { AddFundsModal } from "../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { CloseStreamModal } from "../../../components/CloseStreamModal";
-import { useNativeAccount } from "../../../contexts/accounts";
+import { CloseStreamModal } from "../../components/CloseStreamModal";
+import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees, getStream } from "money-streaming/lib/utils";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { useTranslation } from "react-i18next";
-import { defaultStreamStats, StreamStats } from "../../../models/streams";
+import { defaultStreamStats, StreamStats } from "../../models/streams";
 
 const dateFormat = require("dateformat");
 

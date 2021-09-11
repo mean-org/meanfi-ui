@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { PayrollPayment } from "../screens";
+import { PayrollPayment } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 import { PAYROLL_CONTRACT } from "../../constants";
 import { ContractDefinition } from "../../models/contract-definition";

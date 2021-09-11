@@ -10,12 +10,7 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { environment } from "../../environments/environment";
-import {
-  getComputedFees,
-  getTokenAmountAndSymbolByTokenAddress,
-  isValidNumber,
-} from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from "money-streaming/lib/utils";
