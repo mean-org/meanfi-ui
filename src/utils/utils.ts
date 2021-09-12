@@ -358,7 +358,6 @@ export async function fetchAccountTokens(
 export async function getOwnedAssociatedTokenAccounts(
   connection: Connection,
   publicKey: PublicKey
-
 ) {
 
   let filters = getOwnedAccountsFilters(publicKey);

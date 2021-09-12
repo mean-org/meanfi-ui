@@ -18,17 +18,16 @@ import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Button, Empty, Progress, Tooltip } from 'antd';
 import { consoleOut, percentual } from '../../utils/ui';
-import { NATIVE_SOL } from '../../utils/tokens';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
+import _ from 'lodash';
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
-    tokens,
     userTokens,
     transactions,
     selectedAsset,
@@ -44,8 +43,8 @@ export const AccountsView = () => {
   const [accountAddress, setAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
+  const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [tokenDisplayList, setTokenDisplayList] = useState<UserTokenAccount[]>([]);
   const [canShowAccountDetails, setCanShowAccountDetails] = useState(accountAddress ? true : false);
 
   // QR scan modal
@@ -70,82 +69,80 @@ export const AccountsView = () => {
   // Fetch all the owned token accounts
   useEffect(() => {
 
-    if (connection && customConnection && accountAddress && shouldLoadTokens && tokens) {
+    if (connection && customConnection && accountAddress && shouldLoadTokens && userTokens) {
       setShouldLoadTokens(false);
+      setTokensLoaded(false);
 
+      const myTokens = _.cloneDeep(userTokens);
       const pk = new PublicKey(accountAddress);
       let nativeBalance = 0;
 
       // Fetch SOL balance.
       customConnection.getBalance(pk)
-        .then(value => nativeBalance = value || 0);
-
-      fetchAccountTokens(pk, connection.endpoint)
-        .then(accTks => {
-          if (accTks) {
-            const myTokens = new Array<UserTokenAccount>();
-            myTokens.push(NATIVE_SOL as UserTokenAccount);
-            myTokens[0].balance = nativeBalance / LAMPORTS_PER_SOL;
-            myTokens[0].ataAddress = accountAddress;
-
-            for (let i = 0; i < accTks.length; i++) {
-              const item = accTks[i];
-              const token = tokens.find(i => i.address === item.parsedInfo.mint);
-              // Add the token only if matches one of the user's token account and it is not already in the list
-              if (token) {
-                token.ataAddress = item.pubkey.toBase58();
-                token.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                if (!myTokens.some(t => t.address === token?.address)) {
-                  myTokens.push(token);
-                }
-              }
-            }
-
-            // Report in the console for debugging
-            const tokenTable: any[] = [];
-            myTokens.forEach(item => {
-              tokenTable.push({
-                pubAddr: shortenAddress(item.ataAddress || '-', 8),
-                mintAddr: shortenAddress(item.address, 8),
-                balance: item.balance
-              });
-            });
-            console.table(tokenTable);
-            console.log(accTks);
-            setAccountTokens(myTokens);
-            setTokenDisplayList(myTokens);
-          } else {
-            console.log('could not get account tokens');
-            setAccountTokens([]);
+        .then(solBalance => {
+          nativeBalance = solBalance || 0;
+          myTokens[0].balance = nativeBalance / LAMPORTS_PER_SOL;
+          myTokens[0].ataAddress = accountAddress;
+          // We have the native account balance, now get the token accounts' balance
+          // but first, set all balances to zero
+          for (let index = 1; index < myTokens.length; index++) {
+            myTokens[index].balance = 0;
           }
+          fetchAccountTokens(pk, connection.endpoint)
+            .then(accTks => {
+              if (accTks) {
+                accTks.forEach(item => {
+                  const tokenIndex = myTokens.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    myTokens[tokenIndex].ataAddress = item.pubkey.toBase58();
+                    myTokens[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                  }
+                });    
+                // Report in the console for debugging
+                const tokenTable: any[] = [];
+                myTokens.forEach(item => {
+                  tokenTable.push({
+                    pubAddr: shortenAddress(item.ataAddress || '-', 8),
+                    mintAddr: shortenAddress(item.address, 8),
+                    balance: item.balance
+                  });
+                });
+                console.table(tokenTable);
+                console.log(accTks);
+                setAccountTokens(myTokens);
+                setTokensLoaded(true);    // Important: The first token in the list should be selected after this
+              } else {
+                console.log('could not get account tokens');
+                setAccountTokens([]);
+              }
+            })
+            .catch(error => {
+              setAccountTokens([]);
+              console.error(error);
+            });
         })
         .catch(error => {
-          setAccountTokens([]);
           console.error(error);
         });
     }
-
   }, [
-    tokens,
+    userTokens,
     connection,
     customConnection,
     shouldLoadTokens,
     accountAddress
   ]);
 
-  // Decide which list to use for tokenDisplayList
+  // Preset the first available token
   useEffect(() => {
-    if (publicKey && userTokens) {
-      setTokenDisplayList(userTokens);
-      console.log('Switch to use userTokens');
-    } else if (!publicKey && accountTokens) {
-      setTokenDisplayList(accountTokens);
-      console.log('Switch to use accountTokens');
+    if (accountTokens && tokensLoaded && !selectedAsset) {
+      setSelectedAsset(accountTokens[0]);
     }
   }, [
     accountTokens,
-    publicKey,
-    userTokens
+    tokensLoaded,
+    selectedAsset,
+    setSelectedAsset
   ]);
 
   // Flow control
@@ -354,7 +351,6 @@ export const AccountsView = () => {
                 .finally(() => {
                   transWithSignature.timestamp = timestamp;
                   setTransactions([...transactions, transWithSignature]);
-                  // Increment index to select next signature
                   dispatch(new IncrementTransactionIndexAction());
                   setShouldGetTxDetails(true);
                 });
@@ -448,8 +444,8 @@ export const AccountsView = () => {
 
   const renderTokenList = (
     <>
-    {tokenDisplayList && tokenDisplayList.length ? (
-      tokenDisplayList.map((asset, index) => {
+    {accountTokens && accountTokens.length ? (
+      accountTokens.map((asset, index) => {
         const onTokenAccountClick = () => {
           setAbortSignalReceived(true);
           setShouldGetTxDetails(false);
@@ -575,10 +571,10 @@ export const AccountsView = () => {
                     <div className="item-list-header compact">
                       <div className="header-row">
                         <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">Src/Dst</div>
-                        <div className="std-table-cell fixed-width-120">Amount</div>
-                        <div className="std-table-cell fixed-width-150">Post Balance</div>
-                        <div className="std-table-cell fixed-width-80">Date</div>
+                        <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                        <div className="std-table-cell fixed-width-120">{t('assets.history-table-amount')}</div>
+                        <div className="std-table-cell fixed-width-150">{t('assets.history-table-postbalance')}</div>
+                        <div className="std-table-cell fixed-width-80">{t('assets.history-table-date')}</div>
                       </div>
                     </div>
                   </div>

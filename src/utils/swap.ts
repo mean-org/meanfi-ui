@@ -6,7 +6,6 @@ import { closeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 
 import { 
-  createAssociatedTokenAccountIfNotExist, 
   createTokenAccountIfNotExist, 
   mergeTransactions, 
   sendTransaction
@@ -28,7 +27,6 @@ import {
 } from '@solana/web3.js';
 
 import BN from 'bn.js';
-import { DexInstructions } from '@project-serum/serum';
 import { ACCOUNT_LAYOUT } from './layouts';
 
 const BufferLayout = require('buffer-layout');
