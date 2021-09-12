@@ -1,8 +1,8 @@
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
+import { environment } from "./environments/environment";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
-// import { MarketProvider } from "./contexts/market";
 import AppStateProvider from "./contexts/appstate";
 import { AppLayout } from "./components/Layout";
 import {
@@ -14,7 +14,6 @@ import {
   TransfersView,
   WrapView
 } from "./pages";
-import { environment } from "./environments/environment";
 
 export function Routes() {
   return (
@@ -23,7 +22,6 @@ export function Routes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
-              {/* <MarketProvider> */}
                 <AppStateProvider>
                   <AppLayout>
                     <Switch>
@@ -45,7 +43,6 @@ export function Routes() {
                     </Switch>
                   </AppLayout>
                 </AppStateProvider>
-              {/* </MarketProvider> */}
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>
