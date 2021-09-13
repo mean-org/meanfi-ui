@@ -29,9 +29,7 @@ export type TokenInfo = {
 
 export type ProtocolInfo = {
   address: string,
-  name: string,
-  txFee: number,
-  networkFee: number
+  name: string
 }
 
 export type AmmPoolInfo = {
@@ -44,30 +42,26 @@ export type AmmPoolInfo = {
 }
 
 export type ExchangeInfo = {
-  outAmount: string,
-  outMinimumAmount: string, // including the slippage
-  outPrice: string,
+  outAmount: number,
+  outMinimumAmount: number, // including the slippage
+  outPrice: number,
   priceImpact: number,
-  networkFees: string,
   protocolFees: number,
-  ammPool: string
+  networkFees: number,
+  origin: string
 }
 
 export interface Client {
 
   protocolAddress: string;
 
-  // getPoolInfo(address: string): Promise<any | undefined>
-
   getExchangeInfo: (
-    from: string, 
+    from: string,
     to: string,
     amount: number,
     slippage: number
 
   ) => Promise<ExchangeInfo>
-
-  getTokens(pool: AmmPoolInfo): Promise<Map<string, any>>
 
   getSwap(
     owner: PublicKey,
@@ -80,4 +74,8 @@ export interface Client {
     feeAmount: number
 
   ): Promise<Transaction>
+}
+
+export interface LPClient extends Client {
+  getPoolInfo(address: string): Promise<any | undefined>
 }

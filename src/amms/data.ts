@@ -38,9 +38,7 @@ const initialize = () => {
   for (const protocol of Protocols) {
     PROTOCOLS.push({
       address: protocol.address,
-      name: protocol.name,
-      txFee: protocol.txFee,
-      networkFee: protocol.networkFee
+      name: protocol.name
     });
   }
 

@@ -29,7 +29,7 @@ export const getSwapTx = async (
   const to = getTokenByMintAddress(toCoinMint.toBase58())
 
   if (!from || !to) {
-    throw new Error('Miss token info')
+    throw new Error('Mint info not found');
   }
 
   let wrappedSolAccount: Keypair | null = null;
@@ -81,7 +81,6 @@ export const getSwapTx = async (
     signers.push(wrappedSolAccount2);
   }
 
-  const fromMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
   const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
 
   if (!fromTokenAccountInfo) {
@@ -89,7 +88,7 @@ export const getSwapTx = async (
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        fromMint,
+        fromCoinMint,
         fromTokenAccount,
         owner,
         owner
@@ -97,7 +96,6 @@ export const getSwapTx = async (
     );
   }
 
-  const toMint = toCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toCoinMint;
   const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
 
   if (!toTokenAccountInfo) {
@@ -105,7 +103,7 @@ export const getSwapTx = async (
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        toMint,
+        toCoinMint,
         toTokenAccount,
         owner,
         owner
@@ -143,7 +141,7 @@ export const getSwapTx = async (
   const feeAccountToken = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
-    fromMint,
+    fromCoinMint,
     feeAccount,
     true
   );
@@ -155,9 +153,9 @@ export const getSwapTx = async (
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
-        fromMint,
+        fromCoinMint,
         feeAccountToken,
-        owner,
+        feeAccount,
         owner
       )
     );

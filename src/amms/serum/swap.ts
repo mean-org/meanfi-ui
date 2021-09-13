@@ -273,14 +273,6 @@ export const placeOrderTx = async (
     );
   }
 
-  tx.feePayer = owner;
-  const { blockhash } = await connection.getRecentBlockhash();
-  tx.recentBlockhash = blockhash;
-
-  if (signers.length) {
-    tx.partialSign(...signers);
-  }
-
   return { transaction: tx, signers };
 }
 

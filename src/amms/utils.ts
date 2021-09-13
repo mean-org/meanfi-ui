@@ -1,9 +1,10 @@
-import { AmmPoolInfo, Client, ORCA, RAYDIUM } from "./types";
+import { AmmPoolInfo, Client, ORCA, RAYDIUM, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../utils/ids";
 import { Connection } from "@solana/web3.js";
 import { RaydiumClient } from "./raydium/client";
 import { OrcaClient } from "./orca/client";
+import { SerumClient } from "./serum/client";
 
 export const getClient = (
   connection: Connection,
@@ -20,6 +21,10 @@ export const getClient = (
     }
     case ORCA.toBase58(): {
       client = new OrcaClient(connection);
+      break;
+    }
+    case SERUM.toBase58(): {
+      client = new SerumClient(connection);
       break;
     }
     default: { break; }
@@ -48,13 +53,16 @@ export const getTokensPools = (
       toMint = WRAPPED_SOL_MINT.toBase58();
     }
 
-    return (
+    let include = (
       ammPool.tokenAddresses.includes(fromMint) &&
-      ammPool.tokenAddresses.includes(toMint) &&
-      protocolAddres 
-        ? ammPool.protocolAddress === protocolAddres 
-        : true
+      ammPool.tokenAddresses.includes(toMint)
     );
+
+    if (protocolAddres !== undefined) {
+      include = ammPool.protocolAddress === protocolAddres;
+    }
+
+    return include;
   });  
 }
 

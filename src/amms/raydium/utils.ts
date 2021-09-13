@@ -1,25 +1,11 @@
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Signer,
-  SystemProgram,
-  Transaction,
-
-} from "@solana/web3.js";
-
-import { initializeAccount } from "@project-serum/serum/lib/token-instructions";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { cloneDeep } from "lodash-es";
-import { ACCOUNT_LAYOUT, MINT_LAYOUT } from "../../utils/layouts";
-import { NATIVE_SOL, TOKENS } from "./tokens";
+import { AMM_INFO_LAYOUT_V4, MINT_LAYOUT } from "../../utils/layouts";
+import { LP_TOKENS, NATIVE_SOL, TOKENS } from "./tokens";
 import { TokenInfo } from "./types";
-import { AMM_POOLS } from "../data";
 import { LIQUIDITY_POOLS } from "./pools";
 import { MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
-import { SERUM_PROGRAM_ID_V3 } from "../../utils/ids";
 import { getMultipleAccounts } from "../../utils/accounts";
-import { MARKETS } from '@project-serum/serum/lib/tokens_and_markets';
 
 export const getTokenByMintAddress = (address: string): TokenInfo | null => {
 
@@ -40,105 +26,6 @@ export const getTokenByMintAddress = (address: string): TokenInfo | null => {
   return token;
 }
 
-export const createTokenAccountIfNotExist = async (
-  connection: Connection,
-  account: string | undefined | null,
-  owner: PublicKey,
-  mintAddress: string,
-  lamports: number | null,
-  transaction: Transaction,
-  signer: Array<Signer>
-
-) => {
-
-  let publicKey;
-
-  if (account) {
-    publicKey = new PublicKey(account);
-  } else {
-    publicKey = await createProgramAccountIfNotExist(
-      connection,
-      account,
-      owner,
-      TOKEN_PROGRAM_ID,
-      lamports,
-      ACCOUNT_LAYOUT,
-      transaction,
-      signer
-    );
-
-    transaction.add(
-      initializeAccount({
-        account: publicKey,
-        mint: new PublicKey(mintAddress),
-        owner,
-      })
-    );
-  }
-
-  return publicKey;
-}
-
-export const createProgramAccountIfNotExist = async (
-  connection: Connection,
-  account: string | undefined | null,
-  owner: PublicKey,
-  programId: PublicKey,
-  lamports: number | null,
-  layout: any,
-  transaction: Transaction,
-  signer: Signer[]
-
-) => {
-
-  let publicKey;
-
-  if (account) {
-    publicKey = new PublicKey(account);
-  } else {
-    const newAccount = Keypair.generate();
-    publicKey = newAccount.publicKey;
-
-    transaction.add(
-      SystemProgram.createAccount({
-        fromPubkey: owner,
-        newAccountPubkey: publicKey,
-        lamports:
-          lamports ??
-          (await connection.getMinimumBalanceForRentExemption(layout.span)),
-        space: layout.span,
-        programId,
-      })
-    );
-
-    signer.push(newAccount);
-  }
-
-  return publicKey;
-}
-
-export const getLpMintDecimals = async (
-  connection: any,
-  mintAddress: string
-
-): Promise<number> => {
-
-  let decimals = 0;
-  let ammPoolInfo = Object.values(AMM_POOLS).find(
-    (itemLpToken) => itemLpToken.address === mintAddress
-  );
-
-  if (!ammPoolInfo) {
-    const mintAccountInfo = await connection.getAccountInfo(mintAddress);
-    const mintLayoutData = MINT_LAYOUT.decode(
-      Buffer.from(mintAccountInfo.account.data)
-    );
-    decimals = mintLayoutData.decimals;
-  }
-
-  return decimals;
-};
-
 export const createAmmAuthority = async (programId: PublicKey) => {
 
   const seeds = [
@@ -155,43 +42,102 @@ export const createAmmAuthority = async (programId: PublicKey) => {
   return { publicKey, nonce };
 }
 
-const SERUM_MARKETS: any[] = [];
-
-export function startMarkets() {
-
+export const getAddressForWhat = (address: string) => {
   for (const pool of LIQUIDITY_POOLS) {
-    if (
-      pool.serumProgramId === SERUM_PROGRAM_ID_V3 &&
-      !SERUM_MARKETS.includes(pool.serumMarket) &&
-      pool.official
-    ) {
-      SERUM_MARKETS.push(pool.serumMarket);
-    }
-  }
-}
-
-export const getMarkets = async (connection: Connection) => {
-
-  startMarkets();
-
-  let markets: any = [];
-  const marketInfos = await getMultipleAccounts(
-    connection, 
-    MARKETS.map(m => new PublicKey(m)), 
-    connection.commitment
-  );
-
-  marketInfos.forEach((marketInfo) => {
-    if (marketInfo) {
-      const address = marketInfo.publicKey.toBase58();
-      const data = marketInfo.account.data;
-
-      if (address && data) {
-        const decoded = MARKET_STATE_LAYOUT_V2.decode(data);
-        markets[address] = decoded;
+    for (const [key, value] of Object.entries(pool)) {
+      if (key === 'lp') {
+        if (value.address === address) {
+          return { key: 'lpMintAddress', lpMintAddress: pool.lp.address, version: pool.version }
+        }
+      } else if (value === address) {
+        return { key, lpMintAddress: pool.lp.address, version: pool.version }
       }
     }
-  });
+  }
 
-  return markets;
+  return {}
+}
+
+export const getMarket = async (
+  connection: Connection,
+  address: string
+) => {
+
+  let market: any = {};
+  const marketInfo = await connection.getAccountInfo(new PublicKey(address));
+
+  if (!marketInfo) {
+    throw new Error('Serum market not found');
+  }
+
+  if (marketInfo && marketInfo.data) {
+    market= MARKET_STATE_LAYOUT_V2.decode(marketInfo.data);
+  }
+
+  return { marketId: address, marketInfo: market };
+}
+
+export const getPool = async (
+  connection: Connection,
+  address: string
+
+) => {
+
+  let poolAmm: any;
+  let filteredPool = LIQUIDITY_POOLS.filter(info => info.lp.address === address)[0];
+
+  if (!filteredPool) {
+    throw new Error('Raydium pool not found');
+  }
+
+  const poolAmmInfo = await connection.getAccountInfo(new PublicKey(filteredPool.ammId));
+
+  if (poolAmmInfo && poolAmmInfo.data) {
+    poolAmm = AMM_INFO_LAYOUT_V4.decode(poolAmmInfo.data);
+  }
+
+  return { ammId: filteredPool.ammId, ammInfo: poolAmm };
+}
+  
+export const getLpMintListDecimals = async (
+  connection: any,
+  mintAddressInfos: string[]
+
+): Promise<{ [name: string]: number }> => {
+
+  const reLpInfoDict: { [name: string]: number } = {};
+  const mintList = [] as PublicKey[];
+  
+  mintAddressInfos.forEach((item) => {
+    let lpInfo = Object
+      .values(LP_TOKENS)
+      .find((itemLpToken) => itemLpToken.address === item);
+      
+    if (!lpInfo) {
+      mintList.push(new PublicKey(item));
+      lpInfo = { decimals: null };
+    }
+    reLpInfoDict[item] = lpInfo.decimals;
+  });
+  
+  const mintAll = await getMultipleAccounts(connection, mintList, connection.commitment);
+
+  for (let mintIndex = 0; mintIndex < mintAll.length; mintIndex += 1) {
+    const itemMint = mintAll[mintIndex];
+  
+    if (itemMint) {
+      const mintLayoutData = MINT_LAYOUT.decode(Buffer.from(itemMint.account.data));
+      reLpInfoDict[mintList[mintIndex].toString()] = mintLayoutData.decimals;
+    }
+  }
+
+  const reInfo: { [name: string]: number } = {};
+  
+  for (const key of Object.keys(reLpInfoDict)) {
+    if (reLpInfoDict[key] !== null) {
+      reInfo[key] = reLpInfoDict[key];
+    }
+  }
+
+  return reInfo;
 }
