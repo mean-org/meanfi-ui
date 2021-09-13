@@ -2774,15 +2774,18 @@ section.content {
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        .fetch-proggress {
-          flex: 0 0 calc(100% - 90px);
-          padding-right: 6px;
-          .ant-progress.ant-progress-line .ant-progress-text {
-            color: var(--color-secondary-alpha-70);
-          }
-        }
+        // .fetch-proggress {
+        //   flex: 0 0 calc(100% - 90px);
+        //   padding-right: 6px;
+        //   .ant-progress.ant-progress-line .ant-progress-text {
+        //     color: var(--color-secondary-alpha-70);
+        //   }
+        // }
         .fetch-control {
-          flex: 0 0 70px;
+          position: absolute;
+          right: 6px;
+          top: 6px;
+          color: var(--color-secondary-alpha-70);
         }
         .item-list-header {
           flex: 0 0 100%;

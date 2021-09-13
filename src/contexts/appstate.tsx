@@ -6,7 +6,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
 import { useWallet } from "./wallet";
 import { ENDPOINTS, getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { ConfirmedSignatureInfo, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
@@ -19,6 +19,8 @@ import { Connection } from "@solana/web3.js";
 import { TransactionWithSignature, UserTokenAccount } from "../models/transactions";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
+import useLocalStorage from "../hooks/useLocalStorage";
+import { MappedTransaction } from "../utils/history";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -56,7 +58,9 @@ interface AppStateConfig {
   // Transactions
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
-  transactions: TransactionWithSignature[];
+  transactions: MappedTransaction[] | undefined;
+  signatures: ConfirmedSignatureInfo[];
+  accountAddress: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -86,8 +90,10 @@ interface AppStateConfig {
   setCustomStreamDocked: (state: boolean) => void;
   setReferral: (token: TokenInfo | undefined) => void;
   // Transactions
-  setTransactions: (tx: TransactionWithSignature[]) => void;
+  setTransactions: (map: MappedTransaction[] | undefined) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
+  setSignatures: (sig: ConfirmedSignatureInfo[]) => void;
+  setAccountAddress: (address: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -124,7 +130,9 @@ const contextDefaultValues: AppStateConfig = {
   // Transactions
   userTokens: [],
   selectedAsset: undefined,
-  transactions: [],
+  transactions: undefined,
+  signatures: [],
+  accountAddress: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -155,7 +163,9 @@ const contextDefaultValues: AppStateConfig = {
   setReferral: () => {},
   // Transactions
   setTransactions: () => {},
-  setSelectedAsset: () => {}
+  setSelectedAsset: () => {},
+  setSignatures: () => {},
+  setAccountAddress: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -640,17 +650,27 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Added to support /account page //
   ////////////////////////////////////
 
+  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [userTokens, setUserTokens] = useState<UserTokenAccount[]>([]);
-  const [transactions, updateTransactions] = useState<Array<TransactionWithSignature>>([]);
+  const [signatures, updateSignatures] = useState<Array<ConfirmedSignatureInfo>>([]);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
-  const setTransactions = (tx: TransactionWithSignature[]) => {
-    updateTransactions(tx);
+  const setSignatures = (sig: ConfirmedSignatureInfo[]) => {
+    updateSignatures(sig);
+  }
+
+  const setTransactions = (map: MappedTransaction[] | undefined) => {
+    updateTransactions(map);
   }
 
   const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
     updateSelectedAsset(asset);
+  }
+
+  const setAccountAddress = (address: string) => {
+    updateAccountAddress(address);
   }
 
   // Load the supported tokens
@@ -700,6 +720,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         userTokens,
         selectedAsset,
         transactions,
+        signatures,
+        accountAddress,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -729,7 +751,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCustomStreamDocked,
         setReferral,
         setTransactions,
-        setSelectedAsset
+        setSelectedAsset,
+        setSignatures,
+        setAccountAddress
       }}>
       {children}
     </AppStateContext.Provider>
