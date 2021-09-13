@@ -310,13 +310,13 @@
 			"add-funds-payroll-advice": "You must add funds to start a payroll",
 			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
 			"beneficiary-receives": "Beneficiary receives",
+			"exchange-on": "Exchange on",
 			"min-recommended-amount": "Recommended minimum amount",
 			"price-impact": "Price impact",
 			"recipient-receives": "Minimum received",
 			"slippage": "Slippage tolerance",
 			"transaction-fee": "Transaction fee",
-			"you-receive": "You receive",
-			"exchange-on": "Exchange on"
+			"you-receive": "You receive"
 		},
 		"validation": {
 			"amount-high": "Amount exceeds your {{symbol}} balance",
@@ -328,7 +328,7 @@
 			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Invalid exchange",
-			"minimum-swap-amount": "",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
