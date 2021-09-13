@@ -26,8 +26,15 @@
 		"history-table-amount": "Amount",
 		"history-table-date": "Date",
 		"history-table-postbalance": "Post balance",
-		"no-asset-selected": "Seleccione un activo para ver el historial de transacciones",
-		"no-transactions": "No hay transacciones para el activo seleccionado",
+		"no-balance": {
+			"cta1": "Buy {tokenSymbol}",
+			"cta2": "Exchange",
+			"cta3": "Bridge",
+			"line1": "It looks like your {tokenSymbol} account is pretty empty.",
+			"line2": "What do you want to do about it?",
+			"line3": "Or simply scan the QR code to receive funds directly"
+		},
+		"no-transactions": "No transactions found",
 		"qr-scan-title": "Obtener dirección desde código QR",
 		"screen-title": "Saldos de activos"
 	},

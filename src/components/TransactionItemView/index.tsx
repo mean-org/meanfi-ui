@@ -4,21 +4,22 @@ import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
-import { Timestamp, TransactionWithSignature } from "../../models/transactions";
+import { Timestamp } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { displayTimestamp } from "../../utils/ui";
 import { Tooltip } from "antd";
+import { MappedTransaction } from "../../utils/history";
 
 const dateFormat = require("dateformat");
 
 export const TransactionItemView = (props: {
   accountAddress: string;
-  transaction: TransactionWithSignature;
+  transaction: MappedTransaction;
 }) => {
 
   const isInbound = (): boolean => {
-    const trans = props.transaction.confirmedTransaction.transaction;
-    return trans.instructions[0].keys[1].pubkey.toBase58() === props?.accountAddress ? true : false;
+    const trans = props.transaction.parsedTransaction.transaction.message;
+    return trans.accountKeys[1].pubkey.toBase58() === props?.accountAddress ? true : false;
   }
 
   const getTxIcon = () => {
@@ -34,10 +35,10 @@ export const TransactionItemView = (props: {
   }
 
   const getTxDescription = (shorten = true): string => {
-    const trans = props.transaction.confirmedTransaction.transaction;
+    const trans = props.transaction.parsedTransaction.transaction.message;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
-    const sender = trans.instructions[0].keys[0].pubkey.toBase58();
-    const receiver = trans.instructions[0].keys[1].pubkey.toBase58();
+    const sender = trans.accountKeys[0].pubkey.toBase58();
+    const receiver = trans.accountKeys[1].pubkey.toBase58();
     if (isInbound()) {
       return sender === faucetAddress
               ? 'Faucet account'
@@ -62,7 +63,7 @@ export const TransactionItemView = (props: {
 
   const getTransactionItems = () => {
     const signature = props.transaction.signature?.toString();
-    const meta = props.transaction.confirmedTransaction.meta;
+    const meta = props.transaction.parsedTransaction.meta;
     // const trans = props.transaction.confirmedTransaction.transaction;
     // const slot = props.transaction.confirmedTransaction.slot;
     let amount = 0;
@@ -120,9 +121,9 @@ export const TransactionItemView = (props: {
         </div>
         <div className="std-table-cell fixed-width-80" >
           {
-            props.transaction.timestamp !== "unavailable" ? (
-              <Tooltip placement="bottom" title={displayTimestamp(props.transaction.timestamp * 1000)}>
-                <span className="text-monospace">{getShortDate(props.transaction.timestamp * 1000)}</span>
+            props.transaction.parsedTransaction.blockTime ? (
+              <Tooltip placement="bottom" title={displayTimestamp(props.transaction.parsedTransaction.blockTime * 1000)}>
+                <span className="text-monospace">{getShortDate(props.transaction.parsedTransaction.blockTime * 1000)}</span>
               </Tooltip>
             ) : (
               <span className="text-monospace">'unavailable'</span>
