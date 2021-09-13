@@ -17,12 +17,25 @@
 	"assets": {
 		"account-add-cta-label": "Go!",
 		"account-add-heading": "View account details for any address in",
+		"account-address-change-cta": "Scan another address",
 		"account-address-label": "Account address",
 		"account-address-placeholder": "Enter your account address",
 		"create-account-help": "Don’t have an account yet? Get one for FREE in a couple of clicks",
 		"history-panel-title": "Asset transactions",
-		"no-asset-selected": "Please select an asset to view the transaction history",
-		"no-transactions": "No transactions for the selected asset",
+		"history-table-activity": "Activity",
+		"history-table-amount": "Amount",
+		"history-table-date": "Date",
+		"history-table-postbalance": "Post balance",
+		"no-asset-selected": "No asset selected. Please chose one on the left!",
+		"no-balance": {
+			"cta1": "Buy {{tokenSymbol}}",
+			"cta2": "Exchange",
+			"cta3": "Bridge",
+			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
+			"line2": "What do you want to do about it?",
+			"line3": "Or simply scan the QR code to receive funds directly"
+		},
+		"no-transactions": "No transactions found",
 		"qr-scan-title": "Get address from QR code",
 		"screen-title": "Asset balances"
 	},
@@ -81,6 +94,7 @@
 	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
+		"back-to-deposit-options": "Back to Deposit options",
 		"ftx-cta-label-enabled": "Deposit from FTX",
 		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
 		"modal-title": "Deposit options",
@@ -210,7 +224,8 @@
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
-		"token-select-source": "Select token"
+		"token-select-source": "Select token",
+		"transaction-settings": "Transaction Settings"
 	},
 	"token-selector": {
 		"modal-title": "Select a token",
@@ -295,6 +310,7 @@
 			"add-funds-payroll-advice": "You must add funds to start a payroll",
 			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
 			"beneficiary-receives": "Beneficiary receives",
+			"exchange-on": "Exchange on",
 			"min-recommended-amount": "Recommended minimum amount",
 			"price-impact": "Price impact",
 			"recipient-receives": "Minimum received",
@@ -303,13 +319,16 @@
 			"you-receive": "You receive"
 		},
 		"validation": {
-			"amount-high": "Amount exceeds your balance",
+			"amount-high": "Amount exceeds your {{symbol}} balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
+			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
 			"invalid-amount": "Invalid amount",
-			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
+			"invalid-exchange": "Invalid exchange",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",

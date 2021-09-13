@@ -106,7 +106,7 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      {environment === 'development' && (
+      {(environment === 'development' || environment === 'local') && (
         <Menu.Item key="/accounts">
           <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
         </Menu.Item>
@@ -143,12 +143,12 @@ export const AppBar = (props: { menuType: string }) => {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="charts">
+      {/* <Menu.Item key="charts">
         <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
-      </Menu.Item>
+      </Menu.Item> */}
     </Menu>
   );
 
@@ -190,7 +190,7 @@ export const AppBar = (props: { menuType: string }) => {
         <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
         <div id="overlay">
           <ul onClick={dismissMenu}>
-            {environment === 'development' && (
+            {(environment === 'development' || environment === 'local') && (
               <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                 <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
               </li>
@@ -234,12 +234,12 @@ export const AppBar = (props: { menuType: string }) => {
               </ul>
             </li>
             {/* Charts */}
-            <li key="charts" className="mobile-menu-item">
+            {/* <li key="charts" className="mobile-menu-item">
               <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
                 <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
                 &nbsp;<IconExternalLink className="mean-svg-icons link" />
               </a>
-            </li>
+            </li> */}
           </ul>
         </div>
         <DepositOptions

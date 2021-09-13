@@ -37,6 +37,7 @@
   --color-black: #000000;
 
   /* Black with alpha */
+  --color-secondary-alpha-01: rgba(0, 0, 0, 0.01);
   --color-secondary-alpha-02: rgba(0, 0, 0, 0.02);
   --color-secondary-alpha-05: rgba(0, 0, 0, 0.05);
   --color-secondary-alpha-10: rgba(0, 0, 0, 0.10);
@@ -109,6 +110,7 @@
   --color-black: #000000;
 
   /* Black with alpha */
+  --color-secondary-alpha-01: rgba(255, 255, 255, 0.01);
   --color-secondary-alpha-02: rgba(255, 255, 255, 0.02);
   --color-secondary-alpha-05: rgba(255, 255, 255, 0.05);
   --color-secondary-alpha-10: rgba(255, 255, 255, 0.10);
@@ -166,6 +168,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 .solid-bg {
   background-color: var(--bg-color);
+}
+.fg-secondary {
+  color: var(--color-secondary);
 }
 .fg-secondary-70 {
   color: var(--color-secondary-alpha-70);
@@ -1188,6 +1193,11 @@ section.content {
   &.align-center {
     margin: 0 auto;
   }
+  .back-button {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+  }
   @media (max-width: 575.98px) {
     padding: 0;
     border: none !important;
@@ -1239,6 +1249,12 @@ section.content {
     height: 56px;
     line-height: 20px;
     font-size: 20px;
+  }
+  .left {
+    flex: 1 1 auto;
+  }
+  .right {
+    flex: 0 0 auto;
   }
 }
 .transaction-field {
@@ -1659,6 +1675,64 @@ section.content {
         background-color: transparent;
         color: inherit;
       }
+    }
+    &.multi-step {
+      .ant-modal-content {
+        .ant-modal-body {
+          padding: 0;
+        }
+        .ant-modal-header {
+          padding: 8px 50px 8px 46px;
+          .back-button {
+            position: absolute;
+            display: flex;
+            top: 0.7rem;
+            left: 0.5rem;
+            justify-content: center;
+            align-items: center;
+            right: unset;
+            &.ant-modal-close button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+              background-color: inherit;
+              color: inherit;
+              &:hover {
+                background-color: var(--color-secondary-alpha-05);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.icon-button-container {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  color: inherit;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+  .icon-container {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 15px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+  button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+    background-color: inherit;
+    color: inherit;
+    &:hover {
+      background-color: var(--color-secondary-alpha-05);
     }
   }
 }
@@ -2506,8 +2580,6 @@ section.content {
   margin-bottom: 12px;
 }
 
-
-
 // Transactions
 .transactions-layout {
   display: flex;
@@ -2521,58 +2593,21 @@ section.content {
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 0 2.4rem 0 1.4rem;
+    padding: 0.4rem 1rem;
     .title {
-      font-size: 24px;
+      font-size: 1rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: -0.2px;
       text-align: center;
     }
-    .transaction-stats {
+    .user-address {
       position: relative;
       font-size: 1rem;
       font-weight: 600;
       padding: 0 6px;
-      border-radius: 0.5rem;
       display: flex;
       align-items: center;
-      .ant-spin.ant-spin-sm.ant-spin-spinning {
-        position: absolute;
-        left: 0;
-        width: 100%;
-        height: 24px;
-        line-height: 2;
-        opacity: 0;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        .ant-spin-dot.ant-spin-dot-spin .ant-spin-dot-item {
-          background-color: var(--color-primary-highlight);
-        }
-      }
-      .transaction-legend {
-        display: inline-flex;
-        align-items: center;
-        margin-left: 4px;
-        opacity: 1;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        &.incoming {
-          color: var(--color-incoming-transaction);
-        }
-        &.outgoing {
-          color: var(--color-outgoing-transaction);
-        }
-        &.neutral {
-          color: var(--color-almost-white);
-        }
-      }
-      &.click-disabled {
-        .ant-spin.ant-spin-sm.ant-spin-spinning {
-          opacity: 1;
-        }
-        .transaction-legend {
-          opacity: 0;
-        }
-      }
     }
   }
   .inner-container {
@@ -2671,13 +2706,13 @@ section.content {
     }
   }
   @media (min-width: 768px) {
-    height: 85vh;
+    height: 80vh;
     min-height: 564px;
-    max-height: 84vh;
+    max-height: 80vh;
     .tokens-container,
     .transaction-list-container {
       height: auto;
-      max-height: 82vh;
+      max-height: 80vh;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -2748,15 +2783,18 @@ section.content {
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        .fetch-proggress {
-          flex: 0 0 calc(100% - 90px);
-          padding-right: 6px;
-          .ant-progress.ant-progress-line .ant-progress-text {
-            color: var(--color-secondary-alpha-70);
-          }
-        }
+        // .fetch-proggress {
+        //   flex: 0 0 calc(100% - 90px);
+        //   padding-right: 6px;
+        //   .ant-progress.ant-progress-line .ant-progress-text {
+        //     color: var(--color-secondary-alpha-70);
+        //   }
+        // }
         .fetch-control {
-          flex: 0 0 70px;
+          position: absolute;
+          right: 6px;
+          top: 6px;
+          color: var(--color-secondary-alpha-70);
         }
         .item-list-header {
           flex: 0 0 100%;
@@ -2899,8 +2937,44 @@ section.content {
   }
 }
 
-
-
+.buy-token-options {
+  text-align: center;
+  padding-top: 10%;
+  width: 100%;
+  max-width: 375px;
+  margin: 0 auto;
+  .deposit-option {
+    &.ant-btn.ant-btn-round {
+      height: 40px;
+      border-radius: var(--custom-border-radius);
+      border-style: solid;
+      border-width: 1px;
+      color: var(--text-color);
+      background-color: var(--color-secondary-alpha-02);
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      &:disabled {
+        border-color: var(--color-secondary-alpha-20);
+        color: var(--color-secondary-alpha-50);
+        background-color: var(--color-secondary-alpha-05);
+        .deposit-partner-icon {
+          filter: grayscale(1);
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+  .qr-container {
+    padding: 4px;
+    margin-bottom: 1.4rem;
+    display: inline-flex;
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+    border-radius: 6px;
+  }
+}
 
 // Utilities
 .click-disabled {
@@ -2944,6 +3018,9 @@ section.content {
   }
   &:focus {
     outline: none;
+  }
+  &.underline-on-hover:hover {
+    text-decoration: underline !important;
   }
 }
 .primary-link {
@@ -4585,4 +4662,42 @@ section.content {
 .ant-divider.ant-divider-horizontal {
   color: var(--color-secondary-alpha-40);
   border-top: 1px solid var(--color-secondary-alpha-05);
+}
+
+.ant-popover {
+  &::after {
+    background: var(--color-secondary-alpha-01);
+  }
+  .ant-popover-content {
+    color: var(--text-color);
+    .ant-popover-arrow {
+      .ant-popover-arrow-content {
+        background-color: var(--bg-color);
+      }
+    }
+    .ant-popover-inner {
+      background-color: var(--bg-color);
+      .ant-popover-title {
+        color: var(--color-secondary-alpha-70);
+        border-bottom: 1px solid var(--color-secondary-alpha-20);
+      }
+      .ant-popover-inner-content {
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        .ant-radio-group {
+          .ant-radio-button-wrapper {
+            color: var(--text-color);
+            background: var(--bg-color);
+            &.ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+              color: var(--color-dark);
+              font-weight: 600;
+            }
+            &:hover {
+              color: var(--color-primary-highlight);
+            }
+          }
+        }
+      }
+    }
+  }
 }

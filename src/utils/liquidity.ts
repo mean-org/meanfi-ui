@@ -9,13 +9,13 @@ import { createAmmAuthority } from "./utils";
 import { getAddressForWhat, LiquidityPoolInfo, LIQUIDITY_POOLS } from "./pools";
 import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
-import { getMarkets } from "./markets";
+import { getMarkets, MARKETS } from "./markets";
 
 export const getLiquidityPools = async (connection: Connection) => {
   
   let liquidityPools = {} as any;
   let ammAll: any; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-  let marketToLayout: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
+  let marketAll: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 
   await Promise.all([
     await (async () => {
@@ -26,9 +26,19 @@ export const getLiquidityPools = async (connection: Connection) => {
       )
     })(),
     await (async () => {
-      marketToLayout = (await getMarkets(connection))
+      marketAll = await getMultipleAccounts(
+        connection, 
+        MARKETS.map(m => new PublicKey(m)),
+        connection.commitment
+      )
     })()
   ]);
+
+  const marketToLayout: { [name: string]: any } = {};
+
+  marketAll.forEach((item: any) => {
+    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.accountInfo.data)
+  });
 
   const lpMintAddressList: string[] = [];
 
@@ -54,7 +64,7 @@ export const getLiquidityPools = async (connection: Connection) => {
       !Object.keys(lpMintListDecimls).includes(ammInfo.lpMintAddress.toString()) ||
       ammInfo.pcMintAddress.toString() === ammInfo.serumMarket.toString() ||
       ammInfo.lpMintAddress.toString() === NATIVE_SOL_MINT.toString() ||
-      !Object.keys(marketToLayout).includes(ammInfo.serumMarket.toString())
+      !Object.keys(marketAll).includes(ammInfo.serumMarket.toString())
     ) {
       continue;
     }

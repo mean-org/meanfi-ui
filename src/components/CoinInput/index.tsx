@@ -11,7 +11,7 @@ export const CoinInput = (props: {
   tokenAmount: string;
   onSelectToken: any;
   onInputChange?: any;
-  onMaxAmount: any;
+  onMaxAmount: any | undefined;
   translationId: string;
   readonly?: boolean;
 }) => {
@@ -50,13 +50,13 @@ export const CoinInput = (props: {
             </span>
             <div className="addon-right">
                 <div className="token-group">
-                    {props.token && props.tokenBalance && props.translationId === 'source' ? (
+                    {props.token && props.tokenBalance && props.onMaxAmount && props.translationId === 'source' ? (
                         <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
                     ) : null}
                     <div className="token-selector simplelink" onClick={props.onSelectToken}>
                         {props.token ? (
                             <>
-                                <div className="token-icon">
+                                <div className="token-icon" style={{marginRight:'8px'}} >
                                     {props.token.logoURI ? (
                                         <img alt={`${props.token.name}`} width={20} height={20} src={props.token.logoURI}/>
                                     ) : (

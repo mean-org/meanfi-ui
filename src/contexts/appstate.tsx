@@ -7,22 +7,20 @@ import { findATokenAddress, getStream, listStreamActivity, listStreams } from "m
 import { useWallet } from "./wallet";
 import { ENDPOINTS, getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { useAccountsContext, useNativeAccount } from "./accounts";
-import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
-import { AppConfigService, environment } from "../environments/environment";
+import { useAccountsContext } from "./accounts";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { Connection } from "@solana/web3.js";
-import { TransactionWithSignature, UserTokenAccount } from "../models/transactions";
+import { UserTokenAccount } from "../models/transactions";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
-import _ from "lodash";
-import { TokenAccount } from "../models/account";
-import { NATIVE_SOL_MINT } from "../utils/ids";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import useLocalStorage from "../hooks/useLocalStorage";
+import { MappedTransaction } from "../utils/history";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -58,10 +56,10 @@ interface AppStateConfig {
   customStreamDocked: boolean;
   referral: TokenInfo | undefined;
   // Transactions
-  tokens: UserTokenAccount[];
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
-  transactions: TransactionWithSignature[];
+  transactions: MappedTransaction[] | undefined;
+  accountAddress: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -91,8 +89,9 @@ interface AppStateConfig {
   setCustomStreamDocked: (state: boolean) => void;
   setReferral: (token: TokenInfo | undefined) => void;
   // Transactions
-  setTransactions: (tx: TransactionWithSignature[]) => void;
+  setTransactions: (map: MappedTransaction[] | undefined) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
+  setAccountAddress: (address: string) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -127,10 +126,10 @@ const contextDefaultValues: AppStateConfig = {
   customStreamDocked: false,
   referral: undefined,
   // Transactions
-  tokens: [],
   userTokens: [],
   selectedAsset: undefined,
-  transactions: [],
+  transactions: undefined,
+  accountAddress: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -161,7 +160,8 @@ const contextDefaultValues: AppStateConfig = {
   setReferral: () => {},
   // Transactions
   setTransactions: () => {},
-  setSelectedAsset: () => {}
+  setSelectedAsset: () => {},
+  setAccountAddress: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -173,7 +173,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
-  const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
 
@@ -215,7 +214,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     const applyTheme = (name?: string) => {
-      const theme = name || 'light';
+      const theme = name || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
       updateTheme(theme);
     }
@@ -642,140 +641,42 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshTokenBalance
   ]);
 
-  // Added to support transaction history
-  const [transactions, updateTransactions] = useState<Array<TransactionWithSignature>>([]);
-  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
-  const [tokens, setTokens] = useState<UserTokenAccount[]>([]);
+
+  ////////////////////////////////////
+  // Added to support /account page //
+  ////////////////////////////////////
+
+  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [userTokens, setUserTokens] = useState<UserTokenAccount[]>([]);
-  const [loadingUserTokens, setLoadingUserTokens] = useState(false);
-  const [shouldLoadBalances, setShouldLoadBalances] = useState(false);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
-  const setTransactions = (tx: TransactionWithSignature[]) => {
-    updateTransactions(tx);
+  const setTransactions = (map: MappedTransaction[] | undefined) => {
+    updateTransactions(map);
   }
 
   const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
-    updateTransactions([]);
     updateSelectedAsset(asset);
   }
 
-  // Load a Token list for use in accounts page
+  const setAccountAddress = (address: string) => {
+    updateAccountAddress(address);
+  }
+
+  // Load the supported tokens
   useEffect(() => {
     (async () => {
       let list = new Array<UserTokenAccount>();
-      if (environment === 'production') {
-        const res = await new TokenListProvider().resolve();
-        list = res
-          .filterByChainId(chain.chainID)
-          .excludeByTag("nft")
-          .getList();
-      } else {
-        list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
-      }
-      setTokens(list);
+      list.push(NATIVE_SOL as UserTokenAccount);
+      MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID).forEach(item => list.push(item));
+      setUserTokens(list);
+      console.log('AppState -> userTokens:', list);
     })();
 
     return () => { }
 
   }, [chain]);
-
-  // Filter down the token list against the user token accounts
-  useEffect(() => {
-    if (!publicKey || !tokens || !accounts || !accounts.tokenAccounts || accounts.tokenAccounts.length === 0) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      const myTokens = new Array<UserTokenAccount>();
-      myTokens.push(NATIVE_SOL as UserTokenAccount);
-      for (let i = 0; i < accounts.tokenAccounts.length; i++) {
-        const item = accounts.tokenAccounts[i];
-        let token: UserTokenAccount | undefined;
-        const mintAddress = item.info.mint.toBase58();
-        // console.log(`Account ${i + 1} of ${accounts.tokenAccounts.length}| Native: ${item.info.isNative ? 'Yes' : 'No'} | mint address:`, mintAddress || '-');
-        token = tokens.find(i => i.address === mintAddress);
-
-        // Add the token only if matches one of the user's token account and it is not already in the list
-        if (token) {
-          if (!myTokens.some(t => t.address === token?.address)) {
-            myTokens.push(token);
-          }
-        }
-      }
-      console.log('myTokens:', myTokens);
-      setUserTokens(myTokens);
-      setLoadingUserTokens(false);
-      setShouldLoadBalances(true);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-  }, [
-    publicKey,
-    tokens,
-    accounts,
-    loadingUserTokens
-  ]);
-
-  const getTokenBalance = useCallback(async (tokenPk: PublicKey) => {
-    if (tokenPk.equals(NATIVE_SOL_MINT)) {
-      const info = await connection.getAccountInfo(publicKey as PublicKey);
-      const balance = info ? info.lamports / LAMPORTS_PER_SOL : 0;
-      return balance;
-    } else {
-      const info = await connection?.getTokenAccountBalance(tokenPk);
-      const balance = info && info.value ? (info.value.uiAmount || 0) : 0;
-      return balance;
-    }
-  }, [
-    connection, 
-    publicKey
-  ]);
-
-  // Update the user token account balances when the list of tokens change
-  useEffect(() => {
-    const getAccountBalance = (): number => {
-      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
-    }
-
-    const getBalances = async (tokenList: UserTokenAccount[], userAccounts: TokenAccount[]) => {
-      if (tokenList && tokenList.length > 0 && userAccounts && userAccounts.length > 0) {
-        const tokenListCopy = _.cloneDeep(tokenList);
-        tokenListCopy[0].balance = getAccountBalance();
-        for (let i = 1; i < tokenListCopy.length; i++) {
-          const tokenAddress = tokenListCopy[i].address;
-          const tokenMint = userAccounts.find(m => m.info.mint.toBase58() === tokenAddress);
-          if (tokenMint) {
-            const associatedTokenAddress = await Token.getAssociatedTokenAddress(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              tokenMint.info.mint,
-              publicKey as PublicKey
-            );
-            tokenListCopy[i].ataAddress = associatedTokenAddress.toBase58();
-            tokenListCopy[i].balance = await getTokenBalance(associatedTokenAddress);
-          }
-        }
-        setUserTokens(tokenListCopy);
-        setShouldLoadBalances(false);
-      }
-    }
-
-    if (location.pathname === '/accounts' && connection && publicKey && userTokens && accounts && shouldLoadBalances) {
-      getBalances(userTokens, accounts.tokenAccounts);
-    }
-  }, [
-    location,
-    connection,
-    publicKey,
-    userTokens,
-    accounts,
-    account?.lamports,
-    shouldLoadBalances,
-    getTokenBalance
-  ]);
 
   return (
     <AppStateContext.Provider
@@ -807,10 +708,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamActivity,
         customStreamDocked,
         referral,
-        tokens,
         userTokens,
         selectedAsset,
         transactions,
+        accountAddress,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -840,7 +741,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setCustomStreamDocked,
         setReferral,
         setTransactions,
-        setSelectedAsset
+        setSelectedAsset,
+        setAccountAddress
       }}>
       {children}
     </AppStateContext.Provider>

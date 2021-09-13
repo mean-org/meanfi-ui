@@ -17,12 +17,25 @@
 	"assets": {
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Veja os detalhes da conta para qualquer endereço em",
+		"account-address-change-cta": "Scan another address",
 		"account-address-label": "Endereço da conta",
 		"account-address-placeholder": "Insira o endereço da sua conta",
 		"create-account-help": "Não tem uma conta ainda? Obtenha um GRATUITO com alguns cliques",
 		"history-panel-title": "Transações de ativos",
-		"no-asset-selected": "Selecione um ativo para visualizar o histórico de transações",
-		"no-transactions": "Nenhuma transação para o ativo selecionado",
+		"history-table-activity": "Activity",
+		"history-table-amount": "Amount",
+		"history-table-date": "Date",
+		"history-table-postbalance": "Post balance",
+		"no-asset-selected": "No asset selected. Please chose one on the left!",
+		"no-balance": {
+			"cta1": "Buy {{tokenSymbol}}",
+			"cta2": "Exchange",
+			"cta3": "Bridge",
+			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
+			"line2": "What do you want to do about it?",
+			"line3": "Or simply scan the QR code to receive funds directly"
+		},
+		"no-transactions": "No transactions found",
 		"qr-scan-title": "Obter endereço do código QR",
 		"screen-title": "Saldos de ativos"
 	},
@@ -81,6 +94,7 @@
 	},
 	"deposits": {
 		"address-share-disclaimer": "Este endereço só pode ser usado para receber tokens SOL e SPL em Solana.",
+		"back-to-deposit-options": "Back to Deposit options",
 		"ftx-cta-label-enabled": "Depósito da FTX",
 		"heading": "Deposite de seu cartão, conta bancária ou de outro Blockchain diretamente em sua Carteira Solana.\nSelecione uma das seguintes opções",
 		"modal-title": "Opções de depósito",
@@ -210,7 +224,8 @@
 		"input-label-source": "Trocar de",
 		"insufficient-liquidity": "Liquidez insuficiente para essa transação",
 		"token-select-destination": "Selecione um token",
-		"token-select-source": "Selecione um token"
+		"token-select-source": "Selecione um token",
+		"transaction-settings": "Transaction Settings"
 	},
 	"token-selector": {
 		"modal-title": "Selecione um token",
@@ -295,6 +310,7 @@
 			"add-funds-payroll-advice": "Você deve adicionar fundos para iniciar uma folha de pagamento",
 			"add-funds-repeating-payment-advice": "Você deve adicionar fundos para iniciar o pagamento repetido",
 			"beneficiary-receives": "Beneficiário recebe",
+			"exchange-on": "Exchange on",
 			"min-recommended-amount": "Quantidade mínima recomendada",
 			"price-impact": "Price impact",
 			"recipient-receives": "O destinatário recebe",
@@ -308,7 +324,10 @@
 			"amount-lt-fee": "O valor deve ser maior do que a taxa de transação",
 			"amount-sol-high": "O valor excede o seu saldo SOL",
 			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
+			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
 			"invalid-amount": "Montante inválido",
+			"invalid-exchange": "Invalid exchange",
 			"minimum-swap-amount": "Precisa de pelo menos {{mintAmount}} para trocar por {{toMint}}",
 			"no-amount": "Inserir um montante",
 			"no-balance": "Sem saldo",

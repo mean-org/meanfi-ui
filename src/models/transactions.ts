@@ -4,6 +4,13 @@ import { type } from "../utils/store-types";
 
 export type Timestamp = number | "unavailable";
 
+export enum FetchStatus {
+    Iddle,
+    Fetching,
+    FetchFailed,
+    Fetched,
+}
+
 export class TransactionWithSignature {
     constructor(
         public signature: string,
