@@ -143,12 +143,12 @@ export const AppBar = (props: { menuType: string }) => {
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="charts">
+      {/* <Menu.Item key="charts">
         <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
-      </Menu.Item>
+      </Menu.Item> */}
     </Menu>
   );
 
@@ -234,12 +234,12 @@ export const AppBar = (props: { menuType: string }) => {
               </ul>
             </li>
             {/* Charts */}
-            <li key="charts" className="mobile-menu-item">
+            {/* <li key="charts" className="mobile-menu-item">
               <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
                 <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
                 &nbsp;<IconExternalLink className="mean-svg-icons link" />
               </a>
-            </li>
+            </li> */}
           </ul>
         </div>
         <DepositOptions
