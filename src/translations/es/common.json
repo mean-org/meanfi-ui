@@ -32,8 +32,8 @@
 			"cta2": "Intercambiar",
 			"cta3": "Bridge",
 			"line1": "Su cuenta {{tokenSymbol}} está vacía.",
-			"line2": "What do you want to do about it?",
-			"line3": "Or scan the QR code to receive funds",
+			"line2": "¿Qué quieres hacer al respecto?",
+			"line3": "O escanee el código QR para recibir fondos",
 			"line4": "This address can only be used to receive",
 			"line5": "SOL and SPL tokens on Solana."
 		},
