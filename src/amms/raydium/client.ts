@@ -244,7 +244,7 @@ export class RaydiumClient implements LPClient {
 
     const poolInfo = cloneDeep(this.currentPool);
 
-    if (!this.currentPool) {
+    if (!poolInfo) {
       throw new Error('Raydium pool info not found');
     }
 
@@ -298,6 +298,8 @@ export class RaydiumClient implements LPClient {
     if (!poolInfo) {
       throw new Error('Raydium pool info not found');
     }
+
+    console.log('poolInfo', poolInfo);
 
     const fromMintToken = getTokenByMintAddress(from);
     const toMintToken = getTokenByMintAddress(to);

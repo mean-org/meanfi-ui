@@ -25,17 +25,10 @@ export const getSwapTx = async (
 
   const tx = new Transaction()
   const signers = new Array<Signer>();
-  const from = getTokenByMintAddress(fromCoinMint.toBase58())
-  const to = getTokenByMintAddress(toCoinMint.toBase58())
-
-  if (!from || !to) {
-    throw new Error('Mint info not found');
-  }
-
   let wrappedSolAccount: Keypair | null = null;
   let wrappedSolAccount2: Keypair | null = null;
 
-  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
+  if (fromCoinMint.equals(WRAPPED_SOL_MINT)) {
 
     wrappedSolAccount = Keypair.generate();
 
@@ -58,7 +51,7 @@ export const getSwapTx = async (
     signers.push(wrappedSolAccount);
   }
 
-  if (toCoinMint.equals(NATIVE_SOL_MINT)) {
+  if (toCoinMint.equals(WRAPPED_SOL_MINT)) {
 
     wrappedSolAccount2 = Keypair.generate();
 

@@ -307,7 +307,8 @@
 			"recipient-receives": "Minimum received",
 			"slippage": "Slippage tolerance",
 			"transaction-fee": "Transaction fee",
-			"you-receive": "You receive"
+			"you-receive": "You receive",
+			"exchange-on": "Exchange on"
 		},
 		"validation": {
 			"amount-high": "Amount exceeds your {{symbol}} balance",

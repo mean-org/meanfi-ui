@@ -70,7 +70,6 @@ export const SwapUi = () => {
   const [outToPrice, setOutToPrice] = useState("");
   const [priceImpact, setPriceImpact] = useState("");
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
-  const [feeAmount, setFeeAmount] = useState(0);
   const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
   const [fromTokenList, setFromTokenList] = useState<TokenInfo[]>([]);
   const [toTokenList, setToTokenList] = useState<TokenInfo[]>([]);
@@ -103,6 +102,12 @@ export const SwapUi = () => {
   // const [serumMarket, setSerumMarket] = useState<any>();
   // const [marketOrderbooks, setMarketOrderbooks] = useState<any[]>([]);
   const [refreshTime, setRefreshTime] = useState(0);
+  const [feeAmounts, setFeeAmounts] = useState<any>({
+    network: 0,
+    protocol: 0,
+    aggregator: 0,
+    total: 0
+  });
 
   // Get Tx fees
   useEffect(() => {
@@ -240,8 +245,8 @@ export const SwapUi = () => {
       const amount = fromAmountValid ? parseFloat(fromAmount) : 1;
       setOutToPrice('1');
       setPriceImpact('0.00');
-      const amountOut = parseFloat(((amount - feeAmount) * priceAmount).toFixed(9));
-      const amountWithFee = parseFloat(((amount - feeAmount) * priceAmount).toFixed(9));
+      const amountOut = parseFloat((amount  * priceAmount).toFixed(9));
+      const amountWithFee = parseFloat(((amount - feeAmounts.total) * priceAmount).toFixed(9));
       setToAmount(fromAmountValid ? amountOut.toString() : '');      
       setToSwapAmount(fromAmountValid ? amountWithFee.toString() : '');
     });
@@ -251,7 +256,7 @@ export const SwapUi = () => {
     }
 
   }, [
-    feeAmount, 
+    feeAmounts, 
     fromAmount, 
     isUnwrap, 
     isWrap
@@ -282,17 +287,19 @@ export const SwapUi = () => {
   // Automatically updates the exchange info
   useEffect(() => {
 
-    if (!fromMint || !toMint || !swapClient || isWrap || isUnwrap) { 
+    if (!fromMint || !toMint || !swapClient || isWrap || isUnwrap || !fromAmount) { 
       return; 
     }
 
     const timeout = setTimeout(() => {
+      const amount = parseFloat(fromAmount);
+      const aggregatorFees = getTxFeeAmount(txFees, amount);
       swapClient
         .getExchangeInfo(
           fromMint.toBase58(),
           toMint.toBase58(),
-          parseFloat(fromAmount || '1'),
-          slippage
+          amount - aggregatorFees,
+          parseFloat(slippage.toFixed(1))
         )
         .then((ex: ExchangeInfo) => {
           console.log(ex);
@@ -314,7 +321,8 @@ export const SwapUi = () => {
     isUnwrap, 
     isWrap, 
     slippage, 
-    swapClient
+    swapClient,
+    txFees
   ]);
 
   // Updates the amounts from exchange info
@@ -637,11 +645,17 @@ export const SwapUi = () => {
 
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
       const amount = getTxFeeAmount(txFees, fromAmountValid);
-      const fees = amount + exchangeInfo.protocolFees;
+      const protocolAmount = parseFloat((exchangeInfo.protocolFees * fromAmountValid / 100).toFixed(fromDecimals));
+      const fees = {
+        network: txFees.blockchainFee,
+        protocol: protocolAmount,
+        aggregator: parseFloat(amount.toFixed(fromDecimals)),
+        total: parseFloat((amount + protocolAmount).toFixed(fromDecimals))
+      };
       console.log('fees', fees);
-
-      const formattedAmount = parseFloat(fees.toFixed(fromDecimals));
-      setFeeAmount(formattedAmount);
+      // const total = fees.aggregator + fees.protocol;
+      // const formattedAmount = parseFloat(total.toFixed(fromDecimals));
+      setFeeAmounts(fees);
     });
 
     return () => {
@@ -660,22 +674,29 @@ export const SwapUi = () => {
   // Automatically updates the max allowed amount to swap
   useEffect(() => {
 
-    if (!connected || !fromMint) { return; }
+    if (!connected || !fromMint || !exchangeInfo) { return; }
     
     const timeout = setTimeout(() => {
 
-      let maxAmount = '';
+      let maxAmount = 0;
+      const validfromAmount = isValidNumber(fromAmount) ? parseFloat(fromAmount) : 0;
       const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
-      const txFee = getTxFeeAmount(txFees, (fromAmount || '0'));
+      const txFee = getTxFeeAmount(txFees, validfromAmount);
+      const totalFees = txFee + exchangeInfo.protocolFees;
 
       if (fromMint.equals(NATIVE_SOL_MINT)) {
         const nativeBalance = parseFloat(tokenBalances.get(NATIVE_SOL_MINT.toBase58()) || '0');
-        const totalFees = txFee + txFees.blockchainFee;
-        maxAmount = ((nativeBalance - totalFees) < 0 ? (fromAmount || '0') : (nativeBalance - totalFees).toFixed(9));
+        maxAmount = (nativeBalance - totalFees) < 0 
+          ? parseFloat(validfromAmount.toFixed(9))
+          : parseFloat((nativeBalance - totalFees).toFixed(9));
+
       } else {
-        maxAmount = ((fromMintTokenBalance - txFee) < 0 ? (fromAmount || '0') : (fromMintTokenBalance - txFee).toFixed(fromDecimals));
+        maxAmount = (fromMintTokenBalance - totalFees) < 0 
+          ? parseFloat(validfromAmount.toFixed(9))
+          : parseFloat((fromMintTokenBalance - totalFees).toFixed(fromDecimals));
       }
-      setMaxFromAmount(maxAmount);
+
+      setMaxFromAmount(maxAmount.toString());
     });
 
     return () => {
@@ -684,13 +705,13 @@ export const SwapUi = () => {
 
   }, [
     connected, 
+    exchangeInfo, 
+    fromAmount, 
     fromMint, 
-    fromAmount,
     fromMintTokenBalance, 
-    txFees.blockchainFee, 
+    tokenBalances, 
     tokenMap, 
-    txFees, 
-    tokenBalances
+    txFees
   ]);
 
   // Automatically updates if the balance is valid
@@ -970,9 +991,11 @@ export const SwapUi = () => {
 
   const getSwap = useCallback(async () => {
 
-    if (!fromMint || !toMint || !wallet || !swapClient) {
-      throw new Error("Unable to calculate mint decimals");
+    if (!fromMint || !toMint || !wallet || !swapClient || !fromAmount) {
+      throw new Error("Error executing transaction");
     }
+
+    const aggregatorFee = getTxFeeAmount(txFees, parseFloat(fromAmount));
 
     if (isWrap) {
 
@@ -982,7 +1005,7 @@ export const SwapUi = () => {
         Keypair.generate(),
         new BN(parseFloat(fromAmount) * LAMPORTS_PER_SOL),
         Constants.MSP_OPS,
-        new BN(feeAmount * LAMPORTS_PER_SOL)
+        new BN(aggregatorFee * LAMPORTS_PER_SOL)
       );
 
     } else if (isUnwrap) {
@@ -993,7 +1016,7 @@ export const SwapUi = () => {
         Keypair.generate(),
         new BN(parseFloat(fromAmount) * LAMPORTS_PER_SOL),
         Constants.MSP_OPS,
-        new BN(feeAmount * LAMPORTS_PER_SOL)
+        new BN(aggregatorFee * LAMPORTS_PER_SOL)
       );
 
     } else {
@@ -1006,13 +1029,12 @@ export const SwapUi = () => {
         parseFloat(toAmount),
         slippage,
         Constants.MSP_OPS.toBase58(),
-        feeAmount
+        aggregatorFee
       );
     }
 
   },[
     connection, 
-    feeAmount, 
     fromAmount, 
     fromMint, 
     isUnwrap, 
@@ -1021,7 +1043,8 @@ export const SwapUi = () => {
     swapClient, 
     toAmount, 
     toMint, 
-    wallet
+    wallet, 
+    txFees
   ]);
 
   const renderSourceTokenList = (
@@ -1343,9 +1366,9 @@ export const SwapUi = () => {
 
   const confirmTx = useCallback(async (signature: string) => {
 
-    return connection.getSignatureStatus(signature)
-      .then((status) => { 
-        if(status.value && status.value.confirmationStatus === 'confirmed') {
+    return connection.confirmTransaction(signature)
+      .then((resp) => { 
+        if(resp && resp.value && !resp.value.err) {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished
@@ -1398,8 +1421,9 @@ export const SwapUi = () => {
 
           let confirmed = await confirmTx(signature);
 
-          while (!confirmed) {
-            confirmed = await confirmTx(signature);
+          if (!confirmed) {
+            setIsBusy(false);
+            return;
           }
 
           console.log("confirmed:", confirmed); // put this in a link in the UI
@@ -1466,9 +1490,11 @@ export const SwapUi = () => {
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
           onMaxAmount={
-            fromMint && !fromMint.equals(NATIVE_SOL_MINT) && parseFloat(maxFromAmount) > 0 &&
+            fromMint && !fromMint.equals(NATIVE_SOL_MINT) &&
             (() => {
-              setFromAmount(maxFromAmount);
+              const fromDecimals = tokenMap.get(fromMint.toBase58())?.decimals || 6;
+              const aggregatorFee = getTxFeeAmount(txFees, fromMintTokenBalance);
+              setFromAmount((fromMintTokenBalance - aggregatorFee).toFixed(fromDecimals));
             })
           }
           onSelectToken={() => {
@@ -1547,7 +1573,7 @@ export const SwapUi = () => {
                 !refreshing && isValidSwapAmount && fromAmount &&
                 infoRow(
                   t("transactions.transaction-info.transaction-fee"),
-                  `${feeAmount} ${tokenMap.get(fromMint.toBase58())?.symbol}`
+                  `${feeAmounts.total} ${tokenMap.get(fromMint.toBase58())?.symbol}`
                 )
               }
               {
@@ -1562,6 +1588,14 @@ export const SwapUi = () => {
                 infoRow(
                   t("transactions.transaction-info.price-impact"),                
                   `${priceImpact}%`
+                )
+              }
+              {
+                !refreshing && isValidSwapAmount && exchangeInfo &&
+                infoRow(
+                  t("transactions.transaction-info.exchange-on"),                
+                  `${exchangeInfo.origin}`,
+                  ':'
                 )
               }
             </div>
