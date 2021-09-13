@@ -6,15 +6,12 @@ import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import {
-  ActionTypes, defaultTransactionStats, ResetStatsAction, TransactionActions, TransactionStats,
-  UserTokenAccount
-} from '../../models/transactions';
+import { ActionTypes, FetchStatus, TransactionActions, TransactionStats, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Button, Empty, Tooltip } from 'antd';
+import { Button, Empty, Space, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
@@ -34,13 +31,11 @@ export const AccountsView = () => {
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
     userTokens,
-    signatures,
     transactions,
     selectedAsset,
     accountAddress,
     detailsPanelOpen,
     previousWalletConnectState,
-    setSignatures,
     setTransactions,
     setSelectedAsset,
     setAccountAddress,
@@ -55,24 +50,25 @@ export const AccountsView = () => {
   const [canShowAccountDetails, setCanShowAccountDetails] = useState(accountAddress ? true : false);
 
   // Flow control
+  const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(true);
-  const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
-    switch (action.type) {
-      case ActionTypes.SET_STATS:
-        return {...state, ...action.payload};
-      case ActionTypes.RESET_STATS:
-        return {...state, ...defaultTransactionStats};
-      case ActionTypes.RESET_INDEX:
-        return Object.assign({}, state, { index: 0 });
-      case ActionTypes.ROLL_INDEX:
-        return Object.assign({}, state, { index: signatures.length - 1 });
-      case ActionTypes.INCREMENT_INDEX:
-        return Object.assign({}, state, { index: state.index + 1 });
-      default:
-        return state;
-    }
-  }, defaultTransactionStats);
+  // const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
+  //   switch (action.type) {
+  //     case ActionTypes.SET_STATS:
+  //       return {...state, ...action.payload};
+  //     case ActionTypes.RESET_STATS:
+  //       return {...state, ...defaultTransactionStats};
+  //     case ActionTypes.RESET_INDEX:
+  //       return Object.assign({}, state, { index: 0 });
+  //     case ActionTypes.ROLL_INDEX:
+  //       return Object.assign({}, state, { index: signatures.length - 1 });
+  //     case ActionTypes.INCREMENT_INDEX:
+  //       return Object.assign({}, state, { index: state.index + 1 });
+  //     default:
+  //       return state;
+  //   }
+  // }, defaultTransactionStats);
   
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -83,51 +79,33 @@ export const AccountsView = () => {
     closeQrScannerModal();
   };
 
-  const abortSwitch = () => {
-    setShouldLoadTransactions(false);
-    setLoadingTransactions(false);
-  }
-
   const startSwitch = () => {
+    setStatus(FetchStatus.Fetching);
     setLoadingTransactions(false);
     setShouldLoadTransactions(true);
   }
 
   const reloadSwitch = useCallback(() => {
-    dispatch(new ResetStatsAction());
-    setSignatures([]);
     setTransactions(undefined);
     startSwitch();
-  }, [
-    setTransactions,
-    setSignatures
-  ])
+  }, [setTransactions])
 
   const selectAsset = useCallback((asset: UserTokenAccount) => {
-    abortSwitch();
-    if (!asset || !asset.address) {
-      setSignatures([]);
-      setTransactions(undefined);
-    }
     setSelectedAsset(asset);
     setDtailsPanelOpen(true);
     setTimeout(() => {
       startSwitch();
     }, 10);
   }, [
-    setSignatures,
-    setDtailsPanelOpen,
     setSelectedAsset,
-    setTransactions
+    setDtailsPanelOpen,
   ])
 
   const onAddAccountAddress = () => {
     setAccountAddress(accountAddressInput);
     setShouldLoadTokens(true);
     setCanShowAccountDetails(true);
-    setTimeout(() => {
-      setAccountAddressInput('');
-    }, 100);
+    setAccountAddressInput('');
   }
 
   const handleScanAnotherAddressButtonClick = () => {
@@ -222,8 +200,8 @@ export const AccountsView = () => {
                   const tokenTable: any[] = [];
                   myTokens.forEach(item => {
                     tokenTable.push({
-                      pubAddr: shortenAddress(item.ataAddress || '-', 8),
-                      mintAddr: shortenAddress(item.address, 8),
+                      pubAddr: item.ataAddress ? shortenAddress(item.ataAddress, 8) : '',
+                      mintAddr: item.address ? shortenAddress(item.address, 8) : '',
                       balance: item.balance
                     });
                   });
@@ -264,40 +242,54 @@ export const AccountsView = () => {
     selectAsset
   ]);
 
-  const getScanAddress = useCallback((): PublicKey => {
-    return selectedAsset?.ataAddress &&
-           selectedAsset.ataAddress !== NATIVE_SOL_MINT.toBase58()
-           ? new PublicKey(selectedAsset.ataAddress)
-           : new PublicKey(accountAddress);
-  },[
-    accountAddress,
-    selectedAsset?.ataAddress
-  ]);
+  const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
+    /**
+     * If asset.ataAddress
+     *    If asset.ataAddress equals the SOL mint address
+     *      Use accountAddress
+     *    Else
+     *      Use asset.ataAddress 
+     * Else
+     *    Reflect no transactions
+     */
+    return asset.ataAddress
+            ? asset.ataAddress !== NATIVE_SOL_MINT.toBase58()
+              ? new PublicKey(asset.ataAddress)
+              : new PublicKey(accountAddress)
+            : null;
+  },[accountAddress]);
 
   // Start loading the transactions when signaled
   useEffect(() => {
 
     if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
-      if (!selectedAsset.address) {
+
+      const pk = getScanAddress(selectedAsset);
+      console.log('pk:', pk ? pk.toBase58() : 'NONE');
+      if (!pk) {
         console.log('Asset has no public address, aborting...');
         setTransactions(undefined);
-        dispatch(new ResetStatsAction());
-        setLoadingTransactions(false);
+        setStatus(FetchStatus.Fetched);
         return;
       }
+
       setLoadingTransactions(true);
-      console.log('pk:', getScanAddress().toBase58());
 
       fetchAccountHistory(
         customConnection,
-        getScanAddress(),
+        pk,
         { limit: 10 },
         true
       )
       .then(history => {
         console.log('history:', history);
         setTransactions(history.transactionMap);
+        setStatus(FetchStatus.Fetched);
+      })
+      .catch(error => {
+        console.error(error);
+        setStatus(FetchStatus.FetchFailed);
       })
       .finally(() => setLoadingTransactions(false));
     }
@@ -309,9 +301,8 @@ export const AccountsView = () => {
     customConnection,
     loadingTransactions,
     shouldLoadTransactions,
-    setSignatures,
+    setTransactions,
     getScanAddress,
-    setTransactions
   ]);
 
   // Auto execute (when entering /accounts) if we have an address already stored
@@ -442,24 +433,20 @@ export const AccountsView = () => {
   };
 
   const renderQrCode = (
-    <div className="text-center">
-      <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
+    <div className="text-center mt-4">
+      <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
-        {publicKey && (
-          <QRCode
-            value={publicKey.toBase58()}
-            size={200}
-            renderAs="svg"/>
-        )}
+        <QRCode
+          value={accountAddress}
+          size={200}
+          renderAs="svg"/>
       </div>
       <div className="transaction-field medium">
         <div className="transaction-field-row main-row">
           <span className="input-left recipient-field-wrapper">
-            {publicKey && (
-              <span id="address-static-field" className="overflow-ellipsis-middle">
-                {publicKey.toBase58()}
-              </span>
-            )}
+            <span id="address-static-field" className="overflow-ellipsis-middle">
+              {accountAddress}
+            </span>
           </span>
           <div className="addon-right simplelink" onClick={onCopyAddress}>
             <IconCopy className="mean-svg-icons link" />
@@ -469,6 +456,21 @@ export const AccountsView = () => {
       <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
     </div>
   );
+
+  const renderTokenBuyOptions = () => {
+    return (
+      <div className="buy-token-options">
+        <h3 className="text-center mb-3">{t('assets.no-balance.line1')}</h3>
+        <p className="text-center">{t('assets.no-balance.line2')}</p>
+        <Space size={[16, 16]} wrap>
+          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
+          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta3')}</Button>
+        </Space>
+        {renderQrCode}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -519,15 +521,9 @@ export const AccountsView = () => {
                   <div className="stats-row">
                     <div className="fetch-control">
                       <span className="icon-button-container">
-                        {loadingTransactions ? (
+                        {status === FetchStatus.Fetching ? (
                           <Tooltip placement="bottom" title="Stop">
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="small"
-                              onClick={abortSwitch}>
-                              <SyncOutlined spin />
-                            </Button>
+                            <span className="icon-container"><SyncOutlined spin /></span>
                           </Tooltip>
                         ) : (
                           <Tooltip placement="bottom" title="Refresh">
@@ -546,8 +542,8 @@ export const AccountsView = () => {
                       <div className="header-row">
                         <div className="std-table-cell first-cell">&nbsp;</div>
                         <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                        <div className="std-table-cell fixed-width-120">{t('assets.history-table-amount')}</div>
-                        <div className="std-table-cell fixed-width-150">{t('assets.history-table-postbalance')}</div>
+                        <div className="std-table-cell fixed-width-140">{t('assets.history-table-amount')}</div>
+                        <div className="std-table-cell fixed-width-140">{t('assets.history-table-postbalance')}</div>
                         <div className="std-table-cell fixed-width-80">{t('assets.history-table-date')}</div>
                       </div>
                     </div>
@@ -559,18 +555,25 @@ export const AccountsView = () => {
                           <div className="item-list-body compact">
                             {renderTransactions()}
                           </div>
-                        ) : selectedAsset?.balance ? (
-                          <p>No transactions</p>
-                        ) : (
-                          <p>No tiene lana</p>
+                        ) : status === FetchStatus.Fetched && (
+                          !selectedAsset ? (
+                            <div className="h-100 flex-center">
+                              <span>{t('assets.no-asset-selected')}</span>
+                            </div>
+                          ) : !selectedAsset.balance ? (
+                            renderTokenBuyOptions()
+                          ) : (
+                            <div className="h-100 flex-center">
+                              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+                            </div>
+                          )
                         )
                       }
                     </div>
                   </div>
-                  {(stats && environment === 'local') && (
-                    <div className="stream-share-ctas font-size-70">
-                      <span className="fg-secondary-70 font-light mr-1">Item:</span><span className="font-regular fg-black mr-1">{stats.index}</span>
-                      <span className="fg-secondary-70 font-light mr-1">out of:</span><span className="font-regular fg-black mr-1">{stats.total}</span>
+                  {(environment === 'local') && (
+                    <div className="stream-share-ctas font-size-80">
+                      Load more here
                     </div>
                   )}
                 </div>

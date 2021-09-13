@@ -1719,6 +1719,15 @@ section.content {
   outline: 0;
   cursor: pointer;
   transition: color 0.3s;
+  .icon-container {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 15px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
   button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
     background-color: inherit;
     color: inherit;
@@ -2697,13 +2706,13 @@ section.content {
     }
   }
   @media (min-width: 768px) {
-    height: 85vh;
+    height: 80vh;
     min-height: 564px;
-    max-height: 84vh;
+    max-height: 80vh;
     .tokens-container,
     .transaction-list-container {
       height: auto;
-      max-height: 82vh;
+      max-height: 80vh;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -2925,6 +2934,45 @@ section.content {
         box-shadow: 0px 0px 3px 0 rgba(0,0,0,0.05), -1px 0px 2px 0 rgba(0,0,0,0.05);
       }
     }
+  }
+}
+
+.buy-token-options {
+  text-align: center;
+  padding-top: 10%;
+  width: 100%;
+  max-width: 375px;
+  margin: 0 auto;
+  .deposit-option {
+    &.ant-btn.ant-btn-round {
+      height: 40px;
+      border-radius: var(--custom-border-radius);
+      border-style: solid;
+      border-width: 1px;
+      color: var(--text-color);
+      background-color: var(--color-secondary-alpha-02);
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 12px;
+      &:disabled {
+        border-color: var(--color-secondary-alpha-20);
+        color: var(--color-secondary-alpha-50);
+        background-color: var(--color-secondary-alpha-05);
+        .deposit-partner-icon {
+          filter: grayscale(1);
+          opacity: 0.5;
+        }
+      }
+    }
+  }
+  .qr-container {
+    padding: 4px;
+    margin-bottom: 1.4rem;
+    display: inline-flex;
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+    border-radius: 6px;
   }
 }
 
