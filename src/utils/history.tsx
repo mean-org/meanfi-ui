@@ -26,8 +26,6 @@ export type HistoryUpdate = {
   before?: TransactionSignature;
 };
 
-// type State = Cache.State<AccountHistory>;
-
 async function fetchParsedTransactions(
     connection: Connection,
     transactionSignatures: string[]

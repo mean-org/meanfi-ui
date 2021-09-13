@@ -1152,6 +1152,7 @@ section.content {
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   @media (max-width: 575.98px) {
     padding-top: 74px;
+    height: 100%;
   }
   .place-transaction-box {
     position: relative;
@@ -2627,7 +2628,7 @@ section.content {
   }
   @media (max-width: 575.98px) {
     position: relative;
-    height: 73vh;
+    height: 100%;
     .tokens-container,
     .transaction-list-container {
       transition: transform 0.5s ease-in-out;
@@ -2799,12 +2800,16 @@ section.content {
         .item-list-header {
           flex: 0 0 100%;
           width: 100%;
-          margin-top: 10px;
+          margin-top: 14px;
           &.compact {
             .header-row {
-              height: 20px;
+              height: 26px;
               .std-table-cell {
-                font-size: 0.7rem !important;
+                vertical-align: middle;
+                font-size: 0.75rem !important;
+                color: var(--color-secondary-alpha-70);
+                background-color: var(--color-section);
+                padding: 0px 0px 0px 8px;
               }
             }
           }
@@ -2815,9 +2820,15 @@ section.content {
         z-index: 3;
         .item-list-body.compact {
           .item-list-row {
-            height: 20px;
+            height: 40px;
+            &:not(:last-of-type) {
+              .std-table-cell {
+                border-bottom: 1px solid var(--color-secondary-alpha-05);
+              }
+            }
             .std-table-cell {
-              font-size: 0.7rem !important;
+              font-size: 0.85rem !important;
+              padding: 0px 0px 0px 8px;
             }
           }
         }
@@ -2939,7 +2950,7 @@ section.content {
 
 .buy-token-options {
   text-align: center;
-  padding-top: 10%;
+  padding-top: 6%;
   width: 100%;
   max-width: 375px;
   margin: 0 auto;

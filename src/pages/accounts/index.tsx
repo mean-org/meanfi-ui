@@ -279,7 +279,7 @@ export const AccountsView = () => {
       fetchAccountHistory(
         customConnection,
         pk,
-        { limit: 10 },
+        { limit: 15 },
         true
       )
       .then(history => {
@@ -453,7 +453,8 @@ export const AccountsView = () => {
           </div>
         </div>
       </div>
-      <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
+      <div className="font-light font-size-75 px-4">{t('assets.no-balance.line4')}</div>
+      <div className="font-light font-size-75 px-4">{t('assets.no-balance.line5')}</div>
     </div>
   );
 
@@ -461,7 +462,7 @@ export const AccountsView = () => {
     return (
       <div className="buy-token-options">
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')}</h3>
-        <p className="text-center">{t('assets.no-balance.line2')}</p>
+        <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
           <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
           <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
@@ -538,15 +539,17 @@ export const AccountsView = () => {
                         )}
                       </span>
                     </div>
-                    <div className="item-list-header compact">
-                      <div className="header-row">
-                        <div className="std-table-cell first-cell">&nbsp;</div>
-                        <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                        <div className="std-table-cell fixed-width-140">{t('assets.history-table-amount')}</div>
-                        <div className="std-table-cell fixed-width-140">{t('assets.history-table-postbalance')}</div>
-                        <div className="std-table-cell fixed-width-80">{t('assets.history-table-date')}</div>
+                    {transactions && transactions.length && (
+                      <div className="item-list-header compact">
+                        <div className="header-row">
+                          <div className="std-table-cell first-cell">&nbsp;</div>
+                          <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                          <div className="std-table-cell fixed-width-150 pr-2 text-right">{t('assets.history-table-amount')}</div>
+                          <div className="std-table-cell fixed-width-150 pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                          <div className="std-table-cell fixed-width-100">{t('assets.history-table-date')}</div>
+                        </div>
                       </div>
-                    </div>
+                     )}
                   </div>
                   <div className="transaction-list-data-wrapper vertical-scroll">
                     <div className="activity-list">

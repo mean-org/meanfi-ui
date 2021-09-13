@@ -33,7 +33,9 @@
 			"cta3": "Bridge",
 			"line1": "Votre compte {{tokenSymbol}} est vide.",
 			"line2": "What do you want to do about it?",
-			"line3": "Or simply scan the QR code to receive funds directly"
+			"line3": "Or scan the QR code to receive funds",
+			"line4": "This address can only be used to receive",
+			"line5": "SOL and SPL tokens on Solana."
 		},
 		"no-transactions": "No transactions found",
 		"qr-scan-title": "Obtenir l'adresse à partir du code QR",

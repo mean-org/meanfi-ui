@@ -109,33 +109,27 @@ export const TransactionItemView = (props: {
         </div>
         <div className="std-table-cell responsive-cell">
           <Tooltip placement="bottom" title={getTxDescription(false)}>
-            <span className="text-monospace">
-              {getTxDescription()}
-            </span>
+            <span>{getTxDescription()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-140">
+        <div className="std-table-cell fixed-width-150 pr-2 text-right">
           <Tooltip placement="bottom" title={getDisplayAmount(false)}>
-            <span className="text-monospace">
-              {getDisplayAmount()}
-            </span>
+            <span>{getDisplayAmount()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-140">
+        <div className="std-table-cell fixed-width-150 pr-2 text-right">
           <Tooltip placement="bottom" title={getDisplayPostBalance(false)}>
-            <span className="text-monospace">
-              {getDisplayPostBalance()}
-            </span>
+            <span>{getDisplayPostBalance()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-80" >
+        <div className="std-table-cell fixed-width-100">
           {
             props.transaction.parsedTransaction.blockTime ? (
               <Tooltip placement="bottom" title={displayTimestamp(props.transaction.parsedTransaction.blockTime * 1000)}>
-                <span className="text-monospace">{getShortDate(props.transaction.parsedTransaction.blockTime * 1000)}</span>
+                <span>{getShortDate(props.transaction.parsedTransaction.blockTime * 1000)}</span>
               </Tooltip>
             ) : (
-              <span className="text-monospace">'unavailable'</span>
+              <span>'unavailable'</span>
             )
           }
         </div>
