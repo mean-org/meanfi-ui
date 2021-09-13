@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useReducer } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { ArrowLeftOutlined, EditOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -6,7 +6,7 @@ import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { ActionTypes, FetchStatus, TransactionActions, TransactionStats, UserTokenAccount } from '../../models/transactions';
+import { FetchStatus, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
@@ -14,7 +14,7 @@ import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddre
 import { Button, Empty, Space, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import _ from 'lodash';
 import { IconCopy } from '../../Icons';
@@ -645,7 +645,7 @@ export const AccountsView = () => {
                 </div>
                 <div className="text-center">
                   {t('assets.create-account-help')}<br />
-                  <a className="primary-link font-medium text-uppercase" href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                  <a className="primary-link font-medium text-uppercase" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                     {t('ui-menus.main-menu.services.wallet-guide')}
                   </a>
                 </div>
