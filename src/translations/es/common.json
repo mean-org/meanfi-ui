@@ -32,8 +32,8 @@
 			"cta2": "Intercambiar",
 			"cta3": "Bridge",
 			"line1": "Su cuenta {{tokenSymbol}} está vacía.",
-			"line2": "What do you want to do about it?",
-			"line3": "Or simply scan the QR code to receive funds directly"
+			"line2": "¿Qué quieres hacer al respecto?",
+			"line3": "O escanee el código QR para recibir fondos"
 		},
 		"no-transactions": "No transactions found",
 		"qr-scan-title": "Obtener dirección desde código QR",

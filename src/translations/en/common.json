@@ -33,7 +33,7 @@
 			"cta3": "Bridge",
 			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
 			"line2": "What do you want to do about it?",
-			"line3": "Or simply scan the QR code to receive funds directly"
+			"line3": "Or scan the QR code to receive funds"
 		},
 		"no-transactions": "No transactions found",
 		"qr-scan-title": "Get address from QR code",
