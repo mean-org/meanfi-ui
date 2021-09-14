@@ -34,15 +34,15 @@
 			"line1": "Su cuenta {{tokenSymbol}} está vacía.",
 			"line2": "¿Qué quieres hacer al respecto?",
 			"line3": "O escanee el código QR para recibir fondos",
-			"line4": "This address can only be used to receive",
-			"line5": "SOL and SPL tokens on Solana."
+			"line4": "Esta dirección sólo puede utilizarse para recibir",
+			"line5": "SOL y SPL tokens en Solana."
 		},
-		"no-transactions": "No transactions found",
+		"no-transactions": "No se encontraron transacciones",
 		"qr-scan-title": "Obtener dirección desde código QR",
 		"screen-title": "Saldos de activos"
 	},
 	"close-stream": {
-		"available-funds": "Available funds",
+		"available-funds": "Fondos disponibles",
 		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
@@ -96,10 +96,10 @@
 	},
 	"deposits": {
 		"address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
-		"back-to-deposit-options": "Back to Deposit options",
+		"back-to-deposit-options": "Volver a opciones de Depósito",
 		"ftx-cta-label-enabled": "Depósito de FTX",
 		"heading": "Deposite desde su Tarjeta, Cuenta Bancaria o desde otra Blockchain directamente en su Monedero Solana.\nSeleccione una de las opciones siguientes",
-		"modal-title": "Opciones de depósito",
+		"modal-title": "Opciones de Depósito",
 		"move-from-ethereum-cta-label": "Mover activos de Ethereum",
 		"move-from-polygon-cta-label": "Mover activos de Polygon",
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
@@ -227,7 +227,7 @@
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
 		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Transaction Settings"
+		"transaction-settings": "Configuración de la transacción"
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
@@ -312,7 +312,7 @@
 			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
 			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
 			"beneficiary-receives": "El beneficiario recibe",
-			"exchange-on": "Exchange on",
+			"exchange-on": "Intercambio en",
 			"min-recommended-amount": "Cantidad mínima recomendada",
 			"price-impact": "Price impact",
 			"recipient-receives": "El destinatario recibe",
