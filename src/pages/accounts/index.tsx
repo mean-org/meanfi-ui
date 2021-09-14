@@ -477,9 +477,9 @@ export const AccountsView = () => {
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
-          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
-          <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta3')}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta3')}</Button>
         </Space>
         {renderQrCode}
       </div>
@@ -602,14 +602,24 @@ export const AccountsView = () => {
                 {accountAddress && (
                   <div className="back-button">
                     <span className="icon-button-container">
-                      <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
+                      <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
                         <Button
                           type="default"
                           shape="circle"
                           size="middle"
+                          className="hidden-xs"
                           icon={<ArrowLeftOutlined />}
                           onClick={handleBackToAccountDetailsButtonClick}
                         />
+                        <Button
+                          type="ghost"
+                          shape="round"
+                          size="middle"
+                          className="hidden-sm"
+                          icon={<ArrowLeftOutlined />}
+                          onClick={handleBackToAccountDetailsButtonClick}>
+                          {t('assets.back-to-assets-cta')}
+                        </Button>
                       </Tooltip>
                     </span>
                   </div>
