@@ -112,12 +112,12 @@ export const TransactionItemView = (props: {
             <span>{getTxDescription()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-150 pr-2 text-right">
+        <div className="std-table-cell responsive-cell pr-2 text-right">
           <Tooltip placement="bottom" title={getDisplayAmount(false)}>
             <span>{getDisplayAmount()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-150 pr-2 text-right">
+        <div className="std-table-cell responsive-cell pr-2 text-right">
           <Tooltip placement="bottom" title={getDisplayPostBalance(false)}>
             <span>{getDisplayPostBalance()}</span>
           </Tooltip>

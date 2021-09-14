@@ -552,13 +552,13 @@ export const AccountsView = () => {
                         )}
                       </span>
                     </div>
-                    {transactions && transactions.length && (
+                    {(transactions && transactions.length > 0) && (
                       <div className="item-list-header compact">
                         <div className="header-row">
                           <div className="std-table-cell first-cell">&nbsp;</div>
                           <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                          <div className="std-table-cell fixed-width-150 pr-2 text-right">{t('assets.history-table-amount')}</div>
-                          <div className="std-table-cell fixed-width-150 pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
                           <div className="std-table-cell fixed-width-100">{t('assets.history-table-date')}</div>
                         </div>
                       </div>

@@ -45,12 +45,13 @@
 		"screen-title": "Asset balances"
 	},
 	"close-stream": {
-		"available-funds": "Available funds",
 		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
+		"return-unvested-amount": "Unvested amount",
+		"return-vested-amount": "Vested amount",
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {

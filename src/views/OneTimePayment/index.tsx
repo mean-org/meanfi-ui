@@ -346,8 +346,7 @@ export const OneTimePayment = () => {
         }
 
         return await moneyStream.oneTimePayment(
-          wallet,
-          associatedToken,                                            // treasurerMint
+          wallet.publicKey,
           beneficiary,                                                // beneficiary
           associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount

@@ -644,7 +644,7 @@ export const Streams = () => {
 
         // Create a transaction
         return await moneyStream.addFunds(
-          wallet,
+          wallet.publicKey,
           stream,
           contributorMint,                                  // contributorMint
           amount

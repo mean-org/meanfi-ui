@@ -83,9 +83,13 @@ export const CloseStreamModal = (props: {
         {/* Info */}
         {streamDetail && streamDetail.associatedToken && (
           <div className="p-2 mb-2">
-            {infoRow(
-              t('close-stream.available-funds') + ':',
-              getTokenAmountAndSymbolByTokenAddress(tokenBalance || 0, streamDetail.associatedToken as string)
+            {streamDetail.escrowVestedAmount > 0 && infoRow(
+              t('close-stream.return-vested-amount') + ':',
+              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+            )}
+            {streamDetail.escrowUnvestedAmount > 0 && infoRow(
+              t('close-stream.return-unvested-amount') + ':',
+              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
             )}
             {infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',

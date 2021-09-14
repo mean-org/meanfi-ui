@@ -45,12 +45,13 @@
 		"screen-title": "Saldos de activos"
 	},
 	"close-stream": {
-		"available-funds": "Fondos disponibles",
 		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
+		"return-unvested-amount": "Unvested amount",
+		"return-vested-amount": "Vested amount",
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {

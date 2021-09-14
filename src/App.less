@@ -369,7 +369,6 @@ footer.ant-layout-footer {
   }
 }
 
-
 // Text button shaded with rounded corners
 .ant-btn.ant-btn-text.ant-btn-shaded {
   background-color: var(--color-flat-btn);
@@ -2826,6 +2825,14 @@ section.content {
           right: 6px;
           top: 6px;
           color: var(--color-secondary-alpha-70);
+          @media (max-width: 575.98px) {
+            position: relative;
+            width: 100%;
+            text-align: right;
+            right: unset;
+            top: unset;
+            margin-bottom: 1rem;
+          }
         }
         .item-list-header {
           flex: 0 0 100%;

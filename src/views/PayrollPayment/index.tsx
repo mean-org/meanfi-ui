@@ -600,10 +600,9 @@ export const PayrollPayment = () => {
         }
 
         return await moneyStream.createStream(
-          wallet,                                                     // wallet
+          wallet.publicKey,                                           // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
-          treasurerMint,                                              // treasurerMint
           beneficiaryMint,                                            // beneficiaryMint
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
