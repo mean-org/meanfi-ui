@@ -36,6 +36,7 @@ import {
   copyText,
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
+  getTransactionModalTitle,
   getTransactionOperationDescription,
   getTxFeeAmount,
 } from "../../utils/ui";
@@ -547,23 +548,6 @@ export const Streams = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
-
-  const getTransactionModalTitle = () => {
-    let title: any;
-    if (isBusy) {
-      title = t('transactions.status.modal-title-executing-transaction');
-    } else {
-      if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
-          transactionStatus.currentOperation === TransactionStatus.Iddle) {
-        title = null;
-      } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = t('transactions.status.modal-title-transaction-completed');
-      } else {
-        title = null;
-      }
-    }
-    return title;
   }
 
   const isSuccess = (): boolean => {
@@ -1966,7 +1950,7 @@ export const Streams = () => {
         maskClosable={false}
         afterClose={onAfterAddFundsTransactionModalClosed}
         visible={isAddFundsTransactionModalVisible}
-        title={getTransactionModalTitle()}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideAddFundsTransactionModal}
         width={280}
         footer={null}>
@@ -2036,7 +2020,7 @@ export const Streams = () => {
         maskClosable={false}
         afterClose={onAfterWithdrawFundsTransactionModalClosed}
         visible={isWithdrawFundsTransactionModalVisible}
-        title={getTransactionModalTitle()}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawFundsTransactionModal}
         width={280}
         footer={null}>
@@ -2106,7 +2090,7 @@ export const Streams = () => {
         maskClosable={false}
         afterClose={onAfterCloseStreamTransactionModalClosed}
         visible={isCloseStreamTransactionModalVisible}
-        title={getTransactionModalTitle()}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseStreamTransactionModal}
         width={280}
         footer={null}>

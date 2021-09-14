@@ -277,6 +277,7 @@
 			"instructions": "Confirme esta transação em sua carteira",
 			"modal-title-executing-transaction": "Executando transação",
 			"modal-title-transaction-completed": "Transação Completa",
+			"modal-title-transaction-disabled": "Cannot start transaction",
 			"stream-started-post": "começou com sucesso",
 			"stream-started-pre": "Sua transferência de dinheiro para",
 			"tx-add-funds-operation": "Adicionando fundos com",

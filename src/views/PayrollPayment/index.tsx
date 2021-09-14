@@ -26,6 +26,7 @@ import {
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTimesheetRequirementOptionLabel,
+  getTransactionModalTitle,
   getTransactionOperationDescription,
   getTxFeeAmount,
   isToday,
@@ -741,23 +742,6 @@ export const PayrollPayment = () => {
 
   };
 
-  const getTransactionModalTitle = () => {
-    let title: any;
-    if (isBusy) {
-      title = t('transactions.status.modal-title-executing-transaction');
-    } else {
-      if (transactionStatus.lastOperation === TransactionStatus.Iddle &&
-          transactionStatus.currentOperation === TransactionStatus.Iddle) {
-        title = null;
-      } else if (transactionStatus.lastOperation === TransactionStatus.TransactionFinished) {
-        title = t('transactions.status.modal-title-transaction-completed');
-      } else {
-        title = null;
-      }
-    }
-    return title;
-  }
-
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1112,7 +1096,7 @@ export const PayrollPayment = () => {
         maskClosable={false}
         afterClose={onAfterTransactionModalClosed}
         visible={isTransactionModalVisible}
-        title={getTransactionModalTitle()}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={closeTransactionModal}
         width={280}
         footer={null}>

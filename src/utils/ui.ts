@@ -33,6 +33,33 @@ export class PaymentRateTypeOption {
     }
 }
 
+export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: boolean, trans: any): string {
+    let title: any;
+    if (isBusy) {
+        title = trans("transactions.status.modal-title-executing-transaction");
+    } else {
+        if (
+            status.lastOperation === TransactionStatus.Iddle &&
+            status.currentOperation === TransactionStatus.Iddle
+        ) {
+            title = null;
+        } else if (
+            status.currentOperation ===
+            TransactionStatus.TransactionStartFailure
+        ) {
+            title = trans("transactions.status.modal-title-transaction-disabled");
+        } else if (
+            status.lastOperation ===
+            TransactionStatus.TransactionFinished
+        ) {
+            title = trans("transactions.status.modal-title-transaction-completed");
+        } else {
+            title = null;
+        }
+    }
+    return title;
+};
+
 export const copyText = (val: any): boolean => {
     if (!val) { return false; }
     const selBox = document.createElement('textarea');

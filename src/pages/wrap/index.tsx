@@ -19,7 +19,7 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
+import { getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -318,32 +318,9 @@ export const WrapView = () => {
       : false;
   };
 
-  const getTransactionModalTitle = () => {
-    let title: any;
-    if (isBusy) {
-      title = t("transactions.status.modal-title-executing-transaction");
-    } else {
-      if (
-        transactionStatus.lastOperation === TransactionStatus.Iddle &&
-        transactionStatus.currentOperation === TransactionStatus.Iddle
-      ) {
-        title = null;
-      } else if (
-        transactionStatus.lastOperation ===
-        TransactionStatus.TransactionFinished
-      ) {
-        title = t("transactions.status.modal-title-transaction-completed");
-      } else {
-        title = null;
-      }
-    }
-    return title;
-  };
-
   const isSuccess = (): boolean => {
     return (
-      transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
+      transactionStatus.currentOperation === TransactionStatus.TransactionFinished
     );
   };
 
@@ -530,7 +507,7 @@ export const WrapView = () => {
                 className="mean-modal"
                 maskClosable={false}
                 visible={isTransactionModalVisible}
-                title={getTransactionModalTitle()}
+                title={getTransactionModalTitle(transactionStatus, isBusy, t)}
                 onCancel={hideTransactionModal}
                 afterClose={onAfterTransactionModalClosed}
                 width={280}

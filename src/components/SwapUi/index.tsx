@@ -8,7 +8,7 @@ import { useSwapConnection } from "../../contexts/connection";
 import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
@@ -1174,28 +1174,6 @@ export const SwapUi = () => {
     </>
   );
 
-  const getTransactionModalTitle = () => {
-    let title: any;
-    if (isBusy) {
-      title = t("transactions.status.modal-title-executing-transaction");
-    } else {
-      if (
-        transactionStatus.lastOperation === TransactionStatus.Iddle &&
-        transactionStatus.currentOperation === TransactionStatus.Iddle
-      ) {
-        title = null;
-      } else if (
-        transactionStatus.lastOperation ===
-        TransactionStatus.TransactionFinished
-      ) {
-        title = t("transactions.status.modal-title-transaction-completed");
-      } else {
-        title = null;
-      }
-    }
-    return title;
-  };
-
   const isSuccess = useCallback(() => {
 
     return (
@@ -1618,7 +1596,7 @@ export const SwapUi = () => {
           className="mean-modal"
           maskClosable={false}
           visible={isTransactionModalVisible}
-          title={getTransactionModalTitle()}
+          title={getTransactionModalTitle(transactionStatus, isBusy, t)}
           onCancel={hideTransactionModal}
           afterClose={onAfterTransactionModalClosed}
           width={280}
