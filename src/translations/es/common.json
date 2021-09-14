@@ -277,7 +277,7 @@
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
-			"modal-title-transaction-disabled": "No se puede iniciar la transacción",
+			"modal-title-transaction-disabled": "Transacción cancelada",
 			"stream-started-post": "se inició con éxito",
 			"stream-started-pre": "Tu transferencia de dinero por",
 			"tx-add-funds-operation": "Adicionando fondos con",

@@ -277,7 +277,7 @@
 			"instructions": "Confirmez cette transaction dans votre portefeuille",
 			"modal-title-executing-transaction": "Exécution de la transaction",
 			"modal-title-transaction-completed": "Transaction terminée",
-			"modal-title-transaction-disabled": "Impossible de lancer la transaction",
+			"modal-title-transaction-disabled": "Transaction annulée",
 			"stream-started-post": "a démarré avec succès",
 			"stream-started-pre": "Votre transfert d'argent pour",
 			"tx-add-funds-operation": "Ajouter des fonds avec",

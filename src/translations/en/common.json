@@ -277,7 +277,7 @@
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",
-			"modal-title-transaction-disabled": "Cannot start transaction",
+			"modal-title-transaction-disabled": "Transaction cancelled",
 			"stream-started-post": "was started successfully",
 			"stream-started-pre": "Your money stream for",
 			"tx-add-funds-operation": "Funding stream with",
