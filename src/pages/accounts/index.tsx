@@ -432,6 +432,8 @@ export const AccountsView = () => {
     });
   };
 
+  // TODO: Add a11y attributes to emojis for screen readers  aria-hidden={label ? undefined : true} aria-label={label ? label : undefined} role="img"
+
   const getRandomEmoji = () => {
     const totalEmojis = EMOJIS.length;
     if (totalEmojis) {
@@ -655,10 +657,11 @@ export const AccountsView = () => {
                   </Button>
                 </div>
                 <div className="text-center">
-                  {t('assets.create-account-help')}<br />
-                  <a className="primary-link font-medium text-uppercase" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                    {t('ui-menus.main-menu.services.wallet-guide')}
+                  <span className="mr-1">{t('assets.create-account-help-pre')}</span>
+                  <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                    {t('assets.create-account-help-link')}
                   </a>
+                  <span className="ml-1">{t('assets.create-account-help-post')}</span>
                 </div>
               </div>
               {/* QR scan modal */}
