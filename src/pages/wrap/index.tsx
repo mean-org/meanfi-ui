@@ -262,6 +262,7 @@ export const WrapView = () => {
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           console.log("sent:", sent);
+          setWrapAmount("");
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             console.log("confirmed:", confirmed);
