@@ -45,7 +45,7 @@
 		"screen-title": "Soldes des actifs"
 	},
 	"close-stream": {
-		"context-beneficiary": "Veuillez compléter ce transfert d'argent et ce montant ({{amount}}) sera envoyé sur votre compte ({{beneficiary}}) et le flux d'argent s'arrêtera immédiatement.",
+		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "À la fin de ce transfert monétaire, le flux d'argent s'arrêtera immédiatement, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront retournés à la trésorerie d'origine ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "À l'issue de ce transfert monétaire, le flux d'argent sera immédiatement arrêté, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront restitués au contributeur d'origine.",
 		"modal-title": "Terminer le transfert",
