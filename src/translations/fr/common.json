@@ -326,11 +326,11 @@
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
-			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
-			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
+			"insufficient-amount-needed": "Il vous faut au moins {{amount}} {symbol}} à échanger",
+			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL pour payer les frais de réseau",
 			"invalid-amount": "Montant invalide",
-			"invalid-exchange": "Invalid exchange",
-			"minimum-swap-amount": "Besoin d'au moins {{mintAmount}} pour échanger contre de {{toMint}}",
+			"invalid-exchange": "Échange non valide",
+			"minimum-swap-amount": "Il faut au moins {{mintAmount}} pour passer à {{toMint}}.",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",
 			"no-payment-rate": "Ajouter un taux de paiement",
@@ -347,7 +347,7 @@
 		"en": "Anglais",
 		"es": "Espanol",
 		"fr": "Français",
-		"pt": "Portugais"
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {

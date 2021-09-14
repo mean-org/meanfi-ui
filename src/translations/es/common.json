@@ -326,17 +326,17 @@
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"amount-withdraw-high": "La cantidad es mayor que los fondos disponibles",
-			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
-			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
+			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
+			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL para pagar la cuota de la red",
 			"invalid-amount": "Monto no válido",
-			"invalid-exchange": "Invalid exchange",
+			"invalid-exchange": "Intercambio no válido",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
 			"no-recipient": "Seleccionar destinatario",
 			"no-valid-date": "Establecer una fecha válida",
-			"not-connected": "Conecta tu billetera",
+			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
 			"valid-approve": "Aprobar en su billetera",
 			"valid-start-funding": "Empezar a financiar",
@@ -347,7 +347,7 @@
 		"en": "Inglés",
 		"es": "Español",
 		"fr": "Francés",
-		"pt": "Portugués"
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {
