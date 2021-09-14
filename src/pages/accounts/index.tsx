@@ -14,7 +14,7 @@ import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddre
 import { Button, Empty, Space, Tooltip } from 'antd';
 import { consoleOut, copyText } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
+import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import _ from 'lodash';
 import { IconCopy } from '../../Icons';
@@ -432,6 +432,17 @@ export const AccountsView = () => {
     });
   };
 
+  const getRandomEmoji = () => {
+    const totalEmojis = EMOJIS.length;
+    if (totalEmojis) {
+      const randomIndex = Math.floor(Math.random() * totalEmojis);
+      return (
+        <span className="emoji">{EMOJIS[randomIndex]}</span>
+      );
+    }
+    return null;
+  }
+
   const renderQrCode = (
     <div className="text-center mt-4">
       <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
@@ -461,7 +472,7 @@ export const AccountsView = () => {
   const renderTokenBuyOptions = () => {
     return (
       <div className="buy-token-options">
-        <h3 className="text-center mb-3">{t('assets.no-balance.line1')}</h3>
+        <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
           <Button className="deposit-option" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>

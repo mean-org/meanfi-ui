@@ -63,11 +63,11 @@ export const AppBar = (props: { menuType: string }) => {
     }
   }
 
-  const getChartsLink = (): string => {
-    const config = new AppConfigService();
-    const bucket = config.getConfig().influxDbBucket;
-    return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
-  }
+  // const getChartsLink = (): string => {
+  //   const config = new AppConfigService();
+  //   const bucket = config.getConfig().influxDbBucket;
+  //   return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
+  // }
 
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
@@ -106,11 +106,9 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      {(environment === 'development' || environment === 'local') && (
-        <Menu.Item key="/accounts">
-          <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-        </Menu.Item>
-      )}
+      <Menu.Item key="/accounts">
+        <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+      </Menu.Item>
       <Menu.Item key="/swap">
         <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
@@ -190,11 +188,9 @@ export const AppBar = (props: { menuType: string }) => {
         <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
         <div id="overlay">
           <ul onClick={dismissMenu}>
-            {(environment === 'development' || environment === 'local') && (
-              <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-              </li>
-            )}
+            <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+              <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+            </li>
             <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
               <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
             </li>
