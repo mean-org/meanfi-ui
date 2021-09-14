@@ -143,7 +143,7 @@
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
 		"primary-action": "Selecionar",
-		"secondary-action": "Cancelar"
+		"secondary-action": "Fechar"
 	},
 	"notifications": {
 		"account-address-copied-message": "Endereço da conta copiado com sucesso",
