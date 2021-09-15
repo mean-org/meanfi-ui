@@ -1,5 +1,5 @@
 import { Token } from "@solana/spl-token";
-import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Account, Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { getTokenByMintAddress } from "./utils";
 import { TokenAmount } from "../../utils/safe-math";
@@ -25,12 +25,12 @@ export const getSwapTx = async (
 
   const tx = new Transaction()
   const signers = new Array<Signer>();
-  let wrappedSolAccount: Keypair | null = null;
-  let wrappedSolAccount2: Keypair | null = null;
+  let wrappedSolAccount: Account | null = null;
+  let wrappedSolAccount2: Account | null = null;
 
   if (fromCoinMint.equals(WRAPPED_SOL_MINT)) {
 
-    wrappedSolAccount = Keypair.generate();
+    wrappedSolAccount = new Account();
 
     tx.add(
       SystemProgram.createAccount({
@@ -53,7 +53,7 @@ export const getSwapTx = async (
 
   if (toCoinMint.equals(WRAPPED_SOL_MINT)) {
 
-    wrappedSolAccount2 = Keypair.generate();
+    wrappedSolAccount2 = new Account();
 
     tx.add(
       SystemProgram.createAccount({
@@ -235,27 +235,27 @@ export function getSwapIx(
   ]);
 
   const keys = [
-    // spl token
-    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: true },
+     // spl token
+    { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     // amm
     { pubkey: ammId, isSigner: false, isWritable: true },
-    { pubkey: ammAuthority, isSigner: false, isWritable: true },
+    { pubkey: ammAuthority, isSigner: false, isWritable: false },
     { pubkey: ammOpenOrders, isSigner: false, isWritable: true },
     { pubkey: ammTargetOrders, isSigner: false, isWritable: true },
     { pubkey: poolCoinTokenAccount, isSigner: false, isWritable: true },
     { pubkey: poolPcTokenAccount, isSigner: false, isWritable: true },
     // serum
-    { pubkey: serumProgramId, isSigner: false, isWritable: true },
+    { pubkey: serumProgramId, isSigner: false, isWritable: false },
     { pubkey: serumMarket, isSigner: false, isWritable: true },
     { pubkey: serumBids, isSigner: false, isWritable: true },
     { pubkey: serumAsks, isSigner: false, isWritable: true },
     { pubkey: serumEventQueue, isSigner: false, isWritable: true },
     { pubkey: serumCoinVaultAccount, isSigner: false, isWritable: true },
     { pubkey: serumPcVaultAccount, isSigner: false, isWritable: true },
-    { pubkey: serumVaultSigner, isSigner: false, isWritable: true },
+    { pubkey: serumVaultSigner, isSigner: false, isWritable: false },
     { pubkey: userSourceTokenAccount, isSigner: false, isWritable: true },
     { pubkey: userDestTokenAccount, isSigner: false, isWritable: true },
-    { pubkey: userOwner, isSigner: true, isWritable: true }
+    { pubkey: userOwner, isSigner: true, isWritable: false }
   ];
 
   const data = Buffer.alloc(dataLayout.span);

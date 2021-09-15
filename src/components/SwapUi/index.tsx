@@ -1319,7 +1319,7 @@ export const SwapUi = () => {
     const encodedTx = base64.fromByteArray(serializedTx);
     console.log('tx serialized => ', encodedTx);
 
-    return connection.sendRawTransaction(serializedTx)
+    return connection.sendEncodedTransaction(encodedTx, { skipPreflight: true })
       .then((sig) => {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
