@@ -331,7 +331,7 @@
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"insufficient-amount-needed": "Il vous faut au moins {{amount}} {symbol}} à échanger",
-			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL pour payer les frais de réseau",
+			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL",
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Échange non valide",
 			"minimum-swap-amount": "Il faut au moins {{mintAmount}} pour passer à {{toMint}}.",
