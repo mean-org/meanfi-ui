@@ -45,7 +45,7 @@
 		"screen-title": "Asset balances"
 	},
 	"close-stream": {
-		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"modal-title": "Close stream",
@@ -126,7 +126,6 @@
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
 		"cta-close": "Close",
-		"cta-dismiss": "Dismiss",
 		"cta-finish": "Finish",
 		"day": "day",
 		"hour": "hour",
