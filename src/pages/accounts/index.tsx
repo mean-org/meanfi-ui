@@ -40,6 +40,7 @@ export const AccountsView = () => {
     setSelectedAsset,
     setAccountAddress,
     setDtailsPanelOpen,
+    showDepositOptionsModal
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
@@ -446,7 +447,7 @@ export const AccountsView = () => {
   }
 
   const renderQrCode = (
-    <div className="text-center mt-4">
+    <div className="text-center mt-3">
       <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
         <QRCode
@@ -477,9 +478,9 @@ export const AccountsView = () => {
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default"
+                  onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
           <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
-          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta3')}</Button>
         </Space>
         {renderQrCode}
       </div>
@@ -564,7 +565,7 @@ export const AccountsView = () => {
                       </div>
                      )}
                   </div>
-                  <div className="transaction-list-data-wrapper vertical-scroll">
+                  <div className={transactions && transactions.length ? 'transaction-list-data-wrapper vertical-scroll' : 'transaction-list-data-wrapper empty'}>
                     <div className="activity-list">
                       {
                         transactions && transactions.length ? (

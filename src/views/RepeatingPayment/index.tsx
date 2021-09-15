@@ -570,7 +570,7 @@ export const RepeatingPayment = () => {
         consoleOut('TxFee:', myFees);
         const neededAmount = repeatingPaymentFees.blockchainFee + myFees;
         consoleOut('TxFee + blockchainFee:', neededAmount);
-        consoleOut('Is enough to pay for gas fee:', neededAmount >= nativeBalance ? 'yes' : 'no');
+        consoleOut('Is enough to pay for gas fee:', nativeBalance >= neededAmount ? 'yes' : 'no');
         if (nativeBalance < neededAmount) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -718,7 +718,6 @@ export const RepeatingPayment = () => {
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   const isSuccess = (): boolean => {

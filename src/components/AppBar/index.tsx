@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
@@ -9,7 +9,6 @@ import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
@@ -23,33 +22,14 @@ export const AppBar = (props: { menuType: string }) => {
   const connection = useConnectionConfig();
   const { connected } = useWallet();
   const { t } = useTranslation("common");
-  const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
+  const {
+    isDepositOptionsModalVisible,
+    showDepositOptionsModal,
+    hideDepositOptionsModal,
+    setCustomStreamDocked,
+    refreshStreamList
+  } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Deposits modal
-  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const showDepositOptionsModal = useCallback((e) => {
-    setIsDepositOptionsModalVisibility(true);
-    const depositMenuItem = document.getElementById("deposits-menu-item");
-    if (depositMenuItem) {
-      setTimeout(() => {
-        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
-          depositMenuItem.classList.remove('ant-menu-item-active');
-        }
-      }, 300);
-    }
-  }, []);
-  const hideDepositOptionsModal = useCallback(() => {
-    setIsDepositOptionsModalVisibility(false);
-    const depositMenuItem = document.getElementById("deposits-menu-item");
-    if (depositMenuItem) {
-      setTimeout(() => {
-        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
-          depositMenuItem.classList.remove('ant-menu-item-active');
-        }
-      }, 300);
-    }
-  }, []);
 
   const onGoToTransfersClick = () => {
     refreshStreamList(true);

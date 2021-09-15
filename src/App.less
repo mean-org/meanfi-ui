@@ -2853,7 +2853,13 @@ section.content {
         }
       }
       .transaction-list-data-wrapper {
-        max-height: calc(100% - 3.6rem);
+        &:not(.empty) {
+          max-height: calc(100% - 3.6rem);
+        }
+        &.empty {
+          height: calc(100% - 1rem);
+          &:extend(.flex-center);
+        }
         z-index: 3;
         .item-list-body.compact {
           .item-list-row {
@@ -2993,7 +2999,6 @@ section.content {
 
 .buy-token-options {
   text-align: center;
-  padding-top: 6%;
   width: 100%;
   max-width: 375px;
   margin: 0 auto;

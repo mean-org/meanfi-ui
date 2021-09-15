@@ -31,9 +31,8 @@
 		"history-table-postbalance": "Post saldo",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
-			"cta1": "Compre {{tokenSymbol}}",
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
 			"cta2": "Troca",
-			"cta3": "Bridge",
 			"line1": "Sua conta {{tokenSymbol}} está vazia.",
 			"line2": "O que você quer fazer a respeito disso?",
 			"line3": "Ou escanear o código QR para receber fundos",

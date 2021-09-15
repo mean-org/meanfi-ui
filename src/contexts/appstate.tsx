@@ -31,6 +31,7 @@ interface AppStateConfig {
   theme: string | undefined;
   currentScreen: string | undefined;
   detailsPanelOpen: boolean;
+  isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
@@ -63,6 +64,8 @@ interface AppStateConfig {
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
+  showDepositOptionsModal: () => void;
+  hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
@@ -98,6 +101,7 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   currentScreen: undefined,
   detailsPanelOpen: false,
+  isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
@@ -133,6 +137,8 @@ const contextDefaultValues: AppStateConfig = {
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
+  showDepositOptionsModal: () => {},
+  hideDepositOptionsModal: () => {},
   setContract: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
@@ -372,6 +378,33 @@ const AppStateProvider: React.FC = ({ children }) => {
   const setStreamDetail = (stream: StreamInfo) => {
     updateStreamDetail(stream);
   }
+
+  // Deposits modal
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+
+  const showDepositOptionsModal = useCallback(() => {
+    setIsDepositOptionsModalVisibility(true);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      setTimeout(() => {
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
+      }, 300);
+    }
+  }, []);
+
+  const hideDepositOptionsModal = useCallback(() => {
+    setIsDepositOptionsModalVisibility(false);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      setTimeout(() => {
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
+      }, 300);
+    }
+  }, []);
 
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
@@ -684,6 +717,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         theme,
         currentScreen,
         detailsPanelOpen,
+        isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
         tokenBalance,
@@ -715,6 +749,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
+        showDepositOptionsModal,
+        hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
         setFromCoinAmount,

@@ -31,9 +31,8 @@
 		"history-table-postbalance": "Post balance",
 		"no-asset-selected": "No asset selected. Please chose one on the left!",
 		"no-balance": {
-			"cta1": "Buy {{tokenSymbol}}",
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
 			"cta2": "Exchange",
-			"cta3": "Bridge",
 			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
 			"line2": "What do you want to do about it?",
 			"line3": "Or scan the QR code to receive funds",
