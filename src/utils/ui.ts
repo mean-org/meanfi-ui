@@ -1,4 +1,5 @@
 import { TokenInfo } from "@solana/spl-token-registry";
+import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
@@ -31,6 +32,17 @@ export class PaymentRateTypeOption {
         this.value = _value;
         this.text = _text;
     }
+}
+
+export function isValidAddress(value: any): boolean {
+    if (typeof value === 'string') {
+      // assume base 58 encoding by default
+      const decoded = bs58.decode(value);
+      if (decoded.length === 32) {
+        return true;
+      }
+    }
+    return false;
 }
 
 export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: boolean, trans: any): string {

@@ -20,6 +20,7 @@
 		"account-address-change-cta": "Escanear otra dirección",
 		"account-address-label": "Dirección de cuenta",
 		"account-address-placeholder": "Ingrese la dirección de su cuenta",
+		"account-address-validation": "Not a valid address format",
 		"back-to-assets-cta": "Volver a la lista de activos",
 		"create-account-help-link": "Conozca más sobre billeteras",
 		"create-account-help-post": "abrir una cuenta",

@@ -20,6 +20,7 @@
 		"account-address-change-cta": "Scannez une autre adresse",
 		"account-address-label": "Adresse du compte",
 		"account-address-placeholder": "Entrez votre adresse de compte",
+		"account-address-validation": "Not a valid address format",
 		"back-to-assets-cta": "Retour à la liste des actifs",
 		"create-account-help-link": "En savoir plus sur les portefeuilles",
 		"create-account-help-post": "d'ouvrir un compte",

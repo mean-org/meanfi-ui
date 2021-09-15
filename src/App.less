@@ -1266,10 +1266,17 @@ section.content {
   .transaction-field {
     flex: 1 1 auto;
     margin: 0 1rem 0 0;
-    height: 60px;
-    .transaction-field-row .general-text-input,
-    #payment-recipient-static-field {
-      font-size: 20px;
+    height: 70px;
+    .transaction-field-row.main-row {
+      #payment-recipient-field.general-text-input,
+      #payment-recipient-static-field {
+        font-size: 20px;
+        top: 4px;
+      }
+      .addon-right {
+        display: inline-flex;
+        align-items: center;
+      }
     }
   }
   button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
