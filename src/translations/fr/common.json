@@ -326,7 +326,7 @@
 		},
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
-			"amount-low": "Pas assez de solde de compte",
+			"amount-low": "Pas assez de solde",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
