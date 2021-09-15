@@ -1157,7 +1157,6 @@ export const Streams = () => {
       const treasury = streamDetail.treasuryAddress as string;
       const treasurer = streamDetail.treasurerAddress as string;
       const beneficiary = streamDetail.beneficiaryAddress as string;
-      const withdrawAmount = getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string);
       // TODO: Account for multiple beneficiaries funded by the same treasury (only 1 right now)
       const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
 
@@ -1171,10 +1170,7 @@ export const Streams = () => {
           message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
         }
       } else if (beneficiary === me)  {  // If I am the beneficiary
-        message = t('close-stream.context-beneficiary', {
-          amount: `~${withdrawAmount}`,
-          beneficiary: shortenAddress(beneficiary)
-        });
+        message = t('close-stream.context-beneficiary', { beneficiary: shortenAddress(beneficiary) });
       }
 
     }
@@ -1952,7 +1948,7 @@ export const Streams = () => {
         visible={isAddFundsTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideAddFundsTransactionModal}
-        width={280}
+        width={330}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
@@ -2003,7 +1999,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideAddFundsTransactionModal}>
-                {t('general.cta-dismiss')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
@@ -2022,7 +2018,7 @@ export const Streams = () => {
         visible={isWithdrawFundsTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideWithdrawFundsTransactionModal}
-        width={280}
+        width={330}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
@@ -2073,7 +2069,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideWithdrawFundsTransactionModal}>
-                {t('general.cta-dismiss')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
@@ -2092,7 +2088,7 @@ export const Streams = () => {
         visible={isCloseStreamTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseStreamTransactionModal}
-        width={280}
+        width={330}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
@@ -2143,7 +2139,7 @@ export const Streams = () => {
                 shape="round"
                 size="middle"
                 onClick={hideCloseStreamTransactionModal}>
-                {t('general.cta-dismiss')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
