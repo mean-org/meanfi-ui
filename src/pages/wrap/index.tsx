@@ -510,7 +510,7 @@ export const WrapView = () => {
                 title={getTransactionModalTitle(transactionStatus, isBusy, t)}
                 onCancel={hideTransactionModal}
                 afterClose={onAfterTransactionModalClosed}
-                width={280}
+                width={330}
                 footer={null}
               >
                 <div className="transaction-progress">
@@ -584,9 +584,8 @@ export const WrapView = () => {
                         type="primary"
                         shape="round"
                         size="middle"
-                        onClick={hideTransactionModal}
-                      >
-                        {t("general.cta-dismiss")}
+                        onClick={hideTransactionModal}>
+                        {t("general.cta-close")}
                       </Button>
                     </>
                   ) : (

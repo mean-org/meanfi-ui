@@ -805,7 +805,7 @@ export const OneTimePayment = () => {
         visible={isTransactionModalVisible}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={closeTransactionModal}
-        width={280}
+        width={330}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
@@ -848,7 +848,7 @@ export const OneTimePayment = () => {
                 shape="round"
                 size="middle"
                 onClick={closeTransactionModal}>
-                {t('general.cta-dismiss')}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
