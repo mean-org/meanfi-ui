@@ -565,8 +565,13 @@ export const RepeatingPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('nativeBalance:', nativeBalance);
         const myFees = getTxFeeAmount(repeatingPaymentFees, amount);
-        if (nativeBalance < repeatingPaymentFees.blockchainFee + myFees) {
+        consoleOut('TxFee:', myFees);
+        const neededAmount = repeatingPaymentFees.blockchainFee + myFees;
+        consoleOut('TxFee + blockchainFee:', neededAmount);
+        consoleOut('Is enough to pay for gas fee:', neededAmount >= nativeBalance ? 'yes' : 'no');
+        if (nativeBalance < neededAmount) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
