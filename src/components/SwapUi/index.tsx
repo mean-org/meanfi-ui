@@ -1657,6 +1657,17 @@ export const SwapUi = () => {
     setSlippage(value);
   };
 
+  // const getFormattedAmount = (mint: any, value: number) => {
+  //   if (!connected || !mint || !mintList[mint]) { return 0; }
+  //   const rest = (1 / 10 ** mintList[mint].decimals);
+  //   const amount = parseFloat((value + rest).toFixed(mintList[mint].decimals));
+  //   if (amount > rest) {
+  //     return parseFloat((value - rest).toFixed(mintList[mint].decimals));
+  //   } else {
+  //     return 0;
+  //   }
+  // }
+
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
@@ -1670,6 +1681,7 @@ export const SwapUi = () => {
         {/* Source token / amount */}
         <CoinInput
           token={fromMint && mintList[fromMint]}
+          // tokenBalance={+(fromMint && mintList[fromMint] ? fromBalance.toFixed(mintList[fromMint].decimals) : '0')}
           tokenBalance={fromBalance}
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
@@ -1677,7 +1689,7 @@ export const SwapUi = () => {
             fromMint && toMint && maxFromAmount && mintList[fromMint] &&
             (() => {
               console.log('maxFromAmount', maxFromAmount);
-              const rest = (0.99 / 10 ** mintList[fromMint].decimals);
+              const rest = (1 / 10 ** mintList[fromMint].decimals);
               const amount = parseFloat((maxFromAmount + rest).toFixed(mintList[fromMint].decimals));
               if (amount > 0) {
                 setFromAmount((maxFromAmount - rest).toFixed(mintList[fromMint].decimals));
