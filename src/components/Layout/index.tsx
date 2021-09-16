@@ -16,6 +16,7 @@ import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
+import { environment } from "../../environments/environment";
 
 const { Header, Content, Footer } = Layout;
 
@@ -24,11 +25,14 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     streamList,
+    currentScreen,
     streamProgramAddress,
     previousWalletConnectState,
     setStreamList,
     setStreamDetail,
     setCurrentScreen,
+    setSelectedAsset,
+    setAccountAddress,
     setLoadingStreams,
     setSelectedStream,
     refreshTokenBalance,
@@ -99,6 +103,11 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
           sendConnectionMetric(publicKey.toBase58());
+
+          // Let the AppState know which wallet address is connected and save it
+          setAccountAddress(publicKey.toBase58());
+          setSelectedAsset(undefined);
+
           if (location.pathname === '/transfers') {
             const programId = new PublicKey(streamProgramAddress);
             setLoadingStreams(true);
@@ -144,6 +153,8 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setStreamDetail,
     setCurrentScreen,
+    setSelectedAsset,
+    setAccountAddress,
     setSelectedStream,
     setLoadingStreams,
     refreshTokenBalance,
@@ -166,6 +177,11 @@ export const AppLayout = React.memo((props: any) => {
             <AppBar menuType="desktop" />
           </div>
           <AppBar menuType="mobile" />
+          {environment === 'local' && (
+            <div className="debug-bar">
+              <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen}</span>
+            </div>
+          )}
         </Header>
         <Content>{props.children}</Content>
         <Footer>

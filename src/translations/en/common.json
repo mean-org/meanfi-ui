@@ -20,6 +20,7 @@
 		"account-address-change-cta": "Scan another address",
 		"account-address-label": "Account address",
 		"account-address-placeholder": "Enter your account address",
+		"account-address-validation": "Not a valid address format",
 		"back-to-assets-cta": "Back to list of assets",
 		"create-account-help-link": "Learn about wallets",
 		"create-account-help-post": "to open an account",
@@ -31,9 +32,8 @@
 		"history-table-postbalance": "Post balance",
 		"no-asset-selected": "No asset selected. Please chose one on the left!",
 		"no-balance": {
-			"cta1": "Buy {{tokenSymbol}}",
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
 			"cta2": "Exchange",
-			"cta3": "Bridge",
 			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
 			"line2": "What do you want to do about it?",
 			"line3": "Or scan the QR code to receive funds",
@@ -142,7 +142,7 @@
 	"language-selector": {
 		"modal-title": "Language selector",
 		"primary-action": "Select",
-		"secondary-action": "Cancel"
+		"secondary-action": "Close"
 	},
 	"notifications": {
 		"account-address-copied-message": "Account Address successfully copied",
@@ -330,8 +330,8 @@
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
-			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to swap",
-			"insufficient-balance-needed": "Need at least {{balance}} SOL to pay for network fee",
+			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Invalid exchange",
 			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",

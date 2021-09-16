@@ -1266,10 +1266,17 @@ section.content {
   .transaction-field {
     flex: 1 1 auto;
     margin: 0 1rem 0 0;
-    height: 60px;
-    .transaction-field-row .general-text-input,
-    #payment-recipient-static-field {
-      font-size: 20px;
+    height: 70px;
+    .transaction-field-row.main-row {
+      #payment-recipient-field.general-text-input,
+      #payment-recipient-static-field {
+        font-size: 20px;
+        top: 4px;
+      }
+      .addon-right {
+        display: inline-flex;
+        align-items: center;
+      }
     }
   }
   button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
@@ -2853,7 +2860,13 @@ section.content {
         }
       }
       .transaction-list-data-wrapper {
-        max-height: calc(100% - 3.6rem);
+        &:not(.empty) {
+          max-height: calc(100% - 3.6rem);
+        }
+        &.empty {
+          height: calc(100% - 1rem);
+          &:extend(.flex-center);
+        }
         z-index: 3;
         .item-list-body.compact {
           .item-list-row {
@@ -2993,7 +3006,6 @@ section.content {
 
 .buy-token-options {
   text-align: center;
-  padding-top: 6%;
   width: 100%;
   max-width: 375px;
   margin: 0 auto;
@@ -4746,4 +4758,20 @@ section.content {
 .emoji {
   font-weight: 400;
   font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol;
+}
+
+.debug-bar {
+  @media (max-width: 1199.98px) {
+    display: none;
+  }
+  position: absolute;
+  height: auto;
+  width: 100%;
+  top: 100%;
+  left: 0;
+  padding: 8px;
+  color: var(--color-secondary-alpha-60);
+  font-size: 0.7rem;
+  background-color: var(--color-secondary-alpha-05);
+  border-top: 1px solid var(--color-secondary-alpha-40);
 }

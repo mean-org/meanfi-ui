@@ -210,8 +210,10 @@ export function WalletProvider({ children = null as any }) {
               if (wallet) {
                 wallet.disconnect();
               }
-              setProviderUrl(provider.url);
-              setAutoConnect(true);
+              setTimeout(() => {
+                setProviderUrl(provider.url);
+                setAutoConnect(true);
+              }, 100);
               close();
               if (!isInstalled) {
                 window.open(provider.url, '_blank');

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Button, Empty, Space, Tooltip } from 'antd';
-import { consoleOut, copyText } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
@@ -40,10 +40,12 @@ export const AccountsView = () => {
     setSelectedAsset,
     setAccountAddress,
     setDtailsPanelOpen,
+    showDepositOptionsModal
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
 
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
+  const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
@@ -121,7 +123,15 @@ export const AccountsView = () => {
   }
 
   const handleAccountAddressInputChange = (e: any) => {
-    setAccountAddressInput(e.target.value);
+    const inputValue = e.target.value;
+    // Set the input value
+    setAccountAddressInput(inputValue);
+    // But set the isInputValid flag for validation
+    if (inputValue && isValidAddress(inputValue) ) {
+      setIsInputValid(true);
+    } else {
+      setIsInputValid(false);
+    }
   }
 
   const handleAccountAddressInputFocusIn = () => {
@@ -334,8 +344,6 @@ export const AccountsView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
-        setAccountAddress(publicKey.toBase58());
-        setSelectedAsset(undefined);
         setShouldLoadTokens(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
@@ -343,7 +351,7 @@ export const AccountsView = () => {
       setTimeout(() => {
         setCanShowAccountDetails(true);
         startSwitch();
-      }, 100);
+      }, 150);
     }
 
   }, [
@@ -359,11 +367,18 @@ export const AccountsView = () => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      for (let i = 0; i < ellipsisElements.length; ++i){
-        const e = ellipsisElements[i] as HTMLElement;
-        if (e.offsetWidth < e.scrollWidth){
-          const text = e.textContent;
-          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+      if (isInputValid) {
+        for (let i = 0; i < ellipsisElements.length; ++i){
+          const e = ellipsisElements[i] as HTMLElement;
+          if (e.offsetWidth < e.scrollWidth){
+            const text = e.textContent;
+            e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+          }
+        }
+      } else {
+        if (ellipsisElements?.length) {
+          const e = ellipsisElements[0] as HTMLElement;
+          e.dataset.tail = '';
         }
       }
     };
@@ -378,7 +393,7 @@ export const AccountsView = () => {
       // remove resize listener
       window.removeEventListener('resize', resizeListener);
     }
-  }, []);
+  }, [isInputValid]);
 
   ///////////////
   // Rendering //
@@ -446,7 +461,7 @@ export const AccountsView = () => {
   }
 
   const renderQrCode = (
-    <div className="text-center mt-4">
+    <div className="text-center mt-3">
       <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
         <QRCode
@@ -477,9 +492,9 @@ export const AccountsView = () => {
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default"
+                  onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
           <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
-          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta3')}</Button>
         </Space>
         {renderQrCode}
       </div>
@@ -564,7 +579,7 @@ export const AccountsView = () => {
                       </div>
                      )}
                   </div>
-                  <div className="transaction-list-data-wrapper vertical-scroll">
+                  <div className={transactions && transactions.length ? 'transaction-list-data-wrapper vertical-scroll' : 'transaction-list-data-wrapper empty'}>
                     <div className="activity-list">
                       {
                         transactions && transactions.length ? (
@@ -654,6 +669,17 @@ export const AccountsView = () => {
                         <QrcodeOutlined />
                       </div>
                     </div>
+                    <div className="transaction-field-row">
+                      <span className="field-label-left">
+                        {accountAddressInput && !isInputValid ? (
+                          <span className="fg-red">
+                            {t("assets.account-address-validation")}
+                          </span>
+                        ) : (
+                          <span>&nbsp;</span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                   {/* Go button */}
                   <Button
@@ -662,7 +688,7 @@ export const AccountsView = () => {
                     shape="round"
                     size="large"
                     onClick={onAddAccountAddress}
-                    disabled={!accountAddressInput}>
+                    disabled={!isInputValid}>
                     {t('assets.account-add-cta-label')}
                   </Button>
                 </div>

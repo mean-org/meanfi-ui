@@ -27,7 +27,7 @@ export function Routes() {
                     <Switch>
                       {/* <Route path="/" component={() => <HomeView />} /> */}
                       <Route exact path="/">
-                        <Redirect to={environment === 'development' ? '/accounts' : '/swap'} />
+                        <Redirect to="/accounts" />
                       </Route>
                       <Route exact path="/accounts" children={<AccountsView />} />
                       <Route exact path="/faucet" children={<FaucetView />} />

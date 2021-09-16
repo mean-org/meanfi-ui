@@ -433,6 +433,31 @@
                                 </translations>
                             </concept_node>
                             <concept_node>
+                                <name>account-address-validation</name>
+                                <definition_loaded>false</definition_loaded>
+                                <description/>
+                                <comment/>
+                                <default_text/>
+                                <translations>
+                                    <translation>
+                                        <language>en-US</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>es-ES</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>fr-FR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                    <translation>
+                                        <language>pt-BR</language>
+                                        <approved>false</approved>
+                                    </translation>
+                                </translations>
+                            </concept_node>
+                            <concept_node>
                                 <name>back-to-assets-cta</name>
                                 <definition_loaded>false</definition_loaded>
                                 <description/>
@@ -712,31 +737,6 @@
                                     </concept_node>
                                     <concept_node>
                                         <name>cta2</name>
-                                        <definition_loaded>false</definition_loaded>
-                                        <description/>
-                                        <comment/>
-                                        <default_text/>
-                                        <translations>
-                                            <translation>
-                                                <language>en-US</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>es-ES</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>fr-FR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                            <translation>
-                                                <language>pt-BR</language>
-                                                <approved>false</approved>
-                                            </translation>
-                                        </translations>
-                                    </concept_node>
-                                    <concept_node>
-                                        <name>cta3</name>
                                         <definition_loaded>false</definition_loaded>
                                         <description/>
                                         <comment/>

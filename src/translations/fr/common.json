@@ -20,6 +20,7 @@
 		"account-address-change-cta": "Scannez une autre adresse",
 		"account-address-label": "Adresse du compte",
 		"account-address-placeholder": "Entrez votre adresse de compte",
+		"account-address-validation": "Not a valid address format",
 		"back-to-assets-cta": "Retour à la liste des actifs",
 		"create-account-help-link": "En savoir plus sur les portefeuilles",
 		"create-account-help-post": "d'ouvrir un compte",
@@ -31,9 +32,8 @@
 		"history-table-postbalance": "Post solde",
 		"no-asset-selected": "Aucun actif sélectionné. Veuillez en choisir un à gauche!",
 		"no-balance": {
-			"cta1": "Acheter {{tokenSymbol}}",
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
 			"cta2": "Échanger",
-			"cta3": "Bridge",
 			"line1": "Votre compte {{tokenSymbol}} est vide.",
 			"line2": "Que voulez-vous faire à ce sujet ?",
 			"line3": "Ou scannez le code QR pour recevoir des fonds",
@@ -142,7 +142,7 @@
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
 		"primary-action": "Sélectionner",
-		"secondary-action": "Annuler"
+		"secondary-action": "Fermer"
 	},
 	"notifications": {
 		"account-address-copied-message": "Adresse du compte copiée avec succès",
@@ -326,12 +326,12 @@
 		},
 		"validation": {
 			"amount-high": "Le montant dépasse votre solde",
-			"amount-low": "Pas assez de solde de compte",
+			"amount-low": "Pas assez de solde",
 			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
 			"amount-sol-high": "Le montant dépasse votre solde SOL",
 			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
 			"insufficient-amount-needed": "Il vous faut au moins {{amount}} {symbol}} à échanger",
-			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL pour payer les frais de réseau",
+			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL",
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Échange non valide",
 			"minimum-swap-amount": "Il faut au moins {{mintAmount}} pour passer à {{toMint}}.",

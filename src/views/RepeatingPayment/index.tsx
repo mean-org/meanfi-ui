@@ -162,7 +162,7 @@ export const RepeatingPayment = () => {
     setSelectedStream(undefined);
     closeTransactionModal();
     refreshStreamList(true);
-    setCurrentScreen("streams");
+    setCurrentScreen('streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -570,7 +570,7 @@ export const RepeatingPayment = () => {
         consoleOut('TxFee:', myFees);
         const neededAmount = repeatingPaymentFees.blockchainFee + myFees;
         consoleOut('TxFee + blockchainFee:', neededAmount);
-        consoleOut('Is enough to pay for gas fee:', neededAmount >= nativeBalance ? 'yes' : 'no');
+        consoleOut('Is enough to pay for gas fee:', nativeBalance >= neededAmount ? 'yes' : 'no');
         if (nativeBalance < neededAmount) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
@@ -718,7 +718,6 @@ export const RepeatingPayment = () => {
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   const isSuccess = (): boolean => {
@@ -927,7 +926,7 @@ export const RepeatingPayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
-                  ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true)
                   : "0"
               }`}
             </span>

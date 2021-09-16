@@ -20,6 +20,7 @@
 		"account-address-change-cta": "Digitalize outro endereço",
 		"account-address-label": "Endereço da conta",
 		"account-address-placeholder": "Digite o endereço da sua conta",
+		"account-address-validation": "Not a valid address format",
 		"back-to-assets-cta": "Voltar à lista de bens",
 		"create-account-help-link": "Saiba mais sobre as carteiras",
 		"create-account-help-post": "abrir uma conta",
@@ -31,9 +32,8 @@
 		"history-table-postbalance": "Post saldo",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
-			"cta1": "Compre {{tokenSymbol}}",
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
 			"cta2": "Troca",
-			"cta3": "Bridge",
 			"line1": "Sua conta {{tokenSymbol}} está vazia.",
 			"line2": "O que você quer fazer a respeito disso?",
 			"line3": "Ou escanear o código QR para receber fundos",
@@ -142,7 +142,7 @@
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
 		"primary-action": "Selecionar",
-		"secondary-action": "Cancelar"
+		"secondary-action": "Fechar"
 	},
 	"notifications": {
 		"account-address-copied-message": "Endereço da conta copiado com sucesso",
@@ -331,7 +331,7 @@
 			"amount-sol-high": "O valor excede o seu saldo SOL",
 			"amount-withdraw-high": "O valor é maior do que os fundos disponíveis",
 			"insufficient-amount-needed": "Você precisa de pelo menos {{amount}} {{symbol}} para trocar",
-			"insufficient-balance-needed": "Você precisa pelo menos de {{{balance}} SOL para pagar a taxa de rede",
+			"insufficient-balance-needed": "Você precisa pelo menos de {{{balance}} SOL",
 			"invalid-amount": "Montante inválido",
 			"invalid-exchange": "Troca inválida",
 			"minimum-swap-amount": "Precisa pelo menos de {{mintAmount}} para mudar para {{{toMint}}",
