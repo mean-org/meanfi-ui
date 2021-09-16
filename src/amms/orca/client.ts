@@ -240,8 +240,6 @@ export class OrcaClient implements LPClient {
       transaction.partialSign(...signers);
     }
 
-    console.log('transaction', transaction);
-
     return transaction;
   };
 }

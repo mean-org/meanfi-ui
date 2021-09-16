@@ -304,8 +304,6 @@ export const SwapUi = () => {
 
       } as ExchangeInfo;
 
-      console.log('Exchange', exchange);
-
       setExchangeInfo(exchange);
 
     });
@@ -358,7 +356,6 @@ export const SwapUi = () => {
     if (fromAmount && parseFloat(fromAmount) > 0 && maxFromAmount > 0) { return; }
 
     const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : fromBalance;
-    console.log('amount', amount);
     
     const timeout = setTimeout(() => {
 
@@ -427,8 +424,6 @@ export const SwapUi = () => {
         total: isWrap || isUnwrap ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
-
-      console.log('fees', fees);
 
       setFeesInfo(fees);
 
@@ -1192,15 +1187,11 @@ export const SwapUi = () => {
       throw new Error("Error executing transaction");
     }
 
-    console.log('exchangeInfo.amountIn', exchangeInfo.amountIn);
-
     let amountIn = exchangeInfo.amountIn === maxFromAmount 
       ? maxFromAmount + feesInfo.aggregator
       : exchangeInfo.amountIn;
 
     amountIn = parseFloat(amountIn.toFixed(mintList[fromMint].decimals));
-
-    console.log('amountIn', amountIn);
 
     if (isWrap) {
 
@@ -1688,7 +1679,6 @@ export const SwapUi = () => {
           onMaxAmount={
             fromMint && toMint && maxFromAmount && mintList[fromMint] &&
             (() => {
-              console.log('maxFromAmount', maxFromAmount);
               const rest = (1 / 10 ** mintList[fromMint].decimals);
               const amount = parseFloat((maxFromAmount + rest).toFixed(mintList[fromMint].decimals));
               if (amount > 0) {

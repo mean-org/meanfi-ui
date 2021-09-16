@@ -258,10 +258,6 @@ export class RaydiumClient implements LPClient {
 
     const fromMint = from === poolInfo.coin.address ? poolInfo.coin.address : poolInfo.pc.address;
     const toMint = to === poolInfo.pc.address ? poolInfo.pc.address : poolInfo.coin.address;
-
-    console.log('fromMint', fromMint);
-    console.log('toMint', toMint);
-
     const priceAmount = 1;
     const { 
       amountOut, 
@@ -350,8 +346,6 @@ export class RaydiumClient implements LPClient {
     );
 
     const toSwapAmount = amountOut * (100 - slippage) / 100;
-    console.log('fromMint', fromMint.toBase58());
-    console.log('toMint', toMint.toBase58());
     
     let { transaction, signers } = await getSwapTx(
       this.connection,

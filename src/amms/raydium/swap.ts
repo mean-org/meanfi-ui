@@ -259,8 +259,6 @@ export function getSwapIx(
   ];
 
   const data = Buffer.alloc(dataLayout.span);
-  console.log('amountIn', amountIn);
-  console.log('minAmountOut', minAmountOut);
   dataLayout.encode(
     {
       instruction: 9,

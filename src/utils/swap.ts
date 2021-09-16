@@ -898,8 +898,6 @@ export async function place(
   const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
 
-  console.log('signers', signers);
-
   if (signers.length) {
     tx.partialSign(...signers);
   }
@@ -966,8 +964,6 @@ export function swapInstruction(
   ];
 
   const data = Buffer.alloc(dataLayout.span);
-  console.log('amountIn', amountIn);
-  console.log('minAmountOut', minAmountOut);
   dataLayout.encode(
     {
       instruction: 9,
