@@ -162,7 +162,7 @@ export const RepeatingPayment = () => {
     setSelectedStream(undefined);
     closeTransactionModal();
     refreshStreamList(true);
-    setCurrentScreen("streams");
+    setCurrentScreen('streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {

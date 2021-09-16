@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCallback, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
@@ -8,8 +8,37 @@ import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../..
 import { PreFooter } from "../../components/PreFooter";
 
 export const TransfersView = () => {
-  const { contract, currentScreen } = useContext(AppStateContext);
+  const {
+    contract,
+    streamList,
+    currentScreen,
+    setCurrentScreen,
+    refreshStreamList
+  } = useContext(AppStateContext);
+  const [refreshPending, setRefreshPending] = useState(true);
   const { t } = useTranslation('common');
+
+  // Refresh stream list entering
+  useEffect(() => {
+    if (refreshPending) {
+      setRefreshPending(false);
+      refreshStreamList();
+    }
+  }, [
+    refreshPending,
+    refreshStreamList
+  ]);
+
+  // If the last known screen was 'streams' but there are no streams, fallback to 'contract'
+  useEffect(() => {
+    if (currentScreen === 'streams' && (!streamList || streamList.length === 0)) {
+      setCurrentScreen('contract');
+    }
+  }, [
+    streamList,
+    currentScreen,
+    setCurrentScreen
+  ]);
 
   // Contract switcher modal
   const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
