@@ -344,8 +344,6 @@ export const AccountsView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
-        setAccountAddress(publicKey.toBase58());
-        setSelectedAsset(undefined);
         setShouldLoadTokens(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
@@ -353,7 +351,7 @@ export const AccountsView = () => {
       setTimeout(() => {
         setCanShowAccountDetails(true);
         startSwitch();
-      }, 100);
+      }, 150);
     }
 
   }, [

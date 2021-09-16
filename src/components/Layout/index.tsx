@@ -31,6 +31,8 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setStreamDetail,
     setCurrentScreen,
+    setSelectedAsset,
+    setAccountAddress,
     setLoadingStreams,
     setSelectedStream,
     refreshTokenBalance,
@@ -101,6 +103,11 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
           sendConnectionMetric(publicKey.toBase58());
+
+          // Let the AppState know which wallet address is connected and save it
+          setAccountAddress(publicKey.toBase58());
+          setSelectedAsset(undefined);
+
           if (location.pathname === '/transfers') {
             const programId = new PublicKey(streamProgramAddress);
             setLoadingStreams(true);
@@ -146,6 +153,8 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setStreamDetail,
     setCurrentScreen,
+    setSelectedAsset,
+    setAccountAddress,
     setSelectedStream,
     setLoadingStreams,
     refreshTokenBalance,
