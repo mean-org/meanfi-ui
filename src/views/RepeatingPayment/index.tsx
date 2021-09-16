@@ -926,7 +926,7 @@ export const RepeatingPayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
-                  ? formatAmount(tokenBalance as number, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true)
                   : "0"
               }`}
             </span>

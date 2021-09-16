@@ -581,7 +581,7 @@ export const OneTimePayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${tokenBalance && selectedToken
-                  ? formatAmount(tokenBalance, selectedToken.symbol === 'SOL' ? selectedToken.decimals : 2)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true)
                   : "0"
             }`}
             </span>

@@ -108,8 +108,8 @@ export const AddFundsModal = (props: {
               <span>{t('add-funds.label-right')}:</span>
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
-                    ? formatAmount(tokenBalance as number, selectedToken.decimals || 2)
-                    : "0"
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true)
+                  : "0"
                 }`}
               </span>
               <span>
