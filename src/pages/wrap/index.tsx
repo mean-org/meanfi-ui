@@ -201,9 +201,7 @@ export const WrapView = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         return await connection
-          .sendRawTransaction(transaction.serialize(), {
-            preflightCommitment: connection.commitment as Commitment,
-          })
+          .sendRawTransaction(transaction.serialize(), { skipPreflight: true })
           .then((sig) => {
             console.log("sendSignedTransactions returned a signature:", sig);
             // Stage 3 completed - The transaction was sent and a signature was returned

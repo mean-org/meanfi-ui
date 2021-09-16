@@ -689,7 +689,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransactions(...signedTransactions)
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { skipPreflight: true })
           .then(sig => {
             console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -697,7 +697,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signatures = sig;
+            signatures = [sig];
             return true;
           })
           .catch(error => {
@@ -888,7 +888,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransactions(...signedTransactions)
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { skipPreflight: true })
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -896,7 +896,7 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signatures = sig;
+            signatures = [sig];
             return true;
           })
           .catch(error => {
@@ -1076,7 +1076,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return moneyStream.sendSignedTransactions(signedTransaction)
+        return connection.sendRawTransaction(signedTransaction.serialize(), { skipPreflight: true })
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
