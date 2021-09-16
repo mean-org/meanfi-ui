@@ -45,14 +45,6 @@ export const getTokensPools = (
     let fromMint = from;
     let toMint = to;
 
-    if (from === NATIVE_SOL_MINT.toBase58()) {
-      fromMint = WRAPPED_SOL_MINT.toBase58();
-    }
-
-    if (to === NATIVE_SOL_MINT.toBase58()) {
-      toMint = WRAPPED_SOL_MINT.toBase58();
-    }
-
     let include = (
       ammPool.tokenAddresses.includes(fromMint) &&
       ammPool.tokenAddresses.includes(toMint)

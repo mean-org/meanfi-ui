@@ -1247,7 +1247,6 @@ export const SwapUi = () => {
     exchangeInfo, 
     feesInfo, 
     fromAmount, 
-    fromBalance, 
     fromMint, 
     isUnwrap, 
     isWrap, 
@@ -1303,16 +1302,13 @@ export const SwapUi = () => {
                 <div className="token-name">{token.name}</div>
               </div>
               {
-                connected && mintList && token && userBalancces && userBalancces[token.address] &&
-                (
-                  <div className="token-balance">
-                    {
-                      userBalancces[token.address] === 0
-                        ? '' 
-                        : userBalancces[token.address].toFixed(mintList[token.address].decimals)
-                    }
-                  </div>
-                )
+                <div className="token-balance">
+                {
+                  !userBalancces[token.address] || userBalancces[token.address] === 0
+                    ? '' 
+                    : userBalancces[token.address].toFixed(mintList[token.address].decimals)
+                }
+              </div>
               }
             </div>
           );
@@ -1367,16 +1363,13 @@ export const SwapUi = () => {
                 <div className="token-name">{token.name}</div>
               </div>
               {
-                connected && mintList && token && userBalancces && userBalancces[token.address] &&
-                (
-                  <div className="token-balance">
-                    {
-                      userBalancces[token.address] === 0
-                        ? '' 
-                        : userBalancces[token.address].toFixed(mintList[token.address].decimals)
-                    }
-                  </div>
-                )
+                <div className="token-balance">
+                {
+                  !userBalancces[token.address] || userBalancces[token.address] === 0
+                    ? '' 
+                    : userBalancces[token.address].toFixed(mintList[token.address].decimals)
+                }
+                </div>
               }
             </div>
           );
@@ -1532,7 +1525,7 @@ export const SwapUi = () => {
     const encodedTx = base64.fromByteArray(serializedTx);
     console.log('tx serialized => ', encodedTx);
 
-    return connection.sendEncodedTransaction(encodedTx, { skipPreflight: true })
+    return connection.sendEncodedTransaction(encodedTx)
       .then((sig) => {
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,

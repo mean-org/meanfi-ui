@@ -248,15 +248,33 @@ export class RaydiumClient implements LPClient {
       throw new Error('Raydium pool info not found');
     }
 
+    if (from === WRAPPED_SOL_MINT.toBase58()) {
+      from = NATIVE_SOL_MINT.toBase58()
+    }
+
+    if (to === WRAPPED_SOL_MINT.toBase58()) {
+      to = NATIVE_SOL_MINT.toBase58();
+    }
+
     const fromMint = from === poolInfo.coin.address ? poolInfo.coin.address : poolInfo.pc.address;
     const toMint = to === poolInfo.pc.address ? poolInfo.pc.address : poolInfo.coin.address;
+
+    console.log('fromMint', fromMint);
+    console.log('toMint', toMint);
+
     const priceAmount = 1;
     const { 
       amountOut, 
       amountOutWithSlippage, 
       priceImpact
 
-    } = getSwapOutAmount(poolInfo, fromMint, toMint, priceAmount.toString(), slippage);
+    } = getSwapOutAmount(
+      poolInfo, 
+      fromMint, 
+      toMint,
+      priceAmount.toString(), 
+      slippage
+    );
 
     const protocol = PROTOCOLS.filter(p => p.address === RAYDIUM.toBase58())[0];
     const amountIn = new BN(amount * 10 ** poolInfo.coin.decimals);
@@ -300,7 +318,13 @@ export class RaydiumClient implements LPClient {
       throw new Error('Raydium pool info not found');
     }
 
-    console.log('poolInfo', poolInfo);
+    if (from === WRAPPED_SOL_MINT.toBase58()) {
+      from = NATIVE_SOL_MINT.toBase58()
+    }
+
+    if (to === WRAPPED_SOL_MINT.toBase58()) {
+      to = NATIVE_SOL_MINT.toBase58();
+    }
 
     const fromMintToken = getTokenByMintAddress(from);
     const toMintToken = getTokenByMintAddress(to);
@@ -326,6 +350,8 @@ export class RaydiumClient implements LPClient {
     );
 
     const toSwapAmount = amountOut * (100 - slippage) / 100;
+    console.log('fromMint', fromMint.toBase58());
+    console.log('toMint', toMint.toBase58());
     
     let { transaction, signers } = await getSwapTx(
       this.connection,
