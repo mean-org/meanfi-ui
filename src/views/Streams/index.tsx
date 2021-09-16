@@ -223,7 +223,7 @@ export const Streams = () => {
   const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
   const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
   const onAcceptContractSelector = () => {
-    setCurrentScreen('streams');
+    setCurrentScreen('contract');
     setCustomStreamDocked(false);
     closeContractSelectorModal();
   };
