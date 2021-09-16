@@ -71,11 +71,12 @@ export class SerumClient implements Client {
     const protocol = PROTOCOLS.filter(p => p.address === SERUM.toBase58())[0];
 
     const exchangeInfo: ExchangeInfo = {
-      origin: protocol.name,
+      fromAmm: protocol.name,
       outPrice: !out.isNullOrZero() ? +out.fixed(): 1,
       priceImpact,
-      outAmount: !out.isNullOrZero() ? (+out.fixed() * amount): 0,
-      outMinimumAmount: +outWithSlippage.fixed() * amount,
+      amountIn: amount,
+      amountOut: !out.isNullOrZero() ? (+out.fixed() * amount): 0,
+      minAmountOut: +outWithSlippage.fixed() * amount,
       networkFees: 0,
       protocolFees: 0.3 * amount / 100
     };

@@ -81,16 +81,17 @@ export class OrcaClient implements LPClient {
     }
 
     const decimalTradeAmount = new Decimal(amount);
-    const decimalSlippage = new Decimal(0.1);
+    const decimalSlippage = new Decimal(slippage / 10);
     const quote = await pool.getQuote(tradeToken, decimalTradeAmount, decimalSlippage);
     const protocol = PROTOCOLS.filter(p => p.address === ORCA.toBase58())[0];
 
     const exchangeInfo: ExchangeInfo = {
-      origin: protocol.name,
+      fromAmm: protocol.name,
       outPrice: quote.getRate().toNumber(),
       priceImpact: quote.getPriceImpact().toNumber(),
-      outAmount: quote.getExpectedOutputAmount().toNumber(),
-      outMinimumAmount: quote.getMinOutputAmount().toNumber(),
+      amountIn: amount,
+      amountOut: quote.getExpectedOutputAmount().toNumber(),
+      minAmountOut: quote.getMinOutputAmount().toNumber(),
       networkFees: quote.getNetworkFees().toNumber() / LAMPORTS_PER_SOL,
       protocolFees: quote.getLPFees().toNumber()
     };

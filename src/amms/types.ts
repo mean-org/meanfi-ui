@@ -42,13 +42,21 @@ export type AmmPoolInfo = {
 }
 
 export type ExchangeInfo = {
-  outAmount: number,
-  outMinimumAmount: number, // including the slippage
-  outPrice: number,
-  priceImpact: number,
+  fromAmm: string | undefined,
+  amountIn: number | undefined,
+  amountOut: number | undefined,
+  minAmountOut: number | undefined,
+  outPrice: number | undefined,
+  priceImpact: number | undefined
   protocolFees: number,
-  networkFees: number,
-  origin: string
+  networkFees: number
+}
+
+export type FeesInfo = {
+  protocol: number,
+  network: number,
+  aggregator: number,
+  total: number
 }
 
 export interface Client {

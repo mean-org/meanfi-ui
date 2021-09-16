@@ -263,7 +263,7 @@ export const wrap = async (
       wallet.publicKey
     )
   );
-  
+
   const aTokenKey = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
@@ -273,7 +273,7 @@ export const wrap = async (
   );
 
   const aTokenInfo = await connection.getAccountInfo(aTokenKey);
-
+  
   if (!aTokenInfo) {
     tx.add(
       Token.createAssociatedTokenAccountInstruction(
@@ -370,8 +370,6 @@ export const unwrap = async(
     wallet.publicKey
   );
 
-  const unwrapAcount = amount.sub(fee);
-
   const tx = new Transaction().add(
     SystemProgram.createAccount({
       fromPubkey: wallet.publicKey,
@@ -392,7 +390,7 @@ export const unwrap = async(
       account.publicKey,
       wallet.publicKey,
       [],
-      unwrapAcount.toNumber()
+      amount.toNumber()
     )
   );
 
