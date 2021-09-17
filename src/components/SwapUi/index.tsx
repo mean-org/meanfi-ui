@@ -1,4 +1,4 @@
-import { Row, Col, Spin, Modal, Button } from "antd";
+import { Row, Col, Spin, Modal, Button, Popover } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
@@ -32,6 +32,7 @@ import { SerumClient } from "../../amms/serum/types";
 import { getClient, getFormattedAmount, getOptimalPool, getTokensPools, unwrap, wrap } from "../../amms/utils";
 import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import { InfoIcon } from "../InfoIcon";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1626,15 +1627,49 @@ export const SwapUi = (props: {
     );
   };
 
-  const infoMessage = (caption: string) => {
-    return (
-      <Row>
-        <Col span={24} className="text-center fg-secondary-70">
-          {caption}
-        </Col>
-      </Row>
-    );
-  };
+  // Info items will draw inside the popover
+  const txInfoContent = () => {
+    return fromMint && toMint && exchangeInfo ? (
+      <>
+      {
+        fromAmount && slippage &&
+        infoRow(
+          t("transactions.transaction-info.slippage"),
+          `${slippage.toFixed(2)}%`
+        )
+      }
+      {
+        fromAmount && feesInfo &&
+        infoRow(
+          t("transactions.transaction-info.transaction-fee"),
+          `${feesInfo.total.toFixed(mintList[fromMint].decimals)} ${mintList[fromMint].symbol}`
+        )
+      }
+      {
+        fromAmount &&
+        infoRow(
+          t("transactions.transaction-info.recipient-receives"),                
+          `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
+        )
+      }
+      {
+        fromAmount &&
+        infoRow(
+          t("transactions.transaction-info.price-impact"),                
+          `${exchangeInfo.priceImpact?.toFixed(2)}%`
+        )
+      }
+      {
+        fromAmount && exchangeInfo.fromAmm &&
+        infoRow(
+          t("transactions.transaction-info.exchange-on"),                
+          `${exchangeInfo.fromAmm}`,
+          ':'
+        )
+      }
+      </>
+    ) : null;
+  }
 
   const onSlippageChanged = (value: any) => {
     setSlippage(value);
@@ -1735,54 +1770,24 @@ export const SwapUi = (props: {
         {/* Info */}
         {
           fromMint && toMint && exchangeInfo && (
-            <div className="p-2 mb-2">
-              {
-                !refreshing &&
-                infoRow(
-                  `1 ${mintList[fromMint].symbol}`,
-                  `${exchangeInfo.outPrice} ${mintList[toMint].symbol}`,
-                  '≈'
-                )
-              }
-              {
-                !refreshing && fromAmount && slippage &&
-                infoRow(
-                  t("transactions.transaction-info.slippage"),
-                  `${slippage.toFixed(2)}%`
-                )
-              }
-              {
-                !refreshing && fromAmount && feesInfo &&
-                infoRow(
-                  t("transactions.transaction-info.transaction-fee"),
-                  `${feesInfo.total.toFixed(mintList[fromMint].decimals)} ${mintList[fromMint].symbol}`
-                )
-              }
-              {
-                !refreshing && fromAmount &&
-                infoRow(
-                  t("transactions.transaction-info.recipient-receives"),                
-                  `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
-                )
-              }
-              {
-                !refreshing && fromAmount &&
-                infoRow(
-                  t("transactions.transaction-info.price-impact"),                
-                  `${exchangeInfo.priceImpact?.toFixed(2)}%`
-                )
-              }
-              {
-                !refreshing && fromAmount && exchangeInfo.fromAmm &&
-                infoRow(
-                  t("transactions.transaction-info.exchange-on"),                
-                  `${exchangeInfo.fromAmm}`,
-                  ':'
-                )
-              }
+            <div className="p-2 mb-2 text-right">
+              {!refreshing && (
+                <div className="transaction-info-popover-row flexible-left">
+                  <div className="left">
+                    {`1 ${mintList[fromMint].symbol}`}&nbsp;≈&nbsp;{`${exchangeInfo.outPrice} ${mintList[toMint].symbol}`}
+                  </div>
+                  <div className="right pl-1">
+                    {fromAmount ? (
+                      <InfoIcon content={txInfoContent()} placement="leftBottom" />
+                    ) : null
+                    }
+                  </div>
+                </div>
+              )}
             </div>
           )        
         }
+
         {/* Action button */}
         <Button
           className="main-cta"

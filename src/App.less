@@ -35,6 +35,7 @@
   --color-section-contrast: #f1f1f1;
   --color-white: #ffffff;
   --color-black: #000000;
+  --component-background: #ffffff;
 
   /* Black with alpha */
   --color-secondary-alpha-01: rgba(0, 0, 0, 0.01);
@@ -108,6 +109,7 @@
   --color-section-contrast: #0a0a13;
   --color-white: #ffffff;
   --color-black: #000000;
+  --component-background: #1f1f1f;
 
   /* Black with alpha */
   --color-secondary-alpha-01: rgba(255, 255, 255, 0.01);
@@ -418,6 +420,14 @@ footer.ant-layout-footer {
   justify-content: center;
   align-items: center;
   border: none !important;
+  &.info-icon-button {
+    background-color: inherit;
+    color: inherit;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    font-size: 14px;
+  }
   &:hover,
   &:focus,
   &:active {
@@ -4721,22 +4731,28 @@ section.content {
   &::after {
     background: var(--color-secondary-alpha-01);
   }
+  &.ant-popover-placement-leftBottom {
+    .ant-popover-content,
+    .ant-popover-arrow {
+      margin-right: -0.7rem;
+    }
+  }
   .ant-popover-content {
     color: var(--text-color);
     .ant-popover-arrow {
       .ant-popover-arrow-content {
-        background-color: var(--bg-color);
+        background-color: var(--component-background);
       }
     }
     .ant-popover-inner {
-      background-color: var(--bg-color);
+      background-color: var(--component-background);
       .ant-popover-title {
         color: var(--color-secondary-alpha-70);
         border-bottom: 1px solid var(--color-secondary-alpha-20);
       }
       .ant-popover-inner-content {
         color: var(--text-color);
-        background-color: var(--bg-color);
+        background-color: var(--component-background);
         .ant-radio-group {
           .ant-radio-button-wrapper {
             color: var(--text-color);

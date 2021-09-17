@@ -170,10 +170,10 @@
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
-		"create-new-stream-cta": "Crear nueva transferencia",
+		"back-to-my-streams-cta": "Back to Transfer activity",
+		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
-		"screen-title": "Mis Transferencias de dinero",
+		"screen-title": "Transfer activity",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -225,7 +225,7 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Intercambiar a (Estimado)",
+		"input-label-destination": "Intercambiar a (est.)",
 		"input-label-source": "Intercambiar de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
