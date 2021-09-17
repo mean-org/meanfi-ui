@@ -42,20 +42,22 @@ export const AppBar = (props: { menuType: string }) => {
 
   const onGoToTransfersClick = () => {
     setCustomStreamDocked(false);
-    const programId = new PublicKey(streamProgramAddress);
-    setLoadingStreams(true);
-    listStreams(connection, programId, publicKey, publicKey)
-      .then(async streams => {
-        setStreamList(streams);
-        setLoadingStreams(false);
-        console.log('Layout -> streamList:', streams);
-        setSelectedStream(streams[0]);
-        setStreamDetail(streams[0]);
-        if (streams && streams.length > 0) {
-          consoleOut('streams are available, opening streams...', '', 'blue');
-          setCurrentScreen('streams');
-        }
-      });
+    if (publicKey) {
+      const programId = new PublicKey(streamProgramAddress);
+      setLoadingStreams(true);
+      listStreams(connection, programId, publicKey, publicKey)
+        .then(async streams => {
+          setStreamList(streams);
+          setLoadingStreams(false);
+          console.log('Layout -> streamList:', streams);
+          setSelectedStream(streams[0]);
+          setStreamDetail(streams[0]);
+          if (streams && streams.length > 0) {
+            consoleOut('streams are available, opening streams...', '', 'blue');
+            setCurrentScreen('streams');
+          }
+        });
+    }
   };
 
   const dismissMenu = () => {

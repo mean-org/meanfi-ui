@@ -2,12 +2,14 @@ import React, { useEffect } from 'react';
 import { useCallback, useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
+import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 
 export const TransfersView = () => {
+  const { publicKey } = useWallet();
   const {
     contract,
     streamList,
@@ -18,10 +20,11 @@ export const TransfersView = () => {
 
   // If the last known screen was 'streams' but there are no streams, fallback to 'contract'
   useEffect(() => {
-    if (currentScreen === 'streams' && (!streamList || streamList.length === 0)) {
+    if (publicKey && currentScreen === 'streams' && (!streamList || streamList.length === 0)) {
       setCurrentScreen('contract');
     }
   }, [
+    publicKey,
     streamList,
     currentScreen,
     setCurrentScreen

@@ -900,7 +900,7 @@ export const PayrollPayment = () => {
       </div>
 
       {/* Timesheet requirement */}
-      <div className="transaction-field">
+      {/* <div className="transaction-field">
         <div className="transaction-field-row">
           <span className="field-label-left">{t('transactions.rate-and-frequency.rate-label')}</span>
           <span className="field-label-right">&nbsp;</span>
@@ -917,7 +917,7 @@ export const PayrollPayment = () => {
             </span>
           </div>
         </Dropdown>
-      </div>
+      </div> */}
 
       {/* Send date */}
       <div className="transaction-field">
