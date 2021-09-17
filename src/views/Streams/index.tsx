@@ -690,7 +690,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
           .then(sig => {
             console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -889,7 +889,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -1077,7 +1077,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()), {skipPreflight: true})
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
