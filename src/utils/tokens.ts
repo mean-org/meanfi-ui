@@ -95,7 +95,7 @@ export const TOKENS: Tokens = {
   },
   BTC: {
     symbol: 'BTC',
-    name: 'Wrapped Bitcoin',
+    name: 'Wrapped Bitcoin (Sollet)',
     address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
     decimals: 6,
     referrer: 'GZpS8cY8Nt8HuqxzJh6PXTdSxc38vFUjBmi7eEUkkQtG',
@@ -104,7 +104,7 @@ export const TOKENS: Tokens = {
   },
   ETH: {
     symbol: 'ETH',
-    name: 'Wrapped Ethereum',
+    name: 'Wrapped Ethereum (Sollet)',
     address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
     decimals: 6,
     referrer: 'CXPTcSxxh4AT38gtv3SPbLS7oZVgXzLbMb83o4ziXjjN',
