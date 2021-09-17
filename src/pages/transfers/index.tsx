@@ -13,21 +13,8 @@ export const TransfersView = () => {
     streamList,
     currentScreen,
     setCurrentScreen,
-    refreshStreamList
   } = useContext(AppStateContext);
-  const [refreshPending, setRefreshPending] = useState(true);
   const { t } = useTranslation('common');
-
-  // Refresh stream list entering
-  useEffect(() => {
-    if (refreshPending) {
-      setRefreshPending(false);
-      refreshStreamList();
-    }
-  }, [
-    refreshPending,
-    refreshStreamList
-  ]);
 
   // If the last known screen was 'streams' but there are no streams, fallback to 'contract'
   useEffect(() => {

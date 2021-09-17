@@ -7,33 +7,55 @@ import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentNetwork } from "../CurrentNetwork";
-import { useConnectionConfig } from '../../contexts/connection';
+import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { AppConfigService, environment } from '../../environments/environment';
+import { PublicKey } from '@solana/web3.js';
+import { listStreams } from 'money-streaming/lib/utils';
+import { consoleOut } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
-  const connection = useConnectionConfig();
-  const { connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
+  const { publicKey, connected } = useWallet();
   const { t } = useTranslation("common");
   const {
+    streamProgramAddress,
     isDepositOptionsModalVisible,
+    setStreamList,
+    setStreamDetail,
+    setCurrentScreen,
+    setLoadingStreams,
+    setSelectedStream,
+    setCustomStreamDocked,
     showDepositOptionsModal,
     hideDepositOptionsModal,
-    setCustomStreamDocked,
-    refreshStreamList
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const onGoToTransfersClick = () => {
-    refreshStreamList(true);
     setCustomStreamDocked(false);
+    const programId = new PublicKey(streamProgramAddress);
+    setLoadingStreams(true);
+    listStreams(connection, programId, publicKey, publicKey)
+      .then(async streams => {
+        setStreamList(streams);
+        setLoadingStreams(false);
+        console.log('Layout -> streamList:', streams);
+        setSelectedStream(streams[0]);
+        setStreamDetail(streams[0]);
+        if (streams && streams.length > 0) {
+          consoleOut('streams are available, opening streams...', '', 'blue');
+          setCurrentScreen('streams');
+        }
+      });
   };
 
   const dismissMenu = () => {
@@ -43,11 +65,11 @@ export const AppBar = (props: { menuType: string }) => {
     }
   }
 
-  // const getChartsLink = (): string => {
-  //   const config = new AppConfigService();
-  //   const bucket = config.getConfig().influxDbBucket;
-  //   return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
-  // }
+  const getChartsLink = (): string => {
+    const config = new AppConfigService();
+    const bucket = config.getConfig().influxDbBucket;
+    return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
+  }
 
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
@@ -110,12 +132,12 @@ export const AppBar = (props: { menuType: string }) => {
             <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
           </a>
         </Menu.Item>
-        {connection.env !== 'mainnet-beta' && (
+        {connectionConfig.env !== 'mainnet-beta' && (
           <Menu.Item key="/faucet">
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        {connection.env !== 'mainnet-beta' && (
+        {connectionConfig.env !== 'mainnet-beta' && (
           <Menu.Item key="/wrap">
             <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
           </Menu.Item>
@@ -137,10 +159,10 @@ export const AppBar = (props: { menuType: string }) => {
         <div className="App-Bar-right">
           {connected ? (
             <>
-            {connection.env !== 'mainnet-beta' && (
+            {connectionConfig.env !== 'mainnet-beta' && (
               <div className="cluster-indicator">
                 <ThunderboltOutlined />
-                <span className="network-name">{connection.env}</span>
+                <span className="network-name">{connectionConfig.env}</span>
               </div>
             )}
             <div className="connection-and-account-bar">
@@ -191,12 +213,12 @@ export const AppBar = (props: { menuType: string }) => {
                 <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                   <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
                 </li>
-                {connection.env !== 'mainnet-beta' && (
+                {connectionConfig.env !== 'mainnet-beta' && (
                   <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                     <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                   </li>
                 )}
-                {connection.env !== 'mainnet-beta' && (
+                {connectionConfig.env !== 'mainnet-beta' && (
                   <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
                     <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
                   </li>

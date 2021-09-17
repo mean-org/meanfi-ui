@@ -7,11 +7,9 @@ import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
 import { AppStateContext } from "../../contexts/appstate";
 import { BackButton } from "../BackButton";
-import { PublicKey } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { listStreams } from "money-streaming/lib/utils";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
@@ -24,23 +22,18 @@ export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
   const {
     theme,
-    streamList,
     currentScreen,
-    streamProgramAddress,
     previousWalletConnectState,
     setStreamList,
-    setStreamDetail,
     setCurrentScreen,
     setSelectedAsset,
     setAccountAddress,
-    setLoadingStreams,
-    setSelectedStream,
     refreshTokenBalance,
+    refreshStreamList,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
   const { t } = useTranslation('common');
-  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
@@ -109,20 +102,7 @@ export const AppLayout = React.memo((props: any) => {
           setSelectedAsset(undefined);
 
           if (location.pathname === '/transfers') {
-            const programId = new PublicKey(streamProgramAddress);
-            setLoadingStreams(true);
-            listStreams(connection, programId, publicKey, publicKey)
-              .then(async streams => {
-                setStreamList(streams);
-                setLoadingStreams(false);
-                console.log('Layout -> streamList:', streams);
-                setSelectedStream(streams[0]);
-                setStreamDetail(streams[0]);
-                if (streams && streams.length > 0) {
-                  consoleOut('streams are available, opening streams...', '', 'blue');
-                  setCurrentScreen('streams');
-                }
-              });
+            refreshStreamList(true);
           }
         }
         setPreviousWalletConnectState(true);
@@ -143,20 +123,15 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [
     location,
-    connection,
     publicKey,
     connected,
-    streamList,
-    streamProgramAddress,
     previousWalletConnectState,
     t,
     setStreamList,
-    setStreamDetail,
     setCurrentScreen,
     setSelectedAsset,
     setAccountAddress,
-    setSelectedStream,
-    setLoadingStreams,
+    refreshStreamList,
     refreshTokenBalance,
     sendConnectionMetric,
     setPreviousWalletConnectState
