@@ -204,19 +204,20 @@ export function WalletProvider({ children = null as any }) {
         onCancel={close}
         width={400}>
         <div className="wallet-providers">
-          {WALLET_PROVIDERS.map((provider, index) => {
-            const isInstalled = getIsProviderInstalled(provider);
+          {WALLET_PROVIDERS.map((item, index) => {
+            const isInstalled = getIsProviderInstalled(item);
             const onClick = function () {
               if (wallet) {
                 wallet.disconnect();
               }
+              // TODO: This is not the right way of doing this, there most be a better way
               setTimeout(() => {
-                setProviderUrl(provider.url);
+                setProviderUrl(item.url);
                 setAutoConnect(true);
-              }, 100);
+              }, 800);
               close();
               if (!isInstalled) {
-                window.open(provider.url, '_blank');
+                window.open(item.url, '_blank');
               }
             };
 
@@ -231,14 +232,14 @@ export function WalletProvider({ children = null as any }) {
                 key={index}
                 icon={
                   <img
-                    alt={`${provider.name}`}
+                    alt={`${item.name}`}
                     width={20}
                     height={20}
-                    src={provider.icon}
+                    src={item.icon}
                     style={{ marginRight: 8 }}
                   />
                 }>
-                {provider.name}
+                {item.name}
               </Button>
             );
           })}
