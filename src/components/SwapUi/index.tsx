@@ -18,7 +18,7 @@ import { useTranslation } from "react-i18next";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
-import { DEFAULT_SLIPPAGE_PERCENT, unwrap, wrap } from "../../utils/swap";
+import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { AccountInfo as TokenAccountInfo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as base64 from "base64-js";
@@ -29,7 +29,7 @@ import "./style.less";
 import { TOKENS } from "../../amms/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../amms/types";
 import { SerumClient } from "../../amms/serum/types";
-import { getClient, getOptimalPool, getTokensPools } from "../../amms/utils";
+import { getClient, getFormattedAmount, getOptimalPool, getTokensPools, unwrap, wrap } from "../../amms/utils";
 import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 
@@ -100,16 +100,16 @@ export const SwapUi = (props: {
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
   const [toMint, setToMint] = useState<string | undefined>();
-  const [maxFromAmount, setMaxFromAmount] = useState(0);
-  const [fromBalance, setFromBalance] = useState<number>(0);
-  const [toBalance, setToBalance] = useState<number>(0);
+  const [maxFromAmount, setMaxFromAmount] = useState('');
+  const [fromBalance, setFromBalance] = useState('');
+  const [toBalance, setToBalance] = useState('');
   const [userAccount, setUserAccount] = useState<any | undefined>();
   const [userBalancces, setUserBalances] = useState<any>({});
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
-  const [fromToken, setFromToken] = useState<TokenAccountInfo>();
-  const [toToken, setToToken] = useState<TokenAccountInfo>();
+  // const [fromToken, setFromToken] = useState<TokenAccountInfo>();
+  // const [toToken, setToToken] = useState<TokenAccountInfo>();
   const [swapClient, setSwapClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
@@ -294,9 +294,9 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : fromBalance;
+      const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : 1;
       const aggregatorFees = getTxPercentFeeAmount(txFees, amount);
-      const minAmountOut = (amount - aggregatorFees) >= 0 
+      const minAmountOut = (amount - aggregatorFees) > 0 
         ? (amount - aggregatorFees) : 0;
 
       const exchange = {
@@ -322,8 +322,7 @@ export const SwapUi = (props: {
     isUnwrap, 
     isWrap, 
     fromAmount, 
-    txFees, 
-    fromBalance
+    txFees
   ]);
 
   // Automatically reset and refresh the counter to update exchange info
@@ -358,12 +357,10 @@ export const SwapUi = (props: {
     if (!fromMint || !toMint || !txFees || !swapClient || isWrap || isUnwrap) { 
       return; 
     }
-
-    if (fromAmount && parseFloat(fromAmount) > 0 && maxFromAmount > 0) { return; }
-
-    const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : fromBalance;
     
     const timeout = setTimeout(() => {
+
+      const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : 1;
 
       const success = (info: ExchangeInfo) => {
         console.info('Exchange', info);
@@ -392,16 +389,14 @@ export const SwapUi = (props: {
 
   }, [
     connection, 
+    fromAmount, 
     fromMint, 
     isUnwrap, 
     isWrap, 
     slippage, 
-    fromAmount, 
     swapClient, 
     toMint, 
-    txFees, 
-    fromBalance,
-    maxFromAmount
+    txFees
   ]);
 
   // Automatically updates the fees info
@@ -417,9 +412,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (fromAmount && parseFloat(fromAmount) > 0 && maxFromAmount > 0) { return; }
-
-    const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : fromBalance;
+    const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : 1;
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, amount);
@@ -609,7 +602,7 @@ export const SwapUi = (props: {
     }
     
     if (!connected || !userAccount || !publicKey || !fromMint) {
-      setFromBalance(0);
+      setFromBalance('0');
       setShouldUpdateBalances(false);
       return;
     }
@@ -617,21 +610,21 @@ export const SwapUi = (props: {
     const timeout = setTimeout(() => {
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        setFromBalance(userAccount.lamports / LAMPORTS_PER_SOL);
+        setFromBalance(getFormattedAmount(userAccount.lamports / LAMPORTS_PER_SOL, 9));
         setShouldUpdateBalances(false);
         return;
       }
 
       const error = (_error: any) => {
         console.error(_error);
-        setFromBalance(0);
+        setFromBalance('0');
         setShouldUpdateBalances(false);
       };
 
       const success = (response: any) => {
 
         if (!response.value.length) {
-          setFromBalance(0);
+          setFromBalance('0');
         } else {
           const account = response.value[0];
           const decoded = ACCOUNT_LAYOUT.decode(account.account.data);
@@ -639,9 +632,9 @@ export const SwapUi = (props: {
 
           if (mintList[address]) {
             const balance = decoded.amount.toNumber() / (10 ** mintList[address].decimals);
-            setFromBalance(balance);
+            setFromBalance(getFormattedAmount(balance, mintList[address].decimals));
           } else {
-            setFromBalance(0);
+            setFromBalance('0');
           }
         }
 
@@ -683,7 +676,7 @@ export const SwapUi = (props: {
     }
     
     if (!connected || !userAccount || !publicKey || !toMint) {
-      setToBalance(0);
+      setToBalance('0');
       setShouldUpdateBalances(false);
       return;
     }
@@ -691,21 +684,21 @@ export const SwapUi = (props: {
     const timeout = setTimeout(() => {
 
       if (toMint === NATIVE_SOL_MINT.toBase58()) {
-        setToBalance(userAccount.lamports / LAMPORTS_PER_SOL);
+        setToBalance(getFormattedAmount(userAccount.lamports / LAMPORTS_PER_SOL, 9));
         setShouldUpdateBalances(false);
         return;
       }
 
       const error = (_error: any) => {
         console.error(_error);
-        setToBalance(0);
+        setToBalance('0');
         setShouldUpdateBalances(false);
       };
 
       const success = (response: any) => {
 
         if (!response.value.length) {
-          setToBalance(0);
+          setToBalance('0');
         } else {
           const account = response.value[0];
           const decoded = ACCOUNT_LAYOUT.decode(account.account.data);
@@ -713,9 +706,9 @@ export const SwapUi = (props: {
 
           if (mintList[address]) {
             const balance = decoded.amount.toNumber() / (10 ** mintList[address].decimals);
-            setToBalance(balance);
+            setToBalance(getFormattedAmount(balance, mintList[address].decimals));
           } else {
-            setToBalance(0);
+            setToBalance('0');
           }
         }
 
@@ -840,19 +833,15 @@ export const SwapUi = (props: {
     
     const timeout = setTimeout(() => {
       
-      let balance = fromBalance;
+      let balance = parseFloat(fromBalance);
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         balance = userBalancces[NATIVE_SOL_MINT.toBase58()];
       }
 
-      const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : fromBalance;
-      // setIsValidSwapAmount(amount <= maxFromAmount);
-      // return;
+      const amount = fromAmount && parseFloat(fromAmount) > 0 ? parseFloat(fromAmount) : 0;
 
-      if (amount === 0) {
-        setIsValidSwapAmount(false);
-      } else if (isWrap) {
+      if (isWrap) {
         setIsValidSwapAmount(amount <= (balance - feesInfo.aggregator - feesInfo.network));
       } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         setIsValidSwapAmount(amount <= (balance - feesInfo.total - feesInfo.network));
@@ -871,13 +860,13 @@ export const SwapUi = (props: {
   }, [
     connected, 
     connection, 
-    fromAmount, 
-    fromMint, 
-    fromBalance, 
-    toMint, 
     feesInfo, 
-    isWrap, 
+    fromAmount, 
+    fromBalance, 
+    fromMint, 
     isUnwrap, 
+    isWrap, 
+    toMint, 
     userBalancces
   ])
 
@@ -1028,7 +1017,7 @@ export const SwapUi = (props: {
 
       if (!connected) {
         label = t("transactions.validation.not-connected");
-      } else if (amount === 0) {
+      } else if (amount === 0 && maxFromAmount) {
         label = t("transactions.validation.no-amount");
       } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
@@ -1040,7 +1029,7 @@ export const SwapUi = (props: {
 
         const symbol = mintList[fromMint].symbol;
 
-        if (!isValidBalance) {
+        if (!isValidBalance || !maxFromAmount) {
 
           let needed = 0;
 
@@ -1107,28 +1096,27 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!connected || !fromMint || !toMint || !fromBalance || !feesInfo) {
+    if (!connected || !fromMint || !toMint || !fromBalance || !txFees || !exchangeInfo) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
       let maxAmount = 0;
-      let balance = fromBalance;
+      let balance = parseFloat(fromBalance);
+      const aggregatorFees = getTxPercentFeeAmount(txFees, balance);
 
-      if (balance === 0) {
-        maxAmount = 0;
-      } else if (isWrap) {
-        maxAmount = balance - feesInfo.aggregator - feesInfo.network;
+      if (isWrap) {
+        maxAmount = balance - aggregatorFees - exchangeInfo.networkFees;
       } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        maxAmount = balance - feesInfo.total - feesInfo.network;
+        maxAmount = balance - aggregatorFees - exchangeInfo.protocolFees - exchangeInfo.networkFees;
       } else if (isUnwrap) {
-        maxAmount = balance - feesInfo.aggregator;
+        maxAmount = balance - aggregatorFees;
       } else {
-        maxAmount = balance - feesInfo.total;
+        maxAmount = balance - aggregatorFees - exchangeInfo.protocolFees;
       }
 
-      setMaxFromAmount(maxAmount <= 0 ? 0 : maxAmount);
+      setMaxFromAmount(maxAmount < 0 ? '' : getFormattedAmount(maxAmount, mintList[fromMint].decimals));
       
     });
 
@@ -1139,13 +1127,14 @@ export const SwapUi = (props: {
   },[
     connected, 
     connection, 
-    feesInfo, 
+    exchangeInfo, 
     fromBalance, 
     fromMint, 
-    toMint, 
     isUnwrap, 
     isWrap, 
-    mintList
+    mintList, 
+    toMint, 
+    txFees
   ]);
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
@@ -1193,9 +1182,7 @@ export const SwapUi = (props: {
       throw new Error("Error executing transaction");
     }
 
-    let amountIn = exchangeInfo.amountIn === maxFromAmount 
-      ? maxFromAmount + feesInfo.aggregator
-      : exchangeInfo.amountIn;
+    let amountIn = parseFloat(fromAmount) - feesInfo.aggregator;
 
     amountIn = parseFloat(amountIn.toFixed(mintList[fromMint].decimals));
 
@@ -1247,7 +1234,6 @@ export const SwapUi = (props: {
     fromMint, 
     isUnwrap, 
     isWrap, 
-    maxFromAmount, 
     mintList, 
     slippage, 
     swapClient, 
@@ -1654,17 +1640,6 @@ export const SwapUi = (props: {
     setSlippage(value);
   };
 
-  // const getFormattedAmount = (mint: any, value: number) => {
-  //   if (!connected || !mint || !mintList[mint]) { return 0; }
-  //   const rest = (1 / 10 ** mintList[mint].decimals);
-  //   const amount = parseFloat((value + rest).toFixed(mintList[mint].decimals));
-  //   if (amount > rest) {
-  //     return parseFloat((value - rest).toFixed(mintList[mint].decimals));
-  //   } else {
-  //     return 0;
-  //   }
-  // }
-
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
@@ -1678,17 +1653,19 @@ export const SwapUi = (props: {
         {/* Source token / amount */}
         <CoinInput
           token={fromMint && mintList[fromMint]}
-          // tokenBalance={+(fromMint && mintList[fromMint] ? fromBalance.toFixed(mintList[fromMint].decimals) : '0')}
-          tokenBalance={fromBalance}
+          tokenBalance={
+            (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
+              ? getFormattedAmount(parseFloat(fromBalance), mintList[fromMint].decimals)
+              : '')
+          }
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
           onMaxAmount={
-            fromMint && toMint && maxFromAmount && mintList[fromMint] &&
+            fromMint && toMint && fromBalance && mintList[fromMint] &&
             (() => {
-              const rest = (1 / 10 ** mintList[fromMint].decimals);
-              const amount = parseFloat((maxFromAmount + rest).toFixed(mintList[fromMint].decimals));
+              const amount = parseFloat(maxFromAmount);
               if (amount > 0) {
-                setFromAmount((maxFromAmount - rest).toFixed(mintList[fromMint].decimals));
+                setFromAmount(getFormattedAmount(amount, mintList[fromMint].decimals));
               } else {
                 setFromAmount('');
               }
@@ -1710,10 +1687,14 @@ export const SwapUi = (props: {
         {/* Destination token / amount */}
         <CoinInput
           token={toMint && mintList[toMint]}
-          tokenBalance={toBalance}
+          tokenBalance={
+            (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+              ? getFormattedAmount(parseFloat(toBalance), mintList[toMint].decimals)
+              : '')
+          }
           tokenAmount={
             (toMint && fromAmount && mintList[toMint] && exchangeInfo && exchangeInfo.amountOut 
-              ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+              ? getFormattedAmount(exchangeInfo.amountOut, mintList[toMint].decimals)
               : '')
           }
           readonly={true}

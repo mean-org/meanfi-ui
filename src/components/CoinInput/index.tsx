@@ -2,12 +2,11 @@ import React from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { IconCaretDown } from "../../Icons";
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { Identicon } from "../Identicon";
 
 export const CoinInput = (props: {
   token: TokenInfo | undefined;
-  tokenBalance: number;
+  tokenBalance: string;
   tokenAmount: string;
   onSelectToken: any;
   onInputChange?: any;
@@ -25,7 +24,7 @@ export const CoinInput = (props: {
                 <span>{t('transactions.send-amount.label-right')}:</span>
                 <span className="balance-amount">
                     {`${props.token && props.tokenBalance
-                        ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.token.address, true, true)
+                        ? props.tokenBalance
                         : "0"
                     }`}
                 </span>

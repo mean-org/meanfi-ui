@@ -285,7 +285,7 @@ export class RaydiumClient implements LPClient {
       amountIn: amount,
       amountOut: +amountOut.fixed() * amount,
       minAmountOut: +amountOutWithSlippage.fixed() * amount,
-      networkFees: 0,
+      networkFees: 0.05,
       protocolFees: amountIn.sub(amountInWithFees).toNumber() / (10 ** poolInfo.coin.decimals)
     };
 
