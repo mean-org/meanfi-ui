@@ -21,6 +21,7 @@ import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { environment } from '../../environments/environment';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
+import { useHistory } from 'react-router-dom';
 
 const QRCode = require('qrcode.react');
 
@@ -43,6 +44,7 @@ export const AccountsView = () => {
     showDepositOptionsModal
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const history = useHistory();
 
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [isInputValid, setIsInputValid] = useState(false);
@@ -157,6 +159,18 @@ export const AccountsView = () => {
         description: t('notifications.account-address-not-copied-message'),
         type: "error"
       });
+    }
+  }
+
+  const handleGoToExchangeClick = () => {
+    const queryParams = `${selectedAsset ? '?toMint=' + selectedAsset.symbol : ''}`;
+    if (queryParams) {
+      history.push({
+        pathname: '/swap',
+        search: queryParams,
+      });
+    } else {
+      history.push('/swap');
     }
   }
 
@@ -494,7 +508,8 @@ export const AccountsView = () => {
         <Space size={[16, 16]} wrap>
           <Button className="secondary-button" shape="round" size="middle" type="default"
                   onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
-          <Button className="secondary-button" shape="round" size="middle" type="default">{t('assets.no-balance.cta2')}</Button>
+          <Button className="secondary-button" shape="round" size="middle" type="default"
+                  onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
         </Space>
         {renderQrCode}
       </div>

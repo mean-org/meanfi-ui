@@ -35,7 +35,13 @@ import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const SwapUi = () => {
+export const SwapUi = (props: {
+  queryFromMint: string | null;
+  queryToMint: string | null;
+}) => {
+
+  // Use injected params
+  const {queryFromMint, queryToMint} = props;
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
