@@ -166,11 +166,11 @@ export const AccountsView = () => {
     const queryParams = `${selectedAsset ? '?toMint=' + selectedAsset.symbol : ''}`;
     if (queryParams) {
       history.push({
-        pathname: '/swap',
+        pathname: '/exchange',
         search: queryParams,
       });
     } else {
-      history.push('/swap');
+      history.push('/exchange');
     }
   }
 

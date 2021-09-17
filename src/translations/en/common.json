@@ -230,7 +230,7 @@
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
 		"token-select-source": "Select token",
-		"transaction-settings": "Transaction Settings"
+		"transaction-settings": "Slippage Tolerance"
 	},
 	"token-selector": {
 		"modal-title": "Select a token",

@@ -113,8 +113,8 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="/accounts">
         <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>
-      <Menu.Item key="/swap">
-        <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+      <Menu.Item key="/exchange">
+        <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
@@ -195,8 +195,8 @@ export const AppBar = (props: { menuType: string }) => {
             <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
               <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
             </li>
-            <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-              <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+            <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+              <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
             </li>
             <li key="/transfers"
                 className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}

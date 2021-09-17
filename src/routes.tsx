@@ -33,7 +33,7 @@ export function Routes() {
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />
-                      <Route exact path="/swap" children={<SwapView />} />
+                      <Route exact path="/exchange" children={<SwapView />} />
                       <Route exact path="/wrap" children={<WrapView />} />
                       <Route exact path="/custody" children={<CustodyView />} />
                       <Route path="*">
