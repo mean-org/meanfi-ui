@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Conecte su billetera",
 		"copy-address": "Copiar dirección",
+		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",

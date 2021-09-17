@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Connect wallet account",
 		"copy-address": "Copy Address",
+		"disconnect": "Disconnect",
 		"explorer-link": "View on Solana Explorer",
 		"modal-title": "Account",
 		"network-unknown": "Unknown",

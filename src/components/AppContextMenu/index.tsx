@@ -57,10 +57,10 @@ export const AppContextMenu = () => {
   };
 
   const onDisconnectWallet = () => {
-    disconnect();
-    resetWalletProvider();
     setSelectedStream(undefined);
     setStreamList(undefined);
+    disconnect();
+    resetWalletProvider();
   }
 
   const onSwitchTheme = () => {
