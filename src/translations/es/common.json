@@ -20,7 +20,7 @@
 		"account-address-change-cta": "Escanear otra dirección",
 		"account-address-label": "Dirección de cuenta",
 		"account-address-placeholder": "Ingrese la dirección de su cuenta",
-		"account-address-validation": "Not a valid address format",
+		"account-address-validation": "Formato de dirección no válido",
 		"back-to-assets-cta": "Volver a la lista de activos",
 		"create-account-help-link": "Conozca más sobre billeteras",
 		"create-account-help-post": "abrir una cuenta",
@@ -170,10 +170,10 @@
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "Back to Transfer activity",
+		"back-to-my-streams-cta": "Volver a las transferencia",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
-		"screen-title": "Transfer activity",
+		"screen-title": "Transferencias",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -230,7 +230,7 @@
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
 		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Slippage Tolerance"
+		"transaction-settings": "Tolerancia al deslizamiento"
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
