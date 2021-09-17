@@ -260,7 +260,7 @@ export const DepositOptions = (props: {
                 {t("deposits.move-from-polygon-cta-label")}
               </Button>
             </Col>
-            <Col span={24}>
+            {/* <Col span={24}>
               <Button
                 block
                 className="deposit-option"
@@ -271,7 +271,7 @@ export const DepositOptions = (props: {
                 <img src="assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
                 {t("deposits.move-from-renbridge-cta-label")}
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </div>
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
