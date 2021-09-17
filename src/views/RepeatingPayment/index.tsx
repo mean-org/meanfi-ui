@@ -649,7 +649,7 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendRawTransaction(signedTransactions[0].serialize(), { skipPreflight: true })
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
           .then(sig => {
             console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned

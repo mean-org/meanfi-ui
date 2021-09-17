@@ -65,6 +65,7 @@ import { calculateActionFees, getStream } from "money-streaming/lib/utils";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
+import * as base64 from "base64-js";
 
 const dateFormat = require("dateformat");
 
@@ -689,7 +690,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendRawTransaction(signedTransactions[0].serialize(), { skipPreflight: true })
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
           .then(sig => {
             console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -888,7 +889,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendRawTransaction(signedTransactions[0].serialize(), { skipPreflight: true })
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -1076,7 +1077,7 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendRawTransaction(signedTransaction.serialize(), { skipPreflight: true })
+        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()), {skipPreflight: true})
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
