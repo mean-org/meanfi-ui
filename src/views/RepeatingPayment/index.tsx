@@ -677,8 +677,8 @@ export const RepeatingPayment = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(...signatures)
+    const confirmTx = (): Promise<boolean> => {
+      return connection.confirmTransaction(signatures[0])
         .then(result => {
           console.log('confirmTransactions result:', result);
           // Stage 4 completed - The transaction was confirmed!
