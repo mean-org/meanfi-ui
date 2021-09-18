@@ -110,6 +110,7 @@
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
+		"renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
 		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
 		"transak-cta-label": "Compre con tarjeta de débito/crédito"
 	},

@@ -3059,13 +3059,29 @@ section.content {
     font-size: 18px;
   }
 }
-.mean-svg-icons.link {
-  font-size: 0.8rem;
-  width: 0.92rem;
-  height: 0.92rem;
-  vertical-align: -2px;
-  margin-right: 0.25rem;
+
+.mean-svg-icons {
+  &.info {
+    color: var(--color-notify-info);
+  }
+  &.success {
+    color: var(--color-notify-success);
+  }
+  &.warning {
+    color: var(--color-notify-warning);
+  }
+  &.error {
+    color: var(--color-notify-error);
+  }
+  &.link {
+    font-size: 0.8rem;
+    width: 0.92rem;
+    height: 0.92rem;
+    vertical-align: -2px;
+    margin-right: 0.25rem;
+  }
 }
+
 .top-input-label {
   font-size: 14px;
   font-weight: 500;
