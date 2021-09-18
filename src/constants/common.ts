@@ -9,6 +9,7 @@ export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';
 export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
 export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
+export const GOOGLE_ANALYTICS_PROD_TAG_ID = 'G-5Q840FEC0G';
 export const SOLANA_WALLET_GUIDE = 'https://docs.solana.com/wallet-guide';
 export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
