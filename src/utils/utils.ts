@@ -6,12 +6,12 @@ import { Account, Connection, Keypair, PublicKey, Signer, SimulatedTransactionRe
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { getAmountWithTokenSymbol, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from "money-streaming/lib/types";
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { Swap } from '@project-serum/swap';
 import { MINT_CACHE } from '../contexts/token';
-import { TOKENS } from './tokens';
+import { NATIVE_SOL, TOKENS } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
@@ -298,22 +298,69 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
+export const getTokenFormattedAmountAndSymbolByTokenAddress = (
+  amount: number,
+  address: string,
+  onlyValue = false,
+  truncateInsteadRound = false
+): string => {
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+    }
+  }
+  const inputAmount = amount || 0;
+  let formatted = '';
+  let decimals = 0;
+  let abbr = false;
+  if (inputAmount === 0) {
+    formatted = '0';
+  } else if (inputAmount > 0 && inputAmount < 1) {
+    decimals = 4;
+  } else if (inputAmount >= 1 && inputAmount < 10) {
+    decimals = 3;
+  } else if (inputAmount >= 100) {
+    decimals = 2;
+  } else {
+    decimals = 2;
+    abbr = true;
+  }
+  if (inputAmount) {
+    formatted = truncateInsteadRound
+      ? truncateFloat(inputAmount, decimals)
+      : formatAmount(inputAmount, decimals, abbr);
+  }
+  if (!token || onlyValue) { return formatted; }
+
+  return `${formatted} ${token.symbol}`;
+}
+
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
   onlyValue = false,
   truncateInsteadRound = false
 ): string => {
-  const tokenFromTokenList = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+    }
+  }
   const inputAmount = amount || 0;
-  if (tokenFromTokenList) {
+  if (token) {
     const formatted = truncateInsteadRound
-      ? truncateFloat(inputAmount, tokenFromTokenList.decimals)
-      : `${getFormattedNumberToLocale(formatAmount(inputAmount, tokenFromTokenList.decimals))}`;
+      ? truncateFloat(inputAmount, token.decimals)
+      : `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
-    return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
+    return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }

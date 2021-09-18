@@ -255,10 +255,35 @@ footer.ant-layout-footer {
       display: flex;
       flex-direction: row;
       align-items: center;
+      background-color: var(--color-network-bar);
       border-radius: var(--custom-border-radius);
       height: 40px;
-      padding: 2px 0;
-      margin: 4px 0;
+      padding: 2px;
+      .connected-network {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        align-items: center;
+        margin-right: 8px;
+        margin-left: 4px;
+        .chain-logo {
+          align-items: center;
+          justify-content: center;
+          display: inline-flex;
+          margin-right: 4px;
+          > img {
+            margin: 0;
+          }
+        }
+        .account-balance {
+          font-size: 1rem;
+          font-weight: 400;
+          letter-spacing: -0.5px;
+          line-height: 1;
+          color: var(--color-dark);
+        }
+      }
       .wallet-wrapper {
         display: flex;
         align-items: center;
@@ -942,15 +967,13 @@ footer.ant-layout-footer {
       display: inline-flex;
       margin-right: 4px;
       > img {
-        height: 24px;
-        width: 24px;
-        border-radius: 50%;
+        margin: 0;
       }
     }
-    .chain-name {
+    .account-balance {
       font-size: 1rem;
-      font-weight: 600;
-      text-transform: capitalize;
+      font-weight: 400;
+      letter-spacing: -0.5px;
     }
   }
   .wallet-wrapper {

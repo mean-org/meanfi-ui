@@ -11,12 +11,11 @@ import {
 
 } from "@solana/web3.js";
 
-import { getOrca, Orca, OrcaPoolConfig, OrcaU64, ORCA_TOKEN_SWAP_ID, resolveOrCreateAssociatedTokenAddress, U64Utils } from "@orca-so/sdk";
+import { getOrca, Orca, OrcaPoolConfig, OrcaPoolToken, OrcaU64, ORCA_TOKEN_SWAP_ID, resolveOrCreateAssociatedTokenAddress, U64Utils } from "@orca-so/sdk";
 import { LPClient, ExchangeInfo, ORCA } from "../types";
 import { getTokensPools } from "../utils";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AMM_POOLS, PROTOCOLS } from "../data";
-import { OrcaPoolToken } from "@orca-so/sdk/dist/model/orca/pool/pool-types";
 import { cloneDeep } from "lodash";
 import { BN } from "bn.js";
 import Decimal from "decimal.js";

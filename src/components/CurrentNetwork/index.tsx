@@ -1,31 +1,49 @@
-import React from 'react';
-import { useTranslation } from "react-i18next";
-import { useConnectionConfig } from "../../contexts/connection";
+import React, { useEffect, useState } from 'react';
+import { useNativeAccount } from '../../contexts/accounts';
+import { useWallet } from '../../contexts/wallet';
+import { getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { NATIVE_SOL } from '../../utils/tokens';
+import { Tooltip } from 'antd';
 
 export const CurrentNetwork = () => {
 
-  const connection = useConnectionConfig();
-  const { t } = useTranslation("common");
+  const { publicKey } = useWallet();
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
 
-  let chainLogoUrl: string;
-  let chainName: string;
+  useEffect(() => {
 
-  const getUiTranslation = (translationId: string) => {
-    return t(`account-area.${translationId}`);
-  }
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
 
-  if (connection) {
-    const mainToken = connection.tokens.filter(t => t.name === 'Wrapped SOL');
-    chainName = mainToken && mainToken.length
-      ? mainToken[0].extensions?.coingeckoId || getUiTranslation('network-unknown')
-      : getUiTranslation('network-unknown');
-    chainLogoUrl = mainToken && mainToken.length ? mainToken[0].logoURI || 'solana-logo.png' : 'solana-logo.png';
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      setNativeBalance(getAccountBalance());
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+  ]);
+
+  const renderSolanaIcon = (
+    <img className="token-icon" src="solana-logo.png" alt="Solana logo" />
+  )
+
+  if (publicKey) {
     return (
       <div className="connected-network">
         <span className="chain-logo">
-          <img src={chainLogoUrl} alt={chainName} />
+          {renderSolanaIcon}
         </span>
-        <span className="chain-name">{chainName}</span>
+        <span className="account-balance">
+        <Tooltip placement="bottom" title={getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address)}>
+          <span>{getTokenFormattedAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address, false, true)}</span>
+        </Tooltip>
+        </span>
       </div>
     );
   } else {

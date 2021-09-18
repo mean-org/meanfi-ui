@@ -3,6 +3,7 @@ import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
+import { CurrentNetwork } from '../CurrentNetwork';
 
 export const FooterBar = () => {
   const { connected } = useWallet();
@@ -14,6 +15,7 @@ export const FooterBar = () => {
           {connected ? (
             <div className="footer-account-bar">
               <CurrentUserBadge />
+              <CurrentNetwork />
             </div>
           ) : (
             <ConnectButton />
