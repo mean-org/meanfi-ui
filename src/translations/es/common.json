@@ -261,7 +261,7 @@
 		},
 		"recipient": {
 			"label": "Destinatario",
-			"placeholder": "Dirección pública o ENS",
+			"placeholder": "Dirección pública",
 			"qr-scan-title": "Obtener dirección desde código QR",
 			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},

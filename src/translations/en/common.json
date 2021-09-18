@@ -261,7 +261,7 @@
 		},
 		"recipient": {
 			"label": "Recipient",
-			"placeholder": "Public address or ENS",
+			"placeholder": "Public address",
 			"qr-scan-title": "Get address from QR code",
 			"recipient-is-own-account": "Cannot send to your own account"
 		},

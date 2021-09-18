@@ -261,7 +261,7 @@
 		},
 		"recipient": {
 			"label": "Bénéficiaire",
-			"placeholder": "Sonorisation ou ENS",
+			"placeholder": "Adresse publique",
 			"qr-scan-title": "Obtenir l'adresse à partir du code QR",
 			"recipient-is-own-account": "Impossible d'envoyer vers votre propre compte"
 		},
