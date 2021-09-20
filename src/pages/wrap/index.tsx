@@ -201,7 +201,7 @@ export const WrapView = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         return await connection
-          .sendRawTransaction(transaction.serialize(), { skipPreflight: true })
+          .sendRawTransaction(transaction.serialize(), { preflightCommitment: "singleGossip" })
           .then((sig) => {
             console.log("sendSignedTransactions returned a signature:", sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -231,7 +231,7 @@ export const WrapView = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, connection.commitment as Commitment)
+        .confirmTransaction(signature, "confirmed")
         .then((result) => {
           console.log("confirmTransactions result:", result);
           // Stage 4 completed - The transaction was confirmed!

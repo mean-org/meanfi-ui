@@ -690,7 +690,8 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             console.log('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -720,7 +721,7 @@ export const Streams = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       try {
-        const result = await connection.confirmTransaction(signatures[0]);
+        const result = await connection.confirmTransaction(signatures[0], "confirmed");
         console.log('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
@@ -888,7 +889,8 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -918,7 +920,7 @@ export const Streams = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       try {
-        const result = await connection.confirmTransaction(signatures[0]);
+        const result = await connection.confirmTransaction(signatures[0], "confirmed");
         console.log('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
@@ -1075,7 +1077,8 @@ export const Streams = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
+        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
+        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             console.log('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -1105,7 +1108,7 @@ export const Streams = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       try {
-        const result = await connection.confirmTransaction(signature);
+        const result = await connection.confirmTransaction(signature, "confirmed");
         console.log('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
