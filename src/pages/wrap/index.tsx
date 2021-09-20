@@ -19,7 +19,7 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
@@ -100,7 +100,7 @@ export const WrapView = () => {
     if (!wrapFees.blockchainFee) {
       getTransactionFees().then((values) => {
         setWrapFees(values);
-        console.log("wrapFees:", values);
+        consoleOut("wrapFees:", values);
       });
     }
   }, [connection, wrapFees]);
@@ -142,7 +142,7 @@ export const WrapView = () => {
           amount // amount
         )
           .then((value) => {
-            console.log("wrapSol returned transaction:", value);
+            consoleOut("wrapSol returned transaction:", value);
             // Stage 1 completed - The transaction is created and returned
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -152,7 +152,7 @@ export const WrapView = () => {
             return true;
           })
           .catch((error) => {
-            console.log("wrapSol transaction init error:", error);
+            console.error("wrapSol transaction init error:", error);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
@@ -165,11 +165,11 @@ export const WrapView = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log("Signing transaction...");
+        consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
           .then((signed) => {
-            console.log(
+            consoleOut(
               "signTransactions returned a signed transaction array:",
               signed
             );
@@ -181,7 +181,7 @@ export const WrapView = () => {
             return true;
           })
           .catch(() => {
-            console.log("Signing transaction failed!");
+            console.error("Signing transaction failed!");
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure,
@@ -189,7 +189,7 @@ export const WrapView = () => {
             return false;
           });
       } else {
-        console.log("Cannot sign transaction! Wallet not found!");
+        console.error("Cannot sign transaction! Wallet not found!");
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure,
@@ -203,7 +203,7 @@ export const WrapView = () => {
         return await connection
           .sendRawTransaction(transaction.serialize(), { preflightCommitment: "singleGossip" })
           .then((sig) => {
-            console.log("sendSignedTransactions returned a signature:", sig);
+            consoleOut("sendSignedTransactions returned a signature:", sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -213,7 +213,7 @@ export const WrapView = () => {
             return true;
           })
           .catch((error) => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure,
@@ -233,7 +233,7 @@ export const WrapView = () => {
       return await connection
         .confirmTransaction(signature, "confirmed")
         .then((result) => {
-          console.log("confirmTransactions result:", result);
+          consoleOut("confirmTransactions result:", result);
           // Stage 4 completed - The transaction was confirmed!
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -253,17 +253,17 @@ export const WrapView = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      console.log("initialized:", create);
+      consoleOut("initialized:", create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log("signed:", sign);
+        consoleOut("signed:", sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log("sent:", sent);
+          consoleOut("sent:", sent);
           setWrapAmount("");
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log("confirmed:", confirmed);
+            consoleOut("confirmed:", confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);

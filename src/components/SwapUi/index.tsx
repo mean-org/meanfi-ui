@@ -1,4 +1,4 @@
-import { Row, Col, Spin, Modal, Button, Popover } from "antd";
+import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
@@ -20,13 +20,12 @@ import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import * as base64 from "base64-js";
 import BN from "bn.js";
 import "./style.less";
 
 // NEW
 import { TOKENS } from "../../amms/data";
-import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, Client } from "../../amms/types";
+import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../amms/types";
 import { SerumClient } from "../../amms/serum/types";
 import { getClient, getExchangeInfo, getFormattedAmount, getOptimalPool, getTokensPools, unwrap, wrap } from "../../amms/utils";
 import { cloneDeep } from "lodash";
@@ -130,7 +129,7 @@ export const SwapUi = (props: {
     
     const timeout = setTimeout(() => {
 
-      const error = (_error: any) => console.log(_error);
+      const error = (_error: any) => console.error(_error);
       const success = (info: any) => {
         console.info('user', info);
         setUserAccount(info);
@@ -172,7 +171,7 @@ export const SwapUi = (props: {
         console.info('fees', fees);
       };
 
-      const error = (_error: any) => console.log(_error);
+      const error = (_error: any) => console.error(_error);
 
       calculateActionFees(connection, action)
         .then((fees: TransactionFees) => success(fees))
@@ -308,7 +307,7 @@ export const SwapUi = (props: {
 
       } as ExchangeInfo;
 
-      console.log('exchange', exchange);
+      consoleOut('exchange', exchange);
 
       setExchangeInfo(exchange);
 
@@ -496,7 +495,7 @@ export const SwapUi = (props: {
       };
 
       const error = (_error: any) => {
-        console.log(_error);
+        console.error(_error);
         setRefreshing(false); 
       };
 
@@ -1367,7 +1366,7 @@ export const SwapUi = (props: {
 
     return getSwap()
       .then((tx) => {
-        console.log("SWAP returned transaction:", tx);
+        consoleOut("SWAP returned transaction:", tx);
         setTransactionStatus({
           lastOperation: TransactionStatus.InitTransactionSuccess,
           currentOperation: TransactionStatus.SignTransaction,
@@ -1375,7 +1374,7 @@ export const SwapUi = (props: {
         return tx;
       })
       .catch(_error => {
-        console.log("SWAP transaction init error:", _error);
+        console.error("SWAP transaction init error:", _error);
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.InitTransactionFailure,
@@ -1394,7 +1393,7 @@ export const SwapUi = (props: {
   const signTx = useCallback(async (currentTx: Transaction) => {
 
     if (!wallet) {
-      console.log("Cannot sign transaction! Wallet not found!");
+      consoleOut("Cannot sign transaction! Wallet not found!");
       setTransactionStatus({
         lastOperation: TransactionStatus.SignTransaction,
         currentOperation: TransactionStatus.SignTransactionFailure,
@@ -1402,11 +1401,11 @@ export const SwapUi = (props: {
       return undefined;
     }
 
-    console.log("Signing transaction...");
+    consoleOut("Signing transaction...");
 
     return wallet.signTransaction(currentTx)
       .then((signedTx) => {
-        console.log("signTransaction returned a signed transaction:", signedTx);
+        consoleOut("signTransaction returned a signed transaction:", signedTx);
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: TransactionStatus.SendTransaction,
@@ -1414,7 +1413,7 @@ export const SwapUi = (props: {
         return signedTx;
       })
       .catch(_error => {
-        console.log("Signing transaction failed!", _error);
+        console.error("Signing transaction failed!", _error);
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure,
@@ -1439,7 +1438,7 @@ export const SwapUi = (props: {
 
     const serializedTx = currentTx.serialize();
     const encodedTx = serializedTx.toString('base64');
-    console.log('tx encoded => ', encodedTx);
+    consoleOut('tx encoded => ', encodedTx);
 
     return connection.sendRawTransaction(serializedTx)
       .then((sig) => {
@@ -1501,13 +1500,13 @@ export const SwapUi = (props: {
 
       showTransactionModal();
       const swapTxs = await createTx();
-      console.log("initialized:", swapTxs);
+      consoleOut("initialized:", swapTxs);
 
       if (!swapTxs || transactionCancelled) {
         setIsBusy(false);
       } else {
         const signedTx = await signTx(swapTxs);
-        console.log("signed:", signedTx);
+        consoleOut("signed:", signedTx);
 
         if (!signedTx || transactionCancelled) {
           setIsBusy(false);
@@ -1526,7 +1525,7 @@ export const SwapUi = (props: {
             return;
           }
 
-          console.log("confirmed:", confirmed); // put this in a link in the UI
+          consoleOut("confirmed:", confirmed); // put this in a link in the UI
           setFromAmount('');
           setFromSwapAmount(0);
           setShouldUpdateBalances(true);
@@ -1534,7 +1533,7 @@ export const SwapUi = (props: {
         }
       }      
     }
-    
+
   }, [
     confirmTx, 
     createTx, 

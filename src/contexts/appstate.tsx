@@ -21,6 +21,7 @@ import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
+import { consoleOut } from "../utils/ui";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -304,7 +305,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       streamPublicKey = new PublicKey(streamId);
       try {
         const detail = await getStream(connection, streamPublicKey);
-        console.log('customStream', detail);
+        consoleOut('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
           setStreamList([detail]);
@@ -322,7 +323,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
         }
       } catch (error) {
-        console.log('customStream', error);
+        console.error('customStream', error);
         notify({
           message: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
@@ -349,12 +350,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
       listStreamActivity(newConnection, getEndpointByRuntimeEnv(), streamPublicKey)
         .then(value => {
-          console.log('activity:', value);
+          consoleOut('activity:', value);
           setStreamActivity(value);
           setLoadingStreamActivity(false);
         })
         .catch(err => {
-          console.log(err);
+          console.error(err);
           setStreamActivity([]);
           setLoadingStreamActivity(false);
         });
@@ -436,7 +437,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         await getPrices()
           .then((prices) => {
-            console.log("Coin prices:", prices);
+            consoleOut("Coin prices:", prices, 'blue');
             setCoinPrices(prices);
             if (selectedToken) {
               const tokenSymbol = selectedToken.symbol.toUpperCase();
@@ -458,7 +459,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     coinTimer = window.setInterval(() => {
-      console.log(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
       getCoinPrices();
     }, PRICE_REFRESH_TIMEOUT);
 
@@ -519,7 +520,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       listStreams(connection, programId, publicKey, publicKey)
         .then(streams => {
-          console.log('Streams:', streams);
+          consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;
           if (streams.length) {
             if (reset) {
@@ -533,7 +534,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 item = streams[0];
               }
             }
-            console.log('selectedStream:', item);
+            consoleOut('selectedStream:', item, 'blue');
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
@@ -542,12 +543,12 @@ const AppStateProvider: React.FC = ({ children }) => {
                 const streamPublicKey = new PublicKey(item.id as string);
                 listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
                   .then(value => {
-                    console.log('activity:', value);
+                    consoleOut('activity:', value, 'blue');
                     setStreamActivity(value);
                     setLoadingStreamActivity(false);
                   })
                   .catch(err => {
-                    console.log(err);
+                    console.error(err);
                     setStreamActivity([]);
                     setLoadingStreamActivity(false);
                   });
@@ -565,7 +566,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           setStreamList(streams);
           updateLoadingStreams(false);
         }).catch(err => {
-          console.log(err);
+          console.error(err);
           updateLoadingStreams(false);
         });
     }
@@ -590,7 +591,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       if (streamList && currentScreen === 'streams' && !customStreamDocked) {
         timer = setInterval(() => {
-          console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
           refreshStreamList(false);
         }, STREAMS_REFRESH_TIMEOUT);
       }
@@ -704,7 +705,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       list.push(NATIVE_SOL as UserTokenAccount);
       MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID).forEach(item => list.push(item));
       setUserTokens(list);
-      console.log('AppState -> userTokens:', list);
+      consoleOut('AppState -> userTokens:', list);
     })();
 
     return () => { }

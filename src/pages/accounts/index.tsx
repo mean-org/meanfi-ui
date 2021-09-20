@@ -233,7 +233,7 @@ export const AccountsView = () => {
                   setAccountTokens(myTokens);
                   setTokensLoaded(true);
                 } else {
-                  console.log('could not get account tokens');
+                  console.error('could not get account tokens');
                   setAccountTokens(myTokens);
                   setTokensLoaded(true);
                 }
@@ -290,9 +290,9 @@ export const AccountsView = () => {
       setShouldLoadTransactions(false);
 
       const pk = getScanAddress(selectedAsset);
-      console.log('pk:', pk ? pk.toBase58() : 'NONE');
+      consoleOut('pk:', pk ? pk.toBase58() : 'NONE', 'blue');
       if (!pk) {
-        console.log('Asset has no public address, aborting...');
+        consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
         setTransactions(undefined);
         setStatus(FetchStatus.Fetched);
         return;
@@ -307,7 +307,7 @@ export const AccountsView = () => {
         true
       )
       .then(history => {
-        console.log('history:', history);
+        consoleOut('history:', history, 'blue');
         setTransactions(history.transactionMap);
         setStatus(FetchStatus.Fetched);
       })
@@ -336,7 +336,7 @@ export const AccountsView = () => {
     }
 
     const timeout = setTimeout(() => {
-      console.log('loading user tokens...');
+      consoleOut('loading user tokens...');
       setShouldLoadTokens(true);
     });
 

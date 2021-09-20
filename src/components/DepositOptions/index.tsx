@@ -7,7 +7,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
-import { copyText } from "../../utils/ui";
+import { consoleOut, copyText } from "../../utils/ui";
 import { AppConfig, AppConfigService, environment } from '../../environments/environment';
 import "./style.less";
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -98,7 +98,7 @@ export const DepositOptions = (props: {
         hideMenu: true,
         walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
         themeColor: 'B7001C', // App theme color
-        fiatCurrency: '',
+        fiatCurrency: 'EUR',
         email: '', // Your customer's email address
         redirectURL: '',
         hostURL: window.location.origin,
@@ -118,7 +118,7 @@ export const DepositOptions = (props: {
         transak.init();
         // To get all the events
         transak.on(transak.ALL_EVENTS, (data: any) => {
-          console.log(data);
+          consoleOut('transak event:', data, 'blue');
         });
       }
     }, 300);

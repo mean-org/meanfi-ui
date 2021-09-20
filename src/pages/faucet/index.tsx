@@ -94,7 +94,7 @@ export const FaucetView = () => {
         });
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notify({
         message: t('notifications.error-title'),
         description: t('notifications.error-cannot-fund-account-message'),

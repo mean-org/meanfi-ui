@@ -261,7 +261,7 @@ export const Streams = () => {
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string)
-    console.log("selected token:", token?.symbol);
+    consoleOut("selected token:", token?.symbol);
     if (token) {
       setOldSelectedToken(selectedToken);
       setSelectedToken(token);
@@ -286,7 +286,7 @@ export const Streams = () => {
   const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
   const onAcceptAddFunds = (amount: any) => {
     closeAddFundsModal();
-    console.log('AddFunds amount:', parseFloat(amount));
+    consoleOut('AddFunds amount:', parseFloat(amount));
     onExecuteAddFundsTransaction(amount);
   };
 
@@ -300,7 +300,7 @@ export const Streams = () => {
       try {
         const detail = await getStream(connection, streamPublicKey);
         if (detail) {
-          console.log('detail', detail);
+          consoleOut('detail', detail);
           setLastStreamDetail(detail);
           getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
             setTransactionFees(value);
@@ -315,7 +315,7 @@ export const Streams = () => {
           });
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
         notify({
           message: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
@@ -341,7 +341,7 @@ export const Streams = () => {
 
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
-    console.log('Withdraw amount:', parseFloat(amount));
+    consoleOut('Withdraw amount:', parseFloat(amount));
     onExecuteWithdrawFundsTransaction(amount);
   };
 
@@ -635,7 +635,7 @@ export const Streams = () => {
           amount
         )
         .then(value => {
-          console.log('addFundsTransactions returned transaction:', value);
+          consoleOut('addFundsTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -645,7 +645,7 @@ export const Streams = () => {
           return true;
         })
         .catch(error => {
-          console.log('addFundsTransactions error:', error);
+          console.error('addFundsTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -658,10 +658,10 @@ export const Streams = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log('Signing transaction...');
+        consoleOut('Signing transaction...');
         return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signTransactions returned a signed transaction array:', signed);
+          consoleOut('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -671,7 +671,7 @@ export const Streams = () => {
           return true;
         })
         .catch(() => {
-          console.log('Signing transaction failed!');
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -679,7 +679,7 @@ export const Streams = () => {
           return false;
         });
       } else {
-        console.log('Cannot sign transaction! Wallet not found!');
+        console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
@@ -693,7 +693,7 @@ export const Streams = () => {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
         return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
-            console.log('sendSignedTransactions returned a signature:', sig);
+            consoleOut('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -703,7 +703,7 @@ export const Streams = () => {
             return true;
           })
           .catch(error => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -722,7 +722,7 @@ export const Streams = () => {
     const confirmTx = async (): Promise<boolean> => {
       try {
         const result = await connection.confirmTransaction(signatures[0], "confirmed");
-        console.log('confirmTransactions result:', result);
+        consoleOut('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -741,16 +741,16 @@ export const Streams = () => {
     if (wallet && streamDetail) {
       showAddFundsTransactionModal();
       const create = await createTx();
-      console.log('create:', create);
+      consoleOut('create:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log('sign:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log('sent:', sent);
+          consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log('confirmed:', confirmed);
+            consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);
@@ -834,7 +834,7 @@ export const Streams = () => {
           amount
         )
         .then(value => {
-          console.log('withdrawTransaction returned transaction:', value);
+          consoleOut('withdrawTransaction returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -844,7 +844,7 @@ export const Streams = () => {
           return true;
         })
         .catch(error => {
-          console.log('closeStreamTransaction error:', error);
+          console.error('closeStreamTransaction error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -857,10 +857,10 @@ export const Streams = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log('Signing transaction...');
+        consoleOut('Signing transaction...');
         return await moneyStream.signTransactions(wallet, [transaction])
         .then(signed => {
-          console.log('signTransactions returned a signed transaction array:', signed);
+          consoleOut('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -870,7 +870,7 @@ export const Streams = () => {
           return true;
         })
         .catch(() => {
-          console.log('Signing transaction failed!');
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -878,7 +878,7 @@ export const Streams = () => {
           return false;
         });
       } else {
-        console.log('Cannot sign transaction! Wallet not found!');
+        console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
@@ -892,7 +892,7 @@ export const Streams = () => {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
         return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -902,7 +902,7 @@ export const Streams = () => {
             return true;
           })
           .catch(error => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -921,7 +921,7 @@ export const Streams = () => {
     const confirmTx = async (): Promise<boolean> => {
       try {
         const result = await connection.confirmTransaction(signatures[0], "confirmed");
-        console.log('confirmTransactions result:', result);
+        consoleOut('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -940,16 +940,16 @@ export const Streams = () => {
     if (wallet) {
       showWithdrawFundsTransactionModal();
       const create = await createTx();
-      console.log('create:', create);
+      consoleOut('create:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log('sign:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log('sent:', sent);
+          consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log('confirmed:', confirmed);
+            consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);
@@ -1022,7 +1022,7 @@ export const Streams = () => {
           publicKey as PublicKey                            // Initializer public key
         )
         .then(value => {
-          console.log('closeStream returned transaction:', value);
+          consoleOut('closeStream returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -1032,7 +1032,7 @@ export const Streams = () => {
           return true;
         })
         .catch(error => {
-          console.log('closeStream error:', error);
+          console.error('closeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -1045,10 +1045,10 @@ export const Streams = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log('Signing transaction...');
+        consoleOut('Signing transaction...');
         return await moneyStream.signTransactions(wallet, [transaction])
         .then(signed => {
-          console.log('signTransactions returned a signed transaction:', signed);
+          consoleOut('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -1058,7 +1058,7 @@ export const Streams = () => {
           return true;
         })
         .catch(() => {
-          console.log('Signing transaction failed!');
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -1066,7 +1066,7 @@ export const Streams = () => {
           return false;
         });
       } else {
-        console.log('Cannot sign transaction! Wallet not found!');
+        console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
@@ -1080,7 +1080,7 @@ export const Streams = () => {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
         return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
-            console.log('sendSignedTransaction returned a signature:', sig);
+            consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -1090,7 +1090,7 @@ export const Streams = () => {
             return true;
           })
           .catch(error => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -1109,7 +1109,7 @@ export const Streams = () => {
     const confirmTx = async (): Promise<boolean> => {
       try {
         const result = await connection.confirmTransaction(signature, "confirmed");
-        console.log('confirmTransactions result:', result);
+        consoleOut('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -1128,16 +1128,16 @@ export const Streams = () => {
     if (wallet) {
       showCloseStreamTransactionModal();
       const create = await createTx();
-      console.log('create:', create);
+      consoleOut('create:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log('sign:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log('sent:', sent);
+          consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log('confirmed:', confirmed);
+            consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);
@@ -1791,7 +1791,7 @@ export const Streams = () => {
     {streamList && streamList.length ? (
       streamList.map((item, index) => {
         const onStreamClick = () => {
-          console.log('selected stream:', item);
+          consoleOut('selected stream:', item);
           setSelectedStream(item);
           setDtailsPanelOpen(true);
         };

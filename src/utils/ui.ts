@@ -8,7 +8,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (environment === 'production') { return; }
+    if (environment !== 'local') { return; }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);
@@ -90,7 +90,7 @@ export const copyText = (val: any): boolean => {
         document.body.removeChild(selBox);
         return true;
     } else {
-        console.log('copyContainerInputElement could not be ', 'created/found', 'blue');
+        consoleOut('copyContainerInputElement could not be ', 'created/found', 'blue');
     }
     return false;
 }
