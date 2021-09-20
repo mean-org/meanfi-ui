@@ -53,7 +53,7 @@ import {
   WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, sendAndConfirmRawTransaction, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { AddFundsModal } from "../../components/AddFundsModal";
@@ -719,23 +719,22 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(...signatures)
-        .then(result => {
-          console.log('confirmTransactions result:', result);
-          // Stage 4 completed - The transaction was confirmed!
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return false;
+      try {
+        const result = await connection.confirmTransaction(signatures[0]);
+        console.log('confirmTransactions result:', result);
+        // Stage 4 completed - The transaction was confirmed!
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.TransactionFinished
         });
+        return true;
+      } catch (e) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
     }
 
     if (wallet && streamDetail) {
@@ -918,23 +917,22 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(...signatures)
-        .then(result => {
-          console.log('confirmTransactions result:', result);
-          // Stage 4 completed - The transaction was confirmed!
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return false;
+      try {
+        const result = await connection.confirmTransaction(signatures[0]);
+        console.log('confirmTransactions result:', result);
+        // Stage 4 completed - The transaction was confirmed!
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.TransactionFinished
         });
+        return true;
+      } catch (e) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
     }
 
     if (wallet) {
@@ -1106,23 +1104,22 @@ export const Streams = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(signature)
-        .then(result => {
-          console.log('confirmTransactions result:', result);
-          // Stage 4 completed - The transaction was confirmed!
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return false;
+      try {
+        const result = await connection.confirmTransaction(signature);
+        console.log('confirmTransactions result:', result);
+        // Stage 4 completed - The transaction was confirmed!
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.TransactionFinished
         });
+        return true;
+      } catch (e) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
     }
 
     if (wallet) {

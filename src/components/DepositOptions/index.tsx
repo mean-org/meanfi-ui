@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { IconCopy, IconSolana } from "../../Icons";
+import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { copyText } from "../../utils/ui";
 import { AppConfig, AppConfigService, environment } from '../../environments/environment';
@@ -224,17 +224,20 @@ export const DepositOptions = (props: {
               </Button>
             </Col>
             <Col span={24}>
-              <Button
-                block
-                className="deposit-option"
-                type="default"
-                shape="round"
-                size="middle"
-                disabled={status !== 'ready'}
-                onClick={handleTransakButtonClick}>
-                <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
-                {t("deposits.transak-cta-label")}
-              </Button>
+              <Tooltip placement="bottom" title={t('deposits.renbridge-cta-warning')}>
+                <Button
+                  block
+                  className="deposit-option"
+                  type="default"
+                  shape="round"
+                  size="middle"
+                  disabled={status !== 'ready'}
+                  onClick={handleTransakButtonClick}>
+                  <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
+                  {t("deposits.transak-cta-label")}
+                  <IconInfoTriangle className="mean-svg-icons warning" />
+                </Button>
+              </Tooltip>
             </Col>
             <Col span={24}>
               <Button
@@ -260,7 +263,7 @@ export const DepositOptions = (props: {
                 {t("deposits.move-from-polygon-cta-label")}
               </Button>
             </Col>
-            <Col span={24}>
+            {/* <Col span={24}>
               <Button
                 block
                 className="deposit-option"
@@ -271,7 +274,7 @@ export const DepositOptions = (props: {
                 <img src="assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
                 {t("deposits.move-from-renbridge-cta-label")}
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </div>
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>

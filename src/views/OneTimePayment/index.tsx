@@ -443,23 +443,22 @@ export const OneTimePayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return await moneyStream.confirmTransactions(...signatures)
-        .then(result => {
-          console.log('confirmTransactions result:', result);
-          // Stage 4 completed - The transaction was confirmed!
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return true;
-        })
-        .catch(() => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          return false;
+      try {
+        const result = await connection.confirmTransaction(signatures[0]);
+        console.log('confirmTransactions result:', result);
+        // Stage 4 completed - The transaction was confirmed!
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.TransactionFinished
         });
+        return true;
+      } catch (e) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.ConfirmTransaction,
+          currentOperation: TransactionStatus.ConfirmTransactionFailure
+        });
+        return false;
+      }
     }
 
     // Lets hit it

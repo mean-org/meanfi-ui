@@ -12,9 +12,11 @@ import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
 import { consoleOut } from "../../utils/ui";
+import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
 import { environment } from "../../environments/environment";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 
 const { Header, Content, Footer } = Layout;
 
@@ -37,6 +39,7 @@ export const AppLayout = React.memo((props: any) => {
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
+  const [gaInitialized, setGaInitialized] = useState(false);
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -76,6 +79,25 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('InfluxDB write API - WRITE FAILED', e, 'red');
       })
   }, [provider]);
+
+  // Init Google Analytics
+  useEffect(() => {
+    if (!gaInitialized && environment === 'production') {
+      setGaInitialized(true);
+      ReactGA.initialize(GOOGLE_ANALYTICS_PROD_TAG_ID, {
+        gaOptions: {
+          siteSpeedSampleRate: 100
+        }
+      });
+    }
+  }, [gaInitialized]);
+
+  // Report route
+  useEffect(() => {
+    if (environment === 'production') {
+      ReactGA.pageview(location.pathname);
+    }
+  }, [location.pathname]);
 
   // Effect Network change
   useEffect(() => {

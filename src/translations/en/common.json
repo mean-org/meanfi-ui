@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Connect wallet account",
 		"copy-address": "Copy Address",
+		"disconnect": "Disconnect",
 		"explorer-link": "View on Solana Explorer",
 		"modal-title": "Account",
 		"network-unknown": "Unknown",
@@ -109,6 +110,7 @@
 		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
 		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
+		"renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
 		"send-from-wallet-cta-label": "Send from Wallet/Exchange",
 		"transak-cta-label": "Buy with debit/credit card"
 	},
@@ -170,10 +172,10 @@
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "Back to My Streams",
-		"create-new-stream-cta": "Create new money stream",
+		"back-to-my-streams-cta": "Back to Transfer activity",
+		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Lookup a stream",
-		"screen-title": "My Money Streams",
+		"screen-title": "Transfer activity",
 		"stream-activity": {
 			"action-deposit": "Deposit",
 			"action-withdraw": "Withdraw",
@@ -225,7 +227,7 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Exchange to (Estimate)",
+		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
@@ -259,7 +261,7 @@
 		},
 		"recipient": {
 			"label": "Recipient",
-			"placeholder": "Public address or ENS",
+			"placeholder": "Public address",
 			"qr-scan-title": "Get address from QR code",
 			"recipient-is-own-account": "Cannot send to your own account"
 		},

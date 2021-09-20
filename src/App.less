@@ -35,6 +35,7 @@
   --color-section-contrast: #f1f1f1;
   --color-white: #ffffff;
   --color-black: #000000;
+  --component-background: #ffffff;
 
   /* Black with alpha */
   --color-secondary-alpha-01: rgba(0, 0, 0, 0.01);
@@ -108,6 +109,7 @@
   --color-section-contrast: #0a0a13;
   --color-white: #ffffff;
   --color-black: #000000;
+  --component-background: #1f1f1f;
 
   /* Black with alpha */
   --color-secondary-alpha-01: rgba(255, 255, 255, 0.01);
@@ -253,10 +255,35 @@ footer.ant-layout-footer {
       display: flex;
       flex-direction: row;
       align-items: center;
+      background-color: var(--color-network-bar);
       border-radius: var(--custom-border-radius);
       height: 40px;
-      padding: 2px 0;
-      margin: 4px 0;
+      padding: 2px;
+      .connected-network {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        align-items: center;
+        margin-right: 8px;
+        margin-left: 4px;
+        .chain-logo {
+          align-items: center;
+          justify-content: center;
+          display: inline-flex;
+          margin-right: 4px;
+          > img {
+            margin: 0;
+          }
+        }
+        .account-balance {
+          font-size: 1rem;
+          font-weight: 400;
+          letter-spacing: -0.5px;
+          line-height: 1;
+          color: var(--color-dark);
+        }
+      }
       .wallet-wrapper {
         display: flex;
         align-items: center;
@@ -418,6 +445,14 @@ footer.ant-layout-footer {
   justify-content: center;
   align-items: center;
   border: none !important;
+  &.info-icon-button {
+    background-color: inherit;
+    color: inherit;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    font-size: 14px;
+  }
   &:hover,
   &:focus,
   &:active {
@@ -932,15 +967,13 @@ footer.ant-layout-footer {
       display: inline-flex;
       margin-right: 4px;
       > img {
-        height: 24px;
-        width: 24px;
-        border-radius: 50%;
+        margin: 0;
       }
     }
-    .chain-name {
+    .account-balance {
       font-size: 1rem;
-      font-weight: 600;
-      text-transform: capitalize;
+      font-weight: 400;
+      letter-spacing: -0.5px;
     }
   }
   .wallet-wrapper {
@@ -1935,9 +1968,9 @@ section.content {
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 0 2.4rem 0 1.4rem;
+    padding: 0.4rem 1rem;
     .title {
-      font-size: 24px;
+      font-size: 1rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: -0.2px;
@@ -2006,18 +2039,21 @@ section.content {
   }
   @media (max-width: 575.98px) {
     position: relative;
-    height: 73vh;
+    height: 100%;
     .streams-container,
     .stream-details-container {
       transition: transform 0.5s ease-in-out;
       height: 100%;
-      overflow: auto;
     }
     flex-direction: column;
     justify-content: flex-start;
     overflow: hidden;
     &:not(details-open) {
+      .streams-container {
+        z-index: 2;
+      }
       .stream-details-container {
+        z-index: 1;
         max-height: 0;
       }
     }
@@ -2028,7 +2064,6 @@ section.content {
       transform: translateY(0%);
       transform-origin: top;
       opacity: 1;
-      z-index: 1;
     }
     .stream-details-container {
       position: absolute;
@@ -2038,7 +2073,6 @@ section.content {
       transform: translateY(80%);
       opacity: 0;
       transform-origin: top;
-      z-index: 2;
       .streams-heading,
       .ant-divider.ant-divider-horizontal.streams-divider {
         display: none;
@@ -2052,11 +2086,13 @@ section.content {
         transform: translateY(80%);
         max-height: 0;
         opacity: 0;
+        z-index: 1;
       }
       .stream-details-container {
         transform: translateY(0%);
         max-height: initial;
         opacity: 1;
+        z-index: 2;
       }
     }  
   }
@@ -2085,15 +2121,15 @@ section.content {
     }
   }
   @media (min-width: 768px) {
-    height: 85vh;
+    height: 80vh;
     min-height: 564px;
-    max-height: 84vh;
+    max-height: 80vh;
     .streams-container,
     .stream-details-container {
       flex: 0 0 50%;
       max-width: 50%;
       height: auto;
-      max-height: 82vh;
+      max-height: 80vh;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -2164,7 +2200,7 @@ section.content {
       .stream-details-data-wrapper {
         padding-right: 0.6rem;
         max-height: calc(100% - 0.6rem);
-        z-index: 3;
+        // z-index: 3;
       }
       .stream-fields-container {
         position: relative;
@@ -2675,7 +2711,11 @@ section.content {
     justify-content: flex-start;
     overflow: hidden;
     &:not(details-open) {
+      .tokens-container {
+        z-index: 2;
+      }
       .transaction-list-container {
+        z-index: 1;
         max-height: 0;
       }
     }
@@ -2710,11 +2750,13 @@ section.content {
         transform: translateY(80%);
         max-height: 0;
         opacity: 0;
+        z-index: 1;
       }
       .transaction-list-container {
         transform: translateY(0%);
         max-height: initial;
         opacity: 1;
+        z-index: 2;
       }
     }  
   }
@@ -2867,7 +2909,7 @@ section.content {
           height: calc(100% - 1rem);
           &:extend(.flex-center);
         }
-        z-index: 3;
+        // z-index: 3;
         .item-list-body.compact {
           .item-list-row {
             height: 40px;
@@ -3040,13 +3082,29 @@ section.content {
     font-size: 18px;
   }
 }
-.mean-svg-icons.link {
-  font-size: 0.8rem;
-  width: 0.92rem;
-  height: 0.92rem;
-  vertical-align: -2px;
-  margin-right: 0.25rem;
+
+.mean-svg-icons {
+  &.info {
+    color: var(--color-notify-info);
+  }
+  &.success {
+    color: var(--color-notify-success);
+  }
+  &.warning {
+    color: var(--color-notify-warning);
+  }
+  &.error {
+    color: var(--color-notify-error);
+  }
+  &.link {
+    font-size: 0.8rem;
+    width: 0.92rem;
+    height: 0.92rem;
+    vertical-align: -2px;
+    margin-right: 0.25rem;
+  }
 }
+
 .top-input-label {
   font-size: 14px;
   font-weight: 500;
@@ -4721,22 +4779,28 @@ section.content {
   &::after {
     background: var(--color-secondary-alpha-01);
   }
+  &.ant-popover-placement-leftBottom {
+    .ant-popover-content,
+    .ant-popover-arrow {
+      margin-right: -0.7rem;
+    }
+  }
   .ant-popover-content {
     color: var(--text-color);
     .ant-popover-arrow {
       .ant-popover-arrow-content {
-        background-color: var(--bg-color);
+        background-color: var(--component-background);
       }
     }
     .ant-popover-inner {
-      background-color: var(--bg-color);
+      background-color: var(--component-background);
       .ant-popover-title {
         color: var(--color-secondary-alpha-70);
         border-bottom: 1px solid var(--color-secondary-alpha-20);
       }
       .ant-popover-inner-content {
         color: var(--text-color);
-        background-color: var(--bg-color);
+        background-color: var(--component-background);
         .ant-radio-group {
           .ant-radio-button-wrapper {
             color: var(--text-color);

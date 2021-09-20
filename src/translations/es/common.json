@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Conecte su billetera",
 		"copy-address": "Copiar dirección",
+		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
@@ -20,7 +21,7 @@
 		"account-address-change-cta": "Escanear otra dirección",
 		"account-address-label": "Dirección de cuenta",
 		"account-address-placeholder": "Ingrese la dirección de su cuenta",
-		"account-address-validation": "Not a valid address format",
+		"account-address-validation": "Formato de dirección no válido",
 		"back-to-assets-cta": "Volver a la lista de activos",
 		"create-account-help-link": "Conozca más sobre billeteras",
 		"create-account-help-post": "abrir una cuenta",
@@ -109,6 +110,7 @@
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
+		"renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
 		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
 		"transak-cta-label": "Compre con tarjeta de débito/crédito"
 	},
@@ -170,10 +172,10 @@
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
-		"create-new-stream-cta": "Crear nueva transferencia",
+		"back-to-my-streams-cta": "Volver a las transferencia",
+		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
-		"screen-title": "Mis Transferencias de dinero",
+		"screen-title": "Transferencias",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -225,12 +227,12 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Intercambiar a (Estimado)",
+		"input-label-destination": "Intercambiar a (est.)",
 		"input-label-source": "Intercambiar de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
 		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Slippage Tolerance"
+		"transaction-settings": "Tolerancia al deslizamiento"
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
@@ -259,7 +261,7 @@
 		},
 		"recipient": {
 			"label": "Destinatario",
-			"placeholder": "Dirección pública o ENS",
+			"placeholder": "Dirección pública",
 			"qr-scan-title": "Obtener dirección desde código QR",
 			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},
