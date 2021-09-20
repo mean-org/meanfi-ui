@@ -5,25 +5,19 @@ import {
   PublicKey, 
   Signer, 
   SystemProgram, 
-  SYSVAR_RENT_PUBKEY, 
-  Transaction, 
-  TransactionInstruction
+  Transaction
 
 } from "@solana/web3.js";
 
-import { getOrca, Orca, OrcaPoolConfig, OrcaU64, ORCA_TOKEN_SWAP_ID, resolveOrCreateAssociatedTokenAddress, U64Utils } from "@orca-so/sdk";
+import { getOrca, Orca, OrcaPoolConfig, OrcaPoolToken, OrcaU64 } from "@orca-so/sdk";
 import { LPClient, ExchangeInfo, ORCA } from "../types";
-import { getTokensPools } from "../utils";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AMM_POOLS, PROTOCOLS } from "../data";
-import { OrcaPoolToken } from "@orca-so/sdk/dist/model/orca/pool/pool-types";
 import { cloneDeep } from "lodash";
 import { BN } from "bn.js";
 import Decimal from "decimal.js";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { TokenSwap } from "@solana/spl-token-swap";
-import { orcaPoolConfigs } from "@orca-so/sdk/dist/constants/pools";
 
 export class OrcaClient implements LPClient {
 
@@ -80,7 +74,7 @@ export class OrcaClient implements LPClient {
       tradeToken = cloneDeep(tokenB);
     }
 
-    const decimalTradeAmount = new Decimal(amount);
+    const decimalTradeAmount = new Decimal(amount === 0 ? 1 : amount);
     const decimalSlippage = new Decimal(slippage / 10);
     const quote = await pool.getQuote(tradeToken, decimalTradeAmount, decimalSlippage);
     const protocol = PROTOCOLS.filter(p => p.address === ORCA.toBase58())[0];
@@ -133,41 +127,11 @@ export class OrcaClient implements LPClient {
     }
 
     const minimumOutAmount = amountOut * (100 - slippage) / 100;
+    
+    let tx = new Transaction();
+    let sig: Signer[] = [];
 
-    let { transaction, signers } = await pool.swap(
-      owner, 
-      tradeToken, 
-      OrcaU64.fromNumber(amountIn, tradeToken.scale),
-      OrcaU64.fromNumber(minimumOutAmount, outputToken.scale)
-    );
-
-    const fromMint = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : tradeToken.mint;
-    const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
-    let wrappedSolAccount: Keypair | null = null;
-
-    if (from === NATIVE_SOL_MINT.toBase58()) {
-
-      wrappedSolAccount = Keypair.generate();
-
-      transaction.add(
-        SystemProgram.createAccount({
-          fromPubkey: owner,
-          newAccountPubkey: wrappedSolAccount.publicKey,
-          lamports: feeBnAmount.toNumber() + 1e7,
-          space: ACCOUNT_LAYOUT.span,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          WRAPPED_SOL_MINT,
-          wrappedSolAccount.publicKey,
-          owner
-        )
-      );
-
-      signers.push(wrappedSolAccount);
-    }
-
+    const fromMint = from === WRAPPED_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : tradeToken.mint;
     const fromTokenAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -176,6 +140,121 @@ export class OrcaClient implements LPClient {
       true
     );
 
+    if (fromMint.equals(WRAPPED_SOL_MINT)) {
+
+      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
+      const account = Keypair.generate();
+
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: owner,
+          newAccountPubkey: account.publicKey,
+          lamports: minimumWrappedAccountBalance,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          account.publicKey,
+          owner
+        ),
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          fromTokenAccount,
+          account.publicKey,
+          owner,
+          [],
+          amountIn * LAMPORTS_PER_SOL
+        ),
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          account.publicKey,
+          owner,
+          owner,
+          []
+        )
+      );
+
+      sig.push(account);
+    }
+
+    let { transaction, signers } = await pool.swap(
+      owner, 
+      tradeToken, 
+      OrcaU64.fromNumber(amountIn, tradeToken.scale),
+      OrcaU64.fromNumber(minimumOutAmount, outputToken.scale)
+    );
+
+    tx.add(transaction);
+    sig.push(...signers);
+
+    const toMint = to === WRAPPED_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : outputToken.mint;
+    const toTokenAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      toMint,
+      owner,
+      true
+    );
+
+    if (toMint.equals(WRAPPED_SOL_MINT)) {
+
+      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
+      const account = Keypair.generate();
+  
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: owner,
+          newAccountPubkey: account.publicKey,
+          lamports: minimumWrappedAccountBalance + amountOut * LAMPORTS_PER_SOL,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          account.publicKey,
+          owner
+        )  
+      );
+
+      sig.push(account);
+      const aTokenInfo = await this.connection.getAccountInfo(toTokenAccount);
+  
+      if (!aTokenInfo) {
+        tx.add(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            WRAPPED_SOL_MINT,
+            toTokenAccount,
+            owner,
+            owner
+          )
+        );
+      }
+
+      tx.add(
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          account.publicKey,
+          toTokenAccount,
+          owner,
+          [],
+          new BN(minimumOutAmount * LAMPORTS_PER_SOL).toNumber()
+        ),
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          account.publicKey,
+          owner,
+          owner,
+          []
+        )
+      );
+    }
+
+    const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
     const feeAccountToken = await Token.getAssociatedTokenAddress(
@@ -189,7 +268,7 @@ export class OrcaClient implements LPClient {
     const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);
 
     if (!feeAccountTokenInfo) {
-      transaction.add(
+      tx.add(
         Token.createAssociatedTokenAccountInstruction(
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
@@ -201,45 +280,25 @@ export class OrcaClient implements LPClient {
       );
     }
 
-    if (wrappedSolAccount) {
-      transaction.add(
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          wrappedSolAccount.publicKey,
-          feeAccountToken,
-          owner,
-          [],
-          feeBnAmount.toNumber()
-        ),
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          wrappedSolAccount.publicKey,
-          owner,
-          owner,
-          []
-        )
-      );
-    } else {
-      transaction.add(
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          fromTokenAccount,
-          feeAccountToken,
-          owner,
-          [],
-          feeBnAmount.toNumber()
-        )
-      );
-    }
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount,
+        feeAccountToken,
+        owner,
+        [],
+        feeBnAmount.toNumber()
+      )
+    );
 
-    transaction.feePayer = owner;
+    tx.feePayer = owner;
     const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
-    transaction.recentBlockhash = blockhash;
+    tx.recentBlockhash = blockhash;
 
     if (signers.length) {
-      transaction.partialSign(...signers);
+      tx.partialSign(...sig);
     }
 
-    return transaction;
+    return tx;
   };
 }

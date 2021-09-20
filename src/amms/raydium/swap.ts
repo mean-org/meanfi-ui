@@ -36,7 +36,7 @@ export const getSwapTx = async (
       SystemProgram.createAccount({
         fromPubkey: owner,
         newAccountPubkey: wrappedSolAccount.publicKey,
-        lamports: fromAmount.sub(fee).toNumber() + 1e7,
+        lamports: fromAmount.toNumber() + 1e7,
         space: ACCOUNT_LAYOUT.span,
         programId: TOKEN_PROGRAM_ID,
       }),

@@ -74,13 +74,26 @@ export const getOptimalPool = (
   return pools[0];
 }
 
+export const getExchangeInfo = async (
+  client: Client,
+  from: string,
+  to: string, 
+  amount: number,
+  slippage: number
+
+) => {
+
+  return client.getExchangeInfo(
+    from,
+    to,
+    amount,
+    slippage
+  );
+}
+
 export const getFormattedAmount = (value: number, decimals: number) => {
   //
-  const lamportsPerMint = 10 ** decimals;
-  const amountBn = new BN(value * lamportsPerMint);
-  const result = (amountBn.toNumber() / lamportsPerMint);
-  
-  return result.toFixed(decimals);
+  return value.toFixed(decimals);
 }
 
 export const wrap = async (
