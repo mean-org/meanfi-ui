@@ -42,7 +42,7 @@ export const getTokensPools = (
 
 ): AmmPoolInfo[] => {
 
-  return AMM_POOLS.filter((ammPool) => {
+  const pools = AMM_POOLS.filter((ammPool) => {
 
     let fromMint = from;
     let toMint = to;
@@ -57,7 +57,11 @@ export const getTokensPools = (
     }
 
     return include;
-  });  
+  });
+
+  console.log('pools', pools);
+  
+  return pools;
 }
 
 export const getOptimalPool = (

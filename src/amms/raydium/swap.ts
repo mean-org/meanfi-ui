@@ -1,7 +1,6 @@
 import { Token } from "@solana/spl-token";
-import { Account, Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { getTokenByMintAddress } from "./utils";
+import { Account, Connection, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TokenAmount } from "../../utils/safe-math";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import BN from "bn.js";

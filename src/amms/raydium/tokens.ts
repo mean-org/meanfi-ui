@@ -30,6 +30,15 @@ export const NATIVE_SOL: TokenInfo = {
       logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png",
       tags: ['raydium']
     },
+    renBTC: {
+      symbol: 'renBTC',
+      name: 'renBTC',
+      address: 'CDJWUqTcYTVAKXAVXoQZFes5JUFc7owSeq7eMQcDSbo5',
+      decimals: 8,
+      referrer: '7rr64uygy3o5RKVeNv12JGDUFMXVdr2YHvA3NTxzbZT6',
+      logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/CDJWUqTcYTVAKXAVXoQZFes5JUFc7owSeq7eMQcDSbo5/logo.png',
+      tags: ['raydium']
+    },
     ETH: {
       symbol: 'ETH',
       name: 'Wrapped Ethereum',
@@ -77,6 +86,15 @@ export const NATIVE_SOL: TokenInfo = {
   
       address: '2hMdRdVWZqetQsaHG8kQjdZinEMBz75vsoWTCob1ijXu',
       decimals: TOKENS.BTC.decimals
+    },
+    'renBTC-USDC-V4': {
+      symbol: 'renBTC-USDC',
+      name: 'renBTC-USDC LP',
+      coin: { ...TOKENS.renBTC },
+      pc: { ...TOKENS.USDC },
+  
+      address: 'CTEpsih91ZLo5gunvryLpJ3pzMjmt5jbS6AnSQrzYw7V',
+      decimals: TOKENS.renBTC.decimals
     },
     'ETH-USDC-V4': {
       symbol: 'ETH-USDC',

@@ -1,4 +1,4 @@
-import { Row, Col, Spin, Modal, Button, Popover } from "antd";
+import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
@@ -20,13 +20,12 @@ import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import * as base64 from "base64-js";
 import BN from "bn.js";
 import "./style.less";
 
 // NEW
 import { TOKENS } from "../../amms/data";
-import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, Client } from "../../amms/types";
+import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../amms/types";
 import { SerumClient } from "../../amms/serum/types";
 import { getClient, getExchangeInfo, getFormattedAmount, getOptimalPool, getTokensPools, unwrap, wrap } from "../../amms/utils";
 import { cloneDeep } from "lodash";
@@ -56,32 +55,15 @@ export const SwapUi = (props: {
 
   // Added by YAF (Token balance)
   const [smallAmount, setSmallAmount] = useState(0);
-  const [fromMintTokenBalance, setFromMintTokenBalance] = useState(0);
-  const [toMintTokenBalance, setToMintTokenBalance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [toSwapAmount, setToSwapAmount] = useState("");
   // Get them from the localStorage and set defaults if they are not already stored
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
-  // const [lastSwapToMint, setLastSwapToMint] = useLocalStorage('lastSwapToMint', NATIVE_SOL_MINT.toBase58());
-  // Work with our swap From/To subjects
-  // const [fromMint, setFromMint] = useState<PublicKey | undefined>(new PublicKey(lastSwapFromMint));
-  // const [toMint, setToMint] = useState<PublicKey | undefined>(); //useState(new PublicKey(lastSwapToMint));
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
-  // const [toAmount, setToAmount] = useState("");
-  // const [maxFromAmount, setMaxFromAmount] = useState<number>(0);
-  const [toAmount, setToAmount] = useState("");
   const [isWrap, setIsWrap] = useState(false);
   const [isUnwrap, setIsUnwrap] = useState(false);
-  const [outToPrice, setOutToPrice] = useState("");
-  const [priceImpact, setPriceImpact] = useState("");
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
-  const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
-  const [fromTokenList, setFromTokenList] = useState<TokenInfo[]>([]);
-  const [toTokenList, setToTokenList] = useState<TokenInfo[]>([]);
   const [tokenFilter, setTokenFilter] = useState("");
-  const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map<string, TokenInfo>());
-  const [tokenBalances, setTokenBalances] = useState<any>([]);
   const [isFlipping, setIsFlipping] = useState(false);
   const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -109,13 +91,10 @@ export const SwapUi = (props: {
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
-  // const [fromToken, setFromToken] = useState<TokenAccountInfo>();
-  // const [toToken, setToToken] = useState<TokenAccountInfo>();
   const [swapClient, setSwapClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
-
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
 
   // Automatically updates the user account
@@ -784,21 +763,51 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
+      if (fromMint === WRAPPED_SOL_MINT.toBase58()) {
 
-      if (!btcMintInfo) { return; }
-
-      if (fromMint && (fromMint === btcMintInfo.address)) {
-
-        const usdxList: any[] = Object
+        const solList: any[] = Object
           .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
+          .filter((m: any) => m.symbol === 'SOL');
+
+        setShowToMintList(solList);
+        setToMint(NATIVE_SOL_MINT.toBase58());
+
+        return;
+      }
+
+      const btcMintInfos: any = Object
+        .values(mintList)
+        .filter((m: any) => m.symbol === 'BTC' || m.symbol === 'renBTC');
+
+      if (!btcMintInfos || btcMintInfos.length === 0) { return; }
+
+      const fromBtcInfo = btcMintInfos.find((i: any) => i.address === fromMint);
+ 
+      if (fromBtcInfo) {
+
+        const counterpartyInfo: any = fromBtcInfo.symbol === 'BTC' 
+          ? Object.values(mintList).filter((i: any) => i.symbol === 'renBTC')[0]
+          : Object.values(mintList).filter((i: any) => i.symbol === 'BTC')[0];
+
+        const filteredList: any[] = Object
+          .values(mintList)
+          .filter((m: any) => 
+            m.symbol === 'USDC' || 
+            m.symbol === counterpartyInfo.symbol
+          );
+
+        if (fromBtcInfo.symbol === 'BTC') {
+          filteredList.push(...Object.values(mintList).filter((m: any) => m.symbol === 'USDT'));
+        }
     
-        setShowToMintList(usdxList);
+        setShowToMintList(filteredList);
         
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58()) {
+        if (
+          toMint && 
+          toMint !== USDC_MINT.toBase58() && 
+          toMint !== USDT_MINT.toBase58() && 
+          toMint !== counterpartyInfo.address
+        ) {
           setToMint(USDC_MINT.toBase58());
         }
 
@@ -826,21 +835,39 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const btcMintInfo: any = Object
+      const btcMintInfos: any = Object
         .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
+        .filter((m: any) => m.symbol === 'BTC' || m.symbol === 'renBTC');
 
-      if (!btcMintInfo) { return; }
+      if (!btcMintInfos || btcMintInfos.length === 0) { return; }
 
-      if (toMint && (toMint === btcMintInfo.address)) {
+      const toBtcInfo = btcMintInfos.find((i: any) => i.address === toMint);
 
-        const usdxList: any[] = Object
+      if (toBtcInfo) {
+
+        const counterpartyInfo: any = toBtcInfo.symbol === 'BTC' 
+          ? Object.values(mintList).filter((i: any) => i.symbol === 'renBTC')[0]
+          : Object.values(mintList).filter((i: any) => i.symbol === 'BTC')[0];
+
+        const filteredList: any[] = Object
           .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
+          .filter((m: any) => 
+            m.symbol === 'USDC' || 
+            m.symbol === counterpartyInfo.symbol
+          );
+
+        if (toBtcInfo.symbol === 'BTC') {
+          filteredList.push(...Object.values(mintList).filter((m: any) => m.symbol === 'USDT'));
+        }
     
-        setShowFromMintList(usdxList);
+        setShowFromMintList(filteredList);
         
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58()) {
+        if (
+          fromMint && 
+          fromMint !== USDC_MINT.toBase58() && 
+          fromMint !== USDT_MINT.toBase58() && 
+          fromMint !== counterpartyInfo.addres
+        ) {
           setFromMint(USDC_MINT.toBase58());
         }
 
@@ -909,7 +936,6 @@ export const SwapUi = (props: {
     if (newValue === null || newValue === undefined || newValue === "" || !isValidNumber(newValue)) {
       setFromAmount('');
       setFromSwapAmount(0);
-      setToAmount('');
     } else {
       setFromAmount(newValue);
       setFromSwapAmount(parseFloat(newValue));
@@ -1091,7 +1117,6 @@ export const SwapUi = (props: {
   }, [
     fromBalance, 
     fromMint, 
-    // toAmount, 
     toBalance, 
     toMint
   ]);
@@ -1333,7 +1358,6 @@ export const SwapUi = (props: {
     if (isSuccess()) {
       setFromAmount("");
       setFromSwapAmount(0);
-      setToAmount("");
       setShouldUpdateBalances(true);
       hideTransactionModal();
     }
