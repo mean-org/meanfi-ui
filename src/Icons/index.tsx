@@ -11,6 +11,7 @@ export { IconDownload } from "./IconDownload";
 export { IconEllipsis } from "./IconEllipsis";
 export { IconExit } from "./IconExit";
 export { IconExternalLink } from "./IconExternalLink";
+export { IconGasStation } from "./IconGasStation";
 export { IconIncomingPaused } from "./IconIncomingPaused";
 export { IconInfoCircle } from "./IconInfoCircle";
 export { IconInfoTriangle } from "./IconInfoTriangle";

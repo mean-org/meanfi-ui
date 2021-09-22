@@ -10,6 +10,7 @@ import { displayTimestamp } from "../../utils/ui";
 import { Tooltip } from "antd";
 import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
+import { IconGasStation } from "../../Icons";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -18,6 +19,7 @@ export const TransactionItemView = (props: {
 }) => {
 
   const [isInboundTx, setIsInboundTx] = useState(false);
+  const [hasTokenBalances, setHasTokenBalances] = useState(false);
   const [preBalance, setPreBalance] = useState(0);
   const [postBalance, setPostBalance] = useState(0);
   const [amountChange, setAmountChange] = useState(0);
@@ -41,6 +43,7 @@ export const TransactionItemView = (props: {
         ((meta.preTokenBalances && meta.preTokenBalances.length) || (meta.postTokenBalances && meta.postTokenBalances.length))
         ? true
         : false;
+      setHasTokenBalances(tokensUsed);
 
       // Set inbound/outbound flag
       if (props.accountAddress === accounts[0].pubkey.toBase58()) {
@@ -86,19 +89,29 @@ export const TransactionItemView = (props: {
         amount = tokensUsed
                   ? isInbound
                     ? post - pre
-                    : pre - post
+                    : props.accountAddress === props.selectedAsset?.ataAddress
+                      ? meta.preBalances[0] - meta.postBalances[0]
+                      : pre - post
                   : isInbound
                     ? meta.postBalances[1] - meta.preBalances[1]
                     : meta.preBalances[0] - meta.postBalances[0];
 
         preBalance = tokensUsed
-                        ? pre
+                        ? props.accountAddress === props.selectedAsset?.ataAddress
+                          ? isInbound
+                            ? meta.postBalances[1]
+                            : meta.postBalances[0]
+                          : pre
                         : isInbound
                           ? meta.preBalances[1]
                           : meta.preBalances[0];
 
         postBalance = tokensUsed
-                        ? post
+                        ? props.accountAddress === props.selectedAsset?.ataAddress
+                          ? isInbound
+                            ? meta.postBalances[1]
+                            : meta.postBalances[0]
+                          : post
                         : isInbound
                           ? meta.postBalances[1]
                           : meta.postBalances[0];
@@ -108,18 +121,6 @@ export const TransactionItemView = (props: {
       setPreBalance(preBalance);
       setPostBalance(postBalance);
       setAmountChange(amount);
-
-      // if (!isInbound) {
-      //   const accountsTable: any[] = [];
-      //   accounts.forEach(item => {
-      //     accountsTable.push({
-      //       address: item.pubkey ? shortenAddress(item.pubkey.toBase58(), 5) : '',
-      //       signer: item.signer,
-      //       writable: item.writable
-      //     });
-      //   });
-      //   console.table(accountsTable);
-      // }
     }
   }, [props]);
 
@@ -129,9 +130,15 @@ export const TransactionItemView = (props: {
         <ArrowDownOutlined className="mean-svg-icons incoming" />
       );
     } else {
-      return (
-        <ArrowUpOutlined className="mean-svg-icons outgoing" />
-      );
+      if (props.accountAddress === props.selectedAsset?.ataAddress && hasTokenBalances) {
+        return (
+          <IconGasStation className="mean-svg-icons gas-station warning" />
+        );
+      } else {
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        );
+      }
     }
   }
 
@@ -145,6 +152,8 @@ export const TransactionItemView = (props: {
     const sender = trans.accountKeys[0].pubkey.toBase58();
     const receiver = trans.accountKeys[1].pubkey.toBase58();
     const wallet = (trans.instructions[0] as any)?.parsed?.info?.wallet as string || '';
+    // userTokenAccounts.some(i => i.algo === a.pubkey.toBase58())
+    // props.accountAddress === props.selectedAsset?.ataAddress
     if (isInboundTx) {
       if (sender === faucetAddress) {
         return 'Account airdrop';
@@ -165,23 +174,33 @@ export const TransactionItemView = (props: {
 
     // Display these ones
     const getDisplayAmount = (abbreviated = true): string => {
-      const displayAmount = postTokenBalance
-        ? getTokenAmountAndSymbolByTokenAddress(Math.abs(amountChange), postTokenBalance.mint)
-        : abbreviated
-          ? formatAmount(getAmountFromLamports(Math.abs(amountChange)), 6, true) + ' SOL'
-          : formatAmount(getAmountFromLamports(Math.abs(amountChange)), 9) + ' SOL';
+      const displayAmount =
+        postTokenBalance
+          ? props.accountAddress === props.selectedAsset?.ataAddress
+            ? abbreviated
+              ? formatAmount(getAmountFromLamports(Math.abs(amountChange)), 6)
+              : formatAmount(getAmountFromLamports(Math.abs(amountChange)), 9)
+            : getTokenAmountAndSymbolByTokenAddress(Math.abs(amountChange), postTokenBalance.mint, true)
+          : abbreviated
+            ? formatAmount(getAmountFromLamports(Math.abs(amountChange)), 6)
+            : formatAmount(getAmountFromLamports(Math.abs(amountChange)), 9);
       return isAmountNegative() ? '-' + displayAmount : displayAmount;
     }
 
     const getDisplayPostBalance = (abbreviated = true): string => {
       return postTokenBalance
-        ? getTokenAmountAndSymbolByTokenAddress(
+        ? props.accountAddress === props.selectedAsset?.ataAddress
+          ? abbreviated
+            ? formatAmount(getAmountFromLamports(postBalance), 6)
+            : formatAmount(getAmountFromLamports(postBalance), 9)
+          : getTokenAmountAndSymbolByTokenAddress(
             postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
-            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address
+            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
+            true
           )
         : abbreviated
-          ? formatAmount(getAmountFromLamports(postBalance), 6, true) + ' SOL'
-          : formatAmount(getAmountFromLamports(postBalance), 9) + ' SOL';
+          ? formatAmount(getAmountFromLamports(postBalance), 6)
+          : formatAmount(getAmountFromLamports(postBalance), 9);
     }
 
     return (
@@ -205,7 +224,7 @@ export const TransactionItemView = (props: {
             <span>{getDisplayPostBalance()}</span>
           </Tooltip>
         </div>
-        <div className="std-table-cell fixed-width-100">
+        <div className="std-table-cell responsive-cell pl-2">
           {
             blockTime ? (
               <Tooltip placement="bottom" trigger="hover" title={displayTimestamp(blockTime * 1000)}>
@@ -218,6 +237,7 @@ export const TransactionItemView = (props: {
         </div>
       </a>
     );
+
   };
 
   return getTransactionItems();

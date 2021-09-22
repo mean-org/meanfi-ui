@@ -625,7 +625,7 @@ export const AccountsView = () => {
                           <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
                           <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
                           <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                          <div className="std-table-cell fixed-width-100">{t('assets.history-table-date')}</div>
+                          <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
                         </div>
                       </div>
                     </div>
