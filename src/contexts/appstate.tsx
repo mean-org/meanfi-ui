@@ -681,7 +681,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [userTokens, setUserTokens] = useState<UserTokenAccount[]>([]);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
@@ -695,6 +695,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const setAccountAddress = (address: string) => {
+    updateTransactions([]);
     updateAccountAddress(address);
   }
 
@@ -704,7 +705,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       let list = new Array<UserTokenAccount>();
       list.push(NATIVE_SOL as UserTokenAccount);
       MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID).forEach(item => list.push(item));
-      setUserTokens(list);
+      updateUserTokens(list);
       consoleOut('AppState -> userTokens:', list);
     })();
 

@@ -31,7 +31,7 @@ export const QrScannerModal = (props: {
             // Optional: To close the QR code scannign after the result is found
             html5QrcodeScanner.clear();
             setRecipientAddress(tempString);
-            props.handleOk();
+            props.handleOk(tempString);
           }
         };
 

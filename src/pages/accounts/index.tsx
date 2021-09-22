@@ -78,7 +78,8 @@ export const AccountsView = () => {
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
   const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
   const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
-  const onAcceptQrScannerModal = () => {
+  const onAcceptQrScannerModal = (value: string) => {
+    setAccountAddressInput(value);
     triggerWindowResize();
     closeQrScannerModal();
   };
@@ -95,12 +96,14 @@ export const AccountsView = () => {
   }, [setTransactions])
 
   const selectAsset = useCallback((asset: UserTokenAccount) => {
+    setTransactions(undefined);
     setSelectedAsset(asset);
     setDtailsPanelOpen(true);
     setTimeout(() => {
       startSwitch();
     }, 10);
   }, [
+    setTransactions,
     setSelectedAsset,
     setDtailsPanelOpen,
   ])
@@ -283,7 +286,7 @@ export const AccountsView = () => {
             : null;
   },[accountAddress]);
 
-  // Start loading the transactions when signaled
+  // Load the transactions when signaled
   useEffect(() => {
 
     if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
@@ -457,7 +460,7 @@ export const AccountsView = () => {
 
   const renderTransactions = () => {
     return transactions?.map((trans: MappedTransaction) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} accountAddress={accountAddress} />;
+      return <TransactionItemView key={trans.signature} transaction={trans} selectedAsset={selectedAsset as UserTokenAccount} accountAddress={accountAddress} />;
     });
   };
 
