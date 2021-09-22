@@ -1,0 +1,241 @@
+import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { cloneDeep } from "lodash-es";
+import { AMM_POOLS, PROTOCOLS } from "../data";
+import { ExchangeInfo, LPClient, SABER } from "../types";
+import { deserializeMint, deserializeAccount, TokenAmount, Token } from "@saberhq/token-utils";
+import { SLPInfo } from "./types";
+import { getMultipleAccounts } from "../../utils/accounts";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { SLPools } from "./pool";
+
+import { 
+  StableSwap, 
+  StableSwapConfig, 
+  decodeSwap, 
+  loadProgramAccount, 
+  findSwapAuthorityKey,
+  makeExchange,
+  loadExchangeInfo,
+  calculateSwapPrice,
+  calculateEstimatedSwapOutputAmount
+
+} from "@saberhq/stableswap-sdk";
+import { BN } from "bn.js";
+
+export class SaberClient implements LPClient {
+
+  private connection: Connection;
+  private saberSwap: any;
+  private currentPool: any;
+
+  constructor(connection: Connection) {
+    this.connection = connection;
+  }
+
+  public get protocolAddress() : string {
+    return SABER.toBase58(); 
+  }
+
+  public getPoolInfo = async (
+    address: string
+
+  ) => {
+
+    const poolInfo = AMM_POOLS.filter(info => info.address === address)[0];
+
+    if (!poolInfo) {
+      throw new Error("Saber pool not found.");
+    }
+
+    const programId = new PublicKey(poolInfo.protocolAddress);
+    const swapAccountData = await loadProgramAccount(
+      this.connection,
+      new PublicKey(poolInfo.ammAddress),
+      programId
+    );
+
+    const swapState = decodeSwap(swapAccountData);
+
+    const [authority] = await findSwapAuthorityKey(
+      new PublicKey(poolInfo.ammAddress),
+      programId
+    );
+
+    const config = {
+      authority,
+      swapAccount: new PublicKey(poolInfo.ammAddress),
+      swapProgramID: programId,
+      tokenProgramID: TOKEN_PROGRAM_ID
+      
+    } as StableSwapConfig
+
+    this.saberSwap = new StableSwap(config, swapState);
+    const saberPool = SLPools.filter(p => p.address === poolInfo.address)[0];
+
+    if (!saberPool) {
+      throw new Error("Saber pool not found.");
+    }
+
+    // Mints accounts
+    const mintsMap: any = {};
+    const mintInfos = await getMultipleAccounts(
+      this.connection,
+      saberPool.mints.map(a => new PublicKey(a)),
+      this.connection.commitment
+    );
+
+    mintInfos.forEach((value, index) => {
+      if (value) {
+        const data = value.account.data;
+        const decoded = deserializeMint(data);
+        const token = Token.fromMint(
+          value.publicKey.toBase58(),
+          decoded.decimals,
+          { chainId: 101 }
+        );
+        mintsMap[saberPool.tokens[index]] = token;
+      }
+    });
+
+    // Reserves accounts
+    const reservesMap: any = {};
+    const reserveInfos = await getMultipleAccounts(
+      this.connection,
+      saberPool.reserves.map(a => new PublicKey(a)),
+      this.connection.commitment
+    );
+
+    for (let info of reserveInfos) {
+      if (info) {
+        const data = info.account.data;
+        const decoded = deserializeAccount(data);
+        reservesMap[info.publicKey.toBase58()] = decoded;
+      }
+    }
+
+    const slpInfo: SLPInfo = {
+      name: saberPool.name,
+      address: saberPool.address,
+      ammAddress: saberPool.ammAddress,
+      programId: saberPool.programId,
+      tokens: saberPool.tokens,
+      mints: mintsMap,
+      reserves: reservesMap
+    };
+
+    this.currentPool = slpInfo;
+
+    return this.currentPool;
+  }
+
+  public getExchangeInfo = async (
+    from: string,
+    to: string,
+    amount: number,
+    slippage: number
+
+  ): Promise<ExchangeInfo> => {
+    
+    const poolInfo = cloneDeep(this.currentPool);
+
+    if (!poolInfo) {
+      throw new Error("Orca pool not found.");
+    }
+
+    const invert = (from === poolInfo.tokens[1] && to === poolInfo.tokens[0]);
+    const tokenA = !invert ? poolInfo.mints[from] : poolInfo.mints[to];
+    const tokenB = !invert ? poolInfo.mints[to] : poolInfo.mints[from];
+    const basicExchange = makeExchange({
+      swapAccount: new PublicKey(poolInfo.ammAddress),
+      lpToken: new PublicKey(poolInfo.address),
+      tokenA,
+      tokenB
+    });
+
+    if (!basicExchange) {
+      throw new Error('Exchange not available');
+    }
+
+    const exchangeInfo = await loadExchangeInfo(
+      this.connection,
+      basicExchange,
+      this.saberSwap,
+    );
+
+    if (!exchangeInfo) {
+      throw new Error('Exchange not available');
+    }
+
+    const amountIn = amount === 0 ? 1 : amount;
+    const fromAmount = new TokenAmount(tokenA, 1 * 10 ** tokenA.decimals);
+    const swapOutput = calculateEstimatedSwapOutputAmount(exchangeInfo, fromAmount);
+    const swapPrice = calculateSwapPrice(exchangeInfo);
+    const protocol = PROTOCOLS.filter(p => p.address === SABER.toBase58())[0];
+
+    const outAmount =  !invert
+      ? +swapOutput
+          .outputAmountBeforeFees
+          .toFixed(tokenB.decimals, undefined, 1)
+      : +swapOutput
+          .outputAmountBeforeFees
+          .invert()
+          .toFixed(tokenB.decimals, undefined, 1);
+
+    const minOutAmount = !invert
+      ? +swapOutput
+          .outputAmount
+          .toFixed(tokenB.decimals, undefined, 1)
+      : +swapOutput
+          .outputAmount
+          .invert()
+          .toFixed(tokenB.decimals, undefined, 1);
+
+    const price = !invert 
+      ? +swapPrice
+          .asFraction
+          .toFixed(tokenB.decimals, undefined, 1)
+      : +swapPrice
+          .invert()
+          .asFraction
+          .toFixed(tokenB.decimals, undefined, 1)
+
+    const exchange: ExchangeInfo = {
+      fromAmm: protocol.name,
+      outPrice: price * amountIn,
+      priceImpact: 0,
+      amountIn: amount,
+      amountOut: amount === 0 ? 0 : outAmount * amountIn,
+      minAmountOut: amount === 0 ? 0 : minOutAmount * amountIn,
+      networkFees: amount === 0 ? 0 : +swapOutput
+        .fee
+        .toFixed(tokenA.decimals, undefined, 1) * amountIn,
+
+      protocolFees: amount === 0 ? 0 : +swapOutput
+        .lpFee
+        .toFixed(tokenA.decimals, undefined, 1) * amountIn
+    };
+
+    return exchange;    
+  };
+
+  public getTokens = (): Promise<Map<string, any>> => {
+    throw new Error("Method not implemented.");
+  };
+
+  public getSwap = async (
+    owner: PublicKey,
+    from: string,
+    to: string,
+    amountIn: number,
+    amountOut: number,
+    slippage: number,
+    feeAddress: string,
+    feeAmount: number
+
+  ): Promise<Transaction> => {
+
+    throw new Error('Method Not implemented');
+    
+  };
+
+}

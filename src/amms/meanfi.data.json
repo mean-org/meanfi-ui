@@ -185,7 +185,7 @@
       "chainId": 101,
       "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
       "ammAddress": "AMMwkf57c7ZsbbDCXvBit9zFehMr1xRn8ZzaT1iDF18o",
-      "address": "2hMdRdVWZqetQsaHG8kQjdZinEMBz75vsoWTCob1ijXu",
+      "address": "DgGuvR9GSHimopo3Gc7gfkbKamLKrdyzWkq5yqA6LqYS",
       "name": "BTC-USDT LP",
       "tokenAddresses": [
         "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
@@ -217,8 +217,8 @@
     {
       "chainId": 101,
       "protocolAddress": "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ",
-      "ammAddress": "Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t",
-      "address": "Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1",
+      "ammAddress": "YAkoNb6HKmSxQN9L8hiBE5tPJRsniSSMzND1boHmZxe",
+      "address": "2poo1w1DL6yd2WNTCnNTzDqkC6MBXq7axo77P16yrBuf",
       "name": "USDT-USDC Saber LP",
       "tokenAddresses": [
         "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
@@ -228,9 +228,9 @@
     {
       "chainId": 101,
       "protocolAddress": "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ",
-      "ammAddress": "Crt7UoUR6QgrFrN7j8rmSQpUTNWNSitSwWvsWGf1qZ5t",
-      "address": "Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1",
-      "name": "wBTC-renBTC Saber LP",
+      "ammAddress": "BkwbeSfcX1h4thMDd7obGkHrPevf3QwgzJ4pCEqG18Lu",
+      "address": "SLPbsNrLHv8xG4cTc4R5Ci8kB9wUPs6yn6f7cKosoxs",
+      "name": "BTC-renBTC Saber LP",
       "tokenAddresses": [
         "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
         "CDJWUqTcYTVAKXAVXoQZFes5JUFc7owSeq7eMQcDSbo5"

@@ -205,7 +205,12 @@ export const SwapUi = (props: {
   // Updates the token list everytime is filtered
   useEffect(() => {
 
-    if (!mintList.length) { return; }
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!mintList) { return; }
 
     const timeout = setTimeout(() => {
 
@@ -245,6 +250,7 @@ export const SwapUi = (props: {
     }
     
   }, [
+    connection,
     tokenFilter, 
     subjectTokenSelection, 
     mintList
@@ -438,16 +444,30 @@ export const SwapUi = (props: {
 
       setRefreshing(true);
 
+      const error = (_error: any) => {
+        console.log(_error);
+        setRefreshing(false); 
+      };
+
       const tokensPools = getTokensPools(fromMint, toMint);
+      console.log('pools', tokensPools);
       let promise: any;
       let client: any;
 
       if (tokensPools.length) {
         const optimalPool = getOptimalPool(tokensPools);
         client = getClient(connection, optimalPool.protocolAddress) as LPClient;
+        if (!client) {
+          error(new Error('Exchange client not found'));
+          return;
+        }
         promise = client.getPoolInfo(optimalPool.address);
       } else {
         client = getClient(connection, SERUM.toBase58()) as SerumClient;
+        if (!client) {
+          error(new Error('Exchange client not found'));
+          return;
+        }
         promise = client.getMarketInfo(fromMint, toMint);
       }
 
@@ -472,11 +492,6 @@ export const SwapUi = (props: {
             .then((orderbooks: any) => orderBooksSuccess(orderbooks))
             .catch((_error: any) => error(_error));
         }
-      };
-
-      const error = (_error: any) => {
-        console.log(_error);
-        setRefreshing(false); 
       };
 
       promise
@@ -803,7 +818,7 @@ export const SwapUi = (props: {
         setShowToMintList(filteredList);
         
         if (
-          toMint && 
+          toMint &&
           toMint !== USDC_MINT.toBase58() && 
           toMint !== USDT_MINT.toBase58() && 
           toMint !== counterpartyInfo.address
@@ -866,7 +881,7 @@ export const SwapUi = (props: {
           fromMint && 
           fromMint !== USDC_MINT.toBase58() && 
           fromMint !== USDT_MINT.toBase58() && 
-          fromMint !== counterpartyInfo.addres
+          fromMint !== counterpartyInfo.address
         ) {
           setFromMint(USDC_MINT.toBase58());
         }
@@ -1264,7 +1279,6 @@ export const SwapUi = (props: {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
               setToMint(token.address);
-              setRefreshTime(0);
             }
             onCloseTokenSelector();
           };
@@ -1726,12 +1740,12 @@ export const SwapUi = (props: {
 
         {/* Info */}
         {
-          fromMint && toMint && exchangeInfo && (
+          fromMint && toMint && exchangeInfo && exchangeInfo.outPrice && (
             <div className="p-2 mb-2 text-right">
               {!refreshing && (
                 <div className="transaction-info-popover-row flexible-left">
                   <div className="left">
-                    {`1 ${mintList[fromMint].symbol}`}&nbsp;≈&nbsp;{`${exchangeInfo.outPrice} ${mintList[toMint].symbol}`}
+                    {(`1 ${mintList[fromMint].symbol} ≈ ${exchangeInfo.outPrice.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`)}
                   </div>
                   <div className="right pl-1">
                     {

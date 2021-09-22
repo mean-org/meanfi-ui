@@ -1,4 +1,4 @@
-import { AmmPoolInfo, Client, ORCA, RAYDIUM, SERUM } from "./types";
+import { AmmPoolInfo, Client, ORCA, RAYDIUM, SABER, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
 import { WRAPPED_SOL_MINT } from "../utils/ids";
 import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
@@ -7,6 +7,7 @@ import { OrcaClient } from "./orca/client";
 import { SerumClient } from "./serum/client";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";
+import { SaberClient } from "./saber/client";
 
 export const getClient = (
   connection: Connection,
@@ -23,6 +24,10 @@ export const getClient = (
     }
     case ORCA.toBase58(): {
       client = new OrcaClient(connection);
+      break;
+    }
+    case SABER.toBase58(): {
+      client = new SaberClient(connection);
       break;
     }
     case SERUM.toBase58(): {
@@ -42,7 +47,7 @@ export const getTokensPools = (
 
 ): AmmPoolInfo[] => {
 
-  const pools = AMM_POOLS.filter((ammPool) => {
+  return AMM_POOLS.filter((ammPool) => {
 
     let fromMint = from;
     let toMint = to;
@@ -58,10 +63,6 @@ export const getTokensPools = (
 
     return include;
   });
-
-  console.log('pools', pools);
-  
-  return pools;
 }
 
 export const getOptimalPool = (

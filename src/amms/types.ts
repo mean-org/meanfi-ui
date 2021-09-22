@@ -8,6 +8,10 @@ export const ORCA = new PublicKey(
   '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP'
 );
 
+export const SABER = new PublicKey(
+  'SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ'
+);
+
 export const SERUM = new PublicKey(
   '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'
 );
