@@ -35,6 +35,8 @@ export class RaydiumClient implements LPClient {
     if (this.currentPool && this.currentPool.address === address) {
       return this.currentPool;
     }
+
+    console.log('address', address);
   
     const { ammId, ammInfo } = await getPool(this.connection, address);
   

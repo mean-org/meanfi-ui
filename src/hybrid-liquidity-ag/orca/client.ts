@@ -16,8 +16,7 @@ import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash";
 import { BN } from "bn.js";
 import Decimal from "decimal.js";
-import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
+import { WRAPPED_SOL_MINT } from "../../utils/ids";
 
 export class OrcaClient implements LPClient {
 
@@ -188,71 +187,6 @@ export class OrcaClient implements LPClient {
 
     tx.add(transaction);
     sig.push(...signers);
-
-    const toMint = to === WRAPPED_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : outputToken.mint;
-    const toTokenAccount = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      toMint,
-      owner,
-      true
-    );
-
-    if (toMint.equals(WRAPPED_SOL_MINT)) {
-
-      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
-      const account = Keypair.generate();
-  
-      tx.add(
-        SystemProgram.createAccount({
-          fromPubkey: owner,
-          newAccountPubkey: account.publicKey,
-          lamports: minimumWrappedAccountBalance + amountOut * LAMPORTS_PER_SOL,
-          space: AccountLayout.span,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          WRAPPED_SOL_MINT,
-          account.publicKey,
-          owner
-        )  
-      );
-
-      sig.push(account);
-      const aTokenInfo = await this.connection.getAccountInfo(toTokenAccount);
-  
-      if (!aTokenInfo) {
-        tx.add(
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            WRAPPED_SOL_MINT,
-            toTokenAccount,
-            owner,
-            owner
-          )
-        );
-      }
-
-      tx.add(
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          account.publicKey,
-          toTokenAccount,
-          owner,
-          [],
-          new BN(minimumOutAmount * LAMPORTS_PER_SOL).toNumber()
-        ),
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          account.publicKey,
-          owner,
-          owner,
-          []
-        )
-      );
-    }
 
     const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
     // Transfer fees
