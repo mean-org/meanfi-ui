@@ -2902,14 +2902,28 @@ section.content {
         }
       }
       .transaction-list-data-wrapper {
-        &:not(.empty) {
-          max-height: calc(100% - 3.6rem);
+        @media (max-width: 575.98px) {
+          &:not(.empty) {
+            max-height: calc(100% - 6.5rem);
+          }
         }
-        &.empty {
-          height: calc(100% - 1rem);
-          &:extend(.flex-center);
+        @media (min-width: 576px) {
+          &:not(.empty) {
+            max-height: calc(100% - 3.6rem);
+          }
         }
-        // z-index: 3;
+        @media (max-width: 575.98px) {
+          &.empty {
+            display: block;
+            height: auto;
+          }
+        }
+        @media (min-width: 576px) {
+          &.empty {
+            height: calc(100% - 1rem);
+            &:extend(.flex-center);
+          }
+        }
         .item-list-body.compact {
           .item-list-row {
             height: 40px;
@@ -2959,11 +2973,12 @@ section.content {
           display: flex;
           justify-content: center;
           align-items: center;
+          padding-top: 5px;
         }
         @media (min-width: 768px) {
           position: absolute;
-          bottom: 5px;
-          width: 88%;
+          bottom: 8px;
+          width: calc(100% - 2.8rem);
           z-index: 4;
         }
         display: flex;

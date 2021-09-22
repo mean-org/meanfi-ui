@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
-import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
+import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
@@ -62,6 +62,7 @@ interface AppStateConfig {
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   accountAddress: string;
+  lastTxSignature: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -93,7 +94,7 @@ interface AppStateConfig {
   setCustomStreamDocked: (state: boolean) => void;
   setReferral: (token: TokenInfo | undefined) => void;
   // Transactions
-  setTransactions: (map: MappedTransaction[] | undefined) => void;
+  setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
 }
@@ -135,6 +136,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedAsset: undefined,
   transactions: undefined,
   accountAddress: '',
+  lastTxSignature: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -684,10 +686,31 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
+  const [lastTxSignature, setLastTxSignature] = useState<string>('');
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
-  const setTransactions = (map: MappedTransaction[] | undefined) => {
-    updateTransactions(map);
+  const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
+    if (!addItems) {
+      if (map && map.length === TRANSACTIONS_PER_PAGE) {
+        const lastSignature = map[map.length - 1].signature;
+        setLastTxSignature(lastSignature);
+      } else {
+        setLastTxSignature('');
+      }
+      updateTransactions(map);
+    } else {
+      if (map && map.length) {
+        const lastSignature = map[map.length - 1].signature;
+        const currentArray = transactions?.slice() || [];
+        const jointArray = currentArray.concat(map);
+        if (map.length === TRANSACTIONS_PER_PAGE) {
+          setLastTxSignature(lastSignature);
+        } else {
+          setLastTxSignature('');
+        }
+        updateTransactions(jointArray);
+      }
+    }
   }
 
   const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
@@ -748,6 +771,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedAsset,
         transactions,
         accountAddress,
+        lastTxSignature,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,

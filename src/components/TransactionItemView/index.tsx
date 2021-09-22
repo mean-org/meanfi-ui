@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { LAMPORTS_PER_SOL, TokenBalance } from "@solana/web3.js";
-import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
-import { Timestamp, UserTokenAccount } from "../../models/transactions";
+import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { displayTimestamp } from "../../utils/ui";
 import { Tooltip } from "antd";
 import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
-
-const dateFormat = require("dateformat");
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -157,15 +155,6 @@ export const TransactionItemView = (props: {
     }
   }
 
-  const getShortDate = (timestamp: Timestamp, includeTime = false): string => {
-    if (!timestamp || timestamp === "unavailable") { return 'unavailable'; }
-    const localDate = new Date(timestamp);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
-
   const getAmountFromLamports = (amount: number): number => {
     return (amount || 0) / LAMPORTS_PER_SOL;
   }
@@ -219,8 +208,7 @@ export const TransactionItemView = (props: {
         <div className="std-table-cell fixed-width-100">
           {
             blockTime ? (
-              <Tooltip placement="bottom" title={displayTimestamp(blockTime * 1000)}>
-                {/* <span>{getShortDate(blockTime * 1000)}</span> */}
+              <Tooltip placement="bottom" trigger="hover" title={displayTimestamp(blockTime * 1000)}>
                 <Moment date={blockTime * 1000} fromNow />
               </Tooltip>
             ) : (
