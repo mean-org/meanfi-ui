@@ -502,7 +502,7 @@ export function useMint(key?: string | PublicKey) {
       .then((acc) => {
         setMint(acc.info as any);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.error(err));
 
     const dispose = cache.emitter.onCache((e) => {
       const event = e;
@@ -547,7 +547,7 @@ export function useAccount(pubKey?: PublicKey) {
 
         const acc = await cache
           .query(connection, key, TokenAccountParser)
-          .catch((err) => console.log(err));
+          .catch((err) => console.error(err));
         if (acc) {
           setAccount(acc);
         }

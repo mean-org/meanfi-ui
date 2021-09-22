@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import { ArrowLeftOutlined, EditOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -11,18 +11,18 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Button, Empty, Space, Tooltip } from 'antd';
+import { Button, Empty, Result, Space, Spin, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS } from '../../constants';
+import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import _ from 'lodash';
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
-import { environment } from '../../environments/environment';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useHistory } from 'react-router-dom';
 
+const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
@@ -35,6 +35,7 @@ export const AccountsView = () => {
     transactions,
     selectedAsset,
     accountAddress,
+    lastTxSignature,
     detailsPanelOpen,
     previousWalletConnectState,
     setTransactions,
@@ -56,7 +57,7 @@ export const AccountsView = () => {
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
-  const [shouldLoadTransactions, setShouldLoadTransactions] = useState(true);
+  const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   // const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
   //   switch (action.type) {
   //     case ActionTypes.SET_STATS:
@@ -78,29 +79,37 @@ export const AccountsView = () => {
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
   const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
   const closeQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(false), []);
-  const onAcceptQrScannerModal = () => {
+  const onAcceptQrScannerModal = (value: string) => {
+    setAccountAddressInput(value);
     triggerWindowResize();
     closeQrScannerModal();
   };
 
-  const startSwitch = () => {
+  const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
     setLoadingTransactions(false);
     setShouldLoadTransactions(true);
-  }
+    console.log('startSwitch called!');
+  }, [])
 
   const reloadSwitch = useCallback(() => {
     setTransactions(undefined);
     startSwitch();
-  }, [setTransactions])
+  }, [
+    startSwitch,
+    setTransactions
+  ])
 
   const selectAsset = useCallback((asset: UserTokenAccount) => {
+    setTransactions(undefined);
     setSelectedAsset(asset);
     setDtailsPanelOpen(true);
     setTimeout(() => {
       startSwitch();
     }, 10);
   }, [
+    startSwitch,
+    setTransactions,
     setSelectedAsset,
     setDtailsPanelOpen,
   ])
@@ -174,6 +183,23 @@ export const AccountsView = () => {
     }
   }
 
+  const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
+    /**
+     * If asset.ataAddress
+     *    If asset.ataAddress equals the SOL mint address
+     *      Use accountAddress
+     *    Else
+     *      Use asset.ataAddress 
+     * Else
+     *    Reflect no transactions
+     */
+    return asset?.ataAddress
+            ? asset.ataAddress !== NATIVE_SOL_MINT.toBase58()
+              ? new PublicKey(asset.ataAddress)
+              : new PublicKey(accountAddress)
+            : null;
+  },[accountAddress]);
+
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
     if (!customConnection) {
@@ -233,7 +259,7 @@ export const AccountsView = () => {
                   setAccountTokens(myTokens);
                   setTokensLoaded(true);
                 } else {
-                  console.log('could not get account tokens');
+                  console.error('could not get account tokens');
                   setAccountTokens(myTokens);
                   setTokensLoaded(true);
                 }
@@ -266,33 +292,17 @@ export const AccountsView = () => {
     selectAsset
   ]);
 
-  const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
-    /**
-     * If asset.ataAddress
-     *    If asset.ataAddress equals the SOL mint address
-     *      Use accountAddress
-     *    Else
-     *      Use asset.ataAddress 
-     * Else
-     *    Reflect no transactions
-     */
-    return asset.ataAddress
-            ? asset.ataAddress !== NATIVE_SOL_MINT.toBase58()
-              ? new PublicKey(asset.ataAddress)
-              : new PublicKey(accountAddress)
-            : null;
-  },[accountAddress]);
-
-  // Start loading the transactions when signaled
+  // Load the transactions when signaled
   useEffect(() => {
 
     if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
 
-      const pk = getScanAddress(selectedAsset);
-      console.log('pk:', pk ? pk.toBase58() : 'NONE');
+      // Get the address to scan and ensure there is one
+      const pk = getScanAddress(selectedAsset as UserTokenAccount);
+      consoleOut('pk:', pk ? pk.toBase58() : 'NONE', 'blue');
       if (!pk) {
-        console.log('Asset has no public address, aborting...');
+        consoleOut('Asset has no public address, aborting...', '', 'goldenrod');
         setTransactions(undefined);
         setStatus(FetchStatus.Fetched);
         return;
@@ -300,25 +310,50 @@ export const AccountsView = () => {
 
       setLoadingTransactions(true);
 
-      fetchAccountHistory(
-        customConnection,
-        pk,
-        { limit: 15 },
-        true
-      )
-      .then(history => {
-        console.log('history:', history);
-        setTransactions(history.transactionMap);
-        setStatus(FetchStatus.Fetched);
-      })
-      .catch(error => {
-        console.error(error);
-        setStatus(FetchStatus.FetchFailed);
-      })
-      .finally(() => setLoadingTransactions(false));
+      if (lastTxSignature) {
+        fetchAccountHistory(
+          customConnection,
+          pk,
+          {
+            before: lastTxSignature,
+            limit: TRANSACTIONS_PER_PAGE
+          },
+          true
+        )
+        .then(history => {
+          consoleOut('history:', history, 'blue');
+          setTransactions(history.transactionMap, true);
+          setStatus(FetchStatus.Fetched);
+        })
+        .catch(error => {
+          console.error(error);
+          setStatus(FetchStatus.FetchFailed);
+        })
+        .finally(() => setLoadingTransactions(false));
+      } else {
+        fetchAccountHistory(
+          customConnection,
+          pk,
+          { limit: TRANSACTIONS_PER_PAGE },
+          true
+        )
+        .then(history => {
+          consoleOut('history:', history, 'blue');
+          setTransactions(history.transactionMap);
+          setStatus(FetchStatus.Fetched);
+        })
+        .catch(error => {
+          console.error(error);
+          setStatus(FetchStatus.FetchFailed);
+        })
+        .finally(() => setLoadingTransactions(false));
+      }
+
     }
 
   }, [
+    lastTxSignature,
+    transactions,
     tokensLoaded,
     selectedAsset,
     accountAddress,
@@ -336,7 +371,7 @@ export const AccountsView = () => {
     }
 
     const timeout = setTimeout(() => {
-      console.log('loading user tokens...');
+      consoleOut('loading user tokens...');
       setShouldLoadTokens(true);
     });
 
@@ -372,6 +407,7 @@ export const AccountsView = () => {
     connected,
     previousWalletConnectState,
     publicKey,
+    startSwitch,
     setSelectedAsset,
     setAccountAddress
   ]);
@@ -457,7 +493,7 @@ export const AccountsView = () => {
 
   const renderTransactions = () => {
     return transactions?.map((trans: MappedTransaction) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} accountAddress={accountAddress} />;
+      return <TransactionItemView key={trans.signature} transaction={trans} selectedAsset={selectedAsset as UserTokenAccount} accountAddress={accountAddress} />;
     });
   };
 
@@ -562,27 +598,27 @@ export const AccountsView = () => {
               <div className="transaction-list-container">
                 <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
                 <div className="inner-container">
-                  <div className="stats-row">
-                    <div className="fetch-control">
-                      <span className="icon-button-container">
-                        {status === FetchStatus.Fetching ? (
-                          <Tooltip placement="bottom" title="Stop">
-                            <span className="icon-container"><SyncOutlined spin /></span>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip placement="bottom" title="Refresh">
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="small"
-                              icon={<ReloadOutlined />}
-                              onClick={reloadSwitch}
-                            />
-                          </Tooltip>
-                        )}
-                      </span>
-                    </div>
-                    {(transactions && transactions.length > 0) && (
+                  {(transactions && transactions.length > 0) && (
+                    <div className="stats-row">
+                      <div className="fetch-control">
+                        <span className="icon-button-container">
+                          {status === FetchStatus.Fetching ? (
+                            <Tooltip placement="bottom" title="Stop">
+                              <span className="icon-container"><SyncOutlined spin /></span>
+                            </Tooltip>
+                          ) : (
+                            <Tooltip placement="bottom" title="Refresh">
+                              <Button
+                                type="default"
+                                shape="circle"
+                                size="small"
+                                icon={<ReloadOutlined />}
+                                onClick={reloadSwitch}
+                              />
+                            </Tooltip>
+                          )}
+                        </span>
+                      </div>
                       <div className="item-list-header compact">
                         <div className="header-row">
                           <div className="std-table-cell first-cell">&nbsp;</div>
@@ -592,8 +628,8 @@ export const AccountsView = () => {
                           <div className="std-table-cell fixed-width-100">{t('assets.history-table-date')}</div>
                         </div>
                       </div>
-                     )}
-                  </div>
+                    </div>
+                  )}
                   <div className={transactions && transactions.length ? 'transaction-list-data-wrapper vertical-scroll' : 'transaction-list-data-wrapper empty'}>
                     <div className="activity-list">
                       {
@@ -601,7 +637,11 @@ export const AccountsView = () => {
                           <div className="item-list-body compact">
                             {renderTransactions()}
                           </div>
-                        ) : status === FetchStatus.Fetched && (
+                        ) : status === FetchStatus.Fetching ? (
+                          <div className="h-100 flex-center">
+                            <Spin indicator={antIcon} />
+                          </div>
+                        ) : status === FetchStatus.Fetched ? (
                           !selectedAsset ? (
                             <div className="h-100 flex-center">
                               <span>{t('assets.no-asset-selected')}</span>
@@ -613,13 +653,26 @@ export const AccountsView = () => {
                               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
                             </div>
                           )
+                        ) : status === FetchStatus.FetchFailed && (
+                          <Result status="warning" title={t('assets.loading-error')} />
                         )
                       }
                     </div>
                   </div>
-                  {(environment === 'local') && (
-                    <div className="stream-share-ctas font-size-80">
-                      Load more here
+                  {lastTxSignature && (
+                    <div className="stream-share-ctas">
+                      <Button
+                        type="ghost"
+                        shape="round"
+                        size="small"
+                        onClick={() => startSwitch()}>
+                        {t('assets.history-load-more-cta-label')}
+                      </Button>
+                      {/* {status === FetchStatus.Fetching ? (
+                        <span className="explorer-cta click-disabled">{t('assets.history-load-more-cta-label')}</span>
+                      ) : (
+                        <span className="explorer-cta" onClick={() => startSwitch()}>{t('assets.history-load-more-cta-label')}</span>
+                      )} */}
                     </div>
                   )}
                 </div>

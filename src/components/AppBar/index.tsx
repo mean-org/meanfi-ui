@@ -49,7 +49,7 @@ export const AppBar = (props: { menuType: string }) => {
         .then(async streams => {
           setStreamList(streams);
           setLoadingStreams(false);
-          console.log('Layout -> streamList:', streams);
+          consoleOut('Layout -> streamList:', streams, 'blue');
           setSelectedStream(streams[0]);
           setStreamDetail(streams[0]);
           if (streams && streams.length > 0) {

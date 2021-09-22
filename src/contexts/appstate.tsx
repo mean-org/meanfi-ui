@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
-import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
+import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE } from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
@@ -21,6 +21,7 @@ import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
+import { consoleOut } from "../utils/ui";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -61,6 +62,7 @@ interface AppStateConfig {
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   accountAddress: string;
+  lastTxSignature: string;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -92,7 +94,7 @@ interface AppStateConfig {
   setCustomStreamDocked: (state: boolean) => void;
   setReferral: (token: TokenInfo | undefined) => void;
   // Transactions
-  setTransactions: (map: MappedTransaction[] | undefined) => void;
+  setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
 }
@@ -134,6 +136,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedAsset: undefined,
   transactions: undefined,
   accountAddress: '',
+  lastTxSignature: '',
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -304,7 +307,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       streamPublicKey = new PublicKey(streamId);
       try {
         const detail = await getStream(connection, streamPublicKey);
-        console.log('customStream', detail);
+        consoleOut('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
           setStreamList([detail]);
@@ -322,7 +325,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
         }
       } catch (error) {
-        console.log('customStream', error);
+        console.error('customStream', error);
         notify({
           message: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
@@ -349,12 +352,12 @@ const AppStateProvider: React.FC = ({ children }) => {
       const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
       listStreamActivity(newConnection, getEndpointByRuntimeEnv(), streamPublicKey)
         .then(value => {
-          console.log('activity:', value);
+          consoleOut('activity:', value);
           setStreamActivity(value);
           setLoadingStreamActivity(false);
         })
         .catch(err => {
-          console.log(err);
+          console.error(err);
           setStreamActivity([]);
           setLoadingStreamActivity(false);
         });
@@ -436,7 +439,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         await getPrices()
           .then((prices) => {
-            console.log("Coin prices:", prices);
+            consoleOut("Coin prices:", prices, 'blue');
             setCoinPrices(prices);
             if (selectedToken) {
               const tokenSymbol = selectedToken.symbol.toUpperCase();
@@ -458,7 +461,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     coinTimer = window.setInterval(() => {
-      console.log(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
       getCoinPrices();
     }, PRICE_REFRESH_TIMEOUT);
 
@@ -519,7 +522,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       listStreams(connection, programId, publicKey, publicKey)
         .then(streams => {
-          console.log('Streams:', streams);
+          consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;
           if (streams.length) {
             if (reset) {
@@ -533,7 +536,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 item = streams[0];
               }
             }
-            console.log('selectedStream:', item);
+            consoleOut('selectedStream:', item, 'blue');
             if (item) {
               updateSelectedStream(item);
               updateStreamDetail(item);
@@ -542,12 +545,12 @@ const AppStateProvider: React.FC = ({ children }) => {
                 const streamPublicKey = new PublicKey(item.id as string);
                 listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
                   .then(value => {
-                    console.log('activity:', value);
+                    consoleOut('activity:', value, 'blue');
                     setStreamActivity(value);
                     setLoadingStreamActivity(false);
                   })
                   .catch(err => {
-                    console.log(err);
+                    console.error(err);
                     setStreamActivity([]);
                     setLoadingStreamActivity(false);
                   });
@@ -565,7 +568,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           setStreamList(streams);
           updateLoadingStreams(false);
         }).catch(err => {
-          console.log(err);
+          console.error(err);
           updateLoadingStreams(false);
         });
     }
@@ -590,7 +593,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       if (streamList && currentScreen === 'streams' && !customStreamDocked) {
         timer = setInterval(() => {
-          console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
           refreshStreamList(false);
         }, STREAMS_REFRESH_TIMEOUT);
       }
@@ -680,13 +683,34 @@ const AppStateProvider: React.FC = ({ children }) => {
   ////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [userTokens, setUserTokens] = useState<UserTokenAccount[]>([]);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
+  const [lastTxSignature, setLastTxSignature] = useState<string>('');
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
-  const setTransactions = (map: MappedTransaction[] | undefined) => {
-    updateTransactions(map);
+  const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
+    if (!addItems) {
+      if (map && map.length === TRANSACTIONS_PER_PAGE) {
+        const lastSignature = map[map.length - 1].signature;
+        setLastTxSignature(lastSignature);
+      } else {
+        setLastTxSignature('');
+      }
+      updateTransactions(map);
+    } else {
+      if (map && map.length) {
+        const lastSignature = map[map.length - 1].signature;
+        const currentArray = transactions?.slice() || [];
+        const jointArray = currentArray.concat(map);
+        if (map.length === TRANSACTIONS_PER_PAGE) {
+          setLastTxSignature(lastSignature);
+        } else {
+          setLastTxSignature('');
+        }
+        updateTransactions(jointArray);
+      }
+    }
   }
 
   const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
@@ -694,6 +718,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const setAccountAddress = (address: string) => {
+    updateTransactions([]);
     updateAccountAddress(address);
   }
 
@@ -703,8 +728,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       let list = new Array<UserTokenAccount>();
       list.push(NATIVE_SOL as UserTokenAccount);
       MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID).forEach(item => list.push(item));
-      setUserTokens(list);
-      console.log('AppState -> userTokens:', list);
+      updateUserTokens(list);
+      consoleOut('AppState -> userTokens:', list);
     })();
 
     return () => { }
@@ -746,6 +771,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedAsset,
         transactions,
         accountAddress,
+        lastTxSignature,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,

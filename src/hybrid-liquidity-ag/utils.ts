@@ -3,7 +3,7 @@ import { AMM_POOLS } from "./data";
 import { WRAPPED_SOL_MINT } from "../utils/ids";
 import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { RaydiumClient } from "./raydium/client";
-import { OrcaClient } from "./orca/client";
+import { OrcaClient } from "../hybrid-liquidity-ag/orca/client";
 import { SerumClient } from "./serum/client";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import BN from "bn.js";

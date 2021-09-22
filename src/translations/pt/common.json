@@ -31,6 +31,8 @@
 		"history-table-amount": "Saldo",
 		"history-table-date": "Data",
 		"history-table-postbalance": "Post saldo",
+		"history-load-more-cta-label": "Load more",
+		"loading-error": "Could not load transactions. Please reload the page.",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",

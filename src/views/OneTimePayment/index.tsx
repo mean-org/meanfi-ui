@@ -15,6 +15,7 @@ import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { TransactionStatus } from "../../models/enums";
 import {
+  consoleOut,
   disabledDate,
   getAmountWithTokenSymbol,
   getTransactionModalTitle,
@@ -108,7 +109,7 @@ export const OneTimePayment = () => {
     if (!otpFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setOtpFees(values);
-        console.log("otpFees:", values);
+        consoleOut("otpFees:", values);
       });
     }
   }, [connection, otpFees]);
@@ -295,8 +296,8 @@ export const OneTimePayment = () => {
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log("Start transaction for contract type:", contract?.name);
-        console.log('Beneficiary address:', recipientAddress);
+        consoleOut("Start transaction for contract type:", contract?.name);
+        consoleOut('Beneficiary address:', recipientAddress);
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -304,12 +305,12 @@ export const OneTimePayment = () => {
         });
 
         const beneficiary = new PublicKey(recipientAddress as string);
-        console.log('associatedToken:', selectedToken?.address);
+        consoleOut('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
         const amount = parseFloat(fromCoinAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        console.log('Parsed paymentStartDate:', parsedDate);
+        consoleOut('Parsed paymentStartDate:', parsedDate);
         const fromParsedDate = new Date(parsedDate);
         if (fromParsedDate.getDate() === now.getDate()) {
           setIsScheduledPayment(false);
@@ -318,9 +319,9 @@ export const OneTimePayment = () => {
         }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
-        console.log('Local time added to parsed date!');
-        console.log('fromParsedDate.toString()', fromParsedDate.toString());
-        console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+        consoleOut('Local time added to parsed date!');
+        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
+        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
         const data = {
@@ -334,7 +335,7 @@ export const OneTimePayment = () => {
             ? recipientNote.trim()
             : undefined                                                               // streamName
         };
-        console.log('data:', data);
+        consoleOut('data:', data, 'blue');
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
@@ -358,7 +359,7 @@ export const OneTimePayment = () => {
             : undefined                                               // streamName
         )
         .then(value => {
-          console.log('oneTimePaymentTransactions returned transaction:', value);
+          consoleOut('oneTimePaymentTransactions returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -368,7 +369,7 @@ export const OneTimePayment = () => {
           return true;
         })
         .catch(error => {
-          console.log('oneTimePaymentTransactions error:', error);
+          console.error('oneTimePaymentTransactions error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -381,10 +382,10 @@ export const OneTimePayment = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log('Signing transaction...');
+        consoleOut('Signing transaction...');
         return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signTransaction returned a signed transaction:', signed);
+          consoleOut('signTransaction returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -394,7 +395,7 @@ export const OneTimePayment = () => {
           return true;
         })
         .catch(() => {
-          console.log('Signing transaction failed!');
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -402,7 +403,7 @@ export const OneTimePayment = () => {
           return false;
         });
       } else {
-        console.log('Cannot sign transaction! Wallet not found!');
+        console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
@@ -414,9 +415,9 @@ export const OneTimePayment = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
-            console.log('sendSignedTransactions returned a signature:', sig);
+            consoleOut('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -426,7 +427,7 @@ export const OneTimePayment = () => {
             return true;
           })
           .catch(error => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -444,8 +445,8 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       try {
-        const result = await connection.confirmTransaction(signatures[0]);
-        console.log('confirmTransactions result:', result);
+        const result = await connection.confirmTransaction(signatures[0], "confirmed");
+        consoleOut('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -465,16 +466,16 @@ export const OneTimePayment = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      console.log('create:', create);
+      consoleOut('create:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log('sign:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log('sent:', sent);
+          consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log('confirmed:', confirmed);
+            consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);
@@ -668,7 +669,7 @@ export const OneTimePayment = () => {
             tokenList.map((token, index) => {
               const onClick = function () {
                 setSelectedToken(token);
-                console.log("token selected:", token.symbol);
+                consoleOut("token selected:", token.symbol, 'blue');
                 setEffectiveRate(getPricePerToken(token));
                 onCloseTokenSelector();
               };

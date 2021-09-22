@@ -126,7 +126,7 @@ export const PayrollPayment = () => {
     if (!payrollFees.mspPercentFee) {
       getTransactionFees().then(values => {
         setPayrollFees(values);
-        console.log("payrollFees:", values);
+        consoleOut("payrollFees:", values);
       });
     }
   }, [connection, payrollFees]);
@@ -544,34 +544,34 @@ export const PayrollPayment = () => {
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log("Start transaction for contract type:", contract?.name);
-        console.log('Wallet address:', wallet?.publicKey?.toBase58());
+        consoleOut("Start transaction for contract type:", contract?.name);
+        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        console.log('treasurerMint:', selectedToken?.address);
+        consoleOut('treasurerMint:', selectedToken?.address);
         const treasurerMint = new PublicKey(selectedToken?.address as string);
 
-        console.log('Beneficiary address:', recipientAddress);
+        consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
 
-        console.log('beneficiaryMint:', destinationToken?.address);
+        consoleOut('beneficiaryMint:', destinationToken?.address);
         const beneficiaryMint = new PublicKey(destinationToken?.address as string);
 
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        console.log('Parsed paymentStartDate:', parsedDate);
+        consoleOut('Parsed paymentStartDate:', parsedDate);
         const fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
-        console.log('Local time added to parsed date!');
-        console.log('fromParsedDate.toString()', fromParsedDate.toString());
-        console.log('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+        consoleOut('Local time added to parsed date!');
+        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
+        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
         const data = {
@@ -588,7 +588,7 @@ export const PayrollPayment = () => {
             : undefined,                                              // streamName
           fundingAmount: amount                                       // fundingAmount
         };
-        console.log('data:', data);
+        consoleOut('data:', data, 'blue');
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
@@ -615,7 +615,7 @@ export const PayrollPayment = () => {
           amount                                                      // fundingAmount
         )
         .then(value => {
-          console.log('getCreateStreamTransaction returned transaction:', value);
+          consoleOut('getCreateStreamTransaction returned transaction:', value);
           // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
@@ -625,7 +625,7 @@ export const PayrollPayment = () => {
           return true;
         })
         .catch(error => {
-          console.log('getCreateStreamTransaction error:', error);
+          console.error('getCreateStreamTransaction error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -638,10 +638,10 @@ export const PayrollPayment = () => {
 
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
-        console.log('Signing transaction...');
+        consoleOut('Signing transaction...');
         return await moneyStream.signTransactions(wallet, transactions)
         .then(signed => {
-          console.log('signTransactions returned a signed transaction:', signed);
+          consoleOut('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -651,7 +651,7 @@ export const PayrollPayment = () => {
           return true;
         })
         .catch(() => {
-          console.log('Signing transaction failed!');
+          console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -659,7 +659,7 @@ export const PayrollPayment = () => {
           return false;
         });
       } else {
-        console.log('Cannot sign transaction! Wallet not found!');
+        console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
@@ -670,9 +670,10 @@ export const PayrollPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
-            console.log('sendSignedTransactions returned a signature:', sig);
+            consoleOut('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
@@ -682,7 +683,7 @@ export const PayrollPayment = () => {
             return true;
           })
           .catch(error => {
-            console.log(error);
+            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -690,6 +691,7 @@ export const PayrollPayment = () => {
             return false;
           });
       } else {
+        console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.SendTransactionFailure
@@ -700,8 +702,8 @@ export const PayrollPayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       try {
-        const result = await connection.confirmTransaction(signatures[0]);
-        console.log('confirmTransactions result:', result);
+        const result = await connection.confirmTransaction(signatures[0], "confirmed");
+        consoleOut('confirmTransactions result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
@@ -721,16 +723,16 @@ export const PayrollPayment = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      console.log('create:', create);
+      consoleOut('create:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        console.log('sign:', sign);
+        consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
-          console.log('sent:', sent);
+          consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
-            console.log('confirmed:', confirmed);
+            consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Save signature to the state
               setIsBusy(false);

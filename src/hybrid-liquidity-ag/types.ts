@@ -1,5 +1,9 @@
 import { PublicKey, Transaction } from "@solana/web3.js"
 
+export const MSP_OPS = new PublicKey(
+  'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr'
+)
+
 export const RAYDIUM = new PublicKey(
   '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8'
 );

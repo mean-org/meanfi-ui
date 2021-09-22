@@ -6,7 +6,7 @@ import { Account, Connection, Keypair, PublicKey, Signer, SimulatedTransactionRe
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { getAmountWithTokenSymbol, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { consoleOut, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from "money-streaming/lib/types";
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { Swap } from '@project-serum/swap';
@@ -361,6 +361,11 @@ export const getTokenAmountAndSymbolByTokenAddress = (
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
+  } else if (address && !token) {
+    const formatted = truncateInsteadRound
+      ? truncateFloat(inputAmount, 4)
+      : `${getFormattedNumberToLocale(formatAmount(inputAmount, 4))}`;
+    return onlyValue ? maxTrailingZeroes(formatted, 2) : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
@@ -500,7 +505,7 @@ export async function parseTxResponse(
   resp: SimulatedTransactionResponse,
 ) {
 
-  console.log(resp);
+  consoleOut('simulated Tx resp ->', resp);
 
   if (resp === undefined || !resp.err || !resp.logs) {
       throw new Error('Unable to simulate swap');
@@ -515,7 +520,7 @@ export async function parseTxResponse(
       })[0];
 
   if (didSwapEvent && didSwapEvent.data) {
-    // console.log(didSwapEvent);
+    // consoleOut(didSwapEvent);
     const data: any = didSwapEvent.data;
     const obj = {
       authority: data.authority?.toBase58(),
@@ -530,7 +535,7 @@ export async function parseTxResponse(
       toMint: data.toMint.toBase58()
     };
 
-    console.log('data => ', obj);    
+    consoleOut('data => ', obj, 'blue');
   }
 }
 

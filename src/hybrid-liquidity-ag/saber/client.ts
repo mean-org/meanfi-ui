@@ -20,7 +20,6 @@ import {
   calculateEstimatedSwapOutputAmount
 
 } from "@saberhq/stableswap-sdk";
-import { BN } from "bn.js";
 
 export class SaberClient implements LPClient {
 

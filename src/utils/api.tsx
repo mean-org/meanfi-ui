@@ -24,6 +24,6 @@ export const getPrices = async (path?: string): Promise<any> => {
       return response;
     })
     .catch((err) => {
-      console.log(err);
+      console.error(err);
     });
 };

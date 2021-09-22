@@ -103,7 +103,7 @@ export const AppLayout = React.memo((props: any) => {
   useEffect(() => {
     if (previousChain !== connectionConfig.env) {
       setChain(connectionConfig.env);
-      console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
+      consoleOut('Cluster:', connectionConfig.env, 'brown');
     }
   }, [
     previousChain,
