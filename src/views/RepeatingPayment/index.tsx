@@ -682,7 +682,7 @@ export const RepeatingPayment = () => {
     const confirmTx = async (): Promise<boolean> => {
       try {
         const result = await connection.confirmTransaction(signatures[0], "confirmed");
-        consoleOut('confirmTransactions result:', result);
+        consoleOut('confirmTransaction result:', result);
         // Stage 4 completed - The transaction was confirmed!
         setTransactionStatus({
           lastOperation: TransactionStatus.ConfirmTransactionSuccess,

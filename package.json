@@ -107,6 +107,7 @@
     "@tsconfig/recommended": "^1.0.1",
     "@types/bn.js": "^5.1.0",
     "@types/bs58": "^4.0.1",
+    "@types/dateformat": "^3.0.1",
     "@types/jest": "^26.0.23",
     "@types/ledgerhq__hw-transport": "^4.21.3",
     "@types/ledgerhq__hw-transport-webusb": "^4.70.1",
