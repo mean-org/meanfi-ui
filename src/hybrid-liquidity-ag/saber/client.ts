@@ -2,10 +2,10 @@ import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { cloneDeep } from "lodash-es";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { ExchangeInfo, LPClient, SABER } from "../types";
-import { deserializeMint, deserializeAccount, TokenAmount, Token } from "@saberhq/token-utils";
+import { deserializeMint, deserializeAccount, TokenAmount, Token as SaberToken } from "@saberhq/token-utils";
 import { SLPInfo } from "./types";
 import { getMultipleAccounts } from "../../utils/accounts";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token, u64 } from "@solana/spl-token";
 import { SLPools } from "./pool";
 
 import { 
@@ -20,6 +20,7 @@ import {
   calculateEstimatedSwapOutputAmount
 
 } from "@saberhq/stableswap-sdk";
+import { BN } from "bn.js";
 
 export class SaberClient implements LPClient {
 
@@ -87,8 +88,8 @@ export class SaberClient implements LPClient {
       if (value) {
         const data = value.account.data;
         const decoded = deserializeMint(data);
-        const token = Token.fromMint(
-          value.publicKey.toBase58(),
+        const token = SaberToken.fromMint(
+          value.publicKey,
           decoded.decimals,
           { chainId: 101 }
         );
@@ -104,13 +105,15 @@ export class SaberClient implements LPClient {
       this.connection.commitment
     );
 
-    for (let info of reserveInfos) {
-      if (info) {
-        const data = info.account.data;
+    reserveInfos.forEach((value, index) => {
+      if (value) {
+        const data = value.account.data;
         const decoded = deserializeAccount(data);
-        reservesMap[info.publicKey.toBase58()] = decoded;
+        reservesMap[saberPool.tokens[index]] = Object.assign({ 
+          address: value.publicKey 
+        }, decoded);
       }
-    }
+    });
 
     const slpInfo: SLPInfo = {
       name: saberPool.name,
@@ -189,6 +192,8 @@ export class SaberClient implements LPClient {
           .invert()
           .toFixed(tokenB.decimals, undefined, 1);
 
+    const minOutAmountWithSlippage = minOutAmount * (100 - slippage) / 100;
+
     const price = !invert 
       ? +swapPrice
           .asFraction
@@ -196,22 +201,22 @@ export class SaberClient implements LPClient {
       : +swapPrice
           .invert()
           .asFraction
-          .toFixed(tokenB.decimals, undefined, 1)
-
+          .toFixed(tokenB.decimals, undefined, 1);
+    
     const exchange: ExchangeInfo = {
       fromAmm: protocol.name,
-      outPrice: price * amountIn,
+      outPrice: price,
       priceImpact: 0,
       amountIn: amount,
       amountOut: amount === 0 ? 0 : outAmount * amountIn,
-      minAmountOut: amount === 0 ? 0 : minOutAmount * amountIn,
+      minAmountOut: amount === 0 ? 0 : minOutAmountWithSlippage * amountIn,
       networkFees: amount === 0 ? 0 : +swapOutput
         .fee
-        .toFixed(tokenA.decimals, undefined, 1) * amountIn,
+        .toFixed(tokenA.decimals, undefined, 1),
 
       protocolFees: amount === 0 ? 0 : +swapOutput
         .lpFee
-        .toFixed(tokenA.decimals, undefined, 1) * amountIn
+        .toFixed(tokenA.decimals, undefined, 1)
     };
 
     return exchange;    
@@ -232,9 +237,113 @@ export class SaberClient implements LPClient {
     feeAmount: number
 
   ): Promise<Transaction> => {
-
-    throw new Error('Method Not implemented');
     
+    const poolInfo = cloneDeep(this.currentPool);
+
+    if (!poolInfo) {
+      throw new Error("Saber pool not found.");
+    }
+
+    const tx = new Transaction();
+    const tokenA = poolInfo.mints[from];
+    const tokenB = poolInfo.mints[to];
+    const fromMint = new PublicKey(from);
+    const toMint = new PublicKey(to);
+
+    const fromTokenAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      fromMint,
+      owner,
+      true
+    );
+
+    const toTokenAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      toMint,
+      owner,
+      true
+    );
+
+    const toTokenAccountInfo = await this.connection.getAccountInfo(toTokenAccount);
+
+    if (!toTokenAccountInfo) {      
+      tx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          toMint,
+          toTokenAccount,
+          owner,
+          owner
+        )
+      );
+    }
+
+    const saberPool = SLPools.filter(p => p.address === poolInfo.address)[0];
+
+    if (!saberPool) {
+      throw new Error("Saber pool not found.");
+    }
+
+    const amountWithSlippage = amountOut * (100 - slippage) / 100;
+    const swapArgs = {
+      userAuthority: owner,
+      userSource: fromTokenAccount,
+      poolSource: poolInfo.reserves[fromMint.toBase58()].address,
+      poolDestination: poolInfo.reserves[toMint.toBase58()].address,
+      userDestination: toTokenAccount,
+      amountIn: new u64(amountIn * 10 ** tokenA.decimals),
+      minimumAmountOut: new u64(amountWithSlippage * 10 ** tokenB.decimals)
+    };
+
+    tx.add(
+      this.saberSwap.swap(swapArgs)
+    );
+
+    const feeBnAmount = new BN(feeAmount * 10 ** tokenA.decimals);
+    // Transfer fees
+    const feeAccount = new PublicKey(feeAddress);
+    const feeAccountToken = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      fromMint,
+      feeAccount,
+      true
+    );
+
+    const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);
+
+    if (!feeAccountTokenInfo) {
+      tx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          fromMint,
+          feeAccountToken,
+          feeAccount,
+          owner
+        )
+      );
+    }
+
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount,
+        feeAccountToken,
+        owner,
+        [],
+        feeBnAmount.toNumber()
+      )
+    );
+
+    tx.feePayer = owner;
+    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
+    tx.recentBlockhash = blockhash;
+
+    return tx; 
   };
 
 }

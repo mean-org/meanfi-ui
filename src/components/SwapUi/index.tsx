@@ -605,7 +605,7 @@ export const SwapUi = (props: {
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         balance = userAccount.lamports / LAMPORTS_PER_SOL;
       } else {
-        balance = userBalances[fromMint];
+        balance = userBalances[fromMint] ? userBalances[fromMint] : 0;
       }
 
       setFromBalance(balance.toString());
@@ -646,7 +646,7 @@ export const SwapUi = (props: {
       if (toMint === NATIVE_SOL_MINT.toBase58()) {
         balance = userAccount.lamports / LAMPORTS_PER_SOL;
       } else {
-        balance = userBalances[toMint];
+        balance = userBalances[toMint] ? userBalances[toMint] : 0;
       }
 
       setToBalance(balance.toString());

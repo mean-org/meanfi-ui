@@ -76,7 +76,7 @@ export const getOptimalPool = (
 
   //TODO: implement get the best pool
 
-  return pools[0];
+  return pools[1];
 }
 
 export const getExchangeInfo = async (
