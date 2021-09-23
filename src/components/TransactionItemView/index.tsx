@@ -1,37 +1,59 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { LAMPORTS_PER_SOL, TokenBalance } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, ParsedMessageAccount, TokenBalance } from "@solana/web3.js";
+import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
-import { displayTimestamp } from "../../utils/ui";
 import { Tooltip } from "antd";
 import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
 import { IconGasStation } from "../../Icons";
+import { environment } from "../../environments/environment";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
   selectedAsset: UserTokenAccount | undefined;
   transaction: MappedTransaction;
+  tokenAccounts: UserTokenAccount[];
 }) => {
 
   const [isInboundTx, setIsInboundTx] = useState(false);
+  const [isToMyAccounts, setIsToMyAccounts] = useState(false);
   const [hasTokenBalances, setHasTokenBalances] = useState(false);
+  const [outDstAccountIndex, setOutDstAccountIndex] = useState(1);
   const [preBalance, setPreBalance] = useState(0);
   const [postBalance, setPostBalance] = useState(0);
   const [amountChange, setAmountChange] = useState(0);
   const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(null);
 
+  const isLocal = (): boolean => {
+    return environment === 'local' ? true : false;
+  }
+
   // Prepare some data
   useEffect(() => {
+
+    const isToOneOfMyAccounts = (accounts: ParsedMessageAccount[]): boolean => {
+      const filtered = props.tokenAccounts.filter(ta => ta.ataAddress !== props.accountAddress);
+      const index = accounts.findIndex(a => filtered.some(t => t.ataAddress === a.pubkey.toBase58()));
+      return index !== -1 ? true : false;
+    }
+
+    const getDestAccountIndex = (accounts: ParsedMessageAccount[]): number => {
+      const filtered = props.tokenAccounts.filter(ta => ta.ataAddress !== props.accountAddress);
+      const index = accounts.findIndex(a => filtered.some(t => t.ataAddress === a.pubkey.toBase58()));
+      return index !== -1 ? index : 1;
+    }
+
     if (props.transaction) {
 
       // Define some local vars
       let isInbound = true;
       let accountIndex = 0;
+      let outDestAccountIndex = 1;
       let preBalance = 0;
       let postBalance = 0;
       let amount = 0;
@@ -53,6 +75,17 @@ export const TransactionItemView = (props: {
       }
       setIsInboundTx(isInbound);
 
+      if (!isInbound && props.accountAddress === props.selectedAsset?.ataAddress && tokensUsed) {
+        const toMyOwnAccounts = isToOneOfMyAccounts(accounts);
+        setIsToMyAccounts(toMyOwnAccounts);
+        if (toMyOwnAccounts) {
+          outDestAccountIndex = getDestAccountIndex(accounts);
+          setOutDstAccountIndex(outDestAccountIndex);
+        }
+      } else {
+        setIsToMyAccounts(false);
+      }
+
       // Select token account to use
       if (tokensUsed) {
         if (isInbound) {
@@ -66,11 +99,15 @@ export const TransactionItemView = (props: {
             accountIndex = accounts.findIndex(a => a.pubkey.toBase58() === props.selectedAsset?.ataAddress);
           }
         } else {
-          const ptb = meta?.postTokenBalances && meta.postTokenBalances.length
-            ? meta.postTokenBalances[0]
-            : null;
-          if (ptb) {
-            accountIndex = ptb.accountIndex;
+          if (!isInbound) {
+            accountIndex = outDestAccountIndex;
+          } else {
+            const ptb = meta?.postTokenBalances && meta.postTokenBalances.length
+              ? meta.postTokenBalances[0]
+              : null;
+            if (ptb) {
+              accountIndex = ptb.accountIndex;
+            }
           }
         }
       }
@@ -131,6 +168,11 @@ export const TransactionItemView = (props: {
       );
     } else {
       if (props.accountAddress === props.selectedAsset?.ataAddress && hasTokenBalances) {
+        // if (!isToMyAccounts) {
+        //   return (
+        //     <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        //   );
+        // }
         return (
           <IconGasStation className="mean-svg-icons gas-station warning" />
         );
@@ -150,10 +192,13 @@ export const TransactionItemView = (props: {
     const trans = props.transaction.parsedTransaction.transaction.message;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
     const sender = trans.accountKeys[0].pubkey.toBase58();
-    const receiver = trans.accountKeys[1].pubkey.toBase58();
+    const receiver = props.accountAddress === props.selectedAsset?.ataAddress &&
+                     !isInboundTx &&
+                     hasTokenBalances &&
+                     isToMyAccounts
+                      ? trans.accountKeys[outDstAccountIndex].pubkey.toBase58()
+                      : trans.accountKeys[1].pubkey.toBase58();
     const wallet = (trans.instructions[0] as any)?.parsed?.info?.wallet as string || '';
-    // userTokenAccounts.some(i => i.algo === a.pubkey.toBase58())
-    // props.accountAddress === props.selectedAsset?.ataAddress
     if (isInboundTx) {
       if (sender === faucetAddress) {
         return 'Account airdrop';
@@ -172,35 +217,50 @@ export const TransactionItemView = (props: {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
 
-    // Display these ones
-    const getDisplayAmount = (abbreviated = true): string => {
+    const getDisplayAmount = (): string => {
       const displayAmount =
         postTokenBalance
           ? props.accountAddress === props.selectedAsset?.ataAddress
-            ? abbreviated
-              ? formatAmount(getAmountFromLamports(Math.abs(amountChange)), 6)
-              : formatAmount(getAmountFromLamports(Math.abs(amountChange)), 9)
-            : getTokenAmountAndSymbolByTokenAddress(Math.abs(amountChange), postTokenBalance.mint, true)
-          : abbreviated
-            ? formatAmount(getAmountFromLamports(Math.abs(amountChange)), 6)
-            : formatAmount(getAmountFromLamports(Math.abs(amountChange)), 9);
+            ? getTokenAmountAndSymbolByTokenAddress(
+                getAmountFromLamports(Math.abs(amountChange)),
+                NATIVE_SOL.address,
+                !isLocal()
+              )
+            : getTokenAmountAndSymbolByTokenAddress(
+                Math.abs(amountChange),
+                postTokenBalance.mint,
+                !isLocal()
+              )
+          : getTokenAmountAndSymbolByTokenAddress(
+              getAmountFromLamports(Math.abs(amountChange)),
+              NATIVE_SOL_MINT.toBase58(),
+              !isLocal()
+            );
       return isAmountNegative() ? '-' + displayAmount : displayAmount;
     }
 
-    const getDisplayPostBalance = (abbreviated = true): string => {
+    const getDisplayPostBalance = (): string => {
       return postTokenBalance
         ? props.accountAddress === props.selectedAsset?.ataAddress
-          ? abbreviated
-            ? formatAmount(getAmountFromLamports(postBalance), 6)
-            : formatAmount(getAmountFromLamports(postBalance), 9)
+          ? getTokenAmountAndSymbolByTokenAddress(
+              getAmountFromLamports(Math.abs(postBalance)),
+              NATIVE_SOL_MINT.toBase58(),
+              !isLocal()
+            )
           : getTokenAmountAndSymbolByTokenAddress(
-            postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
-            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
-            true
-          )
-        : abbreviated
-          ? formatAmount(getAmountFromLamports(postBalance), 6)
-          : formatAmount(getAmountFromLamports(postBalance), 9);
+              postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
+              postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
+              !isLocal()
+            )
+          : getTokenAmountAndSymbolByTokenAddress(
+              getAmountFromLamports(postBalance),
+              NATIVE_SOL.address,
+              !isLocal()
+            );
+    }
+
+    if (props.accountAddress === props.selectedAsset?.ataAddress && isInboundTx && hasTokenBalances) {
+      return null;
     }
 
     return (
@@ -215,21 +275,15 @@ export const TransactionItemView = (props: {
           </Tooltip>
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <Tooltip placement="bottom" title={getDisplayAmount(false)}>
-            <span>{getDisplayAmount()}</span>
-          </Tooltip>
+          <span>{getDisplayAmount()}</span>
         </div>
         <div className="std-table-cell responsive-cell pr-2 text-right">
-          <Tooltip placement="bottom" title={getDisplayPostBalance(false)}>
-            <span>{getDisplayPostBalance()}</span>
-          </Tooltip>
+          <span>{getDisplayPostBalance()}</span>
         </div>
         <div className="std-table-cell responsive-cell pl-2">
           {
             blockTime ? (
-              <Tooltip placement="bottom" trigger="hover" title={displayTimestamp(blockTime * 1000)}>
-                <Moment date={blockTime * 1000} fromNow />
-              </Tooltip>
+              <Moment date={blockTime * 1000} fromNow />
             ) : (
               <span>'unavailable'</span>
             )

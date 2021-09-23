@@ -843,7 +843,7 @@ export const Streams = () => {
           return true;
         })
         .catch(error => {
-          console.error('closeStreamTransaction error:', error);
+          console.error('withdrawTransaction error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -889,7 +889,7 @@ export const Streams = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
-        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "confirmed" })
+        return connection.sendRawTransaction(signedTransactions[0].serialize())
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned

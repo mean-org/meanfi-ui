@@ -250,8 +250,8 @@ export const AccountsView = () => {
                   const tokenTable: any[] = [];
                   myTokens.forEach(item => {
                     tokenTable.push({
-                      pubAddr: item.ataAddress ? shortenAddress(item.ataAddress, 8) : '',
-                      mintAddr: item.address ? shortenAddress(item.address, 8) : '',
+                      ataAddress: item.ataAddress ? shortenAddress(item.ataAddress, 8) : '',
+                      address: item.address ? shortenAddress(item.address, 8) : '',
                       balance: item.balance
                     });
                   });
@@ -493,7 +493,12 @@ export const AccountsView = () => {
 
   const renderTransactions = () => {
     return transactions?.map((trans: MappedTransaction) => {
-      return <TransactionItemView key={trans.signature} transaction={trans} selectedAsset={selectedAsset as UserTokenAccount} accountAddress={accountAddress} />;
+      return <TransactionItemView
+                key={trans.signature}
+                transaction={trans}
+                selectedAsset={selectedAsset as UserTokenAccount}
+                accountAddress={accountAddress}
+                tokenAccounts={accountTokens} />;
     });
   };
 
