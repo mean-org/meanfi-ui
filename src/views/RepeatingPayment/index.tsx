@@ -600,7 +600,7 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transaction = value[0];
           return true;
         })
         .catch(error => {
