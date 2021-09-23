@@ -898,7 +898,11 @@ export const Streams = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
+<<<<<<< HEAD
+        return connection.sendRawTransaction(signedTransactions[0].serialize())
+=======
         return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
+>>>>>>> 20d944504c74de56d48f57ec98290ae9da99fa43
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned

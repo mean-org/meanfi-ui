@@ -1443,7 +1443,7 @@ export const SwapUi = (props: {
     consoleOut("Signing transaction...");
 
     return wallet.signTransaction(currentTx)
-      .then((signedTx) => {
+      .then((signedTx: any) => {
         consoleOut("signTransaction returned a signed transaction:", signedTx);
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
@@ -1451,7 +1451,7 @@ export const SwapUi = (props: {
         });
         return signedTx;
       })
-      .catch(_error => {
+      .catch((_error: any) => {
         console.error("Signing transaction failed!", _error);
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
