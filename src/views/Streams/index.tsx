@@ -601,7 +601,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "singleGossip");
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -690,7 +690,7 @@ export const Streams = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
+        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
           .then(sig => {
             consoleOut('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -804,7 +804,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -898,7 +898,7 @@ export const Streams = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
+        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -1013,7 +1013,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1096,7 +1096,7 @@ export const Streams = () => {
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
         // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
+        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned

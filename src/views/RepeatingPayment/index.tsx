@@ -514,7 +514,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress);
+    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -649,7 +649,7 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(signedTransaction.serialize().toString('base64'), { preflightCommitment: "singleGossip" })
+        return connection.sendEncodedTransaction(signedTransaction.serialize().toString('base64'), { preflightCommitment: "confirmed" })
         // return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             consoleOut('sendSignedTransactions returned a signature:', sig);
