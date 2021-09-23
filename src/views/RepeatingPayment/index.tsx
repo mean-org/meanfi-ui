@@ -506,9 +506,9 @@ export const RepeatingPayment = () => {
   // Main action
 
   const onTransactionStart = async () => {
-    let transactions: Transaction[];
-    let signedTransactions: Transaction[];
-    let signatures: any[];
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -600,7 +600,7 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transactions = value;
+          transaction = value;
           return true;
         })
         .catch(error => {
@@ -618,7 +618,7 @@ export const RepeatingPayment = () => {
     const signTx = async (): Promise<boolean> => {
       if (wallet) {
         consoleOut('Signing transaction...');
-        return await moneyStream.signTransactions(wallet, transactions)
+        return await wallet.signTransaction(transaction)
         .then(signed => {
           consoleOut('signAllTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
@@ -626,7 +626,7 @@ export const RepeatingPayment = () => {
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransactions = signed;
+          signedTransaction = signed;
           return true;
         })
         .catch(() => {
@@ -649,8 +649,8 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
-        return connection.sendRawTransaction(signedTransactions[0].serialize(), { preflightCommitment: "singleGossip" })
+        return connection.sendEncodedTransaction(signedTransaction.serialize().toString('base64'), { preflightCommitment: "singleGossip" })
+        // return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             consoleOut('sendSignedTransactions returned a signature:', sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -658,7 +658,7 @@ export const RepeatingPayment = () => {
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
-            signatures = [sig];
+            signature = sig;
             return true;
           })
           .catch(error => {
@@ -680,22 +680,31 @@ export const RepeatingPayment = () => {
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      try {
-        const result = await connection.confirmTransaction(signatures[0], "confirmed");
-        consoleOut('confirmTransaction result:', result);
-        // Stage 4 completed - The transaction was confirmed!
-        setTransactionStatus({
-          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-          currentOperation: TransactionStatus.TransactionFinished
+      return connection.confirmTransaction(signature, "confirmed")
+        .then(result => {
+          consoleOut('confirmTransaction result:', result);
+          if (result && result.value && !result.value.err) {
+            // Stage 4 completed - The transaction was confirmed!
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            return true;
+          } else {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            return false;
+          }
+        })
+        .catch(e => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          return false;
         });
-        return true;
-      } catch (e) {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.ConfirmTransaction,
-          currentOperation: TransactionStatus.ConfirmTransactionFailure
-        });
-        return false;
-      }
     }
 
     // Lets hit it
