@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined, SwapOutlined } from "@ant-design/icons";
 import { LAMPORTS_PER_SOL, ParsedMessageAccount, TokenBalance } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
@@ -170,27 +170,28 @@ export const TransactionItemView = (props: {
   const getTxIcon = () => {
     if (isInboundTx) {
       return (
-        <ArrowDownOutlined className="mean-svg-icons incoming" />
+        <ArrowDownOutlined className="mean-svg-icons incoming downright" />
       );
     } else {
-      // if (isScanningUserWallet) {
-      // } else {
-      //   return (
-      //     <ArrowUpOutlined className="mean-svg-icons outgoing" />
-      //   );
-      // }
-      if (isScanningUserWallet && hasTokenBalances) {
-        // if (!isToMyAccounts) {
-        //   return (
-        //     <ArrowUpOutlined className="mean-svg-icons outgoing" />
-        //   );
-        // }
-        return (
-          <IconGasStation className="mean-svg-icons gas-station warning" />
-        );
+      if (isScanningUserWallet) {
+        if (hasTokenBalances) {
+          if (isToMyAccounts) {
+            return (
+              <ArrowUpOutlined className="mean-svg-icons upright" />
+            );
+          } else {
+            return (
+              <IconGasStation className="mean-svg-icons gas-station warning" />
+            );
+          }
+        } else {
+          return (
+            <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
+          );
+        }
       } else {
         return (
-          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+          <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
         );
       }
     }

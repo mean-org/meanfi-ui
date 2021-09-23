@@ -249,11 +249,13 @@ export const AccountsView = () => {
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
                   myTokens.forEach(item => {
-                    tokenTable.push({
-                      ataAddress: item.ataAddress ? shortenAddress(item.ataAddress, 8) : '',
-                      address: item.address ? shortenAddress(item.address, 8) : '',
-                      balance: item.balance
-                    });
+                    if (item.ataAddress && item.address) {
+                      tokenTable.push({
+                        ataAddress: shortenAddress(item.ataAddress, 8),
+                        address: shortenAddress(item.address, 8),
+                        balance: item.balance
+                      });
+                    }
                   });
                   console.table(tokenTable);
                   setAccountTokens(myTokens);
