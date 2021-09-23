@@ -365,7 +365,7 @@ export const OneTimePayment = () => {
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value;
+          transaction = value[0];
           return true;
         })
         .catch(error => {

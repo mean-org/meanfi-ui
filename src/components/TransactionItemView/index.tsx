@@ -23,6 +23,7 @@ export const TransactionItemView = (props: {
   const [isInboundTx, setIsInboundTx] = useState(false);
   const [isToMyAccounts, setIsToMyAccounts] = useState(false);
   const [hasTokenBalances, setHasTokenBalances] = useState(false);
+  const [isScanningUserWallet, setIsScanningUserWallet] = useState(false);
   const [outDstAccountIndex, setOutDstAccountIndex] = useState(1);
   const [preBalance, setPreBalance] = useState(0);
   const [postBalance, setPostBalance] = useState(0);
@@ -61,6 +62,11 @@ export const TransactionItemView = (props: {
       let postTkBalance: TokenBalance | null = null;
       const meta = props.transaction.parsedTransaction.meta;
       const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
+
+      // Are we scanning a user token account or the user wallet?
+      const isScanningWallet = props.accountAddress === props.selectedAsset?.ataAddress ? true : false;
+      setIsScanningUserWallet(isScanningWallet);
+
       const tokensUsed = meta &&
         ((meta.preTokenBalances && meta.preTokenBalances.length) || (meta.postTokenBalances && meta.postTokenBalances.length))
         ? true
@@ -75,7 +81,7 @@ export const TransactionItemView = (props: {
       }
       setIsInboundTx(isInbound);
 
-      if (!isInbound && props.accountAddress === props.selectedAsset?.ataAddress && tokensUsed) {
+      if (!isInbound && isScanningWallet && tokensUsed) {
         const toMyOwnAccounts = isToOneOfMyAccounts(accounts);
         setIsToMyAccounts(toMyOwnAccounts);
         if (toMyOwnAccounts) {
@@ -126,7 +132,7 @@ export const TransactionItemView = (props: {
         amount = tokensUsed
                   ? isInbound
                     ? post - pre
-                    : props.accountAddress === props.selectedAsset?.ataAddress
+                    : isScanningWallet
                       ? meta.preBalances[0] - meta.postBalances[0]
                       : pre - post
                   : isInbound
@@ -134,7 +140,7 @@ export const TransactionItemView = (props: {
                     : meta.preBalances[0] - meta.postBalances[0];
 
         preBalance = tokensUsed
-                        ? props.accountAddress === props.selectedAsset?.ataAddress
+                        ? isScanningWallet
                           ? isInbound
                             ? meta.postBalances[1]
                             : meta.postBalances[0]
@@ -144,7 +150,7 @@ export const TransactionItemView = (props: {
                           : meta.preBalances[0];
 
         postBalance = tokensUsed
-                        ? props.accountAddress === props.selectedAsset?.ataAddress
+                        ? isScanningWallet
                           ? isInbound
                             ? meta.postBalances[1]
                             : meta.postBalances[0]
@@ -167,7 +173,13 @@ export const TransactionItemView = (props: {
         <ArrowDownOutlined className="mean-svg-icons incoming" />
       );
     } else {
-      if (props.accountAddress === props.selectedAsset?.ataAddress && hasTokenBalances) {
+      // if (isScanningUserWallet) {
+      // } else {
+      //   return (
+      //     <ArrowUpOutlined className="mean-svg-icons outgoing" />
+      //   );
+      // }
+      if (isScanningUserWallet && hasTokenBalances) {
         // if (!isToMyAccounts) {
         //   return (
         //     <ArrowUpOutlined className="mean-svg-icons outgoing" />
@@ -192,13 +204,19 @@ export const TransactionItemView = (props: {
     const trans = props.transaction.parsedTransaction.transaction.message;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
     const sender = trans.accountKeys[0].pubkey.toBase58();
-    const receiver = props.accountAddress === props.selectedAsset?.ataAddress &&
+    const receiver = isScanningUserWallet &&
                      !isInboundTx &&
                      hasTokenBalances &&
                      isToMyAccounts
                       ? trans.accountKeys[outDstAccountIndex].pubkey.toBase58()
                       : trans.accountKeys[1].pubkey.toBase58();
     const wallet = (trans.instructions[0] as any)?.parsed?.info?.wallet as string || '';
+
+    // Log what we have
+    // if (!isInboundTx) {
+    //   console.log(`isScanningUserWallet: ${isScanningUserWallet}\nisInboundTx: ${isInboundTx}\nhasTokenBalances: ${hasTokenBalances}\nisToMyAccounts: ${isToMyAccounts}\noutDstAccountIndex: ${outDstAccountIndex}\ntokenAccount: ${trans.accountKeys[outDstAccountIndex].pubkey.toBase58()}`);
+    // }
+
     if (isInboundTx) {
       if (sender === faucetAddress) {
         return 'Account airdrop';
@@ -220,7 +238,7 @@ export const TransactionItemView = (props: {
     const getDisplayAmount = (): string => {
       const displayAmount =
         postTokenBalance
-          ? props.accountAddress === props.selectedAsset?.ataAddress
+          ? isScanningUserWallet
             ? getTokenAmountAndSymbolByTokenAddress(
                 getAmountFromLamports(Math.abs(amountChange)),
                 NATIVE_SOL.address,
@@ -241,7 +259,7 @@ export const TransactionItemView = (props: {
 
     const getDisplayPostBalance = (): string => {
       return postTokenBalance
-        ? props.accountAddress === props.selectedAsset?.ataAddress
+        ? isScanningUserWallet
           ? getTokenAmountAndSymbolByTokenAddress(
               getAmountFromLamports(Math.abs(postBalance)),
               NATIVE_SOL_MINT.toBase58(),
@@ -259,7 +277,7 @@ export const TransactionItemView = (props: {
             );
     }
 
-    if (props.accountAddress === props.selectedAsset?.ataAddress && isInboundTx && hasTokenBalances) {
+    if (isScanningUserWallet && isInboundTx && hasTokenBalances) {
       return null;
     }
 
