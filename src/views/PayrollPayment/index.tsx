@@ -621,7 +621,7 @@ export const PayrollPayment = () => {
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
-          transaction = value[0];
+          transaction = value;
           return true;
         })
         .catch(error => {

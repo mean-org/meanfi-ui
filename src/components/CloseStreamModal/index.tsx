@@ -8,6 +8,7 @@ import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from 'money-streaming/lib/types';
+import { environment } from '../../environments/environment';
 
 export const CloseStreamModal = (props: {
   handleClose: any;
@@ -115,6 +116,9 @@ export const CloseStreamModal = (props: {
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
                 : '0'
               }`
+            )}
+            {environment === 'local' && (
+              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, streamDetail.associatedToken as string)}</p>
             )}
           </div>
         )}
