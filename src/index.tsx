@@ -18,6 +18,7 @@ console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
 console.log(`%cProgramId:`, 'color:brown', AppConfig.getConfig().streamProgramAddress);
 
 i18next.use(LanguageDetector).init({
+  fallbackLng: 'en',
   interpolation: { escapeValue: false },  // React already does escaping
   resources: {
     en: {

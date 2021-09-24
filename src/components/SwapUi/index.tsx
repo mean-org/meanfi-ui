@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, CheckOutlined, CompassOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -31,6 +31,7 @@ import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { InfoIcon } from "../InfoIcon";
 import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
+import { useAsync } from "react-async-hook";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1138,61 +1139,67 @@ export const SwapUi = (props: {
 
   const getSwap = useCallback(async () => {
 
-    if (!fromMint || !toMint || !mintList[fromMint] || !mintList[toMint] || !wallet || !feesInfo || !exchangeInfo || !exchangeInfo.amountIn || !exchangeInfo.amountOut) {
-      throw new Error("Error executing transaction");
-    }
+    try {
 
-    const fromDecimals = mintList[fromMint].decimals;
-    const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
-    const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
-
-    if (isWrap || isUnwrap) {
-
-      const amountIn = parseFloat((exchangeInfo.amountIn - feesInfo.aggregator).toFixed(fromDecimals));
-      const amountInBn = new BN(amountIn * 10 ** fromDecimals);
-
-      if (isWrap) {
-
-        return wrap(
-          connection,
-          wallet,
-          Keypair.generate(),
-          amountInBn,
-          MSP_OPS,
-          feeAmountBn
+      if (!fromMint || !toMint || !mintList[fromMint] || !mintList[toMint] || !wallet || !feesInfo || !exchangeInfo || !exchangeInfo.amountIn || !exchangeInfo.amountOut) {
+        throw new Error("Error executing transaction");
+      }
+  
+      const fromDecimals = mintList[fromMint].decimals;
+      const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
+      const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
+  
+      if (isWrap || isUnwrap) {
+  
+        const amountIn = parseFloat((exchangeInfo.amountIn - feesInfo.aggregator).toFixed(fromDecimals));
+        const amountInBn = new BN(amountIn * 10 ** fromDecimals);
+  
+        if (isWrap) {
+  
+          return wrap(
+            connection,
+            wallet,
+            Keypair.generate(),
+            amountInBn,
+            MSP_OPS,
+            feeAmountBn
+          );
+    
+        }
+        
+        if (isUnwrap) {
+    
+          return unwrap(
+            connection,
+            wallet,
+            Keypair.generate(),
+            amountInBn,
+            MSP_OPS,
+            feeAmountBn
+          );
+    
+        }
+  
+      } else {
+  
+        if (!swapClient) {
+          throw new Error("Error: Unknown AMM client");
+        }
+  
+        return swapClient.getSwap(
+          wallet.publicKey,
+          fromMint,
+          toMint,
+          exchangeInfo.amountIn,
+          exchangeInfo.amountOut,
+          slippage,
+          MSP_OPS.toBase58(),
+          feeAmount
         );
-  
-      }
-      
-      if (isUnwrap) {
-  
-        return unwrap(
-          connection,
-          wallet,
-          Keypair.generate(),
-          amountInBn,
-          MSP_OPS,
-          feeAmountBn
-        );
-  
       }
 
-    } else {
-
-      if (!swapClient) {
-        throw new Error("Error: Unknown AMM client");
-      }
-
-      return swapClient.getSwap(
-        wallet.publicKey,
-        fromMint,
-        toMint,
-        exchangeInfo.amountIn,
-        exchangeInfo.amountOut,
-        slippage,
-        MSP_OPS.toBase58(),
-        feeAmount
-      );
+    } catch (_error) {
+      console.error(_error);
     }
 
   },[
@@ -1384,144 +1391,163 @@ export const SwapUi = (props: {
   ]);
 
   const createTx = useCallback(async () => {
-    if (!wallet) {       
-      return false; 
-    }
     
-    setTransactionStatus({
-      lastOperation: TransactionStatus.TransactionStart,
-      currentOperation: TransactionStatus.InitTransaction,
-    });
+    try {
 
-    // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
-    // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-    if (!isValidBalance) {
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.TransactionStart,
+        currentOperation: TransactionStatus.InitTransaction,
+      });
+
+      const swapTx = await getSwap();
+      
+      if (!swapTx) {
+        throw new Error('Cannot create the transaction');
+      }
+
+      console.info("SWAP returned transaction:", swapTx);
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.InitTransactionSuccess,
+        currentOperation: TransactionStatus.SignTransaction,
+      });
+
+      return swapTx;
+
+    } catch (_error) {
+      console.error(_error);
       setTransactionStatus({
         lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.TransactionStartFailure,
+        currentOperation: TransactionStatus.InitTransactionFailure,
       });
-      return false;
     }
-
-    return getSwap()
-      .then((tx) => {
-        consoleOut("SWAP returned transaction:", tx);
-        setTransactionStatus({
-          lastOperation: TransactionStatus.InitTransactionSuccess,
-          currentOperation: TransactionStatus.SignTransaction,
-        });
-        return tx;
-      })
-      .catch(_error => {
-        console.error("SWAP transaction init error:", _error);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.InitTransactionFailure,
-        });
-        return undefined;
-      });
     
   },[
     getSwap, 
-    isValidBalance, 
     setTransactionStatus, 
-    transactionStatus.currentOperation, 
-    wallet
+    transactionStatus.currentOperation,
+    connection
   ]);
 
   const signTx = useCallback(async (currentTx: Transaction) => {
 
-    if (!wallet) {
-      consoleOut("Cannot sign transaction! Wallet not found!");
+    try {
+
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      if (!wallet) {
+        throw new Error('Cannot sign transaction. Wallet not found'); 
+      }
+  
+      console.log("Signing transaction...");
+      const signedTx = await wallet.signTransaction(currentTx);
+
+      if (!signedTx) {
+        throw new Error('Signing transaction failed!');
+      }
+
+      console.info("signTransaction returned a signed transaction:", signedTx);
+
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.SendTransaction,
+      });
+
+      return signedTx;
+
+    } catch (_error) {
+      console.error(_error);
       setTransactionStatus({
         lastOperation: TransactionStatus.SignTransaction,
         currentOperation: TransactionStatus.SignTransactionFailure,
       });
-      return undefined;
     }
-
-    consoleOut("Signing transaction...");
-
-    return wallet.signTransaction(currentTx)
-      .then((signedTx: any) => {
-        consoleOut("signTransaction returned a signed transaction:", signedTx);
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.SendTransaction,
-        });
-        return signedTx;
-      })
-      .catch((_error: any) => {
-        console.error("Signing transaction failed!", _error);
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.SignTransactionFailure,
-        });
-        return undefined;
-      });
 
   }, [
     setTransactionStatus, 
     transactionStatus.currentOperation, 
-    wallet
+    wallet,
+    connection
   ]);
 
   const sendTx = useCallback(async (currentTx: Transaction) => {
-    if (!wallet) {
+
+    try {
+
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      const encodedTx = currentTx.serialize().toString('base64');
+      console.log('tx encoded => ', encodedTx);
+
+      const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
+        preflightCommitment: 'confirmed' 
+      });
+
+      if (!sentTx) {
+        throw new Error('Cannot send the transaction');   
+      }
+  
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.SendTransactionSuccess
+      });
+
+      return sentTx;
+
+    } catch (_error) {
+      console.error(_error);
       setTransactionStatus({
         lastOperation: TransactionStatus.SendTransaction,
         currentOperation: TransactionStatus.SendTransactionFailure
       });
-      return undefined;
     }
-
-    const serializedTx = currentTx.serialize();
-    const encodedTx = serializedTx.toString('base64');
-    consoleOut('tx encoded => ', encodedTx);
-
-    return connection.sendRawTransaction(serializedTx)
-      .then((sig) => {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.SendTransactionSuccess
-        });
-        return sig;
-      })
-      .catch(_error => {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
-        });
-        return undefined;
-      });
 
   },[
     connection, 
     setTransactionStatus, 
-    transactionStatus.currentOperation, 
-    wallet
+    transactionStatus.currentOperation
   ]);
 
   const confirmTx = useCallback(async (signature: string) => {
 
-    return connection.confirmTransaction(signature)
-      .then((resp) => { 
-        if(resp && resp.value && !resp.value.err) {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          return signature;
-        }
-        return undefined;
-      })
-      .catch(_error => {
-        setTransactionStatus({
-          lastOperation: TransactionStatus.ConfirmTransaction,
-          currentOperation: TransactionStatus.ConfirmTransactionFailure
-        });
-        return undefined;
+    try {
+
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      const response = await connection.confirmTransaction(signature, 'confirmed');
+
+      if(!response || !response.value || response.value.err) {
+        const err = response && response.value && response.value.err 
+          ? response.value.err 
+          : new Error('Cannot confirm transaction');
+
+        throw err;
+      }
+
+      setTransactionStatus({
+        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+        currentOperation: TransactionStatus.TransactionFinished
       });
+
+      return response;
+
+    } catch (_error) {
+      console.error(_error);
+      setTransactionStatus({
+        lastOperation: TransactionStatus.ConfirmTransaction,
+        currentOperation: TransactionStatus.ConfirmTransactionFailure
+      });
+    }
 
   },[
     connection, 
@@ -1530,47 +1556,52 @@ export const SwapUi = (props: {
 
   const onTransactionStart = useCallback(async () => {
 
-    consoleOut("Starting swap...");
-    setTransactionCancelled(false);
-    setRefreshTime(60);
-    setIsBusy(true);
+    try {
 
-    if (wallet) {
-
+      console.info("Starting exchange");
+      setTransactionCancelled(false);
+      setRefreshTime(30);
+      setIsBusy(true);
       showTransactionModal();
+
       const swapTxs = await createTx();
-      consoleOut("initialized:", swapTxs);
+      console.log("initialized:", swapTxs);
 
       if (!swapTxs || transactionCancelled) {
         setIsBusy(false);
-      } else {
-        const signedTx = await signTx(swapTxs);
-        consoleOut("signed:", signedTx);
+        return;
+      }
 
-        if (!signedTx || transactionCancelled) {
-          setIsBusy(false);
-        } else {
-          const signature = await sendTx(signedTx);
+      const signedTx = await signTx(swapTxs);
+      console.log("signed:", signedTx);
 
-          if (!signature || transactionCancelled) {
-            setIsBusy(false);
-            return;
-          }
+      if (!signedTx || transactionCancelled) {
+        setIsBusy(false);
+        return;
+      }
 
-          let confirmed = await confirmTx(signature);
+      const signature = await sendTx(signedTx);
 
-          if (!confirmed) {
-            setIsBusy(false);
-            return;
-          }
+      if (!signature || transactionCancelled) {
+        setIsBusy(false);
+        return;
+      }
 
-          consoleOut("confirmed:", confirmed); // put this in a link in the UI
-          setFromAmount('');
-          setFromSwapAmount(0);
-          setShouldUpdateBalances(true);
-          setTimeout(() => setIsBusy(false), 1000);
-        }
-      }      
+      let confirmed = await confirmTx(signature);
+
+      if (!confirmed) {
+        setIsBusy(false);
+        return;
+      }
+
+      console.info("confirmed:", confirmed); // put this in a link in the UI
+      setFromAmount('');
+      setFromSwapAmount(0);
+      setShouldUpdateBalances(true);
+      setIsBusy(false);
+
+    } catch (_error) {
+      console.error(_error);
     }
 
   }, [
@@ -1579,8 +1610,7 @@ export const SwapUi = (props: {
     sendTx, 
     showTransactionModal, 
     signTx,
-    transactionCancelled, 
-    wallet
+    transactionCancelled
   ]);
 
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
