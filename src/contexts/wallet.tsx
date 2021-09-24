@@ -32,7 +32,7 @@ export const WALLET_PROVIDERS = [
     name: WalletName.Coin98,
     url: 'https://wallet.coin98.com/',
     icon: `${ICONS_URL}/coin98.svg`,
-    adapter: isDesktop ? Coin98WalletAdapter : null
+    adapter: Coin98WalletAdapter
   },
   {
     name: WalletName.Solong,
