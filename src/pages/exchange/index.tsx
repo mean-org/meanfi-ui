@@ -1,4 +1,6 @@
+import { Alert } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
@@ -6,6 +8,7 @@ import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
 
 export const SwapView = () => {
+  const { t } = useTranslation("common");
   const location = useLocation();
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
@@ -41,6 +44,13 @@ export const SwapView = () => {
     <>
     <div className="container main-container">
       <div className="interaction-area">
+        <div className="notifications">
+          <Alert
+            message={t('swap.exchange-warning')}
+            type="warning"
+            showIcon
+          />
+        </div>
         <div className="place-transaction-box">
           <SwapUi queryFromMint={queryFromMint} queryToMint={queryToMint} />
         </div>

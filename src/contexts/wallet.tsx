@@ -13,11 +13,11 @@ import { WalletName } from "../wallet-adapters/wallets";
 import { SolongWalletAdapter } from "../wallet-adapters/solong";
 import { PhantomWalletAdapter } from "../wallet-adapters/phantom";
 import { MathWalletWalletAdapter } from "../wallet-adapters/mathwallet";
-import { SolflareWalletAdapter } from "../wallet-adapters/solflare";
 import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
 import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { isDesktop } from "react-device-detect";
 import { useConnectionConfig } from "./connection";
 
 const ICONS_URL = "/assets/wallets/";
@@ -30,9 +30,9 @@ export const WALLET_PROVIDERS = [
   },
   {
     name: WalletName.Coin98,
-    url: 'https://coin98.com',
+    url: 'https://wallet.coin98.com/',
     icon: `${ICONS_URL}/coin98.svg`,
-    adapter: Coin98WalletAdapter
+    adapter: isDesktop ? Coin98WalletAdapter : null
   },
   {
     name: WalletName.Solong,
