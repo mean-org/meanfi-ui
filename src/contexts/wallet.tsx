@@ -17,7 +17,6 @@ import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
 import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
-import { isDesktop } from "react-device-detect";
 import { useConnectionConfig } from "./connection";
 
 const ICONS_URL = "/assets/wallets/";
