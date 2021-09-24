@@ -439,6 +439,14 @@ footer.ant-layout-footer {
     color: inherit;
     border-color: var(--color-primary);
   }
+  &[disabled],
+  &[disabled]:hover,
+  &[disabled]:focus,
+  &[disabled]:active {
+    color: var(--color-secondary-alpha-20) !important;
+    border-color: inherit !important;
+    background: var(--color-almost-white);
+  }
 }
 .ant-btn.ant-btn-circle {
   display: inline-flex;

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDownOutlined, ArrowUpOutlined, SwapOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
 import { LAMPORTS_PER_SOL, ParsedMessageAccount, TokenBalance } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { UserTokenAccount } from "../../models/transactions";
@@ -21,6 +21,7 @@ export const TransactionItemView = (props: {
 }) => {
 
   const [isInboundTx, setIsInboundTx] = useState(false);
+  const [isWrapping, setIsWrapping] = useState(false);
   const [isToMyAccounts, setIsToMyAccounts] = useState(false);
   const [hasTokenBalances, setHasTokenBalances] = useState(false);
   const [isScanningUserWallet, setIsScanningUserWallet] = useState(false);
@@ -36,6 +37,15 @@ export const TransactionItemView = (props: {
 
   // Prepare some data
   useEffect(() => {
+
+    const hasWsolAccount = (accounts: ParsedMessageAccount[]): boolean => {
+      const filtered = props.tokenAccounts.filter(ta => ta.address === WRAPPED_SOL_MINT_ADDRESS);
+      if (filtered && filtered.length) {
+        const index = accounts.findIndex(a => a.pubkey.toBase58() === filtered[0].ataAddress);
+        return index !== -1 ? true : false;
+      }
+      return false;
+    }
 
     const isToOneOfMyAccounts = (accounts: ParsedMessageAccount[]): boolean => {
       const filtered = props.tokenAccounts.filter(ta => ta.ataAddress !== props.accountAddress);
@@ -88,7 +98,10 @@ export const TransactionItemView = (props: {
           outDestAccountIndex = getDestAccountIndex(accounts);
           setOutDstAccountIndex(outDestAccountIndex);
         }
+        const isWrap = hasWsolAccount(accounts);
+        setIsWrapping(isWrap);
       } else {
+        setIsWrapping(false);
         setIsToMyAccounts(false);
       }
 
@@ -175,15 +188,25 @@ export const TransactionItemView = (props: {
     } else {
       if (isScanningUserWallet) {
         if (hasTokenBalances) {
-          if (isToMyAccounts) {
-            return (
-              <ArrowUpOutlined className="mean-svg-icons upright" />
-            );
-          } else {
+          if (!isWrapping) {
             return (
               <IconGasStation className="mean-svg-icons gas-station warning" />
             );
           }
+
+          // if (isWrapping) {
+          //   return (
+          //     <ArrowUpOutlined className="mean-svg-icons upright" />
+          //   );
+          // } else {
+          //   return (
+          //     <IconGasStation className="mean-svg-icons gas-station warning" />
+          //   );
+          // }
+
+          return (
+            <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
+          );
         } else {
           return (
             <ArrowUpOutlined className="mean-svg-icons outgoing upright" />

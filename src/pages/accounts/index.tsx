@@ -89,7 +89,6 @@ export const AccountsView = () => {
     setStatus(FetchStatus.Fetching);
     setLoadingTransactions(false);
     setShouldLoadTransactions(true);
-    console.log('startSwitch called!');
   }, [])
 
   const reloadSwitch = useCallback(() => {
@@ -672,14 +671,10 @@ export const AccountsView = () => {
                         type="ghost"
                         shape="round"
                         size="small"
+                        disabled={status === FetchStatus.Fetching}
                         onClick={() => startSwitch()}>
-                        {t('assets.history-load-more-cta-label')}
+                        {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
                       </Button>
-                      {/* {status === FetchStatus.Fetching ? (
-                        <span className="explorer-cta click-disabled">{t('assets.history-load-more-cta-label')}</span>
-                      ) : (
-                        <span className="explorer-cta" onClick={() => startSwitch()}>{t('assets.history-load-more-cta-label')}</span>
-                      )} */}
                     </div>
                   )}
                 </div>
