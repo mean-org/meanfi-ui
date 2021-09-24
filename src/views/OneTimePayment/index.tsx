@@ -9,7 +9,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../Icons";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
@@ -30,17 +30,20 @@ import { AppStateContext } from "../../contexts/appstate";
 import { MoneyStreaming } from "money-streaming/lib/money-streaming";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { useNativeAccount } from "../../contexts/accounts";
+import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
+import { TokenAccount } from '../../models';
+import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
-  const { connected, wallet } = useWallet();
+  const { connected, publicKey, wallet } = useWallet();
   const {
     contract,
     tokenList,
@@ -75,6 +78,8 @@ export const OneTimePayment = () => {
   const [isBusy, setIsBusy] = useState(false);
   const [isScheduledPayment, setIsScheduledPayment] = useState(false);
   const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
+  const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
@@ -96,6 +101,58 @@ export const OneTimePayment = () => {
     nativeBalance,
     previousBalance,
     refreshTokenBalance
+  ]);
+
+  // Automatically update all token balances
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+      connection.getTokenAccountsByOwner(
+        publicKey, 
+        { programId: TOKEN_PROGRAM_ID }, 
+        connection.commitment
+      )
+      .then(response => {
+        for (let acc of response.value) {
+          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+          const address = decoded.mint.toBase58();
+          const itemIndex = tokenList.findIndex(t => t.address === address);
+          if (itemIndex !== -1) {
+            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+          } else {
+            balancesMap[address] = 0;
+          }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (let t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+      })
+      .finally(() => setUserBalances(balancesMap));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    tokenList,
+    accounts,
+    publicKey
   ]);
 
   const [otpFees, setOtpFees] = useState<TransactionFees>({
@@ -725,6 +782,13 @@ export const OneTimePayment = () => {
                     <div className="token-symbol">{token.symbol}</div>
                     <div className="token-name">{token.name}</div>
                   </div>
+                  {
+                    connected && userBalances && userBalances[token.address] > 0 && (
+                      <div className="token-balance">
+                        {getTokenFormattedAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                      </div>
+                    )
+                  }
                 </div>
               );
             })
