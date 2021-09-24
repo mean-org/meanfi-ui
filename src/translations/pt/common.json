@@ -26,12 +26,12 @@
 		"create-account-help-link": "Saiba mais sobre as carteiras",
 		"create-account-help-post": "abrir uma conta",
 		"create-account-help-pre": "Novo em Solana?",
+		"history-load-more-cta-label": "Load more",
 		"history-panel-title": "Transações de bens",
 		"history-table-activity": "Atividade",
 		"history-table-amount": "Saldo",
 		"history-table-date": "Data",
 		"history-table-postbalance": "Post saldo",
-		"history-load-more-cta-label": "Load more",
 		"loading-error": "Could not load transactions. Please reload the page.",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
@@ -229,6 +229,7 @@
 		}
 	},
 	"swap": {
+		"exchange-warning": "A troca de token acontece com bens reais em Mainnet",
 		"input-label-destination": "Trocar para (est.)",
 		"input-label-source": "Trocar de",
 		"insufficient-liquidity": "Liquidez insuficiente para essa transação",
