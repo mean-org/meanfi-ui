@@ -66,10 +66,7 @@ export const FaucetView = () => {
   ]);
 
   const getFaucetAmount = (): number => {
-    if (environment === 'staging') {
-      return 1 * LAMPORTS_PER_SOL;
-    }
-    return 4 * LAMPORTS_PER_SOL;
+    return 1 * LAMPORTS_PER_SOL;
   }
 
   const airdrop = useCallback(() => {
