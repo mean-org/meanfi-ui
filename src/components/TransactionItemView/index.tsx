@@ -193,17 +193,6 @@ export const TransactionItemView = (props: {
               <IconGasStation className="mean-svg-icons gas-station warning" />
             );
           }
-
-          // if (isWrapping) {
-          //   return (
-          //     <ArrowUpOutlined className="mean-svg-icons upright" />
-          //   );
-          // } else {
-          //   return (
-          //     <IconGasStation className="mean-svg-icons gas-station warning" />
-          //   );
-          // }
-
           return (
             <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
           );
