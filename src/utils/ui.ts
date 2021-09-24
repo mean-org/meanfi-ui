@@ -36,11 +36,15 @@ export class PaymentRateTypeOption {
 
 export function isValidAddress(value: any): boolean {
     if (typeof value === 'string') {
-      // assume base 58 encoding by default
-      const decoded = bs58.decode(value);
-      if (decoded.length === 32) {
-        return true;
-      }
+        try {
+            // assume base 58 encoding by default
+            const decoded = bs58.decode(value);
+            if (decoded.length === 32) {
+                return true;
+            }
+        } catch (error) {
+            return false;
+        }
     }
     return false;
 }

@@ -180,6 +180,14 @@ export const TransactionItemView = (props: {
     }
   }, [props]);
 
+  const getAmountFromLamports = (amount: number): number => {
+    return (amount || 0) / LAMPORTS_PER_SOL;
+  }
+
+  const isAmountNegative = (): boolean => {
+    return postBalance < preBalance ? true : false;
+  }
+
   const getTxIcon = () => {
     if (isInboundTx) {
       return (
@@ -209,10 +217,6 @@ export const TransactionItemView = (props: {
     }
   }
 
-  const isAmountNegative = (): boolean => {
-    return postBalance < preBalance ? true : false;
-  }
-
   const getTxDescription = (shorten = true): string => {
     const trans = props.transaction.parsedTransaction.transaction.message;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
@@ -223,8 +227,6 @@ export const TransactionItemView = (props: {
                      isToMyAccounts
                       ? trans.accountKeys[outDstAccountIndex].pubkey.toBase58()
                       : trans.accountKeys[1].pubkey.toBase58();
-    const wallet = (trans.instructions[0] as any)?.parsed?.info?.wallet as string || '';
-
     // Log what we have
     // if (!isInboundTx) {
     //   console.log(`isScanningUserWallet: ${isScanningUserWallet}\nisInboundTx: ${isInboundTx}\nhasTokenBalances: ${hasTokenBalances}\nisToMyAccounts: ${isToMyAccounts}\noutDstAccountIndex: ${outDstAccountIndex}\ntokenAccount: ${trans.accountKeys[outDstAccountIndex].pubkey.toBase58()}`);
@@ -236,59 +238,55 @@ export const TransactionItemView = (props: {
       }
       return shorten ? shortenAddress(sender, 6) : sender;
     } else {
-      return shorten ? shortenAddress(wallet || receiver, 6) : receiver;
+      return shorten ? shortenAddress(receiver, 6) : receiver;
     }
   }
 
-  const getAmountFromLamports = (amount: number): number => {
-    return (amount || 0) / LAMPORTS_PER_SOL;
+  const getDisplayAmount = (): string => {
+    const displayAmount =
+      postTokenBalance
+        ? isScanningUserWallet
+          ? getTokenAmountAndSymbolByTokenAddress(
+              getAmountFromLamports(Math.abs(amountChange)),
+              NATIVE_SOL.address,
+              !isLocal()
+            )
+          : getTokenAmountAndSymbolByTokenAddress(
+              Math.abs(amountChange),
+              postTokenBalance.mint,
+              !isLocal()
+            )
+        : getTokenAmountAndSymbolByTokenAddress(
+            getAmountFromLamports(Math.abs(amountChange)),
+            NATIVE_SOL_MINT.toBase58(),
+            !isLocal()
+          );
+    return isAmountNegative() ? '-' + displayAmount : displayAmount;
+  }
+
+  const getDisplayPostBalance = (): string => {
+    return postTokenBalance
+      ? isScanningUserWallet
+        ? getTokenAmountAndSymbolByTokenAddress(
+            getAmountFromLamports(Math.abs(postBalance)),
+            NATIVE_SOL_MINT.toBase58(),
+            !isLocal()
+          )
+        : getTokenAmountAndSymbolByTokenAddress(
+            postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
+            postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
+            !isLocal()
+          )
+        : getTokenAmountAndSymbolByTokenAddress(
+            getAmountFromLamports(postBalance),
+            NATIVE_SOL.address,
+            !isLocal()
+          );
   }
 
   const getTransactionItems = () => {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
-
-    const getDisplayAmount = (): string => {
-      const displayAmount =
-        postTokenBalance
-          ? isScanningUserWallet
-            ? getTokenAmountAndSymbolByTokenAddress(
-                getAmountFromLamports(Math.abs(amountChange)),
-                NATIVE_SOL.address,
-                !isLocal()
-              )
-            : getTokenAmountAndSymbolByTokenAddress(
-                Math.abs(amountChange),
-                postTokenBalance.mint,
-                !isLocal()
-              )
-          : getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(Math.abs(amountChange)),
-              NATIVE_SOL_MINT.toBase58(),
-              !isLocal()
-            );
-      return isAmountNegative() ? '-' + displayAmount : displayAmount;
-    }
-
-    const getDisplayPostBalance = (): string => {
-      return postTokenBalance
-        ? isScanningUserWallet
-          ? getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(Math.abs(postBalance)),
-              NATIVE_SOL_MINT.toBase58(),
-              !isLocal()
-            )
-          : getTokenAmountAndSymbolByTokenAddress(
-              postTokenBalance ? postTokenBalance.uiTokenAmount.uiAmount || postBalance : postBalance,
-              postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
-              !isLocal()
-            )
-          : getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(postBalance),
-              NATIVE_SOL.address,
-              !isLocal()
-            );
-    }
 
     if (isScanningUserWallet && isInboundTx && hasTokenBalances) {
       return null;

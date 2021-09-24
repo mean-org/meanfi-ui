@@ -29,6 +29,7 @@ import {
   getTransactionOperationDescription,
   getTxFeeAmount,
   isToday,
+  isValidAddress,
   PaymentRateTypeOption
 } from "../../utils/ui";
 import moment from "moment";
@@ -41,7 +42,6 @@ import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
-import * as base64 from "base64-js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -126,6 +126,9 @@ export const RepeatingPayment = () => {
     }
   }, [connection, repeatingPaymentFees]);
 
+  // recipientAddress input field validation flag
+  const [isRecipiendAddressInputValid, setIsRecipiendAddressInputValid] = useState(false);
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -183,12 +186,20 @@ export const RepeatingPayment = () => {
     window.dispatchEvent(new Event('resize'));
   }
 
-  const handleRecipientAddressChange = (e: any) => {
-    setRecipientAddress(e.target.value);
-  }
-
   const handleRecipientNoteChange = (e: any) => {
     setRecipientNote(e.target.value);
+  }
+
+  const handleRecipientAddressChange = (e: any) => {
+    const inputValue = e.target.value as string;
+    // Set the input value
+    setRecipientAddress(inputValue.trim());
+    // But set the isInputValid flag for validation
+    if (inputValue && isValidAddress(inputValue) ) {
+      setIsRecipiendAddressInputValid(true);
+    } else {
+      setIsRecipiendAddressInputValid(false);
+    }
   }
 
   const handleRecipientAddressFocusIn = () => {
@@ -787,7 +798,11 @@ export const RepeatingPayment = () => {
         </div>
         <div className="transaction-field-row">
           <span className="field-label-left">
-            {isAddressOwnAccount() ? (
+            {recipientAddress && !isRecipiendAddressInputValid ? (
+              <span className="fg-red">
+                {t("assets.account-address-validation")}
+              </span>
+            ) : isAddressOwnAccount() ? (
               <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
             ) : (
               <span>&nbsp;</span>

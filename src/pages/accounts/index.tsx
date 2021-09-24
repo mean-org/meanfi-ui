@@ -133,9 +133,9 @@ export const AccountsView = () => {
   }
 
   const handleAccountAddressInputChange = (e: any) => {
-    const inputValue = e.target.value;
+    const inputValue = e.target.value as string;
     // Set the input value
-    setAccountAddressInput(inputValue);
+    setAccountAddressInput(inputValue.trim());
     // But set the isInputValid flag for validation
     if (inputValue && isValidAddress(inputValue) ) {
       setIsInputValid(true);
