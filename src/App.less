@@ -646,7 +646,6 @@ footer.ant-layout-footer {
     margin: 0px;
   }
 }
-
 .App-Bar {
   align-self: center;
   justify-content: space-between;
@@ -872,6 +871,15 @@ footer.ant-layout-footer {
     }
   }
 }
+
+.menu-open #overlay .mobile-menu-item {
+  animation-name: animateIn;
+  animation-duration: 250ms;
+  animation-delay: calc(var(--animation-order) * 50ms);
+  animation-fill-mode: both;
+  animation-timing-function: ease-in-out;
+}
+
 .ant-menu:not(.ant-menu-horizontal) {
   &.ant-menu-submenu-popup > .ant-menu {
     background-color: var(--bg-color);
@@ -4881,4 +4889,16 @@ section.content {
   font-size: 0.7rem;
   background-color: var(--color-secondary-alpha-05);
   border-top: 1px solid var(--color-secondary-alpha-40);
+}
+
+// Animations
+@keyframes animateIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(-8px);
+  }
+  
+  100% {
+    opacity: 1;
+  }
 }
