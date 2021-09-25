@@ -1,22 +1,15 @@
 import React from 'react';
 import { Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-import { useContext } from 'react';
-import { AppStateContext } from '../../contexts/appstate';
 
-export const BackButton = () => {
-  const { detailsPanelOpen, setDtailsPanelOpen } = useContext(AppStateContext);
+export const BackButton = (props: { handleClose: any }) => {
 
-  if (detailsPanelOpen) {
-    return (
-      <Button
-        id="back-button"
-        type="default"
-        shape="circle"
-        icon={<ArrowLeftOutlined />}
-        onClick={() => setDtailsPanelOpen(false)}/>
-    );
-  }
-
-  return null;
+  return (
+    <Button
+      id="back-button"
+      type="default"
+      shape="circle"
+      icon={<ArrowLeftOutlined />}
+      onClick={props.handleClose}/>
+  );
 };

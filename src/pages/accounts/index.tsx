@@ -21,6 +21,8 @@ import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useHistory } from 'react-router-dom';
+import { isDesktop } from "react-device-detect";
+import useWindowSize from '../../hooks/useWindowResize';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -46,7 +48,8 @@ export const AccountsView = () => {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const history = useHistory();
-
+  const { width, height } = useWindowSize();
+  const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
@@ -99,14 +102,20 @@ export const AccountsView = () => {
     setTransactions
   ])
 
-  const selectAsset = useCallback((asset: UserTokenAccount) => {
+  const selectAsset = useCallback((
+    asset: UserTokenAccount,
+    openDetailsPanel: boolean = false
+  ) => {
     setTransactions(undefined);
     setSelectedAsset(asset);
-    setDtailsPanelOpen(true);
+    if (isSmallUpScreen || openDetailsPanel) {
+      setDtailsPanelOpen(true);
+    }
     setTimeout(() => {
       startSwitch();
     }, 10);
   }, [
+    isSmallUpScreen,
     startSwitch,
     setTransactions,
     setSelectedAsset,
@@ -413,7 +422,7 @@ export const AccountsView = () => {
     setAccountAddress
   ]);
 
-  // Window resize listener
+  // Window resize listeners
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -446,6 +455,17 @@ export const AccountsView = () => {
     }
   }, [isInputValid]);
 
+  useEffect(() => {
+    if (isSmallUpScreen && width < 576) {
+      setIsSmallUpScreen(false);
+    }
+  }, [
+    width,
+    isSmallUpScreen,
+    detailsPanelOpen,
+    setDtailsPanelOpen
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -454,7 +474,7 @@ export const AccountsView = () => {
     <>
     {accountTokens && accountTokens.length ? (
       accountTokens.map((asset, index) => {
-        const onTokenAccountClick = () => selectAsset(asset);
+        const onTokenAccountClick = () => selectAsset(asset, true);
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}
                className={selectedAsset && selectedAsset.symbol === asset.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>

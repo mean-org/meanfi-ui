@@ -35,6 +35,7 @@ export const AppBar = (props: { menuType: string }) => {
     setCurrentScreen,
     setLoadingStreams,
     setSelectedStream,
+    setDtailsPanelOpen,
     setCustomStreamDocked,
     showDepositOptionsModal,
     hideDepositOptionsModal,
@@ -69,6 +70,7 @@ export const AppBar = (props: { menuType: string }) => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
+      setDtailsPanelOpen(false);
     }
   }
 

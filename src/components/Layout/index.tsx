@@ -25,6 +25,7 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     currentScreen,
+    detailsPanelOpen,
     previousWalletConnectState,
     setStreamList,
     setCurrentScreen,
@@ -32,6 +33,7 @@ export const AppLayout = React.memo((props: any) => {
     setAccountAddress,
     refreshTokenBalance,
     refreshStreamList,
+    setDtailsPanelOpen,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
@@ -162,7 +164,9 @@ export const AppLayout = React.memo((props: any) => {
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">
-          <BackButton />
+          {detailsPanelOpen && (
+            <BackButton handleClose={() => setDtailsPanelOpen(false)} />
+          )}
           <div className="app-bar-inner">
             <Link to="/" className="flex-center">
               <div className="app-title simplelink">
