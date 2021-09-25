@@ -711,7 +711,7 @@ export const AccountsView = () => {
                 )}
                 <h2 className="text-center mb-3 px-3">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
                 <div className="flexible-left mb-3">
-                  <div className="transaction-field">
+                  <div className="transaction-field left">
                     <div className="transaction-field-row">
                       <span className="field-label-left">{t('assets.account-address-label')}</span>
                       <span className="field-label-right">&nbsp;</span>
@@ -753,7 +753,7 @@ export const AccountsView = () => {
                   </div>
                   {/* Go button */}
                   <Button
-                    className="main-cta"
+                    className="main-cta right"
                     type="primary"
                     shape="round"
                     size="large"
