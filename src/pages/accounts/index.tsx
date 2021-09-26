@@ -181,6 +181,7 @@ export const AccountsView = () => {
 
   const handleGoToExchangeClick = () => {
     const queryParams = `${selectedAsset ? '?toMint=' + selectedAsset.symbol : ''}`;
+    setDtailsPanelOpen(false);
     if (queryParams) {
       history.push({
         pathname: '/exchange',
