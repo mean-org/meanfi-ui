@@ -1676,7 +1676,7 @@ export const SwapUi = (props: {
       <div className="swap-wrapper">
 
         {/* Title bar with settings */}
-        <div className="swap-title-and-settings flexible-left">
+        <div className="swap-title-and-settings flexible-left flex-column-xs">
           <div className="left title">{t('ui-menus.main-menu.swap')}</div>
           <div className="right"><SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/></div>
         </div>
