@@ -18,6 +18,7 @@ import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import { useConnectionConfig } from "./connection";
+import { isMobile } from "react-device-detect";
 
 const ICONS_URL = "/assets/wallets/";
 export const WALLET_PROVIDERS = [
@@ -25,36 +26,42 @@ export const WALLET_PROVIDERS = [
     name: WalletName.Phantom,
     url: 'https://www.phantom.app',
     icon: `${ICONS_URL}/phantom.svg`,
-    adapter: PhantomWalletAdapter
+    adapter: PhantomWalletAdapter,
+    showOnMobile: false
   },
   {
     name: WalletName.Coin98,
     url: 'https://wallet.coin98.com/',
     icon: `${ICONS_URL}/coin98.svg`,
-    adapter: Coin98WalletAdapter
+    adapter: Coin98WalletAdapter,
+    showOnMobile: true
   },
   {
     name: WalletName.Solong,
     url: 'https://solongwallet.com',
     icon: `${ICONS_URL}/solong.png`,
-    adapter: SolongWalletAdapter
+    adapter: SolongWalletAdapter,
+    showOnMobile: false
   },
   {
     name: WalletName.Solflare,
     url: "https://solflare.com/access-wallet",
     icon: `${ICONS_URL}/solflare.svg`,
+    showOnMobile: true
   },
   {
     name: WalletName.MathWallet,
     url: 'https://mathwallet.org',
     icon: `${ICONS_URL}/mathwallet.svg`,
-    adapter: MathWalletWalletAdapter
+    adapter: MathWalletWalletAdapter,
+    showOnMobile: true
   },
   {
     name: WalletName.WalletConnect,
     url: 'https://walletconnect.org',
     icon: `${ICONS_URL}/walletconnect.svg`,
-    adapter: WalletConnectWalletAdapter
+    adapter: WalletConnectWalletAdapter,
+    showOnMobile: true
   },
 ];
 
@@ -224,7 +231,7 @@ export function WalletProvider({ children = null as any }) {
               <Button
                 block
                 size="large"
-                className="wallet-provider"
+                className={!isMobile ? 'wallet-provider' : item.showOnMobile ? 'wallet-provider' : 'wallet-provider hidden'}
                 shape="round"
                 type="ghost"
                 onClick={onClick}
