@@ -770,7 +770,9 @@ footer.ant-layout-footer {
         list-style-type: none;
         width: 100%;
         min-width: 160px;
-        max-width: 300px;
+        max-width: 320px;
+        max-height: 84vh;
+        overflow-y: auto;
         .mobile-submenu-title {
           text-transform: uppercase;
           line-height: 1;
@@ -800,7 +802,7 @@ footer.ant-layout-footer {
             width: 100%;
             justify-content: center;
             align-items: center;
-            padding: 1em 0;
+            padding: 1rem 0;
             color: var(--color-secondary-alpha-60);
             text-decoration: none;
             font-size: 1.5em;
@@ -4837,6 +4839,14 @@ section.content {
     .ant-popover-content,
     .ant-popover-arrow {
       margin-right: -0.7rem;
+    }
+  }
+  &.ant-popover-placement-bottomRight {
+    .ant-popover-content {
+      margin-right: -6px;
+    }
+    .ant-popover-arrow {
+      right: 6px;
     }
   }
   .ant-popover-content {

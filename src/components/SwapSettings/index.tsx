@@ -2,12 +2,18 @@ import React from "react";
 import { Button, Popover, Radio, RadioChangeEvent } from "antd";
 import { useTranslation } from "react-i18next";
 import { SettingOutlined } from "@ant-design/icons";
+import useWindowSize from "../../hooks/useWindowResize";
 
 export const SwapSettings = (props: {
   currentValue: number;
   onValueSelected: any;
 }) => {
   const { t } = useTranslation("common");
+  const { width } = useWindowSize();
+
+  const isSmScreen = ():boolean => {
+    return width < 768 ? true : false;
+  }
 
   const onChangeValue = (e: RadioChangeEvent) => {
     props.onValueSelected(e.target.value);
@@ -27,7 +33,7 @@ export const SwapSettings = (props: {
 
   return (
     <>
-      <Popover placement="bottom" title={text} content={content} trigger="click">
+      <Popover placement={isSmScreen() ? "bottomRight" : 'bottom'} title={text} content={content} trigger="click">
         <Button
           shape="round"
           type="text"
