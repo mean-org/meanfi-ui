@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { ArrowDownOutlined, CheckOutlined, CompassOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -26,12 +26,11 @@ import "./style.less";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
-import { getClient, getExchangeInfo, getFormattedAmount, getOptimalPool, getTokensPools, unwrap, wrap } from "../../hybrid-liquidity-ag/utils";
+import { getClient, getExchangeInfo, getOptimalPool, getTokensPools, unwrap, wrap } from "../../hybrid-liquidity-ag/utils";
 import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { InfoIcon } from "../InfoIcon";
 import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
-import { useAsync } from "react-async-hook";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -204,7 +203,7 @@ export const SwapUi = (props: {
   ]);
 
   // Updates the token list everytime is filtered
-  useEffect(() => {
+  const updateTokenListByFilter = useCallback(() => {
 
     if (!connection) {
       console.error('No connection');
@@ -226,7 +225,7 @@ export const SwapUi = (props: {
       if (subjectTokenSelection === 'source') {
 
         let showFromList = !tokenFilter 
-          ? mintList 
+          ? mintList
           : Object.values(mintList)
             .filter((t: any) => filter(t));
 
@@ -258,20 +257,30 @@ export const SwapUi = (props: {
   ]);
 
   // Token map for quick lookup.
-  useMemo(() => {
+  useEffect(() => {
 
-    const list: any = { };
+    if (!TOKENS) { return; }
 
-    for (let info of TOKENS) {
-      let mint = cloneDeep(info);
-      if (mint.logoURI) {
-        list[mint.address] = mint;
+    const timeout = setTimeout(() => {
+
+      const list: any = { };
+
+      for (let info of TOKENS) {
+        let mint = cloneDeep(info);
+        if (mint.logoURI) {
+          list[mint.address] = mint;
+        }
       }
-    }
 
-    setMintList(list);
-    setShowFromMintList(list);
-    setShowToMintList(list);
+      setMintList(list);
+      setShowFromMintList(list);
+      setShowToMintList(list);
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
 
   }, []);
 
@@ -347,7 +356,11 @@ export const SwapUi = (props: {
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
-      const amount = fromSwapAmount - aggregatorFees;
+      let amount = fromSwapAmount - aggregatorFees;
+
+      if (amount < (1 / 10 ** mintList[fromMint].decimals)) {
+        amount = 0;
+      }
 
       const success = (info: ExchangeInfo) => {
         console.info('Exchange', info);
@@ -382,7 +395,8 @@ export const SwapUi = (props: {
     isWrap, 
     slippage, 
     swapClient, 
-    toMint, 
+    toMint,
+    mintList,
     txFees
   ]);
 
@@ -451,7 +465,7 @@ export const SwapUi = (props: {
       };
 
       const tokensPools = getTokensPools(fromMint, toMint);
-      console.log('pools', tokensPools);
+
       let promise: any;
       let client: any;
 
@@ -791,39 +805,27 @@ export const SwapUi = (props: {
         return;
       }
 
-      const btcMintInfos: any = Object
+      const btcMintInfo: any = Object
         .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC' || m.symbol === 'renBTC');
-
-      if (!btcMintInfos || btcMintInfos.length === 0) { return; }
-
-      const fromBtcInfo = btcMintInfos.find((i: any) => i.address === fromMint);
+        .filter((m: any) => m.symbol === 'BTC')[0];
  
-      if (fromBtcInfo) {
+      if (!btcMintInfo) { return; }
 
-        const counterpartyInfo: any = fromBtcInfo.symbol === 'BTC' 
-          ? Object.values(mintList).filter((i: any) => i.symbol === 'renBTC')[0]
-          : Object.values(mintList).filter((i: any) => i.symbol === 'BTC')[0];
+      if (fromMint === btcMintInfo.address) {
 
-        const filteredList: any[] = Object
+        const usdxList: any = Object
           .values(mintList)
-          .filter((m: any) => 
-            m.symbol === 'USDC' || 
-            m.symbol === counterpartyInfo.symbol
-          );
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
 
-        if (fromBtcInfo.symbol === 'BTC') {
-          filteredList.push(...Object.values(mintList).filter((m: any) => m.symbol === 'USDT'));
+        let usdxMints: any = {};
+
+        for (let item of usdxList) {
+          usdxMints[item.address] = item;
         }
     
-        setShowToMintList(filteredList);
+        setShowToMintList(usdxMints);
         
-        if (
-          toMint &&
-          toMint !== USDC_MINT.toBase58() && 
-          toMint !== USDT_MINT.toBase58() && 
-          toMint !== counterpartyInfo.address
-        ) {
+        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58()) {
           setToMint(USDC_MINT.toBase58());
         }
 
@@ -838,10 +840,9 @@ export const SwapUi = (props: {
     }
 
   },[
-    fromMint, 
-    mintList, 
-    showFromMintList, 
-    toMint
+    fromMint,
+    toMint,
+    mintList
   ]);
 
   // Updates the allowed from mints to select 
@@ -851,39 +852,21 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const btcMintInfos: any = Object
+      const btcMintInfo: any = Object
         .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC' || m.symbol === 'renBTC');
+        .filter((m: any) => m.symbol === 'BTC')[0];
 
-      if (!btcMintInfos || btcMintInfos.length === 0) { return; }
+      if (!btcMintInfo) { return; }
 
-      const toBtcInfo = btcMintInfos.find((i: any) => i.address === toMint);
+      if (toMint && (toMint === btcMintInfo.address)) {
 
-      if (toBtcInfo) {
-
-        const counterpartyInfo: any = toBtcInfo.symbol === 'BTC' 
-          ? Object.values(mintList).filter((i: any) => i.symbol === 'renBTC')[0]
-          : Object.values(mintList).filter((i: any) => i.symbol === 'BTC')[0];
-
-        const filteredList: any[] = Object
+        const usdxList: any[] = Object
           .values(mintList)
-          .filter((m: any) => 
-            m.symbol === 'USDC' || 
-            m.symbol === counterpartyInfo.symbol
-          );
-
-        if (toBtcInfo.symbol === 'BTC') {
-          filteredList.push(...Object.values(mintList).filter((m: any) => m.symbol === 'USDT'));
-        }
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
     
-        setShowFromMintList(filteredList);
+        setShowFromMintList(usdxList);
         
-        if (
-          fromMint && 
-          fromMint !== USDC_MINT.toBase58() && 
-          fromMint !== USDT_MINT.toBase58() && 
-          fromMint !== counterpartyInfo.address
-        ) {
+        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58()) {
           setFromMint(USDC_MINT.toBase58());
         }
 
@@ -898,10 +881,9 @@ export const SwapUi = (props: {
     }
 
   },[
-    fromMint, 
-    mintList, 
-    showToMintList, 
-    toMint
+    fromMint,
+    toMint,
+    mintList
   ]);
 
    // Token selection modal
@@ -967,8 +949,11 @@ export const SwapUi = (props: {
 
     const newValue = input.value;
     setTokenFilter(newValue.trim());
+    updateTokenListByFilter();
     
-  },[]);
+  },[
+    updateTokenListByFilter
+  ]);
 
   // Updates the label of the Swap button
   useEffect(() => {
@@ -1029,7 +1014,11 @@ export const SwapUi = (props: {
           needed = parseFloat(needed.toFixed(mintList[fromMint].decimals));
         }
 
-        label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
+        if (needed === 0) {
+          label = t("transactions.validation.amount-low");
+        } else {
+          label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
+        }
 
       } else {    
         label = t("transactions.validation.valid-approve");
@@ -1081,7 +1070,7 @@ export const SwapUi = (props: {
         maxAmount = balance;
       }
 
-      setMaxFromAmount(maxAmount < 0 ? 0 : maxAmount);
+      setMaxFromAmount(maxAmount <= (1 / 10 ** mintList[fromMint].decimals) ? 0 : maxAmount);
 
     });
 
@@ -1094,6 +1083,7 @@ export const SwapUi = (props: {
     fromBalance, 
     fromMint, 
     toMint, 
+    mintList,
     userBalances
   ]);
 
@@ -1146,13 +1136,17 @@ export const SwapUi = (props: {
       }
   
       const fromDecimals = mintList[fromMint].decimals;
-      const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
+      let feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
+
+      if (feeAmount < (1 / 10 ** fromDecimals)) {
+        feeAmount = (1 / 10 ** fromDecimals);
+      }
+
+      const amountIn = exchangeInfo.amountIn <= (1 / 10 ** fromDecimals) ? 0 : exchangeInfo.amountIn;
+      const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
       const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
   
       if (isWrap || isUnwrap) {
-  
-        const amountIn = parseFloat((exchangeInfo.amountIn - feesInfo.aggregator).toFixed(fromDecimals));
-        const amountInBn = new BN(amountIn * 10 ** fromDecimals);
   
         if (isWrap) {
   
@@ -1265,7 +1259,7 @@ export const SwapUi = (props: {
                   {
                     !userBalances[token.address] || userBalances[token.address] === 0
                       ? '' 
-                      : getFormattedAmount(userBalances[token.address], mintList[token.address].decimals)
+                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
                   }
                   </div>
                 )
@@ -1327,7 +1321,7 @@ export const SwapUi = (props: {
                   {
                     !userBalances[token.address] || userBalances[token.address] === 0
                       ? '' 
-                      : getFormattedAmount(userBalances[token.address], mintList[token.address].decimals)
+                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
                   }
                   </div>
                 )
@@ -1692,7 +1686,7 @@ export const SwapUi = (props: {
           token={fromMint && mintList[fromMint]}
           tokenBalance={
             (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
-              ? getFormattedAmount(parseFloat(fromBalance), mintList[fromMint].decimals)
+              ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
               : '')
           }
           tokenAmount={fromAmount}
@@ -1702,7 +1696,7 @@ export const SwapUi = (props: {
             (() => {
               if (maxFromAmount > 0) {
                 setFromSwapAmount(maxFromAmount);
-                const formattedAmount = getFormattedAmount(maxFromAmount, mintList[fromMint].decimals);                
+                const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
                 setFromAmount(formattedAmount);
               }
             })
@@ -1725,12 +1719,12 @@ export const SwapUi = (props: {
           token={toMint && mintList[toMint]}
           tokenBalance={
             (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-              ? getFormattedAmount(parseFloat(toBalance), mintList[toMint].decimals)
+              ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
               : '')
           }
           tokenAmount={
             (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-              ? getFormattedAmount(exchangeInfo.amountOut, mintList[toMint].decimals)
+              ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
               : '')
           }
           readonly={true}

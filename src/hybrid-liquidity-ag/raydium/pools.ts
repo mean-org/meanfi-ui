@@ -64,35 +64,6 @@ export const LIQUIDITY_POOLS: LiquidityPoolInfo[] =
     official: true
   },
   {
-    name: 'renBTC-USDC',
-    coin: { ...TOKENS.renBTC },
-    pc: { ...TOKENS.USDC },
-    lp: { ...LP_TOKENS['renBTC-USDC-V4'] },
-
-    version: 4,
-    programId: LIQUIDITY_POOL_PROGRAM_ID_V4,
-
-    ammId: '61JtCkTQKSeBU8ztEScByZiBhS6KAHSXfQduVyA4s1h7',
-    ammAuthority: '5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1',
-    ammOpenOrders: 'AtFR9ub2dbNJJod7gPL81F7gRxVtpcR1n4GczqgasqX2',
-    ammTargetOrders: 'ZVmcXezubm6FXvS8Wtvah66vqZRW6NKD17tea7FcGsB',
-    // no need
-    ammQuantities: NATIVE_SOL.address,
-    poolCoinTokenAccount: '2cA595zqm12sRtsiNvV6AqD8WDYYiJoLwEYNQ1FZG2ep',
-    poolPcTokenAccount: 'Fxn92YfcVsd9diz32YtKixqmuezgLeSWqd1gypFL5qe',
-    poolWithdrawQueue: 'ioR3UfTLnz6t9Bzbcu7TPmw1xYQRwXCgGqcpvzRmCQx',
-    poolTempLpTokenAccount: '8VEBvPwhBwu9D4e4Zei6X31ZBs5udL5epJHp935LVMv1',
-    serumProgramId: SERUM_PROGRAM_ID_V3,
-    serumMarket: '74Ciu5yRzhe8TFTHvQuEVbFZJrbnCMRoohBK33NNiPtv',
-    serumBids: 'B1xjpD5EEVtLWnWioHc7pCJLj1WVGyKdyMV1NzY4q5pa',
-    serumAsks: '6NZf4f6dxxv83Bdfiyf1R1vMFo5QP8BLB862qrVkmhuS',
-    serumEventQueue: '7RbmehbSunJLpg7N6kaCX5SenR1N79xHN8jKnuvXoEHC',
-    serumCoinVaultAccount: 'EqnX836tGG4PYSBPgzzQecbTP47AZQRVfcy4RqQW8F3D',
-    serumPcVaultAccount: '7yiA6p6BXxZwcm38St3vTzyGNEmZjw8x7Ko2nyTfvVx3',
-    serumVaultSigner: '9aZNHmGZrNnB3fKmBj5B9oD7moA1nFviZqNUSkx2tctg',
-    official: true
-  },
-  {
     name: 'ETH-USDC',
     coin: { ...TOKENS.ETH },
     pc: { ...TOKENS.USDC },

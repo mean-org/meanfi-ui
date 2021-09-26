@@ -1,4 +1,4 @@
-import { AmmPoolInfo, Client, ORCA, RAYDIUM, SABER, SERUM } from "./types";
+import { AmmPoolInfo, Client, MERCURIAL, ORCA, RAYDIUM, SABER, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
 import { WRAPPED_SOL_MINT } from "../utils/ids";
 import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
@@ -6,8 +6,9 @@ import { RaydiumClient } from "./raydium/client";
 import { OrcaClient } from "../hybrid-liquidity-ag/orca/client";
 import { SerumClient } from "./serum/client";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import BN from "bn.js";
 import { SaberClient } from "./saber/client";
+import { MercurialClient } from "./mercurial/client";
+import BN from "bn.js";
 
 export const getClient = (
   connection: Connection,
@@ -28,6 +29,10 @@ export const getClient = (
     }
     case SABER.toBase58(): {
       client = new SaberClient(connection);
+      break;
+    }
+    case MERCURIAL.toBase58(): {
+      client = new MercurialClient(connection);
       break;
     }
     case SERUM.toBase58(): {
@@ -76,7 +81,7 @@ export const getOptimalPool = (
 
   //TODO: implement get the best pool
 
-  return pools[1];
+  return pools[0];
 }
 
 export const getExchangeInfo = async (
@@ -94,11 +99,6 @@ export const getExchangeInfo = async (
     amount,
     slippage
   );
-}
-
-export const getFormattedAmount = (value: number, decimals: number) => {
-  //
-  return value.toFixed(decimals);
 }
 
 export const wrap = async (

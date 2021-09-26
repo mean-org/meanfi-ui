@@ -16,6 +16,10 @@ export const SABER = new PublicKey(
   'SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ'
 );
 
+export const MERCURIAL = new PublicKey(
+  'MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky'
+);
+
 export const SERUM = new PublicKey(
   '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'
 );

@@ -11,12 +11,12 @@ import {
 
 import { getOrca, Orca, OrcaPoolConfig, OrcaPoolToken, OrcaU64 } from "@orca-so/sdk";
 import { LPClient, ExchangeInfo, ORCA } from "../types";
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_MINT, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash";
 import { BN } from "bn.js";
 import Decimal from "decimal.js";
-import { WRAPPED_SOL_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 
 export class OrcaClient implements LPClient {
 
@@ -44,7 +44,8 @@ export class OrcaClient implements LPClient {
       throw new Error("Orca pool not found.");
     }
 
-    this.currentPool = poolInfo;
+    const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === poolInfo.address)[0];
+    this.currentPool = this.orcaSwap.getPool(poolConfig[1]);
 
     return this.currentPool;
   }
@@ -62,20 +63,18 @@ export class OrcaClient implements LPClient {
     if (!poolInfo) {
       throw new Error("Orca pool not found.");
     }
-
-    const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === poolInfo.address)[0];
-    const pool = this.orcaSwap.getPool(poolConfig[1]);    
-    let tokenA = pool.getTokenA() as OrcaPoolToken;
-    let tokenB = pool.getTokenB() as OrcaPoolToken;
+ 
+    let tokenA = poolInfo.getTokenA() as OrcaPoolToken;
+    let tokenB = poolInfo.getTokenB() as OrcaPoolToken;
     let tradeToken = cloneDeep(tokenA);
 
     if (from === tokenB.mint.toBase58() || to === tokenA.mint.toBase58()) {
       tradeToken = cloneDeep(tokenB);
     }
 
-    const decimalTradeAmount = new Decimal(amount === 0 ? 1 : amount);
+    const decimalTradeAmount = new Decimal(1);
     const decimalSlippage = new Decimal(slippage / 10);
-    const quote = await pool.getQuote(tradeToken, decimalTradeAmount, decimalSlippage);
+    const quote = await poolInfo.getQuote(tradeToken, decimalTradeAmount, decimalSlippage);
     const protocol = PROTOCOLS.filter(p => p.address === ORCA.toBase58())[0];
 
     const exchangeInfo: ExchangeInfo = {
@@ -83,10 +82,10 @@ export class OrcaClient implements LPClient {
       outPrice: quote.getRate().toNumber(),
       priceImpact: quote.getPriceImpact().toNumber(),
       amountIn: amount,
-      amountOut: quote.getExpectedOutputAmount().toNumber(),
-      minAmountOut: quote.getMinOutputAmount().toNumber(),
+      amountOut: quote.getExpectedOutputAmount().toNumber() * amount,
+      minAmountOut: quote.getMinOutputAmount().toNumber() * amount,
       networkFees: quote.getNetworkFees().toNumber() / LAMPORTS_PER_SOL,
-      protocolFees: quote.getLPFees().toNumber()
+      protocolFees: quote.getLPFees().toNumber() * amount
     };
 
     return exchangeInfo;
@@ -114,15 +113,16 @@ export class OrcaClient implements LPClient {
       throw new Error("Orca pool not found.");
     }
 
-    const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === poolInfo.address)[0];
-    const pool = this.orcaSwap.getPool(poolConfig[1]);
-    let inputToken = pool.getTokenA() as OrcaPoolToken;
-    let outputToken = pool.getTokenB() as OrcaPoolToken;
+    let inputToken = poolInfo.getTokenA() as OrcaPoolToken;
+    let outputToken = poolInfo.getTokenB() as OrcaPoolToken;
     let tradeToken = cloneDeep(inputToken);
 
-    if (from === outputToken.mint.toBase58() || to === inputToken.mint.toBase58()) {
-      tradeToken = outputToken;
-      outputToken = inputToken;
+    console.log('amountIn', amountIn);
+    console.log('feeAmount', feeAmount);
+
+    if (from === outputToken.mint.toBase58() || to === tradeToken.mint.toBase58()) {
+      tradeToken = cloneDeep(outputToken);
+      outputToken = cloneDeep(inputToken);
     }
 
     const minimumOutAmount = amountOut * (100 - slippage) / 100;
@@ -130,7 +130,7 @@ export class OrcaClient implements LPClient {
     let tx = new Transaction();
     let sig: Signer[] = [];
 
-    const fromMint = from === WRAPPED_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : tradeToken.mint;
+    const fromMint = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : tradeToken.mint;
     const fromTokenAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
@@ -148,7 +148,7 @@ export class OrcaClient implements LPClient {
         SystemProgram.createAccount({
           fromPubkey: owner,
           newAccountPubkey: account.publicKey,
-          lamports: minimumWrappedAccountBalance,
+          lamports: minimumWrappedAccountBalance + amountIn * LAMPORTS_PER_SOL,
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
         }),
@@ -160,8 +160,8 @@ export class OrcaClient implements LPClient {
         ),
         Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
-          fromTokenAccount,
           account.publicKey,
+          fromTokenAccount,
           owner,
           [],
           amountIn * LAMPORTS_PER_SOL
@@ -178,7 +178,7 @@ export class OrcaClient implements LPClient {
       sig.push(account);
     }
 
-    let { transaction, signers } = await pool.swap(
+    let { transaction, signers } = await poolInfo.swap(
       owner, 
       tradeToken, 
       OrcaU64.fromNumber(amountIn, tradeToken.scale),
@@ -188,42 +188,63 @@ export class OrcaClient implements LPClient {
     tx.add(transaction);
     sig.push(...signers);
 
-    const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
-    const feeAccountToken = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      fromMint,
-      feeAccount,
-      true
-    );
 
-    const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);
-
-    if (!feeAccountTokenInfo) {
+    if (from === NATIVE_SOL_MINT.toBase58()) {
       tx.add(
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
+        SystemProgram.transfer({
+          fromPubkey: owner,
+          toPubkey: feeAccount,
+          lamports: feeAmount * LAMPORTS_PER_SOL
+        })
+      );
+
+    } else {
+
+      const fromTokenAccount = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        owner,
+        true
+      );
+
+      const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
+      const feeAccountToken = await Token.getAssociatedTokenAddress(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        feeAccount,
+        true
+      );
+  
+      const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);
+  
+      if (!feeAccountTokenInfo) {
+        tx.add(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            fromMint,
+            feeAccountToken,
+            feeAccount,
+            owner
+          )
+        );
+      }
+  
+      tx.add(
+        Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
-          fromMint,
+          fromTokenAccount,
           feeAccountToken,
-          feeAccount,
-          owner
+          owner,
+          [],
+          feeBnAmount.toNumber()
         )
       );
     }
-
-    tx.add(
-      Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        fromTokenAccount,
-        feeAccountToken,
-        owner,
-        [],
-        feeBnAmount.toNumber()
-      )
-    );
 
     tx.feePayer = owner;
     const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
