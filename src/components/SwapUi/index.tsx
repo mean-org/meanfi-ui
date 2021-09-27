@@ -1188,7 +1188,7 @@ export const SwapUi = (props: {
           exchangeInfo.amountOut,
           slippage,
           MSP_OPS.toBase58(),
-          feeAmount
+          parseFloat(feeAmount.toFixed(fromDecimals))
         );
       }
 
@@ -1216,6 +1216,8 @@ export const SwapUi = (props: {
         Object.values(showFromMintList).map((token: any, index) => {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
+              setExchangeInfo(undefined);
+              setSwapClient(undefined);
               setFromMint(token.address);
               setLastFromMint(token.address);
             }
@@ -1279,6 +1281,8 @@ export const SwapUi = (props: {
         Object.values(showToMintList).map((token: any, index) => {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
+              setExchangeInfo(undefined);
+              setSwapClient(undefined);
               setToMint(token.address);
             }
             onCloseTokenSelector();

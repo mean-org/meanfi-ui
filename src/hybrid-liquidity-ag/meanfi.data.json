@@ -190,28 +190,6 @@
     },
     {
       "chainId": 101,
-      "protocolAddress": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
-      "ammAddress": "F13xvvx45jVGd84ynK3c8T89UejQVxjCLtmHfPmAXAHP",
-      "address": "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
-      "name": "USDC_USDT",
-      "tokenAddresses": [
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
-      ]
-    },
-    {
-      "chainId": 101,
-      "protocolAddress": "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ",
-      "ammAddress": "YAkoNb6HKmSxQN9L8hiBE5tPJRsniSSMzND1boHmZxe",
-      "address": "2poo1w1DL6yd2WNTCnNTzDqkC6MBXq7axo77P16yrBuf",
-      "name": "USDT-USDC Saber LP",
-      "tokenAddresses": [
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-      ]
-    },
-    {
-      "chainId": 101,
       "protocolAddress": "MERLuDFBMmsHnsBPZw2sDQZHvXFMwp8EdjudcU2HKky",
       "ammAddress": "FDonWCo5RJhx8rzSwtToUXiLEL7dAqLmUhnyH76F888D",
       "address": "USD6kaowtDjwRkN5gAjw1PDMQvc9xRp8xW9GK8Z5HBA",
@@ -232,6 +210,28 @@
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         "Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS"
+      ]
+    },
+    {
+      "chainId": 101,
+      "protocolAddress": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
+      "ammAddress": "F13xvvx45jVGd84ynK3c8T89UejQVxjCLtmHfPmAXAHP",
+      "address": "H2uzgruPvonVpCRhwwdukcpXK8TG17swFNzYFr2rtPxy",
+      "name": "USDC_USDT",
+      "tokenAddresses": [
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+      ]
+    },
+    {
+      "chainId": 101,
+      "protocolAddress": "SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ",
+      "ammAddress": "YAkoNb6HKmSxQN9L8hiBE5tPJRsniSSMzND1boHmZxe",
+      "address": "2poo1w1DL6yd2WNTCnNTzDqkC6MBXq7axo77P16yrBuf",
+      "name": "USDT-USDC Saber LP",
+      "tokenAddresses": [
+        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ]
     }
   ]
