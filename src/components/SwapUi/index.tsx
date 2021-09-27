@@ -969,11 +969,9 @@ export const SwapUi = (props: {
 
       if (!connected) {
         label = t("transactions.validation.not-connected");
-      } else if (fromSwapAmount === 0) {
-        label = t("transactions.validation.no-amount");
       } else if (!fromMint || !toMint || !feesInfo) {
         label = t("transactions.validation.invalid-exchange");
-      } else if(!isValidBalance) {
+      } else if(!isValidBalance || (!isValidBalance && fromMint === NATIVE_SOL_MINT.toBase58())) {
 
         let needed = 0;
 
@@ -985,14 +983,16 @@ export const SwapUi = (props: {
           needed = feesInfo.network;
         }
 
-        needed = Math.round(parseFloat(needed.toFixed(4)));
+        needed = parseFloat(needed.toFixed(4));
 
         if (needed === 0) {
-          needed = Math.round(parseFloat(needed.toFixed(9)));
+          needed = parseFloat(needed.toFixed(6));
         }
 
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
+      } else if (fromSwapAmount === 0) {
+        label = t("transactions.validation.no-amount");
       } else if (!isValidSwapAmount) {
 
         let needed = 0;
@@ -1070,7 +1070,7 @@ export const SwapUi = (props: {
         maxAmount = balance;
       }
 
-      setMaxFromAmount(maxAmount <= (1 / 10 ** mintList[fromMint].decimals) ? 0 : maxAmount);
+      setMaxFromAmount(maxAmount < 0 ? 0 : maxAmount);
 
     });
 
@@ -1696,7 +1696,7 @@ export const SwapUi = (props: {
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
           onMaxAmount={
-            fromMint && toMint && mintList[fromMint] &&
+            fromMint && toMint && mintList[fromMint] && maxFromAmount > 0 &&
             (() => {
               if (maxFromAmount > 0) {
                 setFromSwapAmount(maxFromAmount);
