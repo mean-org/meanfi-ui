@@ -5,6 +5,7 @@ import { cloneDeep } from "lodash-es";
 import { MercurialPoolInfo } from "./types";
 import { MintLayout } from "@solana/spl-token"
 import { SIMULATION_USER, StableSwapNPool } from "@mercurial-finance/stable-swap-n-pool";
+import { BN } from "bn.js";
 
 export class MercurialClient implements LPClient {
 
@@ -85,17 +86,14 @@ export class MercurialClient implements LPClient {
         throw new Error("Mercurial pool not found.");
       }
         
-      //TODO: Implement
-
       const fromMint = new PublicKey(from);
       const toMint = new PublicKey(to);
       const inAmount = amount === 0 ? 1 : amount;
-      console.log('inAmount', inAmount);
-      const { virtualPrice } = await poolInfo.stable.getVirtualPrice();
-      const outPrice = virtualPrice / 10 ** 6;
-      console.log('outAmount', inAmount * outPrice);      
-      const minOutAmount = amount * outPrice * (100 - slippage) / 100;
-      // const networkFee = poolInfo.stable.adminFeeNumerator / poolInfo.stable.amplificationCoefficient
+      const inAmountBn = inAmount * 10 ** 6;
+      const outAmount = await poolInfo.stable.getOutAmount(fromMint, toMint, inAmountBn);
+      const protocolFeeAmount = (outAmount * 0.0004) / (1 - 0.0004);
+      const outPrice = inAmountBn / (outAmount + protocolFeeAmount);
+      const minOutAmount = (outAmount + protocolFeeAmount) * (100 - slippage) / 100;
       const protocol = PROTOCOLS.filter(p => p.address === MERCURIAL.toBase58())[0];
       
       const exchange: ExchangeInfo = {
@@ -103,10 +101,10 @@ export class MercurialClient implements LPClient {
         outPrice: outPrice,
         priceImpact: 0,
         amountIn: amount,
-        amountOut: amount * outPrice,
-        minAmountOut: minOutAmount,
+        amountOut: (outAmount + protocolFeeAmount) / 10 ** 6,
+        minAmountOut: minOutAmount / 10 ** 6,
         networkFees: 0,  
-        protocolFees: 0
+        protocolFees: protocolFeeAmount / 10 ** 6
       };
   
       return exchange;    
