@@ -90,10 +90,10 @@ export const CurrentUserBadge = () => {
         <div className="account-settings-group">
           {/* Wallet */}
           <Row>
-            <Col span={14}>
+            <Col span={16}>
               {getUiTranslation('wallet-provider')} {usedProvider?.name}
             </Col>
-            <Col span={10} className="text-right">
+            <Col span={8} className="text-right">
               <Button
                 shape="round"
                 size="small"

@@ -18,7 +18,7 @@ import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
 import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import { useConnectionConfig } from "./connection";
-import { isDesktop, isMobile } from "react-device-detect";
+import { isDesktop } from "react-device-detect";
 import { SolletWalletAdapter } from "../wallet-adapters/sollet";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
 

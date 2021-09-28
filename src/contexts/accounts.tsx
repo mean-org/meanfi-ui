@@ -245,7 +245,7 @@ function wrapNativeAccount(
       address: pubkey,
       mint: WRAPPED_SOL_MINT,
       owner: pubkey,
-      amount: new u64(account.lamports),
+      amount: new u64(account.lamports || 0),
       delegate: null,
       delegatedAmount: new u64(0),
       isInitialized: true,
@@ -289,21 +289,18 @@ const UseNativeAccount = () => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
+      } else {
+        updateCache(undefined);
+        setNativeAccount(undefined);
       }
     });
-
-    const listener = connection.onAccountChange(publicKey, (acc) => {
+    connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
       }
     });
-
-    return () => {
-      connection.removeAccountChangeListener(listener);
-    }
-
-  }, [wallet, publicKey, connection, updateCache, setNativeAccount]);
+  }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
 
   return { nativeAccount };
 };
@@ -499,9 +496,7 @@ export function useMint(key?: string | PublicKey) {
 
     cache
       .query(connection, id, MintParser)
-      .then((acc) => {
-        setMint(acc.info as any);
-      })
+      .then((acc) => setMint(acc.info as any))
       .catch((err) => console.error(err));
 
     const dispose = cache.emitter.onCache((e) => {
@@ -550,6 +545,8 @@ export function useAccount(pubKey?: PublicKey) {
           .catch((err) => console.error(err));
         if (acc) {
           setAccount(acc);
+        } else {
+          setAccount(undefined);
         }
       } catch (err) {
         console.error(err);

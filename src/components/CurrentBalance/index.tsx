@@ -18,10 +18,12 @@ export const CurrentBalance = () => {
       return (account?.lamports || 0) / LAMPORTS_PER_SOL;
     }
 
-    setNativeBalance(getAccountBalance());
-  }, [
-    account.lamports
-  ]);
+    if (!account || !account.lamports) {
+      setNativeBalance(0);
+    } else {
+      setNativeBalance(getAccountBalance());
+    }
+  }, [account]);
 
   const renderSolanaIcon = (
     <img className="token-icon" src="solana-logo.png" alt="Solana logo" />

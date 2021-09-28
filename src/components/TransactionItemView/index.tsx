@@ -227,10 +227,6 @@ export const TransactionItemView = (props: {
                      isToMyAccounts
                       ? trans.accountKeys[outDstAccountIndex].pubkey.toBase58()
                       : trans.accountKeys[1].pubkey.toBase58();
-    // Log what we have
-    // if (!isInboundTx) {
-    //   console.log(`isScanningUserWallet: ${isScanningUserWallet}\nisInboundTx: ${isInboundTx}\nhasTokenBalances: ${hasTokenBalances}\nisToMyAccounts: ${isToMyAccounts}\noutDstAccountIndex: ${outDstAccountIndex}\ntokenAccount: ${trans.accountKeys[outDstAccountIndex].pubkey.toBase58()}`);
-    // }
 
     if (isInboundTx) {
       if (sender === faucetAddress) {
