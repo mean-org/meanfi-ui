@@ -183,9 +183,6 @@ export const RepeatingPayment = () => {
     }
   }, [connection, repeatingPaymentFees]);
 
-  // recipientAddress input field validation flag
-  const [isRecipiendAddressInputValid, setIsRecipiendAddressInputValid] = useState(false);
-
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -250,13 +247,8 @@ export const RepeatingPayment = () => {
   const handleRecipientAddressChange = (e: any) => {
     const inputValue = e.target.value as string;
     // Set the input value
-    setRecipientAddress(inputValue.trim());
-    // But set the isInputValid flag for validation
-    if (inputValue && isValidAddress(inputValue) ) {
-      setIsRecipiendAddressInputValid(true);
-    } else {
-      setIsRecipiendAddressInputValid(false);
-    }
+    const trimmedValue = inputValue.trim();
+    setRecipientAddress(trimmedValue);
   }
 
   const handleRecipientAddressFocusIn = () => {
@@ -869,7 +861,7 @@ export const RepeatingPayment = () => {
         </div>
         <div className="transaction-field-row">
           <span className="field-label-left">
-            {recipientAddress && !isRecipiendAddressInputValid ? (
+            {recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="fg-red">
                 {t("assets.account-address-validation")}
               </span>
@@ -1141,7 +1133,7 @@ export const RepeatingPayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+        disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
       {/* Transaction execution modal */}

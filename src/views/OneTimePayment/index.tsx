@@ -34,7 +34,6 @@ import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { calculateActionFees } from "money-streaming/lib/utils";
 import { useTranslation } from "react-i18next";
-import { TokenAccount } from '../../models';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
@@ -171,9 +170,6 @@ export const OneTimePayment = () => {
     }
   }, [connection, otpFees]);
 
-  // recipientAddress input field validation flag
-  const [isRecipiendAddressInputValid, setIsRecipiendAddressInputValid] = useState(false);
-
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -237,13 +233,8 @@ export const OneTimePayment = () => {
   const handleRecipientAddressChange = (e: any) => {
     const inputValue = e.target.value as string;
     // Set the input value
-    setRecipientAddress(inputValue.trim());
-    // But set the isInputValid flag for validation
-    if (inputValue && isValidAddress(inputValue) ) {
-      setIsRecipiendAddressInputValid(true);
-    } else {
-      setIsRecipiendAddressInputValid(false);
-    }
+    const trimmedValue = inputValue.trim();
+    setRecipientAddress(trimmedValue);
   }
 
   const handleRecipientAddressFocusIn = () => {
@@ -629,7 +620,7 @@ export const OneTimePayment = () => {
         </div>
         <div className="transaction-field-row">
           <span className="field-label-left">
-            {recipientAddress && !isRecipiendAddressInputValid ? (
+            {recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="fg-red">
                 {t("assets.account-address-validation")}
               </span>
@@ -884,7 +875,7 @@ export const OneTimePayment = () => {
         shape="round"
         size="large"
         onClick={onTransactionStart}
-        disabled={!recipientAddress || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
+        disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
       {/* Transaction execution modal */}

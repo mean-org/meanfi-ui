@@ -54,7 +54,7 @@ export const AccountsView = () => {
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  const [isInputValid, setIsInputValid] = useState(false);
+  // const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
@@ -149,25 +149,20 @@ export const AccountsView = () => {
   const handleAccountAddressInputChange = (e: any) => {
     const inputValue = e.target.value as string;
     // Set the input value
-    setAccountAddressInput(inputValue.trim());
-    // But set the isInputValid flag for validation
-    if (inputValue && isValidAddress(inputValue) ) {
-      setIsInputValid(true);
-    } else {
-      setIsInputValid(false);
-    }
+    const trimmedValue = inputValue.trim();
+    setAccountAddressInput(trimmedValue);
   }
 
   const handleAccountAddressInputFocusIn = () => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 10);
+    }, 100);
   }
 
   const handleAccountAddressInputFocusOut = () => {
     setTimeout(() => {
       triggerWindowResize();
-    }, 10);
+    }, 100);
   }
 
   const onCopyAddress = () => {
@@ -436,7 +431,7 @@ export const AccountsView = () => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
       const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-      if (isInputValid) {
+      if (isValidAddress(accountAddressInput)) {
         for (let i = 0; i < ellipsisElements.length; ++i){
           const e = ellipsisElements[i] as HTMLElement;
           if (e.offsetWidth < e.scrollWidth){
@@ -462,7 +457,7 @@ export const AccountsView = () => {
       // remove resize listener
       window.removeEventListener('resize', resizeListener);
     }
-  }, [isInputValid]);
+  }, [accountAddressInput]);
 
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
@@ -770,7 +765,7 @@ export const AccountsView = () => {
                     </div>
                     <div className="transaction-field-row">
                       <span className="field-label-left">
-                        {accountAddressInput && !isInputValid ? (
+                        {accountAddressInput && !isValidAddress(accountAddressInput) ? (
                           <span className="fg-red">
                             {t("assets.account-address-validation")}
                           </span>
@@ -787,7 +782,7 @@ export const AccountsView = () => {
                     shape="round"
                     size="large"
                     onClick={onAddAccountAddress}
-                    disabled={!isInputValid}>
+                    disabled={!isValidAddress(accountAddressInput)}>
                     {t('assets.account-add-cta-label')}
                   </Button>
                 </div>
