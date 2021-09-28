@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, Signer, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Signer, Transaction } from "@solana/web3.js";
 import { ExchangeInfo, LPClient, MERCURIAL } from "../types";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash-es";

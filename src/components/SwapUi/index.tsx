@@ -17,12 +17,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
-import useLocalStorage from "../../hooks/useLocalStorage";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import BN from "bn.js";
-import "./style.less";
-
-// NEW
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
@@ -31,6 +26,9 @@ import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { InfoIcon } from "../InfoIcon";
 import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
+import useLocalStorage from "../../hooks/useLocalStorage";
+import BN from "bn.js";
+import "./style.less";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -41,7 +39,6 @@ export const SwapUi = (props: {
 
   // Use injected params
   const {queryFromMint, queryToMint} = props;
-
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
   const connection = useSwapConnection();
@@ -54,7 +51,6 @@ export const SwapUi = (props: {
   } = useContext(AppStateContext);
 
   // Added by YAF (Token balance)
-  const [smallAmount, setSmallAmount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
@@ -65,7 +61,6 @@ export const SwapUi = (props: {
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isFlipping, setIsFlipping] = useState(false);
-  // const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
@@ -80,8 +75,8 @@ export const SwapUi = (props: {
   const [txFees, setTxFees] = useState<TransactionFees>();
   // AGGREGATOR
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
-  const [toMint, setToMint] = useState<string | undefined>();
+  const [fromMint, setFromMint] = useState<string | undefined>(queryFromMint ? queryFromMint : lastFromMint);
+  const [toMint, setToMint] = useState<string | undefined>(queryToMint ? queryToMint : undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [maxFromAmount, setMaxFromAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -225,60 +220,6 @@ export const SwapUi = (props: {
     connection, 
     fromMint, 
     toMint
-  ]);
-
-  // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!mintList) { return; }
-
-    const timeout = setTimeout(() => {
-
-      const filter = (t: any) => {
-        return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
-        );
-      };      
-      
-      if (subjectTokenSelection === 'source') {
-
-        let showFromList = !tokenFilter 
-          ? mintList
-          : Object.values(mintList)
-            .filter((t: any) => filter(t));
-
-        setShowFromMintList(showFromList);
-
-      } 
-      
-      if (subjectTokenSelection === 'destination') {
-
-        let showToList = !tokenFilter 
-          ? mintList 
-          : Object.values(mintList)
-            .filter((t: any) => filter(t));
-
-        setShowToMintList(showToList);
-      }
-
-    });
-
-    return () => { 
-      clearTimeout(timeout);
-    }
-    
-  }, [
-    connection,
-    tokenFilter, 
-    subjectTokenSelection, 
-    mintList
   ]);
 
   // Token map for quick lookup.
@@ -569,8 +510,7 @@ export const SwapUi = (props: {
       
       const balancesMap: any = {};
 
-      balancesMap[NATIVE_SOL_MINT.toBase58()] = 
-        userAccount ? userAccount.lamports / LAMPORTS_PER_SOL : 0;
+      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount.lamports / LAMPORTS_PER_SOL;
 
       const tokens = Object.values(mintList)
         .filter((t: any) => t.symbol !== 'SOL')
@@ -619,7 +559,8 @@ export const SwapUi = (props: {
     connection, 
     mintList, 
     publicKey, 
-    userAccount
+    userAccount,
+    userAccount?.lamports
   ]);
 
   // Automatically update from token balance once
@@ -905,75 +846,6 @@ export const SwapUi = (props: {
     mintList
   ]);
 
-   // Token selection modal
-   const showTokenSelector = useCallback(() => {
-
-    const timeout =setTimeout(() => {
-
-      setTokenSelectorModalVisibility(true);
-      const input = document.getElementById("token-search-input");
-
-      if (input) {
-        input.focus();
-      }
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, []);
-
-  // Token selection modal close
-  const onCloseTokenSelector = useCallback(() => {
-    
-    const timeout = setTimeout(() => {
-
-      setTokenSelectorModalVisibility(false);
-      setTokenFilter('');
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, []);
-
-  // Event handling
-  const handleSwapFromAmountChange = useCallback((e: any) => {
-
-    const input = e.target;
-
-    if (!input) { return; }
-
-    const newValue = input.value;
-    
-    if (newValue === null || newValue === undefined || newValue === "" || !isValidNumber(newValue)) {
-      setFromAmount('');
-      setFromSwapAmount(0);
-    } else {
-      setFromAmount(newValue);
-      setFromSwapAmount(parseFloat(newValue));
-    }
-
-  },[]);
-
-  const onTokenSearchInputChange = useCallback((e: any) => {
-
-    const input = e.target;
-
-    if (!input) { return; }
-
-    const newValue = input.value;
-    setTokenFilter(newValue.trim());
-    updateTokenListByFilter();
-    
-  },[
-    updateTokenListByFilter
-  ]);
-
   // Updates the label of the Swap button
   useEffect(() => {
 
@@ -1106,14 +978,128 @@ export const SwapUi = (props: {
     userBalances
   ]);
 
-  const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
-    return (
-      source &&
-      destination &&
-      source.name === destination.name &&
-      source.address === destination.address
-    ) ? true : false;
-  }
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!mintList) { return; }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+        );
+      };      
+      
+      if (subjectTokenSelection === 'source') {
+
+        let showFromList = !tokenFilter 
+          ? mintList
+          : Object.values(mintList)
+            .filter((t: any) => filter(t));
+
+        setShowFromMintList(showFromList);
+
+      } 
+      
+      if (subjectTokenSelection === 'destination') {
+
+        let showToList = !tokenFilter 
+          ? mintList 
+          : Object.values(mintList)
+            .filter((t: any) => filter(t));
+
+        setShowToMintList(showToList);
+      }
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
+  }, [
+    connection,
+    tokenFilter, 
+    subjectTokenSelection, 
+    mintList
+  ]);
+
+  // Token selection modal
+  const showTokenSelector = useCallback(() => {
+
+    const timeout =setTimeout(() => {
+
+      setTokenSelectorModalVisibility(true);
+      const input = document.getElementById("token-search-input");
+
+      if (input) {
+        input.focus();
+      }
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, []);
+
+  // Token selection modal close
+  const onCloseTokenSelector = useCallback(() => {
+    
+    const timeout = setTimeout(() => {
+
+      setTokenSelectorModalVisibility(false);
+      setTokenFilter('');
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, []);
+
+  // Event handling
+  const handleSwapFromAmountChange = useCallback((e: any) => {
+
+    const input = e.target;
+
+    if (!input) { return; }
+
+    const newValue = input.value;
+    
+    if (newValue === null || newValue === undefined || newValue === "" || !isValidNumber(newValue)) {
+      setFromAmount('');
+      setFromSwapAmount(0);
+    } else {
+      setFromAmount(newValue);
+      setFromSwapAmount(parseFloat(newValue));
+    }
+
+  },[]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const input = e.target;
+
+    if (!input) { return; }
+
+    const newValue = input.value;
+    setTokenFilter(newValue.trim());
+    updateTokenListByFilter();
+    
+  },[
+    updateTokenListByFilter
+  ]);
 
   const flipMintsCallback = useCallback(() => {
     
@@ -1219,135 +1205,6 @@ export const SwapUi = (props: {
     toMint, 
     wallet
   ]);
-
-  const renderSourceTokenList = (
-    <>
-      {Object.values(showFromMintList).length ? (
-        Object.values(showFromMintList).map((token: any, index) => {
-          const onClick = () => {
-            if (!fromMint || fromMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
-              setFromMint(token.address);
-              setLastFromMint(token.address);
-            }
-            onCloseTokenSelector();
-          };
-
-          return (
-            <div
-              key={index + 100}
-              onClick={onClick}
-              className={`token-item ${
-                fromMint && fromMint === token.address
-                  ? "selected"
-                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined))
-                  ? 'disabled'
-                  : "simplelink"
-              }`}
-            >
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img
-                    alt={`${token.name}`}
-                    width={24}
-                    height={24}
-                    src={token.logoURI}
-                  />
-                ) : (
-                  <Identicon
-                    address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
-                  />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                  {
-                    !userBalances[token.address] || userBalances[token.address] === 0
-                      ? '' 
-                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                  }
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      ) : (
-        <p>{t("general.loading")}...</p>
-      )}
-    </>
-  );
-
-  const renderDestinationTokenList = (
-    <>
-      {Object.values(showToMintList).length ? (
-        Object.values(showToMintList).map((token: any, index) => {
-          const onClick = () => {
-            if (!toMint || toMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
-              setToMint(token.address);
-            }
-            onCloseTokenSelector();
-          };
-
-          return (
-            <div
-              key={index + 100}
-              onClick={onClick}
-              className={`token-item ${
-                toMint && toMint === token.address
-                  ? "selected"
-                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
-                  ? 'disabled'
-                  : "simplelink"
-              }`}
-            >
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img
-                    alt={`${token.name}`}
-                    width={24}
-                    height={24}
-                    src={token.logoURI}
-                  />
-                ) : (
-                  <Identicon
-                    address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
-                  />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                  {
-                    !userBalances[token.address] || userBalances[token.address] === 0
-                      ? '' 
-                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                  }
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      ) : (
-        <p>{t("general.loading")}...</p>
-      )}
-    </>
-  );
 
   const isSuccess = useCallback(() => {
 
@@ -1600,7 +1457,7 @@ export const SwapUi = (props: {
         return;
       }
 
-      console.info("confirmed:", confirmed); // put this in a link in the UI
+      console.info("confirmed:", signature); // put this in a link in the UI
       setFromAmount('');
       setFromSwapAmount(0);
       setIsBusy(false);
@@ -1617,6 +1474,15 @@ export const SwapUi = (props: {
     signTx,
     transactionCancelled
   ]);
+
+  const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
+    return (
+      source &&
+      destination &&
+      source.name === destination.name &&
+      source.address === destination.address
+    ) ? true : false;
+  }
 
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
     return (
@@ -1681,6 +1547,135 @@ export const SwapUi = (props: {
   const onSlippageChanged = (value: any) => {
     setSlippage(value);
   };
+
+  const renderSourceTokenList = (
+    <>
+      {Object.values(showFromMintList).length ? (
+        Object.values(showFromMintList).map((token: any, index) => {
+          const onClick = () => {
+            if (!fromMint || fromMint !== token.address) {
+              setExchangeInfo(undefined);
+              setSwapClient(undefined);
+              setFromMint(token.address);
+              setLastFromMint(token.address);
+            }
+            onCloseTokenSelector();
+          };
+
+          return (
+            <div
+              key={index + 100}
+              onClick={onClick}
+              className={`token-item ${
+                fromMint && fromMint === token.address
+                  ? "selected"
+                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined))
+                  ? 'disabled'
+                  : "simplelink"
+              }`}
+            >
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img
+                    alt={`${token.name}`}
+                    width={24}
+                    height={24}
+                    src={token.logoURI}
+                  />
+                ) : (
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "24", display: "inline-flex" }}
+                  />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                  {
+                    !userBalances[token.address] || userBalances[token.address] === 0
+                      ? '' 
+                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
+                  }
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      ) : (
+        <p>{t("general.loading")}...</p>
+      )}
+    </>
+  );
+
+  const renderDestinationTokenList = (
+    <>
+      {Object.values(showToMintList).length ? (
+        Object.values(showToMintList).map((token: any, index) => {
+          const onClick = () => {
+            if (!toMint || toMint !== token.address) {
+              setExchangeInfo(undefined);
+              setSwapClient(undefined);
+              setToMint(token.address);
+            }
+            onCloseTokenSelector();
+          };
+
+          return (
+            <div
+              key={index + 100}
+              onClick={onClick}
+              className={`token-item ${
+                toMint && toMint === token.address
+                  ? "selected"
+                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
+                  ? 'disabled'
+                  : "simplelink"
+              }`}
+            >
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img
+                    alt={`${token.name}`}
+                    width={24}
+                    height={24}
+                    src={token.logoURI}
+                  />
+                ) : (
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "24", display: "inline-flex" }}
+                  />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                  {
+                    !userBalances[token.address] || userBalances[token.address] === 0
+                      ? '' 
+                      : userBalances[token.address].toFixed(mintList[token.address].decimals)
+                  }
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      ) : (
+        <p>{t("general.loading")}...</p>
+      )}
+    </>
+  );
 
   return (
     <Spin spinning={isBusy || refreshing}>
@@ -1780,7 +1775,9 @@ export const SwapUi = (props: {
               {!refreshing && (
                 <div className="transaction-info-popover-row flexible-left">
                   <div className="left">
-                    {(`1 ${mintList[fromMint].symbol} ≈ ${exchangeInfo.outPrice.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`)}
+                    {
+                      (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
+                    }
                   </div>
                   <div className="right pl-1">
                     {
@@ -1882,10 +1879,7 @@ export const SwapUi = (props: {
                   </h4>
                 ) : (
                   <h4 className="font-bold mb-1 text-uppercase">
-                    {smallAmount
-                      ? t('transactions.status.tx-send-failure-smallamount')
-                      : getTransactionOperationDescription(transactionStatus, t)
-                    }
+                    { getTransactionOperationDescription(transactionStatus, t) }
                   </h4>
                 )}
                 <Button
