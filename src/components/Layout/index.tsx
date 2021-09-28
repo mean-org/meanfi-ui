@@ -26,6 +26,8 @@ export const AppLayout = React.memo((props: any) => {
     theme,
     currentScreen,
     detailsPanelOpen,
+    addAccountPanelOpen,
+    canShowAccountDetails,
     previousWalletConnectState,
     setStreamList,
     setCurrentScreen,
@@ -34,6 +36,8 @@ export const AppLayout = React.memo((props: any) => {
     refreshTokenBalance,
     refreshStreamList,
     setDtailsPanelOpen,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
@@ -159,13 +163,22 @@ export const AppLayout = React.memo((props: any) => {
     setPreviousWalletConnectState
   ]);
 
+  const closeAllPanels = () => {
+    if (detailsPanelOpen) {
+      setDtailsPanelOpen(false);
+    } else if (addAccountPanelOpen) {
+      setCanShowAccountDetails(true);
+      setAddAccountPanelOpen(false);
+    }
+  }
+
   return (
     <>
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">
-          {detailsPanelOpen && (
-            <BackButton handleClose={() => setDtailsPanelOpen(false)} />
+          {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+            <BackButton handleClose={() => closeAllPanels()} />
           )}
           <div className="app-bar-inner">
             <Link to="/" className="flex-center">

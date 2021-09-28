@@ -39,23 +39,25 @@ export const AccountsView = () => {
     accountAddress,
     lastTxSignature,
     detailsPanelOpen,
+    canShowAccountDetails,
     previousWalletConnectState,
     setTransactions,
     setSelectedAsset,
     setAccountAddress,
     setDtailsPanelOpen,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
     showDepositOptionsModal
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const history = useHistory();
-  const { width, height } = useWindowSize();
+  const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [canShowAccountDetails, setCanShowAccountDetails] = useState(accountAddress ? true : false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -77,7 +79,7 @@ export const AccountsView = () => {
   //       return state;
   //   }
   // }, defaultTransactionStats);
-  
+
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
   const showQrScannerModal = useCallback(() => setIsQrScannerModalVisibility(true), []);
@@ -127,14 +129,17 @@ export const AccountsView = () => {
     setShouldLoadTokens(true);
     setCanShowAccountDetails(true);
     setAccountAddressInput('');
+    setAddAccountPanelOpen(false);
   }
 
   const handleScanAnotherAddressButtonClick = () => {
     setCanShowAccountDetails(false);
+    setAddAccountPanelOpen(true);
   }
 
   const handleBackToAccountDetailsButtonClick = () => {
     setCanShowAccountDetails(true);
+    setAddAccountPanelOpen(false);
   }
 
   const triggerWindowResize = () => {
@@ -410,6 +415,7 @@ export const AccountsView = () => {
       }
       setTimeout(() => {
         setCanShowAccountDetails(true);
+        setAddAccountPanelOpen(false);
         startSwitch();
       }, 150);
     }
@@ -420,7 +426,9 @@ export const AccountsView = () => {
     publicKey,
     startSwitch,
     setSelectedAsset,
-    setAccountAddress
+    setAccountAddress,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
   ]);
 
   // Window resize listeners
@@ -717,7 +725,7 @@ export const AccountsView = () => {
                           icon={<ArrowLeftOutlined />}
                           onClick={handleBackToAccountDetailsButtonClick}
                         />
-                        <Button
+                        {/* <Button
                           type="ghost"
                           shape="round"
                           size="middle"
@@ -725,7 +733,7 @@ export const AccountsView = () => {
                           icon={<ArrowLeftOutlined />}
                           onClick={handleBackToAccountDetailsButtonClick}>
                           {t('assets.back-to-assets-cta')}
-                        </Button>
+                        </Button> */}
                       </Tooltip>
                     </span>
                   </div>

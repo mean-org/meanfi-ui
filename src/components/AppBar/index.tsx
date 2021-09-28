@@ -28,6 +28,8 @@ export const AppBar = (props: { menuType: string }) => {
   const { publicKey, connected } = useWallet();
   const { t } = useTranslation("common");
   const {
+    detailsPanelOpen,
+    addAccountPanelOpen,
     streamProgramAddress,
     isDepositOptionsModalVisible,
     setStreamList,
@@ -39,6 +41,8 @@ export const AppBar = (props: { menuType: string }) => {
     setCustomStreamDocked,
     showDepositOptionsModal,
     hideDepositOptionsModal,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -66,11 +70,20 @@ export const AppBar = (props: { menuType: string }) => {
     }
   };
 
+  const closeAllPanels = () => {
+    if (detailsPanelOpen) {
+      setDtailsPanelOpen(false);
+    } else if (addAccountPanelOpen) {
+      setCanShowAccountDetails(true);
+      setAddAccountPanelOpen(false);
+    }
+  }
+
   const dismissMenu = () => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
-      setDtailsPanelOpen(false);
+      closeAllPanels();
     }
   }
 
@@ -213,11 +226,6 @@ export const AppBar = (props: { menuType: string }) => {
             <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
               <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
             </li>
-            {/* <li key="services">
-              <div className="mobile-submenu-title">{t('ui-menus.main-menu.services.submenu-title')}</div>
-              <ul className="mobile-submenu">
-              </ul>
-            </li> */}
             <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
               <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
             </li>

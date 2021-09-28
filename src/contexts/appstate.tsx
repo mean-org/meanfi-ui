@@ -57,12 +57,14 @@ interface AppStateConfig {
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
   referral: TokenInfo | undefined;
-  // Transactions
+  // Accounts
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
   accountAddress: string;
   lastTxSignature: string;
+  addAccountPanelOpen: boolean;
+  canShowAccountDetails: boolean;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -93,10 +95,12 @@ interface AppStateConfig {
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
   setReferral: (token: TokenInfo | undefined) => void;
-  // Transactions
+  // Accounts
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
+  setAddAccountPanelOpen: (state: boolean) => void;
+  setCanShowAccountDetails: (state: boolean) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -131,12 +135,14 @@ const contextDefaultValues: AppStateConfig = {
   streamActivity: [],
   customStreamDocked: false,
   referral: undefined,
-  // Transactions
+  // Accounts
   userTokens: [],
   selectedAsset: undefined,
   transactions: undefined,
   accountAddress: '',
   lastTxSignature: '',
+  addAccountPanelOpen: true,
+  canShowAccountDetails: false,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -167,10 +173,12 @@ const contextDefaultValues: AppStateConfig = {
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
   setReferral: () => {},
-  // Transactions
+  // Accounts
   setTransactions: () => {},
   setSelectedAsset: () => {},
   setAccountAddress: () => {},
+  setAddAccountPanelOpen: () => {},
+  setCanShowAccountDetails: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -678,16 +686,26 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
 
-  ////////////////////////////////////
-  // Added to support /account page //
-  ////////////////////////////////////
+  /////////////////////////////////////
+  // Added to support /accounts page //
+  /////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
   const [lastTxSignature, setLastTxSignature] = useState<string>('');
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(false);
+  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
   const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
+
+  const setAddAccountPanelOpen = (state: boolean) => {
+    updateAddAccountPanelOpen(state);
+  }
+
+  const setCanShowAccountDetails = (state: boolean) => {
+    updateCanShowAccountDetails(state);
+  }
 
   const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
     if (!addItems) {
@@ -772,6 +790,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         transactions,
         accountAddress,
         lastTxSignature,
+        addAccountPanelOpen,
+        canShowAccountDetails,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -804,7 +824,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setReferral,
         setTransactions,
         setSelectedAsset,
-        setAccountAddress
+        setAccountAddress,
+        setAddAccountPanelOpen,
+        setCanShowAccountDetails
       }}>
       {children}
     </AppStateContext.Provider>
