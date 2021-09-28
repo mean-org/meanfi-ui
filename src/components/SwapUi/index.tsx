@@ -37,8 +37,6 @@ export const SwapUi = (props: {
   queryToMint: string | null;
 }) => {
 
-  // Use injected params
-  const {queryFromMint, queryToMint} = props;
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
   const connection = useSwapConnection();
@@ -75,8 +73,8 @@ export const SwapUi = (props: {
   const [txFees, setTxFees] = useState<TransactionFees>();
   // AGGREGATOR
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(queryFromMint ? queryFromMint : lastFromMint);
-  const [toMint, setToMint] = useState<string | undefined>(queryToMint ? queryToMint : undefined);
+  const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
+  const [toMint, setToMint] = useState<string | undefined>(props.queryToMint ? props.queryToMint : undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [maxFromAmount, setMaxFromAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
