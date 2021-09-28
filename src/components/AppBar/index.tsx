@@ -6,7 +6,7 @@ import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
-import { CurrentNetwork } from "../CurrentNetwork";
+import { CurrentBalance } from "../CurrentBalance";
 import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
@@ -92,10 +92,6 @@ export const AppBar = (props: { menuType: string }) => {
     const bucket = config.getConfig().influxDbBucket;
     return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
   }
-
-  useEffect(() => {
-    consoleOut('path:', location.pathname, 'blue');
-  }, [location.pathname]);
 
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
@@ -192,7 +188,7 @@ export const AppBar = (props: { menuType: string }) => {
               </div>
             )}
             <div className="connection-and-account-bar">
-              <CurrentNetwork />
+              <CurrentBalance />
               <CurrentUserBadge />
             </div>
             </>

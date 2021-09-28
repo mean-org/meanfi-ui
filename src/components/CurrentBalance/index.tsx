@@ -6,11 +6,10 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { Tooltip } from 'antd';
 
-export const CurrentNetwork = () => {
+export const CurrentBalance = () => {
 
   const { publicKey } = useWallet();
   const { account } = useNativeAccount();
-  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
   useEffect(() => {
@@ -19,14 +18,9 @@ export const CurrentNetwork = () => {
       return (account?.lamports || 0) / LAMPORTS_PER_SOL;
     }
 
-    if (account?.lamports !== previousBalance || !nativeBalance) {
-      setNativeBalance(getAccountBalance());
-      setPreviousBalance(account?.lamports);
-    }
+    setNativeBalance(getAccountBalance());
   }, [
-    account,
-    nativeBalance,
-    previousBalance,
+    account.lamports
   ]);
 
   const renderSolanaIcon = (
