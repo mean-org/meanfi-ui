@@ -65,7 +65,7 @@ export const SwapUi = (props: {
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isFlipping, setIsFlipping] = useState(false);
-  const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
+  // const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
@@ -128,8 +128,33 @@ export const SwapUi = (props: {
   },[
     connected, 
     connection, 
-    publicKey,
-    shouldUpdateBalances
+    publicKey
+  ]);
+
+  // Automatically updates user account balance (SOL) 
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!connected || !publicKey) { return; }
+    
+    const listener = connection.onAccountChange(publicKey, (info) => {
+      if (info) {
+        setUserAccount(info);
+      }
+    });
+
+    return () => {
+      connection.removeAccountChangeListener(listener);
+    }
+
+  },[
+    connected, 
+    connection, 
+    publicKey
   ]);
 
   // Get Tx fees
@@ -358,7 +383,7 @@ export const SwapUi = (props: {
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       let amount = fromSwapAmount - aggregatorFees;
 
-      if (amount < (1 / 10 ** mintList[fromMint].decimals)) {
+      if (amount < 0) {
         amount = 0;
       }
 
@@ -536,7 +561,7 @@ export const SwapUi = (props: {
       return;
     }
     
-    if (!connected || !mintList || !publicKey || !userAccount) {
+    if (!connected || !publicKey || !userAccount || !mintList) {
       return;
     }
 
@@ -571,7 +596,6 @@ export const SwapUi = (props: {
         }
         
         setUserBalances(balancesMap);
-        setShouldUpdateBalances(false);
       };
 
       const promise = connection.getTokenAccountsByOwner(
@@ -595,8 +619,7 @@ export const SwapUi = (props: {
     connection, 
     mintList, 
     publicKey, 
-    userAccount,
-    shouldUpdateBalances
+    userAccount
   ]);
 
   // Automatically update from token balance once
@@ -609,7 +632,6 @@ export const SwapUi = (props: {
     
     if (!connected || !userAccount || !fromMint || !userBalances) {
       setFromBalance('0');
-      setShouldUpdateBalances(false);
       return;
     }
 
@@ -624,7 +646,6 @@ export const SwapUi = (props: {
       }
 
       setFromBalance(balance.toString());
-      setShouldUpdateBalances(false);
 
     });
 
@@ -650,7 +671,6 @@ export const SwapUi = (props: {
     
     if (!connected || !userAccount || !userBalances || !toMint) {
       setToBalance('0');
-      setShouldUpdateBalances(false);
       return;
     }
 
@@ -665,7 +685,6 @@ export const SwapUi = (props: {
       }
 
       setToBalance(balance.toString());
-      setShouldUpdateBalances(false);
 
     });
 
@@ -1101,18 +1120,12 @@ export const SwapUi = (props: {
     const timeout = setTimeout(() => {
       const oldFrom = fromMint;
       const oldTo = toMint;
-      // const oldFromBalance = fromMintTokenBalance;
       const oldFromBalance = fromBalance;
-      // const oldToBalance = toMintTokenBalance;
       const oldToBalance = toBalance;
-      // const oldToAmount = toAmount;
       setFromMint(oldTo);
       setToMint(oldFrom);
-      // setFromAmount(oldToAmount);
-      // setFromSwapAmount(parseFloat(oldToAmount));
       setFromBalance(oldToBalance);
       setToBalance(oldFromBalance);
-      // setShouldUpdateBalances(true);
       setRefreshTime(0);
     });
 
@@ -1136,15 +1149,12 @@ export const SwapUi = (props: {
       }
   
       const fromDecimals = mintList[fromMint].decimals;
-      let feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
-
-      if (feeAmount < (1 / 10 ** fromDecimals)) {
-        feeAmount = (1 / 10 ** fromDecimals);
-      }
-
-      const amountIn = exchangeInfo.amountIn <= (1 / 10 ** fromDecimals) ? 0 : exchangeInfo.amountIn;
-      const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
+      const toDecimals = mintList[toMint].decimals;
+      const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
       const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
+      const amountIn = parseFloat(exchangeInfo.amountIn.toFixed(fromDecimals));
+      const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
+      const amountOut = parseFloat(exchangeInfo.amountOut.toFixed(toDecimals));
   
       if (isWrap || isUnwrap) {
   
@@ -1184,11 +1194,11 @@ export const SwapUi = (props: {
           wallet.publicKey,
           fromMint,
           toMint,
-          exchangeInfo.amountIn,
-          exchangeInfo.amountOut,
+          amountIn,
+          amountOut,
           slippage,
           MSP_OPS.toBase58(),
-          parseFloat(feeAmount.toFixed(fromDecimals))
+          feeAmount
         );
       }
 
@@ -1377,15 +1387,13 @@ export const SwapUi = (props: {
     if (isSuccess()) {
       setFromAmount("");
       setFromSwapAmount(0);
-      setShouldUpdateBalances(true);
       hideTransactionModal();
     }
     
   }, [
     isBusy, 
     hideTransactionModal, 
-    isSuccess,
-    setShouldUpdateBalances
+    isSuccess
   ]);
 
   const createTx = useCallback(async () => {
@@ -1595,7 +1603,6 @@ export const SwapUi = (props: {
       console.info("confirmed:", confirmed); // put this in a link in the UI
       setFromAmount('');
       setFromSwapAmount(0);
-      setShouldUpdateBalances(true);
       setIsBusy(false);
 
     } catch (_error) {

@@ -124,7 +124,7 @@ export const getSwapTx = async (
       wrappedSolAccount ? wrappedSolAccount.publicKey : fromTokenAccount,
       wrappedSolAccount2 ? wrappedSolAccount2.publicKey : toTokenAccount,
       owner,
-      fromAmount.sub(fee).toNumber(),
+      fromAmount.toNumber(),
       toSwapAmount.toNumber()
     )
   )

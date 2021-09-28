@@ -258,7 +258,6 @@ export class RaydiumClient implements LPClient {
 
     const fromMint = from === poolInfo.coin.address ? poolInfo.coin.address : poolInfo.pc.address;
     const toMint = to === poolInfo.pc.address ? poolInfo.pc.address : poolInfo.coin.address;
-    const priceAmount = 1;
     const { 
       amountOut, 
       amountOutWithSlippage, 
@@ -268,7 +267,7 @@ export class RaydiumClient implements LPClient {
       poolInfo, 
       fromMint, 
       toMint,
-      priceAmount.toString(), 
+      '1', 
       slippage
     );
 
