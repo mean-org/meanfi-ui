@@ -131,7 +131,6 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                             }, 100);
                         } else {
                             // HACK: sol-wallet-adapter doesn't reject or emit an event if the extension is closed or ignored
-                            // timeout = setTimeout(() => reject(new WalletTimeoutError()), 10000);
                             timeout = setTimeout(() => {
                                 notify({
                                     message: "Sollet Error",

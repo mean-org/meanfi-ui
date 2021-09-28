@@ -185,7 +185,7 @@ export const AccountsView = () => {
   }
 
   const handleGoToExchangeClick = () => {
-    const queryParams = `${selectedAsset ? '?toMint=' + selectedAsset.symbol : ''}`;
+    const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
     if (queryParams) {
       history.push({

@@ -94,6 +94,10 @@ export const AppBar = (props: { menuType: string }) => {
   }
 
   useEffect(() => {
+    consoleOut('path:', location.pathname, 'blue');
+  }, [location.pathname]);
+
+  useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
       if (!isMenuOpen) {
         document.body.classList.add("menu-open");

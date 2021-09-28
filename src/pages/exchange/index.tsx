@@ -18,17 +18,17 @@ export const SwapView = () => {
     const params = new URLSearchParams(location.search);
     let from: TokenInfo | null = null;
     let to: TokenInfo | null = null;
-    // Get fromMint address from symbol passed via query string param
-    if (params.has('fromMint')) {
-      const symbol = params.get('fromMint');
+    // Get from address from symbol passed via query string param
+    if (params.has('from')) {
+      const symbol = params.get('from');
       from = symbol ? getTokenBySymbol(symbol) : null;
       if (from) {
         setQueryFromMint(from.address);
       }
     }
-    // Get toMint as well
-    if (params.has('toMint')) {
-      const symbol = params.get('toMint');
+    // Get to as well
+    if (params.has('to')) {
+      const symbol = params.get('to');
       to = symbol ? getTokenBySymbol(symbol) : null;
       if (to) {
         setQueryToMint(to.address);
