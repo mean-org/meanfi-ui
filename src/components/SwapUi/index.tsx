@@ -31,7 +31,6 @@ import BN from "bn.js";
 import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown } from "../../Icons";
-import { environment } from "../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -78,7 +77,7 @@ export const SwapUi = (props: {
   // AGGREGATOR
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
-  const [toMint, setToMint] = useState<string | undefined>(props.queryToMint ? props.queryToMint : undefined);
+  const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [maxFromAmount, setMaxFromAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -984,6 +983,13 @@ export const SwapUi = (props: {
     mintList,
     userBalances
   ]);
+
+  // Set toMint appropriately
+  useEffect(() => {
+    if (props.queryToMint) {
+      setToMint(props.queryToMint);
+    }
+  }, [props.queryToMint]);
 
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(() => {
@@ -1944,12 +1950,6 @@ export const SwapUi = (props: {
         </Modal>
 
       </div>
-      {environment === 'local' && (
-        <div className="font-size-60">
-          <div className="text-monospace">queryFromMint: {props.queryFromMint || '-'} | fromMint: {fromMint || '-'}</div>
-          <div className="text-monospace">queryToMint: {props.queryToMint || '-'} | toMint: {toMint || '-'}</div>
-        </div>
-      )}
     </Spin>
     );
 };
