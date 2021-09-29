@@ -475,11 +475,20 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-default.ant-btn-round.dropdown-like-button {
   display: inline-flex;
   background-color: var(--color-whitesmoke);
-  border: none;
   color: inherit;
+  border: none;
+  outline: none;
+  box-shadow: none;
   border-radius: var(--custom-border-radius);
   min-height: var(--custom-control-height);
   align-items: center;
+  &:hover,
+  &:focus,
+  &:active {
+    border: none;
+    outline: none;
+    box-shadow: none;
+  }
   &:disabled {
     color: var(--color-secondary-alpha-40) !important;
     background-color: var(--color-secondary-alpha-10);
