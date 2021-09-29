@@ -4,14 +4,14 @@ import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
-import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees } from "money-streaming/lib/utils";
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
@@ -29,6 +29,8 @@ import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import BN from "bn.js";
 import "./style.less";
+import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
+import { IconCaretDown } from "../../Icons";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -41,6 +43,7 @@ export const SwapUi = (props: {
   const { publicKey, wallet, connected } = useWallet();
   const connection = useSwapConnection();
   const {
+    ddcaOption,
     transactionStatus,
     previousWalletConnectState,
     setTransactionStatus,
@@ -89,6 +92,11 @@ export const SwapUi = (props: {
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
+
+  // DDCA Option selector modal
+  const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
+  const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
+  const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
 
   // Automatically updates the user account
   useEffect(() => {
@@ -1690,7 +1698,13 @@ export const SwapUi = (props: {
           token={fromMint && mintList[fromMint]}
           tokenBalance={
             (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
-              ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
+              ? getTokenFormattedAmountAndSymbolByTokenAddress(
+                  parseFloat(fromBalance),
+                  mintList[fromMint],
+                  true,
+                  true,
+                  true
+                ) // parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
               : '')
           }
           tokenAmount={fromAmount}
@@ -1723,7 +1737,13 @@ export const SwapUi = (props: {
           token={toMint && mintList[toMint]}
           tokenBalance={
             (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-              ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+              ? getTokenFormattedAmountAndSymbolByTokenAddress(
+                  parseFloat(toBalance),
+                  mintList[toMint],
+                  true,
+                  true,
+                  true
+                ) //parseFloat(toBalance).toFixed(mintList[toMint].decimals)
               : '')
           }
           tokenAmount={
@@ -1740,6 +1760,21 @@ export const SwapUi = (props: {
           }}
           translationId="destination"
         />
+
+        {/* DDCA Option selector */}
+        <div className="text-center mb-3">
+          {ddcaOption && (
+            <Button
+              type="default"
+              shape="round"
+              size="middle"
+              className="dropdown-like-button"
+              onClick={showDdcaOptionSelector}>
+              <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
+          )}
+        </div>
 
         {/* Token selection modal */}
         <Modal
@@ -1801,6 +1836,13 @@ export const SwapUi = (props: {
           disabled={!isValidBalance || !isValidSwapAmount}>
           {transactionStartButtonLabel}
         </Button>
+
+        {/* DDCA Option selector modal */}
+        <DdcaFrequencySelectorModal
+          isVisible={isDdcaOptionSelectorModalVisible}
+          handleClose={onCloseDdcaOptionSelector}
+          handleOk={onCloseDdcaOptionSelector}
+        />
 
         {/* Transaction execution modal */}
         <Modal

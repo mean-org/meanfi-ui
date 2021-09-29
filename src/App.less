@@ -104,8 +104,8 @@
   --color-dimmed: #eceff1;
   --color-blue-gray: #c9c9c9;
   --color-smoke: #c2c2c2;
-  --color-whitesmoke: #afafaf;
-  --color-almost-white: #474747;
+  --color-whitesmoke: #2e2f3b;
+  --color-almost-white: #1b1c24;
   --color-section: #10101d;
   --color-section-contrast: #0a0a13;
   --color-white: #ffffff;
@@ -366,7 +366,7 @@ footer.ant-layout-footer {
   &:disabled:hover,
   &:disabled:focus,
   &:disabled:active {
-    color: var(--color-secondary) !important;
+    color: var(--color-secondary-alpha-40) !important;
     background-color: var(--color-secondary-alpha-10);
   }
   &.ant-btn-round {
@@ -468,6 +468,21 @@ footer.ant-layout-footer {
   &:active {
     color: initial;
     border: none !important;
+  }
+}
+
+// Dropdown-like button (type=default shape=round)
+.ant-btn.ant-btn-default.ant-btn-round.dropdown-like-button {
+  display: inline-flex;
+  background-color: var(--color-whitesmoke);
+  border: none;
+  color: inherit;
+  border-radius: var(--custom-border-radius);
+  min-height: var(--custom-control-height);
+  align-items: center;
+  &:disabled {
+    color: var(--color-secondary-alpha-40) !important;
+    background-color: var(--color-secondary-alpha-10);
   }
 }
 
@@ -1868,11 +1883,11 @@ section.content {
   }
 }
 
-.contract-card-list {
+.items-card-list {
   max-height: 400px;
   display: flex;
   flex-direction: column;
-  .contract-card {
+  .item-card {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -1912,17 +1927,17 @@ section.content {
       justify-content: center;
       flex: 0 0 30px;
     }
-    .contract-meta {
+    .item-meta {
       display: flex;
       flex-direction: column;
       flex: auto;
       padding-left: 4px;
-      .contract-name {
+      .item-name {
         font-size: 14px;
         font-weight: 600;
         color: var(--color-secondary-alpha-85);
       }
-      .contract-description {
+      .item-description {
         font-size: 12px;
         font-weight: 400;
         color: var(--color-dark-active);

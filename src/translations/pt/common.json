@@ -101,6 +101,29 @@
 			"name": "Inscrição"
 		}
 	},
+	"ddca-selector": {
+		"modal-title": "Trade Operation frequency",
+		"ote": {
+			"name": "One time exchange",
+			"description": "Exchange now. One time."
+		},
+		"repeating-daily": {
+			"name": "Repeat daily",
+			"description": "Buy every day, starting now."
+		},
+		"repeating-once-month": {
+			"name": "Once a month",
+			"description": "Every month on the 27th."
+		},
+		"repeating-twice-month": {
+			"name": "Twice a month",
+			"description": "Buy today, then twice a month on the 1st and the 15th."
+		},
+		"repeating-weekly": {
+			"name": "Repeat weekly",
+			"description": "Buy every Monday, starting today."
+		}
+	},
 	"deposits": {
 		"address-share-disclaimer": "Este endereço só pode ser usado para receber tokens SOL e SPL em Solana.",
 		"back-to-deposit-options": "Voltar para opções de Depósito",

@@ -3,17 +3,17 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import {
-  Commitment,
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
-import { calculateActionFees, wrapSol } from "money-streaming/lib/utils";
+import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -21,7 +21,6 @@ import {
 } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
@@ -168,7 +167,7 @@ export const WrapView = () => {
         consoleOut("Signing transaction...");
         return await wallet
           .signTransaction(transaction)
-          .then((signed) => {
+          .then((signed: Transaction) => {
             consoleOut(
               "signTransactions returned a signed transaction array:",
               signed
@@ -363,9 +362,10 @@ export const WrapView = () => {
                     <span>{t("faucet.current-sol-balance")}:</span>
                     <span className="balance-amount">
                       {`${nativeBalance
-                          ? getTokenAmountAndSymbolByTokenAddress(
+                          ? getTokenFormattedAmountAndSymbolByTokenAddress(
                               nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
+                              true,
                               true,
                               true
                             )

@@ -7,7 +7,7 @@ import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from 
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { consoleOut, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
-import { TransactionFees } from "money-streaming/lib/types";
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { Swap } from '@project-serum/swap';
 import { MINT_CACHE } from '../contexts/token';
@@ -318,18 +318,12 @@ export const getTokenFormattedAmountAndSymbolByTokenAddress = (
   let decimals = 0;
 
   // Set decimals
-  if (abbr) {
-    decimals = 4;
+  if (inputAmount > 0 && inputAmount < 1) {
+    decimals = abbr ? 4 : token?.decimals || 9;
+  } else if (inputAmount >= 1 && inputAmount < 100) {
+    decimals = abbr ? 4 : 6;
   } else {
-    if (inputAmount > 0 && inputAmount < 1) {
-      decimals = token?.decimals || 9;
-    } else if (inputAmount >= 1 && inputAmount < 10) {
-      decimals = 6;
-    } else if (inputAmount >= 10 && inputAmount < 100) {
-      decimals = 4;
-    } else {
-      decimals = 2;
-    }
+    decimals = abbr ? 2 : 4;
   }
   if (inputAmount === 0) {
     formatted = '0';

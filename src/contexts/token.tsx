@@ -8,7 +8,7 @@ import { getOwnedAssociatedTokenAccounts, parseTokenAccountData } from "../utils
 import { useWallet } from "./wallet";
 import { useConnection } from "./connection";
 import * as assert from "assert";
-import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
+import { WalletAdapter } from "../wallet-adapters/wallet-adapter";
 
 // Cache storing all token accounts for the connected wallet provider.
 const OWNED_TOKEN_ACCOUNTS_CACHE: Array<{

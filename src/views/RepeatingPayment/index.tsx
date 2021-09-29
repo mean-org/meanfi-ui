@@ -36,12 +36,12 @@ import {
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { MoneyStreaming } from "money-streaming/lib/money-streaming";
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees } from "money-streaming/lib/utils";
+import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -693,7 +693,7 @@ export const RepeatingPayment = () => {
       if (wallet) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then(signed => {
+        .then((signed: Transaction) => {
           consoleOut('signAllTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
@@ -1015,7 +1015,7 @@ export const RepeatingPayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true)
+                  ? getTokenFormattedAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true, true)
                   : "0"
               }`}
             </span>

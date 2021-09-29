@@ -60,9 +60,9 @@ import { AddFundsModal } from "../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../components/CloseStreamModal";
 import { useNativeAccount } from "../../contexts/accounts";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from "money-streaming/lib/types";
-import { calculateActionFees, getStream } from "money-streaming/lib/utils";
-import { MoneyStreaming } from "money-streaming/lib/money-streaming";
+import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
 
@@ -659,7 +659,7 @@ export const Streams = () => {
       if (wallet) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then(signed => {
+        .then((signed: Transaction) => {
           consoleOut('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
@@ -867,7 +867,7 @@ export const Streams = () => {
       if (wallet) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then(signed => {
+        .then((signed: Transaction) => {
           consoleOut('signTransactions returned a signed transaction array:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({
@@ -1065,7 +1065,7 @@ export const Streams = () => {
       if (wallet) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then(signed => {
+        .then((signed: Transaction) => {
           consoleOut('signTransactions returned a signed transaction:', signed);
           // Stage 2 completed - The transaction was signed
           setTransactionStatus({

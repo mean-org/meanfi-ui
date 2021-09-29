@@ -16,11 +16,11 @@ import { MathWalletWalletAdapter } from "../wallet-adapters/mathwallet";
 import { Coin98WalletAdapter } from "../wallet-adapters/coin98";
 import { WalletConnectWalletAdapter } from "../wallet-adapters/walletconnect";
 import { useTranslation } from "react-i18next";
-import { WalletAdapter } from "money-streaming/lib/wallet-adapter";
 import { useConnectionConfig } from "./connection";
 import { isDesktop } from "react-device-detect";
 import { SolletWalletAdapter } from "../wallet-adapters/sollet";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
+import { WalletAdapter } from "../wallet-adapters/wallet-adapter";
 
 export const WALLET_PROVIDERS = [
   {

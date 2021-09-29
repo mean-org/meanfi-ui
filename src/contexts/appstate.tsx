@@ -1,9 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
-import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT, TRANSACTIONS_PER_PAGE } from "../constants";
+import {
+  DDCA_FREQUENCY_OPTIONS,
+  PRICE_REFRESH_TIMEOUT,
+  STREAMING_PAYMENT_CONTRACTS,
+  STREAMS_REFRESH_TIMEOUT,
+  TRANSACTIONS_PER_PAGE
+} from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
+import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
+import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { findATokenAddress, getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
 import { ENDPOINTS, getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -12,7 +20,6 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
-import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { Connection } from "@solana/web3.js";
@@ -40,6 +47,7 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   contract: ContractDefinition | undefined;
+  ddcaOption: DdcaFrequencyOption | undefined;
   recipientAddress: string;
   recipientNote: string;
   paymentStartDate: string | undefined;
@@ -79,6 +87,7 @@ interface AppStateConfig {
   resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
+  setDdcaOption: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
@@ -115,6 +124,7 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   contract: undefined,
+  ddcaOption: undefined,
   recipientAddress: '',
   recipientNote: '',
   paymentStartDate: undefined,
@@ -149,6 +159,7 @@ const contextDefaultValues: AppStateConfig = {
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
+  setDdcaOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
@@ -202,7 +213,13 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
+
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
+  const [contractName, setContractName] = useLocalStorageState("contractName");
+
+  const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [ddcaOptionName, setDdcaOptionName] = useLocalStorageState("ddcaOptionName");
+
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
   const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
@@ -253,6 +270,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (items?.length) {
       setSelectedContract(items[0]);
       setContractName(name);
+    }
+  }
+
+  const setDdcaOption = (name: string) => {
+    const items = DDCA_FREQUENCY_OPTIONS.filter(c => c.name === name);
+    if (items?.length) {
+      updateDdcaOption(items[0]);
+      setDdcaOptionName(name);
     }
   }
 
@@ -358,7 +383,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
       const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
-      listStreamActivity(newConnection, getEndpointByRuntimeEnv(), streamPublicKey)
+      listStreamActivity(newConnection, streamPublicKey)
         .then(value => {
           consoleOut('activity:', value);
           setStreamActivity(value);
@@ -422,7 +447,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
-  const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
   const [referral, setReferral] = useState<TokenInfo>();  
 
@@ -485,7 +509,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     selectedToken
   ]);
 
-  // Cache contracts
+  // Cache selected contract
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
     [contractName]
@@ -517,6 +541,40 @@ const AppStateProvider: React.FC = ({ children }) => {
     contractFromCache,
     setSelectedContract,
     setContractName
+  ]);
+
+  // Cache selected DDCA frequency option
+  const ddcaOptFromCache = useMemo(
+    () => DDCA_FREQUENCY_OPTIONS.find(({ name }) => name === ddcaOptionName),
+    [ddcaOptionName]
+  );
+
+  // Preselect a DDCA frequency option
+  useEffect(() => {
+
+    const setContractOrAutoSelectFirst = (name?: string) => {
+      if (name) {
+        if (ddcaOptFromCache) {
+          updateDdcaOption(ddcaOptFromCache);
+        } else {
+          const item = DDCA_FREQUENCY_OPTIONS.filter(c => !c.disabled)[0];
+          updateDdcaOption(item);
+          setDdcaOptionName(item.name);
+        }
+      } else {
+        const item = DDCA_FREQUENCY_OPTIONS.filter(c => !c.disabled)[0];
+        updateDdcaOption(item);
+        setDdcaOptionName(item.name);
+      }
+    }
+
+    setContractOrAutoSelectFirst(ddcaOptionName);
+    return () => {};
+  }, [
+    ddcaOptionName,
+    ddcaOptFromCache,
+    setDdcaOptionName,
+    updateDdcaOption,
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
@@ -551,7 +609,7 @@ const AppStateProvider: React.FC = ({ children }) => {
               if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
-                listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
+                listStreamActivity(connection, streamPublicKey)
                   .then(value => {
                     consoleOut('activity:', value, 'blue');
                     setStreamActivity(value);
@@ -768,6 +826,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         contract,
+        ddcaOption,
         recipientAddress,
         recipientNote,
         paymentStartDate,
@@ -806,6 +865,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         resetContractValues,
         refreshStreamList,
         setContract,
+        setDdcaOption,
         setRecipientAddress,
         setRecipientNote,
         setPaymentStartDate,

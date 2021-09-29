@@ -1,7 +1,7 @@
 import { TokenInfo } from "@solana/spl-token-registry";
 import bs58 from "bs58";
 import moment from "moment";
-import { TransactionFees } from "money-streaming/lib/types";
+import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { environment } from "../environments/environment";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
