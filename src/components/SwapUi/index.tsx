@@ -31,6 +31,7 @@ import BN from "bn.js";
 import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown } from "../../Icons";
+import { environment } from "../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1943,6 +1944,12 @@ export const SwapUi = (props: {
         </Modal>
 
       </div>
+      {environment === 'local' && (
+        <div className="font-size-60">
+          <div className="text-monospace">queryFromMint: {props.queryFromMint || '-'} | fromMint: {fromMint || '-'}</div>
+          <div className="text-monospace">queryToMint: {props.queryToMint || '-'} | toMint: {toMint || '-'}</div>
+        </div>
+      )}
     </Spin>
     );
 };
