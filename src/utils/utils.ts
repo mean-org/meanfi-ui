@@ -302,7 +302,8 @@ export const getTokenFormattedAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
   onlyValue = false,
-  truncateInsteadRound = false
+  truncateInsteadRound = false,
+  abbr = false
 ): string => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -315,23 +316,27 @@ export const getTokenFormattedAmountAndSymbolByTokenAddress = (
   const inputAmount = amount || 0;
   let formatted = '';
   let decimals = 0;
-  let abbr = false;
+
+  // Set decimals
+  if (abbr) {
+    decimals = 4;
+  } else {
+    if (inputAmount > 0 && inputAmount < 1) {
+      decimals = token?.decimals || 9;
+    } else if (inputAmount >= 1 && inputAmount < 10) {
+      decimals = 6;
+    } else if (inputAmount >= 10 && inputAmount < 100) {
+      decimals = 4;
+    } else {
+      decimals = 2;
+    }
+  }
   if (inputAmount === 0) {
     formatted = '0';
-  } else if (inputAmount > 0 && inputAmount < 1) {
-    decimals = 4;
-  } else if (inputAmount >= 1 && inputAmount < 10) {
-    decimals = 3;
-  } else if (inputAmount >= 100) {
-    decimals = 2;
   } else {
-    decimals = 2;
-    abbr = true;
-  }
-  if (inputAmount) {
     formatted = truncateInsteadRound
       ? truncateFloat(inputAmount, decimals)
-      : formatAmount(inputAmount, decimals, abbr);
+      : formatAmount(inputAmount, decimals);
   }
   if (!token || onlyValue) { return formatted; }
 
@@ -356,7 +361,7 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   if (token) {
     const formatted = truncateInsteadRound
       ? truncateFloat(inputAmount, token.decimals)
-      : `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
+      : `${getFormattedNumberToLocale(formatAmount(inputAmount, 6))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
