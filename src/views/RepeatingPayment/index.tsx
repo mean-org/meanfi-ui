@@ -723,7 +723,9 @@ export const RepeatingPayment = () => {
 
     const sendTx = async (): Promise<boolean> => {
       if (wallet) {
-        return connection.sendEncodedTransaction(signedTransaction.serialize().toString('base64'), { preflightCommitment: "confirmed" })
+        const aliguito = signedTransaction.serialize().toString('base64');
+        console.log('encodedTransaction', aliguito);
+        return connection.sendEncodedTransaction(aliguito, { preflightCommitment: "confirmed" })
         // return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "singleGossip" })
           .then(sig => {
             consoleOut('sendSignedTransactions returned a signature:', sig);

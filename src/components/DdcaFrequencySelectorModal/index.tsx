@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { CheckOutlined } from "@ant-design/icons";
 import { useContext } from "react";
@@ -6,48 +6,66 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DDCA_FREQUENCY_OPTIONS } from '../../constants/ddca-frequency-options';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
-import { getOrdinalDay } from '../../utils/ui';
+import { getDayOfWeek, getOrdinalDay } from '../../utils/ui';
 
 export const DdcaFrequencySelectorModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
 }) => {
+  const today = new Date();
+  const { t, i18n } = useTranslation("common");
+  const [currentLocale, setCurrentLocale] = useState(i18n.language || 'en-US');
   const { ddcaOption, setDdcaOption } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
+
+  useEffect(() => {
+    if (i18n.language) {
+      setCurrentLocale(i18n.language);
+    }
+  }, [i18n.language]);
 
   const handleSelection = (option: DdcaFrequencyOption) => {
     setDdcaOption(option.name);
     props.handleOk();
   }
 
-  const contractsList = (
-    <div className="items-card-list vertical-scroll">
-      {DDCA_FREQUENCY_OPTIONS.map(option => {
-        return (
-          <div key={`${option.value}`} className={`item-card ${option.name === ddcaOption?.name
-            ? "selected"
-            : option.disabled
-            ? "disabled"
-            : ""
-          }`}
-          onClick={() => {
-            if (!option.disabled) {
-              handleSelection(option);
-            }
-          }}>
-            <div className="checkmark">
-              <CheckOutlined />
+  const ddcaOptionsList = () => {
+    return (
+      <div className="items-card-list vertical-scroll">
+        {DDCA_FREQUENCY_OPTIONS.map(option => {
+          return (
+            <div key={`${option.value}`} className={`item-card ${option.name === ddcaOption?.name
+              ? "selected"
+              : option.disabled
+              ? "disabled"
+              : ""
+            }`}
+            onClick={() => {
+              if (!option.disabled) {
+                handleSelection(option);
+              }
+            }}>
+              <div className="checkmark">
+                <CheckOutlined />
+              </div>
+              <div className="item-meta">
+                <div className="item-name">{t(`ddca-selector.${option.translationId}.name`)}</div>
+                <div className="item-description">
+                  {t(
+                    `ddca-selector.${option.translationId}.description`,
+                    {
+                      ordinalDay: getOrdinalDay(today),
+                      dayOfWeek: getDayOfWeek(today, currentLocale)
+                    })
+                  }
+                </div>
+              </div>
             </div>
-            <div className="item-meta">
-              <div className="item-name">{t(`ddca-selector.${option.translationId}.name`)}</div>
-              <div className="item-description">{t(`ddca-selector.${option.translationId}.description`, { ordinalDay: getOrdinalDay() })}</div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <Modal
@@ -58,7 +76,7 @@ export const DdcaFrequencySelectorModal = (props: {
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}>
-      {contractsList}
+      {ddcaOptionsList()}
     </Modal>
   );
 };

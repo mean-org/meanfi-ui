@@ -350,11 +350,13 @@ export const getFormattedNumberToLocale = (value: any) => {
     return formatted || '';
 }
 
-export const getOrdinalDay = (): string => {
-    const date = new Date();
+export const getOrdinalDay = (date: Date): string => {
     const dayOfMonth = date.getDate();
     return moment.localeData().ordinal(dayOfMonth);
-    // return moment(date, 'DD-MM-YYYY').format('Do');
+}
+
+export const getDayOfWeek = (date: Date, locale = 'en-US'): string => {
+    return date.toLocaleDateString(locale, { weekday: 'long' });
 }
 
 export function disabledDate(current: any) {

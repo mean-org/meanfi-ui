@@ -28,21 +28,25 @@ export const LANGUAGES: Language[] = [
     {
         code: 'en',
         name: 'English',
-        flag: 'assets/flags/us.svg'
+        flag: 'assets/flags/us.svg',
+        locale: 'en-US'
     },
     {
         code: 'es',
         name: 'Español',
-        flag: 'assets/flags/es.svg'
+        flag: 'assets/flags/es.svg',
+        locale: 'es-ES'
     },
     {
         code: 'fr',
         name: 'Français',
-        flag: 'assets/flags/fr.svg'
+        flag: 'assets/flags/fr.svg',
+        locale: 'fr-FR'
     },
     {
         code: 'pt',
         name: 'Português',
-        flag: 'assets/flags/br.svg'
+        flag: 'assets/flags/br.svg',
+        locale: 'pt-BR'
     },
 ];

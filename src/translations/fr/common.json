@@ -121,7 +121,7 @@
 		},
 		"repeating-weekly": {
 			"name": "Repeat weekly",
-			"description": "Buy every Monday, starting today."
+			"description": "Buy every {{dayOfWeek}}, starting today."
 		}
 	},
 	"deposits": {

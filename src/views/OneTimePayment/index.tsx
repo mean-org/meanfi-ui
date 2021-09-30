@@ -384,10 +384,9 @@ export const OneTimePayment = () => {
 
         // Create a transaction
         const data = {
-          wallet: wallet,
-          treasurerMint: associatedToken,                                             // treasurerMint
-          beneficiary: beneficiary,                                                   // beneficiary
-          associatedToken: associatedToken,                                           // beneficiaryMint
+          wallet: wallet.publicKey.toBase58(),
+          beneficiary: beneficiary.toBase58(),                                        // beneficiary
+          associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
           amount: amount,                                                             // fundingAmount
           fromParsedDate: fromParsedDate,                                             // startUtc
           recipientNote: recipientNote
