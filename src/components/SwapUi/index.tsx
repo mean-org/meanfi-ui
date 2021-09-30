@@ -31,6 +31,7 @@ import BN from "bn.js";
 import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown } from "../../Icons";
+import { environment } from "../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1690,13 +1691,31 @@ export const SwapUi = (props: {
     </>
   );
 
+  // TESTING BLOCK FOR STYLING THE UI
+  const [inputPosition, setInputPosition] = useState<"left" | "right">("right");
+  const toggleInputPosition = () => {
+    if (inputPosition === "left") {
+      setInputPosition("right");
+    } else {
+      setInputPosition("left");
+    }
+  }
+  // END OF TESTING BLOCK
+
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
 
         {/* Title bar with settings */}
         <div className="swap-title-and-settings flexible-left flex-column-xs">
-          <div className="left title">{t('ui-menus.main-menu.swap')}</div>
+          <div className="left title">
+            <span>{t('ui-menus.main-menu.swap')}</span>
+            {/* TESTING BLOCK FOR STYLING THE UI */}
+            {environment === 'local' && (
+              <span className="primary-link font-regular font-size-80 ml-3" onClick={toggleInputPosition}>Toggle input position</span>
+            )}
+            {/* END OF TESTING BLOCK */}
+          </div>
           <div className="right"><SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/></div>
         </div>
 
@@ -1730,12 +1749,40 @@ export const SwapUi = (props: {
             setSubjectTokenSelection("source");
             showTokenSelector();
           }}
+          inputPosition={inputPosition}
           translationId="source"
+          inputLabel="" // {t(`swap.input-label-source`)}
         />
 
         <div className="flip-button-container">
+          {/* Flip button */}
           <div className="flip-button" onClick={flipMintsCallback}>
             <ArrowDownOutlined />
+          </div>
+          {/* Info */}
+          <div className="info-line">
+            {
+              fromMint && toMint && exchangeInfo && exchangeInfo.outPrice && (
+                <>
+                {!refreshing && (
+                  <>
+                    <div className="left">
+                      {
+                        (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
+                      }
+                    </div>
+                    <div className="right pl-1">
+                      {
+                        fromAmount ? (
+                          <InfoIcon content={txInfoContent()} placement="leftBottom" />
+                        ) : null
+                      }
+                    </div>
+                  </>
+                )}
+                </>
+              )        
+            }
           </div>
         </div>
 
@@ -1765,11 +1812,13 @@ export const SwapUi = (props: {
             setSubjectTokenSelection("destination");
             showTokenSelector();
           }}
+          inputPosition={inputPosition}
           translationId="destination"
+          inputLabel="" // {t(`swap.input-label-destination`)}
         />
 
         {/* DDCA Option selector */}
-        <div className="text-center mb-3">
+        <div className="text-center mt-3 mb-3">
           {ddcaOption && (
             <Button
               type="default"
@@ -1807,30 +1856,6 @@ export const SwapUi = (props: {
             </div>
           </div>
         </Modal>
-
-        {/* Info */}
-        {
-          fromMint && toMint && exchangeInfo && exchangeInfo.outPrice && (
-            <div className="p-2 mb-2 text-right">
-              {!refreshing && (
-                <div className="transaction-info-popover-row flexible-left">
-                  <div className="left">
-                    {
-                      (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
-                    }
-                  </div>
-                  <div className="right pl-1">
-                    {
-                      fromAmount ? (
-                        <InfoIcon content={txInfoContent()} placement="leftBottom" />
-                      ) : null
-                    }
-                  </div>
-                </div>
-              )}
-            </div>
-          )        
-        }
 
         {/* Action button */}
         <Button

@@ -1340,6 +1340,26 @@ section.content {
   margin: 0 2px;
   vertical-align: -4px;
 }
+.token-group {
+  display: flex;
+  align-items: center;
+  .token-max {
+    margin-right: 8px;
+    min-width: 30px;
+    padding: 3px 6px;
+    color: var(--color-white);
+    font-weight: 800;
+    font-size: 10px;
+    line-height: 11px;
+    white-space: nowrap;
+    text-align: center;
+    background: var(--color-primary);
+    border-radius: var(--custom-border-radius);
+    &:hover {
+      color: var(--color-white);
+    }
+  }
+}
 
 .flexible-left {
   display: flex;
@@ -1442,19 +1462,14 @@ section.content {
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
+    &.reverse {
+      flex-direction: row-reverse;
+      .general-text-input {
+        text-align: right;
+      }
+    }
     &.main-row {
       height: 38px;
-    }
-    .input-left {
-      flex: 1 1 auto;
-      &.recipient-field-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        height: 100%;
-        overflow: hidden;
-      }
     }
     .field-label-left {
       .mean-svg-icons.usd-switcher {
@@ -1513,37 +1528,18 @@ section.content {
     .addon-right {
       flex: 0 0 auto;
       margin-left: 0.5rem;
-      .token-group {
+      .token-selector {
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
         align-items: center;
-        .token-max {
-          margin-right: 8px;
-          min-width: 30px;
-          padding: 3px 6px;
-          color: var(--color-white);
-          font-weight: 800;
-          font-size: 10px;
-          line-height: 11px;
-          white-space: nowrap;
-          text-align: center;
-          background: var(--color-primary);
-          border-radius: var(--custom-border-radius);
-        }
-        .token-selector {
-          display: flex;
-          flex-direction: row;
-          justify-content: flex-start;
-          align-items: center;
-          padding-right: 24px;
-          .token-symbol {
-            font-size: 24px;
-            font-weight: 600;
-            @media (max-width: 575.98px) {
-              font-size: 20px !important;
-              letter-spacing: -0.5px;
-            }
+        padding-right: 24px;
+        .token-symbol {
+          font-size: 24px;
+          font-weight: 600;
+          @media (max-width: 575.98px) {
+            font-size: 20px !important;
+            letter-spacing: -0.5px;
           }
         }
       }
@@ -1587,6 +1583,8 @@ section.content {
         font-size: 20px !important;
       }
     }
+
+    .add-ons,
     .addon-left {
       display: flex;
       flex-direction: row;
@@ -1596,7 +1594,7 @@ section.content {
         display: flex;
         flex-direction: row;
         justify-content: flex-start;
-        align-items: center;
+        align-items: flex-start;
         .token-icon {
           border-radius: 50%;
           overflow: hidden;
@@ -1605,23 +1603,56 @@ section.content {
           justify-content: center;
           align-items: center;
           display: inline-flex;
-          margin-right: 8px;
+          margin: 2px 6px 0 0;
           @media (max-width: 575.98px) {
             width: 18px;
             height: 18px;
-            margin-right: 4px;
+            margin: 2px 4px 0 0;
           }
         }
         .token-symbol {
           font-size: 24px;
           font-weight: 600;
+          line-height: 1;
           @media (max-width: 575.98px) {
             font-size: 20px !important;
             letter-spacing: -0.5px;
           }
         }
+        .token-name {
+          font-size: 0.65rem;
+          color: var(--color-secondary-alpha-50);
+          line-height: 1;
+        }
+        .field-caret-down {
+          position: relative;
+        }
       }
     }
+    .input-left {
+      flex: 1 1 auto;
+    }
+
+    .input-left,
+    .input-control {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      &.recipient-field-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100%;
+        overflow: hidden;
+      }
+      .value-rate {
+        font-size: 0.65rem;
+        color: var(--color-secondary-alpha-50);
+        line-height: 1;
+      }
+    }
+
     // Force some measures
     .cell-1 {
       flex: 0 0 130px;
@@ -3135,6 +3166,10 @@ section.content {
 .click-disabled {
   pointer-events: none;
 }
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
 .flex-center {
   display: flex;
   justify-content: center;
@@ -3142,6 +3177,9 @@ section.content {
 }
 .justify-content-center {
   justify-content: center;
+}
+.flex-row-reverse {
+  flex-direction: row-reverse;
 }
 .symbol-at {
   font-size: 22px;
@@ -3413,6 +3451,9 @@ section.content {
 }
 .mt-4 {
   margin-top: 2rem;
+}
+.mb-0 {
+  margin-bottom: 0;
 }
 .mb-1 {
   margin-bottom: 0.5rem;
