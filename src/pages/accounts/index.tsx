@@ -574,8 +574,11 @@ export const AccountsView = () => {
         <Space size={[16, 16]} wrap>
           <Button className="secondary-button" shape="round" size="middle" type="default"
                   onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
-          <Button className="secondary-button" shape="round" size="middle" type="default"
-                  onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
+          {/* For SOL the first option is ok, any other token, we can use the exchange */}
+          {selectedAsset?.ataAddress !== accountAddress && (
+            <Button className="secondary-button" shape="round" size="middle" type="default"
+                    onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
+          )}
         </Space>
         {renderQrCode}
       </div>
