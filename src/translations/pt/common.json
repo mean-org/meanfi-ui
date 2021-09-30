@@ -102,7 +102,7 @@
 		}
 	},
 	"ddca-selector": {
-		"modal-title": "Trade Operation frequency",
+		"modal-title": "Repeat this trade?",
 		"ote": {
 			"name": "One time exchange",
 			"description": "Exchange now. One time."
@@ -113,7 +113,7 @@
 		},
 		"repeating-once-month": {
 			"name": "Once a month",
-			"description": "Every month on the 27th."
+			"description": "Every month on the {{ordinalDay}}."
 		},
 		"repeating-twice-month": {
 			"name": "Twice a month",

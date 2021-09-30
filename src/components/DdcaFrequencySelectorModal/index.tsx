@@ -6,6 +6,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DDCA_FREQUENCY_OPTIONS } from '../../constants/ddca-frequency-options';
 import { DdcaFrequencyOption } from '../../models/ddca-models';
+import { getOrdinalDay } from '../../utils/ui';
 
 export const DdcaFrequencySelectorModal = (props: {
   handleClose: any;
@@ -40,7 +41,7 @@ export const DdcaFrequencySelectorModal = (props: {
             </div>
             <div className="item-meta">
               <div className="item-name">{t(`ddca-selector.${option.translationId}.name`)}</div>
-              <div className="item-description">{t(`ddca-selector.${option.translationId}.description`)}</div>
+              <div className="item-description">{t(`ddca-selector.${option.translationId}.description`, { ordinalDay: getOrdinalDay() })}</div>
             </div>
           </div>
         );

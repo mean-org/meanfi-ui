@@ -350,6 +350,13 @@ export const getFormattedNumberToLocale = (value: any) => {
     return formatted || '';
 }
 
+export const getOrdinalDay = (): string => {
+    const date = new Date();
+    const dayOfMonth = date.getDate();
+    return moment.localeData().ordinal(dayOfMonth);
+    // return moment(date, 'DD-MM-YYYY').format('Do');
+}
+
 export function disabledDate(current: any) {
     // Can not select days before today and today
     return current && current < moment().subtract(1, 'days').endOf('day');
