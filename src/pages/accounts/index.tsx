@@ -58,6 +58,7 @@ export const AccountsView = () => {
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [isSolAccountEmpty, setIsSolAccountEmpty] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -108,6 +109,7 @@ export const AccountsView = () => {
     asset: UserTokenAccount,
     openDetailsPanel: boolean = false
   ) => {
+    setStatus(FetchStatus.Fetching);
     setTransactions(undefined);
     setSelectedAsset(asset);
     if (isSmallUpScreen || openDetailsPanel) {
@@ -470,6 +472,50 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
+  // Filter only useful Txs for the SOL account to dermine if there is
+  // something to show or offer Buy
+  useEffect(() => {
+    if (transactions && transactions.length) {
+
+      const filtered = transactions.filter(tx => {
+        const meta = tx.parsedTransaction.meta;
+        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
+        const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+        const isInboundTx = accountAddress === accounts[0].pubkey.toBase58()
+          ? false
+          : true;
+        const hasTokenBalances = meta &&
+          ((meta.preTokenBalances && meta.preTokenBalances.length) ||
+          (meta.postTokenBalances && meta.postTokenBalances.length))
+          ? true
+          : false;
+        // Filter out useless Txs (Those incoming not affecting the SOL balance)
+        return isScanningWallet && isInboundTx && hasTokenBalances ? false : true;
+      });
+      console.log(`${filtered.length} useful Txs`);
+      if (filtered && filtered.length) {
+        setIsSolAccountEmpty(false);
+      } else {
+        setIsSolAccountEmpty(true);
+      }
+    } else {
+      setIsSolAccountEmpty(true);
+    }
+  }, [
+    transactions,
+    accountAddress,
+    selectedAsset
+  ]);
+
+  const shallWeDraw = (): boolean => {
+    // We can draw if there are transactions when the selected token is not the SOL account
+    // Or if the user selects the SOL account and there are at least one useful transaction
+    return (accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
+           (accountAddress === selectedAsset?.ataAddress && !isSolAccountEmpty)
+           ? true
+           : false;
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -631,7 +677,8 @@ export const AccountsView = () => {
               <div className="transaction-list-container">
                 <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
                 <div className="inner-container">
-                  {(transactions && transactions.length > 0) && (
+                  {/* Activity table heading */}
+                  {shallWeDraw() && (
                     <div className="stats-row">
                       <div className="fetch-control">
                         <span className="icon-button-container">
@@ -663,35 +710,31 @@ export const AccountsView = () => {
                       </div>
                     </div>
                   )}
+                  {/* Activity list */}
                   <div className={transactions && transactions.length ? 'transaction-list-data-wrapper vertical-scroll' : 'transaction-list-data-wrapper empty'}>
-                    <div className="activity-list">
+                    <div className="activity-list h-100">
                       {
-                        transactions && transactions.length ? (
-                          <div className="item-list-body compact">
-                            {renderTransactions()}
-                          </div>
-                        ) : status === FetchStatus.Fetching ? (
+                        status === FetchStatus.Fetching && !shallWeDraw() ? (
                           <div className="h-100 flex-center">
                             <Spin indicator={antIcon} />
                           </div>
-                        ) : status === FetchStatus.Fetched ? (
-                          !selectedAsset ? (
-                            <div className="h-100 flex-center">
-                              <span>{t('assets.no-asset-selected')}</span>
-                            </div>
-                          ) : !selectedAsset.balance ? (
-                            renderTokenBuyOptions()
-                          ) : (
-                            <div className="h-100 flex-center">
-                              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
-                            </div>
-                          )
+                        ) : selectedAsset?.balance === 0 && !shallWeDraw() ? (
+                          renderTokenBuyOptions()
+                        ) : (transactions && transactions.length) ? (
+                          <div className="item-list-body compact">
+                            {renderTransactions()}
+                          </div>
+                        ) : status === FetchStatus.Fetched && (!transactions || transactions.length === 0) ? (
+                          <div className="h-100 flex-center">
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+                          </div>
                         ) : status === FetchStatus.FetchFailed && (
                           <Result status="warning" title={t('assets.loading-error')} />
                         )
                       }
                     </div>
                   </div>
+                  {/* Load more cta */}
                   {lastTxSignature && (
                     <div className="stream-share-ctas">
                       <Button
