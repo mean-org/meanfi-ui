@@ -1020,7 +1020,7 @@ export const RepeatingPayment = () => {
                   : "0"
               }`}
             </span>
-            <span>
+            <span className="balance-amount">
               (~$
               {tokenBalance && effectiveRate
                 ? formatAmount(tokenBalance as number * effectiveRate, 2)
