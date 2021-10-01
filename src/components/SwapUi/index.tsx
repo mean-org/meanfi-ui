@@ -511,6 +511,7 @@ export const SwapUi = (props: {
     }
     
     if (!connected || !publicKey || !userAccount || !mintList) {
+      setUserBalances({});
       return;
     }
 

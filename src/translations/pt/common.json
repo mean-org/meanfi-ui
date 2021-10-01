@@ -32,7 +32,7 @@
 		"history-table-amount": "Saldo",
 		"history-table-date": "Data",
 		"history-table-postbalance": "Post saldo",
-		"loading-error": "Could not load transactions. Please reload the page.",
+		"loading-error": "Não fomos capazes de carregar transacções. Por favor, volte a carregar a página.",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -102,26 +102,26 @@
 		}
 	},
 	"ddca-selector": {
-		"modal-title": "Repeat this trade?",
+		"modal-title": "Repetir esta troca?",
 		"ote": {
-			"name": "One time exchange",
-			"description": "Exchange now. One time."
+			"description": "Troca agora. Uma vez.",
+			"name": "Troca única"
 		},
 		"repeating-daily": {
-			"name": "Repeat daily",
-			"description": "Buy every day, starting now."
+			"description": "Comprar todos os dias, a partir de agora.",
+			"name": "Repetir diariamente"
 		},
 		"repeating-once-month": {
-			"name": "Once a month",
-			"description": "Every month on the {{ordinalDay}}."
+			"description": "Todos os meses no {{ordinalDay}}.",
+			"name": "Uma vez por mês"
 		},
 		"repeating-twice-month": {
-			"name": "Twice a month",
-			"description": "Buy today, then twice a month on the 1st and the 15th."
+			"description": "Compre hoje, depois duas vezes por mês no dia 1 e no dia 15.",
+			"name": "Duas vezes por mês"
 		},
 		"repeating-weekly": {
-			"name": "Repeat weekly",
-			"description": "Buy every {{dayOfWeek}}, starting today."
+			"description": "Compre a cada {{{dayOfWeek}}, a partir de hoje.",
+			"name": "Repetir semanalmente"
 		}
 	},
 	"deposits": {
@@ -135,7 +135,7 @@
 		"move-from-renbridge-cta-label": "Transfira sua Bitcoin",
 		"not-connected": "Conecte sua carteira",
 		"operation-cta-label-disabled": "Carteira desconectada",
-		"renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
+		"renbridge-cta-warning": "Os cartões de crédito e débito do Chase Bank (EUA) não funcionarão para comprar crypto. Todos os outros bancos estão OK!",
 		"send-from-wallet-cta-label": "Enviar da Carteira/Troca",
 		"transak-cta-label": "Compre com cartão de débito/crédito"
 	},
