@@ -104,24 +104,24 @@
 	"ddca-selector": {
 		"modal-title": "Repeat this trade?",
 		"ote": {
-			"name": "One time exchange",
-			"description": "Exchange now. One time."
+			"description": "Exchange now. One time.",
+			"name": "One time exchange"
 		},
 		"repeating-daily": {
-			"name": "Repeat daily",
-			"description": "Buy every day, starting now."
+			"description": "Buy every day, starting now.",
+			"name": "Repeat daily"
 		},
 		"repeating-once-month": {
-			"name": "Once a month",
-			"description": "Every month on the {{ordinalDay}}."
+			"description": "Every month on the {{ordinalDay}}.",
+			"name": "Once a month"
 		},
 		"repeating-twice-month": {
-			"name": "Twice a month",
-			"description": "Buy today, then twice a month on the 1st and the 15th."
+			"description": "Buy today, then twice a month on the 1st and the 15th.",
+			"name": "Twice a month"
 		},
 		"repeating-weekly": {
-			"name": "Repeat weekly",
-			"description": "Buy every {{dayOfWeek}}, starting today."
+			"description": "Buy every {{dayOfWeek}}, starting today.",
+			"name": "Repeat weekly"
 		}
 	},
 	"deposits": {
