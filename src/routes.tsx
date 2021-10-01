@@ -9,12 +9,13 @@ import {
   AccountsView,
   CustodyView,
   FaucetView,
+  NotFoundView,
   PayrollView,
+  PlaygroundView,
   SwapView,
   TransfersView,
   WrapView
 } from "./pages";
-import { PlaygroundView } from "./pages/playground";
 
 export function Routes() {
   return (
@@ -40,9 +41,9 @@ export function Routes() {
                         <Route exact path="/playground" children={<PlaygroundView />} />
                       )}
                       <Route exact path="/custody" children={<CustodyView />} />
+                      <Route exact path="/404" children={<NotFoundView />} />
                       <Route path="*">
-                        {/* TODO: Create a decent 404 page */}
-                        <Redirect to="/" />
+                        <Redirect to="/404" />
                       </Route>
                     </Switch>
                   </AppLayout>
