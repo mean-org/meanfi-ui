@@ -9,7 +9,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../Icons";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
@@ -654,7 +654,7 @@ export const OneTimePayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${tokenBalance && selectedToken
-                  ? getTokenFormattedAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true, true)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
                   : "0"
             }`}
             </span>
@@ -775,7 +775,7 @@ export const OneTimePayment = () => {
                   {
                     connected && userBalances && userBalances[token.address] > 0 && (
                       <div className="token-balance">
-                        {getTokenFormattedAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                        {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
                       </div>
                     )
                   }

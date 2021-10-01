@@ -14,6 +14,7 @@ import {
   TransfersView,
   WrapView
 } from "./pages";
+import { PlaygroundView } from "./pages/playground";
 
 export function Routes() {
   return (
@@ -35,6 +36,9 @@ export function Routes() {
                       <Route exact path="/payroll" children={<PayrollView />} />
                       <Route exact path="/exchange" children={<SwapView />} />
                       <Route exact path="/wrap" children={<WrapView />} />
+                      {environment === 'local' && (
+                        <Route exact path="/playground" children={<PlaygroundView />} />
+                      )}
                       <Route exact path="/custody" children={<CustodyView />} />
                       <Route path="*">
                         {/* TODO: Create a decent 404 page */}

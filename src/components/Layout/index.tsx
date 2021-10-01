@@ -189,11 +189,11 @@ export const AppLayout = React.memo((props: any) => {
             <AppBar menuType="desktop" />
           </div>
           <AppBar menuType="mobile" />
-          {environment === 'local' && (
+          {/* {environment === 'local' && (
             <div className="debug-bar">
               <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen}</span>
             </div>
-          )}
+          )} */}
         </Header>
         <Content>{props.children}</Content>
         <Footer>

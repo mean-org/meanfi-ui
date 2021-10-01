@@ -3,7 +3,7 @@ import { useContext, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { IconSort } from "../../Icons";
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
 import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
@@ -108,7 +108,7 @@ export const AddFundsModal = (props: {
               <span>{t('add-funds.label-right')}:</span>
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
-                  ? getTokenFormattedAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true, true)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
                   : "0"
                 }`}
               </span>

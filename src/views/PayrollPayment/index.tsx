@@ -12,7 +12,6 @@ import { IconCaretDown, IconSort } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenFormattedAmountAndSymbolByTokenAddress,
   isValidNumber,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
@@ -525,7 +524,7 @@ export const PayrollPayment = () => {
               {
                 connected && userBalances && userBalances[token.address] > 0 && (
                   <div className="token-balance">
-                    {getTokenFormattedAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
                   </div>
                 )
               }
@@ -569,7 +568,7 @@ export const PayrollPayment = () => {
               {
                 connected && userBalances && userBalances[token.address] > 0 && (
                   <div className="token-balance">
-                    {getTokenFormattedAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
                   </div>
                 )
               }
@@ -1057,7 +1056,7 @@ export const PayrollPayment = () => {
             <span>{t('transactions.send-amount.label-right')}:</span>
             <span className="balance-amount">
               {`${selectedToken && tokenBalance
-                  ? getTokenFormattedAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true, true, true)
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
                   : "0"
               }`}
             </span>

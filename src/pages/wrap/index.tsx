@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
@@ -362,11 +362,9 @@ export const WrapView = () => {
                     <span>{t("faucet.current-sol-balance")}:</span>
                     <span className="balance-amount">
                       {`${nativeBalance
-                          ? getTokenFormattedAmountAndSymbolByTokenAddress(
+                          ? getTokenAmountAndSymbolByTokenAddress(
                               nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
-                              true,
-                              true,
                               true
                             )
                           : "0"

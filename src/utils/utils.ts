@@ -298,45 +298,6 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getTokenFormattedAmountAndSymbolByTokenAddress = (
-  amount: number,
-  address: string,
-  onlyValue = false,
-  truncateInsteadRound = false,
-  abbr = false
-): string => {
-  let token: TokenInfo | undefined = undefined;
-  if (address) {
-    if (address === NATIVE_SOL.address) {
-      token = NATIVE_SOL as TokenInfo;
-    } else {
-      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
-    }
-  }
-  const inputAmount = amount || 0;
-  let formatted = '';
-  let decimals = 0;
-
-  // Set decimals
-  if (inputAmount > 0 && inputAmount < 1) {
-    decimals = abbr ? 4 : token?.decimals || 9;
-  } else if (inputAmount >= 1 && inputAmount < 100) {
-    decimals = abbr ? 4 : 6;
-  } else {
-    decimals = abbr ? 2 : 4;
-  }
-  if (inputAmount === 0) {
-    formatted = '0';
-  } else {
-    formatted = truncateInsteadRound
-      ? truncateFloat(inputAmount, decimals)
-      : formatAmount(inputAmount, decimals);
-  }
-  if (!token || onlyValue) { return formatted; }
-
-  return `${formatted} ${token.symbol}`;
-}
-
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,

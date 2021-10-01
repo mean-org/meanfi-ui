@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNativeAccount } from '../../contexts/accounts';
 import { useWallet } from '../../contexts/wallet';
-import { getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { NATIVE_SOL } from '../../utils/tokens';
 import { Tooltip } from 'antd';
+import { getAmountWithTokenSymbol } from '../../utils/ui';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const CurrentBalance = () => {
 
@@ -37,7 +39,7 @@ export const CurrentBalance = () => {
         </span>
         <span className="account-balance">
         <Tooltip placement="bottom" title={getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address)}>
-          <span>{getTokenFormattedAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address, false, true, true)}</span>
+          <span>{getAmountWithTokenSymbol(nativeBalance, NATIVE_SOL as TokenInfo, 4)}</span>
         </Tooltip>
         </span>
       </div>

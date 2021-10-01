@@ -4,7 +4,7 @@ import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
-import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTokenFormattedAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
@@ -1724,13 +1724,7 @@ export const SwapUi = (props: {
           token={fromMint && mintList[fromMint]}
           tokenBalance={
             (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
-              ? getTokenFormattedAmountAndSymbolByTokenAddress(
-                  parseFloat(fromBalance),
-                  mintList[fromMint],
-                  true,
-                  true,
-                  true
-                ) // parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
+              ? parseFloat(fromBalance).toFixed(mintList[fromMint].decimals)
               : '')
           }
           tokenAmount={fromAmount}
@@ -1791,13 +1785,7 @@ export const SwapUi = (props: {
           token={toMint && mintList[toMint]}
           tokenBalance={
             (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-              ? getTokenFormattedAmountAndSymbolByTokenAddress(
-                  parseFloat(toBalance),
-                  mintList[toMint],
-                  true,
-                  true,
-                  true
-                ) //parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+              ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
               : '')
           }
           tokenAmount={
