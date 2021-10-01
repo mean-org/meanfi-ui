@@ -17,6 +17,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import _ from 'lodash';
+import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
@@ -492,7 +493,7 @@ export const AccountsView = () => {
         // Filter out useless Txs (Those incoming not affecting the SOL balance)
         return isScanningWallet && isInboundTx && hasTokenBalances ? false : true;
       });
-      console.log(`${filtered.length} useful Txs`);
+      consoleOut(`${filtered.length} useful Txs`);
       if (filtered && filtered.length) {
         setIsSolAccountEmpty(false);
       } else {
@@ -633,6 +634,12 @@ export const AccountsView = () => {
 
   return (
     <>
+      <Helmet>
+        <title>Accounts - Mean Finance</title>
+        <link rel="canonical" href="https://app.meanfi.com/accounts" />
+        <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
+        <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
+      </Helmet>
       <div className="container main-container">
 
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
