@@ -57,15 +57,9 @@
   --gradEnd: #d2d2d2;
 
   /* Properties */
-  --main-navigation-bar-height: 64px;
-  --main-navigation-bar-shadow: 0px 1px 2px rgba(0,0,0,0.2);
-  --footer-bar-shadow: 0px -1px 2px rgba(0,0,0,0.2);
-  --soft-shadow: 1px 1px 1px rgba(0,0,0,0.25);
-  --hard-shadow: 1px 1px 0px rgba(0,0,0,0.25);
-  --footer-bar-height: 56px;
   --custom-border-radius: 10px;
   --custom-control-height: 40px;
-
+  --custom-border-style: 1px solid var(--color-secondary-alpha-20);
   --color-flat-btn: var(--color-secondary-alpha-20);
   --color-flat-btn-hover: var(--color-secondary-alpha-10);
   --color-network-bar: var(--color-secondary-alpha-10);
@@ -73,6 +67,14 @@
   --wallet-wrapper-bg: var(--color-black);
   --wallet-provider-background: var(--color-secondary-alpha-85);
   --bottom-shadow-up-05: 1px -2px 6px rgba(64,64,64, 0.05);
+
+  --main-navigation-bar-height: 64px;
+  --main-navigation-bar-shadow: 0px 1px 2px rgba(0,0,0,0.2);
+  --footer-bar-shadow: 0px -1px 2px rgba(0,0,0,0.2);
+  --soft-shadow: 1px 1px 1px rgba(0,0,0,0.25);
+  --hard-shadow: 1px 1px 0px rgba(0,0,0,0.25);
+  --footer-bar-height: 56px;
+
 }
 
 // Inverted / Dark theme
@@ -134,7 +136,7 @@
   /* Properties */
   --custom-border-radius: 10px;
   --custom-control-height: 40px;
-
+  --custom-border-style: 1px solid var(--color-secondary-alpha-20);
   --color-flat-btn: var(--color-secondary-alpha-40);
   --color-flat-btn-hover: var(--color-secondary-alpha-50);
   --color-network-bar: var(--color-secondary-alpha-40);
@@ -953,16 +955,66 @@ footer.ant-layout-footer {
 }
 
 // Dropdown menus
-.ant-dropdown-menu-item .mean-svg-icons {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 0.3rem;
-  width: 20px;
-  height: 20px;
+.ant-dropdown-menu {
+  background-color: var(--component-background);
+  .ant-dropdown-menu-item-divider,
+  .ant-dropdown-menu-submenu-title-divider {
+    background-color: var(--color-secondary-alpha-15);
+  }
+  .ant-dropdown-menu-item,
+  .ant-dropdown-menu-submenu-title {
+    color: var(--color-secondary-alpha-80);
+    .mean-svg-icons {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.3rem;
+      width: 20px;
+      height: 20px;
+    }
+    .mean-svg-icons ~ .menu-item-text {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    &:hover {
+      background-color: var(--color-selection);
+    }
+  }
 }
-.ant-dropdown-menu-item .mean-svg-icons ~ .menu-item-text {
-  display: inline-block;
-  vertical-align: middle;
+
+// Ant picker
+.ant-picker-dropdown {
+  color: var(--color-secondary-alpha-80);
+}
+.ant-picker-panel-container {
+  background: var(--component-background);
+  .ant-picker-panel-focused {
+    border-color: var(--color-secondary-alpha-20);
+  }
+  .ant-picker-panel {
+    background: transparent;
+    border: var(--custom-border-style);
+    .ant-picker-header {
+      color: var(--color-secondary-alpha-80);
+      border-bottom: var(--custom-border-style);
+      button {
+        color: inherit;
+      }
+    }
+    .ant-picker-body {
+      .ant-picker-content {
+        th,
+        .ant-picker-cell-in-view {
+          color: inherit;
+        }
+        .ant-picker-cell-disabled {
+          color: var(--color-secondary-alpha-15);
+        }
+      }
+    }
+    .ant-picker-footer {
+      border-top: var(--custom-border-style);
+    }
+  }
 }
 
 // Account / Connection info
