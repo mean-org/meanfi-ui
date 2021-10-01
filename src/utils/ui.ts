@@ -156,8 +156,8 @@ export const getAmountWithTokenSymbol = (
     token: TokenInfo,
     decimals = 2
 ): string => {
-    if (!amount || !token) { return '--'; }
-    const converted = amount.toString();
+    if (!token) { return '--'; }
+    const converted = amount ? amount.toString() : '0';
     const parsed = parseFloat(converted);
     return `${formatAmount(parsed, decimals)} ${token.symbol}`;
 }

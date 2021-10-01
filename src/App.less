@@ -463,12 +463,6 @@ footer.ant-layout-footer {
     min-width: 24px;
     font-size: 14px;
   }
-  &:hover,
-  &:focus,
-  &:active {
-    color: initial;
-    border: none !important;
-  }
 }
 
 // Dropdown-like button (type=default shape=round)
@@ -482,6 +476,7 @@ footer.ant-layout-footer {
   border-radius: var(--custom-border-radius);
   min-height: var(--custom-control-height);
   align-items: center;
+  padding: 7px 8px 7px 14px;
   &:hover,
   &:focus,
   &:active {
@@ -1481,7 +1476,12 @@ section.content {
     .field-label-right {
       .balance-amount {
         margin-left: 4px;
-        margin-right: 4px;
+        &.simplelink {
+          &:hover {
+            color: var(--color-dark);
+            text-decoration: underline;
+          }
+        }
       }
     }
     .field-label-left,
@@ -1619,11 +1619,6 @@ section.content {
             letter-spacing: -0.5px;
           }
         }
-        .token-name {
-          font-size: 0.65rem;
-          color: var(--color-secondary-alpha-50);
-          line-height: 1;
-        }
         .field-caret-down {
           position: relative;
         }
@@ -1645,11 +1640,6 @@ section.content {
         justify-content: flex-start;
         height: 100%;
         overflow: hidden;
-      }
-      .value-rate {
-        font-size: 0.65rem;
-        color: var(--color-secondary-alpha-50);
-        line-height: 1;
       }
     }
 

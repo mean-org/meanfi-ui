@@ -5,6 +5,7 @@ import { IconCaretDown } from "../../Icons";
 import { Identicon } from "../Identicon";
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount } from '../../utils/utils';
+import { useWallet } from '../../contexts/wallet';
 
 export const CoinInput = (props: {
   token: TokenInfo | undefined;
@@ -20,6 +21,7 @@ export const CoinInput = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { coinPrices } = useContext(AppStateContext);
+  const { connected } = useWallet();
 
   const getPricePerToken = (token: TokenInfo): number => {
     const tokenSymbol = token.symbol.toUpperCase();
@@ -35,20 +37,24 @@ export const CoinInput = (props: {
         <div className={`transaction-field-row ${props.inputPosition === "right" ? 'reverse' : '' }`}>
             <span className="field-label-left">{props.inputLabel || ' '}</span>
             <span className="field-label-right">
-                <span className="text-uppercase">{t('transactions.send-amount.label-right')}:</span>
-                <span className="balance-amount">
-                    {`${props.token && props.tokenBalance
-                        ? props.tokenBalance
-                        : "0"
-                    }`}
-                </span>
-                {props.tokenBalance && (
-                    <span className="balance-amount">
-                        {`(~$${props.token && props.tokenBalance
-                            ? formatAmount(parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo), 2)
-                            : "0.00"
-                        })`}
-                    </span>
+                {connected && (
+                    <>
+                        <span className="text-uppercase">{t('transactions.send-amount.label-right')}:</span>
+                        <span className={`${props.translationId === 'source' ? 'balance-amount simplelink' : 'balance-amount'}`} onClick={props.onMaxAmount} role="link">
+                            {`${props.token && props.tokenBalance
+                                ? props.tokenBalance
+                                : "0"
+                            }`}
+                        </span>
+                        {props.tokenBalance && (
+                            <span className="balance-amount">
+                                {`(~$${props.token && props.tokenBalance
+                                    ? formatAmount(parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo), 2)
+                                    : "0.00"
+                                })`}
+                            </span>
+                        )}
+                    </>
                 )}
             </span>
         </div>
@@ -68,18 +74,9 @@ export const CoinInput = (props: {
                     spellCheck="false"
                     readOnly={props.readonly ? true : false}
                     value={props.tokenAmount} />
-                <div className={`value-rate ${props.inputPosition === "right" ? 'text-right' : ''}`}>
-                    ~${props.tokenAmount
-                            ? formatAmount(parseFloat(props.tokenAmount) * getPricePerToken(props.token as TokenInfo), 2)
-                            : "0.00"
-                    }
-                </div>
             </div>
             <span className="add-ons">
                 <div className={`token-group ${props.inputPosition === "right" ? 'flex-row-reverse' : ''}`}>
-                    {props.token && props.tokenBalance && props.onMaxAmount && props.translationId === 'source' ? (
-                        <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
-                    ) : null}
                     <div className="token-selector simplelink" onClick={props.onSelectToken}>
                         <>
                         {props.token ? (
@@ -94,10 +91,7 @@ export const CoinInput = (props: {
                                         />
                                     )}
                                 </div>
-                                <div className="flex-column">
-                                    <div className="token-symbol">{props.token.symbol}</div>
-                                    <span className="token-name">&nbsp;</span>
-                                </div>
+                                <div className="token-symbol">{props.token.symbol}</div>
                             </>
                         ) : (
                             <span className="notoken-label">{t(`swap.token-select-${props.translationId}`)}</span>

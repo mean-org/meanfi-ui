@@ -4,7 +4,7 @@ import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
-import { getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
@@ -44,6 +44,7 @@ export const SwapUi = (props: {
   const { publicKey, wallet, connected } = useWallet();
   const connection = useSwapConnection();
   const {
+    coinPrices,
     ddcaOption,
     transactionStatus,
     previousWalletConnectState,
@@ -1498,6 +1499,15 @@ export const SwapUi = (props: {
     ) ? true : false;
   }
 
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
     return (
       <Row>
@@ -1745,7 +1755,13 @@ export const SwapUi = (props: {
           }}
           inputPosition={inputPosition}
           translationId="source"
-          inputLabel="" // {t(`swap.input-label-source`)}
+          inputLabel={
+            fromMint && mintList[fromMint]
+              ? `~$${fromAmount
+                ? formatAmount(parseFloat(fromAmount) * getPricePerToken(mintList[fromMint] as TokenInfo), 2)
+                : '0.00' }`
+              : ''
+          }
         />
 
         <div className="flip-button-container">
@@ -1802,7 +1818,14 @@ export const SwapUi = (props: {
           }}
           inputPosition={inputPosition}
           translationId="destination"
-          inputLabel="" // {t(`swap.input-label-destination`)}
+          inputLabel={
+            toMint && mintList[toMint]
+              ? `~$${
+                exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                : '0.00'}`
+              : ''
+          }
         />
 
         {/* DDCA Option selector */}
