@@ -168,6 +168,11 @@ body {
 ::-ms-input-placeholder { /* Microsoft Edge */
   color: var(--color-secondary-alpha-25);
 }
+h1.mandatory-h1 {
+  position: absolute;
+  z-index: -1;
+  transform: translate(-100vw, -100vh);
+}
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-secondary-alpha-85);
 }
@@ -1642,6 +1647,7 @@ section.content {
       flex-direction: row;
       justify-content: flex-start;
       align-items: center;
+      flex: 0 0 auto;
       .token-selector {
         display: flex;
         flex-direction: row;

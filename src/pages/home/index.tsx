@@ -14,7 +14,8 @@ export const HomeView = () => {
     </Helmet>
     <div className="container main-container">
       <div className="interaction-area">
-        <p>Home content goes here</p>
+        <h1 className="mandatory-h1">Welcome to Mean Finance</h1>
+        <p>Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!</p>
       </div>
     </div>
     <PreFooter />

@@ -642,6 +642,9 @@ export const AccountsView = () => {
       </Helmet>
       <div className="container main-container">
 
+        {/* This is a SEO mandatory h1 but it is not visible */}
+        <h1 className="mandatory-h1">Accounts, Where you keep track of your assets</h1>
+
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
           {canShowAccountDetails && accountAddress ? (

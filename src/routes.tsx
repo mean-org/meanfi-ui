@@ -41,10 +41,11 @@ export function Routes() {
                         <Route exact path="/playground" children={<PlaygroundView />} />
                       )}
                       <Route exact path="/custody" children={<CustodyView />} />
-                      <Route exact path="/404" children={<NotFoundView />} />
+                      {/* <Route exact path="/404" children={<NotFoundView />} />
                       <Route path="*">
                         <Redirect to="/404" />
-                      </Route>
+                      </Route> */}
+                      <Route component={NotFoundView} />
                     </Switch>
                   </AppLayout>
                 </AppStateProvider>
