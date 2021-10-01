@@ -12,7 +12,7 @@ import {
 import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_URL } from "../../constants";
+import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_URL, LANGUAGES } from "../../constants";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 
@@ -71,6 +71,15 @@ export const AppContextMenu = () => {
     }
   }
 
+  const getLanguageFlag = () => {
+    const lang = LANGUAGES.filter(l => l.code === language || l.locale === language);
+    if (lang && lang.length) {
+      return (<img src={lang[0].flag} alt={getLanguageCode(lang[0].code)} className="mean-svg-icons" />);
+    } else {
+      <IconSettings className="mean-svg-icons" />
+    }
+  }
+
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={onSwitchTheme}>
@@ -82,7 +91,7 @@ export const AppContextMenu = () => {
         </span>
       </Menu.Item>
       <Menu.Item key="2" onClick={showLanguageModal}>
-          <IconSettings className="mean-svg-icons" />
+          {getLanguageFlag()}
           <span className="menu-item-text">{t('ui-menus.app-context-menu.switch-language')}: {t(`ui-language.${getLanguageCode(language)}`)}</span>
       </Menu.Item>
       <Menu.Divider />
