@@ -64,7 +64,7 @@ interface AppStateConfig {
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
-  referral: TokenInfo | undefined;
+  referrals: number;
   // Accounts
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
@@ -103,7 +103,7 @@ interface AppStateConfig {
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
-  setReferral: (token: TokenInfo | undefined) => void;
+  setReferrals: (value: number) => void;
   // Accounts
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
@@ -144,7 +144,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
-  referral: undefined,
+  referrals: 0,
   // Accounts
   userTokens: [],
   selectedAsset: undefined,
@@ -183,7 +183,7 @@ const contextDefaultValues: AppStateConfig = {
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
-  setReferral: () => {},
+  setReferrals: () => {},
   // Accounts
   setTransactions: () => {},
   setSelectedAsset: () => {},
@@ -448,7 +448,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-  const [referral, setReferral] = useState<TokenInfo>();  
+  const [referrals, updateReferrals] = useState(0);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
@@ -461,6 +461,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setEffectiveRate = (rate: number) => {
     updateEffectiveRate(rate);
+  }
+
+  const setReferrals = (value: number) => {
+    updateReferrals(value);
   }
 
   // Effect to load coin prices
@@ -843,7 +847,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
-        referral,
+        referrals,
         userTokens,
         selectedAsset,
         transactions,
@@ -881,7 +885,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
-        setReferral,
+        setReferrals,
         setTransactions,
         setSelectedAsset,
         setAccountAddress,

@@ -179,6 +179,7 @@
 		"error-ledger-title": "Error de Ledger",
 		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
 		"error-title": "Error",
+		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
@@ -195,6 +196,13 @@
 		"streamid-empty": "Introduzca id de transferencia ",
 		"streamid-open-cta": "Iniciar transferencia",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"referrals": {
+		"address-invalid": "The referral address is not a valid solana address",
+		"address-processed": "Please connect your wallet to record this referral.",
+		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
+		"modal-title": "Refer a friend",
+		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto"
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Volver a las transferencia",
@@ -392,7 +400,8 @@
 			"switch-language": "Idioma",
 			"switch-theme": "Cambiar a",
 			"theme-dark": "Modo Oscuro",
-			"theme-light": "Modo Claro"
+			"theme-light": "Modo Claro",
+			"refer-a-friend": "Refer a friend {{referrals}}"
 		},
 		"main-menu": {
 			"accounts": "Cuentas",

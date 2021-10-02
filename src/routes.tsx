@@ -16,6 +16,7 @@ import {
   TransfersView,
   WrapView
 } from "./pages";
+import { ProcessReferals } from "./guards";
 
 export function Routes() {
   return (
@@ -41,6 +42,10 @@ export function Routes() {
                         <Route exact path="/playground" children={<PlaygroundView />} />
                       )}
                       <Route exact path="/custody" children={<CustodyView />} />
+                      <Route exact path="/referrals">
+                        <Redirect to="/accounts" />
+                      </Route>
+                      <Route exact path="/referrals/:address" component={ProcessReferals} />
                       {/* <Route exact path="/404" children={<NotFoundView />} />
                       <Route path="*">
                         <Redirect to="/404" />
