@@ -182,6 +182,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Chave pública inválida. Verifique a senha e tente novamente",
 		"invalid-streamid-message": "ID de transferência errado",
+		"referral-link-copied-message": "Friend referral link copied to clipboard",
+		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "A conta de transferência foi copiada com sucesso para el clipboard",
 		"streamid-not-copied-message": "Não foi possível copiar o endereço de transferência",
 		"success-account-funded-message": "Conta financiada",
@@ -202,7 +204,8 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto"
+		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"share-to": "Share to"
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Voltar para transferências",

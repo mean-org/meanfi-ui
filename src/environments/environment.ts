@@ -1,6 +1,7 @@
 export let environment: string;
 
 export interface AppConfig {
+    appUrl: string;
     transakUrl: string;
     transakApiKey: string;
     streamProgramAddress: string;
@@ -14,6 +15,7 @@ export class AppConfigService {
 
     private readonly CONFIG: { [env: string]: AppConfig } = {
         production: {
+            appUrl: 'https://app.meanfi.com',
             transakUrl: 'https://global.transak.com',
             transakApiKey: 'ba0eae8b-fed1-4c2f-8e62-2b8a69ac60d0',
             streamProgramAddress: 'H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko',
@@ -23,6 +25,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-prod'
         },
         staging: {
+            appUrl: 'https://app-stage.meanfi.com',
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '37z61WhJCAaDADwcpJRHgr66FUhHB9TfkS49Ssvp3Cdb',
@@ -33,6 +36,7 @@ export class AppConfigService {
         },
         // dev and local will have same config
         development: {
+            appUrl: 'https://app-dev.meanfi.com',
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',
@@ -42,6 +46,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev'
         },
         local: {
+            appUrl: 'http://localhost:3000',
             transakUrl: 'https://staging-global.transak.com',
             transakApiKey: '7ad31a0c-3cf3-4c1e-bb59-e92973007787',
             streamProgramAddress: '9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k',

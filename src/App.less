@@ -18,6 +18,8 @@
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
   --color-notify-error: #a61d24;
+  --color-orange: #e64d11;
+  --color-orange-red: #FF4440;
   --text-color: #000000;
   --bg-color: #ffffff;
   
@@ -1820,9 +1822,16 @@ section.content {
       padding: 0;
       height: auto;
     }
-    &.simple-modal .ant-divider.ant-divider-horizontal.ant-divider-plain {
-      margin: 24px -24px 12px;
-      width: auto;
+    &.simple-modal {
+      .ant-modal-content{
+        .ant-modal-header {
+          border: none;
+        }
+      }
+      .ant-divider.ant-divider-horizontal.ant-divider-plain {
+        margin: 24px -24px 12px;
+        width: auto;
+      }
     }
     .mean-modal-form {
       .modal-form-heading {
@@ -2949,9 +2958,6 @@ section.content {
     .inner-container {
       .item-block {
         padding-bottom: 1rem;
-        .ant-empty.ant-empty-normal {
-          color: var(--color-secondary-alpha-50);
-        }
       }
       @media (min-width: 768px) {
         display: flex;
@@ -3193,6 +3199,9 @@ section.content {
     }
   }
 }
+.ant-empty.ant-empty-normal {
+  color: var(--color-secondary-alpha-50);
+}
 
 .buy-token-options {
   text-align: center;
@@ -3214,6 +3223,10 @@ section.content {
 .click-disabled {
   pointer-events: none;
 }
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
 .flex-column {
   display: flex;
   flex-direction: column;
@@ -3221,6 +3234,9 @@ section.content {
 .flex-center {
   display: flex;
   justify-content: center;
+  align-items: center;
+}
+.align-items-center {
   align-items: center;
 }
 .justify-content-center {
@@ -3979,6 +3995,48 @@ code {
   border-radius: 12px;
   color: var(--color-secondary-alpha-50);
   font-weight: 400;
+}
+
+.badge {
+  min-width: 24px;
+  height: 24px;
+  color: var(--color-white);
+  background-color: var(--color-secondary);
+  font-weight: 900;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+  &:hover {
+    color: var(--color-white);
+  }
+  &.primary {
+    background-color: var(--color-primary);
+  }
+  &.secondary {
+    background-color: var(--color-secondary);
+  }
+  &.info {
+    background-color: var(--color-notify-info);
+  }
+  &.success {
+    background-color: var(--color-notify-success);
+  }
+  &.warning {
+    background-color: var(--color-notify-warning);
+  }
+  &.orange {
+    background-color: var(--color-orange);
+  }
+  &.orange-red {
+    background-color: var(--color-orange-red);
+  }
+  &.error {
+    background-color: var(--color-notify-error);
+  }
 }
 
 // Grid
