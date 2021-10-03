@@ -448,7 +448,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-  const [referrals, updateReferrals] = useState(0);
+
+  // TODO: referrals is tempararily persisted in localStorage but we must use an API
+  const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
@@ -464,7 +466,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const setReferrals = (value: number) => {
-    updateReferrals(value);
+    if (publicKey) {
+      updateReferrals(value);
+    }
   }
 
   // Effect to load coin prices

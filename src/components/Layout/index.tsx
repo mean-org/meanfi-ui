@@ -11,12 +11,14 @@ import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
-import { consoleOut } from "../../utils/ui";
+import { consoleOut, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
+import { useLocalStorageState } from "../../utils/utils";
+import useLocalStorage from "../../hooks/useLocalStorage";
 
 const { Header, Content, Footer } = Layout;
 
@@ -24,11 +26,12 @@ export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
   const {
     theme,
-    currentScreen,
+    referrals,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,
+    setReferrals,
     setStreamList,
     setCurrentScreen,
     setSelectedAsset,
@@ -46,6 +49,7 @@ export const AppLayout = React.memo((props: any) => {
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
+  const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -123,10 +127,19 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
-          sendConnectionMetric(publicKey.toBase58());
+          const walletAddress = publicKey.toBase58();
+          sendConnectionMetric(walletAddress);
 
+          // Record pending referral, get referrals count and clear referralAddress from localStorage
+          // Only record if referral address is valid and different from wallet address
+          // TODO: referrals is tempararily persisted in localStorage but we must use an API
+          console.log('referralAddress', referralAddress);
+          if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
+            // setReferrals(referrals + 1);
+            setReferralAddress('');
+          }
           // Let the AppState know which wallet address is connected and save it
-          setAccountAddress(publicKey.toBase58());
+          setAccountAddress(walletAddress);
           setSelectedAsset(undefined);
 
           if (location.pathname === '/transfers') {
@@ -151,13 +164,17 @@ export const AppLayout = React.memo((props: any) => {
     location,
     publicKey,
     connected,
+    referrals,
+    referralAddress,
     previousWalletConnectState,
     t,
+    setReferrals,
     setStreamList,
     setCurrentScreen,
     setSelectedAsset,
     setAccountAddress,
     refreshStreamList,
+    setReferralAddress,
     refreshTokenBalance,
     sendConnectionMetric,
     setPreviousWalletConnectState

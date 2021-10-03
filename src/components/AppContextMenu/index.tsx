@@ -33,6 +33,7 @@ export const AppContextMenu = () => {
   const { t, i18n } = useTranslation("common");
   const [selectedLanguage] = useState<string>(i18n.language);
   const [language, setLanguage] = useState<string>("");
+
   useEffect(() => {
     if (!language) {
       setLanguage(getLanguageCode(selectedLanguage));
@@ -118,7 +119,7 @@ export const AppContextMenu = () => {
       <Menu.Item key="3" onClick={() => openFriendReferralModal()}>
           <IconShareBox className="mean-svg-icons" />
           <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: referrals ? `(${referrals})` : '' })}
+            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: connected && referrals ? `(${referrals})` : '' })}
           </span>
       </Menu.Item>
       <Menu.Divider />

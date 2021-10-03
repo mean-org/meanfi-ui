@@ -9,7 +9,7 @@ import { consoleOut, isValidAddress } from "../../utils/ui";
 export const ProcessReferals = () => {
     const { t } = useTranslation("common");
     const { address } = useParams<ReferralsParams>();
-    const [referralAddress, setReferralAddress] = useLocalStorage('referralAddress', '');
+    const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
     const [redirect, setRedirect] = useState<string | null>(null);
 
     useEffect(() => {

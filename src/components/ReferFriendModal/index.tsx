@@ -14,27 +14,26 @@ import {
   TwitterShareButton,
   WhatsappShareButton,
 } from "react-share";
+import { useWallet } from '../../contexts/wallet';
 
 export const ReferFriendModal = (props: {
   handleClose: any;
   isVisible: boolean;
 }) => {
   const { t } = useTranslation('common');
-  const {
-    referrals,
-    accountAddress
-  } = useContext(AppStateContext);
+  const { publicKey } = useWallet();
+  const { referrals } = useContext(AppStateContext);
   const [referralLink, setReferralLink] = useState('');
 
   useEffect(() => {
-    if (!referralLink && accountAddress) {
+    if (!referralLink && publicKey) {
       const config = new AppConfigService();
-      const newLink = `${config.getConfig().appUrl}/referrals/${accountAddress}`;
+      const newLink = `${config.getConfig().appUrl}/referrals/${publicKey.toBase58()}`;
       consoleOut('referralLink:', newLink, 'blue');
       setReferralLink(newLink);
     }
   }, [
-    accountAddress,
+    publicKey,
     referralLink
   ]);
 
@@ -63,7 +62,9 @@ export const ReferFriendModal = (props: {
         <div className="transaction-progress refer-friend-wrapper">
             <div className="refer-friend-image">
                 <img src="assets/giftbox.svg" alt="" />
-                <span className="badge orange-red referrals-badge">{referrals}</span>
+                {referrals && (
+                  <span className="badge orange-red referrals-badge">{referrals}</span>
+                )}
             </div>
             <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
             <div className="transaction-field medium">
