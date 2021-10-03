@@ -284,7 +284,7 @@ export class RaydiumClient implements LPClient {
       amountIn: amount,
       amountOut: +amountOut.fixed() * amount,
       minAmountOut: +amountOutWithSlippage.fixed() * amount,
-      networkFees: 0.01,
+      networkFees: 0.02,
       protocolFees: amountIn.sub(amountInWithFees).toNumber() / (10 ** poolInfo.coin.decimals)
     };
 
@@ -361,7 +361,7 @@ export class RaydiumClient implements LPClient {
     );
 
     transaction.feePayer = owner;
-    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
+    const { blockhash } = await this.connection.getRecentBlockhash('recent');
     transaction.recentBlockhash = blockhash;
 
     if (signers.length) {

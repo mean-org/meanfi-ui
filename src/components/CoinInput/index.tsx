@@ -19,7 +19,7 @@ export const CoinInput = (props: {
   inputPosition: "left" | "right";
   inputLabel: string;
 }) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const { coinPrices } = useContext(AppStateContext);
   const { connected } = useWallet();
 

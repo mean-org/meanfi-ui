@@ -247,7 +247,7 @@ export class OrcaClient implements LPClient {
     }
 
     tx.feePayer = owner;
-    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
+    const { blockhash } = await this.connection.getRecentBlockhash('recent');
     tx.recentBlockhash = blockhash;
 
     if (signers.length) {

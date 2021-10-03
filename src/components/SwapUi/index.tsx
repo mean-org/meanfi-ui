@@ -2,7 +2,7 @@ import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { MouseEventHandler, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
@@ -86,6 +86,7 @@ export const SwapUi = (props: {
   const [toBalance, setToBalance] = useState('');
   const [userAccount, setUserAccount] = useState<any | undefined>();
   const [userBalances, setUserBalances] = useState<any>();
+  const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
@@ -131,7 +132,8 @@ export const SwapUi = (props: {
   },[
     connected, 
     connection, 
-    publicKey
+    publicKey,
+    shouldUpdateBalances
   ]);
 
   // Automatically updates user account balance (SOL) 
@@ -157,7 +159,8 @@ export const SwapUi = (props: {
   },[
     connected, 
     connection, 
-    publicKey
+    publicKey,
+    shouldUpdateBalances
   ]);
 
   // Get Tx fees
@@ -545,12 +548,11 @@ export const SwapUi = (props: {
         }
         
         setUserBalances(balancesMap);
+        setShouldUpdateBalances(false);
       };
 
       const promise = connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
+        publicKey, { programId: TOKEN_PROGRAM_ID }
       );
         
       promise
@@ -569,7 +571,8 @@ export const SwapUi = (props: {
     mintList, 
     publicKey, 
     userAccount,
-    userAccount?.lamports
+    userAccount?.lamports,
+    shouldUpdateBalances
   ]);
 
   // Automatically update from token balance once
@@ -647,7 +650,8 @@ export const SwapUi = (props: {
     connection, 
     toMint, 
     userAccount, 
-    userBalances
+    userBalances,
+    shouldUpdateBalances
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -1093,10 +1097,10 @@ export const SwapUi = (props: {
 
     const newValue = input.value;
     
-    if (newValue === null || newValue === undefined || newValue === "" || !isValidNumber(newValue)) {
+    if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount('');
       setFromSwapAmount(0);
-    } else {
+    } else if (isValidNumber(newValue)) {
       setFromAmount(newValue);
       setFromSwapAmount(parseFloat(newValue));
     }
@@ -1260,12 +1264,13 @@ export const SwapUi = (props: {
     if (isSuccess()) {
       setFromAmount("");
       setFromSwapAmount(0);
+      setShouldUpdateBalances(true);
       hideTransactionModal();
     }
     
   }, [
     isBusy, 
-    hideTransactionModal, 
+    hideTransactionModal,
     isSuccess
   ]);
 
@@ -1476,6 +1481,7 @@ export const SwapUi = (props: {
       console.info("confirmed:", signature); // put this in a link in the UI
       setFromAmount('');
       setFromSwapAmount(0);
+      setShouldUpdateBalances(true);
       setIsBusy(false);
 
     } catch (_error) {
@@ -1741,14 +1747,13 @@ export const SwapUi = (props: {
           tokenAmount={fromAmount}
           onInputChange={handleSwapFromAmountChange}
           onMaxAmount={
-            fromMint && toMint && mintList[fromMint] && maxFromAmount > 0 &&
-            (() => {
-              if (maxFromAmount > 0) {
+            () => {
+              if (fromMint && toMint && mintList[fromMint] && maxFromAmount && maxFromAmount > 0) {
                 setFromSwapAmount(maxFromAmount);
                 const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
                 setFromAmount(formattedAmount);
               }
-            })
+            }
           }
           onSelectToken={() => {
             setSubjectTokenSelection("source");
