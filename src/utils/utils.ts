@@ -314,11 +314,14 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   }
   const inputAmount = amount || 0;
   if (token) {
-    const formatted = truncateInsteadRound
+    let formatted = truncateInsteadRound
       ? truncateFloat(inputAmount, token.decimals)
       : `${getFormattedNumberToLocale(formatAmount(inputAmount, 6))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
+    }
+    if (parseFloat(formatted) === 0) {
+      formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
     }
     return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
   } else if (address && !token) {
