@@ -6,7 +6,7 @@ import { MouseEventHandler, useCallback, useContext, useEffect, useMemo, useStat
 import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { ArrowDownOutlined, CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -30,7 +30,7 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 import BN from "bn.js";
 import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
-import { IconCaretDown } from "../../Icons";
+import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -1773,7 +1773,7 @@ export const SwapUi = (props: {
         <div className="flip-button-container">
           {/* Flip button */}
           <div className="flip-button" onClick={flipMintsCallback}>
-            <ArrowDownOutlined />
+            <IconSwapFlip className="mean-svg-icons" />
           </div>
           {/* Info */}
           <div className="info-line">

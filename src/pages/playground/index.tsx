@@ -15,13 +15,12 @@ const CRYPTO_VALUES: number[] = [
     0.000004,
     0.0000003,
     0.00000002,
-    0.000000001,
     0.00000012345678,
     1.50,
     10.50,
-    100.50,
-    1200.50,
-    18560.50
+    1200.55,
+    18560.50,
+    1000.000009
 ];
 
 export const PlaygroundView = () => {
@@ -61,7 +60,6 @@ export const PlaygroundView = () => {
     <div className="solid-bg">
         <section className="content">
             <div className="container mt-4 flex-column flex-center">
-                <h2>Formatting of values below 1</h2>
                 <div className="boxed-area">
                     <div className="item-list-header">
                         <div className="header-row">
