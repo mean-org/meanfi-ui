@@ -664,8 +664,9 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(payrollFees, amount);
-        if (nativeBalance < payrollFees.blockchainFee + myFees) {
+        consoleOut('blockchainFee:', payrollFees.blockchainFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < payrollFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure

@@ -369,7 +369,6 @@ export const OneTimePayment = () => {
         const amount = parseFloat(fromCoinAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        consoleOut('Parsed paymentStartDate:', parsedDate);
         const fromParsedDate = new Date(parsedDate);
         if (fromParsedDate.getDate() === now.getDate()) {
           setIsScheduledPayment(false);
@@ -378,8 +377,6 @@ export const OneTimePayment = () => {
         }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
-        consoleOut('Local time added to parsed date!');
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
@@ -397,8 +394,9 @@ export const OneTimePayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        const myFees = getTxFeeAmount(otpFees, amount);
-        if (nativeBalance < otpFees.blockchainFee + myFees) {
+        consoleOut('blockchainFee:', otpFees.blockchainFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < otpFees.blockchainFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
