@@ -207,7 +207,7 @@ export const wrap = async (
   )
 
   tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+  const { blockhash } = await connection.getRecentBlockhash('recent');
   tx.recentBlockhash = blockhash;
   
   if (signers && signers.length) {
@@ -302,7 +302,7 @@ export const unwrap = async(
   );
 
   tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+  const { blockhash } = await connection.getRecentBlockhash('recent');
   tx.recentBlockhash = blockhash;
   
   if (signers && signers.length) {

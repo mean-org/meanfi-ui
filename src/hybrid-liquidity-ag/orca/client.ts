@@ -117,9 +117,6 @@ export class OrcaClient implements LPClient {
     let outputToken = poolInfo.getTokenB() as OrcaPoolToken;
     let tradeToken = cloneDeep(inputToken);
 
-    console.log('amountIn', amountIn);
-    console.log('feeAmount', feeAmount);
-
     if (from === outputToken.mint.toBase58() || to === tradeToken.mint.toBase58()) {
       tradeToken = cloneDeep(outputToken);
       outputToken = cloneDeep(inputToken);
@@ -148,7 +145,7 @@ export class OrcaClient implements LPClient {
         SystemProgram.createAccount({
           fromPubkey: owner,
           newAccountPubkey: account.publicKey,
-          lamports: minimumWrappedAccountBalance + amountIn * LAMPORTS_PER_SOL,
+          lamports: minimumWrappedAccountBalance + (amountIn - feeAmount) * LAMPORTS_PER_SOL,
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
         }),
@@ -164,7 +161,7 @@ export class OrcaClient implements LPClient {
           fromTokenAccount,
           owner,
           [],
-          amountIn * LAMPORTS_PER_SOL
+          (amountIn - feeAmount) * LAMPORTS_PER_SOL
         ),
         Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
@@ -178,10 +175,12 @@ export class OrcaClient implements LPClient {
       sig.push(account);
     }
 
+    const swapAmount = fromMint === WRAPPED_SOL_MINT ? (amountIn - feeAmount) : amountIn;
+
     let { transaction, signers } = await poolInfo.swap(
       owner, 
       tradeToken, 
-      OrcaU64.fromNumber(amountIn, tradeToken.scale),
+      OrcaU64.fromNumber(swapAmount, tradeToken.scale),
       OrcaU64.fromNumber(minimumOutAmount, outputToken.scale)
     );
 
