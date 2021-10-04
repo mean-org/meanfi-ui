@@ -63,7 +63,6 @@ export const SwapUi = (props: {
   const [isUnwrap, setIsUnwrap] = useState(false);
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
-  const [isFlipping, setIsFlipping] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
@@ -269,7 +268,7 @@ export const SwapUi = (props: {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       const exchange = {
-        amountIn: fromSwapAmount,
+        amountIn: fromSwapAmount - aggregatorFees,
         amountOut: fromSwapAmount - aggregatorFees,
         minAmountOut: fromSwapAmount - aggregatorFees,
         outPrice: 1,
@@ -426,8 +425,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!fromMint || !toMint || isWrap || isUnwrap || isFlipping) {
-      setIsFlipping(false); 
+    if (!fromMint || !toMint || isWrap || isUnwrap) {
       return;
     }
 
@@ -498,7 +496,6 @@ export const SwapUi = (props: {
   },[
     connection, 
     fromMint, 
-    isFlipping, 
     isUnwrap, 
     isWrap, 
     toMint
@@ -568,9 +565,7 @@ export const SwapUi = (props: {
     connection, 
     mintList, 
     publicKey, 
-    userAccount,
-    userAccount?.lamports,
-    renderCount
+    userAccount
   ]);
 
   // Automatically update from token balance once
@@ -648,8 +643,7 @@ export const SwapUi = (props: {
     connection, 
     toMint, 
     userAccount, 
-    userBalances,
-    renderCount
+    userBalances
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -1152,15 +1146,6 @@ export const SwapUi = (props: {
         throw new Error("Error executing transaction");
       }
   
-      const fromDecimals = mintList[fromMint].decimals;
-      // const toDecimals = mintList[toMint].decimals;
-      const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
-      const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
-      // const amountIn = parseFloat(exchangeInfo.amountIn.toFixed(fromDecimals));
-      // const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
-      const amountInBn = new BN((exchangeInfo.amountIn - feesInfo.aggregator) * 10 ** fromDecimals);
-      // const amountOut = parseFloat(exchangeInfo.amountOut.toFixed(toDecimals));
-  
       if (isWrap || isUnwrap) {
   
         if (isWrap) {
@@ -1169,9 +1154,9 @@ export const SwapUi = (props: {
             connection,
             wallet,
             Keypair.generate(),
-            amountInBn,
+            exchangeInfo.amountIn,
             MSP_OPS,
-            feeAmountBn
+            feesInfo.aggregator
           );
     
         }
@@ -1182,9 +1167,9 @@ export const SwapUi = (props: {
             connection,
             wallet,
             Keypair.generate(),
-            amountInBn,
+            exchangeInfo.amountIn,
             MSP_OPS,
-            feeAmountBn
+            feesInfo.aggregator
           );
     
         }
@@ -1199,11 +1184,11 @@ export const SwapUi = (props: {
           wallet.publicKey,
           fromMint,
           toMint,
-          exchangeInfo.amountIn, // amountIn,
-          exchangeInfo.amountOut, //amountOut,
+          exchangeInfo.amountIn,
+          exchangeInfo.amountOut,
           slippage,
           MSP_OPS.toBase58(),
-          feeAmount
+          feesInfo.aggregator
         );
       }
 

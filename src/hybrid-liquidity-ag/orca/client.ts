@@ -246,8 +246,6 @@ export class OrcaClient implements LPClient {
       [poolInfo.poolParams.address.toBuffer()],
       ORCA_TOKEN_SWAP_ID
     );
-
-    console.log('amountIn', amountIn);
   
     tx.add(
       TokenSwap.swapInstruction(
@@ -294,7 +292,7 @@ export class OrcaClient implements LPClient {
 
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
-    const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
+    const feeBnAmount = new BN(parseFloat(feeAmount.toFixed(tradeToken.scale)) * 10 ** tradeToken.scale);
 
     if (from === NATIVE_SOL_MINT.toBase58()) {
       tx.add(

@@ -1,7 +1,7 @@
 import { AmmPoolInfo, Client, MERCURIAL, ORCA, RAYDIUM, SABER, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
 import { WRAPPED_SOL_MINT } from "../utils/ids";
-import { Connection, Keypair, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { RaydiumClient } from "./raydium/client";
 import { OrcaClient } from "../hybrid-liquidity-ag/orca/client";
 import { SerumClient } from "./serum/client";
@@ -9,6 +9,7 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } f
 import { SaberClient } from "./saber/client";
 import { MercurialClient } from "./mercurial/client";
 import BN from "bn.js";
+import { consoleOut } from "../utils/ui";
 
 export const getClient = (
   connection: Connection,
@@ -105,12 +106,14 @@ export const wrap = async (
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: BN,
+  amount: number,
   feeAccount: PublicKey,
-  fee: BN
+  fee: number
 
 ): Promise<Transaction> => {
 
+  const amountBn = new BN(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
+  const feeBn = new BN(parseFloat(fee.toFixed(9)) * LAMPORTS_PER_SOL);
   const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   
@@ -118,7 +121,7 @@ export const wrap = async (
     SystemProgram.createAccount({
       fromPubkey: wallet.publicKey,
       newAccountPubkey: account.publicKey,
-      lamports: minimumWrappedAccountBalance + amount.toNumber(),
+      lamports: minimumWrappedAccountBalance + amountBn.toNumber(),
       space: AccountLayout.span,
       programId: TOKEN_PROGRAM_ID,
     }),
@@ -160,7 +163,7 @@ export const wrap = async (
       aTokenKey,
       wallet.publicKey,
       [],
-      amount.toNumber()
+      amountBn.toNumber()
     )
   );
 
@@ -195,7 +198,7 @@ export const wrap = async (
       feeAccountToken, // msp ops token account
       wallet.publicKey,
       [],
-      fee.toNumber()
+      feeBn.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
@@ -221,19 +224,22 @@ export const unwrap = async(
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: BN,
+  amount: number,
   feeAccount: PublicKey,
-  fee: BN
+  fee: number
   
 ): Promise<Transaction> => {
 
+  const amountBn = new BN(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
+  const feeBn = new BN(parseFloat(fee.toFixed(9)) * LAMPORTS_PER_SOL);
   const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   const atokenKey = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
-    wallet.publicKey
+    wallet.publicKey,
+    true
   );
 
   const tx = new Transaction().add(
@@ -256,7 +262,7 @@ export const unwrap = async(
       account.publicKey,
       wallet.publicKey,
       [],
-      amount.toNumber()
+      amountBn.toNumber()
     )
   );
 
@@ -290,7 +296,7 @@ export const unwrap = async(
       feeAccountToken,
       wallet.publicKey,
       [],
-      fee.toNumber()
+      feeBn.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
