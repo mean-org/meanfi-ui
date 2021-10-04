@@ -138,29 +138,33 @@ export class OrcaClient implements LPClient {
       owner
     );
 
+    const fromTokenAccountInfo = await this.connection.getAccountInfo(fromTokenAccount);
+
+    if (!fromTokenAccountInfo) {
+      tx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          fromMint,
+          fromTokenAccount,
+          owner,
+          owner
+        )
+      )
+    }
+
+    let fromWrapAccount: Keypair | undefined;
+    let toWrapAccount: Keypair | undefined;
+
     if (fromMint.equals(WRAPPED_SOL_MINT)) {
 
-      const fromAccount = Keypair.generate();
+      fromWrapAccount = Keypair.generate();
       const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
-      const fromTokenAccountInfo = await this.connection.getAccountInfo(fromTokenAccount);
-
-      if (!fromTokenAccountInfo) {
-        tx.add(
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            WRAPPED_SOL_MINT,
-            fromTokenAccount,
-            owner,
-            owner
-          )
-        )
-      }
 
       tx.add(
         SystemProgram.createAccount({
           fromPubkey: owner,
-          newAccountPubkey: fromAccount.publicKey,
+          newAccountPubkey: fromWrapAccount.publicKey,
           lamports: minimumWrappedAccountBalance + amountIn * LAMPORTS_PER_SOL,
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
@@ -168,27 +172,12 @@ export class OrcaClient implements LPClient {
         Token.createInitAccountInstruction(
           TOKEN_PROGRAM_ID,
           WRAPPED_SOL_MINT,
-          fromAccount.publicKey,
+          fromWrapAccount.publicKey,
           owner
-        ),
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          fromAccount.publicKey,
-          fromTokenAccount,
-          owner,
-          [],
-          amountIn * LAMPORTS_PER_SOL
-        ),
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          fromAccount.publicKey,
-          owner,
-          owner,
-          []
         )
       );
 
-      sig.push(fromAccount);
+      sig.push(fromWrapAccount);
     }
 
     const toTokenAccount = await Token.getAssociatedTokenAddress(
@@ -198,13 +187,52 @@ export class OrcaClient implements LPClient {
       owner
     );
 
+    const toTokenAccountInfo = await this.connection.getAccountInfo(toTokenAccount);
+
+    if (!toTokenAccountInfo) {
+      tx.add(
+        Token.createAssociatedTokenAccountInstruction(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          toMint,
+          toTokenAccount,
+          owner,
+          owner
+        )
+      )
+    }
+
+    if (toMint.equals(WRAPPED_SOL_MINT)) {
+
+      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
+      toWrapAccount = Keypair.generate();
+
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: owner,
+          newAccountPubkey: toWrapAccount.publicKey,
+          lamports: minimumWrappedAccountBalance,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          toWrapAccount.publicKey,
+          owner
+        )
+      );
+
+      sig.push(toWrapAccount);
+    }
+
     const minimumOutAmount = amountOut * (100 - slippage) / 100;
     const userTransferAuthority = Keypair.generate();
 
     tx.add(
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
-        fromTokenAccount,
+        fromWrapAccount ? fromWrapAccount.publicKey : fromTokenAccount,
         userTransferAuthority.publicKey,
         owner,
         [],
@@ -224,10 +252,10 @@ export class OrcaClient implements LPClient {
         poolInfo.poolParams.address,
         authorityForPoolAddress,
         userTransferAuthority.publicKey,
-        fromTokenAccount,
+        fromWrapAccount ? fromWrapAccount.publicKey : fromTokenAccount,
         tradeToken.addr,
         outputToken.addr,
-        toTokenAccount,
+        toWrapAccount ? toWrapAccount.publicKey : toTokenAccount,
         poolInfo.poolParams.poolTokenMint,
         poolInfo.poolParams.feeAccount,
         null,
@@ -238,44 +266,28 @@ export class OrcaClient implements LPClient {
       )
     );
 
-
-    if (toMint.equals(WRAPPED_SOL_MINT)) {
-
-      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
-      const toAccount = Keypair.generate();
-
+    if (fromWrapAccount) {
       tx.add(
-        SystemProgram.createAccount({
-          fromPubkey: owner,
-          newAccountPubkey: toAccount.publicKey,
-          lamports: minimumWrappedAccountBalance,
-          space: AccountLayout.span,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          WRAPPED_SOL_MINT,
-          toAccount.publicKey,
-          owner
-        ),
-        Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          toTokenAccount,
-          toAccount.publicKey,
-          owner,
-          [],
-          minimumOutAmount * LAMPORTS_PER_SOL
-        ),
         Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
-          toAccount.publicKey,
+          fromWrapAccount.publicKey,
           owner,
           owner,
           []
         )
       );
+    }
 
-      sig.push(toAccount);
+    if (toWrapAccount) {
+      tx.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          toWrapAccount.publicKey,
+          owner,
+          owner,
+          []
+        )
+      );
     }
 
     // Transfer fees
