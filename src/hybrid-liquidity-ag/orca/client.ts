@@ -9,15 +9,13 @@ import {
 
 } from "@solana/web3.js";
 
-import { getOrca, Orca, OrcaPool, OrcaPoolConfig, OrcaPoolToken, OrcaU64, ORCA_TOKEN_SWAP_ID, U64Utils } from "@orca-so/sdk";
+import { getOrca, Orca, OrcaPoolConfig, OrcaPoolToken, ORCA_TOKEN_SWAP_ID, U64Utils } from "@orca-so/sdk";
 import { LPClient, ExchangeInfo, ORCA } from "../types";
-import { createSwapInstruction } from "@orca-so/sdk/dist/public/utils/web3/instructions/pool-instructions";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash";
 import Decimal from "decimal.js";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { Owner } from "@orca-so/sdk/dist/public/utils/web3/key-utils";
 import { TokenSwap } from "@solana/spl-token-swap";
 import BN from "bn.js";
 
@@ -135,7 +133,8 @@ export class OrcaClient implements LPClient {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       fromMint,
-      owner
+      owner,
+      true
     );
 
     const fromTokenAccountInfo = await this.connection.getAccountInfo(fromTokenAccount);
@@ -184,7 +183,8 @@ export class OrcaClient implements LPClient {
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       toMint,
-      owner
+      owner,
+      true
     );
 
     const toTokenAccountInfo = await this.connection.getAccountInfo(toTokenAccount);
@@ -261,8 +261,8 @@ export class OrcaClient implements LPClient {
         null,
         ORCA_TOKEN_SWAP_ID,
         TOKEN_PROGRAM_ID,
-        U64Utils.toTokenU64(OrcaU64.fromNumber(amountIn, tradeToken.scale), tradeToken, "amountIn"),
-        U64Utils.toTokenU64(OrcaU64.fromNumber(minimumOutAmount, outputToken.scale), outputToken, "minimumAmountOut")
+        U64Utils.toTokenU64(new Decimal(amountIn), tradeToken, "amountIn"),
+        U64Utils.toTokenU64(new Decimal(minimumOutAmount), outputToken, "minimumAmountOut")
       )
     );
 
@@ -309,7 +309,8 @@ export class OrcaClient implements LPClient {
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         fromMint,
-        feeAccount
+        feeAccount,
+        true
       );
   
       const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);

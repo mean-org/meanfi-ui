@@ -2,7 +2,7 @@ import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
-import { MouseEventHandler, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
@@ -86,7 +86,6 @@ export const SwapUi = (props: {
   const [toBalance, setToBalance] = useState('');
   const [userAccount, setUserAccount] = useState<any | undefined>();
   const [userBalances, setUserBalances] = useState<any>();
-  const [shouldUpdateBalances, setShouldUpdateBalances] = useState(true);
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
@@ -95,6 +94,7 @@ export const SwapUi = (props: {
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
+  const [renderCount, setRenderCount] = useState(0);
 
   // DDCA Option selector modal
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
@@ -133,7 +133,7 @@ export const SwapUi = (props: {
     connected, 
     connection, 
     publicKey,
-    shouldUpdateBalances
+    renderCount
   ]);
 
   // Automatically updates user account balance (SOL) 
@@ -159,8 +159,7 @@ export const SwapUi = (props: {
   },[
     connected, 
     connection, 
-    publicKey,
-    shouldUpdateBalances
+    publicKey
   ]);
 
   // Get Tx fees
@@ -548,7 +547,6 @@ export const SwapUi = (props: {
         }
         
         setUserBalances(balancesMap);
-        setShouldUpdateBalances(false);
       };
 
       const promise = connection.getTokenAccountsByOwner(
@@ -572,7 +570,7 @@ export const SwapUi = (props: {
     publicKey, 
     userAccount,
     userAccount?.lamports,
-    shouldUpdateBalances
+    renderCount
   ]);
 
   // Automatically update from token balance once
@@ -651,7 +649,7 @@ export const SwapUi = (props: {
     toMint, 
     userAccount, 
     userBalances,
-    shouldUpdateBalances
+    renderCount
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -1255,6 +1253,14 @@ export const SwapUi = (props: {
     transactionStatus.currentOperation
   ]);
 
+  const updateRenderCount = useCallback(() => {
+
+    setRenderCount(renderCount + 1);
+
+  },[
+    renderCount
+  ]);
+
   const onAfterTransactionModalClosed = useCallback(() => {
 
     if (isBusy) {
@@ -1264,7 +1270,6 @@ export const SwapUi = (props: {
     if (isSuccess()) {
       setFromAmount("");
       setFromSwapAmount(0);
-      setShouldUpdateBalances(true);
       hideTransactionModal();
     }
     
@@ -1481,7 +1486,7 @@ export const SwapUi = (props: {
       console.info("confirmed:", signature); // put this in a link in the UI
       setFromAmount('');
       setFromSwapAmount(0);
-      setShouldUpdateBalances(true);
+      updateRenderCount();
       setIsBusy(false);
 
     } catch (_error) {
@@ -1494,6 +1499,7 @@ export const SwapUi = (props: {
     sendTx, 
     showTransactionModal, 
     signTx,
+    updateRenderCount,
     transactionCancelled
   ]);
 
