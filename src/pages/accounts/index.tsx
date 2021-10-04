@@ -306,6 +306,40 @@ export const AccountsView = () => {
     selectAsset
   ]);
 
+  // Filter only useful Txs for the SOL account to dermine if there is
+  // something to show or offer Buy
+  const getIsSolAccountEmpty = useCallback((txs: MappedTransaction[]): boolean => {
+    if (txs && txs.length) {
+  
+      const filtered = txs.filter(tx => {
+        const meta = tx.parsedTransaction.meta;
+        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
+        const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+        const isInboundTx = accountAddress === accounts[0].pubkey.toBase58()
+          ? false
+          : true;
+        const hasTokenBalances = meta &&
+          ((meta.preTokenBalances && meta.preTokenBalances.length) ||
+          (meta.postTokenBalances && meta.postTokenBalances.length))
+          ? true
+          : false;
+        // Filter out useless Txs (Those incoming not affecting the SOL balance)
+        return isScanningWallet && isInboundTx && hasTokenBalances ? false : true;
+      });
+      consoleOut(`${filtered.length} useful Txs`);
+      if (filtered && filtered.length) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+  }, [
+    accountAddress,
+    selectedAsset?.ataAddress
+  ]);
+
   // Load the transactions when signaled
   useEffect(() => {
 
@@ -338,6 +372,11 @@ export const AccountsView = () => {
           consoleOut('history:', history, 'blue');
           setTransactions(history.transactionMap, true);
           setStatus(FetchStatus.Fetched);
+          if (pk.toBase58() === accountAddress) {
+            if (getIsSolAccountEmpty(history.transactionMap || [])) {
+              startSwitch();
+            }
+          }
         })
         .catch(error => {
           console.error(error);
@@ -355,6 +394,11 @@ export const AccountsView = () => {
           consoleOut('history:', history, 'blue');
           setTransactions(history.transactionMap);
           setStatus(FetchStatus.Fetched);
+          if (pk.toBase58() === accountAddress) {
+            if (getIsSolAccountEmpty(history.transactionMap || [])) {
+              startSwitch();
+            }
+          }
         })
         .catch(error => {
           console.error(error);
@@ -374,8 +418,10 @@ export const AccountsView = () => {
     customConnection,
     loadingTransactions,
     shouldLoadTransactions,
+    getIsSolAccountEmpty,
     setTransactions,
     getScanAddress,
+    startSwitch
   ]);
 
   // Auto execute (when entering /accounts) if we have an address already stored
@@ -473,39 +519,18 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
-  // Filter only useful Txs for the SOL account to dermine if there is
-  // something to show or offer Buy
+  // Reflect
   useEffect(() => {
     if (transactions && transactions.length) {
 
-      const filtered = transactions.filter(tx => {
-        const meta = tx.parsedTransaction.meta;
-        const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-        const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
-        const isInboundTx = accountAddress === accounts[0].pubkey.toBase58()
-          ? false
-          : true;
-        const hasTokenBalances = meta &&
-          ((meta.preTokenBalances && meta.preTokenBalances.length) ||
-          (meta.postTokenBalances && meta.postTokenBalances.length))
-          ? true
-          : false;
-        // Filter out useless Txs (Those incoming not affecting the SOL balance)
-        return isScanningWallet && isInboundTx && hasTokenBalances ? false : true;
-      });
-      consoleOut(`${filtered.length} useful Txs`);
-      if (filtered && filtered.length) {
-        setIsSolAccountEmpty(false);
-      } else {
-        setIsSolAccountEmpty(true);
-      }
+      const isSolEmpty = getIsSolAccountEmpty(transactions);
+      setIsSolAccountEmpty(isSolEmpty);
     } else {
       setIsSolAccountEmpty(true);
     }
   }, [
     transactions,
-    accountAddress,
-    selectedAsset
+    getIsSolAccountEmpty
   ]);
 
   const shallWeDraw = (): boolean => {
