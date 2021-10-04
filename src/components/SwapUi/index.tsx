@@ -146,9 +146,7 @@ export const SwapUi = (props: {
     if (!connected || !publicKey) { return; }
     
     const listener = connection.onAccountChange(publicKey, (info) => {
-      if (info) {
-        setUserAccount(info);
-      }
+      setUserAccount(info);
     });
 
     return () => {
@@ -509,8 +507,7 @@ export const SwapUi = (props: {
       return;
     }
     
-    if (!connected || !publicKey || !userAccount || !mintList) {
-      setUserBalances({});
+    if (!connected || !publicKey || !mintList) {
       return;
     }
 
@@ -518,7 +515,7 @@ export const SwapUi = (props: {
       
       const balancesMap: any = {};
 
-      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount.lamports / LAMPORTS_PER_SOL;
+      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount ? (userAccount.lamports / LAMPORTS_PER_SOL) : 0;
 
       const tokens = Object.values(mintList)
         .filter((t: any) => t.symbol !== 'SOL')
