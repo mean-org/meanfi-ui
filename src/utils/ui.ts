@@ -3,12 +3,11 @@ import bs58 from "bs58";
 import moment from "moment";
 import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
-import { environment } from "../environments/environment";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (environment !== 'local') { return; }
+    if (window.location.hostname !== 'localhost') { return; }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);
