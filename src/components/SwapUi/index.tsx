@@ -1153,12 +1153,13 @@ export const SwapUi = (props: {
       }
   
       const fromDecimals = mintList[fromMint].decimals;
-      const toDecimals = mintList[toMint].decimals;
+      // const toDecimals = mintList[toMint].decimals;
       const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
       const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
-      const amountIn = parseFloat(exchangeInfo.amountIn.toFixed(fromDecimals));
-      const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
-      const amountOut = parseFloat(exchangeInfo.amountOut.toFixed(toDecimals));
+      // const amountIn = parseFloat(exchangeInfo.amountIn.toFixed(fromDecimals));
+      // const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
+      const amountInBn = new BN((exchangeInfo.amountIn - feesInfo.aggregator) * 10 ** fromDecimals);
+      // const amountOut = parseFloat(exchangeInfo.amountOut.toFixed(toDecimals));
   
       if (isWrap || isUnwrap) {
   
@@ -1198,8 +1199,8 @@ export const SwapUi = (props: {
           wallet.publicKey,
           fromMint,
           toMint,
-          amountIn,
-          amountOut,
+          exchangeInfo.amountIn, // amountIn,
+          exchangeInfo.amountOut, //amountOut,
           slippage,
           MSP_OPS.toBase58(),
           feeAmount

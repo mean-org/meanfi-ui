@@ -246,6 +246,8 @@ export class OrcaClient implements LPClient {
       [poolInfo.poolParams.address.toBuffer()],
       ORCA_TOKEN_SWAP_ID
     );
+
+    console.log('amountIn', amountIn);
   
     tx.add(
       TokenSwap.swapInstruction(
