@@ -434,7 +434,7 @@ export const SwapUi = (props: {
       setRefreshing(true);
 
       const error = (_error: any) => {
-        console.log(_error);
+        consoleOut(_error);
         setRefreshing(false); 
       };
 
@@ -1320,7 +1320,7 @@ export const SwapUi = (props: {
         throw new Error('Cannot sign transaction. Wallet not found'); 
       }
   
-      console.log("Signing transaction...");
+      consoleOut("Signing transaction...");
       const signedTx = await wallet.signTransaction(currentTx);
 
       if (!signedTx) {
@@ -1360,7 +1360,7 @@ export const SwapUi = (props: {
       }
 
       const encodedTx = currentTx.serialize().toString('base64');
-      console.log('tx encoded => ', encodedTx);
+      consoleOut('tx encoded => ', encodedTx);
 
       const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
         preflightCommitment: 'confirmed'
@@ -1440,7 +1440,7 @@ export const SwapUi = (props: {
       showTransactionModal();
 
       const swapTxs = await createTx();
-      console.log("initialized:", swapTxs);
+      consoleOut("initialized:", swapTxs);
 
       if (!swapTxs || transactionCancelled) {
         setIsBusy(false);
@@ -1448,7 +1448,7 @@ export const SwapUi = (props: {
       }
 
       const signedTx = await signTx(swapTxs);
-      console.log("signed:", signedTx);
+      consoleOut("signed:", signedTx);
 
       if (!signedTx || transactionCancelled) {
         setIsBusy(false);
