@@ -9,14 +9,17 @@ import {
 
 } from "@solana/web3.js";
 
-import { getOrca, Orca, OrcaPoolConfig, OrcaPoolToken, OrcaU64 } from "@orca-so/sdk";
+import { getOrca, Orca, OrcaPool, OrcaPoolConfig, OrcaPoolToken, OrcaU64, ORCA_TOKEN_SWAP_ID, U64Utils } from "@orca-so/sdk";
 import { LPClient, ExchangeInfo, ORCA } from "../types";
+import { createSwapInstruction } from "@orca-so/sdk/dist/public/utils/web3/instructions/pool-instructions";
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash";
-import { BN } from "bn.js";
 import Decimal from "decimal.js";
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
+import { Owner } from "@orca-so/sdk/dist/public/utils/web3/key-utils";
+import { TokenSwap } from "@solana/spl-token-swap";
+import BN from "bn.js";
 
 export class OrcaClient implements LPClient {
 
@@ -113,109 +116,188 @@ export class OrcaClient implements LPClient {
       throw new Error("Orca pool not found.");
     }
 
+    const fromMint = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : new PublicKey(from);
+    const toMint = to === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : new PublicKey(to);
+
     let inputToken = poolInfo.getTokenA() as OrcaPoolToken;
     let outputToken = poolInfo.getTokenB() as OrcaPoolToken;
     let tradeToken = cloneDeep(inputToken);
 
-    if (from === outputToken.mint.toBase58() || to === tradeToken.mint.toBase58()) {
+    if (fromMint.equals(outputToken.mint)) {
       tradeToken = cloneDeep(outputToken);
       outputToken = cloneDeep(inputToken);
     }
-
-    const minimumOutAmount = amountOut * (100 - slippage) / 100;
     
     let tx = new Transaction();
     let sig: Signer[] = [];
 
-    const fromMint = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT : tradeToken.mint;
     const fromTokenAccount = await Token.getAssociatedTokenAddress(
       ASSOCIATED_TOKEN_PROGRAM_ID,
       TOKEN_PROGRAM_ID,
       fromMint,
-      owner,
-      true
+      owner
     );
 
     if (fromMint.equals(WRAPPED_SOL_MINT)) {
 
+      const fromAccount = Keypair.generate();
       const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
-      const account = Keypair.generate();
+      const fromTokenAccountInfo = await this.connection.getAccountInfo(fromTokenAccount);
+
+      if (!fromTokenAccountInfo) {
+        tx.add(
+          Token.createAssociatedTokenAccountInstruction(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            WRAPPED_SOL_MINT,
+            fromTokenAccount,
+            owner,
+            owner
+          )
+        )
+      }
 
       tx.add(
         SystemProgram.createAccount({
           fromPubkey: owner,
-          newAccountPubkey: account.publicKey,
-          lamports: minimumWrappedAccountBalance + (amountIn - feeAmount) * LAMPORTS_PER_SOL,
+          newAccountPubkey: fromAccount.publicKey,
+          lamports: minimumWrappedAccountBalance + amountIn * LAMPORTS_PER_SOL,
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
         }),
         Token.createInitAccountInstruction(
           TOKEN_PROGRAM_ID,
           WRAPPED_SOL_MINT,
-          account.publicKey,
+          fromAccount.publicKey,
           owner
         ),
         Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
-          account.publicKey,
+          fromAccount.publicKey,
           fromTokenAccount,
           owner,
           [],
-          (amountIn - feeAmount) * LAMPORTS_PER_SOL
+          amountIn * LAMPORTS_PER_SOL
         ),
         Token.createCloseAccountInstruction(
           TOKEN_PROGRAM_ID,
-          account.publicKey,
+          fromAccount.publicKey,
           owner,
           owner,
           []
         )
       );
 
-      sig.push(account);
+      sig.push(fromAccount);
     }
 
-    const swapAmount = fromMint === WRAPPED_SOL_MINT ? (amountIn - feeAmount) : amountIn;
-
-    let { transaction, signers } = await poolInfo.swap(
-      owner, 
-      tradeToken, 
-      OrcaU64.fromNumber(swapAmount, tradeToken.scale),
-      OrcaU64.fromNumber(minimumOutAmount, outputToken.scale)
+    const toTokenAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      toMint,
+      owner
     );
 
-    tx.add(transaction);
-    sig.push(...signers);
+    const minimumOutAmount = amountOut * (100 - slippage) / 100;
+    const userTransferAuthority = Keypair.generate();
+
+    tx.add(
+      Token.createApproveInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount,
+        userTransferAuthority.publicKey,
+        owner,
+        [],
+        amountIn * 10 ** tradeToken.scale
+      )
+    );
+
+    sig.push(userTransferAuthority);
+
+    const [authorityForPoolAddress] = await PublicKey.findProgramAddress(
+      [poolInfo.poolParams.address.toBuffer()],
+      ORCA_TOKEN_SWAP_ID
+    );
+  
+    tx.add(
+      TokenSwap.swapInstruction(
+        poolInfo.poolParams.address,
+        authorityForPoolAddress,
+        userTransferAuthority.publicKey,
+        fromTokenAccount,
+        tradeToken.addr,
+        outputToken.addr,
+        toTokenAccount,
+        poolInfo.poolParams.poolTokenMint,
+        poolInfo.poolParams.feeAccount,
+        null,
+        ORCA_TOKEN_SWAP_ID,
+        TOKEN_PROGRAM_ID,
+        U64Utils.toTokenU64(OrcaU64.fromNumber(amountIn, tradeToken.scale), tradeToken, "amountIn"),
+        U64Utils.toTokenU64(OrcaU64.fromNumber(minimumOutAmount, outputToken.scale), outputToken, "minimumAmountOut")
+      )
+    );
+
+
+    if (toMint.equals(WRAPPED_SOL_MINT)) {
+
+      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
+      const toAccount = Keypair.generate();
+
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: owner,
+          newAccountPubkey: toAccount.publicKey,
+          lamports: minimumWrappedAccountBalance,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          toAccount.publicKey,
+          owner
+        ),
+        Token.createTransferInstruction(
+          TOKEN_PROGRAM_ID,
+          toTokenAccount,
+          toAccount.publicKey,
+          owner,
+          [],
+          minimumOutAmount * LAMPORTS_PER_SOL
+        ),
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          toAccount.publicKey,
+          owner,
+          owner,
+          []
+        )
+      );
+
+      sig.push(toAccount);
+    }
 
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
+    const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
 
     if (from === NATIVE_SOL_MINT.toBase58()) {
       tx.add(
         SystemProgram.transfer({
           fromPubkey: owner,
           toPubkey: feeAccount,
-          lamports: feeAmount * LAMPORTS_PER_SOL
+          lamports: feeBnAmount.toNumber()
         })
       );
 
     } else {
 
-      const fromTokenAccount = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        fromMint,
-        owner,
-        true
-      );
-
-      const feeBnAmount = new BN(feeAmount * 10 ** tradeToken.scale);
       const feeAccountToken = await Token.getAssociatedTokenAddress(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         fromMint,
-        feeAccount,
-        true
+        feeAccount
       );
   
       const feeAccountTokenInfo = await this.connection.getAccountInfo(feeAccountToken);
@@ -246,10 +328,10 @@ export class OrcaClient implements LPClient {
     }
 
     tx.feePayer = owner;
-    const { blockhash } = await this.connection.getRecentBlockhash('recent');
+    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
     tx.recentBlockhash = blockhash;
 
-    if (signers.length) {
+    if (sig.length) {
       tx.partialSign(...sig);
     }
 

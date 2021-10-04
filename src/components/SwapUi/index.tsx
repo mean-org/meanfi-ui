@@ -1372,7 +1372,7 @@ export const SwapUi = (props: {
       console.log('tx encoded => ', encodedTx);
 
       const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
-        preflightCommitment: 'confirmed' 
+        preflightCommitment: 'confirmed'
       });
 
       if (!sentTx) {

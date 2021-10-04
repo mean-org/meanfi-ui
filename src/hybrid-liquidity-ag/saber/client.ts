@@ -341,7 +341,7 @@ export class SaberClient implements LPClient {
     );
 
     tx.feePayer = owner;
-    const { blockhash } = await this.connection.getRecentBlockhash('recent');
+    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
     tx.recentBlockhash = blockhash;
 
     return tx; 

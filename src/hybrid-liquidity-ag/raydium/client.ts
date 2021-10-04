@@ -361,7 +361,7 @@ export class RaydiumClient implements LPClient {
     );
 
     transaction.feePayer = owner;
-    const { blockhash } = await this.connection.getRecentBlockhash('recent');
+    const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
     transaction.recentBlockhash = blockhash;
 
     if (signers.length) {

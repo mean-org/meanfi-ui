@@ -258,7 +258,7 @@ export class MercurialClient implements LPClient {
         );
 
         tx.feePayer = owner;
-        const { blockhash } = await this.connection.getRecentBlockhash('recent');
+        const { blockhash } = await this.connection.getRecentBlockhash(this.connection.commitment);
         tx.recentBlockhash = blockhash;
 
         if (sig.length) {
