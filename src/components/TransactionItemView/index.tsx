@@ -203,10 +203,13 @@ export const TransactionItemView = (props: {
     // Sender is always account 0 = Fee payer
     const sender = accounts[0].pubkey.toBase58();
     // Receiver could be any account TODO: Polish this logic
+    const destAccount = accounts[outDstAccountIndex]
+          ? accounts[outDstAccountIndex].pubkey.toBase58()
+          : accounts[1].pubkey.toBase58();
     const receiver = isScanningUserWallet &&
                      isOutboundTx &&
                      hasTokenBalances
-                      ? accounts[outDstAccountIndex].pubkey.toBase58()
+                      ? destAccount
                       : accounts[1].pubkey.toBase58();
 
     if (isOutboundTx) {
