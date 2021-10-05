@@ -170,8 +170,24 @@ export const Streams = () => {
           }
         }
 
+        let state: STREAM_STATE | undefined;
+        const threeDays = (3 * 24 * 3600);
+        const nowUtc = Date.parse(new Date().toUTCString());
+        const startDate = new Date(clonedDetail.startUtc as string);
+
+        if (startDate.getTime() > nowUtc) {
+            state = STREAM_STATE.Schedule;
+        } else if (isStreaming && escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
+            state = STREAM_STATE.Running;
+        } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && new Date(clonedDetail.fundedOnUtc as string).getTime() < nowUtc) {
+            state = STREAM_STATE.Paused;
+        } else if (elapsedTime > threeDays) {
+            state = STREAM_STATE.Ended;
+        }
+
         clonedDetail.escrowVestedAmount = escrowVestedAmount;
         clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
+        clonedDetail.state = state as STREAM_STATE;
         setStreamDetail(clonedDetail);
       }
     };
@@ -1487,7 +1503,7 @@ export const Streams = () => {
               onClick={showWithdrawModal}>
               {t('streams.stream-detail.withdraw-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {!customStreamDocked && streamDetail?.state !== STREAM_STATE.Schedule && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -1739,7 +1755,7 @@ export const Streams = () => {
               onClick={showAddFundsModal}>
               {t('streams.stream-detail.add-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {!customStreamDocked && streamDetail?.state !== STREAM_STATE.Schedule && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
