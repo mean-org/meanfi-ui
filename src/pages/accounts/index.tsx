@@ -1,6 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import { ArrowLeftOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -10,7 +10,7 @@ import { FetchStatus, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { fetchAccountTokens, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -59,28 +59,13 @@ export const AccountsView = () => {
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
-  const [isSolAccountEmpty, setIsSolAccountEmpty] = useState(false);
+  const [solAccountItems, setSolAccountItems] = useState(0);
+  // const [shallWeDraw, setShallWeDraw] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
-  // const [stats, dispatch] = useReducer((state: TransactionStats, action: TransactionActions) => {
-  //   switch (action.type) {
-  //     case ActionTypes.SET_STATS:
-  //       return {...state, ...action.payload};
-  //     case ActionTypes.RESET_STATS:
-  //       return {...state, ...defaultTransactionStats};
-  //     case ActionTypes.RESET_INDEX:
-  //       return Object.assign({}, state, { index: 0 });
-  //     case ActionTypes.ROLL_INDEX:
-  //       return Object.assign({}, state, { index: signatures.length - 1 });
-  //     case ActionTypes.INCREMENT_INDEX:
-  //       return Object.assign({}, state, { index: state.index + 1 });
-  //     default:
-  //       return state;
-  //   }
-  // }, defaultTransactionStats);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -99,6 +84,7 @@ export const AccountsView = () => {
   }, [])
 
   const reloadSwitch = useCallback(() => {
+    setSolAccountItems(0);
     setTransactions(undefined);
     startSwitch();
   }, [
@@ -111,6 +97,7 @@ export const AccountsView = () => {
     openDetailsPanel: boolean = false
   ) => {
     setStatus(FetchStatus.Fetching);
+    setSolAccountItems(0);
     setTransactions(undefined);
     setSelectedAsset(asset);
     if (isSmallUpScreen || openDetailsPanel) {
@@ -265,6 +252,7 @@ export const AccountsView = () => {
                       tokenTable.push({
                         ataAddress: shortenAddress(item.ataAddress, 8),
                         address: shortenAddress(item.address, 8),
+                        symbol: item.symbol,
                         balance: item.balance
                       });
                     }
@@ -306,34 +294,37 @@ export const AccountsView = () => {
     selectAsset
   ]);
 
-  // Filter only useful Txs for the SOL account to dermine if there is
-  // something to show or offer Buy
-  const getIsSolAccountEmpty = useCallback((txs: MappedTransaction[]): boolean => {
+  // Filter only useful Txs for the SOL account and return count
+  const getSolAccountItems = useCallback((txs: MappedTransaction[]): number => {
+
+    const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+      if (meta !== null && accountIndex !== -1) {
+        const prevBalance = meta.preBalances[accountIndex] || 0;
+        const postbalance = meta.postBalances[accountIndex] || 0;
+        const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+        return change;
+      }
+      return 0;
+    }
+
     if (txs && txs.length) {
-  
+
+      const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+      // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
         const meta = tx.parsedTransaction.meta;
+        if (meta && meta.err !== null) { return false; }
         const accounts = tx.parsedTransaction.transaction.message.accountKeys;
-        const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
-        const isInboundTx = accountAddress === accounts[0].pubkey.toBase58()
-          ? false
-          : true;
-        const hasTokenBalances = meta &&
-          ((meta.preTokenBalances && meta.preTokenBalances.length) ||
-          (meta.postTokenBalances && meta.postTokenBalances.length))
-          ? true
-          : false;
-        // Filter out useless Txs (Those incoming not affecting the SOL balance)
-        return isScanningWallet && isInboundTx && hasTokenBalances ? false : true;
+        const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
+        if (isScanningWallet && accIdx === -1) { return false; }
+        const change = getChange(accIdx, meta);
+        return isScanningWallet && change !== 0 ? true : false;
       });
+
       consoleOut(`${filtered.length} useful Txs`);
-      if (filtered && filtered.length) {
-        return false;
-      } else {
-        return true;
-      }
+      return filtered.length || 0;
     } else {
-      return true;
+      return 0;
     }
   }, [
     accountAddress,
@@ -372,11 +363,16 @@ export const AccountsView = () => {
           consoleOut('history:', history, 'blue');
           setTransactions(history.transactionMap, true);
           setStatus(FetchStatus.Fetched);
-          if (pk.toBase58() === accountAddress) {
-            if (getIsSolAccountEmpty(history.transactionMap || [])) {
-              startSwitch();
-            }
+
+          if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
+            const validItems = getSolAccountItems(history.transactionMap);
+            setSolAccountItems(current => current + validItems);
           }
+
+          if (history.transactionMap && history.transactionMap.length === TRANSACTIONS_PER_PAGE) {
+            startSwitch();
+          }
+
         })
         .catch(error => {
           console.error(error);
@@ -392,13 +388,21 @@ export const AccountsView = () => {
         )
         .then(history => {
           consoleOut('history:', history, 'blue');
+
           setTransactions(history.transactionMap);
-          setStatus(FetchStatus.Fetched);
-          if (pk.toBase58() === accountAddress) {
-            if (getIsSolAccountEmpty(history.transactionMap || [])) {
-              startSwitch();
-            }
+
+          if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
+            const validItems = getSolAccountItems(history.transactionMap);
+            setSolAccountItems(current => current + validItems);
           }
+
+          if (history.transactionMap && history.transactionMap.length === TRANSACTIONS_PER_PAGE) {
+            setTimeout(() => {
+              startSwitch();
+            }, 100);
+          }
+
+          setStatus(FetchStatus.Fetched);
         })
         .catch(error => {
           console.error(error);
@@ -418,7 +422,7 @@ export const AccountsView = () => {
     customConnection,
     loadingTransactions,
     shouldLoadTransactions,
-    getIsSolAccountEmpty,
+    getSolAccountItems,
     setTransactions,
     getScanAddress,
     startSwitch
@@ -519,29 +523,6 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
-  // Reflect
-  useEffect(() => {
-    if (transactions && transactions.length) {
-
-      const isSolEmpty = getIsSolAccountEmpty(transactions);
-      setIsSolAccountEmpty(isSolEmpty);
-    } else {
-      setIsSolAccountEmpty(true);
-    }
-  }, [
-    transactions,
-    getIsSolAccountEmpty
-  ]);
-
-  const shallWeDraw = (): boolean => {
-    // We can draw if there are transactions when the selected token is not the SOL account
-    // Or if the user selects the SOL account and there are at least one useful transaction
-    return (accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
-           (accountAddress === selectedAsset?.ataAddress && !isSolAccountEmpty)
-           ? true
-           : false;
-  }
-
   ///////////////
   // Rendering //
   ///////////////
@@ -589,14 +570,56 @@ export const AccountsView = () => {
   );
 
   const renderTransactions = () => {
-    return transactions?.map((trans: MappedTransaction) => {
-      return <TransactionItemView
-                key={trans.signature}
-                transaction={trans}
-                selectedAsset={selectedAsset as UserTokenAccount}
-                accountAddress={accountAddress}
-                tokenAccounts={accountTokens} />;
-    });
+    const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+    if (transactions) {
+      if (isScanningWallet) {
+        // Get amount change for each tx
+        const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+          if (meta !== null && accountIndex !== -1) {
+            const prevBalance = meta.preBalances[accountIndex] || 0;
+            const postbalance = meta.postBalances[accountIndex] || 0;
+            const change = getAmountFromLamports(postbalance) - getAmountFromLamports(prevBalance);
+            // consoleOut(
+            //   `prev: ${getAmountFromLamports(prevBalance)}, chge: ${change}, post: ${getAmountFromLamports(postbalance)}`, '',
+            //   change === 0 ? 'red' : 'dkgray'
+            // );
+            return change;
+          }
+          return 0;
+        }
+        // Render only txs that have SOL changes
+        const filtered = transactions.filter(tx => {
+          const meta = tx.parsedTransaction.meta;
+          if (meta && meta.err !== null) { return false; }
+          const accounts = tx.parsedTransaction.transaction.message.accountKeys;
+          const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
+          if (isScanningWallet && accIdx === -1) { return false; }
+          const change = getChange(accIdx, meta);
+          return isScanningWallet && change !== 0 ? true : false;
+        });
+        return filtered?.map((trans: MappedTransaction) => {
+          return <TransactionItemView
+                    key={trans.signature}
+                    transaction={trans}
+                    selectedAsset={selectedAsset as UserTokenAccount}
+                    accountAddress={accountAddress}
+                    tokenAccounts={accountTokens} />;
+        });
+      } else {
+        // Render the transactions collection
+        return transactions?.map((trans: MappedTransaction) => {
+          if (trans.parsedTransaction.meta?.err === null) {
+            return <TransactionItemView
+                      key={trans.signature}
+                      transaction={trans}
+                      selectedAsset={selectedAsset as UserTokenAccount}
+                      accountAddress={accountAddress}
+                      tokenAccounts={accountTokens} />;
+          }
+          return null;
+        });
+      }
+    } else return null;
   };
 
   // TODO: Add a11y attributes to emojis for screen readers  aria-hidden={label ? undefined : true} aria-label={label ? label : undefined} role="img"
@@ -657,6 +680,13 @@ export const AccountsView = () => {
     );
   };
 
+  const shallWeDraw = (): boolean => {
+    return ((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
+            (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+      ? true
+      : false;
+  }
+
   return (
     <>
       <Helmet>
@@ -666,6 +696,13 @@ export const AccountsView = () => {
         <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
       </Helmet>
       <div className="container main-container">
+
+        {window.location.hostname === 'localhost' && (
+          <div className="debug-bar">
+            <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
+            <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
+          </div>
+        )}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
         <h1 className="mandatory-h1">Accounts, Where you keep track of your assets</h1>
@@ -746,14 +783,19 @@ export const AccountsView = () => {
                     </div>
                   )}
                   {/* Activity list */}
-                  <div className={transactions && transactions.length ? 'transaction-list-data-wrapper vertical-scroll' : 'transaction-list-data-wrapper empty'}>
+                  <div className={((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
+                                   (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+                                   ? 'transaction-list-data-wrapper vertical-scroll'
+                                   : 'transaction-list-data-wrapper empty'}>
                     <div className="activity-list h-100">
                       {
-                        status === FetchStatus.Fetching && !shallWeDraw() ? (
+                        status === FetchStatus.Fetching && !((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
+                                                             (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
                           <div className="h-100 flex-center">
                             <Spin indicator={antIcon} />
                           </div>
-                        ) : selectedAsset?.balance === 0 && !shallWeDraw() ? (
+                        ) : selectedAsset?.balance === 0 && !((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
+                                                              (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
                           renderTokenBuyOptions()
                         ) : (transactions && transactions.length) ? (
                           <div className="item-list-body compact">
@@ -769,19 +811,6 @@ export const AccountsView = () => {
                       }
                     </div>
                   </div>
-                  {/* Load more cta */}
-                  {lastTxSignature && (
-                    <div className="stream-share-ctas">
-                      <Button
-                        type="ghost"
-                        shape="round"
-                        size="small"
-                        disabled={status === FetchStatus.Fetching}
-                        onClick={() => startSwitch()}>
-                        {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -801,15 +830,6 @@ export const AccountsView = () => {
                           icon={<ArrowLeftOutlined />}
                           onClick={handleBackToAccountDetailsButtonClick}
                         />
-                        {/* <Button
-                          type="ghost"
-                          shape="round"
-                          size="middle"
-                          className="hidden-sm"
-                          icon={<ArrowLeftOutlined />}
-                          onClick={handleBackToAccountDetailsButtonClick}>
-                          {t('assets.back-to-assets-cta')}
-                        </Button> */}
                       </Tooltip>
                     </span>
                   </div>

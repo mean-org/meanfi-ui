@@ -4048,6 +4048,11 @@ code {
   padding: 0 1rem;
   &.main-container {
     flex: 1 1 auto;
+    position: relative;
+    .debug-bar {
+      position: fixed;
+      top: var(--main-navigation-bar-height);
+    }
   }
 }
 

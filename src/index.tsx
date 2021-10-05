@@ -37,25 +37,34 @@ i18next.use(LanguageDetector).init({
 });
 
 const rootElement = document.getElementById("root");
-if (rootElement?.hasChildNodes()) {
-  hydrate(
-    <React.StrictMode>
-      <I18nextProvider i18n={i18next}>
-        <App/>
-      </I18nextProvider>
-    </React.StrictMode>,
-    rootElement
-  );
-} else {
-  render(
-    <React.StrictMode>
-      <I18nextProvider i18n={i18next}>
-        <App/>
-      </I18nextProvider>
-    </React.StrictMode>,
-    rootElement
-  );
-}
+// if (rootElement?.hasChildNodes()) {
+//   hydrate(
+//     <React.StrictMode>
+//       <I18nextProvider i18n={i18next}>
+//         <App/>
+//       </I18nextProvider>
+//     </React.StrictMode>,
+//     rootElement
+//   );
+// } else {
+//   render(
+//     <React.StrictMode>
+//       <I18nextProvider i18n={i18next}>
+//         <App/>
+//       </I18nextProvider>
+//     </React.StrictMode>,
+//     rootElement
+//   );
+// }
+
+render(
+  <React.StrictMode>
+    <I18nextProvider i18n={i18next}>
+      <App/>
+    </I18nextProvider>
+  </React.StrictMode>,
+  rootElement
+);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

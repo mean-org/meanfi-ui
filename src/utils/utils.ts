@@ -2,7 +2,7 @@ import BN from 'bn.js';
 import { useCallback, useState } from "react";
 import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, Keypair, PublicKey, Signer, SimulatedTransactionResponse, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
+import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SimulatedTransactionResponse, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
 import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
@@ -112,6 +112,10 @@ export function chunks<T>(array: T[], size: number): T[][] {
     0,
     new Array(Math.ceil(array.length / size))
   ).map((_, index) => array.slice(index * size, (index + 1) * size));
+}
+
+export const getAmountFromLamports = (amount: number): number => {
+  return (amount || 0) / LAMPORTS_PER_SOL;
 }
 
 export function toLamports(
@@ -316,12 +320,9 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   if (token) {
     let formatted = truncateInsteadRound
       ? truncateFloat(inputAmount, token.decimals)
-      : `${getFormattedNumberToLocale(formatAmount(inputAmount, 6))}`;
+      : `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
-    }
-    if (parseFloat(formatted) === 0) {
-      formatted = `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
     }
     return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
   } else if (address && !token) {

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { LAMPORTS_PER_SOL, ParsedMessageAccount, TokenBalance } from "@solana/web3.js";
+import { ParsedConfirmedTransactionMeta, ParsedMessageAccount, PublicKey, TokenBalance } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
-import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
 import { UserTokenAccount } from "../../models/transactions";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
@@ -20,52 +20,55 @@ export const TransactionItemView = (props: {
   tokenAccounts: UserTokenAccount[];
 }) => {
 
-  const [isInboundTx, setIsInboundTx] = useState(false);
-  const [isWrapping, setIsWrapping] = useState(false);
-  const [isToMyAccounts, setIsToMyAccounts] = useState(false);
+  const [isOutboundTx, setIsOutbound] = useState(false);
+  const [isFeeOnlyTx, setIsFeeOnlyTx] = useState(false);
   const [hasTokenBalances, setHasTokenBalances] = useState(false);
   const [isScanningUserWallet, setIsScanningUserWallet] = useState(false);
   const [outDstAccountIndex, setOutDstAccountIndex] = useState(1);
-  const [preBalance, setPreBalance] = useState(0);
   const [postBalance, setPostBalance] = useState(0);
   const [amountChange, setAmountChange] = useState(0);
   const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(null);
+
+  // User account being scanned
+  const [myAccountAmountChange, setMyAccountAmountChange] = useState(0);
 
   const isLocal = (): boolean => {
     return environment === 'local' ? true : false;
   }
 
-  // Prepare some data
   useEffect(() => {
 
-    const hasWsolAccount = (accounts: ParsedMessageAccount[]): boolean => {
-      const filtered = props.tokenAccounts.filter(ta => ta.address === WRAPPED_SOL_MINT_ADDRESS);
-      if (filtered && filtered.length) {
-        const index = accounts.findIndex(a => a.pubkey.toBase58() === filtered[0].ataAddress);
-        return index !== -1 ? true : false;
+    const isOneOfMyAccounts = (acc: PublicKey): boolean => {
+      return props.tokenAccounts.some(ta => ta.ataAddress !== props.accountAddress && ta.ataAddress === acc.toBase58());
+    }
+
+    const getAmountChangeForAssocTokenAccount = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
+      let preTkBalance: TokenBalance | null = null;
+      let postTkBalance: TokenBalance | null = null;
+      let post = 0;
+      let pre = 0;
+
+      if (meta) {
+        preTkBalance = meta.preTokenBalances && meta.preTokenBalances.length
+          ? meta.preTokenBalances.filter(b => b.accountIndex === accountIndex)[0] || null
+          : null;
+        pre = preTkBalance ? preTkBalance.uiTokenAmount.uiAmount || 0 : 0;
+
+        postTkBalance = meta.postTokenBalances && meta.postTokenBalances.length
+          ? meta.postTokenBalances.filter(b => b.accountIndex === accountIndex)[0] || null
+          : null;
+        post = postTkBalance ? postTkBalance.uiTokenAmount.uiAmount || 0 : 0;
+        return post - pre;
       }
-      return false;
-    }
 
-    const isToOneOfMyAccounts = (accounts: ParsedMessageAccount[]): boolean => {
-      const filtered = props.tokenAccounts.filter(ta => ta.ataAddress !== props.accountAddress);
-      const index = accounts.findIndex(a => filtered.some(t => t.ataAddress === a.pubkey.toBase58()));
-      return index !== -1 ? true : false;
-    }
-
-    const getDestAccountIndex = (accounts: ParsedMessageAccount[]): number => {
-      const filtered = props.tokenAccounts.filter(ta => ta.ataAddress !== props.accountAddress);
-      const index = accounts.findIndex(a => filtered.some(t => t.ataAddress === a.pubkey.toBase58()));
-      return index !== -1 ? index : 1;
+      return 0;
     }
 
     if (props.transaction) {
 
       // Define some local vars
-      let isInbound = true;
+      let isOutbound = true;
       let accountIndex = 0;
-      let outDestAccountIndex = 1;
-      let preBalance = 0;
       let postBalance = 0;
       let amount = 0;
       let preTkBalance: TokenBalance | null = null;
@@ -77,49 +80,57 @@ export const TransactionItemView = (props: {
       const isScanningWallet = props.accountAddress === props.selectedAsset?.ataAddress ? true : false;
       setIsScanningUserWallet(isScanningWallet);
 
+      // Indicate that tokens were used if it matters
       const tokensUsed = meta &&
         ((meta.preTokenBalances && meta.preTokenBalances.length) || (meta.postTokenBalances && meta.postTokenBalances.length))
         ? true
         : false;
       setHasTokenBalances(tokensUsed);
 
-      // Set inbound/outbound flag
-      if (props.accountAddress === accounts[0].pubkey.toBase58()) {
-        isInbound = false;
-      } else {
-        isInbound = true;
-      }
-      setIsInboundTx(isInbound);
+      // Token accounts with balance change
+      const tokenAccountsWithChanges = accounts.filter((a: ParsedMessageAccount, index: number) =>
+        isOneOfMyAccounts(a.pubkey) &&
+        getAmountChangeForAssocTokenAccount(index, meta) !== 0
+      );
+      const firstTokenAccountsWithChangesAccountIndex = accounts.findIndex((a: ParsedMessageAccount, index: number) =>
+        isOneOfMyAccounts(a.pubkey) &&
+        getAmountChangeForAssocTokenAccount(index, meta) !== 0
+      );
+      setOutDstAccountIndex(firstTokenAccountsWithChangesAccountIndex || 1);
 
-      if (!isInbound && isScanningWallet && tokensUsed) {
-        const toMyOwnAccounts = isToOneOfMyAccounts(accounts);
-        setIsToMyAccounts(toMyOwnAccounts);
-        if (toMyOwnAccounts) {
-          outDestAccountIndex = getDestAccountIndex(accounts);
-          setOutDstAccountIndex(outDestAccountIndex);
-        }
-        const isWrap = hasWsolAccount(accounts);
-        setIsWrapping(isWrap);
+      // Set flag if account address acted only as Tx fee payer
+      const feeOnlyTx = isOutbound && tokenAccountsWithChanges.length >= 2;
+      setIsFeeOnlyTx(feeOnlyTx);
+
+      // Set outbound flag
+      if (props.accountAddress === accounts[0].pubkey.toBase58()) {
+        isOutbound = true;
       } else {
-        setIsWrapping(false);
-        setIsToMyAccounts(false);
+        isOutbound = false;
+      }
+      setIsOutbound(isOutbound);
+
+      // Balances for user account being scanned
+      accountIndex = accounts.findIndex(acc => acc.pubkey.toBase58() === props.accountAddress);
+      if (meta && accountIndex !== -1) {
+        const post = meta.postBalances[accountIndex] || 0;
+        const pre = meta.preBalances[accountIndex] || 0;
+        const change = post - pre;
+        setMyAccountAmountChange(change);
+      } else {
+        setMyAccountAmountChange(0);
       }
 
       // Select token account to use
       if (tokensUsed) {
-        if (isInbound) {
-          accountIndex = 1;
-        } else {
-          accountIndex = 2;
-        }
         if (props.accountAddress !== props.selectedAsset?.ataAddress) {
           const index = accounts.findIndex(a => a.pubkey.toBase58() === props.selectedAsset?.ataAddress);
           if (index !== -1) {
             accountIndex = accounts.findIndex(a => a.pubkey.toBase58() === props.selectedAsset?.ataAddress);
           }
         } else {
-          if (!isInbound) {
-            accountIndex = outDestAccountIndex;
+          if (isOutbound) {
+            accountIndex = firstTokenAccountsWithChangesAccountIndex !== -1 ? firstTokenAccountsWithChangesAccountIndex : 1;
           } else {
             const ptb = meta?.postTokenBalances && meta.postTokenBalances.length
               ? meta.postTokenBalances[0]
@@ -143,128 +154,97 @@ export const TransactionItemView = (props: {
         const post = postTkBalance ? postTkBalance.uiTokenAmount.uiAmount || 0 : 0;
 
         amount = tokensUsed
-                  ? isInbound
-                    ? post - pre
-                    : isScanningWallet
+                  ? isOutbound
+                    ? isScanningWallet
                       ? meta.preBalances[0] - meta.postBalances[0]
                       : pre - post
-                  : isInbound
-                    ? meta.postBalances[1] - meta.preBalances[1]
-                    : meta.preBalances[0] - meta.postBalances[0];
-
-        preBalance = tokensUsed
-                        ? isScanningWallet
-                          ? isInbound
-                            ? meta.postBalances[1]
-                            : meta.postBalances[0]
-                          : pre
-                        : isInbound
-                          ? meta.preBalances[1]
-                          : meta.preBalances[0];
+                    : post - pre
+                  : isOutbound
+                    ? meta.preBalances[0] - meta.postBalances[0]
+                    : meta.postBalances[1] - meta.preBalances[1];
 
         postBalance = tokensUsed
                         ? isScanningWallet
-                          ? isInbound
-                            ? meta.postBalances[1]
-                            : meta.postBalances[0]
+                          ? isOutbound
+                            ? meta.postBalances[0]
+                            : meta.postBalances[1]
                           : post
-                        : isInbound
-                          ? meta.postBalances[1]
-                          : meta.postBalances[0];
+                        : isOutbound
+                          ? meta.postBalances[0]
+                          : meta.postBalances[1];
       }
 
       setPostTokenBalance(postTkBalance);
-      setPreBalance(preBalance);
       setPostBalance(postBalance);
       setAmountChange(amount);
+
     }
   }, [props]);
 
-  const getAmountFromLamports = (amount: number): number => {
-    return (amount || 0) / LAMPORTS_PER_SOL;
-  }
-
-  const isAmountNegative = (): boolean => {
-    return postBalance < preBalance ? true : false;
-  }
-
   const getTxIcon = () => {
-    if (isInboundTx) {
+    if (isFeeOnlyTx) {
+      return (
+        <IconGasStation className="mean-svg-icons gas-station warning" />
+      );
+    } else if (myAccountAmountChange > 0) {
       return (
         <ArrowDownOutlined className="mean-svg-icons incoming downright" />
       );
     } else {
-      if (isScanningUserWallet) {
-        if (hasTokenBalances) {
-          if (!isWrapping) {
-            return (
-              <IconGasStation className="mean-svg-icons gas-station warning" />
-            );
-          }
-          return (
-            <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
-          );
-        } else {
-          return (
-            <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
-          );
-        }
-      } else {
-        return (
-          <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
-        );
-      }
+      return (
+        <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
+      );
     }
   }
 
   const getTxDescription = (shorten = true): string => {
-    const trans = props.transaction.parsedTransaction.transaction.message;
+    const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
-    const sender = trans.accountKeys[0].pubkey.toBase58();
+    // Sender is always account 0 = Fee payer
+    const sender = accounts[0].pubkey.toBase58();
+    // Receiver could be any account TODO: Polish this logic
     const receiver = isScanningUserWallet &&
-                     !isInboundTx &&
-                     hasTokenBalances &&
-                     isToMyAccounts
-                      ? trans.accountKeys[outDstAccountIndex].pubkey.toBase58()
-                      : trans.accountKeys[1].pubkey.toBase58();
+                     isOutboundTx &&
+                     hasTokenBalances
+                      ? accounts[outDstAccountIndex].pubkey.toBase58()
+                      : accounts[1].pubkey.toBase58();
 
-    if (isInboundTx) {
+    if (isOutboundTx) {
+      return shorten ? shortenAddress(receiver, 6) : receiver;
+    } else {
       if (sender === faucetAddress) {
         return 'Account airdrop';
       }
       return shorten ? shortenAddress(sender, 6) : sender;
-    } else {
-      return shorten ? shortenAddress(receiver, 6) : receiver;
     }
   }
 
   const getDisplayAmount = (): string => {
-    const displayAmount =
-      postTokenBalance
+    const displayAmount = postTokenBalance
         ? isScanningUserWallet
           ? getTokenAmountAndSymbolByTokenAddress(
-              getAmountFromLamports(Math.abs(amountChange)),
+              getAmountFromLamports(amountChange),
               NATIVE_SOL.address,
               !isLocal()
             )
           : getTokenAmountAndSymbolByTokenAddress(
-              Math.abs(amountChange),
+              amountChange,
               postTokenBalance.mint,
               !isLocal()
             )
         : getTokenAmountAndSymbolByTokenAddress(
-            getAmountFromLamports(Math.abs(amountChange)),
+            getAmountFromLamports(amountChange),
             NATIVE_SOL_MINT.toBase58(),
             !isLocal()
           );
-    return isAmountNegative() ? '-' + displayAmount : displayAmount;
+    return displayAmount;
   }
 
   const getDisplayPostBalance = (): string => {
     return postTokenBalance
       ? isScanningUserWallet
         ? getTokenAmountAndSymbolByTokenAddress(
-            getAmountFromLamports(Math.abs(postBalance)),
+            getAmountFromLamports(postBalance),
             NATIVE_SOL_MINT.toBase58(),
             !isLocal()
           )
@@ -273,20 +253,16 @@ export const TransactionItemView = (props: {
             postTokenBalance ? postTokenBalance.mint || NATIVE_SOL.address : NATIVE_SOL.address,
             !isLocal()
           )
-        : getTokenAmountAndSymbolByTokenAddress(
-            getAmountFromLamports(postBalance),
-            NATIVE_SOL.address,
-            !isLocal()
-          );
+      : getTokenAmountAndSymbolByTokenAddress(
+          getAmountFromLamports(postBalance),
+          NATIVE_SOL.address,
+          !isLocal()
+        );
   }
 
   const getTransactionItems = () => {
     const signature = props.transaction.signature?.toString();
     const blockTime = props.transaction.parsedTransaction.blockTime;
-
-    if (isScanningUserWallet && isInboundTx && hasTokenBalances) {
-      return null;
-    }
 
     return (
       <a key={signature} className="item-list-row" target="_blank" rel="noopener noreferrer"
