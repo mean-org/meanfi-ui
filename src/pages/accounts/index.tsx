@@ -362,17 +362,13 @@ export const AccountsView = () => {
         .then(history => {
           consoleOut('history:', history, 'blue');
           setTransactions(history.transactionMap, true);
-          setStatus(FetchStatus.Fetched);
 
           if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
             const validItems = getSolAccountItems(history.transactionMap);
             setSolAccountItems(current => current + validItems);
           }
 
-          if (history.transactionMap && history.transactionMap.length === TRANSACTIONS_PER_PAGE) {
-            startSwitch();
-          }
-
+          setStatus(FetchStatus.Fetched);
         })
         .catch(error => {
           console.error(error);
@@ -811,6 +807,19 @@ export const AccountsView = () => {
                       }
                     </div>
                   </div>
+                  {/* Load more cta */}
+                  {lastTxSignature && (
+                    <div className="stream-share-ctas">
+                      <Button
+                        type="ghost"
+                        shape="round"
+                        size="small"
+                        disabled={status === FetchStatus.Fetching}
+                        onClick={() => startSwitch()}>
+                        {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
