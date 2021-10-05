@@ -59,8 +59,6 @@ export const SwapUi = (props: {
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
-  const [isWrap, setIsWrap] = useState(false);
-  const [isUnwrap, setIsUnwrap] = useState(false);
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -99,6 +97,36 @@ export const SwapUi = (props: {
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
   const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
   const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
+
+  const isWrap = useCallback(() => {
+
+    return (
+      fromMint !== undefined &&
+      toMint !== undefined &&
+      fromMint === NATIVE_SOL_MINT.toBase58() && 
+      toMint === WRAPPED_SOL_MINT.toBase58()
+
+    ) ? true : false;
+
+  },[
+    fromMint, 
+    toMint
+  ])
+
+  const isUnwrap = useCallback(() => {
+
+    return (
+      fromMint !== undefined &&
+      toMint !== undefined &&
+      fromMint === WRAPPED_SOL_MINT.toBase58() && 
+      toMint === NATIVE_SOL_MINT.toBase58()
+
+    ) ? true : false;
+
+  },[
+    fromMint, 
+    toMint
+  ])
 
   // Automatically updates the user account
   useEffect(() => {
@@ -169,7 +197,7 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const action = isWrap || isUnwrap 
+      const action = isWrap() || isUnwrap() 
         ? MSP_ACTIONS.wrap 
         : MSP_ACTIONS.swap;
       
@@ -191,42 +219,8 @@ export const SwapUi = (props: {
 
   }, [
     connection, 
-    isUnwrap, 
-    isWrap
-  ]);
-
-  // Updates isWrap/isUnwrap
-  useMemo(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!fromMint || !toMint) {
-      return;
-    }
-
-    setIsWrap((
-      fromMint &&
-      toMint &&
-      fromMint === NATIVE_SOL_MINT.toBase58() && 
-      toMint === WRAPPED_SOL_MINT.toBase58()
-
-    ) ? true : false);
-
-    setIsUnwrap((
-        fromMint &&
-        toMint &&
-        fromMint === WRAPPED_SOL_MINT.toBase58() && 
-        toMint === NATIVE_SOL_MINT.toBase58()
-      ) ? true : false
-    );
-    
-  }, [
-    connection, 
-    fromMint, 
-    toMint
+    isWrap, 
+    isUnwrap
   ]);
 
   // Token map for quick lookup.
@@ -260,7 +254,7 @@ export const SwapUi = (props: {
   // Updates the amounts when is wrap or unwrap
   useEffect(() => { 
 
-    if ((!isWrap && !isUnwrap) || !txFees) { return; }
+    if ((!isWrap() && !isUnwrap()) || !txFees) { return; }
 
     const timeout = setTimeout(() => {
 
@@ -322,7 +316,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!fromMint || !toMint || !txFees || !swapClient || isWrap || isUnwrap) { 
+    if (!fromMint || !toMint || !txFees || !swapClient || isWrap() || isUnwrap()) { 
       return; 
     }
     
@@ -392,7 +386,7 @@ export const SwapUi = (props: {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees === 0 ? txFees.blockchainFee : exchangeInfo.networkFees,
-        total: isWrap || isUnwrap ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
+        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
 
@@ -423,7 +417,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!fromMint || !toMint || isWrap || isUnwrap) {
+    if (!fromMint || !toMint || isWrap() || isUnwrap()) {
       return;
     }
 
@@ -697,7 +691,7 @@ export const SwapUi = (props: {
 
       let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
-      if (isWrap) {
+      if (isWrap()) {
         setIsValidBalance(balance >= (feesInfo.aggregator + feesInfo.network));
       } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         setIsValidBalance(balance >= (feesInfo.total + feesInfo.network));
@@ -868,7 +862,7 @@ export const SwapUi = (props: {
 
         let needed = 0;
 
-        if (isWrap) {
+        if (isWrap()) {
           needed = feesInfo.aggregator + feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = feesInfo.total + feesInfo.network;
@@ -891,11 +885,11 @@ export const SwapUi = (props: {
         let needed = 0;
         const symbol = mintList[fromMint].symbol;
 
-        if (isWrap) {
+        if (isWrap()) {
           needed = fromSwapAmount + feesInfo.aggregator + feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-        } else if (isUnwrap) {
+        } else if (isUnwrap()) {
           needed = fromSwapAmount + feesInfo.aggregator;
         } else {
           needed = fromSwapAmount + feesInfo.total;
@@ -1143,9 +1137,9 @@ export const SwapUi = (props: {
         throw new Error("Error executing transaction");
       }
   
-      if (isWrap || isUnwrap) {
+      if (isWrap() || isUnwrap()) {
   
-        if (isWrap) {
+        if (isWrap()) {
   
           return wrap(
             connection,
@@ -1158,7 +1152,7 @@ export const SwapUi = (props: {
     
         }
         
-        if (isUnwrap) {
+        if (isUnwrap()) {
     
           return unwrap(
             connection,
