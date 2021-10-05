@@ -392,12 +392,6 @@ export const AccountsView = () => {
             setSolAccountItems(current => current + validItems);
           }
 
-          if (history.transactionMap && history.transactionMap.length === TRANSACTIONS_PER_PAGE) {
-            setTimeout(() => {
-              startSwitch();
-            }, 100);
-          }
-
           setStatus(FetchStatus.Fetched);
         })
         .catch(error => {
