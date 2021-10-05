@@ -153,12 +153,7 @@ export const Streams = () => {
           rateIntervalInSeconds = 1;
         }
 
-        let rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
-
-        if (rateAmount === 0) {
-            rateAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
-            rate = rateAmount && rateIntervalInSeconds ? (rateAmount / rateIntervalInSeconds) : 0;
-        }
+        let rate = rateAmount > 0 && rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
 
         const slot = await connection.getSlot();
         const currentBlockTime = await connection.getBlockTime(slot) as number;

@@ -12,6 +12,7 @@ import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
 import { IconGasStation } from "../../Icons";
 import { environment } from "../../environments/environment";
+import { consoleOut } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -20,8 +21,9 @@ export const TransactionItemView = (props: {
   tokenAccounts: UserTokenAccount[];
 }) => {
 
+  const [isOutboundTx, setIsOutboundTx] = useState(false);
   const [isNativeAccountSelected, setIsNativeAccountSelected] = useState(false);
-  const [isFeeOnlyTx, setIsFeeOnlyTx] = useState(false);
+  // const [isFeeOnlyTx, setIsFeeOnlyTx] = useState(false);
   const [hasTokenBalances, setHasTokenBalances] = useState(false);
   const [outDstAccountIndex, setOutDstAccountIndex] = useState(1);
   const [postBalance, setPostBalance] = useState(0);
@@ -76,18 +78,20 @@ export const TransactionItemView = (props: {
       const isScanningWallet = props.accountAddress === props.selectedAsset?.ataAddress ? true : false;
       setIsNativeAccountSelected(isScanningWallet);
 
+      // Set isOutboundTx flag
+      if (accounts[0].pubkey.toBase58() === props.accountAddress) {
+        isOutbound = true;
+      } else {
+        isOutbound = false;
+      }
+      setIsOutboundTx(isOutbound);
+
       // Indicate that tokens were used if it matters
       const tokensUsed = meta &&
         ((meta.preTokenBalances && meta.preTokenBalances.length) || (meta.postTokenBalances && meta.postTokenBalances.length))
         ? true
         : false;
       setHasTokenBalances(tokensUsed);
-
-      // Token accounts with balance change
-      const tokenAccountsWithChanges = accounts.filter((a: ParsedMessageAccount, index: number) =>
-        isOneOfMyAccounts(a.pubkey) &&
-        getAmountChangeForAssocTokenAccount(index, meta) !== 0
-      );
 
       // First token account that had changes
       const firstTokenAccountsWithChangesAccountIndex = accounts.findIndex((a: ParsedMessageAccount, index: number) =>
@@ -97,22 +101,27 @@ export const TransactionItemView = (props: {
       setOutDstAccountIndex(firstTokenAccountsWithChangesAccountIndex || 1);
 
       if (isScanningWallet) {
-        // Get balances for the fee payer
         let pre = 0;
         let post = 0;
         let change = 0;
+        // let feePaid = 0;
+        // let solPaid = 0;
         if (meta) {
           post = meta.postBalances[accountIndex] || 0;
           pre = meta.preBalances[accountIndex] || 0;
           change = post - pre;
+          // feePaid = meta.fee;
+          // const sumPostBalances = meta.postBalances.reduce((a, b) => a + b, 0);
+          // const sumPreBalances = meta.preBalances.reduce((a, b) => a + b, 0);
+          // solPaid = sumPostBalances - sumPreBalances - change - feePaid;
         }
         setPostBalance(post);
         setBalanceChange(change);
 
-        const isSplSwap = tokenAccountsWithChanges.length >= 2;
-        const isFeePayer = accounts[0].pubkey.toBase58() === props.accountAddress;
-        const feeOnlyTx = isFeePayer && isSplSwap ? true : false;
-        setIsFeeOnlyTx(feeOnlyTx);
+        // const isFeePayer = accounts[0].pubkey.toBase58() === props.accountAddress;
+        // const feeOnlyTx = isFeePayer && change === solPaid ? true : false;
+        // setIsFeeOnlyTx(feeOnlyTx);
+        // consoleOut(`feePaid: ${feePaid}| change: ${change} | solPaid: ${solPaid}`, '', 'blue');
       }
 
       // Select token account to use
@@ -177,31 +186,28 @@ export const TransactionItemView = (props: {
   }, [props]);
 
   const getTxIcon = () => {
-    // if (isOutboundTx) {
-    //   return (
-    //     <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
-    //   );
-    //   return (
-    //     <IconGasStation className="mean-svg-icons gas-station warning" />
-    //   );
-    // } else {
-    //   return (
-    //     <ArrowDownOutlined className="mean-svg-icons incoming downright" />
-    //   );
-    // }
-    if (isNativeAccountSelected && isFeeOnlyTx) {
-      return (
-        <IconGasStation className="mean-svg-icons gas-station warning" />
-      );
-    } else if (balanceChange > 0) {
-      return (
-        <ArrowDownOutlined className="mean-svg-icons incoming downright" />
-      );
-    } else {
+    if (isOutboundTx) {
       return (
         <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
       );
+    } else {
+      return (
+        <ArrowDownOutlined className="mean-svg-icons incoming downright" />
+      );
     }
+    // if (isNativeAccountSelected && isFeeOnlyTx) {
+    //   return (
+    //     <IconGasStation className="mean-svg-icons gas-station warning" />
+    //   );
+    // } else if (balanceChange > 0) {
+    //   return (
+    //     <ArrowDownOutlined className="mean-svg-icons incoming downright" />
+    //   );
+    // } else {
+    //   return (
+    //     <ArrowUpOutlined className="mean-svg-icons outgoing upright" />
+    //   );
+    // }
   }
 
   const getTxDescription = (shorten = true): string => {
@@ -315,12 +321,10 @@ var balanceChange = 0;
 if(isNativeAccountSelected)
 {
      balanceChange = postBalance - preBalance;
-     var derivateAddressesWithChanges = tx.accounts
-          .where (a => a.isDerivativeOf(myAddress) && a.AmountChange != 0);
-
-     var isSplSwap = derivateAddressesWithChanges >=2;
+     var solPaid = sum(postBalance) - sum(preBalance) - balanceChange;
      var isFeePayer = tx.accounts.feePayer == myAddress;
-     var isFeeOnlyTx = isFeePayer && isSplSwap;
+
+     var isFeeOnlyTx = isFeePayer && balanceChange == solPaid;
 
      if(isFeeOnlyTx){
           //this is a fee
