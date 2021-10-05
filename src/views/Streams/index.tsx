@@ -1503,7 +1503,7 @@ export const Streams = () => {
               onClick={showWithdrawModal}>
               {t('streams.stream-detail.withdraw-funds-cta')}
             </Button>
-            {!customStreamDocked && streamDetail?.state !== STREAM_STATE.Schedule && (
+            {!customStreamDocked && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -1755,7 +1755,7 @@ export const Streams = () => {
               onClick={showAddFundsModal}>
               {t('streams.stream-detail.add-funds-cta')}
             </Button>
-            {!customStreamDocked && streamDetail?.state !== STREAM_STATE.Schedule && (
+            {!customStreamDocked && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
