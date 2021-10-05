@@ -354,10 +354,10 @@ export class RaydiumClient implements LPClient {
       toMint,
       fromAccount,
       toAccount,
-      new BN(amountIn * 10 ** fromDecimals),
-      new BN(toSwapAmount * 10 ** toDecimals),
+      new BN(parseFloat(amountIn.toFixed(fromDecimals)) * 10 ** fromDecimals),
+      new BN(parseFloat(toSwapAmount.toFixed(toDecimals)) * 10 ** toDecimals),
       new PublicKey(feeAddress),
-      new BN(feeAmount * 10 ** fromDecimals)
+      new BN(parseFloat(feeAmount.toFixed(fromDecimals)) * 10 ** fromDecimals)
     );
 
     transaction.feePayer = owner;

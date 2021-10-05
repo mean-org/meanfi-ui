@@ -147,7 +147,8 @@ export class MercurialClient implements LPClient {
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
           fromMint,
-          owner
+          owner,
+          true
         );
 
         const fromAccountInfo = await this.connection.getAccountInfo(fromAccount);
@@ -169,7 +170,8 @@ export class MercurialClient implements LPClient {
           ASSOCIATED_TOKEN_PROGRAM_ID,
           TOKEN_PROGRAM_ID,
           toMint,
-          owner
+          owner,
+          true
         );
 
         const toAccountInfo = await this.connection.getAccountInfo(toAccount);
@@ -187,9 +189,9 @@ export class MercurialClient implements LPClient {
           );
         }
   
-        const amountInBn = new BN(amountIn * this.USDX_POW);
+        const amountInBn = new BN(parseFloat(amountIn.toFixed(6)) * this.USDX_POW);
         const minimumAmountOut = amountOut * (100 - slippage) / 100;
-        const minimumAmountOutBn = new BN(minimumAmountOut * this.USDX_POW);
+        const minimumAmountOutBn = new BN(parseFloat(minimumAmountOut.toFixed(6)) * this.USDX_POW);
         const ephemeralKeypair = Keypair.generate();
         
         tx.add(
@@ -220,7 +222,7 @@ export class MercurialClient implements LPClient {
         );
 
         sig.push(ephemeralKeypair);
-        const feeBnAmount = new BN(feeAmount * this.USDX_POW);
+        const feeBnAmount = new BN(parseFloat(feeAmount.toFixed(6)) * this.USDX_POW);
         // Transfer fees
         const feeAccount = new PublicKey(feeAddress);
         const feeAccountToken = await Token.getAssociatedTokenAddress(

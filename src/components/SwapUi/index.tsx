@@ -59,11 +59,8 @@ export const SwapUi = (props: {
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
-  const [isWrap, setIsWrap] = useState(false);
-  const [isUnwrap, setIsUnwrap] = useState(false);
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
-  const [isFlipping, setIsFlipping] = useState(false);
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
@@ -100,6 +97,36 @@ export const SwapUi = (props: {
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
   const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
   const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
+
+  const isWrap = useCallback(() => {
+
+    return (
+      fromMint !== undefined &&
+      toMint !== undefined &&
+      fromMint === NATIVE_SOL_MINT.toBase58() && 
+      toMint === WRAPPED_SOL_MINT.toBase58()
+
+    ) ? true : false;
+
+  },[
+    fromMint, 
+    toMint
+  ])
+
+  const isUnwrap = useCallback(() => {
+
+    return (
+      fromMint !== undefined &&
+      toMint !== undefined &&
+      fromMint === WRAPPED_SOL_MINT.toBase58() && 
+      toMint === NATIVE_SOL_MINT.toBase58()
+
+    ) ? true : false;
+
+  },[
+    fromMint, 
+    toMint
+  ])
 
   // Automatically updates the user account
   useEffect(() => {
@@ -147,9 +174,7 @@ export const SwapUi = (props: {
     if (!connected || !publicKey) { return; }
     
     const listener = connection.onAccountChange(publicKey, (info) => {
-      if (info) {
-        setUserAccount(info);
-      }
+      setUserAccount(info);
     });
 
     return () => {
@@ -172,7 +197,7 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const action = isWrap || isUnwrap 
+      const action = isWrap() || isUnwrap() 
         ? MSP_ACTIONS.wrap 
         : MSP_ACTIONS.swap;
       
@@ -194,42 +219,8 @@ export const SwapUi = (props: {
 
   }, [
     connection, 
-    isUnwrap, 
-    isWrap
-  ]);
-
-  // Updates isWrap/isUnwrap
-  useMemo(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!fromMint || !toMint) {
-      return;
-    }
-
-    setIsWrap((
-      fromMint &&
-      toMint &&
-      fromMint === NATIVE_SOL_MINT.toBase58() && 
-      toMint === WRAPPED_SOL_MINT.toBase58()
-
-    ) ? true : false);
-
-    setIsUnwrap((
-        fromMint &&
-        toMint &&
-        fromMint === WRAPPED_SOL_MINT.toBase58() && 
-        toMint === NATIVE_SOL_MINT.toBase58()
-      ) ? true : false
-    );
-    
-  }, [
-    connection, 
-    fromMint, 
-    toMint
+    isWrap, 
+    isUnwrap
   ]);
 
   // Token map for quick lookup.
@@ -263,13 +254,13 @@ export const SwapUi = (props: {
   // Updates the amounts when is wrap or unwrap
   useEffect(() => { 
 
-    if ((!isWrap && !isUnwrap) || !txFees) { return; }
+    if ((!isWrap() && !isUnwrap()) || !txFees) { return; }
 
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       const exchange = {
-        amountIn: fromSwapAmount,
+        amountIn: fromSwapAmount - aggregatorFees,
         amountOut: fromSwapAmount - aggregatorFees,
         minAmountOut: fromSwapAmount - aggregatorFees,
         outPrice: 1,
@@ -325,7 +316,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!fromMint || !toMint || !txFees || !swapClient || isWrap || isUnwrap) { 
+    if (!fromMint || !toMint || !txFees || !swapClient || isWrap() || isUnwrap()) { 
       return; 
     }
     
@@ -395,7 +386,7 @@ export const SwapUi = (props: {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees === 0 ? txFees.blockchainFee : exchangeInfo.networkFees,
-        total: isWrap || isUnwrap ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
+        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
 
@@ -426,8 +417,7 @@ export const SwapUi = (props: {
       return;
     }
 
-    if (!fromMint || !toMint || isWrap || isUnwrap || isFlipping) {
-      setIsFlipping(false); 
+    if (!fromMint || !toMint || isWrap() || isUnwrap()) {
       return;
     }
 
@@ -436,7 +426,7 @@ export const SwapUi = (props: {
       setRefreshing(true);
 
       const error = (_error: any) => {
-        console.log(_error);
+        consoleOut(_error);
         setRefreshing(false); 
       };
 
@@ -498,7 +488,6 @@ export const SwapUi = (props: {
   },[
     connection, 
     fromMint, 
-    isFlipping, 
     isUnwrap, 
     isWrap, 
     toMint
@@ -512,8 +501,7 @@ export const SwapUi = (props: {
       return;
     }
     
-    if (!connected || !publicKey || !userAccount || !mintList) {
-      setUserBalances({});
+    if (!connected || !publicKey || !mintList) {
       return;
     }
 
@@ -521,7 +509,7 @@ export const SwapUi = (props: {
       
       const balancesMap: any = {};
 
-      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount.lamports / LAMPORTS_PER_SOL;
+      balancesMap[NATIVE_SOL_MINT.toBase58()] = userAccount ? (userAccount.lamports / LAMPORTS_PER_SOL) : 0;
 
       const tokens = Object.values(mintList)
         .filter((t: any) => t.symbol !== 'SOL')
@@ -568,9 +556,7 @@ export const SwapUi = (props: {
     connection, 
     mintList, 
     publicKey, 
-    userAccount,
-    userAccount?.lamports,
-    renderCount
+    userAccount
   ]);
 
   // Automatically update from token balance once
@@ -648,8 +634,7 @@ export const SwapUi = (props: {
     connection, 
     toMint, 
     userAccount, 
-    userBalances,
-    renderCount
+    userBalances
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -706,7 +691,7 @@ export const SwapUi = (props: {
 
       let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
-      if (isWrap) {
+      if (isWrap()) {
         setIsValidBalance(balance >= (feesInfo.aggregator + feesInfo.network));
       } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         setIsValidBalance(balance >= (feesInfo.total + feesInfo.network));
@@ -877,7 +862,7 @@ export const SwapUi = (props: {
 
         let needed = 0;
 
-        if (isWrap) {
+        if (isWrap()) {
           needed = feesInfo.aggregator + feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = feesInfo.total + feesInfo.network;
@@ -900,11 +885,11 @@ export const SwapUi = (props: {
         let needed = 0;
         const symbol = mintList[fromMint].symbol;
 
-        if (isWrap) {
+        if (isWrap()) {
           needed = fromSwapAmount + feesInfo.aggregator + feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-        } else if (isUnwrap) {
+        } else if (isUnwrap()) {
           needed = fromSwapAmount + feesInfo.aggregator;
         } else {
           needed = fromSwapAmount + feesInfo.total;
@@ -1152,39 +1137,30 @@ export const SwapUi = (props: {
         throw new Error("Error executing transaction");
       }
   
-      const fromDecimals = mintList[fromMint].decimals;
-      // const toDecimals = mintList[toMint].decimals;
-      const feeAmount = parseFloat(feesInfo.aggregator.toFixed(fromDecimals));
-      const feeAmountBn = new BN(feeAmount * 10 ** fromDecimals);
-      // const amountIn = parseFloat(exchangeInfo.amountIn.toFixed(fromDecimals));
-      // const amountInBn = new BN((amountIn - feeAmount) * 10 ** fromDecimals);
-      const amountInBn = new BN((exchangeInfo.amountIn - feesInfo.aggregator) * 10 ** fromDecimals);
-      // const amountOut = parseFloat(exchangeInfo.amountOut.toFixed(toDecimals));
+      if (isWrap() || isUnwrap()) {
   
-      if (isWrap || isUnwrap) {
-  
-        if (isWrap) {
+        if (isWrap()) {
   
           return wrap(
             connection,
             wallet,
             Keypair.generate(),
-            amountInBn,
+            exchangeInfo.amountIn,
             MSP_OPS,
-            feeAmountBn
+            feesInfo.aggregator
           );
     
         }
         
-        if (isUnwrap) {
+        if (isUnwrap()) {
     
           return unwrap(
             connection,
             wallet,
             Keypair.generate(),
-            amountInBn,
+            exchangeInfo.amountIn,
             MSP_OPS,
-            feeAmountBn
+            feesInfo.aggregator
           );
     
         }
@@ -1199,11 +1175,11 @@ export const SwapUi = (props: {
           wallet.publicKey,
           fromMint,
           toMint,
-          exchangeInfo.amountIn, // amountIn,
-          exchangeInfo.amountOut, //amountOut,
+          exchangeInfo.amountIn,
+          exchangeInfo.amountOut,
           slippage,
           MSP_OPS.toBase58(),
-          feeAmount
+          feesInfo.aggregator
         );
       }
 
@@ -1335,7 +1311,7 @@ export const SwapUi = (props: {
         throw new Error('Cannot sign transaction. Wallet not found'); 
       }
   
-      console.log("Signing transaction...");
+      consoleOut("Signing transaction...");
       const signedTx = await wallet.signTransaction(currentTx);
 
       if (!signedTx) {
@@ -1375,7 +1351,7 @@ export const SwapUi = (props: {
       }
 
       const encodedTx = currentTx.serialize().toString('base64');
-      console.log('tx encoded => ', encodedTx);
+      consoleOut('tx encoded => ', encodedTx);
 
       const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
         preflightCommitment: 'confirmed'
@@ -1455,7 +1431,7 @@ export const SwapUi = (props: {
       showTransactionModal();
 
       const swapTxs = await createTx();
-      console.log("initialized:", swapTxs);
+      consoleOut("initialized:", swapTxs);
 
       if (!swapTxs || transactionCancelled) {
         setIsBusy(false);
@@ -1463,7 +1439,7 @@ export const SwapUi = (props: {
       }
 
       const signedTx = await signTx(swapTxs);
-      console.log("signed:", signedTx);
+      consoleOut("signed:", signedTx);
 
       if (!signedTx || transactionCancelled) {
         setIsBusy(false);

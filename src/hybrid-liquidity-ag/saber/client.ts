@@ -295,15 +295,15 @@ export class SaberClient implements LPClient {
       poolSource: poolInfo.reserves[fromMint.toBase58()].address,
       poolDestination: poolInfo.reserves[toMint.toBase58()].address,
       userDestination: toTokenAccount,
-      amountIn: new u64(amountIn * 10 ** tokenA.decimals),
-      minimumAmountOut: new u64(amountWithSlippage * 10 ** tokenB.decimals)
+      amountIn: new u64(parseFloat(amountIn.toFixed(tokenA.decimals)) * 10 ** tokenA.decimals),
+      minimumAmountOut: new u64(parseFloat(amountWithSlippage.toFixed(tokenA.decimals)) * 10 ** tokenB.decimals)
     };
 
     tx.add(
       this.saberSwap.swap(swapArgs)
     );
 
-    const feeBnAmount = new BN(feeAmount * 10 ** tokenA.decimals);
+    const feeBnAmount = new BN(parseFloat(feeAmount.toFixed(tokenA.decimals)) * 10 ** tokenA.decimals);
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
     const feeAccountToken = await Token.getAssociatedTokenAddress(
