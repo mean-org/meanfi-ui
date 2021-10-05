@@ -149,10 +149,6 @@ export const Streams = () => {
         let rateAmount = clonedDetail.rateAmount;
         let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
 
-        if (rateIntervalInSeconds === 0) {
-          rateIntervalInSeconds = 1;
-        }
-
         let rate = rateAmount > 0 && rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
 
         const slot = await connection.getSlot();
