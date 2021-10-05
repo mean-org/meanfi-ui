@@ -170,9 +170,9 @@ export const Streams = () => {
             state = STREAM_STATE.Schedule;
         } else if (isStreaming && escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
             state = STREAM_STATE.Running;
-        } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && new Date(clonedDetail.fundedOnUtc as string).getTime() < nowUtc) {
+        } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime < threeDays) {
             state = STREAM_STATE.Paused;
-        } else if (elapsedTime > threeDays) {
+        } else if (elapsedTime >= threeDays) {
             state = STREAM_STATE.Ended;
         }
 

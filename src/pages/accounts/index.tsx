@@ -687,12 +687,12 @@ export const AccountsView = () => {
       </Helmet>
       <div className="container main-container">
 
-        {window.location.hostname === 'localhost' && (
+        {/* {window.location.hostname === 'localhost' && (
           <div className="debug-bar">
             <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
             <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
           </div>
-        )}
+        )} */}
 
         {/* This is a SEO mandatory h1 but it is not visible */}
         <h1 className="mandatory-h1">Accounts, Where you keep track of your assets</h1>
