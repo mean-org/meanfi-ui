@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import {
   IconBank,
+  IconCheckedBox,
   IconClock,
   IconDocument,
   IconDownload,
@@ -60,7 +61,7 @@ import { AddFundsModal } from "../../components/AddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../components/CloseStreamModal";
 import { useNativeAccount } from "../../contexts/accounts";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
@@ -348,13 +349,6 @@ export const Streams = () => {
     return item.beneficiaryAddress === publicKey?.toBase58();
   }, [publicKey]);
 
-  const isStreaming = (item: StreamInfo): boolean => {
-    return item && item.escrowVestedAmount < (item.totalDeposits - item.totalWithdrawals) &&
-           item.streamResumedBlockTime >= item.escrowVestedAmountSnapBlockTime
-           ? true
-           : false;
-  }
-
   const isAuthority = (): boolean => {
     return streamDetail && wallet && wallet.publicKey &&
            (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
@@ -369,12 +363,18 @@ export const Streams = () => {
   const getStreamIcon = (item: StreamInfo) => {
     const isInbound = isInboundStream(item);
 
+    if (item.state === STREAM_STATE.Ended) {
+      return (
+        <IconCheckedBox className="mean-svg-icons ended" />
+      );
+    }
+
     if (isInbound) {
       if (item.isUpdatePending) {
         return (
           <IconDocument className="mean-svg-icons pending" />
         );
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
         return (
           <IconIncomingPaused className="mean-svg-icons incoming" />
         );
@@ -388,7 +388,7 @@ export const Streams = () => {
         return (
           <IconDocument className="mean-svg-icons pending" />
         );
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
         return (
           <IconOutgoingPaused className="mean-svg-icons outgoing" />
         );
@@ -440,7 +440,7 @@ export const Streams = () => {
     if (isInbound) {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
         title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
@@ -448,7 +448,7 @@ export const Streams = () => {
     } else {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
         title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
@@ -460,32 +460,28 @@ export const Streams = () => {
   const getTransactionSubTitle = (item: StreamInfo): string => {
     let title = '';
     const isInbound = isInboundStream(item);
-    const now = new Date();
-    const streamStartDate = new Date(item.startUtc as string);
     if (isInbound) {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-inbound');
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused) {
         title = t('streams.stream-list.subtitle-paused-inbound');
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = t('streams.stream-list.subtitle-scheduled-inbound');
+        title += ` ${getShortDate(item.startUtc as string)}`;
       } else {
-        if (streamStartDate > now) {
-          title = t('streams.stream-list.subtitle-scheduled-inbound');
-        } else {
-          title = t('streams.stream-list.subtitle-running-inbound');
-        }
+        title = t('streams.stream-list.subtitle-running-inbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
       }
     } else {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-outbound');
-      } else if (!item.isStreaming) {
+      } else if (item.state === STREAM_STATE.Paused) {
         title = t('streams.stream-list.subtitle-paused-outbound');
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = t('streams.stream-list.subtitle-scheduled-outbound');
+        title += ` ${getShortDate(item.startUtc as string)}`;
       } else {
-        if (streamStartDate > now) {
-          title = t('streams.stream-list.subtitle-scheduled-outbound');
-        } else {
-          title = t('streams.stream-list.subtitle-running-outbound');
-        }
+        title = t('streams.stream-list.subtitle-running-outbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
       }
     }
@@ -1326,7 +1322,7 @@ export const Streams = () => {
       <Spin spinning={loadingStreams}>
         <div className="stream-fields-container">
           {/* Background animation */}
-          {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) && !isStreamScheduled(streamDetail.startUtc as string) ? (
+          {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
             <div className="stream-background">
               <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
             </div>
@@ -1575,7 +1571,7 @@ export const Streams = () => {
       <Spin spinning={loadingStreams}>
         <div className="stream-fields-container">
           {/* Background animation */}
-          {streamDetail && streamDetail.isStreaming && isStreaming(streamDetail) && !isStreamScheduled(streamDetail.startUtc as string) ? (
+          {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
             <div className="stream-background">
               <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
             </div>

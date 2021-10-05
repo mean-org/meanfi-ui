@@ -2430,6 +2430,9 @@ section.content {
           &.pending {
             color: var(--color-pending-transaction);
           }
+          &.ended {
+            color: var(--color-pending-transaction);
+          }
           &.paused {
             color: var(--color-paused-transaction);
           }
@@ -2730,6 +2733,9 @@ section.content {
         color: var(--color-outgoing-transaction);
       }
       &.pending {
+        color: var(--color-pending-transaction);
+      }
+      &.ended {
         color: var(--color-pending-transaction);
       }
       &.paused {
@@ -3161,9 +3167,6 @@ section.content {
           }
           &.outgoing {
             color: var(--color-outgoing-transaction);
-          }
-          &.pending {
-            color: var(--color-pending-transaction);
           }
           &.paused {
             color: var(--color-paused-transaction);
