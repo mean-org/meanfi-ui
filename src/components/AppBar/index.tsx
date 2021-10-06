@@ -13,11 +13,12 @@ import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
-import { AppConfigService, environment } from '../../environments/environment';
+import { environment } from '../../environments/environment';
 import { PublicKey } from '@solana/web3.js';
 import { listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { consoleOut } from '../../utils/ui';
 import { CustomCSSProps } from '../../utils/css-custom-props';
+import { appConfig } from '../..';
 
 const { SubMenu } = Menu;
 
@@ -88,8 +89,7 @@ export const AppBar = (props: { menuType: string }) => {
   }
 
   const getChartsLink = (): string => {
-    const config = new AppConfigService();
-    const bucket = config.getConfig().influxDbBucket;
+    const bucket = appConfig.getConfig().influxDbBucket;
     return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
   }
 

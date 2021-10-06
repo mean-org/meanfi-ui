@@ -6,7 +6,6 @@ import { AppStateContext } from '../../contexts/appstate';
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { consoleOut, copyText } from '../../utils/ui';
-import { AppConfigService } from '../../environments/environment';
 import {
   FacebookShareButton,
   LinkedinShareButton,
@@ -15,6 +14,7 @@ import {
   WhatsappShareButton,
 } from "react-share";
 import { useWallet } from '../../contexts/wallet';
+import { appConfig } from '../..';
 
 export const ReferFriendModal = (props: {
   handleClose: any;
@@ -27,8 +27,7 @@ export const ReferFriendModal = (props: {
 
   useEffect(() => {
     if (!referralLink && publicKey) {
-      const config = new AppConfigService();
-      const newLink = `${config.getConfig().appUrl}?ref=${publicKey.toBase58()}`;
+      const newLink = `${appConfig.getConfig().appUrl}?ref=${publicKey.toBase58()}`;
       setReferralLink(newLink);
     }
   }, [
