@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Redirect, useLocation } from "react-router-dom";
 import "./../../App.less";
 import { AppConfig } from "../..";
 import { Layout } from "antd";
@@ -17,13 +17,14 @@ import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
-import { useLocalStorageState } from "../../utils/utils";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
+  const [redirect, setRedirect] = useState<string | null>(null);
+
   const {
     theme,
     referrals,
@@ -180,6 +181,36 @@ export const AppLayout = React.memo((props: any) => {
     setPreviousWalletConnectState
   ]);
 
+  // Get referral address from query string params and save it to localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('ref')) {
+      const address = params.get('ref');
+      if (address && isValidAddress(address)) {
+        consoleOut('Referral address:', address, 'green');
+        setReferralAddress(address);
+        notify({
+          message: t('notifications.friend-referral-completed'),
+          description: t('referrals.address-processed'),
+          type: "info"
+        });
+        setRedirect('/');
+      } else {
+        consoleOut('Invalid address', '', 'red');
+        notify({
+          message: t('notifications.error-title'),
+          description: t('referrals.address-invalid'),
+          type: "error"
+        });
+        setRedirect('/');
+      }
+    }
+  }, [
+    location,
+    t,
+    setReferralAddress,
+  ]);
+
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
       setDtailsPanelOpen(false);
@@ -191,6 +222,7 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
+    {redirect && <Redirect to={redirect} />}
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">

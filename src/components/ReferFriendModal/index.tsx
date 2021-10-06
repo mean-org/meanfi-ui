@@ -28,7 +28,7 @@ export const ReferFriendModal = (props: {
   useEffect(() => {
     if (!referralLink && publicKey) {
       const config = new AppConfigService();
-      const newLink = `${config.getConfig().appUrl}/referrals/${publicKey.toBase58()}`;
+      const newLink = `${config.getConfig().appUrl}?ref=${publicKey.toBase58()}`;
       consoleOut('referralLink:', newLink, 'blue');
       setReferralLink(newLink);
     }
@@ -70,7 +70,7 @@ export const ReferFriendModal = (props: {
             <div className="transaction-field">
               <div className="transaction-field-row main-row">
                 <span className="input-left recipient-field-wrapper">
-                  <span className="text-monospace">{referralLink}</span>
+                  <span className="referral-link text-monospace">{referralLink}</span>
                 </span>
                 <div className="addon-right simplelink" onClick={onCopyReferralLink}>
                   <IconCopy className="mean-svg-icons" />
