@@ -39,8 +39,8 @@ export const CoinInput = (props: {
             <span className="field-label-right">
                 {connected && (
                     <>
-                        <span className="text-uppercase">{t('transactions.send-amount.label-right')}:</span>
-                        <span className={`${props.translationId === 'source' ? 'balance-amount simplelink' : 'balance-amount'}`} onClick={props.onMaxAmount} role="link">
+                        <span>{t('transactions.send-amount.label-right')}:</span>
+                        <span className="balance-amount">
                             {`${props.token && props.tokenBalance
                                 ? props.tokenBalance
                                 : "0"
@@ -77,6 +77,9 @@ export const CoinInput = (props: {
             </div>
             <span className="add-ons">
                 <div className={`token-group ${props.inputPosition === "right" ? 'flex-row-reverse' : ''}`}>
+                    {props.token && props.tokenBalance && props.onMaxAmount && props.translationId === 'source' ? (
+                        <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
+                    ) : null}
                     <div className="token-selector simplelink" onClick={props.onSelectToken}>
                         <>
                         {props.token ? (
