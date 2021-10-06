@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Link, Redirect, useLocation } from "react-router-dom";
 import "./../../App.less";
-import { AppConfig } from "../..";
+import { appConfig } from "../..";
 import { Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
@@ -57,10 +57,10 @@ export const AppLayout = React.memo((props: any) => {
   }
 
   const sendConnectionMetric = useCallback((address: string) => {
-    const url = AppConfig.getConfig().influxDbUrl;
-    const token = AppConfig.getConfig().influxDbToken;
-    const org = AppConfig.getConfig().influxDbOrg;
-    const bucket = AppConfig.getConfig().influxDbBucket;
+    const url = appConfig.getConfig().influxDbUrl;
+    const token = appConfig.getConfig().influxDbToken;
+    const org = appConfig.getConfig().influxDbOrg;
+    const bucket = appConfig.getConfig().influxDbBucket;
     const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket);
     const data = {
       platform: getPlatform(),

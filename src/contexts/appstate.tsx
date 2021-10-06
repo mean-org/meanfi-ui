@@ -17,7 +17,6 @@ import { ENDPOINTS, getEndpointByRuntimeEnv, useConnection, useConnectionConfig 
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { AppConfigService } from "../environments/environment";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { useTranslation } from "react-i18next";
@@ -29,6 +28,7 @@ import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut } from "../utils/ui";
+import { appConfig } from "..";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -205,8 +205,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
 
   if (!streamProgramAddress) {
-    const config = new AppConfigService();
-    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+    setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
   }
 
   const today = new Date().toLocaleDateString();

@@ -8,10 +8,11 @@ import { useWallet } from "../../contexts/wallet";
 import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
 import { consoleOut, copyText } from "../../utils/ui";
-import { AppConfig, AppConfigService, environment } from '../../environments/environment';
+import { AppConfig, environment } from '../../environments/environment';
 import "./style.less";
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import useScript from '../../hooks/useScript';
+import { appConfig } from '../..';
 
 const QRCode = require('qrcode.react');
 
@@ -35,8 +36,7 @@ export const DepositOptions = (props: {
   // Get App config
   const [currentConfig, setCurrentConfig] = useState<AppConfig | null>(null);
   if (!currentConfig) {
-    const config = new AppConfigService();
-    setCurrentConfig(config.getConfig());
+    setCurrentConfig(appConfig.getConfig());
   }
 
   const enableAddressSharing = () => {
