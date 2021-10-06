@@ -29,7 +29,6 @@ export const ReferFriendModal = (props: {
     if (!referralLink && publicKey) {
       const config = new AppConfigService();
       const newLink = `${config.getConfig().appUrl}?ref=${publicKey.toBase58()}`;
-      consoleOut('referralLink:', newLink, 'blue');
       setReferralLink(newLink);
     }
   }, [

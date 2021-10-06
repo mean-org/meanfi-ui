@@ -216,22 +216,17 @@ export const TransactionItemView = (props: {
     // Sender is always account 0 = Fee payer
     const sender = accounts[0].pubkey.toBase58();
     // Receiver could be any account TODO: Polish this logic
-    const destAccount = accounts[outDstAccountIndex]
+    const receiver = accounts[outDstAccountIndex]
           ? accounts[outDstAccountIndex].pubkey.toBase58()
           : accounts[1].pubkey.toBase58();
-    const receiver = isNativeAccountSelected &&
-                     balanceChange > 0 &&
-                     hasTokenBalances
-                      ? destAccount
-                      : accounts[1].pubkey.toBase58();
 
-    if (balanceChange > 0) {
+    if (isOutboundTx) {
+      return shorten ? shortenAddress(receiver, 6) : receiver;
+    } else {
       if (sender === faucetAddress) {
         return 'Account airdrop';
       }
       return shorten ? shortenAddress(sender, 6) : sender;
-    } else {
-      return shorten ? shortenAddress(receiver, 6) : receiver;
     }
   }
 
