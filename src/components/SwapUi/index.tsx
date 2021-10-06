@@ -425,34 +425,14 @@ export const SwapUi = (props: {
 
       setRefreshing(true);
 
+      const tokensPools = getTokensPools(fromMint, toMint);
+      const consoleMsg = tokensPools.length ? 'Liquidity Pool' : 'Serum Market';
+
       const error = (_error: any) => {
         consoleOut(_error);
         setRefreshing(false); 
       };
 
-      const tokensPools = getTokensPools(fromMint, toMint);
-
-      let promise: any;
-      let client: any;
-
-      if (tokensPools.length) {
-        const optimalPool = getOptimalPool(tokensPools);
-        client = getClient(connection, optimalPool.protocolAddress) as LPClient;
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-        promise = client.getPoolInfo(optimalPool.address);
-      } else {
-        client = getClient(connection, SERUM.toBase58()) as SerumClient;
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-        promise = client.getMarketInfo(fromMint, toMint);
-      }
-
-      const consoleMsg = tokensPools.length ? 'Liquidity Pool' : 'Serum Market';
       const success = (info: any) => {
 
         if (tokensPools.length) {
@@ -475,10 +455,37 @@ export const SwapUi = (props: {
         }
       };
 
-      promise
-        .then((info: any) => success(info))
-        .catch((_error: any) => error(_error));
+      let client: any;
 
+      if (tokensPools.length) {
+
+        const optimalPool = getOptimalPool(tokensPools);
+        client = getClient(connection, optimalPool.protocolAddress) as LPClient;
+
+        if (!client) {
+          error(new Error('Exchange client not found'));
+          return;
+        }
+
+        client
+          .getPoolInfo(optimalPool.address)
+          .then((info: any) => success(info))
+          .catch((_error: any) => error(_error));
+
+      } else {
+
+        client = getClient(connection, SERUM.toBase58()) as SerumClient;
+
+        if (!client) {
+          error(new Error('Exchange client not found'));
+          return;
+        }
+
+        client
+          .getMarketInfo(fromMint, toMint)
+          .then((info: any) => success(info))
+          .catch((_error: any) => error(_error));
+      }
     });
 
     return () => {
