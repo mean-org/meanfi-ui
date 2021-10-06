@@ -6,7 +6,8 @@ export const logger = new Loggly.LogglyTracker();
 logger.push({
     'logglyKey': process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
     'tag': process.env.REACT_APP_LOGGLY_TAG,
-    'subdomain': 'intelerit.com'
+    'subdomain': 'intelerit.com',
+    'useDomainProxy': true
 });
 console.log('logger:', logger);
 
