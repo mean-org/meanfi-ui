@@ -16,7 +16,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: "mainnet-beta" as ENV,
-    endpoint: clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
+    endpoint: 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
     chainID: ChainID.MainnetBeta,
   },
   {
