@@ -75,6 +75,41 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
     return title;
 };
 
+export function getTransactionStatusForLogs (status: TransactionStatus): string {
+    switch (status) {
+        case TransactionStatus.TransactionStart:
+            return 'Collecting transaction data';
+        case TransactionStatus.InitTransaction:
+            return 'Init transaction';
+        case TransactionStatus.TransactionStartFailure:
+            return 'Cannot start transaction';
+        case TransactionStatus.InitTransactionSuccess:
+            return 'Transaction successfully initialized';
+        case TransactionStatus.SignTransaction:
+            return 'Waiting for confirmation';
+        case TransactionStatus.SendTransaction:
+            return 'Sending transaction';
+        case TransactionStatus.ConfirmTransaction:
+            return 'Confirming transaction';
+        case TransactionStatus.InitTransactionFailure:
+            return 'Could not init transaction';
+        case TransactionStatus.SignTransactionFailure:
+            return 'Transaction rejected';
+        case TransactionStatus.SignTransactionSuccess:
+            return 'Transaction signed by the wallet';
+        case TransactionStatus.SendTransactionFailure:
+            return 'Failure submitting transaction';
+        case TransactionStatus.SendTransactionSuccess:
+            return 'Transaction sent successfully';
+        case TransactionStatus.ConfirmTransactionFailure:
+            return 'The transaction could not be confirmed';
+        case TransactionStatus.TransactionFinished:
+            return 'Operation completed. Transaction sent and confirmed!';
+        default:
+            return ''; // 'Idle';
+    }
+}
+
 export const copyText = (val: any): boolean => {
     if (!val) { return false; }
     const selBox = document.createElement('textarea');

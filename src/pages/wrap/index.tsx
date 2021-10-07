@@ -19,7 +19,7 @@ import {
   LoadingOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxFeeAmount, getTxPercentFeeAmount } from "../../utils/ui";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
@@ -114,6 +114,7 @@ export const WrapView = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: string;
+    const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -121,9 +122,14 @@ export const WrapView = () => {
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         const amount = parseFloat(wrapAmount as string);
+
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
         });
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
@@ -134,6 +140,11 @@ export const WrapView = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: ''
+          });
+          customLogger.logError('Transaction error', transactionLog);
           return false;
         }
 
@@ -142,27 +153,41 @@ export const WrapView = () => {
           publicKey as PublicKey, // from
           amount // amount
         )
-          .then((value) => {
-            consoleOut("wrapSol returned transaction:", value);
-            // Stage 1 completed - The transaction is created and returned
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction,
-            });
-            transaction = value;
-            return true;
-          })
-          .catch((error) => {
-            console.error("wrapSol transaction init error:", error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure,
-            });
-            customLogger.logError('wrapSol transaction init error', error);
-            return false;
+        .then((value) => {
+          consoleOut("wrapSol returned transaction:", value);
+          // Stage 1 completed - The transaction is created and returned
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction,
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
+          });
+          transaction = value;
+          return true;
+        })
+        .catch((error) => {
+          console.error("wrapSol transaction init error:", error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure,
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Transaction error', transactionLog);
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', transactionLog);
+        return false;
       }
-      return false;
     };
 
     const signTx = async (): Promise<boolean> => {
@@ -181,6 +206,10 @@ export const WrapView = () => {
               lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransaction,
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: `Signer: ${wallet.publicKey.toBase58()}`
+            });
             return true;
           })
           .catch(error => {
@@ -189,7 +218,11 @@ export const WrapView = () => {
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure,
             });
-            customLogger.logError('Signing transaction failed!', error);
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            });
+            customLogger.logError('Transaction error', transactionLog);
             return false;
           });
       } else {
@@ -198,6 +231,11 @@ export const WrapView = () => {
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure,
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', transactionLog);
         return false;
       }
     };
@@ -215,6 +253,10 @@ export const WrapView = () => {
               currentOperation: TransactionStatus.ConfirmTransaction,
             });
             signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
             return true;
           })
           .catch((error) => {
@@ -223,10 +265,11 @@ export const WrapView = () => {
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
-            customLogger.logError('Send transaction failed!', {
-              error,
-              encodedTx
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
             });
+            customLogger.logError('Transaction error', transactionLog);
             return false;
           });
       } else {
@@ -234,6 +277,11 @@ export const WrapView = () => {
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.SendTransactionFailure,
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', transactionLog);
         return false;
       }
     };
@@ -248,6 +296,10 @@ export const WrapView = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished,
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+            result: ''
+          });
           return true;
         })
         .catch(() => {
@@ -255,7 +307,11 @@ export const WrapView = () => {
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure,
           });
-          customLogger.logError('Could not confirm transaction!', signature);
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Transaction error', transactionLog);
           return false;
         });
     };
@@ -275,7 +331,9 @@ export const WrapView = () => {
             const confirmed = await confirmTx();
             consoleOut("confirmed:", confirmed);
             if (confirmed) {
-              // Save signature to the state
+              // Report success
+              consoleOut('transactionLog:', transactionLog, 'blue');
+              customLogger.logInfo('Transaction successful', transactionLog);
               setIsBusy(false);
             } else {
               setIsBusy(false);
@@ -518,8 +576,7 @@ export const WrapView = () => {
                 onCancel={hideTransactionModal}
                 afterClose={onAfterTransactionModalClosed}
                 width={330}
-                footer={null}
-              >
+                footer={null}>
                 <div className="transaction-progress">
                   {isBusy ? (
                     <>
