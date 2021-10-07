@@ -16,7 +16,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: "mainnet-beta" as ENV,
-    endpoint: 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
+    endpoint: 'https://patient-small-cloud.solana-mainnet.quiknode.pro/351f1eeaa7b316bdaac55f0ce0cee29397fc1a6a/', // 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
     chainID: ChainID.MainnetBeta,
   },
   {
