@@ -20,6 +20,7 @@ import {
   getAmountWithTokenSymbol,
   getTransactionModalTitle,
   getTransactionOperationDescription,
+  getTransactionStatusForLogs,
   getTxFeeAmount,
   isToday,
   isValidAddress
@@ -36,6 +37,7 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -346,6 +348,7 @@ export const OneTimePayment = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -392,6 +395,17 @@ export const OneTimePayment = () => {
         };
         consoleOut('data:', data, 'blue');
 
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', otpFees.blockchainFee, 'blue');
@@ -401,6 +415,11 @@ export const OneTimePayment = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: ''
+          });
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         }
 
@@ -421,6 +440,10 @@ export const OneTimePayment = () => {
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
+          });
           transaction = value;
           return true;
         })
@@ -430,10 +453,21 @@ export const OneTimePayment = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', { transcript: transactionLog });
+        return false;
       }
-      return false;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -442,72 +476,103 @@ export const OneTimePayment = () => {
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
-          // Stage 2 completed - The transaction was signed
+          signedTransaction = signed;
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
           return true;
         })
-        .catch(() => {
+        .catch(error => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         });
       } else {
-        console.error('Cannot sign transaction! Wallet not found!');
+        console.error("Cannot sign transaction! Wallet not found!");
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.SignTransactionFailure
+          currentOperation: TransactionStatus.SignTransactionFailure,
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', { transcript: transactionLog });
         return false;
       }
     }
 
     const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
-        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()), {skipPreflight: true})
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
+        return await connection
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then(sig => {
-            consoleOut('sendSignedTransactions returned a signature:', sig);
-            // Stage 3 completed - The transaction was sent and a signature was returned
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
             signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
             return true;
           })
           .catch(error => {
             console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
+              currentOperation: TransactionStatus.SendTransactionFailure,
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Transaction error', { transcript: transactionLog });
             return false;
           });
       } else {
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
+          currentOperation: TransactionStatus.SendTransactionFailure,
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Transaction error', { transcript: transactionLog });
         return false;
       }
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return connection.confirmTransaction(signature, "confirmed")
+      return await connection
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
-            // Stage 4 completed - The transaction was confirmed!
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: ''
             });
             return true;
           } else {
@@ -515,6 +580,11 @@ export const OneTimePayment = () => {
               lastOperation: TransactionStatus.ConfirmTransaction,
               currentOperation: TransactionStatus.ConfirmTransactionFailure
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('Transaction error', { transcript: transactionLog });
             return false;
           }
         })
@@ -523,18 +593,22 @@ export const OneTimePayment = () => {
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         });
     }
 
-    // Lets hit it
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      consoleOut('create:', create);
+      consoleOut('created:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        consoleOut('sign:', sign);
+        consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
@@ -542,7 +616,8 @@ export const OneTimePayment = () => {
             const confirmed = await confirmTx();
             consoleOut('confirmed:', confirmed);
             if (confirmed) {
-              // Save signature to the state
+              // Report success
+              customLogger.logInfo('Transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

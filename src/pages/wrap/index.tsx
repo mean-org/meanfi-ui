@@ -127,6 +127,13 @@ export const WrapView = () => {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction,
         });
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: `wrapAmount: ${amount}`
+        });
+
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: ''
@@ -144,7 +151,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: ''
           });
-          customLogger.logError('Transaction error', transactionLog);
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         }
 
@@ -177,7 +184,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Transaction error', transactionLog);
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -185,7 +192,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', transactionLog);
+        customLogger.logError('Transaction error', { transcript: transactionLog });
         return false;
       }
     };
@@ -201,7 +208,6 @@ export const WrapView = () => {
               signed
             );
             signedTransaction = signed;
-            // Stage 2 completed - The transaction was signed
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransaction,
@@ -222,7 +228,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
             });
-            customLogger.logError('Transaction error', transactionLog);
+            customLogger.logError('Transaction error', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -235,7 +241,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', transactionLog);
+        customLogger.logError('Transaction error', { transcript: transactionLog });
         return false;
       }
     };
@@ -246,8 +252,7 @@ export const WrapView = () => {
         return await connection
           .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then((sig) => {
-            consoleOut("sendSignedTransactions returned a signature:", sig);
-            // Stage 3 completed - The transaction was sent and a signature was returned
+            consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction,
@@ -269,7 +274,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Transaction error', transactionLog);
+            customLogger.logError('Transaction error', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -281,7 +286,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', transactionLog);
+        customLogger.logError('Transaction error', { transcript: transactionLog });
         return false;
       }
     };
@@ -290,8 +295,7 @@ export const WrapView = () => {
       return await connection
         .confirmTransaction(signature, "confirmed")
         .then((result) => {
-          consoleOut("confirmTransactions result:", result);
-          // Stage 4 completed - The transaction was confirmed!
+          consoleOut("confirmTransaction result:", result);
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished,
@@ -311,7 +315,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
             result: signature
           });
-          customLogger.logError('Transaction error', transactionLog);
+          customLogger.logError('Transaction error', { transcript: transactionLog });
           return false;
         });
     };
@@ -319,7 +323,7 @@ export const WrapView = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      consoleOut("initialized:", create);
+      consoleOut("created:", create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
         consoleOut("signed:", sign);
@@ -332,8 +336,7 @@ export const WrapView = () => {
             consoleOut("confirmed:", confirmed);
             if (confirmed) {
               // Report success
-              consoleOut('transactionLog:', transactionLog, 'blue');
-              customLogger.logInfo('Transaction successful', transactionLog);
+              customLogger.logInfo('Transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else {
               setIsBusy(false);
