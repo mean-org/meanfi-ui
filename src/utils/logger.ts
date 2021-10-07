@@ -7,9 +7,8 @@ logger.push({
     'logglyKey': process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
     'tag': process.env.REACT_APP_LOGGLY_TAG,
     'subdomain': 'intelerit.com',
-    'useDomainProxy': window.location.hostname === 'localhost' ? false : true
+    'useDomainProxy': false
 });
-console.log('logger:', logger);
 
 export class LoggerJsonData {
     Application!: string;
