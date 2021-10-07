@@ -1,5 +1,5 @@
 import { environment } from "../environments/environment";
-import { osName } from "react-device-detect";
+import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
 
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
@@ -7,7 +7,7 @@ logger.push({
     'logglyKey': process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
     'tag': process.env.REACT_APP_LOGGLY_TAG,
     'subdomain': 'intelerit.com',
-    'useDomainProxy': true
+    'useDomainProxy': window.location.hostname === 'localhost' ? false : true
 });
 console.log('logger:', logger);
 
@@ -19,6 +19,7 @@ export class LoggerJsonData {
     MachineName!: string;
     Architecture?: string;
     Process?: string;
+    Browser?: string;
     Message!: string;
     Data?: any;
     Elapsed?: number;
@@ -65,6 +66,10 @@ export class CustomLoggerService {
         }
     }
 
+    private getBrowser(): string {
+        return `${browserName} ${browserVersion}`;
+    }
+
     private getLoggerJsonData(message: string, level: LogLevel, data?: any): LoggerJsonData {
         let logBody: LoggerJsonData = {
             Application: this.applicationName,
@@ -73,10 +78,14 @@ export class CustomLoggerService {
             osName,
             MachineName: window.location.hostname,
             Architecture: process.arch,
-            Process: process.title,
             Message: message,
             timestamp: new Date().toISOString()
         };
+        if (isBrowser) {
+            logBody.Browser = this.getBrowser();
+        } else {
+            logBody.Process = process.title;
+        }
         if (data) {
             logBody.Data = data;
         }

@@ -18,7 +18,7 @@ console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
 console.log(`%cProgramId:`, 'color:brown', appConfig.getConfig().streamProgramAddress);
 export const customLogger = new CustomLoggerService();
-customLogger.logInfo(`ProgramId: ${appConfig.getConfig().streamProgramAddress}`, appConfig.getConfig());
+customLogger.logInfo('Application startup', appConfig.getConfig());
 
 i18next.use(LanguageDetector).init({
   fallbackLng: 'en',

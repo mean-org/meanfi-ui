@@ -25,6 +25,7 @@ import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
 import { useNativeAccount } from "../../contexts/accounts";
+import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -156,6 +157,7 @@ export const WrapView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.InitTransactionFailure,
             });
+            customLogger.logError('wrapSol transaction init error', error);
             return false;
           });
       }
@@ -179,12 +181,13 @@ export const WrapView = () => {
             });
             return true;
           })
-          .catch(() => {
+          .catch(error => {
             console.error("Signing transaction failed!");
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure,
             });
+            customLogger.logError('Signing transaction failed!', error);
             return false;
           });
       } else {
@@ -217,6 +220,7 @@ export const WrapView = () => {
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
+            customLogger.logError('Send transaction failed!', error);
             return false;
           });
       } else {
@@ -238,6 +242,10 @@ export const WrapView = () => {
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished,
           });
+          customLogger.logInfo('Transaction finished and confirmed!', {
+            signature,
+            result
+          });
           return true;
         })
         .catch(() => {
@@ -245,6 +253,7 @@ export const WrapView = () => {
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure,
           });
+          customLogger.logError('Could not confirm transaction!', signature);
           return false;
         });
     };
