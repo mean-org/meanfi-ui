@@ -419,7 +419,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: ''
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -457,7 +457,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -465,7 +465,7 @@ export const OneTimePayment = () => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -497,7 +497,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -510,7 +510,7 @@ export const OneTimePayment = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -543,7 +543,7 @@ export const OneTimePayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Transaction error', { transcript: transactionLog });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -555,7 +555,7 @@ export const OneTimePayment = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -584,7 +584,7 @@ export const OneTimePayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
               result: signature
             });
-            customLogger.logError('Transaction error', { transcript: transactionLog });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
             return false;
           }
         })
@@ -597,7 +597,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
             result: signature
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
     }
@@ -617,7 +617,7 @@ export const OneTimePayment = () => {
             consoleOut('confirmed:', confirmed);
             if (confirmed) {
               // Report success
-              customLogger.logInfo('Transaction successful', { transcript: transactionLog });
+              customLogger.logInfo('One-Time Payment transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

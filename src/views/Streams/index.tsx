@@ -368,13 +368,14 @@ export const Streams = () => {
   }
 
   const getStreamIcon = (item: StreamInfo) => {
-    const isInbound = isInboundStream(item);
 
     if (item.state === STREAM_STATE.Ended) {
       return (
         <IconCheckedBox className="mean-svg-icons ended" />
       );
     }
+
+    const isInbound = isInboundStream(item);
 
     if (isInbound) {
       if (item.isUpdatePending) {
@@ -466,7 +467,13 @@ export const Streams = () => {
 
   const getTransactionSubTitle = (item: StreamInfo): string => {
     let title = '';
+
+    if (item.state === STREAM_STATE.Ended) {
+      return t('streams.stream-list.subtitle-ended');
+    }
+
     const isInbound = isInboundStream(item);
+
     if (isInbound) {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-inbound');

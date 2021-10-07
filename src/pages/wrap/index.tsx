@@ -151,7 +151,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: ''
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -184,7 +184,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -192,7 +192,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
         return false;
       }
     };
@@ -228,7 +228,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
             });
-            customLogger.logError('Transaction error', { transcript: transactionLog });
+            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -241,7 +241,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
         return false;
       }
     };
@@ -274,7 +274,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Transaction error', { transcript: transactionLog });
+            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -286,7 +286,7 @@ export const WrapView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Transaction error', { transcript: transactionLog });
+        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
         return false;
       }
     };
@@ -315,7 +315,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
             result: signature
           });
-          customLogger.logError('Transaction error', { transcript: transactionLog });
+          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
           return false;
         });
     };
@@ -336,7 +336,7 @@ export const WrapView = () => {
             consoleOut("confirmed:", confirmed);
             if (confirmed) {
               // Report success
-              customLogger.logInfo('Transaction successful', { transcript: transactionLog });
+              customLogger.logInfo('Wrap transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else {
               setIsBusy(false);

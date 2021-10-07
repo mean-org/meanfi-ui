@@ -246,6 +246,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
+			"subtitle-ended": "Transfer unfunded for 72h",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",

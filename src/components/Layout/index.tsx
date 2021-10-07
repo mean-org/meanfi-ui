@@ -134,7 +134,6 @@ export const AppLayout = React.memo((props: any) => {
           // Record pending referral, get referrals count and clear referralAddress from localStorage
           // Only record if referral address is valid and different from wallet address
           // TODO: referrals is tempararily persisted in localStorage but we must use an API
-          console.log('referralAddress', referralAddress);
           if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
             // setReferrals(referrals + 1);
             setReferralAddress('');

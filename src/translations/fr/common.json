@@ -246,6 +246,7 @@
 		},
 		"stream-list": {
 			"no-streams": "Aucun transfert disponible",
+			"subtitle-ended": "Transfer unfunded for 72h",
 			"subtitle-paused-inbound": "Ce transfert est en attente faute de fonds.",
 			"subtitle-paused-outbound": "Ce transfert est en attente faute de fonds.",
 			"subtitle-pending-inbound": "Ce contrat est en attente de votre approbation",
