@@ -53,7 +53,7 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
+import { getEndpointByRuntimeEnv, getSolanaExplorerClusterParam, useConnection } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
@@ -72,7 +72,6 @@ import dateFormat from "dateformat";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const Streams = () => {
-  const connectionConfig = useConnectionConfig();
   const connection = useConnection();
   const { connected, wallet, publicKey } = useWallet();
   const {
@@ -611,7 +610,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -815,7 +814,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1025,7 +1024,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(connectionConfig.env, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {

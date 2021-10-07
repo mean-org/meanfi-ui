@@ -16,7 +16,6 @@ import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
-import _ from 'lodash';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
@@ -220,10 +219,10 @@ export const AccountsView = () => {
         setShouldLoadTokens(false);
         setTokensLoaded(false);
   
-        const myTokens = _.cloneDeep(userTokens);
+        const myTokens = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
         const pk = new PublicKey(accountAddress);
         let nativeBalance = 0;
-  
+
         // Fetch SOL balance.
         customConnection.getBalance(pk)
           .then(solBalance => {
@@ -244,7 +243,7 @@ export const AccountsView = () => {
                       myTokens[tokenIndex].ataAddress = item.pubkey.toBase58();
                       myTokens[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     }
-                  });    
+                  });
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
                   myTokens.forEach(item => {
