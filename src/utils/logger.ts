@@ -1,5 +1,6 @@
 import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
+import { consoleOut } from "./ui";
 
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
@@ -9,6 +10,7 @@ logger.push({
     'subdomain': 'intelerit.com',
     'useDomainProxy': false
 });
+consoleOut('logger:', logger, 'blue');
 
 export class LoggerJsonData {
     Application!: string;
