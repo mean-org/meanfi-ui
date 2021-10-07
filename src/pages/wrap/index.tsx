@@ -112,6 +112,7 @@ export const WrapView = () => {
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
+    let signedTransaction: Transaction;
     let signature: string;
 
     setTransactionCancelled(false);
@@ -174,6 +175,7 @@ export const WrapView = () => {
               "signTransactions returned a signed transaction array:",
               signed
             );
+            signedTransaction = signed;
             // Stage 2 completed - The transaction was signed
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -201,9 +203,10 @@ export const WrapView = () => {
     };
 
     const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendRawTransaction(transaction.serialize(), { preflightCommitment: "singleGossip" })
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then((sig) => {
             consoleOut("sendSignedTransactions returned a signature:", sig);
             // Stage 3 completed - The transaction was sent and a signature was returned
@@ -220,7 +223,10 @@ export const WrapView = () => {
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure,
             });
-            customLogger.logError('Send transaction failed!', error);
+            customLogger.logError('Send transaction failed!', {
+              error,
+              encodedTx
+            });
             return false;
           });
       } else {
@@ -241,10 +247,6 @@ export const WrapView = () => {
           setTransactionStatus({
             lastOperation: TransactionStatus.ConfirmTransactionSuccess,
             currentOperation: TransactionStatus.TransactionFinished,
-          });
-          customLogger.logInfo('Transaction finished and confirmed!', {
-            signature,
-            result
           });
           return true;
         })
