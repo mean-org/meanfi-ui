@@ -106,14 +106,11 @@ export const wrap = async (
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: number,
-  feeAccount: PublicKey,
-  fee: number
+  amount: number
 
 ): Promise<Transaction> => {
 
   const amountBn = new BN(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
-  const feeBn = new BN(parseFloat(fee.toFixed(9)) * LAMPORTS_PER_SOL);
   const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   
@@ -164,41 +161,6 @@ export const wrap = async (
       wallet.publicKey,
       [],
       amountBn.toNumber()
-    )
-  );
-
-  const feeAccountToken = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    WRAPPED_SOL_MINT,
-    feeAccount,
-    true
-  );
-
-  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
-
-  if (!feeAccountTokenInfo) {
-    tx.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        feeAccountToken,
-        wallet.publicKey,
-        wallet.publicKey
-      )
-    );
-  }
-  
-  tx.add(
-    // Transfer fees
-    Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      aTokenKey,
-      feeAccountToken, // msp ops token account
-      wallet.publicKey,
-      [],
-      feeBn.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,
@@ -207,7 +169,7 @@ export const wrap = async (
       wallet.publicKey,
       []
     )
-  )
+  );
 
   tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash('recent');
@@ -224,14 +186,11 @@ export const unwrap = async(
   connection: Connection,
   wallet: any,
   account: Keypair,
-  amount: number,
-  feeAccount: PublicKey,
-  fee: number
+  amount: number
   
 ): Promise<Transaction> => {
 
   const amountBn = new BN(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
-  const feeBn = new BN(parseFloat(fee.toFixed(9)) * LAMPORTS_PER_SOL);
   const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   const atokenKey = await Token.getAssociatedTokenAddress(
@@ -263,40 +222,6 @@ export const unwrap = async(
       wallet.publicKey,
       [],
       amountBn.toNumber()
-    )
-  );
-
-  const feeAccountToken = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    WRAPPED_SOL_MINT,
-    feeAccount,
-    true
-  );
-
-  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
-
-  if (!feeAccountTokenInfo) {
-    tx.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        feeAccountToken,
-        wallet.publicKey,
-        wallet.publicKey
-      )
-    );
-  }
-
-  tx.add(
-    Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      atokenKey,
-      feeAccountToken,
-      wallet.publicKey,
-      [],
-      feeBn.toNumber()
     ),
     Token.createCloseAccountInstruction(
       TOKEN_PROGRAM_ID,

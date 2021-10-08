@@ -17,7 +17,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
@@ -197,13 +197,12 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const action = isWrap() || isUnwrap() 
+      const action = isWrap() || isUnwrap()
         ? MSP_ACTIONS.wrap 
         : MSP_ACTIONS.swap;
       
       const success = (fees: TransactionFees) => {
         setTxFees(fees);
-        console.info('fees', fees);
       };
 
       const error = (_error: any) => console.error(_error);
@@ -258,11 +257,10 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
       const exchange = {
-        amountIn: fromSwapAmount - aggregatorFees,
-        amountOut: fromSwapAmount - aggregatorFees,
-        minAmountOut: fromSwapAmount - aggregatorFees,
+        amountIn: fromSwapAmount,
+        amountOut: fromSwapAmount,
+        minAmountOut: fromSwapAmount,
         outPrice: 1,
         priceImpact: 0.00,
         networkFees: txFees.blockchainFee,
@@ -330,7 +328,6 @@ export const SwapUi = (props: {
       }
 
       const success = (info: ExchangeInfo) => {
-        console.info('Exchange', info);
         setExchangeInfo(info);
       };
 
@@ -699,7 +696,7 @@ export const SwapUi = (props: {
       let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
       if (isWrap()) {
-        setIsValidBalance(balance >= (feesInfo.aggregator + feesInfo.network));
+        setIsValidBalance(balance >= feesInfo.network);
       } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         setIsValidBalance(balance >= (feesInfo.total + feesInfo.network));
       } else {
@@ -893,11 +890,11 @@ export const SwapUi = (props: {
         const symbol = mintList[fromMint].symbol;
 
         if (isWrap()) {
-          needed = fromSwapAmount + feesInfo.aggregator + feesInfo.network;
+          needed = fromSwapAmount + feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
           needed = fromSwapAmount + feesInfo.total + feesInfo.network;
         } else if (isUnwrap()) {
-          needed = fromSwapAmount + feesInfo.aggregator;
+          needed = fromSwapAmount;
         } else {
           needed = fromSwapAmount + feesInfo.total;
         }
@@ -956,9 +953,6 @@ export const SwapUi = (props: {
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         balance = userBalances[fromMint];
-      }
-
-      if (fromMint === NATIVE_SOL_MINT.toBase58()) {
         maxAmount = balance - exchangeInfo.networkFees;
       } else {
         maxAmount = balance;
@@ -1152,9 +1146,7 @@ export const SwapUi = (props: {
             connection,
             wallet,
             Keypair.generate(),
-            exchangeInfo.amountIn,
-            MSP_OPS,
-            feesInfo.aggregator
+            exchangeInfo.amountIn
           );
     
         }
@@ -1165,9 +1157,7 @@ export const SwapUi = (props: {
             connection,
             wallet,
             Keypair.generate(),
-            exchangeInfo.amountIn,
-            MSP_OPS,
-            feesInfo.aggregator
+            exchangeInfo.amountIn
           );
     
         }
