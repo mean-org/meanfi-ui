@@ -416,7 +416,10 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: ''
+            result: t('transactions.status.tx-start-failure', {
+              accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
+              feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
+            })
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
@@ -433,8 +436,7 @@ export const OneTimePayment = () => {
             : undefined                                               // streamName
         )
         .then(value => {
-          consoleOut('oneTimePaymentTransactions returned transaction:', value);
-          // Stage 1 completed - The transaction is created and returned
+          consoleOut('oneTimePayment returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -447,7 +449,7 @@ export const OneTimePayment = () => {
           return true;
         })
         .catch(error => {
-          console.error('oneTimePaymentTransactions error:', error);
+          console.error('oneTimePayment error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -546,6 +548,7 @@ export const OneTimePayment = () => {
             return false;
           });
       } else {
+        console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.SendTransactionFailure,
@@ -615,8 +618,6 @@ export const OneTimePayment = () => {
             const confirmed = await confirmTx();
             consoleOut('confirmed:', confirmed);
             if (confirmed) {
-              // Report success
-              customLogger.logInfo('One-Time Payment transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }
