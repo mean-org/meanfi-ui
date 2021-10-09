@@ -473,7 +473,6 @@ export const WrapView = () => {
                                 getMaxPossibleAmount(),
                                 WRAPPED_SOL_MINT_ADDRESS,
                                 true,
-                                true
                               )
                             );
                           }}>
@@ -552,8 +551,7 @@ export const WrapView = () => {
                               ? parseFloat(wrapAmount)
                               : 0,
                             WRAPPED_SOL_MINT_ADDRESS,
-                            false,
-                            true
+                            false
                           )
                         : "0"
                     }`

@@ -305,8 +305,7 @@ export const getTokenDecimals = (address: string): number => {
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
-  onlyValue = false,
-  truncateInsteadRound = false
+  onlyValue = false
 ): string => {
   let token: TokenInfo | undefined = undefined;
   if (address) {
@@ -318,17 +317,13 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   }
   const inputAmount = amount || 0;
   if (token) {
-    let formatted = truncateInsteadRound
-      ? truncateFloat(inputAmount, token.decimals)
-      : `${getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals))}`;
+    let formatted = getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals));
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
     return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = truncateInsteadRound
-      ? truncateFloat(inputAmount, 4)
-      : `${getFormattedNumberToLocale(formatAmount(inputAmount, 4))}`;
+    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
     return onlyValue ? maxTrailingZeroes(formatted, 2) : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;

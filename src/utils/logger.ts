@@ -1,16 +1,10 @@
 import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
 import { consoleOut } from "./ui";
+import { appConfig } from "..";
 
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
-logger.push({
-    'logglyKey': process.env.REACT_APP_LOGGLY_CUSTOMER_TOKEN,
-    'tag': process.env.REACT_APP_LOGGLY_TAG,
-    'subdomain': 'intelerit.com',
-    'useDomainProxy': false
-});
-consoleOut('logger:', logger, 'blue');
 
 export class LoggerJsonData {
     Application!: string;
@@ -38,7 +32,14 @@ export class CustomLoggerService {
     public applicationName: string;
 
     constructor() {
-        this.applicationName = process.env.REACT_APP_LOGGLY_TAG as string;
+        this.applicationName = appConfig.getConfig().logglyTag;
+        logger.push({
+            'logglyKey': appConfig.getConfig().logglyCustomerKey,
+            'tag': this.applicationName,
+            'subdomain': 'intelerit.com',
+            'useDomainProxy': false
+        });
+        consoleOut('logger:', logger, 'blue');
     }
 
     public async logInfo(message: string, data?: any) {

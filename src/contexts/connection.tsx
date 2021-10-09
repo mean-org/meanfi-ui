@@ -6,6 +6,7 @@ import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
 import { useLocalStorageState } from "./../utils/utils";
 import { Account, clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { RpcConfigLite } from "../models/connections-hq";
 
 export type ENV =
   | "mainnet-beta"
@@ -16,7 +17,7 @@ export type ENV =
 export const ENDPOINTS = [
   {
     name: "mainnet-beta" as ENV,
-    endpoint: 'https://patient-small-cloud.solana-mainnet.quiknode.pro/351f1eeaa7b316bdaac55f0ce0cee29397fc1a6a/', // 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
+    endpoint: clusterApiUrl("mainnet-beta"),
     chainID: ChainID.MainnetBeta,
   },
   {
@@ -92,7 +93,8 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
 
 export function ConnectionProvider({ children = undefined as any }) {
 
-  const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
+  const [lastUsedRpc, setLastUsedRpc] = useLocalStorageState("lastUsedRpc");
+  const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfigLite).httpProvider || getEndpointByRuntimeEnv());
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
     DEFAULT_SLIPPAGE.toString()

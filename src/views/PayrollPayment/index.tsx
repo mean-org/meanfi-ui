@@ -1093,7 +1093,7 @@ export const PayrollPayment = () => {
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
-                        getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true, true)
+                        getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
                       )
                     }>
                     MAX

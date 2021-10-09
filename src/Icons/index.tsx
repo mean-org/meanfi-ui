@@ -7,6 +7,7 @@ export { IconCheckedBox } from "./IconCheckedBox";
 export { IconClock } from "./IconClock";
 export { IconCodeBlock } from "./IconCodeBlock";
 export { IconCopy } from "./IconCopy";
+export { IconDiscord } from "./IconDiscord";
 export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";
 export { IconEllipsis } from "./IconEllipsis";

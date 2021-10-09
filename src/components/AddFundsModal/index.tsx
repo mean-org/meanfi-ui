@@ -146,7 +146,7 @@ export const AddFundsModal = (props: {
                       className="token-max simplelink"
                       onClick={() => {
                         setValue(
-                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true, true)
+                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
                         );
                       }}>
                       MAX
