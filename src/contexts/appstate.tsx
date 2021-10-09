@@ -13,7 +13,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
-import { ENDPOINTS, getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
+import { getEndpointByRuntimeEnv, getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -762,7 +762,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [lastTxSignature, setLastTxSignature] = useState<string>('');
   const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(false);
   const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
-  const chain = ENDPOINTS.find((end) => end.endpoint === connectionConfig.endpoint) || ENDPOINTS[0];
 
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
@@ -810,14 +809,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     (async () => {
       let list = new Array<UserTokenAccount>();
       list.push(NATIVE_SOL as UserTokenAccount);
-      MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID).forEach(item => list.push(item));
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+        .forEach(item => list.push(item));
       updateUserTokens(list);
       consoleOut('AppState -> userTokens:', list);
     })();
 
     return () => { }
 
-  }, [chain]);
+  }, [connectionConfig.cluster]);
 
   return (
     <AppStateContext.Provider

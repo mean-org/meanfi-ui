@@ -12,7 +12,7 @@ import { getRpcApiEndpoint } from './utils/api';
 import { useLocalStorageState } from './utils/utils';
 import { IconDiscord, IconSolana } from './Icons';
 import { consoleOut } from './utils/ui';
-import { GET_RPC_API_ENDPOINT, InitStatus, NUM_RETRIES, RELOAD_TIMER, RETRY_TIMER, RpcConfig, RpcConfigLite } from './models/connections-hq';
+import { GET_RPC_API_ENDPOINT, InitStatus, NUM_RETRIES, RELOAD_TIMER, RETRY_TIMER, RpcConfig } from './models/connections-hq';
 
 const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
@@ -32,6 +32,10 @@ function App() {
   const [canTestEndpoint, setCanTestEndpoint] = useState(false);
   const [reloadDisabled, setReloadDisabled] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+
+  const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+  }
 
   const restartInit = () => {
     if (initStatus !== InitStatus.NoNetwork) {
@@ -55,18 +59,6 @@ function App() {
     window.location.reload();
   }
 
-  // Use the preferred theme or dark as a default
-  useEffect(() => {
-    const applyTheme = (name?: string) => {
-      const theme = name || 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
-      updateTheme(theme);
-    }
-
-    applyTheme(theme);
-    return () => {};
-  }, [theme, updateTheme]);
-
   const getEndpointNameByRuntimeEnv = (): Cluster => {
     switch (environment) {
       case 'local':
@@ -80,7 +72,7 @@ function App() {
     }
   }
 
-  const getNetworkId = (): number => {
+  const getNetworkIdByRuntimeEnv = (): number => {
     switch (environment) {
       case 'production':
         return 101;
@@ -88,6 +80,17 @@ function App() {
         return 102;
       default:
         return 103;
+    }
+  }
+
+  const getNetworkNameByRuntimeEnv = (): string => {
+    switch (environment) {
+      case 'production':
+        return 'Mainnet Beta';
+      case 'staging':
+        return 'Testnet';
+      default:
+        return 'Devnet';
     }
   }
 
@@ -118,29 +121,49 @@ function App() {
     }
   }
 
+  // Use the preferred theme or dark as a default
+  useEffect(() => {
+    const applyTheme = (name?: string) => {
+      const theme = name || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      updateTheme(theme);
+    }
+
+    applyTheme(theme);
+    return () => {};
+  }, [theme, updateTheme]);
+
   // Build fetch url
   useEffect(() => {
-    if (lastUsedRpc) {
-      // Indicate further test
-      if (initStatus !== InitStatus.TestRpcSuccess) {
-        setInitStatus(InitStatus.TestRpcConfig);
-        setTimeout(() => {
-          setCanTestEndpoint(true);
-        }, 50);
-      }
-    } else if (!lastUsedRpc) {
-      // Build it
+    if (isLocal()) {
       if (canFetch) {
-        const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkId()}`;
+        const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkIdByRuntimeEnv()}`;
         setLoadRpcConfigApiUrl(url);
         setInitStatus(InitStatus.LoadAnotherRpcConfig);
       }
-    } else if (initStatus === InitStatus.TestRpcError) {
-      // Build it
-      if (canFetch) {
-        const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkId()}&previousRpcId=${(lastUsedRpc as RpcConfigLite).id}`;
-        setLoadRpcConfigApiUrl(url);
-        setInitStatus(InitStatus.LoadAnotherRpcConfig);
+    } else {
+      if (lastUsedRpc) {
+        // Indicate further test
+        if (initStatus !== InitStatus.TestRpcSuccess) {
+          setInitStatus(InitStatus.TestRpcConfig);
+          setTimeout(() => {
+            setCanTestEndpoint(true);
+          }, 50);
+        }
+      } else if (!lastUsedRpc) {
+        // Build it
+        if (canFetch) {
+          const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkIdByRuntimeEnv()}`;
+          setLoadRpcConfigApiUrl(url);
+          setInitStatus(InitStatus.LoadAnotherRpcConfig);
+        }
+      } else if (initStatus === InitStatus.TestRpcError) {
+        // Build it
+        if (canFetch) {
+          const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkIdByRuntimeEnv()}&previousRpcId=${(lastUsedRpc as RpcConfig).id}`;
+          setLoadRpcConfigApiUrl(url);
+          setInitStatus(InitStatus.LoadAnotherRpcConfig);
+        }
       }
     }
   }, [
@@ -154,9 +177,9 @@ function App() {
     if (initStatus === InitStatus.LoadAnotherRpcConfig && canFetch) {
       setCanFetch(false);
       getRpcApiEndpoint(loadRpcConfigApiUrl, opts)
-        .then((item: RpcConfig | null) => {
+        .then((item: any | null) => {
           if (item) {
-            consoleOut('rpcConfig:', item, 'blue');
+            consoleOut('Server rpcConfig:', item, 'blue');
             setInitStatus(InitStatus.LoadRpcConfigSuccess);
             setFetchedRpc(item);
             setRetryCount(0);
@@ -183,9 +206,12 @@ function App() {
           customLogger.logError('MeanFi API failure. Using defaul Solana public API', customError);
           setInitStatus(InitStatus.LoadRpcConfigError);
           setRetryCount(value => value + 1);
-          const solanaPublicApi: RpcConfigLite = {
+          const solanaPublicApi: RpcConfig = {
+            httpProvider: clusterApiUrl(getEndpointNameByRuntimeEnv()),
             id: 0,
-            httpProvider: clusterApiUrl(getEndpointNameByRuntimeEnv())
+            cluster: getEndpointNameByRuntimeEnv(),
+            network: getNetworkNameByRuntimeEnv(),
+            networkId: getNetworkIdByRuntimeEnv()
           };
           setLastUsedRpc(solanaPublicApi);
         });
@@ -212,7 +238,7 @@ function App() {
   useEffect(() => {
     if (initStatus !== InitStatus.TestRpcConfig || !canTestEndpoint) { return; }
 
-    const testGetRecentBlockhash = (rpcConfig: RpcConfig | RpcConfigLite) => {
+    const testGetRecentBlockhash = (rpcConfig: RpcConfig) => {
       try {
         const connection = new Connection(rpcConfig.httpProvider);
         if (connection) {
@@ -221,12 +247,8 @@ function App() {
             consoleOut('response:', response, 'blue');
             if (response && response.blockhash) {
               // Ok
-              if (!lastUsedRpc || (lastUsedRpc && (lastUsedRpc as RpcConfigLite).httpProvider !== rpcConfig.httpProvider)) {
-                const rpc: RpcConfigLite = {
-                  id: rpcConfig.id,
-                  httpProvider: rpcConfig.httpProvider
-                };
-                setLastUsedRpc(rpc);
+              if (!lastUsedRpc || (lastUsedRpc && (lastUsedRpc as RpcConfig).httpProvider !== rpcConfig.httpProvider)) {
+                setLastUsedRpc(rpcConfig);
               }
               setInitStatus(InitStatus.TestRpcSuccess);
               setTimeout(() => {
@@ -258,7 +280,7 @@ function App() {
       if (fetchedRpc) {
         testGetRecentBlockhash(fetchedRpc);
       } else {
-        testGetRecentBlockhash((lastUsedRpc as RpcConfigLite));
+        testGetRecentBlockhash((lastUsedRpc as RpcConfig));
       }
     }
   }, [
@@ -335,7 +357,7 @@ function App() {
             </div>
           </div>
         </Content>
-        {window.location.hostname === 'localhost' && (
+        {isLocal() && (
           <div className="debug-footer">
             <span className="ml-1">
               lastUsedRpc:<span className="ml-1 font-bold fg-dark-active">{lastUsedRpc ? 'true' : 'false'}</span>

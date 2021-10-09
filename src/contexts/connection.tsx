@@ -5,51 +5,51 @@ import { ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { environment } from "../environments/environment";
 import { useLocalStorageState } from "./../utils/utils";
-import { Account, clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
-import { RpcConfigLite } from "../models/connections-hq";
+import { Account, Cluster, clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { ConnectionEndpoint, RpcConfig } from "../models/connections-hq";
 
-export type ENV =
-  | "mainnet-beta"
-  | "testnet"
-  | "devnet"
-  | "localnet";
-
-export const ENDPOINTS = [
+export const ENDPOINTS: ConnectionEndpoint[] = [
   {
-    name: "mainnet-beta" as ENV,
-    endpoint: clusterApiUrl("mainnet-beta"),
-    chainID: ChainID.MainnetBeta,
+    cluster: "mainnet-beta",
+    httpProvider: clusterApiUrl("mainnet-beta"),
+    networkId: ChainID.MainnetBeta,
   },
   {
-    name: "testnet" as ENV,
-    endpoint: clusterApiUrl("testnet"),
-    chainID: ChainID.Testnet,
+    cluster: "testnet",
+    httpProvider: clusterApiUrl("testnet"),
+    networkId: ChainID.Testnet,
   },
   {
-    name: "devnet" as ENV,
-    endpoint: clusterApiUrl("devnet"),
-    chainID: ChainID.Devnet,
-  },
-  {
-    name: "localnet" as ENV,
-    endpoint: "http://127.0.0.1:8899",
-    chainID: ChainID.Devnet,
-  },
+    cluster: "devnet",
+    httpProvider: clusterApiUrl("devnet"),
+    networkId: ChainID.Devnet,
+  }
 ];
 
-const DEFAULT = ENDPOINTS[0].endpoint;
+const DEFAULT = ENDPOINTS[0].httpProvider;
 const DEFAULT_SLIPPAGE = 0.25;
+
+export const getNetworkIdByCluster = (cluster: Cluster) => {
+  switch (cluster) {
+    case "devnet":
+      return ChainID.Devnet;
+    case "testnet":
+      return ChainID.Testnet;
+    default:
+      return ChainID.MainnetBeta;
+  }
+}
 
 export const getEndpointByRuntimeEnv = (): string => {
   switch (environment) {
     case 'local':
     case 'development':
-      return ENDPOINTS[2].endpoint;
+      return ENDPOINTS[2].httpProvider;
     case 'staging':
-      return ENDPOINTS[1].endpoint;
+      return ENDPOINTS[1].httpProvider;
     case 'production':
     default:
-      return ENDPOINTS[0].endpoint;
+      return ENDPOINTS[0].httpProvider;
   }
 }
 
@@ -72,7 +72,7 @@ interface ConnectionConfig {
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
-  env: ENV;
+  cluster: Cluster;
   setEndpoint: (val: string) => void;
   tokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
@@ -85,16 +85,16 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   setSlippage: (val: number) => {},
   connection: new Connection(DEFAULT, "recent"),
   sendConnection: new Connection(DEFAULT, "recent"),
-  env: ENDPOINTS[0].name,
+  cluster: ENDPOINTS[0].cluster,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
-  swapConnection: new Connection(ENDPOINTS[0].endpoint, "confirmed")
+  swapConnection: new Connection(ENDPOINTS[0].httpProvider, "confirmed")
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
 
   const [lastUsedRpc, setLastUsedRpc] = useLocalStorageState("lastUsedRpc");
-  const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfigLite).httpProvider || getEndpointByRuntimeEnv());
+  const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfig).httpProvider || getEndpointByRuntimeEnv());
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
     DEFAULT_SLIPPAGE.toString()
@@ -108,12 +108,13 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].endpoint, "confirmed"), []);
+  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].httpProvider, "confirmed"), []);
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
-  const chain = ENDPOINTS.find((end) => end.endpoint === endpoint) || ENDPOINTS[0];
-  const env = chain.name;
+
+  const chain = lastUsedRpc ? (lastUsedRpc as RpcConfig) : ENDPOINTS.find((end) => end.httpProvider === endpoint) || ENDPOINTS[0];
+  const env = chain.cluster;
 
   useEffect(() => {
     cache.clear();
@@ -123,11 +124,11 @@ export function ConnectionProvider({ children = undefined as any }) {
       // if (environment === 'production') {
       //   const res = await new TokenListProvider().resolve();
       //   list = res
-      //     .filterByChainId(chain.chainID)
+      //     .filterByChainId(chain.networkId)
       //     .excludeByTag("nft")
       //     .getList();
       // }
-      list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.chainID);
+      list = MEAN_TOKEN_LIST.filter(t => t.chainId === chain.networkId);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
         return map;
@@ -198,7 +199,7 @@ export function ConnectionProvider({ children = undefined as any }) {
         sendConnection,
         tokens,
         tokenMap,
-        env,
+        cluster: env,
         swapConnection
       }}
     >
@@ -224,7 +225,7 @@ export function useConnectionConfig() {
   return {
     endpoint: context.endpoint,
     setEndpoint: context.setEndpoint,
-    env: context.env,
+    cluster: context.cluster,
     tokens: context.tokens,
     tokenMap: context.tokenMap,
   };

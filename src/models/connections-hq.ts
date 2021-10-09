@@ -1,3 +1,5 @@
+import { Cluster } from "@solana/web3.js";
+
 export enum InitStatus {
     LoadingApp = 0,
     LoadAnotherRpcConfig = 1,
@@ -10,18 +12,15 @@ export enum InitStatus {
     NoNetwork = 8
 }
 
-export interface RpcConfig {
-    id: number,
-    name: string;
-    hostingProvider: string;
-    network: string;
+export interface ConnectionEndpoint {
+    cluster: Cluster;
     httpProvider: string;
-    wssProvider: string;
+    networkId: number;
 }
 
-export interface RpcConfigLite {
+export interface RpcConfig extends ConnectionEndpoint {
     id: number,
-    httpProvider: string;
+    network?: string;
 }
 
 export const RETRY_TIMER = 10;

@@ -6,4 +6,4 @@ if (fs.existsSync(webConfigPath)) {
     fs.unlinkSync(webConfigPath);
 }
 
-fs.copySync('./iisConfig/web.config', webConfigPath);
+fs.copySync('./ci/web.config', webConfigPath);

@@ -107,8 +107,12 @@ export const TransactionItemView = (props: {
         // let feePaid = 0;
         // let solPaid = 0;
         if (meta) {
-          post = meta.postBalances[accountIndex] || 0;
-          pre = meta.preBalances[accountIndex] || 0;
+          pre = isOutbound
+                  ? meta.preBalances[0]
+                  : meta.preBalances[1] || 0;
+          post = isOutbound
+                  ? meta.postBalances[0]
+                  : meta.postBalances[1] || 0;
           change = post - pre;
           // feePaid = meta.fee;
           // const sumPostBalances = meta.postBalances.reduce((a, b) => a + b, 0);
@@ -308,31 +312,3 @@ export const TransactionItemView = (props: {
 
   return getTransactionItems();
 };
-
-/*
-var isNativeAccountSelected = selected == SOL;
-var balanceChange = 0;
-
-if(isNativeAccountSelected)
-{
-     balanceChange = postBalance - preBalance;
-     var solPaid = sum(postBalance) - sum(preBalance) - balanceChange;
-     var isFeePayer = tx.accounts.feePayer == myAddress;
-
-     var isFeeOnlyTx = isFeePayer && balanceChange == solPaid;
-
-     if(isFeeOnlyTx){
-          //this is a fee
-         //return
-     }
-}
-
-balanceChange =  postTokenBalance - preTokenBalance;
-
-if (balanceChange > 0) {
-      // this is a incoming tx
-}
-else {
-    // this is outgoing tx
-}
-*/

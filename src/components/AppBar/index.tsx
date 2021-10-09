@@ -184,7 +184,7 @@ export const AppBar = (props: { menuType: string }) => {
             {!isProd() && (
               <div className="cluster-indicator">
                 <ThunderboltOutlined />
-                <span className="network-name">{connectionConfig.env}</span>
+                <span className="network-name">{connectionConfig.cluster}</span>
               </div>
             )}
             <div className="connection-and-account-bar">

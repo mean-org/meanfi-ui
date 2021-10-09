@@ -72,7 +72,6 @@ typings/
 .env
 .env.test
 .env.staging
-.env.production
 .env.development
 
 # parcel-bundler cache (https://parceljs.org/)
@@ -108,4 +107,4 @@ build
 
 # TernJS port file
 .tern-port
-.vscode/launch.json
+.vscode/

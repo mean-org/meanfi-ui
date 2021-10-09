@@ -112,9 +112,9 @@ export const AppLayout = React.memo((props: any) => {
 
   // Effect Network change
   useEffect(() => {
-    if (previousChain !== connectionConfig.env) {
-      setChain(connectionConfig.env);
-      consoleOut('Cluster:', connectionConfig.env, 'brown');
+    if (previousChain !== connectionConfig.cluster) {
+      setChain(connectionConfig.cluster);
+      consoleOut('Cluster:', connectionConfig.cluster, 'brown');
     }
   }, [
     previousChain,
