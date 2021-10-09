@@ -1182,6 +1182,7 @@ export const Streams = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -1197,6 +1198,23 @@ export const Streams = () => {
         });
         const streamPublicKey = new PublicKey(streamDetail.id as string);
 
+        const data = {
+          stream: streamPublicKey.toBase58(),                     // stream
+          initializer: wallet.publicKey.toBase58(),               // initializer
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
@@ -1206,6 +1224,15 @@ export const Streams = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL)`
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1216,10 +1243,13 @@ export const Streams = () => {
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
-          // Stage 1 completed - The transaction is created and returned
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
           });
           transaction = value;
           return true;
@@ -1230,10 +1260,21 @@ export const Streams = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        return false;
       }
-      return false;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -1241,21 +1282,29 @@ export const Streams = () => {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
-          consoleOut('signTransactions returned a signed transaction:', signed);
-          // Stage 2 completed - The transaction was signed
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
           return true;
         })
-        .catch(() => {
+        .catch(error => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1264,22 +1313,31 @@ export const Streams = () => {
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
-        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransaction.serialize()))
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
+        return await connection
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then(sig => {
-            consoleOut('sendSignedTransaction returned a signature:', sig);
-            // Stage 3 completed - The transaction was sent and a signature was returned
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
             signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
             return true;
           })
           .catch(error => {
@@ -1288,27 +1346,42 @@ export const Streams = () => {
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
+        console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.SendTransactionFailure
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const confirmTx = async (): Promise<boolean> => {
 
-      return connection.confirmTransaction(signature, "confirmed")
+      return await connection
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
-            // Stage 4 completed - The transaction was confirmed!
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: result.value
             });
             return true;
           } else {
@@ -1316,6 +1389,11 @@ export const Streams = () => {
               lastOperation: TransactionStatus.ConfirmTransaction,
               currentOperation: TransactionStatus.ConfirmTransactionFailure
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
         })
@@ -1324,6 +1402,11 @@ export const Streams = () => {
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
     }
@@ -1342,7 +1425,6 @@ export const Streams = () => {
             const confirmed = await confirmTx();
             consoleOut('confirmed:', confirmed);
             if (confirmed) {
-              // Save signature to the state
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }
@@ -2258,7 +2340,7 @@ export const Streams = () => {
                       true
                     )} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      transactionFees.blockchainFee + getTxFeeAmount(transactionFees, withdrawFundsAmount) - nativeBalance,
+                      transactionFees.blockchainFee,
                       WRAPPED_SOL_MINT_ADDRESS,
                       true
                     )} SOL`})
@@ -2328,7 +2410,7 @@ export const Streams = () => {
                       true
                     )} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      transactionFees.blockchainFee + getTxFeeAmount(transactionFees) - nativeBalance,
+                      transactionFees.blockchainFee,
                       WRAPPED_SOL_MINT_ADDRESS,
                       true
                     )} SOL`})
