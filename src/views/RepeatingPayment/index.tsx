@@ -827,7 +827,7 @@ export const RepeatingPayment = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: ''
+              result: result.value
             });
             return true;
           } else {

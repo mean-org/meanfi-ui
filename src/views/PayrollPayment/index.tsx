@@ -28,6 +28,7 @@ import {
   getTimesheetRequirementOptionLabel,
   getTransactionModalTitle,
   getTransactionOperationDescription,
+  getTransactionStatusForLogs,
   getTxFeeAmount,
   isToday,
   isValidAddress,
@@ -47,6 +48,7 @@ import { ContractDefinition } from "../../models/contract-definition";
 import { Redirect } from "react-router-dom";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -606,6 +608,7 @@ export const PayrollPayment = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
     setIsBusy(true);
@@ -622,9 +625,6 @@ export const PayrollPayment = () => {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
-
-        consoleOut('treasurerMint:', selectedToken?.address);
-        const treasurerMint = new PublicKey(selectedToken?.address as string);
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
@@ -646,10 +646,10 @@ export const PayrollPayment = () => {
 
         // Create a transaction
         const data = {
-          wallet: wallet,                                             // wallet
-          beneficiary: beneficiary,                                   // beneficiary
-          treasurerMint: treasurerMint,                               // treasurerMint
-          beneficiaryMint: beneficiaryMint,                           // beneficiaryMint
+          wallet: wallet.publicKey.toBase58(),                        // wallet
+          treasury: 'undefined',                                      // treasury
+          beneficiary: beneficiary.toBase58(),                        // beneficiary
+          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
@@ -661,6 +661,17 @@ export const PayrollPayment = () => {
         };
         consoleOut('data:', data, 'blue');
 
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', payrollFees.blockchainFee, 'blue');
@@ -670,6 +681,22 @@ export const PayrollPayment = () => {
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: t('transactions.status.tx-start-failure', {
+              accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                nativeBalance,
+                WRAPPED_SOL_MINT_ADDRESS,
+                true
+              )} SOL`,
+              feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                payrollFees.blockchainFee + getTxFeeAmount(payrollFees, fromCoinAmount) - nativeBalance,
+                WRAPPED_SOL_MINT_ADDRESS,
+                true
+              )} SOL`
+            })
+          });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -687,25 +714,39 @@ export const PayrollPayment = () => {
           amount                                                      // fundingAmount
         )
         .then(value => {
-          consoleOut('getCreateStreamTransaction returned transaction:', value);
-          // Stage 1 completed - The transaction is created and returned
+          consoleOut('createStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
           });
           transaction = value;
           return true;
         })
         .catch(error => {
-          console.error('getCreateStreamTransaction error:', error);
+          console.error('createStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+        return false;
       }
-      return false;
     }
 
     const signTx = async (): Promise<boolean> => {
@@ -713,21 +754,29 @@ export const PayrollPayment = () => {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
-          consoleOut('signTransactions returned a signed transaction:', signed);
-          // Stage 2 completed - The transaction was signed
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
-          signedTransaction = signed;
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
           return true;
         })
-        .catch(() => {
+        .catch(error => {
           console.error('Signing transaction failed!');
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -736,22 +785,31 @@ export const PayrollPayment = () => {
           lastOperation: TransactionStatus.SignTransaction,
           currentOperation: TransactionStatus.SignTransactionFailure
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
-        // return connection.sendEncodedTransaction(base64.fromByteArray(signedTransactions[0].serialize()))
-        return connection.sendRawTransaction(signedTransaction.serialize(), { preflightCommitment: "confirmed" })
+        return await connection
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then(sig => {
-            consoleOut('sendSignedTransactions returned a signature:', sig);
-            // Stage 3 completed - The transaction was sent and a signature was returned
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
             });
             signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
             return true;
           })
           .catch(error => {
@@ -760,6 +818,11 @@ export const PayrollPayment = () => {
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -768,19 +831,28 @@ export const PayrollPayment = () => {
           lastOperation: TransactionStatus.SendTransaction,
           currentOperation: TransactionStatus.SendTransactionFailure
         });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const confirmTx = async (): Promise<boolean> => {
-      return connection.confirmTransaction(signature, "confirmed")
+      return await connection
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
-            // Stage 4 completed - The transaction was confirmed!
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: result.value
             });
             return true;
           } else {
@@ -788,6 +860,11 @@ export const PayrollPayment = () => {
               lastOperation: TransactionStatus.ConfirmTransaction,
               currentOperation: TransactionStatus.ConfirmTransactionFailure
             });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
             return false;
           }
         })
@@ -796,6 +873,11 @@ export const PayrollPayment = () => {
             lastOperation: TransactionStatus.ConfirmTransaction,
             currentOperation: TransactionStatus.ConfirmTransactionFailure
           });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
     }
@@ -815,7 +897,6 @@ export const PayrollPayment = () => {
             const confirmed = await confirmTx();
             consoleOut('confirmed:', confirmed);
             if (confirmed) {
-              // Save signature to the state
               setIsBusy(false);
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }
