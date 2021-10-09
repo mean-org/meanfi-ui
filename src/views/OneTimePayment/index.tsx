@@ -416,10 +416,11 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: t('transactions.status.tx-start-failure', {
-              accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-              feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`
-            })
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL)`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;

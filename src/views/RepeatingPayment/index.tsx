@@ -658,18 +658,11 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: t('transactions.status.tx-start-failure', {
-              accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                nativeBalance,
-                WRAPPED_SOL_MINT_ADDRESS,
-                true
-              )} SOL`,
-              feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                repeatingPaymentFees.blockchainFee + getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) - nativeBalance,
-                WRAPPED_SOL_MINT_ADDRESS,
-                true
-              )} SOL`
-            })
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL)`
           });
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
@@ -857,7 +850,6 @@ export const RepeatingPayment = () => {
         });
     }
 
-    // Lets hit it
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
@@ -1255,7 +1247,7 @@ export const RepeatingPayment = () => {
                       true
                     )} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      repeatingPaymentFees.blockchainFee + getTxFeeAmount(repeatingPaymentFees, fromCoinAmount) - nativeBalance,
+                      repeatingPaymentFees.blockchainFee,
                       WRAPPED_SOL_MINT_ADDRESS,
                       true
                     )} SOL`})

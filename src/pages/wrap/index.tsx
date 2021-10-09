@@ -204,7 +204,7 @@ export const WrapView = () => {
           .signTransaction(transaction)
           .then((signed: Transaction) => {
             consoleOut(
-              "signTransactions returned a signed transaction array:",
+              "signTransaction returned a signed transaction:",
               signed
             );
             signedTransaction = signed;

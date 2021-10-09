@@ -683,18 +683,11 @@ export const PayrollPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: t('transactions.status.tx-start-failure', {
-              accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                nativeBalance,
-                WRAPPED_SOL_MINT_ADDRESS,
-                true
-              )} SOL`,
-              feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                payrollFees.blockchainFee + getTxFeeAmount(payrollFees, fromCoinAmount) - nativeBalance,
-                WRAPPED_SOL_MINT_ADDRESS,
-                true
-              )} SOL`
-            })
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
+            } SOL)`
           });
           customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
@@ -882,7 +875,6 @@ export const PayrollPayment = () => {
         });
     }
 
-    // Lets hit it
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
@@ -1302,7 +1294,7 @@ export const PayrollPayment = () => {
                       true
                     )} SOL`,
                     feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      payrollFees.blockchainFee + getTxFeeAmount(payrollFees, fromCoinAmount) - nativeBalance,
+                      payrollFees.blockchainFee,
                       WRAPPED_SOL_MINT_ADDRESS,
                       true
                     )} SOL`})
