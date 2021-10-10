@@ -8,10 +8,12 @@ import { useLocalStorageState } from "./../utils/utils";
 import { Account, Cluster, clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { ConnectionEndpoint, RpcConfig } from "../models/connections-hq";
 
+// endpoint: 'https://patient-small-cloud.solana-mainnet.quiknode.pro/351f1eeaa7b316bdaac55f0ce0cee29397fc1a6a/', // 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
+
 export const ENDPOINTS: ConnectionEndpoint[] = [
   {
     cluster: "mainnet-beta",
-    httpProvider: clusterApiUrl("mainnet-beta"),
+    httpProvider: 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),
     networkId: ChainID.MainnetBeta,
   },
   {
