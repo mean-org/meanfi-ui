@@ -2,12 +2,12 @@ import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -17,7 +17,7 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
-import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
@@ -27,11 +27,11 @@ import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { InfoIcon } from "../InfoIcon";
 import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import BN from "bn.js";
 import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
+import { customLogger } from "../..";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -68,6 +68,7 @@ export const SwapUi = (props: {
   const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
   const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
   const [isBusy, setIsBusy] = useState(false);
+  const [transactionLog, setTransactionLog] = useState<Array<any>>([]);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
@@ -1254,7 +1255,8 @@ export const SwapUi = (props: {
   ]);
 
   const createTx = useCallback(async () => {
-    
+    setTransactionLog([]);
+   
     try {
 
       if (!connection) {
@@ -1266,8 +1268,14 @@ export const SwapUi = (props: {
         currentOperation: TransactionStatus.InitTransaction,
       });
 
+      // Log input data
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+        result: '' // TODO: Discrete info converted to string (not objects)
+      }]);
+
       const swapTx = await getSwap();
-      
+
       if (!swapTx) {
         throw new Error('Cannot create the transaction');
       }
@@ -1279,6 +1287,12 @@ export const SwapUi = (props: {
         currentOperation: TransactionStatus.SignTransaction,
       });
 
+      // Log success
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+        result: '' // TODO: Discrete info converted to string (not objects)
+      }]);
+
       return swapTx;
 
     } catch (_error) {
@@ -1287,11 +1301,18 @@ export const SwapUi = (props: {
         lastOperation: transactionStatus.currentOperation,
         currentOperation: TransactionStatus.InitTransactionFailure,
       });
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+        result: `${_error}`
+      }]);
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
     }
-    
+
   },[
     getSwap, 
-    setTransactionStatus, 
+    setTransactionStatus,
+    transactionLog,
     transactionStatus.currentOperation,
     connection
   ]);
@@ -1322,6 +1343,11 @@ export const SwapUi = (props: {
         currentOperation: TransactionStatus.SendTransaction,
       });
 
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+        result: '' // TODO: Discrete info converted to string (not objects)
+      }]);
+
       return signedTx;
 
     } catch (_error) {
@@ -1330,25 +1356,32 @@ export const SwapUi = (props: {
         lastOperation: TransactionStatus.SignTransaction,
         currentOperation: TransactionStatus.SignTransactionFailure,
       });
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+        result: `${_error}`
+      }]);
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
     }
 
   }, [
-    setTransactionStatus, 
-    transactionStatus.currentOperation, 
+    setTransactionStatus,
+    transactionLog,
+    transactionStatus.currentOperation,
     wallet,
     connection
   ]);
 
   const sendTx = useCallback(async (currentTx: Transaction) => {
 
+    const encodedTx = currentTx.serialize().toString('base64');
+    consoleOut('tx encoded => ', encodedTx);
+
     try {
 
       if (!connection) {
         throw new Error('Not connected');
       }
-
-      const encodedTx = currentTx.serialize().toString('base64');
-      consoleOut('tx encoded => ', encodedTx);
 
       const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
         preflightCommitment: 'confirmed'
@@ -1363,6 +1396,11 @@ export const SwapUi = (props: {
         currentOperation: TransactionStatus.SendTransactionSuccess
       });
 
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+        result: `signature: ${sentTx}`
+      }]);
+
       return sentTx;
 
     } catch (_error) {
@@ -1371,11 +1409,18 @@ export const SwapUi = (props: {
         lastOperation: TransactionStatus.SendTransaction,
         currentOperation: TransactionStatus.SendTransactionFailure
       });
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+        result: { _error, encodedTx }
+      }]);
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
     }
 
   },[
-    connection, 
-    setTransactionStatus, 
+    connection,
+    transactionLog,
+    setTransactionStatus,
     transactionStatus.currentOperation
   ]);
 
@@ -1401,6 +1446,11 @@ export const SwapUi = (props: {
         lastOperation: TransactionStatus.ConfirmTransactionSuccess,
         currentOperation: TransactionStatus.TransactionFinished
       });
+
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+        result: response.value  // TODO: Log this perhaps?
+      }]);
 
       return response;
 
