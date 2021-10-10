@@ -13,7 +13,7 @@ import { ConnectionEndpoint, RpcConfig } from "../models/connections-hq";
 export const ENDPOINTS: ConnectionEndpoint[] = [
   {
     cluster: "mainnet-beta",
-    httpProvider: 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),
+    httpProvider: clusterApiUrl("mainnet-beta"),
     networkId: ChainID.MainnetBeta,
   },
   {
@@ -110,7 +110,12 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].httpProvider, "confirmed"), []);
+  const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
+
+  const swapConnection = useMemo(() => new Connection(isMainnetRpc ? endpoint : ENDPOINTS[0].httpProvider, "confirmed"), [
+    isMainnetRpc,
+    endpoint
+  ]);
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());
