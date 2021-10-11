@@ -1452,7 +1452,7 @@ export const SwapUi = (props: {
           ? response.value.err 
           : new Error('Cannot confirm transaction');
 
-        throw err;
+        throw(err);
       }
 
       setTransactionStatus({

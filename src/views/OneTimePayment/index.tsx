@@ -461,7 +461,7 @@ export const OneTimePayment = () => {
             result: `${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          return false;
+          throw(error);
         });
       } else {
         transactionLog.push({
@@ -501,7 +501,7 @@ export const OneTimePayment = () => {
             result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          return false;
+          throw(error);
         });
       } else {
         console.error("Cannot sign transaction! Wallet not found!");
@@ -547,7 +547,7 @@ export const OneTimePayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-            return false;
+            throw(error);
           });
       } else {
         console.error('Cannot send transaction! Wallet not found!');
@@ -589,7 +589,7 @@ export const OneTimePayment = () => {
               result: signature
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-            return false;
+            throw(result?.value?.err || new Error("Could not confirm transaction"));
           }
         })
         .catch(e => {
