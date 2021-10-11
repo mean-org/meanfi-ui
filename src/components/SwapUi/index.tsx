@@ -141,7 +141,10 @@ export const SwapUi = (props: {
     
     const timeout = setTimeout(() => {
 
-      const error = (_error: any) => console.error(_error);
+      const error = (_error: any) => {
+        console.error(_error);
+        throw(_error);
+      };
       const success = (info: any) => {
         console.info('user', info);
         setUserAccount(info);
@@ -206,7 +209,10 @@ export const SwapUi = (props: {
         setTxFees(fees);
       };
 
-      const error = (_error: any) => console.error(_error);
+      const error = (_error: any) => {
+        console.error(_error);
+        throw(_error);
+      };
 
       calculateActionFees(connection, action)
         .then((fees: TransactionFees) => success(fees))
@@ -332,7 +338,10 @@ export const SwapUi = (props: {
         setExchangeInfo(info);
       };
 
-      const error = (_error: any) => console.error(_error);
+      const error = (_error: any) => {
+        console.error(_error);
+        throw(_error);
+      };
 
       const promise = getExchangeInfo(
         swapClient,
@@ -1183,6 +1192,7 @@ export const SwapUi = (props: {
 
     } catch (_error) {
       console.error(_error);
+      throw(_error);
     }
 
   },[
@@ -1307,6 +1317,7 @@ export const SwapUi = (props: {
         result: `${_error}`
       }]);
       customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+      throw(_error);
     }
 
   },[
@@ -1362,6 +1373,7 @@ export const SwapUi = (props: {
         result: `${_error}`
       }]);
       customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+      throw(_error);
     }
 
   }, [
@@ -1415,6 +1427,7 @@ export const SwapUi = (props: {
         result: { _error, encodedTx }
       }]);
       customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+      throw(_error);
     }
 
   },[
@@ -1460,10 +1473,18 @@ export const SwapUi = (props: {
         lastOperation: TransactionStatus.ConfirmTransaction,
         currentOperation: TransactionStatus.ConfirmTransactionFailure
       });
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+        result: `${_error}`
+      }]);
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+      throw(_error);
     }
 
   },[
-    connection, 
+    connection,
+    transactionLog,
     setTransactionStatus
   ]);
 
@@ -1515,6 +1536,7 @@ export const SwapUi = (props: {
 
     } catch (_error) {
       console.error(_error);
+      throw(_error);
     }
 
   }, [

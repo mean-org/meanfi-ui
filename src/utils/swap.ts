@@ -3,7 +3,7 @@ import { TOKENS, getTokenByMintAddress } from './tokens';
 import { TokenAmount } from '../utils/safe-math';
 import { TOKEN_PROGRAM_ID, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT, NATIVE_SOL_MINT } from './ids';
 import { closeAccount } from '@project-serum/serum/lib/token-instructions';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
 
 import { 
   createTokenAccountIfNotExist, 
