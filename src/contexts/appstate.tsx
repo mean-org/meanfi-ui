@@ -706,13 +706,18 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
-      const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-      if (!accountInfo) return 0;
-      if (address === publicKey?.toBase58()) {
-        return accountInfo.lamports / LAMPORTS_PER_SOL;
+      try {
+        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
+        if (!accountInfo) return 0;
+        if (address === publicKey?.toBase58()) {
+          return accountInfo.lamports / LAMPORTS_PER_SOL;
+        }
+        const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
+        return tokenAmount.uiAmount || 0;
+      } catch (error) {
+        console.error(error);
+        throw(error);
       }
-      const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
-      return tokenAmount.uiAmount || 0;
     }
 
     if (!selectedToken) return;

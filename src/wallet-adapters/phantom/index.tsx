@@ -185,7 +185,7 @@ export class PhantomWalletAdapter extends BaseMessageSignerWalletAdapter {
             }
         } catch (error: any) {
             this.emit('error', error);
-            throw error;
+            throw(error);
         }
     }
 

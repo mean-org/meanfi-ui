@@ -7,8 +7,7 @@ import { environment } from "../environments/environment";
 import { useLocalStorageState } from "./../utils/utils";
 import { Account, Cluster, clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { ConnectionEndpoint, RpcConfig } from "../models/connections-hq";
-
-// endpoint: 'https://patient-small-cloud.solana-mainnet.quiknode.pro/351f1eeaa7b316bdaac55f0ce0cee29397fc1a6a/', // 'https://mainnet.rpcpool.com', // clusterApiUrl("mainnet-beta"),// "https://mainnet.rpcpool.com",
+import useConnectionHq from "../hooks/useConnectionHq";
 
 export const ENDPOINTS: ConnectionEndpoint[] = [
   {
@@ -70,7 +69,7 @@ export const getSolanaExplorerClusterParam = (): string => {
 interface ConnectionConfig {
   connection: Connection;
   sendConnection: Connection;
-  swapConnection: Connection;
+  swapConnection: Connection | undefined;
   endpoint: string;
   slippage: number;
   setSlippage: (val: number) => void;
@@ -90,7 +89,7 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   cluster: ENDPOINTS[0].cluster,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
-  swapConnection: new Connection(ENDPOINTS[0].httpProvider, "confirmed")
+  swapConnection: undefined
 });
 
 export function ConnectionProvider({ children = undefined as any }) {
@@ -110,12 +109,18 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
-
+  const { selectedRpcEndpoint, isSuccessful } = useConnectionHq(101);
   // Use the value of 'endpoint' if the the cluster is mainnet or use the solana public API
-  const swapConnection = useMemo(() => new Connection(isMainnetRpc ? endpoint : ENDPOINTS[0].httpProvider, "confirmed"), [
-    isMainnetRpc,
-    endpoint
+  const swapConnection = useMemo(() => {
+    const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
+    if (selectedRpcEndpoint && isSuccessful) {
+      return new Connection(isMainnetRpc ? endpoint : selectedRpcEndpoint.httpProvider, "confirmed")
+    }
+  }, [
+    endpoint,
+    lastUsedRpc,
+    isSuccessful,
+    selectedRpcEndpoint
   ]);
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
