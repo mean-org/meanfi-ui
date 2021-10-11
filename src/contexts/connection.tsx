@@ -112,6 +112,7 @@ export function ConnectionProvider({ children = undefined as any }) {
 
   const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
 
+  // Use the value of 'endpoint' if the the cluster is mainnet or use the solana public API
   const swapConnection = useMemo(() => new Connection(isMainnetRpc ? endpoint : ENDPOINTS[0].httpProvider, "confirmed"), [
     isMainnetRpc,
     endpoint
@@ -124,7 +125,6 @@ export function ConnectionProvider({ children = undefined as any }) {
   const env = chain.cluster;
 
   useEffect(() => {
-    cache.clear();
     // fetch token files
     (async () => {
       let list: TokenInfo[];
@@ -141,14 +141,22 @@ export function ConnectionProvider({ children = undefined as any }) {
         return map;
       }, new Map<string, TokenInfo>());
 
-      const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'recent');
-      accounts.keys.forEach((key, index) => {
-        const account = accounts.array[index];
-        if(!account) {
-          return;
+      try {
+        const accounts = await getMultipleAccounts(connection, [...knownMints.keys()], 'recent');
+        if (accounts) {
+          cache.clear();
+          accounts.keys.forEach((key, index) => {
+            const account = accounts.array[index];
+            if(!account) {
+              return;
+            }
+            cache.add(new PublicKey(key), account, MintParser);
+          })
         }
-        cache.add(new PublicKey(key), account, MintParser);
-      })
+      } catch (error) {
+        console.log('Cache update failed.', error);
+        throw(error);
+      }
 
       setTokenMap(knownMints);
       setTokens(list);

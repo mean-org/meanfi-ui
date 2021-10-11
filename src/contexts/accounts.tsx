@@ -293,6 +293,9 @@ const UseNativeAccount = () => {
         updateCache(undefined);
         setNativeAccount(undefined);
       }
+    })
+    .catch(error => {
+      throw(error);
     });
     connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
@@ -318,12 +321,17 @@ const precacheUserTokenAccounts = async (
   PRECACHED_OWNERS.add(owner.toBase58());
 
   // user accounts are update via ws subscription
-  const accounts = await connection.getTokenAccountsByOwner(owner, {
-    programId: programIds().token,
-  });
-  accounts.value.forEach((info) => {
-    cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
-  });
+  try {
+    const accounts = await connection.getTokenAccountsByOwner(owner, {
+      programId: programIds().token,
+    });
+    accounts.value.forEach((info) => {
+      cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
+    });
+  } catch (error) {
+    console.log('getTokenAccountsByOwner failed.', error);
+    throw(error);
+  }
 };
 
 export function AccountsProvider({ children = null as any }) {

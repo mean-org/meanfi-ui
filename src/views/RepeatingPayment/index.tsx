@@ -7,7 +7,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { getEndpointByRuntimeEnv, useConnection } from "../../contexts/connection";
+import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../Icons";
 import {
   formatAmount,
@@ -51,6 +51,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const RepeatingPayment = () => {
   const connection = useConnection();
+  const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
   const {
     contract,
@@ -589,7 +590,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {

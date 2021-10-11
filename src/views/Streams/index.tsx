@@ -40,7 +40,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  getTxFeeAmount,
 } from "../../utils/ui";
 import { ContractSelectorModal } from '../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../components/OpenStreamModal';
@@ -54,7 +53,7 @@ import {
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
   WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
-import { getEndpointByRuntimeEnv, getSolanaExplorerClusterParam, useConnection } from "../../contexts/connection";
+import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
@@ -75,6 +74,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const Streams = () => {
   const connection = useConnection();
+  const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
   const {
     streamList,
@@ -613,7 +613,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -901,7 +901,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1188,7 +1188,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(getEndpointByRuntimeEnv(), streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {

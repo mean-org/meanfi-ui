@@ -13,7 +13,7 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { findATokenAddress, getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
-import { getEndpointByRuntimeEnv, getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
 import { TokenInfo } from "@solana/spl-token-registry";
@@ -381,7 +381,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!loadingStreamActivity) {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
+      const newConnection = new Connection(connectionConfig.endpoint, "confirmed");
       listStreamActivity(newConnection, streamPublicKey)
         .then(value => {
           consoleOut('activity:', value);
@@ -397,6 +397,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [
     connected,
+    connectionConfig.endpoint,
     loadingStreamActivity
   ]);
 
