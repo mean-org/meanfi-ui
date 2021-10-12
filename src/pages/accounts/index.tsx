@@ -11,10 +11,10 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Button, Empty, Result, Space, Spin, Tooltip } from 'antd';
+import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE } from '../../constants';
+import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
@@ -23,6 +23,7 @@ import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useHistory } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
+import useLocalStorage from '../../hooks/useLocalStorage';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -34,6 +35,7 @@ export const AccountsView = () => {
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
     userTokens,
+    splTokenList,
     transactions,
     selectedAsset,
     accountAddress,
@@ -65,6 +67,8 @@ export const AccountsView = () => {
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
+  const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
+  const [numMeanTokens, setNumMeanTokens] = useState(0);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -210,43 +214,80 @@ export const AccountsView = () => {
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   useEffect(() => {
-    if (!connection || !customConnection || !accountAddress || !shouldLoadTokens || !userTokens) {
+    if (!connection || !customConnection || !accountAddress || !shouldLoadTokens || !userTokens || !splTokenList) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      if (connection && customConnection && accountAddress && shouldLoadTokens && userTokens) {
+      if (connection && customConnection && accountAddress && shouldLoadTokens &&
+          userTokens && userTokens.length && splTokenList && splTokenList.length) {
         setShouldLoadTokens(false);
         setTokensLoaded(false);
   
-        const myTokens = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+        const meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+        const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
         const pk = new PublicKey(accountAddress);
         let nativeBalance = 0;
+        setNumMeanTokens(userTokens.length);
 
         // Fetch SOL balance.
         customConnection.getBalance(pk)
           .then(solBalance => {
             nativeBalance = solBalance || 0;
-            myTokens[0].balance = nativeBalance / LAMPORTS_PER_SOL;
-            myTokens[0].ataAddress = accountAddress;
+            meanTokensCopy[0].balance = nativeBalance / LAMPORTS_PER_SOL;
+            meanTokensCopy[0].ataAddress = accountAddress;
             // We have the native account balance, now get the token accounts' balance
             // but first, set all balances to zero
-            for (let index = 1; index < myTokens.length; index++) {
-              myTokens[index].balance = 0;
+            for (let index = 1; index < meanTokensCopy.length; index++) {
+              meanTokensCopy[index].balance = 0;
             }
+
             fetchAccountTokens(pk, connection.endpoint)
               .then(accTks => {
                 if (accTks) {
+                  // Update balances in the mean token list
                   accTks.forEach(item => {
-                    const tokenIndex = myTokens.findIndex(i => i.address === item.parsedInfo.mint);
+                    const tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
                     if (tokenIndex !== -1) {
-                      myTokens[tokenIndex].ataAddress = item.pubkey.toBase58();
-                      myTokens[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      meanTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
+                      meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     }
                   });
+                  // Update balances in the SPL token list
+                  accTks.forEach(item => {
+                    const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                    if (tokenIndex !== -1) {
+                      splTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
+                      splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    }
+                  });
+                  // Create a list containing the tokens for the user accounts not in the meanTokenList
+                  const intersectedList = new Array<UserTokenAccount>();
+                  accTks.forEach(item => {
+                    // Loop through the user token accounts and add the token account to the list: meanTokensCopy
+                    // If it is not already on the list
+                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint);
+                    const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+                    if (tokenFromSplTokenList && !isTokenAccountInTheList) {
+                      intersectedList.push(tokenFromSplTokenList);
+                    }
+                  });
+                  const sortedList = intersectedList.sort((a, b) => {
+                    var nameA = a.symbol.toUpperCase();
+                    var nameB = b.symbol.toUpperCase();
+                    if (nameA < nameB) {
+                      return -1;
+                    }
+                    if (nameA > nameB) {
+                      return 1;
+                    }
+                    // names must be equal
+                    return 0;
+                  });
+                  const finalList = meanTokensCopy.concat(sortedList);
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
-                  myTokens.forEach(item => {
+                  finalList.forEach(item => {
                     if (item.ataAddress && item.address) {
                       tokenTable.push({
                         ataAddress: shortenAddress(item.ataAddress, 8),
@@ -257,25 +298,28 @@ export const AccountsView = () => {
                     }
                   });
                   console.table(tokenTable);
-                  setAccountTokens(myTokens);
+                  // Update the state
+                  setAccountTokens(finalList);
                   setTokensLoaded(true);
                 } else {
                   console.error('could not get account tokens');
-                  setAccountTokens(myTokens);
+                  setAccountTokens(meanTokensCopy);
                   setTokensLoaded(true);
                 }
                 // Preset the first available token
-                selectAsset(myTokens[0]);
+                selectAsset(meanTokensCopy[0]);
               })
               .catch(error => {
                 console.error(error);
-                setAccountTokens(myTokens);
+                setAccountTokens(meanTokensCopy);
                 setTokensLoaded(true);
-                selectAsset(myTokens[0]);
+                selectAsset(meanTokensCopy[0]);
+                throw(error);
               });
           })
           .catch(error => {
             console.error(error);
+            throw(error);
           });
       }
     });
@@ -286,6 +330,7 @@ export const AccountsView = () => {
 
   }, [
     accountAddress,
+    splTokenList,
     userTokens,
     connection,
     customConnection,
@@ -520,6 +565,12 @@ export const AccountsView = () => {
     <>
     {accountTokens && accountTokens.length ? (
       accountTokens.map((asset, index) => {
+        if (hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT) {
+          return null;
+        }
+        if (index === numMeanTokens) {
+          return <div className="pinned-token-separator"></div>;
+        }
         const onTokenAccountClick = () => selectAsset(asset, true);
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}
@@ -730,6 +781,10 @@ export const AccountsView = () => {
                 <div className="inner-container">
                   <div className="item-block vertical-scroll">
                     {renderTokenList}
+                  </div>
+                  <div className="bottom-ctas">
+                    <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+                    <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
                   </div>
                 </div>
               </div>

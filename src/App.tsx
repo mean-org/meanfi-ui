@@ -140,6 +140,12 @@ function App() {
         const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkIdByRuntimeEnv()}`;
         setLoadRpcConfigApiUrl(url);
         setInitStatus(InitStatus.LoadAnotherRpcConfig);
+      } else if (initStatus === InitStatus.TestRpcError) {
+        if (canFetch) {
+          const url = `${appConfig.getConfig().apiUrl}${GET_RPC_API_ENDPOINT}?networkId=${getNetworkIdByRuntimeEnv()}&previousRpcId=${(lastUsedRpc as RpcConfig).id}`;
+          setLoadRpcConfigApiUrl(url);
+          setInitStatus(InitStatus.LoadAnotherRpcConfig);
+        }
       }
     } else {
       if (lastUsedRpc) {
@@ -263,6 +269,7 @@ function App() {
             console.error(error);
             // This didn't work either
             setInitStatus(InitStatus.TestRpcError);
+            throw(error);
           });
         } else {
           // Connection constructor didn't work at all (like when bad url is given) not sure of this

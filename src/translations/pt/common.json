@@ -45,7 +45,8 @@
 		},
 		"no-transactions": "Nenhuma transação foi encontrada",
 		"qr-scan-title": "Obter endereço do código QR",
-		"screen-title": "Saldos de ativos"
+		"screen-title": "Asset balances",
+		"switch-hide-low-balances": "Hide low balances"
 	},
 	"close-stream": {
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",

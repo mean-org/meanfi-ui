@@ -16,7 +16,7 @@ import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
-import { TokenInfo } from "@solana/spl-token-registry";
+import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { useTranslation } from "react-i18next";
@@ -29,6 +29,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut } from "../utils/ui";
 import { appConfig } from "..";
+import { ChainId } from "@saberhq/token-utils";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -66,6 +67,7 @@ interface AppStateConfig {
   customStreamDocked: boolean;
   referrals: number;
   // Accounts
+  splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
   transactions: MappedTransaction[] | undefined;
@@ -146,6 +148,7 @@ const contextDefaultValues: AppStateConfig = {
   customStreamDocked: false,
   referrals: 0,
   // Accounts
+  splTokenList: [],
   userTokens: [],
   selectedAsset: undefined,
   transactions: undefined,
@@ -762,6 +765,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   /////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>([]);
   const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
   const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
   const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
@@ -814,11 +818,46 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     (async () => {
       let list = new Array<UserTokenAccount>();
-      list.push(NATIVE_SOL as UserTokenAccount);
+      const sol: UserTokenAccount = {
+        address: NATIVE_SOL.address,
+        balance: 0,
+        chainId: 0,
+        decimals: NATIVE_SOL.decimals,
+        name: NATIVE_SOL.name,
+        symbol: NATIVE_SOL.symbol,
+        ataAddress: '',
+        tags: NATIVE_SOL.tags,
+        logoURI: NATIVE_SOL.logoURI
+      };
+      sol.isMeanSupportedToken = true;
+      list.push(sol);
       MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
-        .forEach(item => list.push(item));
+        .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+      // Update the list
       updateUserTokens(list);
       consoleOut('AppState -> userTokens:', list);
+
+      // Load the mainnet list
+      const res = await new TokenListProvider().resolve();
+      const mainnetList = res
+        .filterByChainId(ChainId.MainnetBeta)
+        .excludeByTag("nft")
+        .getList() as UserTokenAccount[];
+      // Sort the big list
+      const sortedMainnetList = mainnetList.sort((a, b) => {
+        var nameA = a.symbol.toUpperCase();
+        var nameB = b.symbol.toUpperCase();
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        // names must be equal
+        return 0;
+      });
+
+      updateSplTokenList(sortedMainnetList);
     })();
 
     return () => { }
@@ -857,6 +896,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamActivity,
         customStreamDocked,
         referrals,
+        splTokenList,
         userTokens,
         selectedAsset,
         transactions,
