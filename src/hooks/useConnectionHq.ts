@@ -128,9 +128,9 @@ const useConnectionHq = (networkId: number) => {
                         setInitStatus(InitStatus.TestRpcConfig);
                         setCanTestEndpoint(true);
                     } else {
-                        // The fetch config failed
+                        // No more configs to retrieve, everything went to hell
                         setFetchedRpc(undefined);
-                        setInitStatus(InitStatus.LoadRpcConfigError);
+                        setInitStatus(InitStatus.NoNetwork);
                     }
                 })
                 .catch(error => {
@@ -162,49 +162,48 @@ const useConnectionHq = (networkId: number) => {
 
     // Actually test the endpoint
     useEffect(() => {
-        if (initStatus === InitStatus.TestRpcConfig && canTestEndpoint) {
+        if (initStatus !== InitStatus.TestRpcConfig || !canTestEndpoint) { return; }
 
-            const testGetRecentBlockhash = (rpcConfig: RpcConfig) => {
-                try {
-                    const connection = new Connection(rpcConfig.httpProvider);
-                    if (connection) {
-                        connection.getRecentBlockhash()
-                            .then(response => {
-                                consoleOut('response:', response, 'blue');
-                                if (response && response.blockhash) {
-                                    // Ok
-                                    if (!selectedRpcEndpoint || (selectedRpcEndpoint && (selectedRpcEndpoint as RpcConfig).httpProvider !== rpcConfig.httpProvider)) {
-                                        setSelectedRpcEndpoint(rpcConfig);
-                                    }
-                                    setInitStatus(InitStatus.TestRpcSuccess);
-                                } else {
-                                    // This didn't work
-                                    setInitStatus(InitStatus.TestRpcError);
+        const testGetRecentBlockhash = (rpcConfig: RpcConfig) => {
+            try {
+                const connection = new Connection(rpcConfig.httpProvider);
+                if (connection) {
+                    connection.getRecentBlockhash()
+                        .then(response => {
+                            consoleOut('response:', response, 'blue');
+                            if (response && response.blockhash) {
+                                // Ok
+                                if (!selectedRpcEndpoint || (selectedRpcEndpoint && (selectedRpcEndpoint as RpcConfig).httpProvider !== rpcConfig.httpProvider)) {
+                                    setSelectedRpcEndpoint(rpcConfig);
                                 }
-                            })
-                            .catch(error => {
-                                console.error(error);
-                                // This didn't work either
+                                setInitStatus(InitStatus.TestRpcSuccess);
+                            } else {
+                                // This didn't work
                                 setInitStatus(InitStatus.TestRpcError);
-                            });
-                    } else {
-                        // Connection constructor didn't work at all (like when bad url is given) not sure of this
-                        setInitStatus(InitStatus.TestRpcError);
-                    }
-                } catch (error) {
-                    console.error(error);
-                    // Menos que menos
+                            }
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            // This didn't work either
+                            setInitStatus(InitStatus.TestRpcError);
+                        });
+                } else {
+                    // Connection constructor didn't work at all (like when bad url is given) not sure of this
                     setInitStatus(InitStatus.TestRpcError);
                 }
+            } catch (error) {
+                console.error(error);
+                // Menos que menos
+                setInitStatus(InitStatus.TestRpcError);
             }
-    
-            if (fetchedRpc || selectedRpcEndpoint) {
-                setCanTestEndpoint(false);
-                if (fetchedRpc) {
-                    testGetRecentBlockhash(fetchedRpc);
-                } else {
-                    testGetRecentBlockhash((selectedRpcEndpoint as RpcConfig));
-                }
+        }
+
+        if (fetchedRpc || selectedRpcEndpoint) {
+            setCanTestEndpoint(false);
+            if (fetchedRpc) {
+                testGetRecentBlockhash(fetchedRpc);
+            } else {
+                testGetRecentBlockhash((selectedRpcEndpoint as RpcConfig));
             }
         }
 
@@ -218,8 +217,9 @@ const useConnectionHq = (networkId: number) => {
     ]);
 
     const isSuccessful = initStatus === InitStatus.TestRpcSuccess ? true : false;
+    const isNetworkFailure = initStatus === InitStatus.NoNetwork ? true : false;
 
-    return {selectedRpcEndpoint, isSuccessful} as const;
+    return {selectedRpcEndpoint, isSuccessful, isNetworkFailure} as const;
 };
 
 export default useConnectionHq;

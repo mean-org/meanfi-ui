@@ -109,7 +109,11 @@ export function ConnectionProvider({ children = undefined as any }) {
     endpoint,
   ]);
 
-  const { selectedRpcEndpoint, isSuccessful } = useConnectionHq(101);
+  const { selectedRpcEndpoint, isSuccessful, isNetworkFailure } = useConnectionHq(101);
+  // If isNetworkFailure turns true in any moment just go to root
+  if (isNetworkFailure) {
+    window.location.href = '/';
+  }
   // Use the value of 'endpoint' if the the cluster is mainnet or use the solana public API
   const swapConnection = useMemo(() => {
     const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
