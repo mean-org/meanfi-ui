@@ -2,6 +2,7 @@ import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
 import { consoleOut } from "./ui";
 import { appConfig } from "..";
+import { WALLET_PROVIDERS } from "../contexts/wallet";
 
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
@@ -16,6 +17,7 @@ export class LoggerJsonData {
     Process?: string;
     Browser?: string;
     Message!: string;
+    WalletAdapter?: string;
     Data?: any;
     Elapsed?: number;
     timestamp!: string;
@@ -30,9 +32,11 @@ export enum LogLevel {
 export class CustomLoggerService {
 
     public applicationName: string;
+    private walletProviderKey: string;
 
     constructor() {
         this.applicationName = appConfig.getConfig().logglyTag;
+        this.walletProviderKey = 'walletProvider';
         logger.push({
             'logglyKey': appConfig.getConfig().logglyCustomerKey,
             'tag': this.applicationName,
@@ -83,11 +87,26 @@ export class CustomLoggerService {
             Message: message,
             timestamp: new Date().toISOString()
         };
+
         if (isBrowser) {
             logBody.Browser = this.getBrowser();
         } else {
             logBody.Process = process.title;
         }
+
+        try {
+            const item = window.localStorage.getItem(this.walletProviderKey);
+            if (item) {
+                const providerUrl = JSON.parse(item);
+                const provider = WALLET_PROVIDERS.find(p => p.url === providerUrl);
+                if (provider) {
+                    logBody.WalletAdapter = provider.name;
+                }
+            }
+        } catch (error) {
+            console.warn(`Error reading localStorage key “${this.walletProviderKey}”:`, error);
+        }
+
         if (data) {
             logBody.Data = data;
         }
