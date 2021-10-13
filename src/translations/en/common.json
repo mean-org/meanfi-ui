@@ -122,19 +122,40 @@
 		},
 		"repeating-daily": {
 			"description": "Buy every day, starting now.",
-			"name": "Repeat daily"
+			"name": "Repeat daily",
+			"recurrence-period": "every day"
 		},
 		"repeating-once-month": {
-			"description": "Every month on the {{ordinalDay}}.",
-			"name": "Once a month"
+			"description": "Every 30 days, starting today.",
+			"name": "Repeat monthly",
+			"recurrence-period": "every 30 days"
 		},
 		"repeating-twice-month": {
-			"description": "Buy today, then twice a month on the 1st and the 15th.",
-			"name": "Twice a month"
+			"description": "Every other week on {{dayOfWeek}}, starting today.",
+			"name": "Every two weeks",
+			"recurrence-period": "every two weeks"
 		},
 		"repeating-weekly": {
 			"description": "Buy every {{dayOfWeek}}, starting today.",
-			"name": "Repeat weekly"
+			"name": "Repeat weekly",
+			"recurrence-period": "every week"
+		}
+	},
+	"ddca-setup": {
+		"modal-title": "Review Repeating Buy",
+		"cta-label": "Approve",
+		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
+		"help": {
+			"how-does-it-work": "How does it work?",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault."
+		},
+		"notes": {
+			"notes-title": "Important Notes",
+			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-02": "Fees for the scheduled swaps are charged upfront",
+			"note-item-03": "All unused fees are returned to you upon withdrawal"
 		}
 	},
 	"deposits": {
@@ -168,10 +189,12 @@
 		"cta-close": "Close",
 		"cta-finish": "Finish",
 		"day": "day",
+		"days": "days",
 		"hour": "hour",
 		"loading": "Loading",
 		"minute": "minute",
 		"month": "month",
+		"months": "months",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"not-implemented": "Not implemented",
 		"reload-cta": "Try again now",
@@ -179,6 +202,7 @@
 		"seconds": "seconds",
 		"today": "today",
 		"week": "week",
+		"weeks": "weeks",
 		"year": "year",
 		"you": "you"
 	},
@@ -391,6 +415,7 @@
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Invalid exchange",
 			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
+			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
@@ -399,6 +424,7 @@
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment rate exceeds your balance",
 			"valid-approve": "Approve on your wallet",
+			"valid-ddca-review": "Review",
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal"
 		}

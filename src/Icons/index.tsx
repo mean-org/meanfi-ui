@@ -29,6 +29,7 @@ export { IconRefresh } from "./IconRefresh";
 export { IconSettings } from "./IconSettings";
 export { IconShare } from "./IconShare";
 export { IconShareBox } from "./IconShareBox";
+export { IconShield } from "./IconShield";
 export { IconSolana } from "./IconSolana";
 export { IconSort } from "./IconSort";
 export { IconSun } from "./IconSun";

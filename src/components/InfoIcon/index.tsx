@@ -1,9 +1,9 @@
 import React from "react";
 import { Button, Popover } from "antd";
 import { TooltipPlacement } from "antd/lib/tooltip";
-import { InfoCircleOutlined } from "@ant-design/icons";
 
 export const InfoIcon = (props: {
+  children: React.ReactElement;
   content: React.ReactElement | null;
   title?: React.ReactElement;
   style?: React.CSSProperties;
@@ -20,7 +20,7 @@ export const InfoIcon = (props: {
         className="info-icon-button"
         type="default"
         shape="circle">
-        <InfoCircleOutlined style={props.style} />
+        {props.children}
       </Button>
     </Popover>
   );

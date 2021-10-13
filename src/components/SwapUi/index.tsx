@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useSwapConnection } from "../../contexts/connection";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -32,6 +32,8 @@ import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { customLogger } from "../..";
+import { DdcaFrequencyValue } from "../../models/ddca-models";
+import { DdcaSetupModal } from "../DdcaSetupModal";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -99,6 +101,11 @@ export const SwapUi = (props: {
   const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
   const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
 
+  // DDCA Setup modal
+  const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
+  const showDdcaSetup = useCallback(() => setDdcaSetupModalVisibility(true), []);
+  const onCloseDdcaSetup = useCallback(() => setDdcaSetupModalVisibility(false), []);
+
   const isWrap = useCallback(() => {
 
     return (
@@ -133,7 +140,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -171,7 +177,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -195,7 +200,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -317,7 +321,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -378,7 +381,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -420,7 +422,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -511,7 +512,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
     
@@ -577,7 +577,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
     
@@ -616,7 +615,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
     
@@ -692,7 +690,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -732,7 +729,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -860,7 +856,6 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -921,6 +916,8 @@ export const SwapUi = (props: {
           label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
         }
 
+      } else if (ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange) {
+        label = t("transactions.validation.valid-ddca-review");
       } else {    
         label = t("transactions.validation.valid-approve");
       }
@@ -935,6 +932,7 @@ export const SwapUi = (props: {
 
   }, [
     t,
+    ddcaOption?.value,
     connected, 
     connection, 
     feesInfo, 
@@ -996,7 +994,6 @@ export const SwapUi = (props: {
   const updateTokenListByFilter = useCallback(() => {
 
     if (!connection) {
-      console.error('No connection');
       return;
     }
 
@@ -1842,7 +1839,9 @@ export const SwapUi = (props: {
                     <div className="right pl-1">
                       {
                         fromAmount ? (
-                          <InfoIcon content={txInfoContent()} placement="leftBottom" />
+                          <InfoIcon content={txInfoContent()} placement="leftBottom">
+                            <InfoCircleOutlined />
+                          </InfoIcon>
                         ) : null
                       }
                     </div>
@@ -1893,13 +1892,31 @@ export const SwapUi = (props: {
               type="default"
               shape="round"
               size="middle"
-              className="dropdown-like-button"
+              className={`dropdown-like-button ${ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange ? 'active' : ''}`}
               onClick={showDdcaOptionSelector}>
               <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
               <IconCaretDown className="mean-svg-icons" />
             </Button>
           )}
         </div>
+
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={() => {
+            if (ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange) {
+              showDdcaSetup();
+            } else {
+              onTransactionStart();
+            }
+          }}
+          disabled={!isValidBalance || !isValidSwapAmount}>
+          {transactionStartButtonLabel}
+        </Button>
 
         {/* Token selection modal */}
         <Modal
@@ -1926,24 +1943,25 @@ export const SwapUi = (props: {
           </div>
         </Modal>
 
-        {/* Action button */}
-        <Button
-          className="main-cta"
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={onTransactionStart}
-          disabled={!isValidBalance || !isValidSwapAmount}>
-          {transactionStartButtonLabel}
-        </Button>
-
         {/* DDCA Option selector modal */}
         <DdcaFrequencySelectorModal
           isVisible={isDdcaOptionSelectorModalVisible}
           handleClose={onCloseDdcaOptionSelector}
           handleOk={onCloseDdcaOptionSelector}
         />
+
+        {/* DDCA Setup modal */}
+        {isDdcaSetupModalVisible && (
+          <DdcaSetupModal
+            isVisible={isDdcaSetupModalVisible}
+            handleClose={onCloseDdcaSetup}
+            handleOk={onTransactionStart}
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+            fromTokenAmount={parseFloat(fromAmount) || 0}
+            toToken={toMint && mintList[toMint]}
+          />
+        )}
 
         {/* Transaction execution modal */}
         <Modal

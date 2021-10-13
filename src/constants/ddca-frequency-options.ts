@@ -1,34 +1,34 @@
-import { DdcaFrequencyOption } from "../models/ddca-models";
+import { DdcaFrequencyOption, DdcaFrequencyValue } from "../models/ddca-models";
 
 export const DDCA_FREQUENCY_OPTIONS: DdcaFrequencyOption[] = [
     {
-        value: 1,
+        value: DdcaFrequencyValue.OneTimeExchange,
         translationId: 'ote',
         name: 'One time exchange',
         disabled: false,
     },
+    // {
+    //     value: DdcaFrequencyValue.RepeatingDaily,
+    //     translationId: 'repeating-daily',
+    //     name: 'Repeat daily',
+    //     disabled: false,
+    // },
     {
-        value: 2,
-        translationId: 'repeating-daily',
-        name: 'Repeat daily',
-        disabled: true,
-    },
-    {
-        value: 3,
+        value: DdcaFrequencyValue.RepeatingWeekly,
         translationId: 'repeating-weekly',
         name: 'Repeat weekly',
-        disabled: true,
+        disabled: false,
     },
     {
-        value: 4,
+        value: DdcaFrequencyValue.RepeatingTwiceMonth,
         translationId: 'repeating-twice-month',
-        name: 'Twice a month',
-        disabled: true,
+        name: 'Every two weeks',
+        disabled: false,
     },
     {
-        value: 5,
+        value: DdcaFrequencyValue.RepeatingOnceMonth,
         translationId: 'repeating-once-month',
-        name: 'Once a month',
-        disabled: true,
+        name: 'Repeat monthly',
+        disabled: false,
     },
 ];

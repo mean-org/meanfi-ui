@@ -302,6 +302,10 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
+export const getFormattedRateAmount = (amount: number): string => {
+  return `${getFormattedNumberToLocale(formatAmount(amount, 2))}`;
+}
+
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,

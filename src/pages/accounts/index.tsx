@@ -10,7 +10,7 @@ import { FetchStatus, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { fetchAccountTokens, getAmountFromLamports, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { fetchAccountTokens, getAmountFromLamports, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -34,6 +34,7 @@ export const AccountsView = () => {
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
+    coinPrices,
     userTokens,
     splTokenList,
     transactions,
@@ -201,6 +202,15 @@ export const AccountsView = () => {
               : new PublicKey(accountAddress)
             : null;
   },[accountAddress]);
+
+  const getPricePerToken = (token: UserTokenAccount): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -574,6 +584,7 @@ export const AccountsView = () => {
           return <div key="separator" className="pinned-token-separator"></div>;
         }
         const onTokenAccountClick = () => selectAsset(asset, true);
+        const tokenPrice = getPricePerToken(asset);
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}
                className={selectedAsset && selectedAsset.symbol === asset.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>
@@ -587,12 +598,20 @@ export const AccountsView = () => {
               </div>
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{asset.symbol}</div>
+              <div className="title">
+                {asset.symbol}
+                {tokenPrice && (
+                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>~${getFormattedRateAmount(tokenPrice)}</span>
+                )}
+              </div>
               <div className="subtitle text-truncate">{asset.name}</div>
             </div>
             <div className="rate-cell">
               <div className="rate-amount">
                 {getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true)}
+              </div>
+              <div className="interval">
+                ~${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
               </div>
             </div>
           </div>

@@ -13,7 +13,7 @@
   --color-pending-transaction: #e64d11;
   --color-paused-transaction: #1698e4;
   --color-devnet-indicator: #F7B500;
-
+  --color-golden: #FFF2C0;
   --color-notify-info: #177ddc;
   --color-notify-success: #49aa19;
   --color-notify-warning: #d89614;
@@ -283,9 +283,6 @@ h1.mandatory-h1 {
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-secondary-alpha-85);
 }
-.solid-bg {
-  background-color: var(--bg-color);
-}
 .fg-secondary {
   color: var(--color-secondary);
 }
@@ -295,10 +292,12 @@ h1, h2, h3, h4, h5, h6 {
 .fg-black-25 {
   color: var(--color-secondary-alpha-25);
 }
-.fg-red {
+.fg-red,
+.fg-primary {
   color: var(--color-primary);
 }
-.fg-error {
+.fg-error,
+.fg-primary-highlight {
   color: var(--color-primary-highlight);
 }
 .fg-success {
@@ -306,6 +305,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 .fg-dark-active {
   color: var(--color-dark-active);
+}
+.fg-dark {
+  color: var(--color-dark) !important;
+}
+.solid-bg {
+  background-color: var(--bg-color);
 }
 .bg-white {
   background-color: var(--color-white);
@@ -2868,7 +2873,8 @@ section.content {
     min-width: 12rem;
     padding-left: 4px;
     .title {
-      display: block;
+      display: inline-flex;
+      align-items: center;
       font-size: 16px;
       line-height: 1.2;
       color: var(--color-secondary-alpha-70);
@@ -2890,6 +2896,10 @@ section.content {
       line-height: 1.3;
     }
   }
+}
+.tokens-container .interval {
+  color: var(--color-secondary);
+  font-size: 76% !important;
 }
 
 /* Stream details */
@@ -4120,12 +4130,19 @@ code {
 
 // Pills
 .yellow-pill {
-  background: rgba(255, 212, 40, 0.43);
-  font-size: 12px;
-  padding: 5px 15px;
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 12px;
   border-radius: 12px;
-  color: var(--color-secondary-alpha-50);
-  font-weight: 400;
+  color: var(--color-black);
+  background-color: var(--color-golden);
+  .mean-svg-icons {
+    margin: -1px 0.2rem -1px -3px;
+    color: var(--color-item-selector-selected) !important;
+  }
 }
 
 .badge {
@@ -4162,11 +4179,26 @@ code {
   &.orange {
     background-color: var(--color-orange);
   }
+  &.golden {
+    background-color: var(--color-golden);
+  }
   &.orange-red {
     background-color: var(--color-orange-red);
   }
   &.error {
     background-color: var(--color-notify-error);
+  }
+  &.darken {
+    background-color: var(--color-secondary-alpha-20);
+  }
+  &.small {
+    font-size: 10px;
+    padding: 2px 4px 3px;
+    border-radius: 5px;
+    line-height: 10px;
+    height: auto;
+    margin-left: 6px;
+    font-weight: 400;
   }
 }
 

@@ -220,7 +220,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
-  const [ddcaOptionName, setDdcaOptionName] = useLocalStorageState("ddcaOptionName");
+  const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
 
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
   const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);

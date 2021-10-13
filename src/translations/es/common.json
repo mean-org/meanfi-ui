@@ -115,26 +115,47 @@
 		}
 	},
 	"ddca-selector": {
-		"modal-title": "¿Repite este intercambio?",
+		"modal-title": "Repeat this trade?",
 		"ote": {
-			"description": "Intercambia ahora. Una vez.",
-			"name": "Intercambio único"
+			"description": "Exchange now. One time.",
+			"name": "One time exchange"
 		},
 		"repeating-daily": {
-			"description": "Compre todos los días a partir de ahora.",
-			"name": "Repetir diariamente"
+			"description": "Buy every day, starting now.",
+			"name": "Repeat daily",
+			"recurrence-period": "every day"
 		},
 		"repeating-once-month": {
-			"description": "Cada mes en el {{ordinalDay}}.",
-			"name": "Una vez al mes"
+			"description": "Every 30 days, starting today.",
+			"name": "Repeat monthly",
+			"recurrence-period": "every 30 days"
 		},
 		"repeating-twice-month": {
-			"description": "Compre hoy, luego dos veces al mes, el 1 y el 15.",
-			"name": "Dos veces al mes"
+			"description": "Every other week on {{dayOfWeek}}, starting today.",
+			"name": "Every two weeks",
+			"recurrence-period": "every two weeks"
 		},
 		"repeating-weekly": {
-			"description": "Compre cada {{dayOfWeek}}, a partir de hoy.",
-			"name": "Repetir semanalmente"
+			"description": "Buy every {{dayOfWeek}}, starting today.",
+			"name": "Repeat weekly",
+			"recurrence-period": "every week"
+		}
+	},
+	"ddca-setup": {
+		"modal-title": "Review Repeating Buy",
+		"cta-label": "Approve",
+		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
+		"help": {
+			"how-does-it-work": "How does it work?",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault."
+		},
+		"notes": {
+			"notes-title": "Important Notes",
+			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-02": "Fees for the scheduled swaps are charged upfront",
+			"note-item-03": "All unused fees are returned to you upon withdrawal"
 		}
 	},
 	"deposits": {
@@ -399,6 +420,7 @@
 			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
 			"valid-approve": "Aprobar en su billetera",
+			"valid-ddca-review": "Review",
 			"valid-start-funding": "Empezar a financiar",
 			"valid-start-withdrawal": "Iniciar retiro"
 		}
