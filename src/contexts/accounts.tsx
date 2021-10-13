@@ -297,12 +297,18 @@ const UseNativeAccount = () => {
     .catch(error => {
       throw(error);
     });
-    connection.onAccountChange(publicKey, (acc) => {
+    const listener = connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
       }
     });
+
+    return () => {
+      if (listener) {
+        connection.removeAccountChangeListener(listener);
+      }
+    };
   }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
 
   return { nativeAccount };
@@ -368,9 +374,10 @@ export function AccountsProvider({ children = null as any }) {
       if (args.isNew) {
         let id = args.id;
         let deserialize = args.parser;
-        connection.onAccountChange(new PublicKey(id), (info) => {
+        const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
           cache.add(id, info, deserialize);
         });
+        subs.push(listenerId);
       }
     });
 

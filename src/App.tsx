@@ -245,37 +245,35 @@ function App() {
   useEffect(() => {
     if (initStatus !== InitStatus.TestRpcConfig || !canTestEndpoint) { return; }
 
-    const testGetRecentBlockhash = (rpcConfig: RpcConfig) => {
+    const testWeb3jsMethod = (rpcConfig: RpcConfig) => {
       try {
         const connection = new Connection(rpcConfig.httpProvider);
-        if (connection) {
-          connection.getRecentBlockhash()
-          .then(response => {
-            consoleOut('response:', response, 'blue');
-            if (response && response.blockhash) {
-              // Ok
-              if (!lastUsedRpc || (lastUsedRpc && (lastUsedRpc as RpcConfig).httpProvider !== rpcConfig.httpProvider)) {
-                setLastUsedRpc(rpcConfig);
-              }
-              setInitStatus(InitStatus.TestRpcSuccess);
-              setTimeout(() => {
-                setCanContinueLoadingApp(true);
-              }, 100);
-            } else {
-              // This didn't work
-              setInitStatus(InitStatus.TestRpcError);
-            }
-          })
-          .catch(error => {
-            console.error(error);
-            // This didn't work either
-            setInitStatus(InitStatus.TestRpcError);
-            throw(error);
-          });
-        } else {
-          // Connection constructor didn't work at all (like when bad url is given) not sure of this
-          setInitStatus(InitStatus.TestRpcError);
+        if (!connection) {
+          throw new Error("No connection");
         }
+        connection.getRecentBlockhashAndContext()
+        .then((response: any) => {
+          consoleOut('response:', response, 'blue');
+
+          if(!response || !response.value || response.value.err) {
+            const err = response && response.value && response.value.err 
+              ? response.value.err 
+              : new Error(response.value.err);
+            throw(err);
+          }
+
+          // Ok
+          if (!lastUsedRpc || (lastUsedRpc && (lastUsedRpc as RpcConfig).httpProvider !== rpcConfig.httpProvider)) {
+            setLastUsedRpc(rpcConfig);
+          }
+          setInitStatus(InitStatus.TestRpcSuccess);
+          setCanContinueLoadingApp(true);
+        })
+        .catch(error => {
+          console.error(error);
+          // This didn't work either
+          throw(error);
+        });
       } catch (error) {
         console.error(error);
         // Menos que menos
@@ -286,9 +284,9 @@ function App() {
     if (fetchedRpc || lastUsedRpc) {
       setCanTestEndpoint(false);
       if (fetchedRpc) {
-        testGetRecentBlockhash(fetchedRpc);
+        testWeb3jsMethod(fetchedRpc);
       } else {
-        testGetRecentBlockhash((lastUsedRpc as RpcConfig));
+        testWeb3jsMethod((lastUsedRpc as RpcConfig));
       }
     }
   }, [

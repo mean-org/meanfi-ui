@@ -68,7 +68,6 @@ export const getSolanaExplorerClusterParam = (): string => {
 
 interface ConnectionConfig {
   connection: Connection;
-  sendConnection: Connection;
   swapConnection: Connection | undefined;
   endpoint: string;
   slippage: number;
@@ -87,7 +86,6 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
   connection: new Connection(DEFAULT, "recent"),
-  sendConnection: new Connection(DEFAULT, "recent"),
   cluster: ENDPOINTS[0].cluster,
   tokens: [],
   tokenMap: new Map<string, TokenInfo>(),
@@ -191,40 +189,6 @@ export function ConnectionProvider({ children = undefined as any }) {
 
   setProgramIds(env);
 
-  // The websocket library solana/web3.js uses closes its websocket connection when the subscription list
-  // is empty after opening its first time, preventing subsequent subscriptions from receiving responses.
-  // This is a hack to prevent the list from every getting empty
-  useEffect(() => {
-    const id = connection.onAccountChange(new Account().publicKey, () => {});
-    return () => {
-      connection.removeAccountChangeListener(id);
-    };
-  }, [connection]);
-
-  useEffect(() => {
-    const id = connection.onSlotChange(() => null);
-    return () => {
-      connection.removeSlotChangeListener(id);
-    };
-  }, [connection]);
-
-  useEffect(() => {
-    const id = sendConnection.onAccountChange(
-      new Account().publicKey,
-      () => {}
-    );
-    return () => {
-      sendConnection.removeAccountChangeListener(id);
-    };
-  }, [sendConnection]);
-
-  useEffect(() => {
-    const id = sendConnection.onSlotChange(() => null);
-    return () => {
-      sendConnection.removeSlotChangeListener(id);
-    };
-  }, [sendConnection]);
-
   return (
     <ConnectionContext.Provider
       value={{
@@ -234,7 +198,6 @@ export function ConnectionProvider({ children = undefined as any }) {
         slippage: parseFloat(slippage),
         setSlippage: (val) => setSlippage(val.toString()),
         connection,
-        sendConnection,
         tokens,
         tokenMap,
         cluster: env,
@@ -252,10 +215,6 @@ export function useConnection() {
 
 export function useSwapConnection() {
   return useContext(ConnectionContext).swapConnection as Connection;
-}
-
-export function useSendConnection() {
-  return useContext(ConnectionContext)?.sendConnection;
 }
 
 export function useConnectionConfig() {
