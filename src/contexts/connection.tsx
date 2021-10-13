@@ -102,9 +102,9 @@ export function ConnectionProvider({ children = undefined as any }) {
     // Forcefully set a different endpoint.
   }
 
-  const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
+  // const [endpoint, setEndpoint] = useState(getEndpointByRuntimeEnv());
 
-  // const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfig).httpProvider || getEndpointByRuntimeEnv());
+  const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfig).httpProvider || getEndpointByRuntimeEnv());
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
     DEFAULT_SLIPPAGE.toString()
@@ -119,9 +119,8 @@ export function ConnectionProvider({ children = undefined as any }) {
   ]);
 
   // FIxed for now
-  const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].httpProvider, "confirmed"), []);
+  // const swapConnection = useMemo(() => new Connection(ENDPOINTS[0].httpProvider, "confirmed"), []);
 
-  /*
   const { selectedRpcEndpoint, isSuccessful, isNetworkFailure } = useConnectionHq(101);
   // If isNetworkFailure turns true in any moment just go to root
   if (isNetworkFailure) {
@@ -140,7 +139,6 @@ export function ConnectionProvider({ children = undefined as any }) {
     isSuccessful,
     selectedRpcEndpoint
   ]);
-  */
 
   const [tokens, setTokens] = useState<TokenInfo[]>([]);
   const [tokenMap, setTokenMap] = useState<Map<string, TokenInfo>>(new Map());

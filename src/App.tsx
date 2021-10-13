@@ -21,7 +21,7 @@ const opts: RequestInit = {
 }
 
 function App() {
-  /*
+
   const { t } = useTranslation('common');
   const [canContinueLoadingApp, setCanContinueLoadingApp] = useState(false);
   const [theme, updateTheme] = useLocalStorageState("theme");
@@ -392,8 +392,6 @@ function App() {
       </Layout>
     );
   }
-  */
-  return <Routes />;
 }
 
 export default App;
