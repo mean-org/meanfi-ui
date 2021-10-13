@@ -305,6 +305,8 @@ export const AccountsView = () => {
                   console.error('could not get account tokens');
                   setAccountTokens(meanTokensCopy);
                   setTokensLoaded(true);
+                  // TODO: Implement hot connect to a different RPC
+                  connection.nextRpcEndpoint();
                 }
                 // Preset the first available token
                 selectAsset(meanTokensCopy[0]);
@@ -314,12 +316,12 @@ export const AccountsView = () => {
                 setAccountTokens(meanTokensCopy);
                 setTokensLoaded(true);
                 selectAsset(meanTokensCopy[0]);
-                throw(error);
+                connection.nextRpcEndpoint();
               });
           })
           .catch(error => {
             console.error(error);
-            throw(error);
+            connection.nextRpcEndpoint();
           });
       }
     });
@@ -568,8 +570,8 @@ export const AccountsView = () => {
         if (hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT) {
           return null;
         }
-        if (index === numMeanTokens) {
-          return <div className="pinned-token-separator"></div>;
+        if (index === numMeanTokens - 1 && accountTokens.length > index + 1) {
+          return <div key="separator" className="pinned-token-separator"></div>;
         }
         const onTokenAccountClick = () => selectAsset(asset, true);
         return (

@@ -75,6 +75,7 @@ interface ConnectionConfig {
   setSlippage: (val: number) => void;
   cluster: Cluster;
   setEndpoint: (val: string) => void;
+  nextRpcEndpoint: () => void;
   tokens: TokenInfo[];
   tokenMap: Map<string, TokenInfo>;
 }
@@ -82,6 +83,7 @@ interface ConnectionConfig {
 const ConnectionContext = React.createContext<ConnectionConfig>({
   endpoint: DEFAULT,
   setEndpoint: () => {},
+  nextRpcEndpoint: () => {},
   slippage: DEFAULT_SLIPPAGE,
   setSlippage: (val: number) => {},
   connection: new Connection(DEFAULT, "recent"),
@@ -95,6 +97,11 @@ const ConnectionContext = React.createContext<ConnectionConfig>({
 export function ConnectionProvider({ children = undefined as any }) {
 
   const [lastUsedRpc, setLastUsedRpc] = useLocalStorageState("lastUsedRpc");
+
+  const nextRpcEndpoint = () => {
+    // Forcefully set a different endpoint.
+  }
+
   const [endpoint, setEndpoint] = useState((lastUsedRpc as RpcConfig).httpProvider || getEndpointByRuntimeEnv());
   const [slippage, setSlippage] = useLocalStorageState(
     "slippage",
@@ -114,6 +121,7 @@ export function ConnectionProvider({ children = undefined as any }) {
   if (isNetworkFailure) {
     window.location.href = '/';
   }
+
   // Use the value of 'endpoint' if the the cluster is mainnet or use the solana public API
   const swapConnection = useMemo(() => {
     const isMainnetRpc = lastUsedRpc && (lastUsedRpc as RpcConfig).cluster === "mainnet-beta" ? true : false;
@@ -217,6 +225,7 @@ export function ConnectionProvider({ children = undefined as any }) {
       value={{
         endpoint,
         setEndpoint,
+        nextRpcEndpoint,
         slippage: parseFloat(slippage),
         setSlippage: (val) => setSlippage(val.toString()),
         connection,
@@ -249,6 +258,7 @@ export function useConnectionConfig() {
   return {
     endpoint: context.endpoint,
     setEndpoint: context.setEndpoint,
+    nextRpcEndpoint: context.nextRpcEndpoint,
     cluster: context.cluster,
     tokens: context.tokens,
     tokenMap: context.tokenMap,

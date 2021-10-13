@@ -338,7 +338,12 @@ export const percentual = (partialValue: number, total: number): number => {
     return (100 * partialValue) / total;
 }
 
-// Get the given percent of total
+/**
+ * Get the given percent of total
+ * @param {number} percent - The percentual value to obtain from the total amount
+ * @param {number} total - The total amount to calculate a given percent of
+ * @returns {number} - The resulting fraction of the total
+ */
 export const percentage = (percent: number, total: number): number => {
     return percent * total / 100;
 }

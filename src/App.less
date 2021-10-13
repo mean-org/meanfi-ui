@@ -595,7 +595,8 @@ footer.ant-layout-footer {
   display: inline-flex;
   background-color: var(--color-whitesmoke);
   color: inherit;
-  border: none;
+  border-color: transparent !important;
+  border-width: 2px;
   outline: none;
   box-shadow: none;
   border-radius: var(--custom-border-radius);
@@ -605,13 +606,16 @@ footer.ant-layout-footer {
   &:hover,
   &:focus,
   &:active {
-    border: none;
+    border-color: var(--color-secondary-alpha-20) !important;
     outline: none;
     box-shadow: none;
   }
   &:disabled {
     color: var(--color-secondary-alpha-40) !important;
     background-color: var(--color-secondary-alpha-10);
+  }
+  &.active {
+    border-color: var(--color-item-selector-selected) !important;
   }
 }
 
