@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Link, Redirect, useLocation } from "react-router-dom";
 import "./../../App.less";
+import "./style.less";
 import { appConfig } from "../..";
 import { Layout } from "antd";
 import { AppBar } from "../AppBar";
@@ -218,6 +219,24 @@ export const AppLayout = React.memo((props: any) => {
       setRedirect('/service-unavailable');
     }
   }, [cachedRpc]);
+
+  useEffect(() => {
+    const bodyClass = location.pathname.split('/')[1];
+
+    const addRouteNameClass = () => {
+      if (bodyClass) {
+        document.body.classList.add(bodyClass);
+      }
+    }
+
+    addRouteNameClass();
+
+    return () => {
+      if (bodyClass) {
+        document.body.classList.remove(bodyClass);
+      }
+    };
+  }, [location.pathname]);
 
   const closeAllPanels = () => {
     if (detailsPanelOpen) {

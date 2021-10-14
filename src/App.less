@@ -156,12 +156,13 @@ body {
   }
 }
 .loading-screen-container {
+  position: relative;
   width: 100%;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 1rem;
-  height: 84vh;
+  height: 100%;
   .bottom-links {
     display: flex;
     align-items: center;
@@ -258,6 +259,10 @@ body {
         stroke: var(--color-primary-highlight);
       }
     }
+  }
+  .app-logo {
+    max-height: 50px;
+    margin-bottom: 3rem;
   }
 }
 
