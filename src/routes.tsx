@@ -30,7 +30,6 @@ export function Routes() {
                 <AppStateProvider>
                   <AppLayout>
                     <Switch>
-                      {/* <Route path="/" component={() => <HomeView />} /> */}
                       <Route exact path="/">
                         <Redirect to="/accounts" />
                       </Route>
