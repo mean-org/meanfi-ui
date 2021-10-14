@@ -82,7 +82,7 @@ export const DdcaSetupModal = (props: {
   const getModalHeadline = () => {
     // Buy 100 USDC worth of SOL every week ,for 6 weeks, starting today.
     // Buy {{fromTokenAmount}} worth of {{toTokenSymbol}} {{recurrencePeriod}} for {{totalPeriod}}, starting today.
-    return `<span>${t('ddca-setup.headline', {
+    return `<span>${t('ddca-setup-modal.headline', {
       fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(props.fromTokenAmount, props.fromToken?.address as string),
       toTokenSymbol: props.toToken?.symbol,
       recurrencePeriod: getRecurrencePeriod(),
@@ -186,11 +186,11 @@ export const DdcaSetupModal = (props: {
   const importantNotesPopoverContent = () => {
     return (
       <>
-        <div className="font-bold">{t('ddca-setup.notes.notes-title')}</div>
+        <div className="font-bold">{t('ddca-setup-modal.notes.notes-title')}</div>
         <ol className="greek small">
-          <li>{t('ddca-setup.notes.note-item-01')}</li>
-          <li>{t('ddca-setup.notes.note-item-02')}</li>
-          <li>{t('ddca-setup.notes.note-item-03')}</li>
+          <li>{t('ddca-setup-modal.notes.note-item-01')}</li>
+          <li>{t('ddca-setup-modal.notes.note-item-02')}</li>
+          <li>{t('ddca-setup-modal.notes.note-item-03')}</li>
         </ol>
       </>
     );
@@ -199,7 +199,7 @@ export const DdcaSetupModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('ddca-setup.modal-title')}</div>}
+      title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
@@ -221,11 +221,11 @@ export const DdcaSetupModal = (props: {
           dots={false}/>
       </div>
       <div className="mb-3">
-        <div className="font-bold">{t('ddca-setup.help.how-does-it-work')}</div>
+        <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
         <ol className="greek">
           <li>
             {
-              t('ddca-setup.help.help-item-01', {
+              t('ddca-setup-modal.help.help-item-01', {
                 fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
                   props.fromTokenAmount * recurrencePeriod,
                   props.fromToken?.address as string)
@@ -234,14 +234,14 @@ export const DdcaSetupModal = (props: {
           </li>
           <li>
             {
-              t('ddca-setup.help.help-item-02', {
+              t('ddca-setup-modal.help.help-item-02', {
                 recurrencePeriod: getRecurrencePeriod(),
               })
             }
           </li>
           <li>
             {
-              t('ddca-setup.help.help-item-03', {
+              t('ddca-setup-modal.help.help-item-03', {
                 toTokenSymbol: props.toToken?.symbol,
               })
             }
@@ -253,7 +253,7 @@ export const DdcaSetupModal = (props: {
           <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
             <IconShield className="mean-svg-icons"/>
           </InfoIcon>
-          <span>{t('ddca-setup.notes.note-item-01')}</span>
+          <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
         </span>
       </div>
       {!isOperationValid && (
@@ -280,7 +280,7 @@ export const DdcaSetupModal = (props: {
         disabled={true}
         onClick={onAcceptModal}>
           {isOperationValid
-            // ? t('ddca-setup.cta-label')
+            // ? t('ddca-setup-modal.cta-label')
             ? 'Repeating buy temporarily unavailable'
             : t('transactions.validation.amount-low')}
       </Button>

@@ -2,9 +2,8 @@ import { Row, Col, Spin, Modal, Button } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
-import { useCallback, useContext, useEffect, useState } from "react";
-import { useSwapConnection } from "../../contexts/connection";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, useLocalStorageState } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
@@ -13,7 +12,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
@@ -34,6 +33,7 @@ import { environment } from "../../environments/environment";
 import { customLogger } from "../..";
 import { DdcaFrequencyValue } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
+import { getLiveRpc, RpcConfig } from "../../models/connections-hq";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -44,7 +44,6 @@ export const SwapUi = (props: {
 
   const { t } = useTranslation("common");
   const { publicKey, wallet, connected } = useWallet();
-  const connection = useSwapConnection();
   const {
     coinPrices,
     ddcaOption,
@@ -54,6 +53,28 @@ export const SwapUi = (props: {
     setPreviousWalletConnectState
 
   } = useContext(AppStateContext);
+
+  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
+  const cachedRpc = (cachedRpcJson as RpcConfig);
+
+  useEffect(() => {
+    (async () => {
+      if (cachedRpc.networkId !== 101) {
+        const mainnetRpc = await getLiveRpc(101);
+        if (!mainnetRpc) {
+          window.location.href = '/';
+        }
+        setMainnetRpc(mainnetRpc);
+      } else {
+        setMainnetRpc(null);
+      }
+    })();
+    return () => { }
+  }, [cachedRpc.networkId]);
+
+  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
+    [cachedRpc.httpProvider, mainnetRpc]);
 
   // Added by YAF (Token balance)
   const [refreshing, setRefreshing] = useState(false);

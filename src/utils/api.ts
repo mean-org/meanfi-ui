@@ -31,14 +31,11 @@ export const getPrices = async (path?: string): Promise<any> => {
 export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
   try {
     const response = await fetch(url, options)
-    if (response.status >= 400) {
-      throw new Error(response.statusText)
-    } else if (response.status === 200) {
+    if (response.status === 200) {
       const data = (await response.json());
       return data;
-    } else {
-      return null;
     }
+    return null;
   } catch (error) {
     throw(error);
   }

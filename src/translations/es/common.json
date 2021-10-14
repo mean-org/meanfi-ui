@@ -62,7 +62,6 @@
 		"init-status-loading-app": "Loading app",
 		"init-status-try-saved-rpc-api": "Connecting to RPC API",
 		"init-status-load-rpc-api": "Trying alternate RPC API",
-		"init-status-load-rpc-api-error": "Could not load RPC API",
 		"init-status-load-rpc-api-success": "RPC API endpoint loaded",
 		"init-status-test-rpc": "Testing selected cluster endpoint",
 		"init-status-test-rpc-error": "Failed testing selected cluster endpoint",
@@ -114,6 +113,9 @@
 			"name": "Suscripción"
 		}
 	},
+	"ddcas": {
+		"screen-title": "Recurring buys"
+	},
 	"ddca-selector": {
 		"modal-title": "Repeat this trade?",
 		"ote": {
@@ -141,7 +143,7 @@
 			"recurrence-period": "every week"
 		}
 	},
-	"ddca-setup": {
+	"ddca-setup-modal": {
 		"modal-title": "Review Repeating Buy",
 		"cta-label": "Approve",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",

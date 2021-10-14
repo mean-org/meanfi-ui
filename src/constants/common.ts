@@ -25,6 +25,12 @@ export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 
+const meanFiHeaders = new Headers();
+meanFiHeaders.append('X-Api-Version', '1.0');
+export const requestOptions: RequestInit = {
+  headers: meanFiHeaders
+}
+
 export const LANGUAGES: Language[] = [
     {
         code: 'en',

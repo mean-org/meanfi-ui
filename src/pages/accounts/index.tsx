@@ -24,6 +24,7 @@ import { useHistory } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import { refreshCachedRpc } from '../../models/connections-hq';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -315,8 +316,7 @@ export const AccountsView = () => {
                   console.error('could not get account tokens');
                   setAccountTokens(meanTokensCopy);
                   setTokensLoaded(true);
-                  // TODO: Implement hot connect to a different RPC
-                  connection.nextRpcEndpoint();
+                  refreshCachedRpc();
                 }
                 // Preset the first available token
                 selectAsset(meanTokensCopy[0]);
@@ -326,12 +326,12 @@ export const AccountsView = () => {
                 setAccountTokens(meanTokensCopy);
                 setTokensLoaded(true);
                 selectAsset(meanTokensCopy[0]);
-                connection.nextRpcEndpoint();
+                refreshCachedRpc();
               });
           })
           .catch(error => {
             console.error(error);
-            connection.nextRpcEndpoint();
+            refreshCachedRpc();
           });
       }
     });
@@ -601,7 +601,9 @@ export const AccountsView = () => {
               <div className="title">
                 {asset.symbol}
                 {tokenPrice && (
-                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>~${getFormattedRateAmount(tokenPrice)}</span>
+                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                    ~${getFormattedRateAmount(tokenPrice)}
+                  </span>
                 )}
               </div>
               <div className="subtitle text-truncate">{asset.name}</div>
@@ -610,9 +612,11 @@ export const AccountsView = () => {
               <div className="rate-amount">
                 {getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true)}
               </div>
-              <div className="interval">
-                ~${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
-              </div>
+              {(tokenPrice && (asset.balance || 0) > 0) && (
+                <div className="interval">
+                  ~${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+                </div>
+              )}
             </div>
           </div>
         );
