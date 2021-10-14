@@ -10,7 +10,6 @@ import { consoleOut, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui"
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
 import { Swap } from '@project-serum/swap';
-import { MINT_CACHE } from '../contexts/token';
 import { NATIVE_SOL, TOKENS } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
@@ -59,36 +58,6 @@ export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
 
-export function getTokenName(
-  map: KnownTokenMap,
-  mint?: string | PublicKey,
-  shorten = true
-): string {
-  const mintAddress = typeof mint === "string" ? mint : mint?.toBase58();
-
-  if (!mintAddress) {
-    return "N/A";
-  }
-
-  const knownSymbol = map.get(mintAddress)?.symbol;
-  if (knownSymbol) {
-    return knownSymbol;
-  }
-
-  return shorten ? `${mintAddress.substring(0, 5)}...` : mintAddress;
-}
-
-export function getTokenByName(tokenMap: KnownTokenMap, name: string) {
-  let token: TokenInfo | null = null;
-  for (const val of tokenMap.values()) {
-    if (val.symbol === name) {
-      token = val;
-      break;
-    }
-  }
-  return token;
-}
-
 export function getTokenIcon(
   map: KnownTokenMap,
   mintAddress?: string | PublicKey
@@ -102,10 +71,6 @@ export function getTokenIcon(
   return map.get(address)?.logoURI;
 }
 
-export function isKnownMint(map: KnownTokenMap, mintAddress: string) {
-  return !!map.get(mintAddress);
-}
-
 export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
 
 export function chunks<T>(array: T[], size: number): T[][] {
@@ -117,46 +82,6 @@ export function chunks<T>(array: T[], size: number): T[][] {
 
 export const getAmountFromLamports = (amount: number): number => {
   return (amount || 0) / LAMPORTS_PER_SOL;
-}
-
-export function toLamports(
-  account?: TokenAccount | number,
-  mint?: MintInfo
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount =
-    typeof account === "number" ? account : account.info.amount?.toNumber();
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  return Math.floor(amount * precision);
-}
-
-export function wadToLamports(amount?: BN): BN {
-  return amount?.div(WAD) || ZERO;
-}
-
-export function fromLamports(
-  account?: TokenAccount | number | BN,
-  mint?: MintInfo,
-  rate: number = 1.0
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount = Math.floor(
-    typeof account === "number"
-      ? account
-      : BN.isBN(account)
-      ? account.toNumber()
-      : account.info.amount.toNumber()
-  );
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  return (amount / precision) * rate;
 }
 
 var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
@@ -190,26 +115,6 @@ export const formatAmount = (
   }
   return '0';
 };
-
-export function formatTokenAmount(
-  account?: TokenAccount,
-  mint?: MintInfo,
-  rate: number = 1.0,
-  prefix = "",
-  suffix = "",
-  precision = 6,
-  abbr = false
-): string {
-  if (!account) {
-    return "";
-  }
-
-  return `${[prefix]}${formatAmount(
-    fromLamports(account, mint, rate),
-    precision,
-    abbr
-  )}${suffix}`;
-}
 
 export const formatUSD = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -371,138 +276,6 @@ export async function fetchAccountTokens(
   }
 }
 
-export async function getOwnedAssociatedTokenAccounts(
-  connection: Connection,
-  publicKey: PublicKey
-) {
-
-  let filters = getOwnedAccountsFilters(publicKey);
-  let resp = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
-    commitment: connection.commitment,
-    filters
-  });
-
-  const accs = resp
-    .map(({ pubkey, account: { data, executable, owner, lamports }}: any) => ({
-      publicKey: pubkey,
-      accountInfo: {
-        data,
-        executable,
-        owner,
-        lamports,
-      }
-    }))
-    .map(({ publicKey, accountInfo }: any) => {
-      return { publicKey, account: parseTokenAccountData(accountInfo.data) };
-    });
-
-  return (
-    (
-      await Promise.all(
-        accs
-          .map(async (ta) => {
-            const ata = await Token.getAssociatedTokenAddress(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              ta.account.mint,
-              publicKey
-            );
-            return [ta, ata];
-          })
-      )
-    )
-    .filter(([ta, ata]: any) => ta.publicKey.equals(ata))
-    .map(([ta]) => ta)
-  );
-}
-
-export function parseTokenAccountData(data: Buffer): AccountInfo {
-  
-  let { mint, owner, amount } = AccountLayout.decode(data);
-  // @ts-ignore
-  return {
-    address: mint,
-    owner,
-    amount
-  };
-}
-
-function getOwnedAccountsFilters(publicKey: PublicKey) {
-  return [
-    {
-      memcmp: {
-        offset: AccountLayout.offsetOf("mint"),
-        bytes: publicKey.toBase58(),
-      },
-    },
-    {
-      dataSize: AccountLayout.span,
-    },
-  ];
-}
-
-export async function getMintInfo(connection: Connection, mint: PublicKey) {
-
-  if (!mint) {
-    return undefined;
-  }
-
-  if (MINT_CACHE.get(mint.toString())) {
-    return MINT_CACHE.get(mint.toString());
-  }
-
-  const mintClient = new Token(
-    connection,
-    mint,
-    TOKEN_PROGRAM_ID,
-    new Account()
-  );
-
-  const mintInfo = await mintClient.getMintInfo();
-  MINT_CACHE.set(mint.toString(), mintInfo);
-
-  return mintInfo;
-}
-
-export async function parseTxResponse(
-  client: Swap,
-  resp: SimulatedTransactionResponse,
-) {
-
-  consoleOut('simulated Tx resp ->', resp);
-
-  if (resp === undefined || !resp.err || !resp.logs) {
-      throw new Error('Unable to simulate swap');
-  }
-
-  // Decode the return value.
-  let didSwapEvent = resp.logs
-      .filter((log: any) => log.startsWith('Program log: 4ZfIrPLY4R'))
-      .map((log: any) => {
-          const logStr = log.slice('Program log: '.length);
-          return client.program.coder.events.decode(logStr)
-      })[0];
-
-  if (didSwapEvent && didSwapEvent.data) {
-    // consoleOut(didSwapEvent);
-    const data: any = didSwapEvent.data;
-    const obj = {
-      authority: data.authority?.toBase58(),
-      fromAmount: data.fromAmount.toNumber(),
-      fromMint: data.fromMint?.toBase58(),
-      givenAmount: data.givenAmount.toNumber(),
-      minExchangeRate: data.minExchangeRate,
-      quoteAmount: data.quoteAmount.toNumber(),
-      quiteMint: data.quoteMint?.toBase58(),
-      spillAmount: data.spillAmount.toNumber(),
-      toAmount: data.toAmount.toNumber(),
-      toMint: data.toMint.toBase58()
-    };
-
-    consoleOut('data => ', obj, 'blue');
-  }
-}
-
 // from raydium
 export async function signTransaction(
   connection: Connection,
@@ -594,51 +367,6 @@ async function covertToProgramWalletTransaction(
   }
 
   return transaction;
-}
-
-export async function createAssociatedTokenAccountIfNotExist(
-  account: string | undefined | null,
-  owner: PublicKey,
-  mintAddress: string,
-  transaction: Transaction,
-  atas: string[] = []
-
-) {
-
-  let publicKey;
-  
-  if (account) {
-    publicKey = new PublicKey(account);
-  }
-
-  const mint = new PublicKey(mintAddress);
-  const ata = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID, 
-    TOKEN_PROGRAM_ID, 
-    mint, 
-    owner, 
-    true
-  );
-
-  if (
-    (!publicKey || !ata.equals(publicKey)) &&
-    mintAddress !== TOKENS.WSOL.mintAddress &&
-    !atas.includes(ata.toBase58())
-  ) {
-    transaction.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        mint,
-        ata,
-        owner,
-        owner
-      )
-    );
-    atas.push(ata.toBase58());
-  }
-
-  return ata;
 }
 
 export async function createProgramAccountIfNotExist(

@@ -405,58 +405,38 @@ export const AccountsView = () => {
 
       setLoadingTransactions(true);
 
-      if (lastTxSignature) {
-        fetchAccountHistory(
-          customConnection,
-          pk,
-          {
-            before: lastTxSignature,
-            limit: TRANSACTIONS_PER_PAGE
-          },
-          true
-        )
-        .then(history => {
-          consoleOut('history:', history, 'blue');
-          setTransactions(history.transactionMap, true);
-
-          if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
-            const validItems = getSolAccountItems(history.transactionMap);
-            setSolAccountItems(current => current + validItems);
-          }
-
-          setStatus(FetchStatus.Fetched);
-        })
-        .catch(error => {
-          console.error(error);
-          setStatus(FetchStatus.FetchFailed);
-        })
-        .finally(() => setLoadingTransactions(false));
-      } else {
-        fetchAccountHistory(
-          customConnection,
-          pk,
-          { limit: TRANSACTIONS_PER_PAGE },
-          true
-        )
-        .then(history => {
-          consoleOut('history:', history, 'blue');
-
-          setTransactions(history.transactionMap);
-
-          if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
-            const validItems = getSolAccountItems(history.transactionMap);
-            setSolAccountItems(current => current + validItems);
-          }
-
-          setStatus(FetchStatus.Fetched);
-        })
-        .catch(error => {
-          console.error(error);
-          setStatus(FetchStatus.FetchFailed);
-        })
-        .finally(() => setLoadingTransactions(false));
+      let options = {
+        limit: TRANSACTIONS_PER_PAGE
       }
 
+      if (lastTxSignature) {
+        options = Object.assign(options, {
+          before: lastTxSignature
+        });
+      }
+
+      fetchAccountHistory(
+        customConnection,
+        pk,
+        options,
+        true
+      )
+      .then(history => {
+        consoleOut('history:', history, 'blue');
+        setTransactions(history.transactionMap, true);
+
+        if (history.transactionMap && history.transactionMap.length && pk.toBase58() === accountAddress) {
+          const validItems = getSolAccountItems(history.transactionMap);
+          setSolAccountItems(current => current + validItems);
+        }
+
+        setStatus(FetchStatus.Fetched);
+      })
+      .catch(error => {
+        console.error(error);
+        setStatus(FetchStatus.FetchFailed);
+      })
+      .finally(() => setLoadingTransactions(false));
     }
 
   }, [

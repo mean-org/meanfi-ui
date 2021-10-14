@@ -1,15 +1,15 @@
-import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { LIQUIDITY_POOL_PROGRAM_ID_V4, NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT } from "./ids";
 import { MARKET_STATE_LAYOUT_V2, OpenOrders } from "@project-serum/serum/lib/market";
 import { ACCOUNT_LAYOUT, AMM_INFO_LAYOUT, AMM_INFO_LAYOUT_V3, AMM_INFO_LAYOUT_V4, MINT_LAYOUT } from "./layouts";
-import { getFilteredProgramAccountsCache, getMultipleAccounts } from "./accounts";
+import { getMultipleAccounts } from "./accounts";
 import { LP_TOKENS, TokenInfo, TOKENS } from "./tokens";
 import { BN } from "bn.js";
 import { createAmmAuthority } from "./utils";
 import { getAddressForWhat, LiquidityPoolInfo, LIQUIDITY_POOLS } from "./pools";
 import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
-import { getMarkets, MARKETS } from "./markets";
+import { MARKETS } from "./markets";
 
 export const getLiquidityPools = async (connection: Connection) => {
   
