@@ -13,7 +13,7 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { AccountMeta, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT, SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -1572,6 +1572,8 @@ export const SwapUi = (props: {
 
   // YAF - DDCA Transaction
   const onDdcaTransactionStart = async (payload: any) => {
+
+    onCloseDdcaSetup();
     let transaction: Transaction;
     let transaction2: Transaction;
     let signedTransaction: Transaction;
@@ -2019,7 +2021,6 @@ export const SwapUi = (props: {
       {
         !refreshing && fromAmount && exchangeInfo.fromAmm &&
         infoRow(
-          t("transactions.transaction-info.exchange-on"),                
           `${exchangeInfo.fromAmm}`,
           ':'
         )
@@ -2172,6 +2173,26 @@ export const SwapUi = (props: {
   }
   // END OF TESTING BLOCK
 
+  const isStableSwap = (from: string | undefined, to: string | undefined) => {
+    if (!from || !to) { return false; }
+
+    const usdStables = [
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+    ];
+    const solStables = [
+      '11111111111111111111111111111111',
+      'So11111111111111111111111111111111111111112addr'
+    ];
+    if (usdStables.includes(from) && usdStables.includes(to)) {
+      return true;
+    }
+    if (solStables.includes(from) && solStables.includes(to)) {
+      return true;
+    }
+    return false;
+  }
+
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
@@ -2296,6 +2317,7 @@ export const SwapUi = (props: {
               type="default"
               shape="round"
               size="middle"
+              disabled={isStableSwap(fromMint, toMint)}
               className={`dropdown-like-button ${ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange ? 'active' : ''}`}
               onClick={showDdcaOptionSelector}>
               <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
