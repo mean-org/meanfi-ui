@@ -49,8 +49,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
         address: '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk',
-        symbol: 'wETH',
-        name: 'Wrapped Ethereum',
+        symbol: 'ETH',
+        name: 'Wrapped Ethereum (Sollet)',
         decimals: 6,
         logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png',
         tags: [
@@ -67,8 +67,8 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
         address: '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
-        symbol: 'wBTC',
-        name: 'Wrapped Bitcoin',
+        symbol: 'BTC',
+        name: 'Wrapped Bitcoin (Sollet)',
         decimals: 6,
         logoURI: 'https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png',
         tags: [

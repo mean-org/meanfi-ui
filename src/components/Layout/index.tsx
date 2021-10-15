@@ -1,55 +1,70 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Redirect, useLocation } from "react-router-dom";
 import "./../../App.less";
-import { AppConfig } from "../..";
+import "./style.less";
+import { appConfig } from "../..";
 import { Layout } from "antd";
 import { AppBar } from "../AppBar";
 import { FooterBar } from "../FooterBar";
 import { AppStateContext } from "../../contexts/appstate";
 import { BackButton } from "../BackButton";
-import { PublicKey } from "@solana/web3.js";
 import { useTranslation } from "react-i18next";
-import { useConnection, useConnectionConfig } from "../../contexts/connection";
+import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
-import { listStreams } from "money-streaming/lib/utils";
 import { notify } from "../../utils/notifications";
-import { consoleOut } from "../../utils/ui";
+import { consoleOut, isValidAddress } from "../../utils/ui";
+import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
+import { environment } from "../../environments/environment";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
+import useLocalStorage from "../../hooks/useLocalStorage";
+import { useLocalStorageState } from "../../utils/utils";
+import { RpcConfig } from "../../models/connections-hq";
 
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
+  const [redirect, setRedirect] = useState<string | null>(null);
+
   const {
     theme,
-    streamList,
-    streamProgramAddress,
+    referrals,
+    detailsPanelOpen,
+    addAccountPanelOpen,
+    canShowAccountDetails,
     previousWalletConnectState,
+    setReferrals,
     setStreamList,
-    setStreamDetail,
     setCurrentScreen,
-    setLoadingStreams,
-    setSelectedStream,
+    setSelectedAsset,
+    setAccountAddress,
     refreshTokenBalance,
+    refreshStreamList,
+    setDtailsPanelOpen,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
 
   const { t } = useTranslation('common');
-  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { provider, connected, publicKey } = useWallet();
   const [previousChain, setChain] = useState("");
+  const [gaInitialized, setGaInitialized] = useState(false);
+  const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const [cachedRpc] = useLocalStorageState("cachedRpc");
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
   }
 
   const sendConnectionMetric = useCallback((address: string) => {
-    const url = AppConfig.getConfig().influxDbUrl;
-    const token = AppConfig.getConfig().influxDbToken;
-    const org = AppConfig.getConfig().influxDbOrg;
-    const bucket = AppConfig.getConfig().influxDbBucket;
+    const url = appConfig.getConfig().influxDbUrl;
+    const token = appConfig.getConfig().influxDbToken;
+    const org = appConfig.getConfig().influxDbOrg;
+    const bucket = appConfig.getConfig().influxDbBucket;
     const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket);
     const data = {
       platform: getPlatform(),
@@ -80,11 +95,30 @@ export const AppLayout = React.memo((props: any) => {
       })
   }, [provider]);
 
+  // Init Google Analytics
+  useEffect(() => {
+    if (!gaInitialized && environment === 'production') {
+      setGaInitialized(true);
+      ReactGA.initialize(GOOGLE_ANALYTICS_PROD_TAG_ID, {
+        gaOptions: {
+          siteSpeedSampleRate: 100
+        }
+      });
+    }
+  }, [gaInitialized]);
+
+  // Report route
+  useEffect(() => {
+    if (environment === 'production') {
+      ReactGA.pageview(location.pathname);
+    }
+  }, [location.pathname]);
+
   // Effect Network change
   useEffect(() => {
-    if (previousChain !== connectionConfig.env) {
-      setChain(connectionConfig.env);
-      console.log(`%cCluster:`, 'color:brown', connectionConfig.env);
+    if (previousChain !== connectionConfig.cluster) {
+      setChain(connectionConfig.cluster);
+      consoleOut('Cluster:', connectionConfig.cluster, 'brown');
     }
   }, [
     previousChain,
@@ -98,32 +132,30 @@ export const AppLayout = React.memo((props: any) => {
       if (!previousWalletConnectState && connected) {
         consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
-          sendConnectionMetric(publicKey.toBase58());
-          const programId = new PublicKey(streamProgramAddress);
-          setLoadingStreams(true);
-          listStreams(connection, programId, publicKey, publicKey)
-            .then(async streams => {
-              setStreamList(streams);
-              setLoadingStreams(false);
-              if (location.pathname === '/transfers') {
-                console.log('Layout -> streamList:', streams);
-                setSelectedStream(streams[0]);
-                setStreamDetail(streams[0]);
-                if (streams && streams.length > 0) {
-                  consoleOut('streams are available, opening streams...', '', 'blue');
-                  setCurrentScreen('streams');
-                }
-              }
-            });
+          const walletAddress = publicKey.toBase58();
+          sendConnectionMetric(walletAddress);
+
+          // Record pending referral, get referrals count and clear referralAddress from localStorage
+          // Only record if referral address is valid and different from wallet address
+          // TODO: referrals is tempararily persisted in localStorage but we must use an API
+          if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
+            // setReferrals(referrals + 1);
+            setReferralAddress('');
+          }
+          // Let the AppState know which wallet address is connected and save it
+          setAccountAddress(walletAddress);
+          setSelectedAsset(undefined);
+
+          if (location.pathname === '/transfers') {
+            refreshStreamList(true);
+          }
         }
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         setStreamList([]);
-        if (location.pathname === '/transfers') {
-          setCurrentScreen('contract');
-        }
+        setCurrentScreen('contract');
         refreshTokenBalance();
         notify({
           message: t('notifications.wallet-connection-event-title'),
@@ -134,29 +166,96 @@ export const AppLayout = React.memo((props: any) => {
     }
   }, [
     location,
-    connection,
     publicKey,
     connected,
-    streamList,
-    streamProgramAddress,
+    referrals,
+    referralAddress,
     previousWalletConnectState,
     t,
+    setReferrals,
     setStreamList,
-    setStreamDetail,
     setCurrentScreen,
-    setSelectedStream,
-    setLoadingStreams,
+    setSelectedAsset,
+    setAccountAddress,
+    refreshStreamList,
+    setReferralAddress,
     refreshTokenBalance,
     sendConnectionMetric,
     setPreviousWalletConnectState
   ]);
 
+  // Get referral address from query string params and save it to localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('ref')) {
+      const address = params.get('ref');
+      if (address && isValidAddress(address)) {
+        consoleOut('Referral address:', address, 'green');
+        setReferralAddress(address);
+        notify({
+          message: t('notifications.friend-referral-completed'),
+          description: t('referrals.address-processed'),
+          type: "info"
+        });
+        setRedirect('/');
+      } else {
+        consoleOut('Invalid address', '', 'red');
+        notify({
+          message: t('notifications.error-title'),
+          description: t('referrals.address-invalid'),
+          type: "error"
+        });
+        setRedirect('/');
+      }
+    }
+  }, [
+    location,
+    t,
+    setReferralAddress,
+  ]);
+
+  useEffect(() => {
+    if (!cachedRpc || !(cachedRpc as RpcConfig).httpProvider) {
+      setRedirect('/service-unavailable');
+    }
+  }, [cachedRpc]);
+
+  useEffect(() => {
+    const bodyClass = location.pathname.split('/')[1];
+
+    const addRouteNameClass = () => {
+      if (bodyClass) {
+        document.body.classList.add(bodyClass);
+      }
+    }
+
+    addRouteNameClass();
+
+    return () => {
+      if (bodyClass) {
+        document.body.classList.remove(bodyClass);
+      }
+    };
+  }, [location.pathname]);
+
+  const closeAllPanels = () => {
+    if (detailsPanelOpen) {
+      setDtailsPanelOpen(false);
+    } else if (addAccountPanelOpen) {
+      setCanShowAccountDetails(true);
+      setAddAccountPanelOpen(false);
+    }
+  }
+
   return (
     <>
+    {redirect && <Redirect to={redirect} />}
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">
-          <BackButton />
+          {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
+            <BackButton handleClose={() => closeAllPanels()} />
+          )}
           <div className="app-bar-inner">
             <Link to="/" className="flex-center">
               <div className="app-title simplelink">
@@ -166,6 +265,11 @@ export const AppLayout = React.memo((props: any) => {
             <AppBar menuType="desktop" />
           </div>
           <AppBar menuType="mobile" />
+          {/* {environment === 'local' && (
+            <div className="debug-bar">
+              <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen}</span>
+            </div>
+          )} */}
         </Header>
         <Content>{props.children}</Content>
         <Footer>

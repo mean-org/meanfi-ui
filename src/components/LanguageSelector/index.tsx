@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, Divider, Modal } from "antd";
+import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../../constants";
 import "./style.less";

@@ -245,7 +245,7 @@ function wrapNativeAccount(
       address: pubkey,
       mint: WRAPPED_SOL_MINT,
       owner: pubkey,
-      amount: new u64(account.lamports),
+      amount: new u64(account.lamports || 0),
       delegate: null,
       delegatedAmount: new u64(0),
       isInitialized: true,
@@ -289,9 +289,14 @@ const UseNativeAccount = () => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
+      } else {
+        updateCache(undefined);
+        setNativeAccount(undefined);
       }
+    })
+    .catch(error => {
+      throw(error);
     });
-
     const listener = connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
         updateCache(acc);
@@ -300,10 +305,11 @@ const UseNativeAccount = () => {
     });
 
     return () => {
-      connection.removeAccountChangeListener(listener);
-    }
-
-  }, [wallet, publicKey, connection, updateCache, setNativeAccount]);
+      if (listener) {
+        connection.removeAccountChangeListener(listener);
+      }
+    };
+  }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
 
   return { nativeAccount };
 };
@@ -321,12 +327,17 @@ const precacheUserTokenAccounts = async (
   PRECACHED_OWNERS.add(owner.toBase58());
 
   // user accounts are update via ws subscription
-  const accounts = await connection.getTokenAccountsByOwner(owner, {
-    programId: programIds().token,
-  });
-  accounts.value.forEach((info) => {
-    cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
-  });
+  try {
+    const accounts = await connection.getTokenAccountsByOwner(owner, {
+      programId: programIds().token,
+    });
+    accounts.value.forEach((info) => {
+      cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
+    });
+  } catch (error) {
+    console.log('getTokenAccountsByOwner failed.', error);
+    throw(error);
+  }
 };
 
 export function AccountsProvider({ children = null as any }) {
@@ -363,9 +374,10 @@ export function AccountsProvider({ children = null as any }) {
       if (args.isNew) {
         let id = args.id;
         let deserialize = args.parser;
-        connection.onAccountChange(new PublicKey(id), (info) => {
+        const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
           cache.add(id, info, deserialize);
         });
+        subs.push(listenerId);
       }
     });
 
@@ -499,10 +511,8 @@ export function useMint(key?: string | PublicKey) {
 
     cache
       .query(connection, id, MintParser)
-      .then((acc) => {
-        setMint(acc.info as any);
-      })
-      .catch((err) => console.log(err));
+      .then((acc) => setMint(acc.info as any))
+      .catch((err) => console.error(err));
 
     const dispose = cache.emitter.onCache((e) => {
       const event = e;
@@ -547,9 +557,11 @@ export function useAccount(pubKey?: PublicKey) {
 
         const acc = await cache
           .query(connection, key, TokenAccountParser)
-          .catch((err) => console.log(err));
+          .catch((err) => console.error(err));
         if (acc) {
           setAccount(acc);
+        } else {
+          setAccount(undefined);
         }
       } catch (err) {
         console.error(err);

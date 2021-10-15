@@ -7,7 +7,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } fr
 import { Identicon } from '../Identicon';
 import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from 'money-streaming/lib/types';
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 
 export const AddFundsModal = (props: {
   handleClose: any;
@@ -108,11 +108,11 @@ export const AddFundsModal = (props: {
               <span>{t('add-funds.label-right')}:</span>
               <span className="balance-amount">
                 {`${selectedToken && tokenBalance
-                    ? formatAmount(tokenBalance as number, selectedToken.decimals || 2)
-                    : "0"
+                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                  : "0"
                 }`}
               </span>
-              <span>
+              <span className="balance-amount">
                 (~$
                 {tokenBalance && effectiveRate
                   ? formatAmount(tokenBalance as number * effectiveRate, 2)
@@ -146,7 +146,7 @@ export const AddFundsModal = (props: {
                       className="token-max simplelink"
                       onClick={() => {
                         setValue(
-                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true, true)
+                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
                         );
                       }}>
                       MAX

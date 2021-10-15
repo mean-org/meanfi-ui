@@ -2,12 +2,13 @@ import { Connection, PublicKey } from "@solana/web3.js"
 import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_markets'
 import { LIQUIDITY_POOLS } from './pools'
 import { SERUM_PROGRAM_ID_V3 } from './ids'
-import { MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum/lib/market";
-import { getFilteredProgramAccounts, getMultipleAccounts } from "./accounts";
+import { getMultipleAccounts } from "./accounts";
+import { MARKET_STATE_LAYOUT_V2 } from "@project-serum/serum";
 
 export const MARKETS: Array<string> = [];
 
 export function startMarkets() { 
+
   for (const market of SERUM_MARKETS) {
     const address = market.address.toBase58()
     if (!market.deprecated && !MARKETS.includes(address)) {
@@ -34,11 +35,14 @@ export async function getMarkets(connection: Connection) {
   );
 
   marketInfos.forEach((marketInfo) => {
-    const address = marketInfo?.publicKey.toBase58();
-    const data = marketInfo?.account.data;
+    if (marketInfo) {
+      const address = marketInfo.publicKey.toBase58();
+      const data = marketInfo.account.data;
 
-    if (address && data) {
-      markets[address] = MARKET_STATE_LAYOUT_V2.decode(data);
+      if (address && data) {
+        const decoded = MARKET_STATE_LAYOUT_V2.decode(data);
+        markets[address] = decoded;
+      }
     }
   });
 

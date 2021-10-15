@@ -1,19 +1,26 @@
 .options-list,
-.address-share {
+.option-detail-panel {
     width: 100%;
 }
+.options-list.show {
+    padding: 24px;
+}
 .options-list.show,
-.address-share.show {
+.option-detail-panel.show {
     height: auto;
     opacity: 1;
-    transition:  all 0.2s ease-in-out;
+    transition-property: height, opacity;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
 }
 .options-list.hide,
-.address-share.hide {
+.option-detail-panel.hide {
     height: 0;
     opacity: 0;
     overflow: hidden;
-    transition: all 0.2s ease-in-out;
+    transition-property: height, opacity;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-in-out;
 }
 #address-static-field {
     font-size: 0.8rem;

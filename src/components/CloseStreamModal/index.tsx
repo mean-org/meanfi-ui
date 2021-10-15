@@ -7,7 +7,8 @@ import { AppStateContext } from '../../contexts/appstate';
 import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from 'money-streaming/lib/types';
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { environment } from '../../environments/environment';
 
 export const CloseStreamModal = (props: {
   handleClose: any;
@@ -47,6 +48,24 @@ export const CloseStreamModal = (props: {
     streamDetail
   ]);
 
+  const isUserTreasurer = (): boolean => {
+    if (publicKey && streamDetail) {
+      const me = publicKey.toBase58();
+      const treasurer = streamDetail.treasurerAddress as string;
+      return treasurer === me ? true : false;
+    }
+    return false;
+  }
+
+  // const isUserBeneficiary = (): boolean => {
+  //   if (publicKey && streamDetail) {
+  //     const me = publicKey.toBase58();
+  //     const beneficiary = streamDetail.beneficiaryAddress as string;
+  //     return beneficiary === me ? true : false;
+  //   }
+  //   return false;
+  // }
+
   useEffect(() => {
     if (!feeAmount && props.transactionFees && streamDetail) {
       setFeeAmount(getFeeAmount(props.transactionFees));
@@ -84,8 +103,12 @@ export const CloseStreamModal = (props: {
         {streamDetail && streamDetail.associatedToken && (
           <div className="p-2 mb-2">
             {infoRow(
-              t('close-stream.available-funds') + ':',
-              getTokenAmountAndSymbolByTokenAddress(tokenBalance || 0, streamDetail.associatedToken as string)
+              t('close-stream.return-vested-amount') + ':',
+              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+            )}
+            {isUserTreasurer() && infoRow(
+              t('close-stream.return-unvested-amount') + ':',
+              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
             )}
             {infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
@@ -93,6 +116,9 @@ export const CloseStreamModal = (props: {
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
                 : '0'
               }`
+            )}
+            {environment === 'local' && (
+              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, streamDetail.associatedToken as string)}</p>
             )}
           </div>
         )}

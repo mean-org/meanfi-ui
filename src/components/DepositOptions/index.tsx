@@ -1,16 +1,24 @@
 import React from 'react';
-import { Button, Col, Modal, Row } from "antd";
+import { Button, Col, Modal, Row, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MEAN_FINANCE_APP_ALLBRIDGE_URL, MEAN_FINANCE_APP_RENBRIDGE_URL } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
-import { IconCopy, IconSolana } from "../../Icons";
+import { IconCopy, IconInfoTriangle, IconSolana } from "../../Icons";
 import { notify } from "../../utils/notifications";
-import { copyText } from "../../utils/ui";
+import { consoleOut, copyText } from "../../utils/ui";
+import { AppConfig, environment } from '../../environments/environment';
 import "./style.less";
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import useScript from '../../hooks/useScript';
+import { appConfig } from '../..';
 
 const QRCode = require('qrcode.react');
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const TransakSDK: any;
+let transak: any = undefined;
 
 export const DepositOptions = (props: {
   handleClose: any;
@@ -19,13 +27,27 @@ export const DepositOptions = (props: {
   const { t } = useTranslation("common");
   const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
+
+  // Load the Transak widget script asynchronously
+  const {library, status} = useScript(`https://global.transak.com/sdk/v1.1/widget.js`);
+
   const [isSharingAddress, setIsSharingAddress] = useState(false);
+
+  // Get App config
+  const [currentConfig, setCurrentConfig] = useState<AppConfig | null>(null);
+  if (!currentConfig) {
+    setCurrentConfig(appConfig.getConfig());
+  }
 
   const enableAddressSharing = () => {
     setIsSharingAddress(true);
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 250);
+  }
+
+  const closePanels = () => {
+    setIsSharingAddress(false);
   }
 
   const getFtxPayLink = (): string => {
@@ -63,6 +85,43 @@ export const DepositOptions = (props: {
     setTimeout(() => {
       window.open(MEAN_FINANCE_APP_RENBRIDGE_URL, '_blank','noreferrer');
     }, 500);
+    props.handleClose();
+  }
+
+  useEffect(() => {
+    if (status === 'ready' && !transak) {
+      transak = new TransakSDK.default({
+        apiKey: currentConfig?.transakApiKey,  // Your API Key
+        environment: environment === 'production' ? 'PRODUCTION' : 'STAGING', // STAGING/PRODUCTION
+        defaultCryptoCurrency: 'SOL',
+        networks: 'SOLANA',
+        hideMenu: true,
+        walletAddress: publicKey?.toBase58() || '', // Your customer's wallet address
+        themeColor: 'B7001C', // App theme color
+        fiatCurrency: 'EUR',
+        email: '', // Your customer's email address
+        redirectURL: '',
+        hostURL: window.location.origin,
+        widgetHeight: '634px',
+        widgetWidth: '100%'
+      });
+    }
+  }, [
+    currentConfig,
+    publicKey,
+    status
+  ]);
+
+  const handleTransakButtonClick = () => {
+    setTimeout(() => {
+      if (transak) {
+        transak.init();
+        // To get all the events
+        transak.on(transak.ALL_EVENTS, (data: any) => {
+          consoleOut('transak event:', data, 'blue');
+        });
+      }
+    }, 300);
     props.handleClose();
   }
 
@@ -107,16 +166,30 @@ export const DepositOptions = (props: {
 
   return (
     <Modal
-      className="mean-modal simple-modal"
+      className="mean-modal simple-modal multi-step"
       title={
+        <>
+        {isSharingAddress && (
+          <div className="back-button ant-modal-close">
+            <Tooltip placement="bottom" title={t('deposits.back-to-deposit-options')}>
+              <Button
+                type="default"
+                shape="circle"
+                icon={<ArrowLeftOutlined />}
+                onClick={closePanels}
+              />
+            </Tooltip>
+          </div>
+        )}
         <div className="modal-title">{t("deposits.modal-title")}</div>
+        </>
       }
       footer={null}
       visible={props.isVisible}
       onOk={props.handleClose}
       onCancel={props.handleClose}
-      afterClose={() => setIsSharingAddress(false)}
-      width={320}>
+      afterClose={closePanels}
+      width={450}>
       <div className="deposit-selector">
         <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
           <p>{t("deposits.heading")}:</p>
@@ -151,6 +224,22 @@ export const DepositOptions = (props: {
               </Button>
             </Col>
             <Col span={24}>
+              <Tooltip placement="bottom" title={t('deposits.renbridge-cta-warning')}>
+                <Button
+                  block
+                  className="deposit-option"
+                  type="default"
+                  shape="round"
+                  size="middle"
+                  disabled={status !== 'ready'}
+                  onClick={handleTransakButtonClick}>
+                  <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
+                  {t("deposits.transak-cta-label")}
+                  <IconInfoTriangle className="mean-svg-icons warning" />
+                </Button>
+              </Tooltip>
+            </Col>
+            <Col span={24}>
               <Button
                 block
                 className="deposit-option"
@@ -174,7 +263,7 @@ export const DepositOptions = (props: {
                 {t("deposits.move-from-polygon-cta-label")}
               </Button>
             </Col>
-            <Col span={24}>
+            {/* <Col span={24}>
               <Button
                 block
                 className="deposit-option"
@@ -185,10 +274,10 @@ export const DepositOptions = (props: {
                 <img src="assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
                 {t("deposits.move-from-renbridge-cta-label")}
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </div>
-        <div className={isSharingAddress ? "address-share show" : "address-share hide"} id="address-share">
+        <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
             <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
@@ -199,7 +288,6 @@ export const DepositOptions = (props: {
                   renderAs="svg"/>
               )}
             </div>
-
             <div className="transaction-field medium">
               <div className="transaction-field-row main-row">
                 <span className="input-left recipient-field-wrapper">
@@ -214,17 +302,7 @@ export const DepositOptions = (props: {
                 </div>
               </div>
             </div>
-
-            <p className="font-light font-size-75 px-4 mb-3">{t('deposits.address-share-disclaimer')}</p>
-
-            <Button
-              className="deposit-option"
-              type="default"
-              shape="round"
-              size="middle"
-              onClick={() => setIsSharingAddress(false)}>
-              {t('general.cta-finish')}
-            </Button>
+            <div className="font-light font-size-75 px-4">{t('deposits.address-share-disclaimer')}</div>
           </div>
         </div>
       </div>

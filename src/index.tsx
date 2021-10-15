@@ -11,13 +11,16 @@ import common_es from "./translations/es/common.json";
 import common_en from "./translations/en/common.json";
 import common_fr from "./translations/fr/common.json";
 import common_pt from "./translations/pt/common.json";
+import { CustomLoggerService } from "./utils/logger";
 
-export const AppConfig = new AppConfigService(process.env.REACT_APP_ENV);
+export const appConfig = new AppConfigService(process.env.REACT_APP_ENV);
 console.log(`%cApp version:`, 'color:brown', process.env.REACT_APP_VERSION);
 console.log(`%cEnvironment:`, 'color:brown', process.env.REACT_APP_ENV);
-console.log(`%cProgramId:`, 'color:brown', AppConfig.getConfig().streamProgramAddress);
+console.log(`%cProgramId:`, 'color:brown', appConfig.getConfig().streamProgramAddress);
+export const customLogger = new CustomLoggerService();
 
 i18next.use(LanguageDetector).init({
+  fallbackLng: 'en',
   interpolation: { escapeValue: false },  // React already does escaping
   resources: {
     en: {
@@ -43,6 +46,27 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById("root")
 );
+
+// const rootElement = document.getElementById("root");
+// if (rootElement?.hasChildNodes()) {
+//   hydrate(
+//     <React.StrictMode>
+//       <I18nextProvider i18n={i18next}>
+//         <App/>
+//       </I18nextProvider>
+//     </React.StrictMode>,
+//     rootElement
+//   );
+// } else {
+//   render(
+//     <React.StrictMode>
+//       <I18nextProvider i18n={i18next}>
+//         <App/>
+//       </I18nextProvider>
+//     </React.StrictMode>,
+//     rootElement
+//   );
+// }
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

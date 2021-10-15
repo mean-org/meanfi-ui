@@ -1,19 +1,33 @@
-import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Market, OpenOrders, _OPEN_ORDERS_LAYOUT_V2 } from '@project-serum/serum/lib/market';
-import { NATIVE_SOL, TOKENS, getTokenByMintAddress } from './tokens';
+import { TOKENS, getTokenByMintAddress } from './tokens';
 import { TokenAmount } from '../utils/safe-math';
 import { TOKEN_PROGRAM_ID, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT, NATIVE_SOL_MINT } from './ids';
-import { closeAccount, transfer } from '@project-serum/serum/lib/token-instructions';
+import { closeAccount } from '@project-serum/serum/lib/token-instructions';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+
 import { 
-  createAssociatedTokenAccountIfNotExist, 
-  createProgramAccountIfNotExist, 
   createTokenAccountIfNotExist, 
   mergeTransactions, 
   sendTransaction
 
 } from './utils';
+
+import { 
+  Account, 
+  Connection, 
+  Keypair, 
+  LAMPORTS_PER_SOL, 
+  PublicKey, 
+  Signer, 
+  SystemProgram, 
+  SYSVAR_RENT_PUBKEY, 
+  Transaction, 
+  TransactionInstruction 
+
+} from '@solana/web3.js';
+
 import BN from 'bn.js';
-import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token } from '@solana/spl-token';
+import { ACCOUNT_LAYOUT } from './layouts';
 
 const BufferLayout = require('buffer-layout');
 
@@ -221,269 +235,112 @@ export function forecastSell(market: any, orderBook: any, coinIn: any, slippage:
   };
 }
 
-// export async function wrap(
-//   axios: any,
-//   connection: Connection,
-//   wallet: any,
-//   fromCoinMint: string,
-//   toCoinMint: string,
-//   fromTokenAccount: string,
-//   toTokenAccount: string,
-//   amount: string
-
-// ) {
-//   const transaction = new Transaction();
-//   const signers: Account[] = [];
-//   const owner = wallet.publicKey;
-//   const fromCoin = getTokenByMintAddress(fromCoinMint);
-//   const amountOut = new TokenAmount(amount, fromCoin?.decimals, false);
-
-//   const newFromTokenAccount = await createAssociatedTokenAccountIfNotExist(
-//     fromTokenAccount,
-//     owner,
-//     fromCoinMint,
-//     transaction
-//   );
-
-//   const newToTokenAccount = await createAssociatedTokenAccountIfNotExist(
-//     toTokenAccount, 
-//     owner, 
-//     toCoinMint, 
-//     transaction
-//   );
-
-//   const solletRes = await axios.post('https://swap.sollet.io/api/swap_to', {
-//     address: newToTokenAccount.toString(),
-//     blockchain: 'sol',
-//     coin: toCoinMint,
-//     size: 1,
-//     wusdtToUsdt: true
-//   });
-
-//   const { address, maxSize } = solletRes.result;
-
-//   if (!address) {
-//     throw new Error('Unwrap not available now');
-//   }
-
-//   if (parseFloat(amount) > maxSize) {
-//     throw new Error(`Max allow ${maxSize}`);
-//   }
-
-//   transaction.add(
-//     transfer({
-//       source: newFromTokenAccount, 
-//       destination: new PublicKey(address), 
-//       owner, 
-//       amount: parseFloat(amountOut.fixed())
-//     })
-//   );
-
-//   return await sendTransaction(connection, wallet, transaction, signers);
-// }
-
-export const wrap = async (
-  connection: Connection,
-  wallet: any,
-  account: Keypair,
-  amount: BN
-
-): Promise<Transaction> => {
-
-  const signers = new Array<Signer>(...[account]);
-  const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
-  
-  const tx = new Transaction().add(
-    SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
-      newAccountPubkey: account.publicKey,
-      lamports: minimumWrappedAccountBalance + amount.toNumber(),
-      space: AccountLayout.span,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT,
-      account.publicKey,
-      wallet.publicKey
-    )
-  );
-  
-  const atokenKey = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    WRAPPED_SOL_MINT,
-    wallet.publicKey
-  );
-
-  const atokenAccountInfo = await connection.getAccountInfo(atokenKey);
-
-  if (!atokenAccountInfo) {
-    tx.add(
-      Token.createAssociatedTokenAccountInstruction(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        WRAPPED_SOL_MINT,
-        atokenKey,
-        wallet.publicKey,
-        wallet.publicKey          
-      )
-    );
-  }
-
-  tx.add(
-    Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      account.publicKey,
-      atokenKey,
-      wallet.publicKey,
-      [],
-      amount.toNumber()
-    ),
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      account.publicKey,
-      wallet.publicKey,
-      wallet.publicKey,
-      []
-    )
-  );
-
-  tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
-  tx.recentBlockhash = blockhash;
-  
-  if (signers && signers.length) {
-    tx.partialSign(...signers as Signer[]);
-  }
-
-  return tx;
-}
-
-export const unwrap = async(
-  connection: Connection,
-  wallet: any,
-  account: Keypair,
-  amount: BN
-  
-): Promise<Transaction> => {
-
-  const signers = new Array<Signer>(...[account]);
-  const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
-  const atokenKey = await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
-    WRAPPED_SOL_MINT,
-    wallet.publicKey
-  );
-
-  const tx = new Transaction().add(
-    SystemProgram.createAccount({
-      fromPubkey: wallet.publicKey,
-      newAccountPubkey: account.publicKey,
-      lamports: minimumWrappedAccountBalance,
-      space: AccountLayout.span,
-      programId: TOKEN_PROGRAM_ID,
-    }),
-    Token.createInitAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      WRAPPED_SOL_MINT,
-      account.publicKey,
-      wallet.publicKey
-    ),
-    Token.createTransferInstruction(
-      TOKEN_PROGRAM_ID,
-      atokenKey,
-      account.publicKey,
-      wallet.publicKey,
-      [],
-      amount.toNumber()
-    ),
-    Token.createCloseAccountInstruction(
-      TOKEN_PROGRAM_ID,
-      account.publicKey,
-      wallet.publicKey,
-      wallet.publicKey,
-      []
-    )
-  );
-
-  tx.feePayer = wallet.publicKey;
-  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
-  tx.recentBlockhash = blockhash;
-  
-  if (signers && signers.length) {
-    tx.partialSign(...signers as Signer[]);
-  }
-
-  return tx;
-}
-
 export async function swap(
   connection: Connection,
   wallet: any,
   poolInfo: any,
-  fromCoinMint: string,
-  toCoinMint: string,
+  fromCoinMint: PublicKey,
+  toCoinMint: PublicKey,
   fromTokenAccount: PublicKey,
   toTokenAccount: PublicKey,
-  aIn: string,
-  aOut: string
+  fromAmount: BN,
+  toSwapAmount: BN,
+  feeAccount: PublicKey,
+  fee: BN
 
 ) {
 
   const tx = new Transaction()
   const signers = new Array<Signer>();
-  const from = getTokenByMintAddress(fromCoinMint)
-  const to = getTokenByMintAddress(toCoinMint)
+  const from = getTokenByMintAddress(fromCoinMint.toBase58())
+  const to = getTokenByMintAddress(toCoinMint.toBase58())
 
   if (!from || !to) {
     throw new Error('Miss token info')
   }
 
-  const amountIn = new TokenAmount(aIn, from.decimals, false);
-  const amountOut = new TokenAmount(aOut, to.decimals, false);
-  let wrappedSolAccount: PublicKey | null = null
-  let wrappedSolAccount2: PublicKey | null = null
+  let wrappedSolAccount: Keypair | null = null;
+  let wrappedSolAccount2: Keypair | null = null;
 
-  if (fromCoinMint === NATIVE_SOL_MINT.toBase58()) {
-    wrappedSolAccount = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount,
-      wallet.publicKey,
-      WRAPPED_SOL_MINT.toBase58(),
-      amountIn.wei.toNumber() + 1e7,
-      tx,
-      signers
+  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
+
+    wrappedSolAccount = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: wrappedSolAccount.publicKey,
+        lamports: fromAmount.sub(fee).toNumber() + 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount.publicKey,
+        wallet.publicKey
+      )
+    );
+
+    signers.push(wrappedSolAccount);
+  }
+
+  if (toCoinMint.equals(NATIVE_SOL_MINT)) {
+
+    wrappedSolAccount2 = Keypair.generate();
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: wrappedSolAccount2.publicKey,
+        lamports: 1e7,
+        space: ACCOUNT_LAYOUT.span,
+        programId: TOKEN_PROGRAM_ID,
+      }),
+      Token.createInitAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        WRAPPED_SOL_MINT,
+        wrappedSolAccount2.publicKey,
+        wallet.publicKey
+      )
+    );
+
+    signers.push(wrappedSolAccount2);
+  }
+
+  const fromMint = fromCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : fromCoinMint;
+  const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
+
+  if (!fromTokenAccountInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        fromTokenAccount,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
-  if (toCoinMint === NATIVE_SOL_MINT.toBase58()) {
-    wrappedSolAccount2 = await createTokenAccountIfNotExist(
-      connection,
-      wrappedSolAccount2,
-      wallet.publicKey,
-      WRAPPED_SOL_MINT.toBase58(),
-      1e7,
-      tx,
-      signers
+  const toMint = toCoinMint.equals(NATIVE_SOL_MINT) ? WRAPPED_SOL_MINT : toCoinMint;
+  const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
+
+  if (!toTokenAccountInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        toMint,
+        toTokenAccount,
+        wallet.publicKey,
+        wallet.publicKey
+      )
     );
   }
 
-  const newFromTokenAccount = await createAssociatedTokenAccountIfNotExist(
-    fromTokenAccount.toBase58(),
-    wallet.publicKey,
-    fromCoinMint,
-    tx
-  );
-
-  const newToTokenAccount = await createAssociatedTokenAccountIfNotExist(
-    toTokenAccount.toBase58(), 
-    wallet.publicKey, 
-    toCoinMint, 
-    tx
-  );
-
+  // Swap ix
   tx.add(
     swapInstruction(
       new PublicKey(poolInfo.programId),
@@ -501,39 +358,84 @@ export async function swap(
       new PublicKey(poolInfo.serumCoinVaultAccount),
       new PublicKey(poolInfo.serumPcVaultAccount),
       new PublicKey(poolInfo.serumVaultSigner),
-      wrappedSolAccount ?? newFromTokenAccount,
-      wrappedSolAccount2 ?? newToTokenAccount,
+      wrappedSolAccount ? wrappedSolAccount.publicKey : fromTokenAccount,
+      wrappedSolAccount2 ? wrappedSolAccount2.publicKey : toTokenAccount,
       wallet.publicKey,
-      amountIn.wei.toNumber(),
-      amountOut.wei.toNumber()
+      fromAmount.sub(fee).toNumber(),
+      toSwapAmount.toNumber()
     )
   )
 
+  // Transfer fees
+  const feeAccountToken = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    fromMint,
+    feeAccount,
+    true
+  );
+
+  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
+
+  if (!feeAccountTokenInfo) {
+    tx.add(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        fromMint,
+        feeAccountToken,
+        wallet.publicKey,
+        wallet.publicKey
+      )
+    );
+  }
+
   if (wrappedSolAccount) {
     tx.add(
-      closeAccount({
-        source: wrappedSolAccount,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey
-      })
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount.publicKey,
+        feeAccountToken,
+        wallet.publicKey,
+        [],
+        fee.toNumber()
+      ),
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
+    );
+  } else {
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount,
+        feeAccountToken,
+        wallet.publicKey,
+        [],
+        fee.toNumber()
+      )
     );
   }
 
   if (wrappedSolAccount2) {
     tx.add(
-      closeAccount({
-        source: wrappedSolAccount2,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey
-      })
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount2.publicKey,
+        wallet.publicKey,
+        wallet.publicKey,
+        []
+      )
     );
   }
 
   tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
-
-  console.log('signers', signers);
 
   if (signers.length) {
     tx.partialSign(...signers);
@@ -548,129 +450,157 @@ export async function place(
   market: Market,
   asks: any,
   bids: any,
-  fromCoinMint: string,
-  toCoinMint: string,
+  fromCoinMint: PublicKey,
+  toCoinMint: PublicKey,
   fromTokenAccount: PublicKey,
   toTokenAccount: PublicKey,
-  amount: string,
-  slippage: number
+  fromAmount: BN,
+  slippage: number,
+  feeAccount: PublicKey,
+  fee: BN
 
 ) {
 
   const tx = new Transaction();
-  const signers = new Array<Signer>();
-
+  const signers: Signer[] = [];
+  const swapAmount = fromAmount.sub(fee).toNumber() / 10 ** 6;
+  
   const forecastConfig = getOutAmount(
     market, 
     asks, 
     bids, 
-    fromCoinMint, 
-    toCoinMint, 
-    amount, 
+    fromCoinMint.toBase58(), 
+    toCoinMint.toBase58(), 
+    swapAmount.toString(), //fromAmount.sub(fee).toNumber().toString(),
     slippage
   );
 
-  const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(
-    connection, 
-    wallet.publicKey, 
-    0
-  );
+  const serumProgramId = new PublicKey(SERUM_PROGRAM_ID_V3);
+  const openOrdersAccounts = await market.findOpenOrdersAccountsForOwner(connection, wallet.publicKey, 0);
+  let openOrdersAddress: PublicKey;
 
-  const openOrdersAddress = await createProgramAccountIfNotExist(
-    connection,
-    openOrdersAccounts.length === 0 ? null : openOrdersAccounts[0].address.toBase58(),
-    wallet.publicKey,
-    new PublicKey(SERUM_PROGRAM_ID_V3),
-    null,
-    _OPEN_ORDERS_LAYOUT_V2,
-    tx,
-    signers
-  );
+  if (openOrdersAccounts.length > 0) {
+    openOrdersAddress = openOrdersAccounts[0].address;
+  } else {
+    const openOrderNewAccount = new Account();//Keypair.generate();
+    openOrdersAddress = openOrderNewAccount.publicKey;
+
+    tx.add(
+      SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: openOrdersAddress,
+        lamports: await connection.getMinimumBalanceForRentExemption(_OPEN_ORDERS_LAYOUT_V2.span),
+        space: _OPEN_ORDERS_LAYOUT_V2.span,
+        programId: serumProgramId
+      })
+    );
+
+    signers.push(openOrderNewAccount);
+  }
 
   let wrappedSolAccount: PublicKey | null = null;
 
-  if (fromCoinMint === NATIVE_SOL.address) {
+  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
     let lamports;
 
     if (forecastConfig.side === 'buy') {
-      lamports = Math.round(forecastConfig.worstPrice * forecastConfig.amountOut * 1.01 * LAMPORTS_PER_SOL);
+      lamports = forecastConfig.worstPrice * parseFloat(forecastConfig.amountOut.toFixed(6)) * 1.01 * LAMPORTS_PER_SOL;
       if (openOrdersAccounts.length > 0) {
-        lamports -= openOrdersAccounts[0].quoteTokenFree.toNumber();
+        lamports -= openOrdersAccounts[0].baseTokenFree.toNumber();
       }
     } else {
-      lamports = Math.round(forecastConfig.maxInAllow * LAMPORTS_PER_SOL)
+      lamports = parseFloat(forecastConfig.maxInAllow.toFixed(6)) * LAMPORTS_PER_SOL;
       if (openOrdersAccounts.length > 0) {
         lamports -= openOrdersAccounts[0].baseTokenFree.toNumber();
       }
     }
 
-    lamports = Math.max(lamports, 0) + 1e7;
+    lamports += (fee.toNumber() + 1e7);
 
     wrappedSolAccount = await createTokenAccountIfNotExist(
       connection,
       wrappedSolAccount,
       wallet.publicKey,
-      TOKENS.WSOL.address,
+      WRAPPED_SOL_MINT.toBase58(),
       lamports,
       tx,
       signers
     );
   }
 
+  const sizeAmount = forecastConfig.side === 'buy'
+    ? parseFloat(forecastConfig.amountOut.toFixed(6))
+    : forecastConfig.maxInAllow
+    ? parseFloat(forecastConfig.maxInAllow.toFixed(6))
+    : parseFloat(swapAmount.toFixed(6));
+
   tx.add(
     market.makePlaceOrderInstruction(connection, {
       owner: wallet.publicKey,
-      payer: wrappedSolAccount ?? new PublicKey(fromTokenAccount),
+      payer: wrappedSolAccount ?? fromTokenAccount,
       side: forecastConfig.side === 'buy' ? 'buy' : 'sell',
       price: forecastConfig.worstPrice,
-      size:
-        forecastConfig.side === 'buy'
-          ? parseFloat(forecastConfig.amountOut.toFixed(6))
-          : parseFloat(forecastConfig.maxInAllow.toFixed(6)),
+      size: sizeAmount,
 
       orderType: 'ioc',
-      openOrdersAddressKey: openOrdersAddress
+      openOrdersAddressKey: openOrdersAddress,
+      programId: serumProgramId,
+      selfTradeBehavior: 'decrementTake'
     })
   );
-
-  if (wrappedSolAccount) {
-    tx.add(
-      closeAccount({
-        source: wrappedSolAccount,
-        destination: wallet.publicKey,
-        owner: wallet.publicKey
-      })
-    );
-  }
 
   let fromMint = fromCoinMint
   let toMint = toCoinMint
 
-  if (fromMint === NATIVE_SOL.address) {
-    fromMint = TOKENS.WSOL.address;
+  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
+    fromMint = WRAPPED_SOL_MINT;
   }
 
-  if (toMint === NATIVE_SOL.address) {
-    toMint = TOKENS.WSOL.address;
+  if (toCoinMint.equals(NATIVE_SOL_MINT)) {
+    toMint = WRAPPED_SOL_MINT;
   }
 
-  const newFromTokenAccount = await createAssociatedTokenAccountIfNotExist(
-    fromTokenAccount.toBase58(),
-    wallet.publicKey,
-    fromMint,
-    tx
-  );
+  const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
 
-  const newToTokenAccount = await createAssociatedTokenAccountIfNotExist(
-    toTokenAccount.toBase58(), 
-    wallet.publicKey, 
-    toMint, 
-    tx
-  );
+  if (!fromTokenAccountInfo) {
+    tx.add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: fromTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
+          { pubkey: fromMint, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+  }
 
-  const userAccounts = [newFromTokenAccount, newToTokenAccount];
+  const toTokenAccountInfo = await connection.getAccountInfo(toTokenAccount);
 
-  if (market.baseMintAddress.toBase58() === toMint && market.quoteMintAddress.toBase58() === fromMint) {
+  if (!toTokenAccountInfo) {
+    tx.add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: toTokenAccount, isSigner: false, isWritable: true },
+          { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
+          { pubkey: toMint, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+  }
+
+  const userAccounts = [fromTokenAccount, toTokenAccount];
+
+  if (market.baseMintAddress.equals(toMint) && market.quoteMintAddress.equals(fromMint)) {
     userAccounts.reverse();
   }
 
@@ -688,11 +618,7 @@ export async function place(
 
   const settleTx = await market.makeSettleFundsTransaction(
     connection,
-    new OpenOrders(
-      openOrdersAddress, 
-      { owner: wallet.publicKey }, 
-      new PublicKey(SERUM_PROGRAM_ID_V3)
-    ),
+    new OpenOrders(openOrdersAddress, { owner: wallet.publicKey }, serumProgramId),
     baseTokenAccount,
     quoteTokenAccount,
     referrerQuoteWallet
@@ -700,11 +626,66 @@ export async function place(
 
   signers.push(...settleTx.signers);
   tx.add(settleTx.transaction);
+
+  // Transfer fees
+  const feeAccountToken = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    fromMint,
+    feeAccount,
+  );
+
+  const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);
+
+  if (!feeAccountTokenInfo) {
+    tx.add(
+      new TransactionInstruction({
+        keys: [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: true },
+          { pubkey: feeAccountToken, isSigner: false, isWritable: true },
+          { pubkey: feeAccount, isSigner: false, isWritable: false },
+          { pubkey: fromMint, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+  }
+
+  if (wrappedSolAccount) {
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        wrappedSolAccount,
+        feeAccountToken,
+        wallet.publicKey,
+        [],
+        fee.toNumber()
+      ),
+      closeAccount({
+        source: wrappedSolAccount,
+        destination: wallet.publicKey,
+        owner: wallet.publicKey
+      })
+    );
+  } else {
+    tx.add(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromTokenAccount,
+        feeAccountToken,
+        wallet.publicKey,
+        [],
+        fee.toNumber()
+      )
+    );
+  }
+
   tx.feePayer = wallet.publicKey;
   const { blockhash } = await connection.getRecentBlockhash();
   tx.recentBlockhash = blockhash;
-
-  console.log('signers', signers);
 
   if (signers.length) {
     tx.partialSign(...signers);

@@ -1,62 +1,90 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useTranslation } from 'react-i18next';
 import { IconCaretDown } from "../../Icons";
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { Identicon } from "../Identicon";
+import { AppStateContext } from '../../contexts/appstate';
+import { formatAmount } from '../../utils/utils';
+import { useWallet } from '../../contexts/wallet';
 
 export const CoinInput = (props: {
   token: TokenInfo | undefined;
-  tokenBalance: number;
+  tokenBalance: string;
   tokenAmount: string;
   onSelectToken: any;
   onInputChange?: any;
-  onMaxAmount: any;
+  onMaxAmount: any | undefined;
   translationId: string;
   readonly?: boolean;
+  inputPosition: "left" | "right";
+  inputLabel: string;
 }) => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
+  const { coinPrices } = useContext(AppStateContext);
+  const { connected } = useWallet();
+
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
 
   return (
-    <div className={`transaction-field ${props.translationId}`}>
-        <div className="transaction-field-row">
-            <span className="field-label-left">{t(`swap.input-label-${props.translationId}`)}</span>
+    <div className="transaction-field mb-0">
+        <div className={`transaction-field-row ${props.inputPosition === "right" ? 'reverse' : '' }`}>
+            <span className="field-label-left">{props.inputLabel || ' '}</span>
             <span className="field-label-right">
-                <span>{t('transactions.send-amount.label-right')}:</span>
-                <span className="balance-amount">
-                    {`${props.token && props.tokenBalance
-                        ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.token.address, true, true)
-                        : "0"
-                    }`}
-                </span>
+                {connected && (
+                    <>
+                        <span>{t('transactions.send-amount.label-right')}:</span>
+                        <span className="balance-amount">
+                            {`${props.token && props.tokenBalance
+                                ? props.tokenBalance
+                                : "0"
+                            }`}
+                        </span>
+                        {props.tokenBalance && (
+                            <span className="balance-amount">
+                                {`(~$${props.token && props.tokenBalance
+                                    ? formatAmount(parseFloat(props.tokenBalance) * getPricePerToken(props.token as TokenInfo), 2)
+                                    : "0.00"
+                                })`}
+                            </span>
+                        )}
+                    </>
+                )}
             </span>
         </div>
-        <div className="transaction-field-row main-row">
-            <span className="input-left">
-            <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={props.onInputChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                readOnly={props.readonly ? true : false}
-                value={props.tokenAmount} />
-            </span>
-            <div className="addon-right">
-                <div className="token-group">
-                    {props.token && props.tokenBalance && props.translationId === 'source' ? (
+        <div className={`transaction-field-row ${props.inputPosition === "left" ? 'main-row' : 'main-row reverse' }`}>
+            <div className="input-control">
+                <input
+                    className="general-text-input"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    type="text"
+                    onChange={props.onInputChange}
+                    pattern="^[0-9]*[.,]?[0-9]*$"
+                    placeholder="0.0"
+                    minLength={1}
+                    maxLength={79}
+                    spellCheck="false"
+                    readOnly={props.readonly ? true : false}
+                    value={props.tokenAmount} />
+            </div>
+            <span className="add-ons">
+                <div className={`token-group ${props.inputPosition === "right" ? 'flex-row-reverse' : ''}`}>
+                    {props.token && props.tokenBalance && props.onMaxAmount && props.translationId === 'source' ? (
                         <div className="token-max simplelink" onClick={props.onMaxAmount}>MAX</div>
                     ) : null}
                     <div className="token-selector simplelink" onClick={props.onSelectToken}>
+                        <>
                         {props.token ? (
                             <>
-                                <div className="token-icon">
+                                <div className="token-icon" style={{marginRight:'8px'}} >
                                     {props.token.logoURI ? (
                                         <img alt={`${props.token.name}`} width={20} height={20} src={props.token.logoURI}/>
                                     ) : (
@@ -71,11 +99,12 @@ export const CoinInput = (props: {
                         ) : (
                             <span className="notoken-label">{t(`swap.token-select-${props.translationId}`)}</span>
                         )}
+                        <span className="field-caret-down">
+                            <IconCaretDown className="mean-svg-icons" />
+                        </span>
+                        </>
                     </div>
                 </div>
-            </div>
-            <span className="field-caret-down">
-                <IconCaretDown className="mean-svg-icons" />
             </span>
         </div>
     </div>

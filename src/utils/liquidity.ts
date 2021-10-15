@@ -1,43 +1,34 @@
-import { AccountInfo, Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { LIQUIDITY_POOL_PROGRAM_ID_V4, NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, WRAPPED_SOL_MINT } from "./ids";
-import { Market, MARKET_STATE_LAYOUT_V2, OpenOrders } from "@project-serum/serum/lib/market";
+import { MARKET_STATE_LAYOUT_V2, OpenOrders } from "@project-serum/serum/lib/market";
 import { ACCOUNT_LAYOUT, AMM_INFO_LAYOUT, AMM_INFO_LAYOUT_V3, AMM_INFO_LAYOUT_V4, MINT_LAYOUT } from "./layouts";
-import { getFilteredProgramAccountsCache, getMultipleAccounts } from "./accounts";
+import { getMultipleAccounts } from "./accounts";
 import { LP_TOKENS, TokenInfo, TOKENS } from "./tokens";
 import { BN } from "bn.js";
 import { createAmmAuthority } from "./utils";
 import { getAddressForWhat, LiquidityPoolInfo, LIQUIDITY_POOLS } from "./pools";
 import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
-import { MARKETS as SERUM_MARKETS } from '@project-serum/serum/lib/tokens_and_markets'
+import { MARKETS } from "./markets";
 
-export const getLiquidityPools = async (
-  connection: Connection,
-  fromMint: PublicKey,
-  toMint: PublicKey
-) => {
+export const getLiquidityPools = async (connection: Connection) => {
   
   let liquidityPools = {} as any;
-  let ammAll: any = []; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-  let marketAll: any = []; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
-
-  let filteredPools = LIQUIDITY_POOLS.filter(lp => {
-    return (lp.coin.address === fromMint.toBase58() && lp.pc.address === toMint.toBase58()) || 
-      (lp.coin.address === toMint.toBase58() && lp.pc.address === fromMint.toBase58());
-  });
+  let ammAll: any; // { publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
+  let marketAll: any; //{ publicKey: PublicKey, accountInfo: AccountInfo<Buffer> }[] = [];
 
   await Promise.all([
     await (async () => {
       ammAll = await getMultipleAccounts(
         connection,
-        filteredPools.map(p => new PublicKey(p.ammId)),
+        LIQUIDITY_POOLS.map(p => new PublicKey(p.ammId)),
         connection.commitment
       )
     })(),
     await (async () => {
       marketAll = await getMultipleAccounts(
         connection, 
-        SERUM_MARKETS.map(m => m.address),
+        MARKETS.map(m => new PublicKey(m)),
         connection.commitment
       )
     })()
@@ -46,7 +37,7 @@ export const getLiquidityPools = async (
   const marketToLayout: { [name: string]: any } = {};
 
   marketAll.forEach((item: any) => {
-    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.account.data)
+    marketToLayout[item.publicKey.toString()] = MARKET_STATE_LAYOUT_V2.decode(item.accountInfo.data)
   });
 
   const lpMintAddressList: string[] = [];
@@ -73,7 +64,7 @@ export const getLiquidityPools = async (
       !Object.keys(lpMintListDecimls).includes(ammInfo.lpMintAddress.toString()) ||
       ammInfo.pcMintAddress.toString() === ammInfo.serumMarket.toString() ||
       ammInfo.lpMintAddress.toString() === NATIVE_SOL_MINT.toString() ||
-      !Object.keys(marketToLayout).includes(ammInfo.serumMarket.toString())
+      !Object.keys(marketAll).includes(ammInfo.serumMarket.toString())
     ) {
       continue;
     }
@@ -182,23 +173,23 @@ export const getLiquidityPools = async (
       official: false
     };
     
-    if (!filteredPools.find((item) => item.ammId === itemLiquidity.ammId)) {
-      filteredPools.push(itemLiquidity);
+    if (!LIQUIDITY_POOLS.find((item) => item.ammId === itemLiquidity.ammId)) {
+      LIQUIDITY_POOLS.push(itemLiquidity);
     } else {
-      for (let itemIndex = 0; itemIndex < filteredPools.length; itemIndex += 1) {
+      for (let itemIndex = 0; itemIndex < LIQUIDITY_POOLS.length; itemIndex += 1) {
         if (
-          filteredPools[itemIndex].ammId === itemLiquidity.ammId &&
-          filteredPools[itemIndex].name !== itemLiquidity.name &&
-          !filteredPools[itemIndex].official
+          LIQUIDITY_POOLS[itemIndex].ammId === itemLiquidity.ammId &&
+          LIQUIDITY_POOLS[itemIndex].name !== itemLiquidity.name &&
+          !LIQUIDITY_POOLS[itemIndex].official
         ) {
-          filteredPools[itemIndex] = itemLiquidity;
+          LIQUIDITY_POOLS[itemIndex] = itemLiquidity;
         }
       }
     }
 
     const publicKeys = [] as any;
 
-    filteredPools.forEach((pool) => {
+    LIQUIDITY_POOLS.forEach((pool) => {
       const { 
         poolCoinTokenAccount, 
         poolPcTokenAccount, 
@@ -208,8 +199,6 @@ export const getLiquidityPools = async (
         pc, 
         lp 
       } = pool;
-
-      console.log('pool', filteredPools.length, pool);
 
       publicKeys.push(
         new PublicKey(poolCoinTokenAccount),

@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Connect wallet account",
 		"copy-address": "Copy Address",
+		"disconnect": "Disconnect",
 		"explorer-link": "View on Solana Explorer",
 		"modal-title": "Account",
 		"network-unknown": "Unknown",
@@ -14,13 +15,47 @@
 		"label-right": "Balance",
 		"modal-title": "Add funds"
 	},
+	"assets": {
+		"account-add-cta-label": "Go!",
+		"account-add-heading": "View account details for any address in",
+		"account-address-change-cta": "Scan another address",
+		"account-address-label": "Account address",
+		"account-address-placeholder": "Enter your account address",
+		"account-address-validation": "Not a valid address format",
+		"back-to-assets-cta": "Back to list of assets",
+		"create-account-help-link": "Learn about wallets",
+		"create-account-help-post": "to open an account",
+		"create-account-help-pre": "New to Solana?",
+		"history-load-more-cta-label": "Load more",
+		"history-panel-title": "Asset transactions",
+		"history-table-activity": "Activity",
+		"history-table-amount": "Amount",
+		"history-table-date": "Date",
+		"history-table-postbalance": "Post balance",
+		"loading-error": "Could not load transactions. Please reload the page.",
+		"no-asset-selected": "No asset selected. Please chose one on the left!",
+		"no-balance": {
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
+			"cta2": "Exchange",
+			"line1": "It looks like your {{tokenSymbol}} account is pretty empty.",
+			"line2": "What do you want to do about it?",
+			"line3": "Or scan the QR code to receive funds",
+			"line4": "This address can only be used to receive",
+			"line5": "SOL and SPL tokens on Solana."
+		},
+		"no-transactions": "No transactions found",
+		"qr-scan-title": "Get address from QR code",
+		"screen-title": "Asset balances",
+		"switch-hide-low-balances": "Hide low balances"
+	},
 	"close-stream": {
-		"available-funds": "Available funds",
-		"context-beneficiary": "Closing a stream will send ({{amount}}) to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
+		"return-unvested-amount": "Unvested amount",
+		"return-vested-amount": "Vested amount",
 		"secondary-cta": "Cancel"
 	},
 	"contract-selector": {
@@ -55,7 +90,7 @@
 			"name": "Rent Collection"
 		},
 		"repeating": {
-			"description": "Send money to anyone at a fixed flow rate over time. Great for family remmitances, child allowances and more.",
+			"description": "Send money to anyone at a fixed flow rate over time. Great for family remittances, child allowances and more.",
 			"name": "Repeating Payment"
 		},
 		"setup-everything": {
@@ -67,8 +102,56 @@
 			"name": "Subscription"
 		}
 	},
+	"ddca-selector": {
+		"modal-title": "Repeat this trade?",
+		"ote": {
+			"description": "Exchange now. One time.",
+			"name": "One time exchange"
+		},
+		"repeating-daily": {
+			"description": "Buy every day, starting now.",
+			"name": "Repeat daily",
+			"recurrence-period": "every day"
+		},
+		"repeating-once-month": {
+			"description": "Every 30 days, starting today.",
+			"name": "Repeat monthly",
+			"recurrence-period": "every 30 days"
+		},
+		"repeating-twice-month": {
+			"description": "Every other week on {{dayOfWeek}}, starting today.",
+			"name": "Every two weeks",
+			"recurrence-period": "every two weeks"
+		},
+		"repeating-weekly": {
+			"description": "Buy every {{dayOfWeek}}, starting today.",
+			"name": "Repeat weekly",
+			"recurrence-period": "every week"
+		}
+	},
+	"ddca-setup-modal": {
+		"cta-label": "Approve",
+		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
+		"help": {
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
+			"how-does-it-work": "How does it work?"
+		},
+		"modal-title": "Review Repeating Buy",
+		"notes": {
+			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-02": "Fees for the scheduled swaps are charged upfront",
+			"note-item-03": "All unused fees are returned to you upon withdrawal",
+			"notes-title": "Important Notes"
+		}
+	},
+	"ddcas": {
+		"screen-title": "Recurring buys"
+	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
+		"back-to-deposit-options": "Back to Deposit options",
 		"ftx-cta-label-enabled": "Deposit from FTX",
 		"heading": "Deposit from your Card, Bank Account, or from another Blockchain directly into your Solana Wallet.\nSelect from one of the options below",
 		"modal-title": "Deposit options",
@@ -77,7 +160,14 @@
 		"move-from-renbridge-cta-label": "Transfer your Bitcoin",
 		"not-connected": "Please connect your wallet first",
 		"operation-cta-label-disabled": "Wallet not connected",
-		"send-from-wallet-cta-label": "Send from Wallet/Exchange"
+		"renbridge-cta-warning": "Chase Bank (US) credit card and debit cards will not work to buy crypto. All other banks are OK!",
+		"send-from-wallet-cta-label": "Send from Wallet/Exchange",
+		"transak-cta-label": "Buy with debit/credit card"
+	},
+	"error-screens": {
+		"network-status": "Check network status",
+		"report-problem": "Report a problem",
+		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
@@ -93,24 +183,29 @@
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
 		"cta-close": "Close",
-		"cta-dismiss": "Dismiss",
 		"cta-finish": "Finish",
 		"day": "day",
+		"days": "days",
 		"hour": "hour",
 		"loading": "Loading",
 		"minute": "minute",
 		"month": "month",
+		"months": "months",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"not-implemented": "Not implemented",
+		"reload-cta": "Try again now",
+		"reload-cta-disabled": "You can try again in",
+		"seconds": "seconds",
 		"today": "today",
 		"week": "week",
+		"weeks": "weeks",
 		"year": "year",
 		"you": "you"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
 		"primary-action": "Select",
-		"secondary-action": "Cancel"
+		"secondary-action": "Close"
 	},
 	"notifications": {
 		"account-address-copied-message": "Account Address successfully copied",
@@ -120,8 +215,11 @@
 		"error-ledger-title": "Ledger Error",
 		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
 		"error-title": "Error",
+		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
+		"referral-link-copied-message": "Friend referral link copied to clipboard",
+		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",
 		"streamid-not-copied-message": "Could not copy stream Address",
 		"success-account-funded-message": "Account funded",
@@ -137,11 +235,19 @@
 		"streamid-open-cta": "Open stream",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
+	"referrals": {
+		"address-invalid": "The referral address is not a valid solana address",
+		"address-processed": "Please connect your wallet to record this referral.",
+		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
+		"modal-title": "Refer a friend",
+		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"share-to": "Share to"
+	},
 	"streams": {
-		"back-to-my-streams-cta": "Back to My Streams",
-		"create-new-stream-cta": "Create new money stream",
+		"back-to-my-streams-cta": "Back to Transfer activity",
+		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Lookup a stream",
-		"screen-title": "My Money Streams",
+		"screen-title": "Transfer activity",
 		"stream-activity": {
 			"action-deposit": "Deposit",
 			"action-withdraw": "Withdraw",
@@ -176,6 +282,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No streams available",
+			"subtitle-ended": "Transfer unfunded for 72h",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
 			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
 			"subtitle-pending-inbound": "This contract is pending your approval",
@@ -193,11 +300,13 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Exchange to (Estimate)",
+		"exchange-warning": "Token exchange happen with real assets in Mainnet",
+		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
-		"token-select-source": "Select token"
+		"token-select-source": "Select token",
+		"transaction-settings": "Slippage Tolerance"
 	},
 	"token-selector": {
 		"modal-title": "Select a token",
@@ -226,7 +335,7 @@
 		},
 		"recipient": {
 			"label": "Recipient",
-			"placeholder": "Public address or ENS",
+			"placeholder": "Public address",
 			"qr-scan-title": "Get address from QR code",
 			"recipient-is-own-account": "Cannot send to your own account"
 		},
@@ -243,6 +352,7 @@
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",
+			"modal-title-transaction-disabled": "Transaction cancelled",
 			"stream-started-post": "was started successfully",
 			"stream-started-pre": "Your money stream for",
 			"tx-add-funds-operation": "Funding stream with",
@@ -282,19 +392,26 @@
 			"add-funds-payroll-advice": "You must add funds to start a payroll",
 			"add-funds-repeating-payment-advice": "You must add funds to start the repeating payment",
 			"beneficiary-receives": "Beneficiary receives",
+			"exchange-on": "Exchange on",
 			"min-recommended-amount": "Recommended minimum amount",
-			"recipient-receives": "Recipient receives",
+			"price-impact": "Price impact",
+			"recipient-receives": "Minimum received",
+			"slippage": "Slippage tolerance",
 			"transaction-fee": "Transaction fee",
 			"you-receive": "You receive"
 		},
 		"validation": {
-			"amount-high": "Amount exceeds your balance",
+			"amount-high": "Amount exceeds your {{symbol}} balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",
 			"amount-withdraw-high": "Amount is greater than the available funds",
+			"insufficient-amount-needed": "Need at least {{amount}} {{symbol}} to exchange",
+			"insufficient-balance-needed": "Need at least {{balance}} SOL",
 			"invalid-amount": "Invalid amount",
-			"minimum-swap-amount": "Need at least {{mintAmount}} to swap for {{toMint}}",
+			"invalid-exchange": "Invalid exchange",
+			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
@@ -303,6 +420,7 @@
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment rate exceeds your balance",
 			"valid-approve": "Approve on your wallet",
+			"valid-ddca-review": "Review",
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal"
 		}
@@ -311,7 +429,7 @@
 		"en": "English",
 		"es": "Spanish",
 		"fr": "French",
-		"pt": "Portuguese"
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -321,6 +439,7 @@
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Docs",
+			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
 			"theme-dark": "Dark Mode",

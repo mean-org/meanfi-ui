@@ -33,10 +33,10 @@ export const ContractSelectorModal = (props: {
   }
 
   const contractsList = (
-    <div className="contract-card-list vertical-scroll">
+    <div className="items-card-list vertical-scroll">
       {getContractListByCategory('cat1').map(cntrct => {
         return (
-          <div key={`${cntrct.id}`} className={`contract-card ${cntrct.name === contract?.name
+          <div key={`${cntrct.id}`} className={`item-card ${cntrct.name === contract?.name
             ? "selected"
             : cntrct.disabled
             ? "disabled"
@@ -50,9 +50,9 @@ export const ContractSelectorModal = (props: {
             <div className="checkmark">
               <CheckOutlined />
             </div>
-            <div className="contract-meta">
-              <div className="contract-name">{t(`contract-selector.${cntrct.translationId}.name`)}</div>
-              <div className="contract-description">{t(`contract-selector.${cntrct.translationId}.description`)}</div>
+            <div className="item-meta">
+              <div className="item-name">{t(`contract-selector.${cntrct.translationId}.name`)}</div>
+              <div className="item-description">{t(`contract-selector.${cntrct.translationId}.description`)}</div>
             </div>
           </div>
         );
@@ -64,10 +64,10 @@ export const ContractSelectorModal = (props: {
   //   <Tabs defaultActiveKey={contract?.categoryId} centered>
   //     {getCategories().map((tab) => {
   //       return (
-  //         <div className="contract-card-list vertical-scroll">
+  //         <div className="items-card-list vertical-scroll">
   //           {getContractListByCategory(tab.categoryId).map(cntrct => {
   //             return (
-  //               <div key={`${cntrct.id}`} className={`contract-card ${cntrct.name === contract?.name
+  //               <div key={`${cntrct.id}`} className={`item-card ${cntrct.name === contract?.name
   //                 ? "selected"
   //                 : cntrct.disabled
   //                 ? "disabled"
@@ -81,9 +81,9 @@ export const ContractSelectorModal = (props: {
   //                 <div className="checkmark">
   //                   <CheckOutlined />
   //                 </div>
-  //                 <div className="contract-meta">
-  //                   <div className="contract-name">{t(`contract-selector.${cntrct.translationId}.name`)}</div>
-  //                   <div className="contract-description">{t(`contract-selector.${cntrct.translationId}.description`)}</div>
+  //                 <div className="item-meta">
+  //                   <div className="item-name">{t(`contract-selector.${cntrct.translationId}.name`)}</div>
+  //                   <div className="item-description">{t(`contract-selector.${cntrct.translationId}.description`)}</div>
   //                 </div>
   //               </div>
   //             );

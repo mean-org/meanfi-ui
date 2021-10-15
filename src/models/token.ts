@@ -1,0 +1,14 @@
+import { PublicKey, TokenAmount } from "@solana/web3.js";
+
+export class AccountTokenParsedInfo {
+  parsedInfo!: TokenAccountInfo;
+  pubkey!: PublicKey;
+}
+
+export type TokenAccountInfo = {
+  mint: string;
+  owner: string;
+  tokenAmount: TokenAmount;
+  state: string;
+  isNative: boolean;
+};

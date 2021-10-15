@@ -2,6 +2,7 @@
 	"account-area": {
 		"connect-button": "Conecte su billetera",
 		"copy-address": "Copiar dirección",
+		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
@@ -14,13 +15,47 @@
 		"label-right": "Saldo",
 		"modal-title": "Añadir fondos"
 	},
+	"assets": {
+		"account-add-cta-label": "Ir!",
+		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
+		"account-address-change-cta": "Escanear otra dirección",
+		"account-address-label": "Dirección de cuenta",
+		"account-address-placeholder": "Ingrese la dirección de su cuenta",
+		"account-address-validation": "Formato de dirección no válido",
+		"back-to-assets-cta": "Volver a la lista de activos",
+		"create-account-help-link": "Conozca más sobre billeteras",
+		"create-account-help-post": "abrir una cuenta",
+		"create-account-help-pre": "¿Es nuevo en Solana?",
+		"history-load-more-cta-label": "Load more",
+		"history-panel-title": "Transacciones de activos",
+		"history-table-activity": "Actividad",
+		"history-table-amount": "Saldo",
+		"history-table-date": "Fecha",
+		"history-table-postbalance": "Post saldo",
+		"loading-error": "No pudimos cargar las transacciones. Por favor, recargue la página.",
+		"no-asset-selected": "No ha seleccionado ningún activo. Por favor, elija uno de la izquierda.",
+		"no-balance": {
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
+			"cta2": "Intercambiar",
+			"line1": "Su cuenta {{tokenSymbol}} está vacía.",
+			"line2": "¿Qué quieres hacer al respecto?",
+			"line3": "O escanee el código QR para recibir fondos",
+			"line4": "Esta dirección sólo puede utilizarse para recibir",
+			"line5": "SOL y SPL tokens en Solana."
+		},
+		"no-transactions": "No se encontraron transacciones",
+		"qr-scan-title": "Obtener dirección desde código QR",
+		"screen-title": "Asset balances",
+		"switch-hide-low-balances": "Hide low balances"
+	},
 	"close-stream": {
-		"available-funds": "Available funds",
-		"context-beneficiary": "Concluya esta transferencia monetaria y se enviará ({{amount}}) a su cuenta ({{beneficiary}}) y se detendrá el flujo de dinero inmediatamente.",
+		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
+		"return-unvested-amount": "Cantidad pendiente",
+		"return-vested-amount": "Cantidad adquirida",
 		"secondary-cta": "Cancelar"
 	},
 	"contract-selector": {
@@ -67,17 +102,72 @@
 			"name": "Suscripción"
 		}
 	},
+	"ddca-selector": {
+		"modal-title": "Repeat this trade?",
+		"ote": {
+			"description": "Exchange now. One time.",
+			"name": "One time exchange"
+		},
+		"repeating-daily": {
+			"description": "Buy every day, starting now.",
+			"name": "Repeat daily",
+			"recurrence-period": "every day"
+		},
+		"repeating-once-month": {
+			"description": "Every 30 days, starting today.",
+			"name": "Repeat monthly",
+			"recurrence-period": "every 30 days"
+		},
+		"repeating-twice-month": {
+			"description": "Every other week on {{dayOfWeek}}, starting today.",
+			"name": "Every two weeks",
+			"recurrence-period": "every two weeks"
+		},
+		"repeating-weekly": {
+			"description": "Buy every {{dayOfWeek}}, starting today.",
+			"name": "Repeat weekly",
+			"recurrence-period": "every week"
+		}
+	},
+	"ddca-setup-modal": {
+		"cta-label": "Approve",
+		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
+		"help": {
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
+			"how-does-it-work": "How does it work?"
+		},
+		"modal-title": "Review Repeating Buy",
+		"notes": {
+			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-02": "Fees for the scheduled swaps are charged upfront",
+			"note-item-03": "All unused fees are returned to you upon withdrawal",
+			"notes-title": "Important Notes"
+		}
+	},
+	"ddcas": {
+		"screen-title": "Recurring buys"
+	},
 	"deposits": {
 		"address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
+		"back-to-deposit-options": "Volver a opciones de Depósito",
 		"ftx-cta-label-enabled": "Depósito de FTX",
 		"heading": "Deposite desde su Tarjeta, Cuenta Bancaria o desde otra Blockchain directamente en su Monedero Solana.\nSeleccione una de las opciones siguientes",
-		"modal-title": "Opciones de depósito",
+		"modal-title": "Opciones de Depósito",
 		"move-from-ethereum-cta-label": "Mover activos de Ethereum",
 		"move-from-polygon-cta-label": "Mover activos de Polygon",
 		"move-from-renbridge-cta-label": "Transfiere tu Bitcoin",
 		"not-connected": "Por favor conecte su billetera",
 		"operation-cta-label-disabled": "Billetera desconectada",
-		"send-from-wallet-cta-label": "Enviar desde Billetera / Exchange"
+		"renbridge-cta-warning": "Las tarjetas de crédito y débito del Chase Bank (US) no funcionan para comprar crypto. ¡Todos los demás bancos están bien!",
+		"send-from-wallet-cta-label": "Enviar desde Billetera/Exchange",
+		"transak-cta-label": "Compre con tarjeta de débito/crédito"
+	},
+	"error-screens": {
+		"network-status": "Check network status",
+		"report-problem": "Report a problem",
+		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
 	},
 	"faucet": {
 		"current-sol-balance": "Saldo de SOL actual",
@@ -93,24 +183,29 @@
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
 		"cta-close": "Cerrar",
-		"cta-dismiss": "Cancelar",
 		"cta-finish": "Terminar",
 		"day": "día",
+		"days": "",
 		"hour": "hora",
 		"loading": "Cargando",
 		"minute": "minuto",
 		"month": "mes",
+		"months": "",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
+		"reload-cta": "Try again now",
+		"reload-cta-disabled": "You can try again in",
+		"seconds": "seconds",
 		"today": "hoy",
 		"week": "semana",
+		"weeks": "",
 		"year": "año",
 		"you": "usted"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
-		"secondary-action": "Cancelar"
+		"secondary-action": "Cerrar"
 	},
 	"notifications": {
 		"account-address-copied-message": "La cuenta ha sido copiada correctamente",
@@ -120,8 +215,11 @@
 		"error-ledger-title": "Error de Ledger",
 		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
 		"error-title": "Error",
+		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
+		"referral-link-copied-message": "Friend referral link copied to clipboard",
+		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
 		"streamid-not-copied-message": "No se pudo copiar dirección de la transferencia",
 		"success-account-funded-message": "Cuenta financiada",
@@ -137,11 +235,19 @@
 		"streamid-open-cta": "Iniciar transferencia",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
+	"referrals": {
+		"address-invalid": "The referral address is not a valid solana address",
+		"address-processed": "Please connect your wallet to record this referral.",
+		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
+		"modal-title": "Refer a friend",
+		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"share-to": "Share to"
+	},
 	"streams": {
-		"back-to-my-streams-cta": "Regresar a Mis Transferencias",
-		"create-new-stream-cta": "Crear nueva transferencia",
+		"back-to-my-streams-cta": "Volver a las transferencia",
+		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
-		"screen-title": "Mis transferencias de dinero",
+		"screen-title": "Transferencias",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -176,6 +282,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
+			"subtitle-ended": "Transfer unfunded for 72h",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
@@ -193,11 +300,13 @@
 		}
 	},
 	"swap": {
-		"input-label-destination": "Intercambiar a (Estimado)",
+		"exchange-warning": "El intercambio de tokens se realiza con activos reales en Mainnet",
+		"input-label-destination": "Intercambiar a (est.)",
 		"input-label-source": "Intercambiar de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
-		"token-select-source": "Seleccione un token"
+		"token-select-source": "Seleccione un token",
+		"transaction-settings": "Tolerancia al deslizamiento"
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
@@ -226,7 +335,7 @@
 		},
 		"recipient": {
 			"label": "Destinatario",
-			"placeholder": "Dirección pública o ENS",
+			"placeholder": "Dirección pública",
 			"qr-scan-title": "Obtener dirección desde código QR",
 			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},
@@ -243,6 +352,7 @@
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
+			"modal-title-transaction-disabled": "Transacción cancelada",
 			"stream-started-post": "se inició con éxito",
 			"stream-started-pre": "Tu transferencia de dinero por",
 			"tx-add-funds-operation": "Adicionando fondos con",
@@ -276,14 +386,17 @@
 			"clock-in-out": "Hora de entrada / salida",
 			"label": "Requisito del parte de horas",
 			"not-required": "Innecesario (transmisiones 24/7)",
-			"submit-timesheets": "Enviar hojas de horas"
+			"submit-timesheets": "Enviar planilla de horas"
 		},
 		"transaction-info": {
 			"add-funds-payroll-advice": "Debes agregar fondos para iniciar una nómina",
 			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
 			"beneficiary-receives": "El beneficiario recibe",
+			"exchange-on": "Intercambio en",
 			"min-recommended-amount": "Cantidad mínima recomendada",
+			"price-impact": "Price impact",
 			"recipient-receives": "El destinatario recibe",
+			"slippage": "Tolerancia al deslizamiento",
 			"transaction-fee": "Tarifa de transacción",
 			"you-receive": "Recibes"
 		},
@@ -293,16 +406,21 @@
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"amount-withdraw-high": "La cantidad es mayor que los fondos disponibles",
+			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
+			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL",
 			"invalid-amount": "Monto no válido",
+			"invalid-exchange": "Intercambio no válido",
+			"minimum-repeating-buy-amount": "",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
 			"no-recipient": "Seleccionar destinatario",
 			"no-valid-date": "Establecer una fecha válida",
-			"not-connected": "Conecta tu billetera",
+			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
 			"valid-approve": "Aprobar en su billetera",
+			"valid-ddca-review": "Review",
 			"valid-start-funding": "Empezar a financiar",
 			"valid-start-withdrawal": "Iniciar retiro"
 		}
@@ -311,7 +429,7 @@
 		"en": "Inglés",
 		"es": "Español",
 		"fr": "Francés",
-		"pt": "Portugués"
+		"pt": "Português"
 	},
 	"ui-menus": {
 		"app-context-menu": {
@@ -321,6 +439,7 @@
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Docs",
+			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Idioma",
 			"switch-theme": "Cambiar a",
 			"theme-dark": "Modo Oscuro",

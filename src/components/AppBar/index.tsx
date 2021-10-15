@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
@@ -6,66 +6,90 @@ import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
-import { CurrentNetwork } from "../CurrentNetwork";
-import { useConnectionConfig } from '../../contexts/connection';
+import { CurrentBalance } from "../CurrentBalance";
+import { useConnection, useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
-import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppStateContext } from '../../contexts/appstate';
-import { MEANFI_METRICS_URL, HELP_URI_WALLET_GUIDE, MEAN_DAO_GITBOOKS_URL } from '../../constants';
+import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
-import { AppConfigService, environment } from '../../environments/environment';
+import { environment } from '../../environments/environment';
+import { PublicKey } from '@solana/web3.js';
+import { listStreams } from '@mean-dao/money-streaming/lib/utils';
+import { consoleOut } from '../../utils/ui';
+import { CustomCSSProps } from '../../utils/css-custom-props';
+import { appConfig } from '../..';
 
 const { SubMenu } = Menu;
 
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
-  const connection = useConnectionConfig();
-  const { connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
+  const connection = useConnection();
+  const { publicKey, connected } = useWallet();
   const { t } = useTranslation("common");
-  const { setCustomStreamDocked, refreshStreamList } = useContext(AppStateContext);
+  const {
+    detailsPanelOpen,
+    addAccountPanelOpen,
+    streamProgramAddress,
+    isDepositOptionsModalVisible,
+    setStreamList,
+    setStreamDetail,
+    setCurrentScreen,
+    setLoadingStreams,
+    setSelectedStream,
+    setDtailsPanelOpen,
+    setCustomStreamDocked,
+    showDepositOptionsModal,
+    hideDepositOptionsModal,
+    setAddAccountPanelOpen,
+    setCanShowAccountDetails,
+  } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Deposits modal
-  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
-  const showDepositOptionsModal = useCallback((e) => {
-    setIsDepositOptionsModalVisibility(true);
-    const depositMenuItem = document.getElementById("deposits-menu-item");
-    if (depositMenuItem) {
-      setTimeout(() => {
-        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
-          depositMenuItem.classList.remove('ant-menu-item-active');
-        }
-      }, 300);
-    }
-  }, []);
-  const hideDepositOptionsModal = useCallback(() => {
-    setIsDepositOptionsModalVisibility(false);
-    const depositMenuItem = document.getElementById("deposits-menu-item");
-    if (depositMenuItem) {
-      setTimeout(() => {
-        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
-          depositMenuItem.classList.remove('ant-menu-item-active');
-        }
-      }, 300);
-    }
-  }, []);
+  const isProd = (): boolean => {
+    return environment === 'production' ? true : false;
+  }
 
   const onGoToTransfersClick = () => {
-    refreshStreamList(true);
     setCustomStreamDocked(false);
+    if (publicKey) {
+      const programId = new PublicKey(streamProgramAddress);
+      setLoadingStreams(true);
+      listStreams(connection, programId, publicKey, publicKey)
+        .then(async streams => {
+          setStreamList(streams);
+          setLoadingStreams(false);
+          consoleOut('Layout -> streamList:', streams, 'blue');
+          setSelectedStream(streams[0]);
+          setStreamDetail(streams[0]);
+          if (streams && streams.length > 0) {
+            consoleOut('streams are available, opening streams...', '', 'blue');
+            setCurrentScreen('streams');
+          }
+        });
+    }
   };
+
+  const closeAllPanels = () => {
+    if (detailsPanelOpen) {
+      setDtailsPanelOpen(false);
+    } else if (addAccountPanelOpen) {
+      setCanShowAccountDetails(true);
+      setAddAccountPanelOpen(false);
+    }
+  }
 
   const dismissMenu = () => {
     const mobileMenuTrigger = document.getElementById("overlay-input");
     if (mobileMenuTrigger) {
       mobileMenuTrigger?.click();
+      closeAllPanels();
     }
   }
 
   const getChartsLink = (): string => {
-    const config = new AppConfigService();
-    const bucket = config.getConfig().influxDbBucket;
+    const bucket = appConfig.getConfig().influxDbBucket;
     return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
   }
 
@@ -106,13 +130,11 @@ export const AppBar = (props: { menuType: string }) => {
 
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
-      {environment === 'development' && (
-        <Menu.Item key="/accounts">
-          <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-        </Menu.Item>
-      )}
-      <Menu.Item key="/swap">
-        <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+      <Menu.Item key="/accounts">
+        <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+      </Menu.Item>
+      <Menu.Item key="/exchange">
+        <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
       <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
         <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
@@ -128,27 +150,27 @@ export const AppBar = (props: { menuType: string }) => {
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
         <Menu.Item key="wallet-guide">
-          <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+          <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
           </a>
         </Menu.Item>
-        {connection.env !== 'mainnet-beta' && (
+        {!isProd() && (
           <Menu.Item key="/faucet">
             <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
           </Menu.Item>
         )}
-        {connection.env !== 'mainnet-beta' && (
+        {!isProd() && (
           <Menu.Item key="/wrap">
             <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
           </Menu.Item>
         )}
       </SubMenu>
-      <Menu.Item key="charts">
+      {/* <Menu.Item key="charts">
         <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
           <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
-      </Menu.Item>
+      </Menu.Item> */}
     </Menu>
   );
 
@@ -159,14 +181,14 @@ export const AppBar = (props: { menuType: string }) => {
         <div className="App-Bar-right">
           {connected ? (
             <>
-            {connection.env !== 'mainnet-beta' && (
+            {!isProd() && (
               <div className="cluster-indicator">
                 <ThunderboltOutlined />
-                <span className="network-name">{connection.env}</span>
+                <span className="network-name">{connectionConfig.cluster}</span>
               </div>
             )}
             <div className="connection-and-account-bar">
-              <CurrentNetwork />
+              <CurrentBalance />
               <CurrentUserBadge />
             </div>
             </>
@@ -190,56 +212,49 @@ export const AppBar = (props: { menuType: string }) => {
         <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
         <div id="overlay">
           <ul onClick={dismissMenu}>
-            {environment === 'development' && (
-              <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-              </li>
-            )}
-            <li key="/swap" className={location.pathname === '/swap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-              <Link to="/swap">{t('ui-menus.main-menu.swap')}</Link>
+            <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
+              <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
             </li>
-            <li key="/transfers"
+            <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
+              <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
+            </li>
+            <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
                 className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
                 onClick={() => onGoToTransfersClick()}>
               <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
             </li>
-            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal}>
+            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
               <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
             </li>
-            <li key="services">
-              <div className="mobile-submenu-title">{t('ui-menus.main-menu.services.submenu-title')}</div>
-              <ul className="mobile-submenu">
-                <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                  <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
-                </li>
-                <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                  <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
-                </li>
-                {connection.env !== 'mainnet-beta' && (
-                  <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                    <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
-                  </li>
-                )}
-                {connection.env !== 'mainnet-beta' && (
-                  <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                    <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
-                  </li>
-                )}
-                <li key="wallet-guide" className="mobile-menu-item">
-                  <a href={MEAN_DAO_GITBOOKS_URL + HELP_URI_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                    <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
-                    &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                  </a>
-                </li>
-              </ul>
+            <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+              <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
+            </li>
+            <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+              <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
+            </li>
+            {!isProd() && (
+              <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
+                <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+              </li>
+            )}
+            {!isProd() && (
+              <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
+                <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+              </li>
+            )}
+            <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 7 : 9} as CustomCSSProps}>
+              <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
+                &nbsp;<IconExternalLink className="mean-svg-icons link" />
+              </a>
             </li>
             {/* Charts */}
-            <li key="charts" className="mobile-menu-item">
+            {/* <li key="charts" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
               <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
                 <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
                 &nbsp;<IconExternalLink className="mean-svg-icons link" />
               </a>
-            </li>
+            </li> */}
           </ul>
         </div>
         <DepositOptions

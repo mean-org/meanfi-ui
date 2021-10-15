@@ -1,21 +1,35 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
-import { PRICE_REFRESH_TIMEOUT, STREAMING_PAYMENT_CONTRACTS, STREAMS_REFRESH_TIMEOUT } from "../constants";
+import {
+  DDCA_FREQUENCY_OPTIONS,
+  PRICE_REFRESH_TIMEOUT,
+  STREAMING_PAYMENT_CONTRACTS,
+  STREAMS_REFRESH_TIMEOUT,
+  TRANSACTIONS_PER_PAGE
+} from "../constants";
 import { ContractDefinition } from "../models/contract-definition";
+import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
-import { findATokenAddress, getStream, listStreamActivity, listStreams } from "money-streaming/lib/utils";
+import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { findATokenAddress, getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
-import { getEndpointByRuntimeEnv, useConnection, useConnectionConfig } from "./connection";
+import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { useAccountsContext } from "./accounts";
-import { TokenInfo } from "@solana/spl-token-registry";
-import { AppConfigService } from "../environments/environment";
+import { TokenInfo, TokenListProvider } from "@solana/spl-token-registry";
 import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
-import { StreamActivity, StreamInfo } from "money-streaming/lib/types";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { Connection } from "@solana/web3.js";
+import { UserTokenAccount } from "../models/transactions";
+import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { NATIVE_SOL } from "../utils/tokens";
+import useLocalStorage from "../hooks/useLocalStorage";
+import { MappedTransaction } from "../utils/history";
+import { consoleOut } from "../utils/ui";
+import { appConfig } from "..";
+import { ChainId } from "@saberhq/token-utils";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -26,6 +40,7 @@ interface AppStateConfig {
   theme: string | undefined;
   currentScreen: string | undefined;
   detailsPanelOpen: boolean;
+  isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
   tokenBalance: number;
@@ -33,6 +48,7 @@ interface AppStateConfig {
   effectiveRate: number;
   coinPrices: any | null;
   contract: ContractDefinition | undefined;
+  ddcaOption: DdcaFrequencyOption | undefined;
   recipientAddress: string;
   recipientNote: string;
   paymentStartDate: string | undefined;
@@ -49,10 +65,21 @@ interface AppStateConfig {
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
-  referral: TokenInfo | undefined;
+  referrals: number;
+  // Accounts
+  splTokenList: UserTokenAccount[];
+  userTokens: UserTokenAccount[];
+  selectedAsset: UserTokenAccount | undefined;
+  transactions: MappedTransaction[] | undefined;
+  accountAddress: string;
+  lastTxSignature: string;
+  addAccountPanelOpen: boolean;
+  canShowAccountDetails: boolean;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
+  showDepositOptionsModal: () => void;
+  hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
@@ -62,6 +89,7 @@ interface AppStateConfig {
   resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
+  setDdcaOption: (name: string) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
@@ -77,13 +105,20 @@ interface AppStateConfig {
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
-  setReferral: (token: TokenInfo | undefined) => void;
+  setReferrals: (value: number) => void;
+  // Accounts
+  setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
+  setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
+  setAccountAddress: (address: string) => void;
+  setAddAccountPanelOpen: (state: boolean) => void;
+  setCanShowAccountDetails: (state: boolean) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   currentScreen: undefined,
   detailsPanelOpen: false,
+  isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
   tokenBalance: 0,
@@ -91,6 +126,7 @@ const contextDefaultValues: AppStateConfig = {
   effectiveRate: 0,
   coinPrices: null,
   contract: undefined,
+  ddcaOption: undefined,
   recipientAddress: '',
   recipientNote: '',
   paymentStartDate: undefined,
@@ -110,11 +146,23 @@ const contextDefaultValues: AppStateConfig = {
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
-  referral: undefined,
+  referrals: 0,
+  // Accounts
+  splTokenList: [],
+  userTokens: [],
+  selectedAsset: undefined,
+  transactions: undefined,
+  accountAddress: '',
+  lastTxSignature: '',
+  addAccountPanelOpen: true,
+  canShowAccountDetails: false,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
+  showDepositOptionsModal: () => {},
+  hideDepositOptionsModal: () => {},
   setContract: () => {},
+  setDdcaOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
@@ -138,7 +186,13 @@ const contextDefaultValues: AppStateConfig = {
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
-  setReferral: () => {}
+  setReferrals: () => {},
+  // Accounts
+  setTransactions: () => {},
+  setSelectedAsset: () => {},
+  setAccountAddress: () => {},
+  setAddAccountPanelOpen: () => {},
+  setCanShowAccountDetails: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -154,16 +208,20 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
 
   if (!streamProgramAddress) {
-    const config = new AppConfigService();
-    console.log('config => ', config.getConfig());
-    setStreamProgramAddress(config.getConfig().streamProgramAddress);
+    setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
   }
 
   const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
+
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
+  const [contractName, setContractName] = useLocalStorageState("contractName");
+
+  const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
+
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
   const [recipientNote, updateRecipientNote] = useState<string>(contextDefaultValues.recipientNote);
   const [paymentStartDate, updatePaymentStartDate] = useState<string | undefined>(today);
@@ -192,7 +250,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     const applyTheme = (name?: string) => {
-      const theme = name || 'light';
+      const theme = name || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
       updateTheme(theme);
     }
@@ -214,6 +272,14 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (items?.length) {
       setSelectedContract(items[0]);
       setContractName(name);
+    }
+  }
+
+  const setDdcaOption = (name: string) => {
+    const items = DDCA_FREQUENCY_OPTIONS.filter(c => c.name === name);
+    if (items?.length) {
+      updateDdcaOption(items[0]);
+      setDdcaOptionName(name);
     }
   }
 
@@ -276,7 +342,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       streamPublicKey = new PublicKey(streamId);
       try {
         const detail = await getStream(connection, streamPublicKey);
-        console.log('customStream', detail);
+        consoleOut('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
           setStreamList([detail]);
@@ -294,7 +360,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           });
         }
       } catch (error) {
-        console.log('customStream', error);
+        console.error('customStream', error);
         notify({
           message: t('notifications.error-title'),
           description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
@@ -318,15 +384,15 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!loadingStreamActivity) {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      const newConnection = new Connection(getEndpointByRuntimeEnv(), "confirmed");
-      listStreamActivity(newConnection, getEndpointByRuntimeEnv(), streamPublicKey)
+      const newConnection = new Connection(connectionConfig.endpoint, "confirmed");
+      listStreamActivity(newConnection, streamPublicKey)
         .then(value => {
-          console.log('activity:', value);
+          consoleOut('activity:', value);
           setStreamActivity(value);
           setLoadingStreamActivity(false);
         })
         .catch(err => {
-          console.log(err);
+          console.error(err);
           setStreamActivity([]);
           setLoadingStreamActivity(false);
         });
@@ -334,6 +400,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [
     connected,
+    connectionConfig.endpoint,
     loadingStreamActivity
   ]);
 
@@ -351,14 +418,42 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateStreamDetail(stream);
   }
 
+  // Deposits modal
+  const [isDepositOptionsModalVisible, setIsDepositOptionsModalVisibility] = useState(false);
+
+  const showDepositOptionsModal = useCallback(() => {
+    setIsDepositOptionsModalVisibility(true);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      setTimeout(() => {
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
+      }, 300);
+    }
+  }, []);
+
+  const hideDepositOptionsModal = useCallback(() => {
+    setIsDepositOptionsModalVisibility(false);
+    const depositMenuItem = document.getElementById("deposits-menu-item");
+    if (depositMenuItem) {
+      setTimeout(() => {
+        if (depositMenuItem.classList.contains('ant-menu-item-active')) {
+          depositMenuItem.classList.remove('ant-menu-item-active');
+        }
+      }, 300);
+    }
+  }, []);
+
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [coinPrices, setCoinPrices] = useState<any>(null);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
-  const [contractName, setContractName] = useLocalStorageState("contractName");
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-  const [referral, setReferral] = useState<TokenInfo>();  
+
+  // TODO: referrals is tempararily persisted in localStorage but we must use an API
+  const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
@@ -373,6 +468,12 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateEffectiveRate(rate);
   }
 
+  const setReferrals = (value: number) => {
+    if (publicKey) {
+      updateReferrals(value);
+    }
+  }
+
   // Effect to load coin prices
   useEffect(() => {
     let coinTimer: any;
@@ -381,7 +482,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       try {
         await getPrices()
           .then((prices) => {
-            console.log("Coin prices:", prices);
+            consoleOut("Coin prices:", prices, 'blue');
             setCoinPrices(prices);
             if (selectedToken) {
               const tokenSymbol = selectedToken.symbol.toUpperCase();
@@ -403,7 +504,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     coinTimer = window.setInterval(() => {
-      console.log(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
       getCoinPrices();
     }, PRICE_REFRESH_TIMEOUT);
 
@@ -419,7 +520,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     selectedToken
   ]);
 
-  // Cache contracts
+  // Cache selected contract
   const contractFromCache = useMemo(
     () => STREAMING_PAYMENT_CONTRACTS.find(({ name }) => name === contractName),
     [contractName]
@@ -453,6 +554,40 @@ const AppStateProvider: React.FC = ({ children }) => {
     setContractName
   ]);
 
+  // Cache selected DDCA frequency option
+  const ddcaOptFromCache = useMemo(
+    () => DDCA_FREQUENCY_OPTIONS.find(({ name }) => name === ddcaOptionName),
+    [ddcaOptionName]
+  );
+
+  // Preselect a DDCA frequency option
+  useEffect(() => {
+
+    const setContractOrAutoSelectFirst = (name?: string) => {
+      if (name) {
+        if (ddcaOptFromCache) {
+          updateDdcaOption(ddcaOptFromCache);
+        } else {
+          const item = DDCA_FREQUENCY_OPTIONS.filter(c => !c.disabled)[0];
+          updateDdcaOption(item);
+          setDdcaOptionName(item.name);
+        }
+      } else {
+        const item = DDCA_FREQUENCY_OPTIONS.filter(c => !c.disabled)[0];
+        updateDdcaOption(item);
+        setDdcaOptionName(item.name);
+      }
+    }
+
+    setContractOrAutoSelectFirst(ddcaOptionName);
+    return () => {};
+  }, [
+    ddcaOptionName,
+    ddcaOptFromCache,
+    setDdcaOptionName,
+    updateDdcaOption,
+  ]);
+
   const refreshStreamList = useCallback((reset = false) => {
     if (!publicKey) {
       return [];
@@ -464,7 +599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       listStreams(connection, programId, publicKey, publicKey)
         .then(streams => {
-          console.log('Streams:', streams);
+          consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;
           if (streams.length) {
             if (reset) {
@@ -478,21 +613,22 @@ const AppStateProvider: React.FC = ({ children }) => {
                 item = streams[0];
               }
             }
-            console.log('selectedStream:', item);
+            consoleOut('selectedStream:', item, 'blue');
             if (item) {
+              console.log(item);
               updateSelectedStream(item);
               updateStreamDetail(item);
               if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
-                listStreamActivity(connection, getEndpointByRuntimeEnv(), streamPublicKey)
+                listStreamActivity(connection, streamPublicKey)
                   .then(value => {
-                    console.log('activity:', value);
+                    consoleOut('activity:', value, 'blue');
                     setStreamActivity(value);
                     setLoadingStreamActivity(false);
                   })
                   .catch(err => {
-                    console.log(err);
+                    console.error(err);
                     setStreamActivity([]);
                     setLoadingStreamActivity(false);
                   });
@@ -510,7 +646,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           setStreamList(streams);
           updateLoadingStreams(false);
         }).catch(err => {
-          console.log(err);
+          console.error(err);
           updateLoadingStreams(false);
         });
     }
@@ -535,7 +671,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       if (streamList && currentScreen === 'streams' && !customStreamDocked) {
         timer = setInterval(() => {
-          console.log(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
           refreshStreamList(false);
         }, STREAMS_REFRESH_TIMEOUT);
       }
@@ -574,13 +710,18 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
-      const accountInfo = await connection.getAccountInfo(address.toPublicKey());
-      if (!accountInfo) return 0;
-      if (address === publicKey?.toBase58()) {
-        return accountInfo.lamports / LAMPORTS_PER_SOL;
+      try {
+        const accountInfo = await connection.getAccountInfo(address.toPublicKey());
+        if (!accountInfo) return 0;
+        if (address === publicKey?.toBase58()) {
+          return accountInfo.lamports / LAMPORTS_PER_SOL;
+        }
+        const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
+        return tokenAmount.uiAmount || 0;
+      } catch (error) {
+        console.error(error);
+        throw(error);
       }
-      const tokenAmount = (await connection.getTokenAccountBalance(address.toPublicKey())).value;
-      return tokenAmount.uiAmount || 0;
     }
 
     if (!selectedToken) return;
@@ -619,12 +760,118 @@ const AppStateProvider: React.FC = ({ children }) => {
     refreshTokenBalance
   ]);
 
+
+  /////////////////////////////////////
+  // Added to support /accounts page //
+  /////////////////////////////////////
+
+  const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>([]);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
+  const [lastTxSignature, setLastTxSignature] = useState<string>('');
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(false);
+  const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
+
+  const setAddAccountPanelOpen = (state: boolean) => {
+    updateAddAccountPanelOpen(state);
+  }
+
+  const setCanShowAccountDetails = (state: boolean) => {
+    updateCanShowAccountDetails(state);
+  }
+
+  const setTransactions = (map: MappedTransaction[] | undefined, addItems?: boolean) => {
+    if (!addItems) {
+      if (map && map.length === TRANSACTIONS_PER_PAGE) {
+        const lastSignature = map[map.length - 1].signature;
+        setLastTxSignature(lastSignature);
+      } else {
+        setLastTxSignature('');
+      }
+      updateTransactions(map);
+    } else {
+      if (map && map.length) {
+        const lastSignature = map[map.length - 1].signature;
+        const currentArray = transactions?.slice() || [];
+        const jointArray = currentArray.concat(map);
+        if (map.length === TRANSACTIONS_PER_PAGE) {
+          setLastTxSignature(lastSignature);
+        } else {
+          setLastTxSignature('');
+        }
+        updateTransactions(jointArray);
+      }
+    }
+  }
+
+  const setSelectedAsset = (asset: UserTokenAccount | undefined) => {
+    updateSelectedAsset(asset);
+  }
+
+  const setAccountAddress = (address: string) => {
+    updateTransactions([]);
+    updateAccountAddress(address);
+  }
+
+  // Load the supported tokens
+  useEffect(() => {
+    (async () => {
+      let list = new Array<UserTokenAccount>();
+      const sol: UserTokenAccount = {
+        address: NATIVE_SOL.address,
+        balance: 0,
+        chainId: 0,
+        decimals: NATIVE_SOL.decimals,
+        name: NATIVE_SOL.name,
+        symbol: NATIVE_SOL.symbol,
+        ataAddress: '',
+        tags: NATIVE_SOL.tags,
+        logoURI: NATIVE_SOL.logoURI
+      };
+      sol.isMeanSupportedToken = true;
+      list.push(sol);
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+        .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
+      // Update the list
+      updateUserTokens(list);
+      consoleOut('AppState -> userTokens:', list);
+
+      // Load the mainnet list
+      const res = await new TokenListProvider().resolve();
+      const mainnetList = res
+        .filterByChainId(ChainId.MainnetBeta)
+        .excludeByTag("nft")
+        .getList() as UserTokenAccount[];
+      // Sort the big list
+      const sortedMainnetList = mainnetList.sort((a, b) => {
+        var nameA = a.symbol.toUpperCase();
+        var nameB = b.symbol.toUpperCase();
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        // names must be equal
+        return 0;
+      });
+
+      updateSplTokenList(sortedMainnetList);
+    })();
+
+    return () => { }
+
+  }, [connectionConfig.cluster]);
+
   return (
     <AppStateContext.Provider
       value={{
         theme,
         currentScreen,
         detailsPanelOpen,
+        isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
         tokenBalance,
@@ -632,6 +879,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         effectiveRate,
         coinPrices,
         contract,
+        ddcaOption,
         recipientAddress,
         recipientNote,
         paymentStartDate,
@@ -648,10 +896,20 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
-        referral,
+        referrals,
+        splTokenList,
+        userTokens,
+        selectedAsset,
+        transactions,
+        accountAddress,
+        lastTxSignature,
+        addAccountPanelOpen,
+        canShowAccountDetails,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
+        showDepositOptionsModal,
+        hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
         setFromCoinAmount,
@@ -661,6 +919,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         resetContractValues,
         refreshStreamList,
         setContract,
+        setDdcaOption,
         setRecipientAddress,
         setRecipientNote,
         setPaymentStartDate,
@@ -676,7 +935,12 @@ const AppStateProvider: React.FC = ({ children }) => {
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
-        setReferral
+        setReferrals,
+        setTransactions,
+        setSelectedAsset,
+        setAccountAddress,
+        setAddAccountPanelOpen,
+        setCanShowAccountDetails
       }}>
       {children}
     </AppStateContext.Provider>

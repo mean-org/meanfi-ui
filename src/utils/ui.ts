@@ -1,13 +1,13 @@
 import { TokenInfo } from "@solana/spl-token-registry";
+import bs58 from "bs58";
 import moment from "moment";
-import { TransactionFees } from "money-streaming/lib/types";
+import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
-import { environment } from "../environments/environment";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (environment === 'production') { return; }
+    if (window.location.hostname !== 'localhost') { return; }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);
@@ -33,6 +33,83 @@ export class PaymentRateTypeOption {
     }
 }
 
+export function isValidAddress(value: any): boolean {
+    if (typeof value === 'string') {
+        try {
+            // assume base 58 encoding by default
+            const decoded = bs58.decode(value);
+            if (decoded.length === 32) {
+                return true;
+            }
+        } catch (error) {
+            return false;
+        }
+    }
+    return false;
+}
+
+export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: boolean, trans: any): string {
+    let title: any;
+    if (isBusy) {
+        title = trans("transactions.status.modal-title-executing-transaction");
+    } else {
+        if (
+            status.lastOperation === TransactionStatus.Iddle &&
+            status.currentOperation === TransactionStatus.Iddle
+        ) {
+            title = null;
+        } else if (
+            status.currentOperation ===
+            TransactionStatus.TransactionStartFailure
+        ) {
+            title = trans("transactions.status.modal-title-transaction-disabled");
+        } else if (
+            status.lastOperation ===
+            TransactionStatus.TransactionFinished
+        ) {
+            title = trans("transactions.status.modal-title-transaction-completed");
+        } else {
+            title = null;
+        }
+    }
+    return title;
+};
+
+export function getTransactionStatusForLogs (status: TransactionStatus): string {
+    switch (status) {
+        case TransactionStatus.TransactionStart:
+            return 'Collecting transaction data';
+        case TransactionStatus.InitTransaction:
+            return 'Init transaction';
+        case TransactionStatus.TransactionStartFailure:
+            return 'Cannot start transaction';
+        case TransactionStatus.InitTransactionSuccess:
+            return 'Transaction successfully initialized';
+        case TransactionStatus.SignTransaction:
+            return 'Waiting for confirmation';
+        case TransactionStatus.SendTransaction:
+            return 'Sending transaction';
+        case TransactionStatus.ConfirmTransaction:
+            return 'Confirming transaction';
+        case TransactionStatus.InitTransactionFailure:
+            return 'Could not init transaction';
+        case TransactionStatus.SignTransactionFailure:
+            return 'Transaction rejected';
+        case TransactionStatus.SignTransactionSuccess:
+            return 'Transaction signed by the wallet';
+        case TransactionStatus.SendTransactionFailure:
+            return 'Failure submitting transaction';
+        case TransactionStatus.SendTransactionSuccess:
+            return 'Transaction sent successfully';
+        case TransactionStatus.ConfirmTransactionFailure:
+            return 'The transaction could not be confirmed';
+        case TransactionStatus.TransactionFinished:
+            return 'Operation completed. Transaction sent and confirmed!';
+        default:
+            return ''; // 'Idle';
+    }
+}
+
 export const copyText = (val: any): boolean => {
     if (!val) { return false; }
     const selBox = document.createElement('textarea');
@@ -51,7 +128,7 @@ export const copyText = (val: any): boolean => {
         document.body.removeChild(selBox);
         return true;
     } else {
-        console.log('copyContainerInputElement could not be ', 'created/found', 'blue');
+        consoleOut('copyContainerInputElement could not be ', 'created/found', 'blue');
     }
     return false;
 }
@@ -113,8 +190,8 @@ export const getAmountWithTokenSymbol = (
     token: TokenInfo,
     decimals = 2
 ): string => {
-    if (!amount || !token) { return '--'; }
-    const converted = amount.toString();
+    if (!token) { return '--'; }
+    const converted = amount ? amount.toString() : '0';
     const parsed = parseFloat(converted);
     return `${formatAmount(parsed, decimals)} ${token.symbol}`;
 }
@@ -187,7 +264,7 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
         case TransactionStatus.TransactionFinished:
             return trans ? trans('transactions.status.tx-completed') : 'Operation completed';
         default:
-            return trans ? trans('transactions.status.tx-idle') : 'Idle';
+            return ''; // trans ? trans('transactions.status.tx-idle') : 'Idle';
     }
 }
 
@@ -254,14 +331,19 @@ export const getFairPercentForInterval = (frequency: PaymentRateType): number =>
     return value / 100;
 }
 
-export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Get a percentual value that partialValue represents in total
 export const percentual = (partialValue: number, total: number): number => {
     return (100 * partialValue) / total;
 }
 
-// Get the given percent of total
+/**
+ * Get the given percent of total
+ * @param {number} percent - The percentual value to obtain from the total amount
+ * @param {number} total - The total amount to calculate a given percent of
+ * @returns {number} - The resulting fraction of the total
+ */
 export const percentage = (percent: number, total: number): number => {
     return percent * total / 100;
 }
@@ -303,8 +385,17 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
 export const getFormattedNumberToLocale = (value: any) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9 }).format(converted);
+    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9, minimumSignificantDigits: 3, minimumFractionDigits: 2 }).format(converted);
     return formatted || '';
+}
+
+export const getOrdinalDay = (date: Date): string => {
+    const dayOfMonth = date.getDate();
+    return moment.localeData().ordinal(dayOfMonth);
+}
+
+export const getDayOfWeek = (date: Date, locale = 'en-US'): string => {
+    return date.toLocaleDateString(locale, { weekday: 'long' });
 }
 
 export function disabledDate(current: any) {
@@ -319,6 +410,36 @@ export const isToday = (someDate: string): boolean => {
     return inputDate.getDate() === today.getDate() &&
       inputDate.getMonth() === today.getMonth() &&
       inputDate.getFullYear() === today.getFullYear()
+}
+
+export function displayTimestamp(
+    unixTimestamp: number,
+    shortTimeZoneName = false
+): string {
+    const expireDate = new Date(unixTimestamp);
+    const dateString = new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(expireDate);
+    const timeString = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hourCycle: "h23",
+      timeZoneName: shortTimeZoneName ? "short" : "long",
+    }).format(expireDate);
+
+    return `${dateString} at ${timeString}`;
+}
+
+export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    let inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees && fees.mspPercentFee) {
+        fee = percentage(fees.mspPercentFee, inputAmount);
+    }
+    return fee;
 }
 
 export const getTxFeeAmount = (fees: TransactionFees, amount?: any): number => {

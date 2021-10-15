@@ -1,5 +1,7 @@
 import { Language } from "../models/languages";
 
+export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
+export const TRANSACTIONS_PER_PAGE = 15;
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
@@ -9,6 +11,8 @@ export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';
 export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
 export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
+export const GOOGLE_ANALYTICS_PROD_TAG_ID = 'G-5Q840FEC0G';
+export const SOLANA_WALLET_GUIDE = 'https://docs.solana.com/wallet-guide';
 export const SOLANA_EXPLORER_URI_INSPECT_ADDRESS = 'https://explorer.solana.com/address/';
 export const SOLANA_EXPLORER_URI_INSPECT_TRANSACTION = 'https://explorer.solana.com/tx/';
 export const MEAN_FINANCE_WEBSITE_URL = 'https://meanfi.com';
@@ -18,29 +22,47 @@ export const MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL = 'https://forms.gle/buhxAR4
 export const MEAN_FINANCE_DISCORD_URL = 'https://discord.gg/qBKDgm49js';
 export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
 export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
-export const HELP_URI_WALLET_GUIDE = '/tutorials/wallet-guide';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
+export const FALLBACK_COIN_IMAGE = 'assets/coin-error.svg';
+
+const meanFiHeaders = new Headers();
+meanFiHeaders.append('X-Api-Version', '1.0');
+export const requestOptions: RequestInit = {
+  headers: meanFiHeaders
+}
 
 export const LANGUAGES: Language[] = [
     {
         code: 'en',
         name: 'English',
-        flag: 'assets/flags/us.svg'
+        flag: 'assets/flags/us.svg',
+        locale: 'en-US'
     },
     {
         code: 'es',
         name: 'Español',
-        flag: 'assets/flags/es.svg'
+        flag: 'assets/flags/es.svg',
+        locale: 'es-ES'
     },
     {
         code: 'fr',
         name: 'Français',
-        flag: 'assets/flags/fr.svg'
+        flag: 'assets/flags/fr.svg',
+        locale: 'fr-FR'
     },
     {
         code: 'pt',
         name: 'Português',
-        flag: 'assets/flags/br.svg'
+        flag: 'assets/flags/br.svg',
+        locale: 'pt-BR'
     },
+];
+
+export const EXCEPTION_LIST = [
+    '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
+    '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
+    'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
+    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
+    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw'  // MT
 ];

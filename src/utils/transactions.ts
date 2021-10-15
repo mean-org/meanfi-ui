@@ -12,7 +12,6 @@ export async function getTransactions(
     address: PublicKey
 ): Promise<Array<TransactionWithSignature>> {
     const transSignatures = await connection.getConfirmedSignaturesForAddress2(address);
-    console.log('transSignatures:', transSignatures);
 
     const transactions = new Array<TransactionWithSignature>();
     for (let i = 0; i < transSignatures.length; i++) {
