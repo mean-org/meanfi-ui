@@ -354,12 +354,12 @@ export const Streams = () => {
     return item.beneficiaryAddress === publicKey?.toBase58();
   }, [publicKey]);
 
-  const isAuthority = (): boolean => {
-    return streamDetail && wallet && wallet.publicKey &&
-           (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
-            streamDetail?.beneficiaryAddress === wallet.publicKey.toBase58())
-           ? true : false;
-  }
+  // const isAuthority = (): boolean => {
+  //   return streamDetail && wallet && wallet.publicKey &&
+  //          (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
+  //           streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
+  //          ? true : false;
+  // }
 
   const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
@@ -1561,7 +1561,7 @@ export const Streams = () => {
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={showCloseStreamModal} disabled={!isAuthority()}>
+      <Menu.Item key="1" onClick={showCloseStreamModal}>
         <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
       </Menu.Item>
     </Menu>
