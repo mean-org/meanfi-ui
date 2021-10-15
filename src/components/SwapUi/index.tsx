@@ -2361,14 +2361,10 @@ export const SwapUi = (props: {
             isVisible={isDdcaSetupModalVisible}
             handleClose={onCloseDdcaSetup}
             handleOk={onDdcaTransactionStart}
-            fromToken={mintList['AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU']}
-            fromTokenBalance={14.64}
-            fromTokenAmount={1}
-            toToken={mintList['So11111111111111111111111111111111111111112']}
-            // fromToken={fromMint && mintList[fromMint]}
-            // fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
-            // fromTokenAmount={parseFloat(fromAmount) || 0}
-            // toToken={toMint && mintList[toMint]}
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+            fromTokenAmount={parseFloat(fromAmount) || 0}
+            toToken={toMint && mintList[toMint]}
           />
         )}
 
