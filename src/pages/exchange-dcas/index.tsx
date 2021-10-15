@@ -5,11 +5,9 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { DcaAccount } from '../../models/ddca-models';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from '../../contexts/connection';
 import { consoleOut, copyText } from '../../utils/ui';
-import { getRecurringBuys } from '../../utils/api';
 import { StreamActivity } from '@mean-dao/money-streaming';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Spin } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
@@ -21,6 +19,7 @@ import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPEC
 import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
 import { ArrowUpOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
+import { DdcaClient, DdcaAccount } from '@mean-dao/ddca';
 
 export const ExchangeDcasView = () => {
   const {
@@ -28,18 +27,18 @@ export const ExchangeDcasView = () => {
     setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-  const { connected, publicKey } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const connection = useConnection();
   const connectionConfig = useConnectionConfig();
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  // const [recurringBuys, setRecurringBuys] = useState<DcaAccount[] | undefined>();
-  const [recurringBuys, setRecurringBuys] = useState<DcaAccount[] | undefined>();
-  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DcaAccount | undefined>();
+  const [recurringBuys, setRecurringBuys] = useState<DdcaAccount[] | undefined>();
+  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DdcaAccount | undefined>();
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activity, setActivity] = useState<StreamActivity[]>([]);
 
+  // Gets the recurring buys on demmand
   const reloadRecurringBuys = useCallback(() => {
     if (!publicKey) {
       return [];
@@ -48,10 +47,12 @@ export const ExchangeDcasView = () => {
     if (!loadingRecurringBuys) {
       setLoadingRecurringBuys(true);
 
-      getRecurringBuys()
+      const ddcaClient = new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment });
+
+      ddcaClient.ListDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
-          let item: DcaAccount | undefined;
+          let item: DdcaAccount | undefined;
           if (dcas.length) {
             item = JSON.parse(JSON.stringify(dcas[0]));
             consoleOut('selectedBuy:', item, 'blue');
@@ -68,8 +69,11 @@ export const ExchangeDcasView = () => {
         }).finally(() => setLoadingRecurringBuys(false));
     }
   }, [
+    wallet,
     publicKey,
     loadingRecurringBuys,
+    connection.commitment,
+    connectionConfig.endpoint,
   ]);
 
   // Load recurring buys once if the list is empty
@@ -153,16 +157,16 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getRecurringBuyTitle = (item: DcaAccount) => {
+  const getRecurringBuyTitle = (item: DdcaAccount) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
-    return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.fromAmountPerSwap, item.fromMint)} worth of ${toToken?.symbol}`;
+    return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)} worth of ${toToken?.symbol}`;
   }
 
-  const getRecurringBuySubTitle = (item: DcaAccount) => {
+  const getRecurringBuySubTitle = (item: DdcaAccount) => {
     return `Last purchased ${getShortDate(item.startUtc as string)}`;
   }
 
-  const getRecurrencePeriod = (item: DcaAccount | undefined): string => {
+  const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
     if (!item) { return ''; }
     switch (item.intervalInSeconds) {
       case 86400:
@@ -178,7 +182,7 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  const getBuyIconPair = (item: DcaAccount) => {
+  const getBuyIconPair = (item: DdcaAccount) => {
     const fromToken = MEAN_TOKEN_LIST.find(t => t.address === item.fromMint);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return (
@@ -247,13 +251,13 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getDetailsPanelTitle = (item: DcaAccount) => {
+  const getDetailsPanelTitle = (item: DdcaAccount) => {
     const recurrencePeriod = getRecurrencePeriod(item);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
 
     return (
       <span>Buying <strong>{getTokenAmountAndSymbolByTokenAddress(
-          item.fromAmountPerSwap,
+          item.amountPerSwap,
           item.fromMint)}</strong> worth of <strong>{toToken?.symbol}</strong> every <span className="text-lowercase">{recurrencePeriod}</span>
       </span>
     );

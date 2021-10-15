@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { DcaAccount } from "../models/ddca-models";
 
 export function useCoinPrices() {
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -42,9 +41,10 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
   }
 };
 
-export const getRecurringBuys = async (): Promise<DcaAccount[]> => {
+/*
+export const getRecurringBuys = async (): Promise<DdcaAccount[]> => {
   return new Promise((resolve, reject) => {
-    const data: DcaAccount[] = [
+    const data: DdcaAccount[] = [
       {
         id: 'FyicoDDWUijAapwtShCp4S11GixiNDKjn9PJNinhRhjp',
         fromMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
@@ -71,3 +71,4 @@ export const getRecurringBuys = async (): Promise<DcaAccount[]> => {
     resolve(data);
   });
 };
+*/

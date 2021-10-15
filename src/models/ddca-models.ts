@@ -18,15 +18,3 @@ export class DdcaFrequencyOption {
         this.disabled = true;
     }
 }
-
-export interface DcaAccount {
-    id: string;
-    fromMint: string;
-    totalDepositsAmount: number;
-    fromAmountPerSwap: number;
-    toMint: string;
-    intervalInSeconds: number;
-    startUtc: string;
-    lastCompletedUtc: string;
-    isPaused: boolean;
-}

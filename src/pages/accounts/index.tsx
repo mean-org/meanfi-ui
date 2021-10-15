@@ -14,7 +14,7 @@ import { fetchAccountTokens, getAmountFromLamports, getFormattedRateAmount, getT
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT } from '../../constants';
+import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
@@ -565,13 +565,17 @@ export const AccountsView = () => {
         }
         const onTokenAccountClick = () => selectAsset(asset, true);
         const tokenPrice = getPricePerToken(asset);
+        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          event.currentTarget.src = FALLBACK_COIN_IMAGE;
+          event.currentTarget.className = "error";
+        };
         return (
           <div key={`${index + 50}`} onClick={onTokenAccountClick}
                className={selectedAsset && selectedAsset.symbol === asset.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>
             <div className="icon-cell">
               <div className="token-icon">
                 {asset.logoURI ? (
-                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} />
+                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
                 ) : (
                   <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
                 )}
@@ -580,23 +584,23 @@ export const AccountsView = () => {
             <div className="description-cell">
               <div className="title">
                 {asset.symbol}
-                {tokenPrice && (
+                {tokenPrice > 0 ? (
                   <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    ~${getFormattedRateAmount(tokenPrice)}
+                    ${getFormattedRateAmount(tokenPrice)}
                   </span>
-                )}
+                ) : (null)}
               </div>
               <div className="subtitle text-truncate">{asset.name}</div>
             </div>
             <div className="rate-cell">
               <div className="rate-amount">
-                {getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true)}
+                {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
               </div>
-              {(tokenPrice && (asset.balance || 0) > 0) && (
+              {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
                 <div className="interval">
-                  ~${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+                  ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
                 </div>
-              )}
+              ) : (null)}
             </div>
           </div>
         );

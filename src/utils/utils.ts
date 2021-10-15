@@ -1,20 +1,17 @@
-import BN from 'bn.js';
 import { useCallback, useState } from "react";
-import { AccountInfo, AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SimulatedTransactionResponse, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
-import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
+import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
+import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { consoleOut, getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
-import { Swap } from '@project-serum/swap';
-import { NATIVE_SOL, TOKENS } from './tokens';
+import { NATIVE_SOL } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
-
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -323,7 +320,6 @@ export async function sendTransaction(
 export async function sendSignedTransaction(
   connection: Connection, 
   signedTransaction: Transaction
-
 ): Promise<string> {
 
   const rawTransaction = signedTransaction.serialize()

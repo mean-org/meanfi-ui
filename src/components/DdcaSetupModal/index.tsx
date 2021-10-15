@@ -11,6 +11,9 @@ import "./style.less";
 import { SliderMarks } from 'antd/lib/slider';
 import { IconShield } from '../../Icons';
 import { InfoIcon } from '../InfoIcon';
+import { PublicKey } from '@solana/web3.js';
+import { useWallet } from '../../contexts/wallet';
+import { EXCEPTION_LIST } from '../../constants';
 
 export const DdcaSetupModal = (props: {
   fromToken: TokenInfo | undefined;
@@ -22,6 +25,7 @@ export const DdcaSetupModal = (props: {
   isVisible: boolean;
 }) => {
   const { t } = useTranslation("common");
+  const { publicKey } = useWallet();
   const { ddcaOption, setDdcaOption } = useContext(AppStateContext);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
@@ -30,8 +34,31 @@ export const DdcaSetupModal = (props: {
   const [marks, setMarks] = useState<SliderMarks>();
   const [isOperationValid, setIsOperationValid] = useState(false);
 
+  const getInterval = (): number => {
+    switch (ddcaOption?.dcaInterval) {
+      case DcaInterval.RepeatingDaily:
+        return 86400;
+      case DcaInterval.RepeatingWeekly:
+        return 604800;
+      case DcaInterval.RepeatingTwiceMonth:
+        return 1209600;
+      case DcaInterval.RepeatingOnceMonth:
+        return 2592000;
+      default:
+        return 0;
+    }
+  }
+
   const onAcceptModal = () => {
-    props.handleOk();
+    const payload = {
+      ownerAccountAddress: publicKey,
+      depositAmount: props.fromTokenAmount * recurrencePeriod,
+      amountPerSwap: props.fromTokenAmount,
+      fromMint: new PublicKey(props.fromToken?.address as string),
+      toMint: new PublicKey(props.toToken?.address as string),
+      intervalinSeconds: getInterval(),
+    }
+    props.handleOk(payload);
   }
 
   const getRecurrencePeriod = (): string => {
@@ -171,16 +198,10 @@ export const DdcaSetupModal = (props: {
     getTotalPeriod
   ]);
 
-  /**
-   * si el balance es menos que el needed for the min time of 3 weeks
-   * the CTA disabled reading "Not enough balance" (min needed > balance)
-   * a red validation label reading: "You need a min of 0.62125859 SOL to start this repeating buy"
-   * 
-   * Important Notes
-   * Only you can withdraw funds from your DCA Vault
-   * Fees for the scheduled swaps are charged upfront
-   * All unused fees are returned to you upon withdrawal
-  */
+  const isUserAllowed = (): boolean => {
+    if (!publicKey) { return true; }
+    return EXCEPTION_LIST.some(a => a === publicKey.toBase58());
+  }
 
   // Info items will draw inside the popover
   const importantNotesPopoverContent = () => {
@@ -276,13 +297,16 @@ export const DdcaSetupModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        // disabled={!isOperationValid}
-        disabled={true}
+        disabled={!isUserAllowed()}
+        // disabled={true}
         onClick={onAcceptModal}>
-          {isOperationValid
-            // ? t('ddca-setup-modal.cta-label')
-            ? 'Repeating buy temporarily unavailable'
-            : t('transactions.validation.amount-low')}
+          {
+            !isOperationValid
+              ? t('transactions.validation.amount-low')
+              : isUserAllowed()
+                ? t('ddca-setup-modal.cta-label')
+                : 'Repeating buy temporarily unavailable'
+          }
       </Button>
     </Modal>
   );

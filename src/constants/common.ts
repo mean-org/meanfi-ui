@@ -24,6 +24,7 @@ export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
 export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
+export const FALLBACK_COIN_IMAGE = 'assets/coin-error.svg';
 
 const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
@@ -56,4 +57,12 @@ export const LANGUAGES: Language[] = [
         flag: 'assets/flags/br.svg',
         locale: 'pt-BR'
     },
+];
+
+export const EXCEPTION_LIST = [
+    '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
+    '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
+    'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
+    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
+    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw'  // MT
 ];

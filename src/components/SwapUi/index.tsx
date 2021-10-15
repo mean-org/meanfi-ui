@@ -3,16 +3,16 @@ import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, useLocalStorageState } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, sendSignedTransaction, useLocalStorageState } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, delay, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountMeta, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
@@ -33,16 +33,19 @@ import { environment } from "../../environments/environment";
 import { customLogger } from "../..";
 import { DcaInterval } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
-import { getLiveRpc, RpcConfig } from "../../models/connections-hq";
+import { DdcaClient } from '@mean-dao/ddca';
+import { useConnectionConfig } from "../../contexts/connection";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const SwapUi = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
+  connection: Connection;
 }) => {
 
   const { t } = useTranslation("common");
+  const connectionConfig = useConnectionConfig();
   const { publicKey, wallet, connected } = useWallet();
   const {
     coinPrices,
@@ -54,27 +57,7 @@ export const SwapUi = (props: {
 
   } = useContext(AppStateContext);
 
-  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
-  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
-  const cachedRpc = (cachedRpcJson as RpcConfig);
-
-  useEffect(() => {
-    (async () => {
-      if (cachedRpc.networkId !== 101) {
-        const mainnetRpc = await getLiveRpc(101);
-        if (!mainnetRpc) {
-          window.location.href = '/';
-        }
-        setMainnetRpc(mainnetRpc);
-      } else {
-        setMainnetRpc(null);
-      }
-    })();
-    return () => { }
-  }, [cachedRpc.networkId]);
-
-  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
-    [cachedRpc.httpProvider, mainnetRpc]);
+  const connection = useMemo(() => props.connection, [props.connection]);
 
   // Added by YAF (Token balance)
   const [refreshing, setRefreshing] = useState(false);
@@ -87,14 +70,18 @@ export const SwapUi = (props: {
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [isValidBalance, setIsValidBalance] = useState(false);
   const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
-  // Transaction execution modal
-  const showTransactionModal = useCallback(() => setTransactionModalVisibility(true), []);
-  const hideTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
+  // SWAP Transaction execution modal
+  const showSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(true), []);
+  const hideSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(false), []);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionLog, setTransactionLog] = useState<Array<any>>([]);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isTransactionModalVisible, setTransactionModalVisibility] = useState(false);
+  const [isSwapTransactionModalVisible, setSwapTransactionModalVisibility] = useState(false);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
+  // DDCA Transaction execution modal
+  const showDdcaTransactionModal = useCallback(() => setDdcaTransactionModalVisibility(true), []);
+  const hideDdcaTransactionModal = useCallback(() => setDdcaTransactionModalVisibility(false), []);
+  const [isDdcaTransactionModalVisible, setDdcaTransactionModalVisibility] = useState(false);
   // FEES
   const [txFees, setTxFees] = useState<TransactionFees>();
   // AGGREGATOR
@@ -1286,14 +1273,16 @@ export const SwapUi = (props: {
       setFromAmount("");
       setFromSwapAmount(0);
       updateRenderCount();
-      hideTransactionModal();
+      hideSwapTransactionModal();
+      hideDdcaTransactionModal();
     }
     
   }, [
     isBusy, 
     isSuccess, 
     updateRenderCount, 
-    hideTransactionModal
+    hideSwapTransactionModal,
+    hideDdcaTransactionModal
   ]);
 
   const createTx = useCallback(async () => {
@@ -1528,7 +1517,7 @@ export const SwapUi = (props: {
       setTransactionCancelled(false);
       setRefreshTime(30);
       setIsBusy(true);
-      showTransactionModal();
+      showSwapTransactionModal();
 
       const swapTxs = await createTx();
       consoleOut("initialized:", swapTxs);
@@ -1575,11 +1564,391 @@ export const SwapUi = (props: {
     confirmTx, 
     createTx, 
     sendTx, 
-    showTransactionModal, 
+    showSwapTransactionModal, 
     signTx,
     updateRenderCount,
     transactionCancelled
   ]);
+
+  // YAF - DDCA Transaction
+  const onDdcaTransactionStart = async (payload: any) => {
+    let transaction: Transaction;
+    let transaction2: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let ddcaAccountPda: PublicKey;
+    const transactionLog: any[] = [];
+
+    const saberAmmAddress = new PublicKey("VeNkoB1HvSP6bSeGybQDnx9wTWFsQb2NBCemeCDSuKL");
+    const saberPoolTokenAddress = new PublicKey("YakofBo4X3zMxa823THQJwZ8QeoU8pxPdFdxJs7JW57");
+    const sabarUsdcReservesAddress = new PublicKey("6aFutFMWR7PbWdBQhdfrcKrAor9WYa2twtSinTMb9tXv");
+    const saberUsdtReservesAddress = new PublicKey("HXbhpnLTxSDDkTg6deDpsXzJRBf8j7T6Dc3GidwrLWeo");
+    const saberProtocolProgramAddress = new PublicKey("SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ");
+    const hlaAmmAccounts: Array<AccountMeta> = [
+      { pubkey: saberProtocolProgramAddress, isWritable: false, isSigner: false},
+      { pubkey: saberAmmAddress, isWritable: false, isSigner: false},
+      { pubkey: saberPoolTokenAddress, isWritable: false, isSigner: false},
+      { pubkey: sabarUsdcReservesAddress, isWritable: true, isSigner: false},
+      { pubkey: saberUsdtReservesAddress, isWritable: true, isSigner: false},
+    ];
+
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const ddcaClient = new DdcaClient(connectionConfig.endpoint, wallet, { commitment: "confirmed" })
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        consoleOut('ddca params:', payload, 'brown');
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Create a transaction
+        return await ddcaClient.createDdcaTx(
+          payload.ownerAccountAddress,
+          payload.fromMint,
+          payload.toMint,
+          payload.depositAmount,
+          payload.amountPerSwap,
+          payload.intervalinSeconds)
+        .then((value: [PublicKey, Transaction]) => {
+          consoleOut('createDdca returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
+          });
+          ddcaAccountPda = value[0];
+          transaction = value[1];
+          return true;
+        })
+        .catch(error => {
+          console.error('createDdca error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.SignTransactionFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .then(sig => {
+            consoleOut('sendSignedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+
+      return await connection
+        .confirmTransaction(signature, "confirmed")
+        .then(result => {
+          consoleOut('confirmTransaction result:', result);
+          if (result && result.value && !result.value.err) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransactionSuccess
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionSuccess),
+              result: result.value
+            });
+            return true;
+          } else {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+            return false;
+          }
+        })
+        .catch(e => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+          return false;
+        });
+    }
+
+    // Create second Tx
+    const createSwapTx = async (): Promise<boolean> => {
+      if (wallet) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const swapPayload = {
+          ddcaAccountPda: ddcaAccountPda,
+          fromMint: payload.fromMint,
+          toMint: payload.toMint,
+          hlaAmmAccounts: hlaAmmAccounts,
+          swapMinimumOutAmount: payload.swapMinimumOutAmount,
+          swapSlippage: slippage
+        };
+
+        consoleOut('ddca swap params:', swapPayload, 'brown');
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: swapPayload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Create a transaction
+        return await ddcaClient.createWakeAndSwapTx(
+          ddcaAccountPda,
+          payload.fromMint,
+          payload.toMint,
+          hlaAmmAccounts,
+          payload.swapMinimumOutAmount,
+          slippage)
+        .then(value => {
+          consoleOut('createDdca returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
+          });
+          transaction2 = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createDdca error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendSwapTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await sendSignedTransaction(connection, transaction2)
+          .then(sig => {
+            consoleOut('sendTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.SendTransactionFailure
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      showDdcaTransactionModal();
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            consoleOut('confirmed:', confirmed);
+            if (confirmed) {
+              const createSwap = await createSwapTx();
+              if (createSwap && !transactionCancelled) {
+                const sent = await sendSwapTx();
+                consoleOut('sent:', sent);
+                if (sent && !transactionCancelled) {
+                  const confirmed = await confirmTx();
+                  consoleOut('confirmed:', confirmed);
+                  if (confirmed) {
+                    setIsBusy(false);
+                  }
+                } else { setIsBusy(false); }
+              } else { setIsBusy(false); }
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
     return (
@@ -1949,7 +2318,8 @@ export const SwapUi = (props: {
               onTransactionStart();
             }
           }}
-          disabled={!isValidBalance || !isValidSwapAmount}>
+          // disabled={!isValidBalance || !isValidSwapAmount}
+          >
           {transactionStartButtonLabel}
         </Button>
 
@@ -1990,21 +2360,25 @@ export const SwapUi = (props: {
           <DdcaSetupModal
             isVisible={isDdcaSetupModalVisible}
             handleClose={onCloseDdcaSetup}
-            handleOk={onTransactionStart}
-            fromToken={fromMint && mintList[fromMint]}
-            fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
-            fromTokenAmount={parseFloat(fromAmount) || 0}
-            toToken={toMint && mintList[toMint]}
+            handleOk={onDdcaTransactionStart}
+            fromToken={mintList['AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU']}
+            fromTokenBalance={14.64}
+            fromTokenAmount={1}
+            toToken={mintList['So11111111111111111111111111111111111111112']}
+            // fromToken={fromMint && mintList[fromMint]}
+            // fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+            // fromTokenAmount={parseFloat(fromAmount) || 0}
+            // toToken={toMint && mintList[toMint]}
           />
         )}
 
-        {/* Transaction execution modal */}
+        {/* SWAP Transaction execution modal */}
         <Modal
           className="mean-modal"
           maskClosable={false}
-          visible={isTransactionModalVisible}
+          visible={isSwapTransactionModalVisible}
           title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-          onCancel={hideTransactionModal}
+          onCancel={hideSwapTransactionModal}
           afterClose={onAfterTransactionModalClosed}
           width={330}
           footer={null}
@@ -2046,7 +2420,7 @@ export const SwapUi = (props: {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={hideTransactionModal}>
+                  onClick={hideSwapTransactionModal}>
                   {t("general.cta-close")}
                 </Button>
               </>
@@ -2081,7 +2455,107 @@ export const SwapUi = (props: {
                   type="primary"
                   shape="round"
                   size="middle"
-                  onClick={hideTransactionModal}>
+                  onClick={hideSwapTransactionModal}>
+                  {t("general.cta-close")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Spin indicator={bigLoadingIcon} className="icon" />
+                <h4 className="font-bold mb-4 text-uppercase">
+                  {t("transactions.status.tx-wait")}...
+                </h4>
+              </>
+            )}
+          </div>
+        </Modal>
+
+        {/* DDCA Transaction execution modal */}
+        <Modal
+          className="mean-modal"
+          maskClosable={false}
+          visible={isDdcaTransactionModalVisible}
+          title={getTransactionModalTitle(transactionStatus, isBusy, t)}
+          onCancel={hideDdcaTransactionModal}
+          afterClose={onAfterTransactionModalClosed}
+          width={330}
+          footer={null}
+        >
+          <div className="transaction-progress">
+            {isBusy ? (
+              <>
+                <Spin indicator={bigLoadingIcon} className="icon" />
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(transactionStatus, t)}
+                </h4>
+                {/* TODO: Show stuff related to the DDCA operation to be started/scheduled */}
+                <p className="operation">
+                  {
+                    fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut &&
+                    t("transactions.status.tx-swap-operation", {
+                      fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
+                      toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
+                    })
+                  }
+                </p>
+                <div className="indication">
+                  {t("transactions.status.instructions")}
+                </div>
+              </>
+            ) : isSuccess() ? (
+              <>
+                <CheckOutlined
+                  style={{ fontSize: 48 }}
+                  className="icon"
+                />
+                <h4 className="font-bold mb-1 text-uppercase">
+                  {getTransactionOperationDescription(transactionStatus, t)}
+                </h4>
+                {/* TODO: Set the right completion plus resume message */}
+                <p className="operation">
+                  {t("transactions.status.tx-swap-operation-success")}.
+                </p>
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideDdcaTransactionModal}>
+                  {t("general.cta-close")}
+                </Button>
+              </>
+            ) : isError() ? (
+              <>
+                <WarningOutlined
+                  style={{ fontSize: 48 }}
+                  className="icon"
+                />
+                {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <h4 className="mb-4">
+                    {t("transactions.status.tx-start-failure", {
+                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                        parseFloat(fromBalance),
+                        WRAPPED_SOL_MINT.toBase58(),
+                        true
+                      )} SOL`,
+                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                        getComputedFees(txFees),
+                        WRAPPED_SOL_MINT.toBase58(),
+                        true
+                      )} SOL`
+                    })}
+                  </h4>
+                ) : (
+                  <h4 className="font-bold mb-1 text-uppercase">
+                    { getTransactionOperationDescription(transactionStatus, t) }
+                  </h4>
+                )}
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideDdcaTransactionModal}>
                   {t("general.cta-close")}
                 </Button>
               </>

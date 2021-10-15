@@ -331,7 +331,7 @@ export const getFairPercentForInterval = (frequency: PaymentRateType): number =>
     return value / 100;
 }
 
-export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Get a percentual value that partialValue represents in total
 export const percentual = (partialValue: number, total: number): number => {
@@ -385,7 +385,7 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
 export const getFormattedNumberToLocale = (value: any) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9 }).format(converted);
+    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9, minimumSignificantDigits: 3, minimumFractionDigits: 2 }).format(converted);
     return formatted || '';
 }
 
