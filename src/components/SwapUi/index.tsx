@@ -839,6 +839,18 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      if (toMint === WRAPPED_SOL_MINT.toBase58()) {
+
+        const solList: any[] = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol === 'SOL');
+
+        setShowFromMintList(solList);
+        setFromMint(NATIVE_SOL_MINT.toBase58());
+
+        return;
+      }
+
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
@@ -1273,13 +1285,15 @@ export const SwapUi = (props: {
     if (isSuccess()) {
       setFromAmount("");
       setFromSwapAmount(0);
+      updateRenderCount();
       hideTransactionModal();
     }
     
   }, [
     isBusy, 
-    hideTransactionModal,
-    isSuccess
+    isSuccess, 
+    updateRenderCount, 
+    hideTransactionModal
   ]);
 
   const createTx = useCallback(async () => {
@@ -1554,7 +1568,7 @@ export const SwapUi = (props: {
 
     } catch (_error) {
       console.error(_error);
-      throw(_error);
+      setIsBusy(false);
     }
 
   }, [

@@ -27,7 +27,9 @@ export const placeOrderTx = async (
     
   const tx = new Transaction();
   const signers: Signer[] = [];
-  const swapAmount = fromAmount.sub(fee).toNumber() / 10 ** 6;
+  const fromMintAccount = getTokenByMintAddress(fromCoinMint.toBase58());
+  const toMintAccount = getTokenByMintAddress(toCoinMint.toBase58());
+  const swapAmount = fromAmount.toNumber() / 10 ** (fromMintAccount?.decimals || 9);
 
   const forecastConfig = getOutAmount(
     market,
@@ -69,6 +71,17 @@ export const placeOrderTx = async (
     signers.push(openOrderNewAccount);
   }
 
+  let fromMint = fromCoinMint;
+  let toMint = toCoinMint;
+
+  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
+    fromMint = WRAPPED_SOL_MINT;
+  }
+
+  if (toCoinMint.equals(NATIVE_SOL_MINT)) {
+    toMint = WRAPPED_SOL_MINT;
+  }
+
   let wrappedSolAccount: PublicKey | null = null;
 
   if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
@@ -78,7 +91,7 @@ export const placeOrderTx = async (
 
       lamports =
         forecastConfig.worstPrice *
-        parseFloat(forecastConfig.amountOut.toFixed(6)) *
+        forecastConfig.amountOut *
         1.01 *
         LAMPORTS_PER_SOL;
 
@@ -88,7 +101,7 @@ export const placeOrderTx = async (
 
     } else {
         
-      lamports = parseFloat(forecastConfig.maxInAllow.toFixed(6)) * LAMPORTS_PER_SOL;
+      lamports = forecastConfig.maxInAllow * LAMPORTS_PER_SOL;
 
       if (openOrdersAccounts.length > 0) {
         lamports -= openOrdersAccounts[0].baseTokenFree.toNumber();
@@ -108,12 +121,15 @@ export const placeOrderTx = async (
     );
   }
 
+  console.log('forecastConfig', forecastConfig);
+
   const sizeAmount =
-    forecastConfig.side === "buy"
+    forecastConfig.side === 'buy'
       ? parseFloat(forecastConfig.amountOut.toFixed(6))
-      : forecastConfig.maxInAllow
-      ? parseFloat(forecastConfig.maxInAllow.toFixed(6))
-      : parseFloat(swapAmount.toFixed(6));
+      : parseFloat(forecastConfig.maxInAllow.toFixed(6));
+
+  console.log('sizeAmount', sizeAmount);
+  const decimals = forecastConfig.side === "buy" ? (toMintAccount?.decimals || 6) : (fromMintAccount?.decimals || 6);
 
   tx.add(
     market.makePlaceOrderInstruction(connection, {
@@ -121,27 +137,14 @@ export const placeOrderTx = async (
       payer: wrappedSolAccount ?? fromTokenAccount,
       side: forecastConfig.side === "buy" ? "buy" : "sell",
       price: forecastConfig.worstPrice,
-      size: sizeAmount,
+      size: new BN(sizeAmount * 10 ** decimals).toNumber(),
       orderType: "ioc",
       openOrdersAddressKey: openOrdersAddress,
       programId: serumProgramId
     })
   );
 
-  let fromMint = fromCoinMint;
-  let toMint = toCoinMint;
-
-  if (fromCoinMint.equals(NATIVE_SOL_MINT)) {
-    fromMint = WRAPPED_SOL_MINT;
-  }
-
-  if (toCoinMint.equals(NATIVE_SOL_MINT)) {
-    toMint = WRAPPED_SOL_MINT;
-  }
-
-  const fromTokenAccountInfo = await connection.getAccountInfo(
-    fromTokenAccount
-  );
+  const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
 
   if (!fromTokenAccountInfo) {
     tx.add(
@@ -222,7 +225,8 @@ export const placeOrderTx = async (
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     fromMint,
-    feeAccount
+    feeAccount,
+    true
   );
 
   const feeAccountTokenInfo = await connection.getAccountInfo(feeAccountToken);

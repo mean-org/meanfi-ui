@@ -75,13 +75,6 @@ export function ConnectionProvider({ children = undefined as any }) {
     // fetch token files
     (async () => {
       let list: TokenInfo[];
-      // if (environment === 'production') {
-      //   const res = await new TokenListProvider().resolve();
-      //   list = res
-      //     .filterByChainId(chain.networkId)
-      //     .excludeByTag("nft")
-      //     .getList();
-      // }
       list = MEAN_TOKEN_LIST.filter(t => t.chainId === cachedRpc.networkId);
       const knownMints = list.reduce((map, item) => {
         map.set(item.address, item);
