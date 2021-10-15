@@ -102,9 +102,6 @@
 			"name": "Abonnement"
 		}
 	},
-	"ddcas": {
-		"screen-title": "Recurring buys"
-	},
 	"ddca-selector": {
 		"modal-title": "Repeat this trade?",
 		"ote": {
@@ -133,21 +130,24 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"modal-title": "Review Repeating Buy",
 		"cta-label": "Approve",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"how-does-it-work": "How does it work?",
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
-			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault."
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
+			"how-does-it-work": "How does it work?"
 		},
+		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"notes-title": "Important Notes",
 			"note-item-01": "Only you can withdraw funds from your DCA Vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
-			"note-item-03": "All unused fees are returned to you upon withdrawal"
+			"note-item-03": "All unused fees are returned to you upon withdrawal",
+			"notes-title": "Important Notes"
 		}
+	},
+	"ddcas": {
+		"screen-title": "Recurring buys"
 	},
 	"deposits": {
 		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
@@ -165,9 +165,9 @@
 		"transak-cta-label": "Acheter par carte de débit/crédit"
 	},
 	"error-screens": {
-		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again.",
 		"network-status": "Check network status",
-		"report-problem": "Report a problem"
+		"report-problem": "Report a problem",
+		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
 	},
 	"faucet": {
 		"current-sol-balance": "Solde SOL actuel",
@@ -185,10 +185,12 @@
 		"cta-close": "Fermer",
 		"cta-finish": "Terminer",
 		"day": "journée",
+		"days": "",
 		"hour": "heure",
 		"loading": "Chargement",
 		"minute": "minute",
 		"month": "mois",
+		"months": "",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"not-implemented": "Pas mis en œuvre",
 		"reload-cta": "Try again now",
@@ -196,6 +198,7 @@
 		"seconds": "seconds",
 		"today": "aujourd'hui",
 		"week": "la semaine",
+		"weeks": "",
 		"year": "année",
 		"you": "vous"
 	},
@@ -407,6 +410,7 @@
 			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL",
 			"invalid-amount": "Montant invalide",
 			"invalid-exchange": "Échange non valide",
+			"minimum-repeating-buy-amount": "",
 			"minimum-swap-amount": "Il faut au moins {{mintAmount}} pour passer à {{toMint}}.",
 			"no-amount": "Entrer le montant",
 			"no-balance": "Aucun solde",
@@ -435,11 +439,11 @@
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Documents",
+			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "La langue",
 			"switch-theme": "Basculer vers",
 			"theme-dark": "Mode Sombre",
-			"theme-light": "Mode lumière",
-			"refer-a-friend": "Refer a friend {{referrals}}"
+			"theme-light": "Mode lumière"
 		},
 		"main-menu": {
 			"accounts": "Comptes",

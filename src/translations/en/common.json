@@ -90,7 +90,7 @@
 			"name": "Rent Collection"
 		},
 		"repeating": {
-			"description": "Send money to anyone at a fixed flow rate over time. Great for family remmitances, child allowances and more.",
+			"description": "Send money to anyone at a fixed flow rate over time. Great for family remittances, child allowances and more.",
 			"name": "Repeating Payment"
 		},
 		"setup-everything": {
@@ -101,9 +101,6 @@
 			"description": "Setup a SaaS subscription contract for regular membership payments. Think Netflix, or your monthly Gym Club Membership.",
 			"name": "Subscription"
 		}
-	},
-	"ddcas": {
-		"screen-title": "Recurring buys"
 	},
 	"ddca-selector": {
 		"modal-title": "Repeat this trade?",
@@ -133,21 +130,24 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"modal-title": "Review Repeating Buy",
 		"cta-label": "Approve",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"how-does-it-work": "How does it work?",
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
-			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault."
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
+			"how-does-it-work": "How does it work?"
 		},
+		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"notes-title": "Important Notes",
 			"note-item-01": "Only you can withdraw funds from your DCA Vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
-			"note-item-03": "All unused fees are returned to you upon withdrawal"
+			"note-item-03": "All unused fees are returned to you upon withdrawal",
+			"notes-title": "Important Notes"
 		}
+	},
+	"ddcas": {
+		"screen-title": "Recurring buys"
 	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
@@ -165,9 +165,9 @@
 		"transak-cta-label": "Buy with debit/credit card"
 	},
 	"error-screens": {
-		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again.",
 		"network-status": "Check network status",
-		"report-problem": "Report a problem"
+		"report-problem": "Report a problem",
+		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
 	},
 	"faucet": {
 		"current-sol-balance": "Current SOL balance",
@@ -410,8 +410,8 @@
 			"insufficient-balance-needed": "Need at least {{balance}} SOL",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Invalid exchange",
-			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
 			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
+			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",
@@ -439,11 +439,11 @@
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Docs",
+			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
 			"theme-dark": "Dark Mode",
-			"theme-light": "Light Mode",
-			"refer-a-friend": "Refer a friend {{referrals}}"
+			"theme-light": "Light Mode"
 		},
 		"main-menu": {
 			"accounts": "Accounts",
