@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip } from "antd";
 import {
@@ -133,73 +132,71 @@ export const Streams = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
+  const updateLiveStreamData = useCallback(() => {
+
+    if (!streamDetail) { return; }
+
+    if (isStreamScheduled(streamDetail.startUtc as string)) {
+      return;
+    }
+
+    const clonedDetail = Object.assign({}, streamDetail);
+    const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
+    const lastTimeSnap = Math.max(clonedDetail.streamResumedBlockTime, clonedDetail.escrowVestedAmountSnapBlockTime);
+    let escrowVestedAmount = 0.0;
+    let rateAmount = clonedDetail.rateAmount;
+    let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
+    let rate = rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
+    const currentBlockTime = Date.parse(new Date().toUTCString()) / 1000;
+    const elapsedTime = currentBlockTime - lastTimeSnap;
+
+    if (currentBlockTime >= lastTimeSnap) {
+      escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
+      if (escrowVestedAmount > clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
+        escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
+      }
+    }
+
+    let state: STREAM_STATE | undefined;
+    const threeDays = (3 * 24 * 3600);
+    const nowUtc = Date.parse(new Date().toUTCString());
+    const startDate = new Date(clonedDetail.startUtc as string);
+
+    if (startDate.getTime() > nowUtc) {
+        state = STREAM_STATE.Schedule;
+    } else if (escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
+        state = STREAM_STATE.Running;
+    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime < threeDays) {
+        state = STREAM_STATE.Paused;
+    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime >= threeDays) {
+        state = STREAM_STATE.Ended;
+    }
+
+    clonedDetail.escrowVestedAmount = escrowVestedAmount;
+    clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
+    clonedDetail.state = state as STREAM_STATE;
+    setStreamDetail(clonedDetail);
+
+  },[
+    setStreamDetail, 
+    streamDetail
+  ]);
+
   // Live data calculation
   useEffect(() => {
 
-    const updateData = async () => {
-      if (streamDetail && streamDetail.escrowUnvestedAmount) {
+    const timeout = setTimeout(() => {
+      updateLiveStreamData();
 
-        if (isStreamScheduled(streamDetail.startUtc as string)) {
-          return;
-        }
-
-        const clonedDetail = Object.assign({}, streamDetail);
-        const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
-        const lastTimeSnap = isStreaming === 1 ? clonedDetail.streamResumedBlockTime : clonedDetail.escrowVestedAmountSnapBlockTime;
-        let escrowVestedAmount = 0.0;
-        let rateAmount = clonedDetail.rateAmount;
-        let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
-
-        let rate = rateAmount > 0 && rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
-
-        const slot = await connection.getSlot();
-        const currentBlockTime = await connection.getBlockTime(slot) as number;
-        const elapsedTime = currentBlockTime - lastTimeSnap;
-        if (currentBlockTime >= lastTimeSnap) {
-          escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
-          if (escrowVestedAmount >= clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
-            escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
-          }
-        }
-
-        let state: STREAM_STATE | undefined;
-        const threeDays = (3 * 24 * 3600);
-        const nowUtc = Date.parse(new Date().toUTCString());
-        const startDate = new Date(clonedDetail.startUtc as string);
-
-        if (startDate.getTime() > nowUtc) {
-            state = STREAM_STATE.Schedule;
-        } else if (isStreaming && escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
-            state = STREAM_STATE.Running;
-        } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime < threeDays) {
-            state = STREAM_STATE.Paused;
-        } else if (elapsedTime >= threeDays) {
-            state = STREAM_STATE.Ended;
-        }
-
-        clonedDetail.escrowVestedAmount = escrowVestedAmount;
-        clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
-        clonedDetail.state = state as STREAM_STATE;
-        setStreamDetail(clonedDetail);
-      }
-    };
-
-    // Install the timer
-    const updateDateTimer = window.setInterval(() => {
-      updateData();
     }, 1000);
 
-    // Return callback to run on unmount.
     return () => {
-      if (updateDateTimer) {
-        window.clearInterval(updateDateTimer);
-      }
-    };
+      clearTimeout(timeout);
+    }
+
   }, [
-    connection,
-    streamDetail,
-    setStreamDetail
-  ]);
+    updateLiveStreamData
+  ])
 
   // Handle overflow-ellipsis-middle elements of resize
   useEffect(() => {

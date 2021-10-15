@@ -216,7 +216,10 @@ export const AccountsView = () => {
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
     if (!customConnection) {
-      setCustomConnection(new Connection(connection.endpoint, 'confirmed'));
+      setCustomConnection(new Connection(connection.endpoint, {
+        commitment: "confirmed",
+        disableRetryOnRateLimit: true
+      }));
     }
   }, [
     connection.endpoint,

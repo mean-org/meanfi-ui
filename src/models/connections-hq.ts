@@ -75,7 +75,7 @@ export const isRpcLive = async (rpcConfig: RpcConfig): Promise<boolean> => {
     if (!connection) {
       return false;
     }
-    return connection.getRecentBlockhashAndContext()
+    return connection.getRecentBlockhashAndContext("confirmed")
       .then((response: any) => {
         const rpcTestPassed = response && response.value && !response.value.err ? true : false;
         console.log(`Response valid for rpc: ${rpcConfig.httpProvider}`, rpcTestPassed);
