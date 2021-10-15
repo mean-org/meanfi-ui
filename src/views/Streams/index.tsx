@@ -146,7 +146,7 @@ export const Streams = () => {
     let escrowVestedAmount = 0.0;
     let rateAmount = clonedDetail.rateAmount;
     let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
-    let rate = rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 0;
+    let rate = rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 1;
     const currentBlockTime = Date.parse(new Date().toUTCString()) / 1000;
     const elapsedTime = currentBlockTime - lastTimeSnap;
 
