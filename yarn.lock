@@ -1593,18 +1593,18 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.2.0.tgz#9fb2d6f1811316697f7b3cc14607f6c608912419"
   integrity sha512-SLyFyD7ElMhgKWPYedFGCT/ilcbGPgL5hXXYHxOM79Fs5fWi0zaUpt5oGqGMsOAAFaMa9/rbun0pokzPhEFz8A==
 
-"@mean-dao/ddca@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.1.tgz#1667b3ccf58456a296f09ec094c50edafd027e46"
-  integrity sha512-8kCLY8FU2jeo0XV6ws8cIxwcZBYxS8Dfzo4Y1hWsZYmKsZaGN+SsxOIhZSeLUJg5LpVBKtRmD9FdbgEbh19MYA==
+"@mean-dao/ddca@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.2.tgz#99a700cad9ee0abfa6187944e89f788fd43eaaa7"
+  integrity sha512-L11pCO8OvdUEDe+rOpKVVG0xGfcqhnRm8/wRAmOIKLyhkXrm9cBOUUCmF7swplHDb14UW6A9SBElLMXNIQU5rw==
   dependencies:
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/money-streaming@1.4.5":
-  version "1.4.5"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.5.tgz#6b4f1f8884b07462cfe884faf846aea803d8687d"
-  integrity sha512-0uv8cY6XUUeXh23XbQN5T+O30ySS2DmBbkadoV3NnMtbhpq+R/o90yG7o9uoB0O70Xl1JEGaZFfsJk8bH7KdAw==
+"@mean-dao/money-streaming@1.4.6":
+  version "1.4.6"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.6.tgz#e477aa55fbbb918acfc02c4ee40ddc565af06c27"
+  integrity sha512-3KUmHp0O4IggIXp6AOxUmYhukztfgTuj8xrVvhkSndMsldClYg74lJpAB2S0psAb5D3+2NjoX1dGVBYQ6vCZ0A==
   dependencies:
     "@project-serum/anchor" "^0.15.0"
     "@solana/spl-token" "^0.1.7"
