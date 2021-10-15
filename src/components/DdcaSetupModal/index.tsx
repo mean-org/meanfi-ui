@@ -52,7 +52,7 @@ export const DdcaSetupModal = (props: {
   const onAcceptModal = () => {
     const payload = {
       ownerAccountAddress: publicKey,
-      depositAmount: props.fromTokenAmount * recurrencePeriod,
+      depositAmount: props.fromTokenAmount * (recurrencePeriod + 1),
       amountPerSwap: props.fromTokenAmount,
       fromMint: new PublicKey(props.fromToken?.address as string),
       toMint: new PublicKey(props.toToken?.address as string),
@@ -177,7 +177,7 @@ export const DdcaSetupModal = (props: {
       setMarks(marks);
 
       // Set minimum required and valid flag
-      const minimumRequired = props.fromTokenAmount * rangeMin;
+      const minimumRequired = props.fromTokenAmount * (rangeMin + 1);
       const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
       setMinimumRequiredBalance(minimumRequired);
       setIsOperationValid(isOpValid);
@@ -248,7 +248,7 @@ export const DdcaSetupModal = (props: {
             {
               t('ddca-setup-modal.help.help-item-01', {
                 fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  props.fromTokenAmount * recurrencePeriod,
+                  props.fromTokenAmount * (recurrencePeriod + 1),
                   props.fromToken?.address as string)
               })
             }
@@ -297,8 +297,7 @@ export const DdcaSetupModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isUserAllowed()}
-        // disabled={true}
+        disabled={!isOperationValid || !isUserAllowed()}
         onClick={onAcceptModal}>
           {
             !isOperationValid
