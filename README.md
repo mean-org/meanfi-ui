@@ -1,4 +1,4 @@
-# MeanFi - A DEFI PROTOCOL POWERING EVERYDAY BANKING WORKFLOWS
+# MeanFi - A DEFI PROTOCOL POWERING EVERYDAY BANKING WORKFLOWS ON SOLANA
 This is MeanFi (https://app.meanfi.com), a Solana DeFi app for continuous, self-governing, trustless payments from anyone to anyone.  
 It uses the Money Streaming Program to facilitate money streaming between two or more parties.
 
