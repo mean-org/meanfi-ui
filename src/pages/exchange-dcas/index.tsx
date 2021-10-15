@@ -16,10 +16,11 @@ import "./style.less";
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import dateFormat from 'dateformat';
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
-import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
-import { ArrowUpOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { IconClock, IconDownload, IconExchange, IconExternalLink, IconUpload } from '../../Icons';
+import { ArrowDownOutlined, ArrowUpOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
-import { DdcaClient, DdcaAccount } from '@mean-dao/ddca';
+import { DdcaClient, DdcaDetails } from '@mean-dao/ddca';
+import { getRecurringBuys } from '../../utils/api';
 
 export const ExchangeDcasView = () => {
   const {
@@ -32,8 +33,8 @@ export const ExchangeDcasView = () => {
   const connectionConfig = useConnectionConfig();
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [recurringBuys, setRecurringBuys] = useState<DdcaAccount[] | undefined>();
-  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DdcaAccount | undefined>();
+  const [recurringBuys, setRecurringBuys] = useState<DdcaDetails[] | undefined>();
+  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DdcaDetails | undefined>();
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activity, setActivity] = useState<StreamActivity[]>([]);
@@ -49,10 +50,10 @@ export const ExchangeDcasView = () => {
 
       const ddcaClient = new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment });
 
-      ddcaClient.ListDdcas()
+      getRecurringBuys()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
-          let item: DdcaAccount | undefined;
+          let item: DdcaDetails | undefined;
           if (dcas.length) {
             item = JSON.parse(JSON.stringify(dcas[0]));
             consoleOut('selectedBuy:', item, 'blue');
@@ -67,6 +68,25 @@ export const ExchangeDcasView = () => {
         }).catch(err => {
           console.error(err);
         }).finally(() => setLoadingRecurringBuys(false));
+
+      // ddcaClient.ListDdcas()
+      //   .then(dcas => {
+      //     consoleOut('Recurring buys:', dcas, 'blue');
+      //     let item: DdcaDetails | undefined;
+      //     if (dcas.length) {
+      //       item = JSON.parse(JSON.stringify(dcas[0]));
+      //       consoleOut('selectedBuy:', item, 'blue');
+      //       if (item) {
+      //         setRecurringBuyDetails(item);
+      //       }
+      //     } else {
+      //       setActivity([]);
+      //       setRecurringBuyDetails(undefined);
+      //     }
+      //     setRecurringBuys(dcas);
+      //   }).catch(err => {
+      //     console.error(err);
+      //   }).finally(() => setLoadingRecurringBuys(false));
     }
   }, [
     wallet,
@@ -157,16 +177,16 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getRecurringBuyTitle = (item: DdcaAccount) => {
+  const getRecurringBuyTitle = (item: DdcaDetails) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)} worth of ${toToken?.symbol}`;
   }
 
-  const getRecurringBuySubTitle = (item: DdcaAccount) => {
+  const getRecurringBuySubTitle = (item: DdcaDetails) => {
     return `Last purchased ${getShortDate(item.startUtc as string)}`;
   }
 
-  const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
+  const getRecurrencePeriod = (item: DdcaDetails | undefined): string => {
     if (!item) { return ''; }
     switch (item.intervalInSeconds) {
       case 86400:
@@ -182,7 +202,7 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  const getBuyIconPair = (item: DdcaAccount) => {
+  const getBuyIconPair = (item: DdcaDetails) => {
     const fromToken = MEAN_TOKEN_LIST.find(t => t.address === item.fromMint);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return (
@@ -214,6 +234,10 @@ export const ExchangeDcasView = () => {
       localDate,
       includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
     );
+  }
+
+  const getToken = (tokenAddress: string) => {
+    return MEAN_TOKEN_LIST.find(t => t.address === tokenAddress);
   }
 
   const getTokenIcon = (tokenAddress: string) => {
@@ -251,7 +275,7 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getDetailsPanelTitle = (item: DdcaAccount) => {
+  const getDetailsPanelTitle = (item: DdcaDetails) => {
     const recurrencePeriod = getRecurrencePeriod(item);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
 
@@ -291,147 +315,220 @@ export const ExchangeDcasView = () => {
 
   const renderRecurringBuy = (
     <>
-    <div className="transaction-list-data-wrapper vertical-scroll">
-
-      <Spin spinning={loadingRecurringBuys}>
-        <div className="stream-fields-container">
-
-          {recurringBuyDetails && (
-            <h2>{getDetailsPanelTitle(recurringBuyDetails)}</h2>
-          )}
-
-          {/* Start date */}
-          {recurringBuyDetails && (
-            <div className="mb-3">
-              <div className="info-label">{t('streams.stream-detail.label-start-date-started')}</div>
-              <div className="transaction-detail-row">
-                <span className="info-icon">
-                  <IconClock className="mean-svg-icons" />
-                </span>
-                <span className="info-data">
-                  {getReadableDate(recurringBuyDetails.startUtc as string)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {recurringBuyDetails && (
-            <Row className="mb-3">
-              <Col span={11}>
-                <div className="info-label">Total deposits</div>
-                <div className="transaction-detail-row">
-                  {getTokenIconAndAmount(recurringBuyDetails.fromMint, recurringBuyDetails.totalDepositsAmount)}
-                </div>
-              </Col>
-              <Col span={13} className="pl-4">
-                <div className="info-label">Total left (will run out by Dec 23rd)</div>
-                <div className="transaction-detail-row">
-                  {getTokenIconAndAmount(recurringBuyDetails.fromMint, 111)}
-                </div>
-              </Col>
-            </Row>
-          )}
-
-          {recurringBuyDetails && (
-            <div className="mb-3">
-              <div className="info-label">Exchanged for (avg rate 1 SOL ≈ 0.03987 ETH)</div>
-              <div className="transaction-detail-row">
-                {getTokenIcon(recurringBuyDetails.toMint)}
-                <span className="info-data large">
-                {getTokenAmountAndSymbolByTokenAddress(111, recurringBuyDetails.toMint)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Next schaduled exchange */}
-          {recurringBuyDetails && (
-            <div className="mb-3">
-              <div className="info-label">Next schaduled exchange</div>
-              <div className="transaction-detail-row">
-                <span className="info-icon">
-                  <IconClock className="mean-svg-icons" />
-                </span>
-                <span className="info-data">
-                  {getReadableDate(recurringBuyDetails.startUtc as string)}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Top up (add funds) button */}
-          <div className="mt-3 mb-3 withdraw-container">
-            <Button
-              block
-              className="withdraw-cta"
-              type="text"
-              shape="round"
-              size="small"
-              onClick={() => {}}>
-              {t('streams.stream-detail.add-funds-cta')}
-            </Button>
-            <Dropdown overlay={menu} trigger={["click"]}>
-              <Button
-                shape="round"
-                type="text"
-                size="small"
-                className="ant-btn-shaded"
-                onClick={(e) => e.preventDefault()}
-                icon={<EllipsisOutlined />}>
-              </Button>
-            </Dropdown>
-          </div>
-        </div>
-      </Spin>
-
-      <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
-      {!activity || activity.length === 0 ? (
-        <p>{t('streams.stream-activity.no-activity')}.</p>
-      ) : (
-        <div className="activity-list">
-          <Spin spinning={loadingActivity}>
-            {activity && (
-              <>
-                <div className="item-list-header compact">
-                  <div className="header-row">
-                    <div className="std-table-cell first-cell">&nbsp;</div>
-                    <div className="std-table-cell responsive-cell">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                  </div>
-                </div>
-                <div className="item-list-body compact">
-                  {activity.map((item, index) => {
-                    return (
-                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                        <div className="std-table-cell responsive-cell">
-                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
-                        </div>
-                        <div className="std-table-cell fixed-width-120" >
-                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              </>
+      <div className="transaction-list-data-wrapper vertical-scroll">
+        <Spin spinning={loadingRecurringBuys}>
+          <div className="stream-fields-container">
+            {recurringBuyDetails && (
+              <h2>{getDetailsPanelTitle(recurringBuyDetails)}</h2>
             )}
-          </Spin>
+
+            {/* Start date */}
+            {recurringBuyDetails && (
+              <div className="mb-3">
+                <div className="info-label">
+                  {t("streams.stream-detail.label-start-date-started")}
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconClock className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data">
+                    {getReadableDate(recurringBuyDetails.startUtc as string)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {recurringBuyDetails && (
+              <Row className="mb-3">
+                <Col span={11}>
+                  <div className="info-label">Total deposits</div>
+                  <div className="transaction-detail-row">
+                    {getTokenIconAndAmount(
+                      recurringBuyDetails.fromMint,
+                      recurringBuyDetails.totalDepositsAmount
+                    )}
+                  </div>
+                </Col>
+                <Col span={13} className="pl-4">
+                  <div className="info-label">
+                    Total left (will run out by {getShortDate(recurringBuyDetails.fromBalanceWillRunOutByUtc)})
+                  </div>
+                  <div className="transaction-detail-row">
+                    {getTokenIconAndAmount(recurringBuyDetails.fromMint, recurringBuyDetails.fromBalance)}
+                  </div>
+                </Col>
+              </Row>
+            )}
+
+            {recurringBuyDetails && (
+              <div className="mb-3">
+                <div className="info-label">
+                  Exchanged for (avg rate 1 {getToken(recurringBuyDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                      recurringBuyDetails.exchangedRateAverage,
+                      recurringBuyDetails.toMint
+                    )})
+                </div>
+                <div className="transaction-detail-row">
+                  {getTokenIcon(recurringBuyDetails.toMint)}
+                  <span className="info-data large">
+                    {getTokenAmountAndSymbolByTokenAddress(
+                      recurringBuyDetails.exchangedForAmount,
+                      recurringBuyDetails.toMint
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Next schaduled exchange */}
+            {recurringBuyDetails && (
+              <div className="mb-3">
+                <div className="info-label">Next schaduled exchange</div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconClock className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data">
+                    {getReadableDate(recurringBuyDetails.nextScheduledSwapUtc as string)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Top up (add funds) button */}
+            <div className="mt-3 mb-3 withdraw-container">
+              <Button
+                block
+                className="withdraw-cta"
+                type="text"
+                shape="round"
+                size="small"
+                onClick={() => {}}
+              >
+                {t("streams.stream-detail.add-funds-cta")}
+              </Button>
+              <Dropdown overlay={menu} trigger={["click"]}>
+                <Button
+                  shape="round"
+                  type="text"
+                  size="small"
+                  className="ant-btn-shaded"
+                  onClick={(e) => e.preventDefault()}
+                  icon={<EllipsisOutlined />}
+                ></Button>
+              </Dropdown>
+            </div>
+          </div>
+        </Spin>
+
+        <Divider className="activity-divider" plain></Divider>
+        <div className="activity-title">
+          {t("streams.stream-activity.heading")}
         </div>
-      )}
-    </div>
-    {recurringBuyDetails && (
-      <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyRecurringBuyAddress(recurringBuyDetails.id)}>{recurringBuyDetails.id}</span>
-        <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-           href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${recurringBuyDetails.id}${getSolanaExplorerClusterParam()}`}>
-          <IconExternalLink className="mean-svg-icons" />
-        </a>
+        <div className="activity-list">
+          <>
+            <div className="item-list-header compact">
+              <div className="header-row">
+                <div className="std-table-cell first-cell">&nbsp;</div>
+                <div className="std-table-cell responsive-cell">&nbsp;</div>
+                <div className="std-table-cell fixed-width-150">
+                  {t("streams.stream-activity.label-date")}
+                </div>
+              </div>
+            </div>
+            <div className="item-list-body compact">
+              {(recurringBuyDetails?.id as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
+                <>
+                <span className="item-list-row simplelink">
+                  <div className="std-table-cell first-cell">
+                    <IconExchange className="mean-svg-icons"/>
+                  </div>
+                  <div className="std-table-cell responsive-cell">
+                    <span className="align-middle">Exchanged 1 wSOL for 0.0413 ETH</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    <span className="align-middle">10/12/2021 14:53 PM</span>
+                  </div>
+                </span>
+                <span className="item-list-row simplelink">
+                  <div className="std-table-cell first-cell">
+                    <ArrowDownOutlined className="incoming"/>
+                  </div>
+                  <div className="std-table-cell responsive-cell">
+                    <span className="align-middle">Deposited 5 wSOL</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    <span className="align-middle">10/12/2021 14:53 PM</span>
+                  </div>
+                </span>
+                </>
+              ) : (
+                <>
+                <span className="item-list-row simplelink">
+                  <div className="std-table-cell first-cell">
+                    <IconExchange className="mean-svg-icons"/>
+                  </div>
+                  <div className="std-table-cell responsive-cell">
+                    <span className="align-middle">Exchanged 50 USDC for 0.3118 SOL</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    <span className="align-middle">10/15/2021 14:53 PM</span>
+                  </div>
+                </span>
+                <span className="item-list-row simplelink">
+                  <div className="std-table-cell first-cell">
+                    <ArrowDownOutlined className="incoming"/>
+                  </div>
+                  <div className="std-table-cell responsive-cell">
+                    <span className="align-middle">Deposited 200 USDC</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    <span className="align-middle">10/15/2021 14:53 PM</span>
+                  </div>
+                </span>
+                </>
+              )}
+
+              {/* {activity.map((item, index) => {
+              return (
+                <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                  <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                  <div className="std-table-cell responsive-cell">
+                    <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
+                  </div>
+                  <div className="std-table-cell fixed-width-120" >
+                    <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                  </div>
+                </a>
+              );
+            })} */}
+            </div>
+          </>
+        </div>
       </div>
-    )}
-  </>
+      {/* {recurringBuyDetails && (
+        <div className="stream-share-ctas">
+          <span
+            className="copy-cta overflow-ellipsis-middle"
+            onClick={() => onCopyRecurringBuyAddress(recurringBuyDetails.id)}
+          >
+            {recurringBuyDetails.id}
+          </span>
+          <a
+            className="explorer-cta"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
+              recurringBuyDetails.id
+            }${getSolanaExplorerClusterParam()}`}
+          >
+            <IconExternalLink className="mean-svg-icons" />
+          </a>
+        </div>
+      )} */}
+    </>
   );
 
   const renderRecurringBuys = (
