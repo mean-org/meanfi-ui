@@ -36,7 +36,7 @@ export const ServiceUnavailableView = () => {
       <div className="loading-screen-container flex-center">
         <div className="flex-column flex-center">
           <img className="app-logo" src={theme === 'dark' ? 'assets/mean-pay-logo-color-light.svg' : 'assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
-          <h3 className="network-down-message">{t('connection-hq.init-status-network-down')}</h3>
+          <h3 className="network-down-message">{t('error-screens.service-unavailable-message')}</h3>
           <div className="text-center">
             <Button
               type="primary"
@@ -56,12 +56,12 @@ export const ServiceUnavailableView = () => {
           <div className="bottom-links">
             <div className="link">
               <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href="https://status.solana.com/">
-                <IconSolana className="mean-svg-icons"/><span>Check network status</span>
+                <IconSolana className="mean-svg-icons"/><span>{t('error-screens.network-status')}</span>
               </a>
             </div>
             <div className="link">
               <a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer" href="https://discord.meanfi.com/">
-                <IconDiscord className="mean-svg-icons"/><span>Report a problem</span>
+                <IconDiscord className="mean-svg-icons"/><span>{t('error-screens.report-problem')}</span>
               </a>
             </div>
           </div>

@@ -31,7 +31,7 @@ import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { customLogger } from "../..";
-import { DdcaFrequencyValue } from "../../models/ddca-models";
+import { DcaInterval } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
 import { getLiveRpc, RpcConfig } from "../../models/connections-hq";
 
@@ -949,7 +949,7 @@ export const SwapUi = (props: {
           label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
         }
 
-      } else if (ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange) {
+      } else if (ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange) {
         label = t("transactions.validation.valid-ddca-review");
       } else {    
         label = t("transactions.validation.valid-approve");
@@ -965,7 +965,7 @@ export const SwapUi = (props: {
 
   }, [
     t,
-    ddcaOption?.value,
+    ddcaOption?.dcaInterval,
     connected, 
     connection, 
     feesInfo, 
@@ -1927,7 +1927,7 @@ export const SwapUi = (props: {
               type="default"
               shape="round"
               size="middle"
-              className={`dropdown-like-button ${ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange ? 'active' : ''}`}
+              className={`dropdown-like-button ${ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange ? 'active' : ''}`}
               onClick={showDdcaOptionSelector}>
               <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
               <IconCaretDown className="mean-svg-icons" />
@@ -1943,7 +1943,7 @@ export const SwapUi = (props: {
           shape="round"
           size="large"
           onClick={() => {
-            if (ddcaOption?.value !== DdcaFrequencyValue.OneTimeExchange) {
+            if (ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange) {
               showDdcaSetup();
             } else {
               onTransactionStart();

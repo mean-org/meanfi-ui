@@ -34,7 +34,7 @@ export const DdcaFrequencySelectorModal = (props: {
       <div className="items-card-list vertical-scroll">
         {DDCA_FREQUENCY_OPTIONS.map(option => {
           return (
-            <div key={`${option.value}`} className={`item-card ${option.name === ddcaOption?.name
+            <div key={`${option.dcaInterval}`} className={`item-card ${option.name === ddcaOption?.name
               ? "selected"
               : option.disabled
               ? "disabled"
