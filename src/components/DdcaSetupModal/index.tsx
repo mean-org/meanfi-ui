@@ -3,7 +3,7 @@ import { Button, Modal, Slider } from "antd";
 import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
-import { DdcaFrequencyValue } from '../../models/ddca-models';
+import { DcaInterval } from '../../models/ddca-models';
 import { percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
@@ -36,17 +36,17 @@ export const DdcaSetupModal = (props: {
 
   const getRecurrencePeriod = (): string => {
     let strOut = '';
-    switch (ddcaOption?.value) {
-      case DdcaFrequencyValue.RepeatingDaily:
+    switch (ddcaOption?.dcaInterval) {
+      case DcaInterval.RepeatingDaily:
         strOut = t('ddca-selector.repeating-daily.recurrence-period');
         break;
-      case DdcaFrequencyValue.RepeatingWeekly:
+      case DcaInterval.RepeatingWeekly:
         strOut = t('ddca-selector.repeating-weekly.recurrence-period');
         break;
-      case DdcaFrequencyValue.RepeatingTwiceMonth:
+      case DcaInterval.RepeatingTwiceMonth:
         strOut = t('ddca-selector.repeating-twice-month.recurrence-period');
         break;
-      case DdcaFrequencyValue.RepeatingOnceMonth:
+      case DcaInterval.RepeatingOnceMonth:
         strOut = t('ddca-selector.repeating-once-month.recurrence-period');
         break;
       default:
@@ -57,17 +57,17 @@ export const DdcaSetupModal = (props: {
 
   const getTotalPeriod = useCallback((periodValue: number): string => {
     let strOut = '';
-    switch (ddcaOption?.value) {
-      case DdcaFrequencyValue.RepeatingDaily:
+    switch (ddcaOption?.dcaInterval) {
+      case DcaInterval.RepeatingDaily:
         strOut = `${periodValue} ${t('general.days')}`;
         break;
-      case DdcaFrequencyValue.RepeatingWeekly:
+      case DcaInterval.RepeatingWeekly:
         strOut = `${periodValue} ${t('general.weeks')}`;
         break;
-      case DdcaFrequencyValue.RepeatingTwiceMonth:
+      case DcaInterval.RepeatingTwiceMonth:
         strOut = `${periodValue * 2} ${t('general.weeks')}`;
         break;
-      case DdcaFrequencyValue.RepeatingOnceMonth:
+      case DcaInterval.RepeatingOnceMonth:
         strOut = `${periodValue} ${t('general.months')}`;
         break;
       default:
@@ -76,7 +76,7 @@ export const DdcaSetupModal = (props: {
     return strOut;
   }, [
     t,
-    ddcaOption?.value
+    ddcaOption?.dcaInterval
   ])
 
   const getModalHeadline = () => {
@@ -126,11 +126,11 @@ export const DdcaSetupModal = (props: {
   useEffect(() => {
     if (ddcaOption && props.fromTokenAmount && props.fromTokenBalance) {
       const maxRangeFromSelection =
-        ddcaOption.value === DdcaFrequencyValue.RepeatingDaily
+        ddcaOption.dcaInterval === DcaInterval.RepeatingDaily
           ? 365
-          : ddcaOption.value === DdcaFrequencyValue.RepeatingWeekly
+          : ddcaOption.dcaInterval === DcaInterval.RepeatingWeekly
           ? 52
-          : ddcaOption.value === DdcaFrequencyValue.RepeatingTwiceMonth
+          : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
       const maxRangeFromBalance = (props.fromTokenBalance / props.fromTokenAmount);

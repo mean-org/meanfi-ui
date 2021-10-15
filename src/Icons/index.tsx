@@ -12,6 +12,7 @@ export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";
 export { IconEllipsis } from "./IconEllipsis";
 export { IconEnvelope } from "./IconEnvelope";
+export { IconExchange } from "./IconExchange";
 export { IconExit } from "./IconExit";
 export { IconExternalLink } from "./IconExternalLink";
 export { IconFacebook } from "./IconFacebook";
