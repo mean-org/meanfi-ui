@@ -45,7 +45,7 @@ export async function fetchAccountHistory(
     const fetched = await connection.getConfirmedSignaturesForAddress2(
       pubkey,
       options,
-      "finalized"
+      "confirmed"
     );
 
     let history = {
@@ -83,40 +83,32 @@ export const fetchParsedTransactionsAsync = async (
   
   try {
 
-    let txSignatures = signatures.splice(
-      0,
-      MAX_TRANSACTION_BATCH_SIZE
-    );
+    while (signatures.length > 0) {
 
-    let promises: Promise<ParsedConfirmedTransaction | null>[] = [];
+      const txSignatures = signatures.splice(
+        0,
+        MAX_TRANSACTION_BATCH_SIZE
+      );
 
-    txSignatures.forEach(sig => {
-      promises.push(
-        connection.getParsedConfirmedTransaction(sig)
-      )
-    });
+      let promises: Promise<ParsedConfirmedTransaction | null>[] = [];
+
+      txSignatures.forEach(sig => {
+        promises.push(
+          connection.getParsedConfirmedTransaction(sig)
+        )
+      });
+
+      const fetched = await Promise.all(promises);
   
-    const fetched = await Promise.all(promises);
-  
-    let result = (fetched.map(tx => {
-      return { 
-        signature: tx?.transaction.signatures[0], 
-        parsedTransaction: tx 
-      }
-    }) as MappedTransaction[]).filter(tx => tx !== undefined);
-  
-    txMap.push(...result);
-  
-    if (signatures.length === 0) {
-      return txMap as MappedTransaction[];
+      let result = (fetched.map(tx => {
+        return { 
+          signature: tx?.transaction.signatures[0], 
+          parsedTransaction: tx 
+        }
+      }) as MappedTransaction[]).filter(tx => tx !== undefined);
+    
+      txMap.push(...result);
     }
-  
-    result = (await fetchParsedTransactionsAsync(
-      connection,
-      signatures
-    ) as MappedTransaction[]).filter(tx => tx !== undefined);
-  
-    txMap.push(...result);
 
   } catch (_error) {
     console.log(_error);
@@ -124,28 +116,4 @@ export const fetchParsedTransactionsAsync = async (
 
   return txMap;
 }
-
-// async function fetchParsedTransactions(
-//   connection: Connection,
-//   transactionSignatures: string[]
-// ) {
-// const transactionMap =  Array<MappedTransaction>();
-
-// while (transactionSignatures.length > 0) {
-//   const signatures = transactionSignatures.splice(
-//     0,
-//     MAX_TRANSACTION_BATCH_SIZE
-//   );
-//   const fetched = await connection.getParsedConfirmedTransactions(signatures);
-//   fetched.forEach(
-//     (parsed: ParsedConfirmedTransaction | null, index: number) => {
-//       if (parsed !== null) {
-//         transactionMap.push({ signature: signatures[index], parsedTransaction: parsed });
-//       }
-//     }
-//   );
-// }
-
-// return transactionMap;
-// }
 
