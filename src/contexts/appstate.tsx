@@ -615,6 +615,7 @@ const AppStateProvider: React.FC = ({ children }) => {
             }
             consoleOut('selectedStream:', item, 'blue');
             if (item) {
+              console.log(item);
               updateSelectedStream(item);
               updateStreamDetail(item);
               if (!loadingStreamActivity) {
