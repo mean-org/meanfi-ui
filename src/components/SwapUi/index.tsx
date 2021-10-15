@@ -2318,7 +2318,7 @@ export const SwapUi = (props: {
               onTransactionStart();
             }
           }}
-          // disabled={!isValidBalance || !isValidSwapAmount}
+          disabled={!isValidBalance || !isValidSwapAmount}
           >
           {transactionStartButtonLabel}
         </Button>
