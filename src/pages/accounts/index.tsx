@@ -489,6 +489,8 @@ export const AccountsView = () => {
         setShouldLoadTokens(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
+        setSolAccountItems(0);
+        setTransactions(undefined);
       }
       setTimeout(() => {
         setCanShowAccountDetails(true);
@@ -502,6 +504,7 @@ export const AccountsView = () => {
     previousWalletConnectState,
     publicKey,
     startSwitch,
+    setTransactions,
     setSelectedAsset,
     setAccountAddress,
     setAddAccountPanelOpen,
