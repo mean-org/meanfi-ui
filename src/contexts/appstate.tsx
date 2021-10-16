@@ -634,7 +634,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   });
               }
             }
-            if (currentScreen === 'contract') {
+            if (reset && currentScreen === 'contract') {
               setSelectedTab('streams');
             }
           } else {

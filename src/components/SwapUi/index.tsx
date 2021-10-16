@@ -6,14 +6,14 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, sendSignedTransaction } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, delay, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { AccountMeta, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
+import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -1925,49 +1925,28 @@ export const SwapUi = (props: {
       if (create && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('sign:', sign);
-
-        // TODO: Remove block starts
         if (sign && !transactionCancelled) {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          await delay(2000);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SendTransactionSuccess,
-            currentOperation: TransactionStatus.ConfirmTransaction
-          });
-          await delay(3000);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-            currentOperation: TransactionStatus.TransactionFinished
-          });
-          setIsBusy(false);
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            consoleOut('confirmed:', confirmed);
+            if (confirmed) {
+              const createSwap = await createSwapTx();
+              if (createSwap && !transactionCancelled) {
+                const sent = await sendSwapTx();
+                consoleOut('sent:', sent);
+                if (sent && !transactionCancelled) {
+                  const confirmed = await confirmTx();
+                  consoleOut('confirmed:', confirmed);
+                  if (confirmed) {
+                    setIsBusy(false);
+                  }
+                } else { setIsBusy(false); }
+              } else { setIsBusy(false); }
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
         } else { setIsBusy(false); }
-        // TODO: Remove block ends
-
-        // if (sign && !transactionCancelled) {
-        //   const sent = await sendTx();
-        //   consoleOut('sent:', sent);
-        //   if (sent && !transactionCancelled) {
-        //     const confirmed = await confirmTx();
-        //     consoleOut('confirmed:', confirmed);
-        //     if (confirmed) {
-        //       const createSwap = await createSwapTx();
-        //       if (createSwap && !transactionCancelled) {
-        //         const sent = await sendSwapTx();
-        //         consoleOut('sent:', sent);
-        //         if (sent && !transactionCancelled) {
-        //           const confirmed = await confirmTx();
-        //           consoleOut('confirmed:', confirmed);
-        //           if (confirmed) {
-        //             setIsBusy(false);
-        //           }
-        //         } else { setIsBusy(false); }
-        //       } else { setIsBusy(false); }
-        //     } else { setIsBusy(false); }
-        //   } else { setIsBusy(false); }
-        // } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
