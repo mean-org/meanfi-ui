@@ -39,10 +39,12 @@ export const WithdrawModal = (props: {
   const onAcceptWithdrawal = () => {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(withdrawAmountInput)
       ? true : false;
+    setWithdrawAmountInput('');
     props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
   };
 
   const onCloseModal = () => {
+    setWithdrawAmountInput('');
     props.handleClose();
   }
 
