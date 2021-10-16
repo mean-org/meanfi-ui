@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
 import { useWallet } from '../../contexts/wallet';
@@ -19,6 +19,7 @@ export const SwapView = () => {
   const { publicKey, wallet } = useWallet();
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -59,7 +60,7 @@ export const SwapView = () => {
       if (cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
-          window.location.href = '/';
+          setRedirect('/service-unavailable');
         }
         setMainnetRpc(mainnetRpc);
       } else {
@@ -114,6 +115,7 @@ export const SwapView = () => {
 
   return (
     <>
+    {redirect && <Redirect to={redirect} />}
     <div className="container main-container">
       <div className="interaction-area">
         {environment !== 'production' && (

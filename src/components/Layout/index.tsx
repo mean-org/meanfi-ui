@@ -19,8 +19,6 @@ import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect"
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { useLocalStorageState } from "../../utils/utils";
-import { RpcConfig } from "../../models/connections-hq";
 
 const { Header, Content, Footer } = Layout;
 
@@ -54,7 +52,6 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const [cachedRpc] = useLocalStorageState("cachedRpc");
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -213,12 +210,6 @@ export const AppLayout = React.memo((props: any) => {
     t,
     setReferralAddress,
   ]);
-
-  useEffect(() => {
-    if (!cachedRpc || !(cachedRpc as RpcConfig).httpProvider) {
-      setRedirect('/service-unavailable');
-    }
-  }, [cachedRpc]);
 
   useEffect(() => {
     const bodyClass = location.pathname.split('/')[1];
