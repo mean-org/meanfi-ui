@@ -26,7 +26,7 @@ export const WRAPPED_SOL_MINT_ADDRESS = 'So1111111111111111111111111111111111111
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = 'assets/coin-error.svg';
 
-const meanFiHeaders = new Headers();
+export const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
 export const requestOptions: RequestInit = {
   headers: meanFiHeaders

@@ -1,5 +1,8 @@
 import { DdcaAccount, DdcaDetails } from "@mean-dao/ddca";
 import { useState } from "react";
+import { appConfig } from "..";
+import { meanFiHeaders } from "../constants";
+import { getDefaultRpc } from "../models/connections-hq";
 
 export function useCoinPrices() {
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -86,4 +89,26 @@ export const getRecurringBuys = async (): Promise<DdcaDetails[]> => {
     ];
     resolve(data);
   });
+};
+
+// POST /meanfi-connected-accounts Creates a referral for a new address
+export const reportConnectedAccount = async (address: string, refBy?: string): Promise<boolean> => {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders
+  }
+  let url = appConfig.getConfig().apiUrl + '/meanfi-connected-accounts';
+  url += `?networkId=${getDefaultRpc().networkId}&a=${address}`;
+  if (refBy) {
+    url += `&refBy=${refBy}`;
+  }
+  try {
+    const response = await fetch(url, options)
+    if (response.status === 200) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    throw(error);
+  }
 };
