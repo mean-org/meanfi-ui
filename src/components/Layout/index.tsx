@@ -54,6 +54,18 @@ export const AppLayout = React.memo((props: any) => {
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
 
+  // Clear cachedRpc on App destroy (window is being reloaded)
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
+
+  const handleTabClosingOrPageRefresh = () => {
+    window.localStorage.removeItem('cachedRpc');
+  }
+
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
   }

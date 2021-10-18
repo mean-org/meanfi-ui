@@ -2,7 +2,7 @@ import { DdcaAccount, DdcaDetails } from "@mean-dao/ddca";
 import { useState } from "react";
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
-import { getDefaultRpc } from "../models/connections-hq";
+import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
 
 export function useCoinPrices() {
   const [coinPrices, setCoinPrices] = useState<any>(null);
@@ -36,7 +36,8 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
   try {
     const response = await fetch(url, options)
     if (response.status === 200) {
-      const data = (await response.json());
+      const data = (await response.json()) as RpcConfig;
+      // data.httpProvider = 'https://meanfi.rpcpool.com/'; // Use this to manually test RPC endpoints
       return data;
     }
     return null;
