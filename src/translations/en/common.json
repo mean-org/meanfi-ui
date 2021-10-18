@@ -349,6 +349,9 @@
 		},
 		"status": {
 			"cta-view-stream": "View Stream",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",

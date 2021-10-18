@@ -1804,8 +1804,8 @@ export const SwapUi = (props: {
       if (wallet) {
 
         setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
+          lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+          currentOperation: TransactionStatus.CreateRecurringBuySchedule
         });
 
         const swapPayload = {
@@ -1821,13 +1821,8 @@ export const SwapUi = (props: {
 
         // Log input data
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuySchedule),
           inputs: swapPayload
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
         });
 
         // Create a transaction
@@ -1839,26 +1834,22 @@ export const SwapUi = (props: {
           payload.swapMinimumOutAmount,
           slippage)
         .then(value => {
-          consoleOut('createDdca returned transaction:', value);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.InitTransactionSuccess,
-            currentOperation: TransactionStatus.SignTransaction
-          });
+          consoleOut('createWakeAndSwapTx returned transaction:', value);
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: 'createWakeAndSwapTx succeeded'
           });
           transaction2 = value;
           return true;
         })
         .catch(error => {
-          console.error('createDdca error:', error);
+          console.error('createWakeAndSwapTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.InitTransactionFailure
+            currentOperation: TransactionStatus.CreateRecurringBuyScheduleFailure
           });
           transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
             result: `${error}`
           });
           customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1866,7 +1857,7 @@ export const SwapUi = (props: {
         });
       } else {
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1875,17 +1866,20 @@ export const SwapUi = (props: {
     }
 
     const sendSwapTx = async (): Promise<boolean> => {
+      const encodedTx = transaction2.serialize({ requireAllSignatures: false, verifySignatures: false });
+      consoleOut('encodedTx:', encodedTx.toString('base64'), 'blue');
       if (wallet) {
-        return await sendSignedTransaction(connection, transaction2)
+        return await connection
+          .sendRawTransaction(encodedTx, { skipPreflight: true, preflightCommitment: "confirmed" })
           .then(sig => {
-            consoleOut('sendTransaction returned a signature:', sig);
+            consoleOut('sendRawTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.CreateRecurringBuyScheduleSuccess
             });
             signature = sig;
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleSuccess),
               result: `signature: ${signature}`
             });
             return true;
@@ -1893,11 +1887,11 @@ export const SwapUi = (props: {
           .catch(error => {
             console.error(error);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.CreateRecurringBuyScheduleFailure
             });
             transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
               result: `${error}`
             });
             customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1906,11 +1900,11 @@ export const SwapUi = (props: {
       } else {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.CreateRecurringBuyScheduleFailure
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1936,13 +1930,11 @@ export const SwapUi = (props: {
               if (createSwap && !transactionCancelled) {
                 const sent = await sendSwapTx();
                 consoleOut('sent:', sent);
-                if (sent && !transactionCancelled) {
-                  const confirmed = await confirmTx();
-                  consoleOut('confirmed:', confirmed);
-                  if (confirmed) {
-                    setIsBusy(false);
-                  }
-                } else { setIsBusy(false); }
+                setTransactionStatus({
+                  lastOperation: transactionStatus.currentOperation,
+                  currentOperation: TransactionStatus.TransactionFinished
+                });
+                setIsBusy(false);
               } else { setIsBusy(false); }
             } else { setIsBusy(false); }
           } else { setIsBusy(false); }

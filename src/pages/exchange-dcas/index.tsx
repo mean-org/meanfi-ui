@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { AppStateContext } from '../../contexts/appstate';
@@ -13,34 +13,96 @@ import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Spin } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, useLocalStorageState } from '../../utils/utils';
 import dateFormat from 'dateformat';
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
 import { IconClock, IconDownload, IconExchange, IconExternalLink, IconUpload } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, EllipsisOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
-import { DdcaClient, DdcaDetails } from '@mean-dao/ddca';
-import { getRecurringBuys } from '../../utils/api';
+import { DdcaAccount, DdcaClient, DdcaDetails } from '@mean-dao/ddca';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { Redirect } from 'react-router-dom';
 
 export const ExchangeDcasView = () => {
   const {
+    recurringBuys,
     detailsPanelOpen,
+    loadingRecurringBuys,
+    setRecurringBuys,
     setDtailsPanelOpen,
+    setLoadingRecurringBuys,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey, wallet } = useWallet();
-  const connection = useConnection();
   const connectionConfig = useConnectionConfig();
+  const [redirect, setRedirect] = useState<string | null>(null);
+
+  // Connection management
+  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
+  const cachedRpc = (cachedRpcJson as RpcConfig);
+
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [recurringBuys, setRecurringBuys] = useState<DdcaDetails[] | undefined>();
-  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DdcaDetails | undefined>();
-  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
+  const [selectedDdca, setSelectedDdca] = useState<DdcaAccount | undefined>();
+  const [ddcaDetails, setDdcaDetails] = useState<DdcaDetails | undefined>();
+  const [loadingDdcaDetails, setLoadingDdcaDetails] = useState<boolean>(false);
+
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activity, setActivity] = useState<StreamActivity[]>([]);
 
+  useEffect(() => {
+    (async () => {
+      if (cachedRpc.networkId !== 101) {
+        const mainnetRpc = await getLiveRpc(101);
+        if (!mainnetRpc) {
+          setRedirect('/service-unavailable');
+        }
+        setMainnetRpc(mainnetRpc);
+      } else {
+        setMainnetRpc(null);
+      }
+    })();
+    return () => { }
+  }, [cachedRpc.networkId]);
+
+  // Set and cache connection
+  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
+    [cachedRpc.httpProvider, mainnetRpc]);
+
+  // Set and cache the DDCA client
+  const ddcaClient = useMemo(() => new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment }), [
+    wallet,
+    connection.commitment,
+    connectionConfig.endpoint,
+  ]);
+
+  //////////////////////
+  //   Data Related   //
+  //////////////////////
+
+  const selectDdcaItem = useCallback((item: DdcaAccount) => {
+    setDtailsPanelOpen(true);
+    setSelectedDdca(item);
+    setLoadingDdcaDetails(true);
+    const ddcaAddress = new PublicKey(item.id as string);
+    ddcaClient.GetDdca(ddcaAddress)
+      .then(ddca => {
+        if (ddca) {
+          setDdcaDetails(ddca);
+          consoleOut('ddcaDetails:', ddca, 'blue');
+        }
+      })
+      .catch(error => console.error(error))
+      .finally(() => setLoadingDdcaDetails(false));
+  }, [
+    ddcaClient,
+    setDtailsPanelOpen
+  ]);
+
   // Gets the recurring buys on demmand
-  const reloadRecurringBuys = useCallback(() => {
+  const reloadRecurringBuys = useCallback((reset = false) => {
     if (!publicKey) {
       return [];
     }
@@ -48,66 +110,99 @@ export const ExchangeDcasView = () => {
     if (!loadingRecurringBuys) {
       setLoadingRecurringBuys(true);
 
-      const ddcaClient = new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment });
-
-      getRecurringBuys()
+      ddcaClient.ListDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
-          let item: DdcaDetails | undefined;
+          let item: DdcaAccount | undefined;
           if (dcas.length) {
-            item = JSON.parse(JSON.stringify(dcas[0]));
+            if (reset) {
+              item = JSON.parse(JSON.stringify(dcas[0]));
+            } else {
+              // Try to get current item by its id
+              if (selectedDdca) {
+                const itemFromServer = dcas.find(i => i.id === selectedDdca.id);
+                item = itemFromServer || selectedDdca;
+              } else {
+                item = JSON.parse(JSON.stringify(dcas[0]));
+              }
+            }
             consoleOut('selectedBuy:', item, 'blue');
             if (item) {
-              setRecurringBuyDetails(item);
+              setSelectedDdca(item);
+              setLoadingDdcaDetails(true);
+              const ddcaAddress = new PublicKey(item.id as string);
+              ddcaClient.GetDdca(ddcaAddress)
+                .then(ddca => {
+                  if (ddca) {
+                    setDdcaDetails(ddca);
+                    consoleOut('ddcaDetails:', ddca, 'blue');
+                  }
+                })
+                .catch(error => console.error(error))
+                .finally(() => setLoadingDdcaDetails(false));
             }
           } else {
-            setActivity([]);
-            setRecurringBuyDetails(undefined);
+            setSelectedDdca(undefined);
+            setDdcaDetails(undefined);
           }
           setRecurringBuys(dcas);
         }).catch(err => {
           console.error(err);
         }).finally(() => setLoadingRecurringBuys(false));
-
-      // ddcaClient.ListDdcas()
-      //   .then(dcas => {
-      //     consoleOut('Recurring buys:', dcas, 'blue');
-      //     let item: DdcaDetails | undefined;
-      //     if (dcas.length) {
-      //       item = JSON.parse(JSON.stringify(dcas[0]));
-      //       consoleOut('selectedBuy:', item, 'blue');
-      //       if (item) {
-      //         setRecurringBuyDetails(item);
-      //       }
-      //     } else {
-      //       setActivity([]);
-      //       setRecurringBuyDetails(undefined);
-      //     }
-      //     setRecurringBuys(dcas);
-      //   }).catch(err => {
-      //     console.error(err);
-      //   }).finally(() => setLoadingRecurringBuys(false));
     }
   }, [
-    wallet,
     publicKey,
+    ddcaClient,
+    selectedDdca,
     loadingRecurringBuys,
-    connection.commitment,
-    connectionConfig.endpoint,
+    setLoadingRecurringBuys,
+    setRecurringBuys
   ]);
 
-  // Load recurring buys once if the list is empty
+  // Load recurring buys if the list is empty
   useEffect(() => {
 
-    if (!recurringBuys) {
+    if (!recurringBuys || recurringBuys.length === 0) {
       reloadRecurringBuys();
     }
 
     return () => {};
   }, [
+    ddcaClient,
+    selectedDdca,
     recurringBuys,
+    loadingDdcaDetails,
     reloadRecurringBuys
   ]);
+
+  // Load DDCA activity by ddcaAddress
+  // useEffect(() => {
+
+  //   if (!ddcaDetails) { return; }
+
+  //   if (!loadingActivity) {
+  //     setLoadingActivity(true);
+  //     const ddcaAddress = new PublicKey(item.id as string);
+  //     ddcaClient.GetDdcaActivity(ddcaAddress)
+  //       .then(activity => {
+  //         if (activity) {
+  //           setActivity(activity);
+  //           consoleOut('Ddca activity:', activity, 'blue');
+  //         }
+  //       })
+  //       .catch(error => console.error(error))
+  //       .finally(() => setLoadingActivity(false));
+  //   }
+
+  // }, [
+  //   ddcaClient,
+  //   ddcaDetails,
+  //   loadingActivity
+  // ]);
+
+  ////////////////////
+  //   UI Related   //
+  ////////////////////
 
   // Window resize listeners
   useEffect(() => {
@@ -135,6 +230,7 @@ export const ExchangeDcasView = () => {
     }
   }, []);
 
+  // Keep flag for small screens
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
       setIsSmallUpScreen(false);
@@ -164,9 +260,9 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  ///////////////
-  // Rendering //
-  ///////////////
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
 
   const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
@@ -177,16 +273,16 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getRecurringBuyTitle = (item: DdcaDetails) => {
+  const getRecurringBuyTitle = (item: DdcaAccount) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)} worth of ${toToken?.symbol}`;
   }
 
-  const getRecurringBuySubTitle = (item: DdcaDetails) => {
+  const getRecurringBuySubTitle = (item: DdcaAccount) => {
     return `Last purchased ${getShortDate(item.startUtc as string)}`;
   }
 
-  const getRecurrencePeriod = (item: DdcaDetails | undefined): string => {
+  const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
     if (!item) { return ''; }
     switch (item.intervalInSeconds) {
       case 86400:
@@ -202,7 +298,7 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  const getBuyIconPair = (item: DdcaDetails) => {
+  const getBuyIconPair = (item: DdcaAccount) => {
     const fromToken = MEAN_TOKEN_LIST.find(t => t.address === item.fromMint);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return (
@@ -242,7 +338,7 @@ export const ExchangeDcasView = () => {
 
   const getTokenIcon = (tokenAddress: string) => {
     const token = MEAN_TOKEN_LIST.find(t => t.address === tokenAddress);
-    if (!token || !recurringBuyDetails) {
+    if (!token || !ddcaDetails) {
       return null;
     }
     return (
@@ -250,7 +346,7 @@ export const ExchangeDcasView = () => {
         {token.logoURI ? (
           <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
         ) : (
-          <Identicon address={recurringBuyDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
         )}
       </span>
     );
@@ -258,7 +354,7 @@ export const ExchangeDcasView = () => {
 
   const getTokenIconAndAmount = (tokenAddress: string, amount: number) => {
     const token = MEAN_TOKEN_LIST.find(t => t.address === tokenAddress);
-    if (!token || !recurringBuyDetails) {
+    if (!token || !ddcaDetails) {
       return null;
     }
     return (
@@ -267,7 +363,7 @@ export const ExchangeDcasView = () => {
           {token.logoURI ? (
             <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
           ) : (
-            <Identicon address={recurringBuyDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
           )}
         </span>
         <span className="info-data">{getTokenAmountAndSymbolByTokenAddress(amount, token.address)}</span>
@@ -318,12 +414,12 @@ export const ExchangeDcasView = () => {
       <div className="transaction-list-data-wrapper vertical-scroll">
         <Spin spinning={loadingRecurringBuys}>
           <div className="stream-fields-container">
-            {recurringBuyDetails && (
-              <h2>{getDetailsPanelTitle(recurringBuyDetails)}</h2>
+            {ddcaDetails && (
+              <h2>{getDetailsPanelTitle(ddcaDetails)}</h2>
             )}
 
             {/* Start date */}
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
                   {t("streams.stream-detail.label-start-date-started")}
@@ -333,48 +429,48 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(recurringBuyDetails.startUtc as string)}
+                    {getReadableDate(ddcaDetails.startUtc as string)}
                   </span>
                 </div>
               </div>
             )}
 
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <Row className="mb-3">
                 <Col span={11}>
                   <div className="info-label">Total deposits</div>
                   <div className="transaction-detail-row">
                     {getTokenIconAndAmount(
-                      recurringBuyDetails.fromMint,
-                      recurringBuyDetails.totalDepositsAmount
+                      ddcaDetails.fromMint,
+                      ddcaDetails.totalDepositsAmount
                     )}
                   </div>
                 </Col>
                 <Col span={13} className="pl-4">
                   <div className="info-label">
-                    Total left (will run out by {getShortDate(recurringBuyDetails.fromBalanceWillRunOutByUtc)})
+                    Total left (will run out by {getShortDate(ddcaDetails.fromBalanceWillRunOutByUtc)})
                   </div>
                   <div className="transaction-detail-row">
-                    {getTokenIconAndAmount(recurringBuyDetails.fromMint, recurringBuyDetails.fromBalance)}
+                    {getTokenIconAndAmount(ddcaDetails.fromMint, ddcaDetails.fromBalance)}
                   </div>
                 </Col>
               </Row>
             )}
 
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
-                  Exchanged for (avg rate 1 {getToken(recurringBuyDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
-                      recurringBuyDetails.exchangedRateAverage,
-                      recurringBuyDetails.toMint
+                  Exchanged for (avg rate 1 {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                      ddcaDetails.exchangedRateAverage,
+                      ddcaDetails.toMint
                     )})
                 </div>
                 <div className="transaction-detail-row">
-                  {getTokenIcon(recurringBuyDetails.toMint)}
+                  {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
                     {getTokenAmountAndSymbolByTokenAddress(
-                      recurringBuyDetails.exchangedForAmount,
-                      recurringBuyDetails.toMint
+                      ddcaDetails.exchangedForAmount,
+                      ddcaDetails.toMint
                     )}
                   </span>
                 </div>
@@ -382,7 +478,7 @@ export const ExchangeDcasView = () => {
             )}
 
             {/* Next schaduled exchange */}
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">Next schaduled exchange</div>
                 <div className="transaction-detail-row">
@@ -390,7 +486,7 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(recurringBuyDetails.nextScheduledSwapUtc as string)}
+                    {getReadableDate(ddcaDetails.nextScheduledSwapUtc as string)}
                   </span>
                 </div>
               </div>
@@ -438,7 +534,7 @@ export const ExchangeDcasView = () => {
               </div>
             </div>
             <div className="item-list-body compact">
-              {(recurringBuyDetails?.id as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
+              {(ddcaDetails?.id as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
                 <>
                 <span className="item-list-row simplelink">
                   <div className="std-table-cell first-cell">
@@ -490,20 +586,20 @@ export const ExchangeDcasView = () => {
                 </>
               )}
 
-              {/* {activity.map((item, index) => {
-              return (
-                <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                  <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-120" >
-                    <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                  </div>
-                </a>
-              );
-            })} */}
+              {activity.map((item, index) => {
+                return (
+                  <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                      href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                    <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-120" >
+                      <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </>
         </div>
@@ -537,12 +633,11 @@ export const ExchangeDcasView = () => {
       recurringBuys.map((item, index) => {
         const onBuyClick = () => {
           consoleOut('select buy:', item, 'blue');
-          setRecurringBuyDetails(item);
-          setDtailsPanelOpen(true);
+          selectDdcaItem(item);
         };
         return (
           <div key={`${index + 50}`} onClick={onBuyClick}
-               className={`transaction-list-row ${recurringBuyDetails && recurringBuyDetails.id === item.id ? 'selected' : ''}`}>
+               className={`transaction-list-row ${ddcaDetails && ddcaDetails.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               {getBuyIconPair(item)}
             </div>
@@ -571,6 +666,7 @@ export const ExchangeDcasView = () => {
 
   return (
     <>
+      {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
         {/* {window.location.hostname === 'localhost' && (
@@ -602,7 +698,7 @@ export const ExchangeDcasView = () => {
             <div className="transaction-list-container">
               <div className="transactions-heading"><span className="title">Exchange details</span></div>
               <div className="inner-container">
-                {recurringBuyDetails ? renderRecurringBuy : (
+                {ddcaDetails ? renderRecurringBuy : (
                   <div className="h-75 flex-center">
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>

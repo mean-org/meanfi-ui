@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link, Redirect, useLocation } from 'react-router-dom';
@@ -8,15 +8,22 @@ import { useWallet } from '../../contexts/wallet';
 import { environment } from '../../environments/environment';
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
-import { DdcaClient, DdcaAccount } from '@mean-dao/ddca';
+import { DdcaClient } from '@mean-dao/ddca';
 import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const SwapView = () => {
   const { t } = useTranslation("common");
   const location = useLocation();
   const { publicKey, wallet } = useWallet();
+  const {
+    recurringBuys,
+    loadingRecurringBuys,
+    setRecurringBuys,
+    setLoadingRecurringBuys,
+  } = useContext(AppStateContext);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [redirect, setRedirect] = useState<string | null>(null);
@@ -48,16 +55,14 @@ export const SwapView = () => {
     }
   }, [location]);
 
-  // Recurring buys
-  const [recurringBuys, setRecurringBuys] = useState<DdcaAccount[] | undefined>();
-  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
+  // Connection management
   const [cachedRpcJson] = useLocalStorageState("cachedRpc");
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
   const cachedRpc = (cachedRpcJson as RpcConfig);
 
   useEffect(() => {
     (async () => {
-      if (cachedRpc.networkId !== 101) {
+      if (cachedRpc && cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
           setRedirect('/service-unavailable');
@@ -68,7 +73,7 @@ export const SwapView = () => {
       }
     })();
     return () => { }
-  }, [cachedRpc.networkId]);
+  }, [cachedRpc]);
 
   const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
     [cachedRpc.httpProvider, mainnetRpc]);
@@ -85,9 +90,9 @@ export const SwapView = () => {
       const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
 
       ddcaClient.ListDdcas()
-        .then(dcas => {
-          consoleOut('Recurring buys:', dcas, 'blue');
-          setRecurringBuys(dcas);
+        .then(ddcas => {
+          consoleOut('ddcas:', ddcas, 'blue');
+          setRecurringBuys(ddcas);
         }).catch(err => {
           console.error(err);
         }).finally(() => setLoadingRecurringBuys(false));
@@ -95,15 +100,17 @@ export const SwapView = () => {
   }, [
     wallet,
     publicKey,
-    cachedRpc.httpProvider,
     mainnetRpc,
     loadingRecurringBuys,
+    cachedRpc.httpProvider,
     connection.commitment,
+    setLoadingRecurringBuys,
+    setRecurringBuys
   ]);
 
   // Load recurring buys once if the list is empty
   useEffect(() => {
-    if (!recurringBuys) {
+    if (!recurringBuys || recurringBuys.length === 0) {
       reloadRecurringBuys();
     }
 

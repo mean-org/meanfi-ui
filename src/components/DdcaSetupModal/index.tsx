@@ -160,7 +160,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = (props.fromTokenBalance / props.fromTokenAmount);
+      const maxRangeFromBalance = Math.floor(props.fromTokenBalance / props.fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
