@@ -147,7 +147,13 @@
 		}
 	},
 	"ddcas": {
-		"screen-title": "Recurring buys"
+		"screen-title": "Recurring buys",
+		"streams-ddcas": "Click to refresh recurring buys",
+		"close-ddca": {
+			"modal-title": "Close recurring buy",
+			"primary-cta": "Close this buy",
+			"secondary-cta": "Cancel"
+		}
 	},
 	"deposits": {
 		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
@@ -300,7 +306,7 @@
 		}
 	},
 	"swap": {
-		"exchange-warning": "L'échange de tokens se fait avec des actifs réels sur le Mainnet.",
+		"exchange-warning": "Mean Exchange est disponible uniquement sur",
 		"input-label-destination": "Échanger pour (est.)",
 		"input-label-source": "Échanger depuis",
 		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",

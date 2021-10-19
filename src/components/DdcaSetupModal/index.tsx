@@ -15,6 +15,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import { EXCEPTION_LIST } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { environment } from '../../environments/environment';
 
 export const DdcaSetupModal = (props: {
   fromToken: TokenInfo | undefined;
@@ -36,6 +37,10 @@ export const DdcaSetupModal = (props: {
   const [minimumRequiredBalance, setMinimumRequiredBalance] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
   const [isOperationValid, setIsOperationValid] = useState(false);
+
+  const isProd = (): boolean => {
+    return environment === 'production';
+  }
 
   const getInterval = (): number => {
     switch (ddcaOption?.dcaInterval) {
@@ -301,7 +306,7 @@ export const DdcaSetupModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isOperationValid || !isUserAllowed() || !hasEnoughNativeBalance()}
+        disabled={!isOperationValid || !isUserAllowed() || !hasEnoughNativeBalance() || !isProd()}
         onClick={onAcceptModal}>
           {
             !isOperationValid

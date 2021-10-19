@@ -153,6 +153,11 @@ export const formatPct = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+export const formatThousands = (val: number) => {
+  const integerWithThousands = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  return integerWithThousands.format(val);
+}
+
 export function convert(
   account?: TokenAccount | number,
   mint?: MintInfo,

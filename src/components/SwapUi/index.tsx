@@ -1,11 +1,11 @@
-import { Row, Col, Spin, Modal, Button } from "antd";
+import { Row, Col, Spin, Modal, Button, Alert } from "antd";
 import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -30,8 +30,8 @@ import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
-import { customLogger } from "../..";
-import { DcaInterval } from "../../models/ddca-models";
+import { appConfig, customLogger } from "../..";
+import { DcaInterval, DdcaFrequencyOption } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
 import {
   DdcaClient,
@@ -1722,7 +1722,7 @@ export const SwapUi = (props: {
         });
       } else {
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1764,10 +1764,10 @@ export const SwapUi = (props: {
         console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.SignTransactionFailure
+          currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1810,10 +1810,10 @@ export const SwapUi = (props: {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
+          currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1922,7 +1922,7 @@ export const SwapUi = (props: {
         });
       } else {
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -1966,10 +1966,10 @@ export const SwapUi = (props: {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.CreateRecurringBuyScheduleFailure
+          currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.CreateRecurringBuyScheduleFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
@@ -2397,10 +2397,28 @@ export const SwapUi = (props: {
               onTransactionStart();
             }
           }}
-          disabled={!isValidBalance || !isValidSwapAmount}
+          disabled={!isValidBalance || !isValidSwapAmount || (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) }
           >
           {transactionStartButtonLabel}
         </Button>
+
+        {/* Warning */}
+        {environment !== 'production' && (
+          <div className="notifications">
+            <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
+              <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
+                <WarningFilled />
+              </span>
+              <div className="ant-alert-content">
+                <div className="ant-alert-message">
+                  {t('swap.exchange-warning')}&nbsp;
+                  <a className="primary-link" href={`${appConfig.getConfig('production').appUrl}/exchange`} target="_blank" rel="noopener noreferrer">MAINNET</a>
+                </div>
+                <div className="ant-alert-description"></div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Token selection modal */}
         <Modal

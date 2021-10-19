@@ -1,10 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Alert } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
-import { environment } from '../../environments/environment';
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
@@ -13,21 +10,25 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
+import { environment } from '../../environments/environment';
 
 export const SwapView = () => {
-  const { t } = useTranslation("common");
   const location = useLocation();
   const { publicKey, wallet } = useWallet();
   const {
     recurringBuys,
-    loadingRecurringBuys,
     setRecurringBuys,
-    setLoadingRecurringBuys,
   } = useContext(AppStateContext);
+  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [redirect, setRedirect] = useState<string | null>(null);
 
+  const isProd = (): boolean => {
+    return environment === 'production';
+  }
+
+  // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     let from: TokenInfo | null = null;
@@ -125,19 +126,10 @@ export const SwapView = () => {
     {redirect && <Redirect to={redirect} />}
     <div className="container main-container">
       <div className="interaction-area">
-        {environment !== 'production' && (
-          <div className="notifications">
-            <Alert
-              message={t('swap.exchange-warning')}
-              type="warning"
-              showIcon
-            />
-          </div>
-        )}
         <div className="place-transaction-box mb-3">
           <SwapUi connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
         </div>
-        {recurringBuys && recurringBuys.length > 0 && (
+        {(recurringBuys && recurringBuys.length > 0 && isProd()) && (
           <div className="text-center mb-3">
             <Link to="/exchange-dcas"><span className="secondary-link">{`You have ${recurringBuys.length} recurring buys scheduled`}</span></Link>
           </div>
