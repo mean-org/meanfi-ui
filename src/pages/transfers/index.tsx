@@ -56,7 +56,7 @@ export const TransfersView = () => {
         {currentScreen === 'streams' ? (
           <Streams />
         ) : (
-          <div className="place-transaction-box">
+          <div className="place-transaction-box mb-3">
             <div className="position-relative mb-2">
               {contract && (
                 <>

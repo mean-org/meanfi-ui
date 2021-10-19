@@ -436,6 +436,7 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
+			"blog": "Blog",
 			"code": "Code",
 			"developers": "Developers",
 			"disconnect": "Disconnect wallet",
@@ -445,6 +446,7 @@
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
+			"twitter": "Twitter",
 			"theme-dark": "Dark Mode",
 			"theme-light": "Light Mode"
 		},

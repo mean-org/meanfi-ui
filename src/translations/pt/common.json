@@ -436,6 +436,7 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
+			"blog": "Blog",
 			"code": "Código",
 			"developers": "Programadores",
 			"disconnect": "Desconectar carteira",
@@ -445,6 +446,7 @@
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Idioma",
 			"switch-theme": "Troque para",
+			"twitter": "Twitter",
 			"theme-dark": "Modo escuro",
 			"theme-light": "Modo de luz"
 		},

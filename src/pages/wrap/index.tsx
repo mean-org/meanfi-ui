@@ -426,7 +426,7 @@ export const WrapView = () => {
       <div className="container main-container">
         <div className="interaction-area">
           {publicKey ? (
-            <div className="place-transaction-box mt-4">
+            <div className="place-transaction-box mt-4 mb-3">
               <div className="transaction-field mb-3">
                 <div className="transaction-field-row">
                   <span className="field-label-left">&nbsp;</span>
