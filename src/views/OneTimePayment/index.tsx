@@ -811,7 +811,7 @@ export const OneTimePayment = () => {
         footer={null}>
         <div className="token-list">
           {/* Loop through the tokens */}
-          {selectedToken && tokenList ? (
+          {(selectedToken && tokenList) && (
             tokenList.map((token, index) => {
               const onClick = function () {
                 setSelectedToken(token);
@@ -857,8 +857,6 @@ export const OneTimePayment = () => {
                 </div>
               );
             })
-          ) : (
-            <p>{t('general.loading')}...</p>
           )}
         </div>
       </Modal>

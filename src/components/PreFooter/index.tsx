@@ -8,12 +8,12 @@ export const PreFooter = () => {
   return (
     <div className="pre-footer">
       <div className="pre-footer-notice">
-        <div className="container wrapper">
+        <div className="wrapper">
           {t('general.app-background-disclaimer')}
         </div>
       </div>
       <div className="pre-footer-menu">
-        <div className="container wrapper">
+        <div className="wrapper">
           <div className="flexible-left">
             <div className="left">
               <ul className="standard-menu">

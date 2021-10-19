@@ -497,7 +497,7 @@ export const PayrollPayment = () => {
 
   const renderAvailableTokenList = (
     <>
-      {destinationToken && tokenList ? (
+      {(destinationToken && tokenList) && (
         tokenList.map((token, index) => {
           const onClick = () => {
             setDestinationToken(token);
@@ -533,15 +533,13 @@ export const PayrollPayment = () => {
             </div>
           );
         })
-      ) : (
-        <p>{t('general.loading')}...</p>
       )}
     </>
   );
 
   const renderUserTokenList = (
     <>
-      {selectedToken && tokenList ? (
+      {(selectedToken && tokenList) && (
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
@@ -577,8 +575,6 @@ export const PayrollPayment = () => {
             </div>
           );
         })
-      ) : (
-        <p>{t('general.loading')}...</p>
       )}
     </>
   );

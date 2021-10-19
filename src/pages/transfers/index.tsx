@@ -44,7 +44,7 @@ export const TransfersView = () => {
       case 1:   return <OneTimePayment />;
       case 2:   return <RepeatingPayment />;
       case 3:   return <PayrollPayment />;
-      default:  return <h4>{t(`general.not-implemented`)}</h4>
+      default:  return null;
     }
   }
 
