@@ -3,7 +3,7 @@ import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, sendSignedTransaction } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
@@ -33,7 +33,12 @@ import { environment } from "../../environments/environment";
 import { customLogger } from "../..";
 import { DcaInterval } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
-import { DdcaClient } from '@mean-dao/ddca';
+import {
+  DdcaClient,
+  calculateActionFees as calculateDdcaActionFees,
+  TransactionFees as DdcaTxFees,
+  DDCA_ACTIONS
+} from '@mean-dao/ddca';
 import { useConnectionConfig } from "../../contexts/connection";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -84,6 +89,9 @@ export const SwapUi = (props: {
   const [isDdcaTransactionModalVisible, setDdcaTransactionModalVisibility] = useState(false);
   // FEES
   const [txFees, setTxFees] = useState<TransactionFees>();
+  const [ddcaTxFees, setdDcaTxFees] = useState<DdcaTxFees>({
+    flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
+  });
   // AGGREGATOR
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
@@ -239,6 +247,33 @@ export const SwapUi = (props: {
     connection, 
     isWrap, 
     isUnwrap
+  ]);
+
+  // Get DDCA Tx fees
+  useEffect(() => {
+
+    if (!connection) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      calculateDdcaActionFees(connection, DDCA_ACTIONS.create, 1)
+        .then((fees: DdcaTxFees) => {
+          setdDcaTxFees(fees);
+          consoleOut('ddcaTxFees:', fees, 'blue');
+        })
+        .catch((_error: any) => {
+          console.error(_error);
+          throw(_error);
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection
   ]);
 
   // Token map for quick lookup.
@@ -1620,6 +1655,36 @@ export const SwapUi = (props: {
           result: ''
         });
 
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+
+        consoleOut('maxFeePerSwap:', ddcaTxFees.maxFeePerSwap, 'blue');
+        const totalScheduledSwapsFees = ddcaTxFees.maxFeePerSwap * payload.totalSwaps;
+        consoleOut('totalScheduledSwapsFees:', totalScheduledSwapsFees, 'blue');
+        const solBalance = userBalances[NATIVE_SOL_MINT.toBase58()];
+        consoleOut('nativeBalance:', solBalance, 'blue');
+
+        if (solBalance < totalScheduledSwapsFees) {
+          const newFees = Object.assign({}, ddcaTxFees, {
+            totalScheduledSwapsFees: totalScheduledSwapsFees
+          }) as DdcaTxFees;
+          setdDcaTxFees(newFees);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(solBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(totalScheduledSwapsFees, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
         // Create a transaction
         return await ddcaClient.createDdcaTx(
           payload.ownerAccountAddress,
@@ -2379,6 +2444,8 @@ export const SwapUi = (props: {
             fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
             fromTokenAmount={parseFloat(fromAmount) || 0}
             toToken={toMint && mintList[toMint]}
+            userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}
+            maxFeePerSwap={ddcaTxFees.maxFeePerSwap}
           />
         )}
 
@@ -2436,23 +2503,18 @@ export const SwapUi = (props: {
               </>
             ) : isError() ? (
               <>
-                <WarningOutlined
-                  style={{ fontSize: 48 }}
-                  className="icon"
-                />
+                <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                 {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t("transactions.status.tx-start-failure", {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         parseFloat(fromBalance),
-                        WRAPPED_SOL_MINT.toBase58(),
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
                         getComputedFees(txFees),
-                        WRAPPED_SOL_MINT.toBase58(),
-                        true
-                      )} SOL`
+                        NATIVE_SOL_MINT.toBase58()
+                      )
                     })}
                   </h4>
                 ) : (
@@ -2536,23 +2598,18 @@ export const SwapUi = (props: {
               </>
             ) : isError() ? (
               <>
-                <WarningOutlined
-                  style={{ fontSize: 48 }}
-                  className="icon"
-                />
+                <WarningOutlined style={{ fontSize: 48 }} className="icon" />
                 {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t("transactions.status.tx-start-failure", {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
-                        parseFloat(fromBalance),
-                        WRAPPED_SOL_MINT.toBase58(),
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        getComputedFees(txFees),
-                        WRAPPED_SOL_MINT.toBase58(),
-                        true
-                      )} SOL`
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                        userBalances[NATIVE_SOL_MINT.toBase58()],
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        ddcaTxFees.totalScheduledSwapsFees,
+                        NATIVE_SOL_MINT.toBase58()
+                      )
                     })}
                   </h4>
                 ) : (

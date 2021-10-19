@@ -1593,10 +1593,10 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.0.tgz#c012c1ecc1a0e53d50e6af381618dca5268461c1"
   integrity sha512-lLseUPEhSFUXYTKj6q7s2O3s2vW2ebgA11vMAlKodXGf5AFw4zUoEbTz9CoFOC9jS6xY4Qr8BmRnxP/odT4Uuw==
 
-"@mean-dao/ddca@^1.2.3":
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.3.tgz#9fcee8a96419feadfb3ab2d2a4ebb3f86b330c16"
-  integrity sha512-tWMBMqJHnwEbX+NAxOwd7z+HoP6+3hwh+kDiKxS0gVnWb4UL6xGnXECg/Q+jmNIu1E/3IZQCSi3UKamTVL72WQ==
+"@mean-dao/ddca@^1.2":
+  version "1.2.7"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.7.tgz#9d0c25031bab9cc1f9b7b69a14248b13db1ffd70"
+  integrity sha512-OAhrR0AFO+qTLMs2JOGv9QlWMUJTP9BDfi20TlJFrT5QevRoiDBz0EnA09jVtkTps2d23I4I+Z5QrGFS0J3XcA==
   dependencies:
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
@@ -2434,20 +2434,15 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*":
-  version "16.11.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.0.tgz#4b95f2327bacd1ef8f08d8ceda193039c5d7f52e"
-  integrity sha512-8MLkBIYQMuhRBQzGN9875bYsOhPnf/0rgXGo66S2FemHkhbn9qtsz9ywV1iCG+vbjigE4WUNVvw37Dx+L0qsPg==
+"@types/node@*", "@types/node@^16.11":
+  version "16.11.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.1.tgz#2e50a649a50fc403433a14f829eface1a3443e97"
+  integrity sha512-PYGcJHL9mwl1Ek3PLiYgyEKtwTMmkMw4vbiyz/ps3pfdRYLVv+SN7qHVAImrjdAXxgluDEw6Ph4lyv+m9UpRmA==
 
 "@types/node@^12.12.54":
   version "12.20.33"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.33.tgz#24927446e8b7669d10abacedd16077359678f436"
   integrity sha512-5XmYX2GECSa+CxMYaFsr2mrql71Q4EvHjKS+ox/SiwSdaASMoBIWE6UmZqFO+VX1jIcsYLStI4FFoB6V7FeIYw==
-
-"@types/node@^16.11":
-  version "16.11.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.1.tgz#2e50a649a50fc403433a14f829eface1a3443e97"
-  integrity sha512-PYGcJHL9mwl1Ek3PLiYgyEKtwTMmkMw4vbiyz/ps3pfdRYLVv+SN7qHVAImrjdAXxgluDEw6Ph4lyv+m9UpRmA==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
