@@ -14,6 +14,7 @@ import { InfoIcon } from '../InfoIcon';
 import { PublicKey } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import { EXCEPTION_LIST } from '../../constants';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
 export const DdcaSetupModal = (props: {
   fromToken: TokenInfo | undefined;
@@ -23,10 +24,12 @@ export const DdcaSetupModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  userBalance: number;
+  maxFeePerSwap: number;
 }) => {
   const { t } = useTranslation("common");
   const { publicKey } = useWallet();
-  const { ddcaOption, setDdcaOption } = useContext(AppStateContext);
+  const { ddcaOption } = useContext(AppStateContext);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
   const [recurrencePeriod, setRecurrencePeriod] = useState(0);
@@ -57,6 +60,7 @@ export const DdcaSetupModal = (props: {
       fromMint: new PublicKey(props.fromToken?.address as string),
       toMint: new PublicKey(props.toToken?.address as string),
       intervalinSeconds: getInterval(),
+      totalSwaps: recurrencePeriod + 1
     }
     props.handleOk(payload);
   }
@@ -134,10 +138,6 @@ export const DdcaSetupModal = (props: {
     );
   }
 
-  // const isOperationValid = (): boolean => {
-  //   return fromTokenBalance >= minimumRequiredBalance;
-  // }
-
   /**
    * Set values for rangeMin, rangeMax and recurrencePeriod
    * 
@@ -160,7 +160,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = (props.fromTokenBalance / props.fromTokenAmount);
+      const maxRangeFromBalance = Math.floor(props.fromTokenBalance / props.fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -201,6 +201,10 @@ export const DdcaSetupModal = (props: {
   const isUserAllowed = (): boolean => {
     if (!publicKey) { return true; }
     return EXCEPTION_LIST.some(a => a === publicKey.toBase58());
+  }
+
+  const hasEnoughNativeBalance = (): boolean => {
+    return props.userBalance >= props.maxFeePerSwap * (recurrencePeriod + 1) ? true : false;
   }
 
   // Info items will draw inside the popover
@@ -297,14 +301,16 @@ export const DdcaSetupModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isOperationValid || !isUserAllowed()}
+        disabled={!isOperationValid || !isUserAllowed() || !hasEnoughNativeBalance()}
         onClick={onAcceptModal}>
           {
             !isOperationValid
               ? t('transactions.validation.amount-low')
-              : isUserAllowed()
-                ? t('ddca-setup-modal.cta-label')
-                : 'Repeating buy temporarily unavailable'
+              : !isUserAllowed()
+                ? 'Repeating buy temporarily unavailable'
+                : !hasEnoughNativeBalance()
+                  ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
+                  : t('ddca-setup-modal.cta-label')
           }
       </Button>
     </Modal>

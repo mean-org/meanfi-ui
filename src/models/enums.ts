@@ -42,6 +42,9 @@ export enum TransactionStatus {
     ConfirmTransactionFailure = 14,
     TransactionFinished = 15,
     SendTransactionFailureByMinimumAmount = 16,
+    CreateRecurringBuySchedule = 17,
+    CreateRecurringBuyScheduleSuccess = 17,
+    CreateRecurringBuyScheduleFailure = 17,
 }
 
 export enum Operations {

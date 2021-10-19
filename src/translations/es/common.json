@@ -349,6 +349,9 @@
 		},
 		"status": {
 			"cta-view-stream": "Ver Transferencia de dinero",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",

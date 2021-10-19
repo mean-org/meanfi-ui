@@ -19,6 +19,7 @@ import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect"
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
+import { reportConnectedAccount } from "../../utils/api";
 
 const { Header, Content, Footer } = Layout;
 
@@ -52,6 +53,18 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+
+  // Clear cachedRpc on App destroy (window is being reloaded)
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
+
+  const handleTabClosingOrPageRefresh = () => {
+    window.localStorage.removeItem('cachedRpc');
+  }
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -134,10 +147,14 @@ export const AppLayout = React.memo((props: any) => {
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
           // Only record if referral address is valid and different from wallet address
-          // TODO: referrals is tempararily persisted in localStorage but we must use an API
           if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
-            // setReferrals(referrals + 1);
-            setReferralAddress('');
+            reportConnectedAccount(walletAddress, referralAddress)
+              .then(result => {
+                setReferralAddress('');
+              })
+              .catch(error => console.error(error));
+          } else {
+            reportConnectedAccount(walletAddress).then(result => consoleOut('reportConnectedAccount hit'));
           }
           // Let the AppState know which wallet address is connected and save it
           setAccountAddress(walletAddress);

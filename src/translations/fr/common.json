@@ -349,6 +349,9 @@
 		},
 		"status": {
 			"cta-view-stream": "Voir Transfert d'argent",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"instructions": "Confirmez cette transaction dans votre portefeuille",
 			"modal-title-executing-transaction": "Exécution de la transaction",
 			"modal-title-transaction-completed": "Transaction terminée",

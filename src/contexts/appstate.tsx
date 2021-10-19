@@ -30,6 +30,7 @@ import { MappedTransaction } from "../utils/history";
 import { consoleOut } from "../utils/ui";
 import { appConfig } from "..";
 import { ChainId } from "@saberhq/token-utils";
+import { DdcaAccount, DdcaClient } from "@mean-dao/ddca";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -75,6 +76,9 @@ interface AppStateConfig {
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
   canShowAccountDetails: boolean;
+  // DDCAs
+  recurringBuys: DdcaAccount[];
+  loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -112,6 +116,9 @@ interface AppStateConfig {
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
   setCanShowAccountDetails: (state: boolean) => void;
+  // DDCAs
+  setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
+  setLoadingRecurringBuys: (state: boolean) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -156,6 +163,9 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   addAccountPanelOpen: true,
   canShowAccountDetails: false,
+  // DDCAs
+  recurringBuys: [],
+  loadingRecurringBuys: false,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -193,6 +203,9 @@ const contextDefaultValues: AppStateConfig = {
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
   setCanShowAccountDetails: () => {},
+  // DDCAs
+  setRecurringBuys: () => {},
+  setLoadingRecurringBuys: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -865,6 +878,21 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [connectionConfig.cluster]);
 
+  /////////////////////////////////////
+  // Added to support /accounts page //
+  /////////////////////////////////////
+
+  const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
+  const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);
+
+  const setLoadingRecurringBuys = (value: boolean) => {
+    updateLoadingRecurringBuys(value);
+  }
+
+  const setRecurringBuys = (recurringBuys: DdcaAccount[]) => {
+    updateRecurringBuys(recurringBuys);
+  }
+
   return (
     <AppStateContext.Provider
       value={{
@@ -905,6 +933,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         addAccountPanelOpen,
         canShowAccountDetails,
+        recurringBuys,
+        loadingRecurringBuys,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -940,7 +970,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setAccountAddress,
         setAddAccountPanelOpen,
-        setCanShowAccountDetails
+        setCanShowAccountDetails,
+        setRecurringBuys,
+        setLoadingRecurringBuys
       }}>
       {children}
     </AppStateContext.Provider>

@@ -103,6 +103,12 @@ export function getTransactionStatusForLogs (status: TransactionStatus): string 
             return 'Transaction sent successfully';
         case TransactionStatus.ConfirmTransactionFailure:
             return 'The transaction could not be confirmed';
+        case TransactionStatus.CreateRecurringBuySchedule:
+            return 'Create recurring exchange schedule';
+        case TransactionStatus.CreateRecurringBuyScheduleSuccess:
+            return 'Recurring exchange created successfully';
+        case TransactionStatus.CreateRecurringBuyScheduleFailure:
+            return 'Could not create the recurring exchange';
         case TransactionStatus.TransactionFinished:
             return 'Operation completed. Transaction sent and confirmed!';
         default:
@@ -259,6 +265,12 @@ export const getTransactionOperationDescription = (status: TransactionStatusInfo
             return trans ? trans('transactions.status.tx-rejected') : 'Transaction rejected';
         case TransactionStatus.SendTransactionFailure :
             return trans ? trans('transactions.status.tx-send-failure') : 'Failure submitting transaction';
+        case TransactionStatus.CreateRecurringBuySchedule:
+            return trans ? trans('transactions.status.ddca-create-tx') : 'Create scheduled recurring exchange';
+        case TransactionStatus.CreateRecurringBuyScheduleSuccess:
+            return trans ? trans('transactions.status.ddca-create-tx-success') : 'Recurring exchange created successfully';
+        case TransactionStatus.CreateRecurringBuyScheduleFailure:
+            return trans ? trans('transactions.status.ddca-create-tx-failure') : 'Could not create the recurring exchange';
         case TransactionStatus.ConfirmTransactionFailure:
             return trans ? trans('transactions.status.tx-confirm-failure') : 'The transaction could not be confirmed';
         case TransactionStatus.TransactionFinished:
