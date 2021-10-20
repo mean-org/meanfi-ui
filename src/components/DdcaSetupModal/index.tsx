@@ -19,6 +19,7 @@ import { environment } from '../../environments/environment';
 import { TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
+import { LoadingOutlined } from '@ant-design/icons';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -51,6 +52,7 @@ export const DdcaSetupModal = (props: {
   } = useContext(AppStateContext);
   const [isBusy, setIsBusy] = useState(false);
   const [vaultCreated, setVaultCreated] = useState(false);
+  const [swapExecuted, setSwapExecuted] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
 
   const isProd = (): boolean => {
@@ -86,19 +88,6 @@ export const DdcaSetupModal = (props: {
       default:
         return 0;
     }
-  }
-
-  const onAcceptModal = () => {
-    const payload = {
-      ownerAccountAddress: publicKey,
-      depositAmount: props.fromTokenAmount * (recurrencePeriod + 1),
-      amountPerSwap: props.fromTokenAmount,
-      fromMint: new PublicKey(props.fromToken?.address as string),
-      toMint: new PublicKey(props.toToken?.address as string),
-      intervalinSeconds: getInterval(),
-      totalSwaps: recurrencePeriod + 1
-    }
-    props.handleOk(payload);
   }
 
   const getRecurrencePeriod = (): string => {
@@ -249,6 +238,10 @@ export const DdcaSetupModal = (props: {
     props.handleClose();
   }
 
+  const onOperationSuccess = () => {
+    props.handleOk();
+  }
+
   const onCreateVaultTxStart = async () => {
 
     let transaction: Transaction;
@@ -258,6 +251,7 @@ export const DdcaSetupModal = (props: {
     const transactionLog: any[] = [];
 
     setVaultCreated(false);
+    setSwapExecuted(false);
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -492,7 +486,7 @@ export const DdcaSetupModal = (props: {
         //   if (sent && !transactionCancelled) {
         //     const confirmed = await confirmTx();
         //     if (confirmed && !transactionCancelled) {
-        //       setVaultCrated(true);
+        //       setVaultCreated(true);
         //       setIsBusy(false);
         //     } else { setIsBusy(false); }
         //   } else { setIsBusy(false); }
@@ -523,6 +517,7 @@ export const DdcaSetupModal = (props: {
       { pubkey: saberUsdtReservesAddress, isWritable: true, isSigner: false},
     ];
 
+    setSwapExecuted(false);
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -763,6 +758,7 @@ export const DdcaSetupModal = (props: {
         currentOperation: TransactionStatus.TransactionFinished
       });
       setIsBusy(false);
+      setSwapExecuted(true);
 
       // const create = await createTx();
       // consoleOut('create:', create);
@@ -776,6 +772,7 @@ export const DdcaSetupModal = (props: {
       //       const confirmed = await confirmTx();
       //       if (confirmed && !transactionCancelled) {
       //         setIsBusy(false);
+      //         setSwapExecuted(true);
       //       } else { setIsBusy(false); }
       //     } else { setIsBusy(false); }
       //   } else { setIsBusy(false); }
@@ -814,63 +811,55 @@ export const DdcaSetupModal = (props: {
       <div className="mb-3">
         <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div>
       </div>
-      {vaultCreated && isBusy && !transactionCancelled ? (
-        <div className="transaction-progress">
-          pepe
-        </div>
-      ) : (
-        <>
-          <div className="slider-container">
-            <Slider
-              disabled={isBusy || vaultCreated}
-              marks={marks}
-              min={rangeMin}
-              max={rangeMax}
-              included={false}
-              tipFormatter={sliderTooltipFormatter}
-              value={recurrencePeriod}
-              onChange={onSliderChange}
-              tooltipVisible
-              dots={false}/>
-          </div>
-          <div className="mb-3">
-            <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
-            <ol className="greek">
-              <li>
-                {
-                  t('ddca-setup-modal.help.help-item-01', {
-                    fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                      props.fromTokenAmount * (recurrencePeriod + 1),
-                      props.fromToken?.address as string)
-                  })
-                }
-              </li>
-              <li>
-                {
-                  t('ddca-setup-modal.help.help-item-02', {
-                    recurrencePeriod: getRecurrencePeriod(),
-                  })
-                }
-              </li>
-              <li>
-                {
-                  t('ddca-setup-modal.help.help-item-03', {
-                    toTokenSymbol: props.toToken?.symbol,
-                  })
-                }
-              </li>
-            </ol>
-          </div>
-          <div className="mb-2 text-center">
-            <span className="yellow-pill">
-              <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
-                <IconShield className="mean-svg-icons"/>
-              </InfoIcon>
-              <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
-            </span>
-          </div>
-        </>
-      )}
+      <div className="slider-container">
+        <Slider
+          disabled={isBusy || vaultCreated}
+          marks={marks}
+          min={rangeMin}
+          max={rangeMax}
+          included={false}
+          tipFormatter={sliderTooltipFormatter}
+          value={recurrencePeriod}
+          onChange={onSliderChange}
+          tooltipVisible
+          dots={false}/>
+      </div>
+      <div className="mb-3">
+        <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
+        <ol className="greek">
+          <li>
+            {
+              t('ddca-setup-modal.help.help-item-01', {
+                fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
+                  props.fromTokenAmount * (recurrencePeriod + 1),
+                  props.fromToken?.address as string)
+              })
+            }
+          </li>
+          <li>
+            {
+              t('ddca-setup-modal.help.help-item-02', {
+                recurrencePeriod: getRecurrencePeriod(),
+              })
+            }
+          </li>
+          <li>
+            {
+              t('ddca-setup-modal.help.help-item-03', {
+                toTokenSymbol: props.toToken?.symbol,
+              })
+            }
+          </li>
+        </ol>
+      </div>
+      <div className="mb-2 text-center">
+        <span className="yellow-pill">
+          <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
+            <IconShield className="mean-svg-icons"/>
+          </InfoIcon>
+          <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
+        </span>
+      </div>
       {!isOperationValid && (
         <div className="mb-2 text-center">
           <span className="fg-error">
@@ -903,8 +892,8 @@ export const DdcaSetupModal = (props: {
                     : !hasEnoughNativeBalance()
                       ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
                       : vaultCreated
-                        ? t('ddca-setup-modal.cta-label-approved')
-                        : t('ddca-setup-modal.cta-label')
+                        ? t('ddca-setup-modal.cta-label-vault-created')
+                        : t('ddca-setup-modal.cta-label-deposit')
               }
           </Button>
         </div>
@@ -916,15 +905,29 @@ export const DdcaSetupModal = (props: {
             shape="round"
             size="large"
             disabled={!vaultCreated}
-            onClick={onSpawnSwapTxStart}>
-            Deposit
+            onClick={() => {
+              if (vaultCreated && swapExecuted) {
+                onOperationSuccess();
+              } else {
+                onSpawnSwapTxStart();
+              }
+            }}>
+            {vaultCreated && isBusy ? 'Starting' : vaultCreated && swapExecuted ? 'Finished' : 'Start'}
           </Button>
         </div>
       </div>
       <div className="transaction-timeline-wrapper">
         <ul className="transaction-timeline">
           <li><span className="value">{vaultCreated ? '✔︎' : '1'}</span></li>
-          <li><span className="value">2</span></li>
+          <li>
+            {vaultCreated && isBusy ? (
+              <span className="value"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            ) : vaultCreated && swapExecuted ? (
+              <span className="value">✔︎</span>
+            ) : (
+              <span className="value">2</span>
+            )}
+          </li>
         </ul>
       </div>
     </Modal>

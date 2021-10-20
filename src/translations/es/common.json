@@ -130,8 +130,8 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"cta-label": "Approve",
-		"cta-label-approved": "Approved",
+		"cta-label-deposit": "Deposit",
+		"cta-label-vault-created": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
