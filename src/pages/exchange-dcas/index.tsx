@@ -51,6 +51,7 @@ export const ExchangeDcasView = () => {
   const [cachedRpcJson] = useLocalStorageState("cachedRpc");
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
   const cachedRpc = (cachedRpcJson as RpcConfig);
+  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
 
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -79,14 +80,23 @@ export const ExchangeDcasView = () => {
   }, [cachedRpc.networkId]);
 
   // Set and cache connection
-  const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
-    [cachedRpc.httpProvider, mainnetRpc]);
+  const connection = useMemo(() => new Connection(endpoint, "confirmed"), [endpoint]);
 
   // Set and cache the DDCA client
-  const ddcaClient = useMemo(() => new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment }), [
+  const ddcaClient = useMemo(() => {
+    if (connection && wallet && endpoint) {
+      consoleOut('endpoint:', endpoint, 'blue');
+      consoleOut('connection:', connection, 'blue');
+      consoleOut('wallet:', wallet, 'blue');
+      consoleOut('Creating DdcaClient...', '', 'brown');
+      return new DdcaClient(endpoint, wallet, { commitment: connection.commitment });
+    } else {
+      return undefined;
+    }
+  }, [
     wallet,
-    connection.commitment,
-    connectionConfig.endpoint,
+    endpoint,
+    connection
   ]);
 
   // Transaction execution (Applies to all transactions)
@@ -175,21 +185,15 @@ export const ExchangeDcasView = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && ddcaDetails) {
+      if (wallet && ddcaDetails && ddcaClient) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const ddcaAccountPda = new PublicKey(ddcaDetails.id);
-        const fromMint = new PublicKey(ddcaDetails.fromMint);
-        const toMint = new PublicKey(ddcaDetails.toMint);
-
+        const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
         const data = {
-          ownerAccountAddress: wallet.publicKey.toBase58(),       // ownerAccountAddress
           ddcaAccountPda: ddcaAccountPda.toBase58(),              // ddcaAccountPda
-          fromMint: fromMint.toBase58(),                          // fromMint
-          toMint: toMint.toBase58()                               // toMint
         }
         consoleOut('data:', data);
 
@@ -230,10 +234,7 @@ export const ExchangeDcasView = () => {
 
         // Create a transaction
         return await ddcaClient.createCloseTx(
-          wallet.publicKey,                                 // ownerAccountAddress
-          ddcaAccountPda,                                   // ddcaAccountPda
-          fromMint,                                         // fromMint
-          toMint                                            // toMint
+          ddcaAccountPda,                                   // ddcaAccountAddress
         )
         .then(value => {
           consoleOut('createCloseTx returned transaction:', value);
@@ -463,10 +464,13 @@ export const ExchangeDcasView = () => {
   //////////////////////
 
   const selectDdcaItem = useCallback((item: DdcaAccount) => {
+    if (!ddcaClient) { return; }
+
     setDtailsPanelOpen(true);
     setSelectedDdca(item);
     setLoadingDdcaDetails(true);
-    const ddcaAddress = new PublicKey(item.id as string);
+    const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
+    consoleOut('Calling ddcaClient.GetDdca...', '', 'brown');
     ddcaClient.GetDdca(ddcaAddress)
       .then(ddca => {
         if (ddca) {
@@ -483,13 +487,14 @@ export const ExchangeDcasView = () => {
 
   // Gets the recurring buys on demmand
   const reloadRecurringBuys = useCallback((reset = false) => {
-    if (!publicKey) {
+    if (!publicKey || !ddcaClient) {
       return [];
     }
 
     if (!loadingRecurringBuys) {
       setLoadingRecurringBuys(true);
 
+      consoleOut('Calling ddcaClient.ListDdcas...', '', 'brown');
       ddcaClient.ListDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
@@ -498,9 +503,9 @@ export const ExchangeDcasView = () => {
             if (reset) {
               item = JSON.parse(JSON.stringify(dcas[0]));
             } else {
-              // Try to get current item by its id
+              // Try to get current item by its ddcaAccountAddress
               if (selectedDdca) {
-                const itemFromServer = dcas.find(i => i.id === selectedDdca.id);
+                const itemFromServer = dcas.find(i => i.ddcaAccountAddress === selectedDdca.ddcaAccountAddress);
                 item = itemFromServer || selectedDdca;
               } else {
                 item = JSON.parse(JSON.stringify(dcas[0]));
@@ -510,7 +515,8 @@ export const ExchangeDcasView = () => {
             if (item) {
               setSelectedDdca(item);
               setLoadingDdcaDetails(true);
-              const ddcaAddress = new PublicKey(item.id as string);
+              const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
+              consoleOut('Calling ddcaClient.GetDca...', '', 'brown');
               ddcaClient.GetDdca(ddcaAddress)
                 .then(ddca => {
                   if (ddca) {
@@ -543,15 +549,16 @@ export const ExchangeDcasView = () => {
   // It means that it will be triggered if going from disconnected to connected
   useEffect(() => {
 
-    if (publicKey && !firstLoadDone) {
+    if (previousWalletConnectState === connected && !firstLoadDone) {
       setFirstLoadDone(true);
       reloadRecurringBuys(true);
     }
 
     return () => {};
   }, [
-    publicKey,
+    connected,
     firstLoadDone,
+    previousWalletConnectState,
     reloadRecurringBuys
   ]);
 
@@ -561,9 +568,7 @@ export const ExchangeDcasView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected) {
         consoleOut('Loading DDCAs...', '', 'blue');
-        if (publicKey) {
-          reloadRecurringBuys(true);
-        }
+        reloadRecurringBuys(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('Cleaning DDCAs...', '', 'blue');
         setSelectedDdca(undefined);
@@ -572,7 +577,6 @@ export const ExchangeDcasView = () => {
       }
     }
   }, [
-    publicKey,
     connected,
     previousWalletConnectState,
     reloadRecurringBuys,
@@ -938,7 +942,7 @@ export const ExchangeDcasView = () => {
               </div>
             </div>
             <div className="item-list-body compact">
-              {(ddcaDetails?.id as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
+              {(ddcaDetails?.ddcaAccountAddress as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
                 <>
                 <span className="item-list-row simplelink">
                   <div className="std-table-cell first-cell">
@@ -1012,16 +1016,16 @@ export const ExchangeDcasView = () => {
         <div className="stream-share-ctas">
           <span
             className="copy-cta overflow-ellipsis-middle"
-            onClick={() => onCopyRecurringBuyAddress(selectedDdca.id)}
+            onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}
           >
-            {selectedDdca.id}
+            {selectedDdca.ddcaAccountAddress}
           </span>
           <a
             className="explorer-cta"
             target="_blank"
             rel="noopener noreferrer"
             href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-              selectedDdca.id
+              selectedDdca.ddcaAccountAddress
             }${getSolanaExplorerClusterParam()}`}
           >
             <IconExternalLink className="mean-svg-icons" />
@@ -1041,7 +1045,7 @@ export const ExchangeDcasView = () => {
         };
         return (
           <div key={`${index + 50}`} onClick={onBuyClick}
-               className={`transaction-list-row ${ddcaDetails && ddcaDetails.id === item.id ? 'selected' : ''}`}>
+               className={`transaction-list-row ${ddcaDetails && ddcaDetails.ddcaAccountAddress === item.ddcaAccountAddress ? 'selected' : ''}`}>
             <div className="icon-cell">
               {getBuyIconPair(item)}
             </div>

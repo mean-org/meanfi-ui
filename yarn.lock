@@ -1594,9 +1594,9 @@
   integrity sha512-lLseUPEhSFUXYTKj6q7s2O3s2vW2ebgA11vMAlKodXGf5AFw4zUoEbTz9CoFOC9jS6xY4Qr8BmRnxP/odT4Uuw==
 
 "@mean-dao/ddca@^1.2":
-  version "1.2.7"
-  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.7.tgz#9d0c25031bab9cc1f9b7b69a14248b13db1ffd70"
-  integrity sha512-OAhrR0AFO+qTLMs2JOGv9QlWMUJTP9BDfi20TlJFrT5QevRoiDBz0EnA09jVtkTps2d23I4I+Z5QrGFS0J3XcA==
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.8.tgz#ffacab679611d5840974077e701c0d91facbd75f"
+  integrity sha512-fHRdeQ4skCxUNGXGQQ3mzQ4gJGp/AqExxskUPquMn+KG1J2KhKqUmiT2aXJYItBJZrQp4hIxvGdpKRioGNVSdw==
   dependencies:
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"

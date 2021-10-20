@@ -1687,7 +1687,6 @@ export const SwapUi = (props: {
 
         // Create a transaction
         return await ddcaClient.createDdcaTx(
-          payload.ownerAccountAddress,
           payload.fromMint,
           payload.toMint,
           payload.depositAmount,
