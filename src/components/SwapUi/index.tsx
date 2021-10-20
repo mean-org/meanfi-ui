@@ -2413,6 +2413,8 @@ export const SwapUi = (props: {
                 <div className="ant-alert-message">
                   {t('swap.exchange-warning')}&nbsp;
                   <a className="primary-link" href={`${appConfig.getConfig('production').appUrl}/exchange`} target="_blank" rel="noopener noreferrer">MAINNET</a>
+                  <span className="ml-1">(<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
+                      href="https://docs.meanfi.com/tutorials/faq#why-is-the-mean-exchange-not-available-to-test-in-devnet">Why?</a>)</span>
                 </div>
                 <div className="ant-alert-description"></div>
               </div>
