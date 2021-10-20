@@ -91,7 +91,7 @@ export const SwapView = () => {
 
       const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
 
-      ddcaClient.ListDdcas()
+      ddcaClient.listDdcas()
         .then(ddcas => {
           consoleOut('ddcas:', ddcas, 'blue');
           setRecurringBuys(ddcas);

@@ -467,7 +467,7 @@ export const ExchangeDcasView = () => {
     setLoadingDdcaDetails(true);
     const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
     consoleOut('Calling ddcaClient.GetDdca...', '', 'brown');
-    ddcaClient.GetDdca(ddcaAddress)
+    ddcaClient.getDdca(ddcaAddress)
       .then(ddca => {
         if (ddca) {
           setDdcaDetails(ddca);
@@ -491,9 +491,9 @@ export const ExchangeDcasView = () => {
       setLoadingRecurringBuys(true);
 
       consoleOut('Calling ddcaClient.ListDdcas...', '', 'brown');
-      consoleOut('ddcaClient:', ddcaClient.ToString(), 'green');
+      consoleOut('ddcaClient:', ddcaClient.toString(), 'green');
 
-      ddcaClient.ListDdcas()
+      ddcaClient.listDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
           let item: DdcaAccount | undefined;
@@ -515,7 +515,7 @@ export const ExchangeDcasView = () => {
               setLoadingDdcaDetails(true);
               const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
               consoleOut('Calling ddcaClient.GetDca...', '', 'brown');
-              ddcaClient.GetDdca(ddcaAddress)
+              ddcaClient.getDdca(ddcaAddress)
                 .then(ddca => {
                   if (ddca) {
                     setDdcaDetails(ddca);
