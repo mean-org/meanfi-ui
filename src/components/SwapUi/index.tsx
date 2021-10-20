@@ -56,6 +56,7 @@ export const SwapUi = (props: {
     transactionStatus,
     previousWalletConnectState,
     setTransactionStatus,
+    setDdcaOption,
     setPreviousWalletConnectState
 
   } = useContext(AppStateContext);
@@ -117,8 +118,9 @@ export const SwapUi = (props: {
   const onCloseDdcaSetup = useCallback(() => {
     setFromAmount("");
     setFromSwapAmount(0);
+    setDdcaOption('One time exchange');
     setDdcaSetupModalVisibility(false);
-  }, []);
+  }, [setDdcaOption]);
 
   const isWrap = useCallback(() => {
 
