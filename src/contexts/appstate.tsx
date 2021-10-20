@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
+  BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   PRICE_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
@@ -857,8 +858,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         .filterByChainId(ChainId.MainnetBeta)
         .excludeByTag("nft")
         .getList() as UserTokenAccount[];
+      // Filter out the banned tokens
+      const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
       // Sort the big list
-      const sortedMainnetList = mainnetList.sort((a, b) => {
+      const sortedMainnetList = filteredTokens.sort((a, b) => {
         var nameA = a.symbol.toUpperCase();
         var nameB = b.symbol.toUpperCase();
         if (nameA < nameB) {

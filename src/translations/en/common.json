@@ -131,6 +131,7 @@
 	},
 	"ddca-setup-modal": {
 		"cta-label": "Approve",
+		"cta-label-approved": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
@@ -147,7 +148,13 @@
 		}
 	},
 	"ddcas": {
-		"screen-title": "Recurring buys"
+		"screen-title": "Recurring buys",
+		"streams-ddcas": "Click to refresh recurring buys",
+		"close-ddca": {
+			"modal-title": "Close recurring buy",
+			"primary-cta": "Close this buy",
+			"secondary-cta": "Cancel"
+		}
 	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
@@ -240,7 +247,8 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"see-rules": "See rules for details",
 		"share-to": "Share to"
 	},
 	"streams": {
@@ -300,7 +308,7 @@
 		}
 	},
 	"swap": {
-		"exchange-warning": "Token exchange happen with real assets in Mainnet",
+		"exchange-warning": "Mean Exchange is only available on",
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
@@ -436,6 +444,7 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
+			"blog": "Blog",
 			"code": "Code",
 			"developers": "Developers",
 			"disconnect": "Disconnect wallet",
@@ -445,6 +454,7 @@
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
+			"twitter": "Twitter",
 			"theme-dark": "Dark Mode",
 			"theme-light": "Light Mode"
 		},
