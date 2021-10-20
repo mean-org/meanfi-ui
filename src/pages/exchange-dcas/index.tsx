@@ -44,7 +44,6 @@ export const ExchangeDcasView = () => {
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
-  const connectionConfig = useConnectionConfig();
   const [redirect, setRedirect] = useState<string | null>(null);
 
   // Connection management
@@ -84,18 +83,15 @@ export const ExchangeDcasView = () => {
 
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
-    if (connection && wallet && endpoint) {
-      consoleOut('endpoint:', endpoint, 'blue');
-      consoleOut('connection:', connection, 'blue');
-      consoleOut('wallet:', wallet, 'blue');
-      consoleOut('Creating DdcaClient...', '', 'brown');
-      return new DdcaClient(endpoint, wallet, { commitment: connection.commitment });
+    if (connection && wallet && publicKey && endpoint) {
+      return new DdcaClient(endpoint, wallet, { commitment: connection.commitment }, true);
     } else {
       return undefined;
     }
   }, [
     wallet,
     endpoint,
+    publicKey,
     connection
   ]);
 
@@ -487,14 +483,16 @@ export const ExchangeDcasView = () => {
 
   // Gets the recurring buys on demmand
   const reloadRecurringBuys = useCallback((reset = false) => {
-    if (!publicKey || !ddcaClient) {
+    if (!publicKey || ddcaClient === undefined) {
       return [];
     }
 
-    if (!loadingRecurringBuys) {
+    if (!loadingRecurringBuys && ddcaClient) {
       setLoadingRecurringBuys(true);
 
       consoleOut('Calling ddcaClient.ListDdcas...', '', 'brown');
+      consoleOut('ddcaClient:', ddcaClient.ToString(), 'green');
+
       ddcaClient.ListDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
@@ -811,9 +809,20 @@ export const ExchangeDcasView = () => {
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={showCloseDdcaModal}>
-        <span className="menu-item-text">Cancel recurring buy</span>
-      </Menu.Item>
+      {/*
+        *     If exchangeFor is > 0 -> Withdraw is visible
+        *     If totalLeft is > 0 -> Cancel and withdraw everything
+      */}
+      {(ddcaDetails && ddcaDetails.exchangedForAmount > 0) && (
+        <Menu.Item key="1" onClick={() => {}}>
+          <span className="menu-item-text">Withdraw</span>
+        </Menu.Item>
+      )}
+      {(ddcaDetails && ddcaDetails.fromBalance > 0) && (
+        <Menu.Item key="2" onClick={showCloseDdcaModal}>
+          <span className="menu-item-text">Cancel and withdraw everything</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -901,6 +910,15 @@ export const ExchangeDcasView = () => {
             )}
 
             {/* Top up (add funds) button */}
+            {/*
+              * Top up will always be there
+              * [...]
+              *  Visibe If exchangeFor > 0 || totalLeft is > 0
+              *  {
+              *     If exchangeFor is > 0 -> Withdraw is visible
+              *     If totalLeft is > 0 -> Cancel and withdraw everything
+              *  }
+            */}
             <div className="mt-3 mb-3 withdraw-container">
               <Button
                 block
@@ -908,20 +926,21 @@ export const ExchangeDcasView = () => {
                 type="text"
                 shape="round"
                 size="small"
-                onClick={() => {}}
-              >
+                onClick={() => {}}>
                 {t("streams.stream-detail.add-funds-cta")}
               </Button>
-              <Dropdown overlay={menu} trigger={["click"]}>
-                <Button
-                  shape="round"
-                  type="text"
-                  size="small"
-                  className="ant-btn-shaded"
-                  onClick={(e) => e.preventDefault()}
-                  icon={<EllipsisOutlined />}
-                ></Button>
-              </Dropdown>
+              {(ddcaDetails && (ddcaDetails.exchangedForAmount > 0 || ddcaDetails.fromBalance > 0)) && (
+                <Dropdown overlay={menu} trigger={["click"]}>
+                  <Button
+                    shape="round"
+                    type="text"
+                    size="small"
+                    className="ant-btn-shaded"
+                    onClick={(e) => e.preventDefault()}
+                    icon={<EllipsisOutlined />}
+                  ></Button>
+                </Dropdown>
+              )}
             </div>
           </div>
         </Spin>
