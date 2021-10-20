@@ -60,6 +60,7 @@ export const SwapView = () => {
   const [cachedRpcJson] = useLocalStorageState("cachedRpc");
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
   const cachedRpc = (cachedRpcJson as RpcConfig);
+  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
 
   useEffect(() => {
     (async () => {
@@ -127,7 +128,7 @@ export const SwapView = () => {
     <div className="container main-container">
       <div className="interaction-area">
         <div className="place-transaction-box mb-3">
-          <SwapUi connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
+          <SwapUi connection={connection} endpoint={endpoint} queryFromMint={queryFromMint} queryToMint={queryToMint} />
         </div>
         {(recurringBuys && recurringBuys.length > 0 && isProd()) && (
           <div className="text-center mb-3">
