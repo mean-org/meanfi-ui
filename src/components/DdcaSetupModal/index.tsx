@@ -246,6 +246,12 @@ export const DdcaSetupModal = (props: {
     setIsBusy(false);
   }
 
+  const onFinishedSwapTx = () => {
+    setIsBusy(false);
+    setSwapExecuted(true);
+    props.handleOk();
+  }
+
   const onOperationCancel = () => {
     if (isBusy) {
       setTransactionCancelled(true);
@@ -755,8 +761,7 @@ export const DdcaSetupModal = (props: {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            setIsBusy(false);
-            setSwapExecuted(true);
+            onFinishedSwapTx();
             // const confirmed = await confirmTx();
             // if (confirmed && !transactionCancelled) {
             //   setIsBusy(false);
