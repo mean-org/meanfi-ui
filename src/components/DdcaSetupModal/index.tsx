@@ -57,9 +57,6 @@ export const DdcaSetupModal = (props: {
   const [swapExecuted, setSwapExecuted] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
 
-  console.log('HLA INFO', props.hlaInfo);
-  console.log('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
-
   const isProd = (): boolean => {
     return environment === 'production';
   }
@@ -223,12 +220,16 @@ export const DdcaSetupModal = (props: {
         setRecurrencePeriod(minRangeSelectable);
       }
 
+      consoleOut('HLA INFO', props.hlaInfo, 'blue');
+      consoleOut('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
+    
     }
   }, [
     ddcaOption,
     rangeMin,
     props.fromTokenAmount,
     props.fromTokenBalance,
+    props.hlaInfo,
     getTotalPeriod
   ]);
 
@@ -483,7 +484,7 @@ export const DdcaSetupModal = (props: {
           await delay(2000);
           setVaultCreated(true);
           setIsBusy(false);
-        }
+        }  else { setIsBusy(false); }
 
         // if (sign && !transactionCancelled) {
         //   const sent = await sendTx();
@@ -923,7 +924,15 @@ export const DdcaSetupModal = (props: {
       </div>
       <div className="transaction-timeline-wrapper">
         <ul className="transaction-timeline">
-          <li><span className="value">{vaultCreated ? '✔︎' : '1'}</span></li>
+          <li>
+            {!vaultCreated && !swapExecuted && isBusy ? (
+              <span className="value"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            ) : vaultCreated ? (
+              <span className="value">✔︎</span>
+            ) : (
+              <span className="value">1</span>
+            )}
+          </li>
           <li>
             {vaultCreated && isBusy ? (
               <span className="value"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
