@@ -180,19 +180,19 @@ export const SwapUi = (props: {
 
     if (!fromMint || !toMint) { return false; }
 
-    // const usdStables = [
-    //   USDC_MINT.toBase58(), 
-    //   USDT_MINT.toBase58()
-    // ];
+    const usdStables = [
+      USDC_MINT.toBase58(), 
+      USDT_MINT.toBase58()
+    ];
 
     const solStables = [
       NATIVE_SOL_MINT.toBase58(), 
       WRAPPED_SOL_MINT.toBase58()
     ];
 
-    // if (usdStables.includes(fromMint) && usdStables.includes(toMint)) {
-    //   return true;
-    // }
+    if (usdStables.includes(fromMint) && usdStables.includes(toMint)) {
+      return true;
+    }
 
     if (solStables.includes(fromMint) && solStables.includes(toMint)) {
       return true;
@@ -924,17 +924,17 @@ export const SwapUi = (props: {
         setDdcaOption('One time exchange');
       }
 
-      if (toMint === WRAPPED_SOL_MINT.toBase58()) {
+      // if (toMint === WRAPPED_SOL_MINT.toBase58()) {
 
-        const solList: any[] = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'SOL');
+      //   const solList: any[] = Object
+      //     .values(mintList)
+      //     .filter((m: any) => m.symbol === 'SOL');
 
-        setShowFromMintList(solList);
-        setFromMint(NATIVE_SOL_MINT.toBase58());
+      //   setShowFromMintList(solList);
+      //   setFromMint(NATIVE_SOL_MINT.toBase58());
 
-        return;
-      }
+      //   return;
+      // }
 
       const btcMintInfo: any = Object
         .values(mintList)
