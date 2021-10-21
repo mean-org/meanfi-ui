@@ -2186,7 +2186,6 @@ export const Streams = () => {
       </div>
       {/* Right / down panel */}
       <div className="stream-details-container">
-        <Divider className="streams-divider" plain></Divider>
         <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
         <div className="inner-container">
           {connected && streamDetail ? (
