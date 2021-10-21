@@ -9,7 +9,6 @@ import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } f
 import { SaberClient } from "./saber/client";
 import { MercurialClient } from "./mercurial/client";
 import BN from "bn.js";
-import { consoleOut } from "../utils/ui";
 
 export const getClient = (
   connection: Connection,

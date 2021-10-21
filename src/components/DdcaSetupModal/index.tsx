@@ -20,6 +20,7 @@ import { TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { LoadingOutlined } from '@ant-design/icons';
+import { HlaInfo } from '../../hybrid-liquidity-ag/types';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -35,6 +36,7 @@ export const DdcaSetupModal = (props: {
   userBalance: number;
   ddcaTxFees: TransactionFees;
   slippage: number;
+  hlaInfo: HlaInfo;
 }) => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
@@ -54,6 +56,9 @@ export const DdcaSetupModal = (props: {
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
+
+  console.log('HLA INFO', props.hlaInfo);
+  console.log('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
 
   const isProd = (): boolean => {
     return environment === 'production';

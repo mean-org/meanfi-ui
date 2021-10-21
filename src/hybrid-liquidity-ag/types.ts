@@ -71,6 +71,13 @@ export type FeesInfo = {
   total: number
 }
 
+export type HlaInfo = {
+  exchangeRate: number,
+  protocolFees: number,
+  aggregatorFees: number,
+  remainingAccounts: PublicKey[]
+}
+
 export interface Client {
 
   protocolAddress: string;
@@ -97,5 +104,9 @@ export interface Client {
 }
 
 export interface LPClient extends Client {
+
   getPoolInfo(address: string): Promise<any | undefined>
+
+  hlaExchangeAccounts: PublicKey[]
+
 }

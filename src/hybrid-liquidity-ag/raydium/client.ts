@@ -27,6 +27,10 @@ export class RaydiumClient implements LPClient {
     return RAYDIUM.toBase58();
   }
 
+  public get hlaExchangeAccounts(): PublicKey[] {
+    return [];
+  }
+
   public getPoolInfo = async (
     address: string
   

@@ -18,7 +18,7 @@ import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
-import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
+import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, HlaInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
 import { getClient, getExchangeInfo, getOptimalPool, getTokensPools, unwrap, wrap } from "../../hybrid-liquidity-ag/utils";
 import { cloneDeep } from "lodash";
@@ -106,6 +106,7 @@ export const SwapUi = (props: {
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
+  const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
 
   // DDCA Option selector modal
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
@@ -114,7 +115,26 @@ export const SwapUi = (props: {
 
   // DDCA Setup modal
   const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
-  const showDdcaSetup = useCallback(() => setDdcaSetupModalVisibility(true), []);
+
+  const showDdcaSetup = useCallback(() => {
+
+    if (!swapClient) { return; }
+
+    const hlaInfo: HlaInfo = {
+      exchangeRate: exchangeInfo ? exchangeInfo.outPrice as number : 0,
+      protocolFees: exchangeInfo ? exchangeInfo.protocolFees as number : 0,
+      aggregatorFees: 0.05,
+      remainingAccounts: swapClient.hlaExchangeAccounts
+    };
+
+    setHlaInfo(hlaInfo);
+    setDdcaSetupModalVisibility(true);
+    
+  }, [
+    swapClient, 
+    exchangeInfo
+  ]);
+
   const onCloseDdcaSetup = useCallback(() => {
     setFromAmount("");
     setFromSwapAmount(0);
@@ -151,6 +171,35 @@ export const SwapUi = (props: {
     fromMint, 
     toMint
   ])
+
+  const isStableSwap = useCallback(() => {
+
+    if (!fromMint || !toMint) { return false; }
+
+    // const usdStables = [
+    //   USDC_MINT.toBase58(), 
+    //   USDT_MINT.toBase58()
+    // ];
+
+    const solStables = [
+      NATIVE_SOL_MINT.toBase58(), 
+      WRAPPED_SOL_MINT.toBase58()
+    ];
+
+    // if (usdStables.includes(fromMint) && usdStables.includes(toMint)) {
+    //   return true;
+    // }
+
+    if (solStables.includes(fromMint) && solStables.includes(toMint)) {
+      return true;
+    }
+
+    return false;
+
+  },[
+    fromMint, 
+    toMint
+  ]);
 
   // Automatically updates the user account
   useEffect(() => {
@@ -802,6 +851,10 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      if (isStableSwap()) {
+        setDdcaOption('One time exchange');
+      }
+
       if (fromMint === WRAPPED_SOL_MINT.toBase58()) {
 
         const solList: any[] = Object
@@ -851,7 +904,9 @@ export const SwapUi = (props: {
   },[
     fromMint,
     toMint,
-    mintList
+    mintList,
+    isStableSwap,
+    setDdcaOption
   ]);
 
   // Updates the allowed from mints to select 
@@ -860,6 +915,10 @@ export const SwapUi = (props: {
     if (!toMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
+      
+      if (isStableSwap()) {
+        setDdcaOption('One time exchange');
+      }
 
       if (toMint === WRAPPED_SOL_MINT.toBase58()) {
 
@@ -904,7 +963,9 @@ export const SwapUi = (props: {
   },[
     fromMint,
     toMint,
-    mintList
+    mintList,
+    isStableSwap,
+    setDdcaOption
   ]);
 
   // Updates the label of the Swap button
@@ -1825,26 +1886,6 @@ export const SwapUi = (props: {
   }
   // END OF TESTING BLOCK
 
-  const isStableSwap = (from: string | undefined, to: string | undefined) => {
-    if (!from || !to) { return false; }
-
-    const usdStables = [
-      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
-    ];
-    const solStables = [
-      '11111111111111111111111111111111',
-      'So11111111111111111111111111111111111111112addr'
-    ];
-    if (usdStables.includes(from) && usdStables.includes(to)) {
-      return true;
-    }
-    if (solStables.includes(from) && solStables.includes(to)) {
-      return true;
-    }
-    return false;
-  }
-
   return (
     <Spin spinning={isBusy || refreshing}>
       <div className="swap-wrapper">
@@ -1969,7 +2010,7 @@ export const SwapUi = (props: {
               type="default"
               shape="round"
               size="middle"
-              disabled={isStableSwap(fromMint, toMint)}
+              disabled={isStableSwap()}
               className={`dropdown-like-button ${ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange ? 'active' : ''}`}
               onClick={showDdcaOptionSelector}>
               <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
@@ -2065,6 +2106,7 @@ export const SwapUi = (props: {
             userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}
             ddcaTxFees={ddcaTxFees}
             slippage={slippage}
+            hlaInfo={hlaInfo as HlaInfo}
           />
         )}
 

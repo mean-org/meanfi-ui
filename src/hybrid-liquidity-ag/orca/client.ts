@@ -34,6 +34,10 @@ export class OrcaClient implements LPClient {
     return ORCA.toBase58(); 
   }
 
+  public get hlaExchangeAccounts(): PublicKey[] {
+    return [];
+  }
+
   public getPoolInfo = async (
     address: string
 
