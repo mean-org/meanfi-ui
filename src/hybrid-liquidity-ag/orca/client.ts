@@ -25,10 +25,12 @@ export class OrcaClient implements LPClient {
   private connection: Connection;
   private orcaSwap: Orca;
   private currentPool: any;
+  private exchangeAccounts: AccountMeta[];
 
   constructor(connection: Connection) {
     this.connection = connection;
     this.orcaSwap = getOrca(this.connection);
+    this.exchangeAccounts = [];
   }
 
   public get protocolAddress() : string {
@@ -36,7 +38,7 @@ export class OrcaClient implements LPClient {
   }
 
   public get hlaExchangeAccounts(): AccountMeta[] {
-    return [];
+    return this.exchangeAccounts;
   }
 
   public getPoolInfo = async (
@@ -93,6 +95,8 @@ export class OrcaClient implements LPClient {
       networkFees: quote.getNetworkFees().toNumber() / LAMPORTS_PER_SOL,
       protocolFees: quote.getLPFees().toNumber() * amount
     };
+
+    await this.updateHlaExchangeAccounts(from, to);
 
     return exchangeInfo;
   };
@@ -355,4 +359,39 @@ export class OrcaClient implements LPClient {
 
     return tx;
   };
+
+  private updateHlaExchangeAccounts = async (
+    from: string,
+    to: string
+
+  ): Promise<void> => {
+
+    try {
+
+      if (!this.currentPool) {
+        return undefined;
+      }
+
+      const [authorityForPoolAddress] = await PublicKey.findProgramAddress(
+        [this.currentPool.poolParams.address.toBuffer()],
+        ORCA_TOKEN_SWAP_ID
+      );
+
+      const fromAddress = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : from; 
+      const toAddress = to === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : to;
+
+      this.exchangeAccounts = [
+        { pubkey: ORCA_TOKEN_SWAP_ID, isSigner: false, isWritable: false },
+        { pubkey: this.currentPool.poolParams.address, isSigner: false, isWritable: false },
+        { pubkey: authorityForPoolAddress, isSigner: false, isWritable: false },
+        { pubkey: this.currentPool.poolParams.tokens[fromAddress].addr, isSigner: false, isWritable: true },
+        { pubkey: this.currentPool.poolParams.tokens[toAddress].addr, isSigner: false, isWritable: true },
+        { pubkey: this.currentPool.poolParams.poolTokenMint, isSigner: false, isWritable: false },
+        { pubkey: this.currentPool.poolParams.feeAccount, isSigner: false, isWritable: false }
+      ];
+
+    } catch (_error) {
+      throw _error;
+    }
+  }
 }

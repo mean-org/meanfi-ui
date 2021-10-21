@@ -1,7 +1,7 @@
 import { AmmPoolInfo, Client, MERCURIAL, ORCA, RAYDIUM, SABER, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
 import { WRAPPED_SOL_MINT } from "../utils/ids";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { RaydiumClient } from "./raydium/client";
 import { OrcaClient } from "../hybrid-liquidity-ag/orca/client";
 import { SerumClient } from "./serum/client";
