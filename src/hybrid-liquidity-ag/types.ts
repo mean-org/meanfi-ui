@@ -1,4 +1,4 @@
-import { PublicKey, Transaction } from "@solana/web3.js"
+import { AccountMeta, PublicKey, Transaction } from "@solana/web3.js"
 
 export const MSP_OPS = new PublicKey(
   'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr'
@@ -75,7 +75,7 @@ export type HlaInfo = {
   exchangeRate: number,
   protocolFees: number,
   aggregatorPercentFees: number,
-  remainingAccounts: PublicKey[]
+  remainingAccounts: AccountMeta[]
 }
 
 export interface Client {
@@ -107,6 +107,6 @@ export interface LPClient extends Client {
 
   getPoolInfo(address: string): Promise<any | undefined>
 
-  hlaExchangeAccounts: PublicKey[]
+  hlaExchangeAccounts: AccountMeta[]
 
 }

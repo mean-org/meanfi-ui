@@ -1,4 +1,4 @@
-import { Connection, Keypair, PublicKey, Signer, Transaction } from "@solana/web3.js";
+import { AccountMeta, Connection, Keypair, PublicKey, Signer, Transaction } from "@solana/web3.js";
 import { ExchangeInfo, LPClient, MERCURIAL } from "../types";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { cloneDeep } from "lodash-es";
@@ -23,7 +23,7 @@ export class MercurialClient implements LPClient {
     return MERCURIAL.toBase58(); 
   }
 
-  public get hlaExchangeAccounts(): PublicKey[] {
+  public get hlaExchangeAccounts(): AccountMeta[] {
     return [];
   }
   

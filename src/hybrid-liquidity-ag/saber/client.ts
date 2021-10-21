@@ -1,4 +1,4 @@
-import { Connection, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
+import { AccountMeta, Connection, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
 import { cloneDeep } from "lodash-es";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { ExchangeInfo, LPClient, SABER } from "../types";
@@ -28,7 +28,7 @@ export class SaberClient implements LPClient {
   private connection: Connection;
   private saberSwap: any;
   private currentPool: any;
-  private exchangeAccounts: any;
+  private exchangeAccounts: AccountMeta[];
 
   constructor(connection: Connection) {
     this.connection = connection;
@@ -39,7 +39,7 @@ export class SaberClient implements LPClient {
     return SABER.toBase58(); 
   }
 
-  public get hlaExchangeAccounts(): PublicKey[] {
+  public get hlaExchangeAccounts(): AccountMeta[] {
     return this.exchangeAccounts || [];
   }
 
@@ -386,14 +386,14 @@ export class SaberClient implements LPClient {
       }
 
       this.exchangeAccounts = [
-        new PublicKey(saberPool.address),
-        saberSwap.config.swapProgramID,
-        saberSwap.config.swapAccount,
-        saberSwap.config.authority,
-        inputReserveAccount,
-        outputReserveAccount,
-        adminFeeAccount,
-        SYSVAR_CLOCK_PUBKEY
+        { pubkey: new PublicKey(saberPool.address), isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.swapProgramID, isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.swapAccount, isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.authority, isSigner: false, isWritable: false },
+        { pubkey: inputReserveAccount, isSigner: false, isWritable: true },
+        { pubkey: outputReserveAccount, isSigner: false, isWritable: true },
+        { pubkey: adminFeeAccount, isSigner: false, isWritable: true },
+        { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false }
       ];
 
     } catch (_error) {

@@ -1,4 +1,5 @@
 import { 
+  AccountMeta,
   Connection, 
   Keypair, 
   LAMPORTS_PER_SOL, 
@@ -34,7 +35,7 @@ export class OrcaClient implements LPClient {
     return ORCA.toBase58(); 
   }
 
-  public get hlaExchangeAccounts(): PublicKey[] {
+  public get hlaExchangeAccounts(): AccountMeta[] {
     return [];
   }
 
