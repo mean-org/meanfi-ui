@@ -4,14 +4,14 @@ import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
-import { consoleOut, delay, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import "./style.less";
 import { SliderMarks } from 'antd/lib/slider';
 import { IconShield } from '../../Icons';
 import { InfoIcon } from '../InfoIcon';
-import { AccountMeta, Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import { EXCEPTION_LIST } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
@@ -45,7 +45,7 @@ export const DdcaSetupModal = (props: {
   const [recurrencePeriod, setRecurrencePeriod] = useState(0);
   const [minimumRequiredBalance, setMinimumRequiredBalance] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
-  const [isOperationValid, setIsOperationValid] = useState(false);
+  const [hasMinimumTokenBalance, setHasMinimumTokenBalance] = useState(false);
   // Transaction control
   const {
     ddcaOption,
@@ -56,6 +56,7 @@ export const DdcaSetupModal = (props: {
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [ddcaAccountPda, setDdcaAccountPda] = useState<PublicKey | undefined>();
 
   const isProd = (): boolean => {
     return environment === 'production';
@@ -211,7 +212,7 @@ export const DdcaSetupModal = (props: {
       const minimumRequired = props.fromTokenAmount * (rangeMin + 1);
       const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
       setMinimumRequiredBalance(minimumRequired);
-      setIsOperationValid(isOpValid);
+      setHasMinimumTokenBalance(isOpValid);
 
       // Set the slider position
       if (isOpValid) {
@@ -221,8 +222,6 @@ export const DdcaSetupModal = (props: {
       }
 
       consoleOut('HLA INFO', props.hlaInfo, 'blue');
-      consoleOut('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
-    
     }
   }, [
     ddcaOption,
@@ -253,9 +252,9 @@ export const DdcaSetupModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
-    let ddcaAccountPda: PublicKey;
     const transactionLog: any[] = [];
 
+    setDdcaAccountPda(undefined);
     setVaultCreated(false);
     setSwapExecuted(false);
     setTransactionCancelled(false);
@@ -311,7 +310,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
             result: ''
           });
-          ddcaAccountPda = value[0];
+          setDdcaAccountPda(value[0]);
           transaction = value[1];
           return true;
         })
@@ -479,24 +478,24 @@ export const DdcaSetupModal = (props: {
         const sign = await signTx();
         consoleOut('sign:', sign);
 
-        if (sign && !transactionCancelled) {
-          consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
-          await delay(2000);
-          setVaultCreated(true);
-          setIsBusy(false);
-        }  else { setIsBusy(false); }
-
         // if (sign && !transactionCancelled) {
-        //   const sent = await sendTx();
-        //   consoleOut('sent:', sent);
-        //   if (sent && !transactionCancelled) {
-        //     const confirmed = await confirmTx();
-        //     if (confirmed && !transactionCancelled) {
-        //       setVaultCreated(true);
-        //       setIsBusy(false);
-        //     } else { setIsBusy(false); }
-        //   } else { setIsBusy(false); }
-        // } else { setIsBusy(false); }
+        //   consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
+        //   await delay(2000);
+        //   setVaultCreated(true);
+        //   setIsBusy(false);
+        // }  else { setIsBusy(false); }
+
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            if (confirmed && !transactionCancelled) {
+              setVaultCreated(true);
+              setIsBusy(false);
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
@@ -507,21 +506,7 @@ export const DdcaSetupModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
-    let ddcaAccountPda: PublicKey;
     const transactionLog: any[] = [];
-
-    const saberAmmAddress = new PublicKey("VeNkoB1HvSP6bSeGybQDnx9wTWFsQb2NBCemeCDSuKL");
-    const saberPoolTokenAddress = new PublicKey("YakofBo4X3zMxa823THQJwZ8QeoU8pxPdFdxJs7JW57");
-    const sabarUsdcReservesAddress = new PublicKey("6aFutFMWR7PbWdBQhdfrcKrAor9WYa2twtSinTMb9tXv");
-    const saberUsdtReservesAddress = new PublicKey("HXbhpnLTxSDDkTg6deDpsXzJRBf8j7T6Dc3GidwrLWeo");
-    const saberProtocolProgramAddress = new PublicKey("SSwpkEEcbUqx4vtoEByFjSkhKdCT862DNVb52nZg1UZ");
-    const hlaAmmAccounts: Array<AccountMeta> = [
-      { pubkey: saberProtocolProgramAddress, isWritable: false, isSigner: false},
-      { pubkey: saberAmmAddress, isWritable: false, isSigner: false},
-      { pubkey: saberPoolTokenAddress, isWritable: false, isSigner: false},
-      { pubkey: sabarUsdcReservesAddress, isWritable: true, isSigner: false},
-      { pubkey: saberUsdtReservesAddress, isWritable: true, isSigner: false},
-    ];
 
     setSwapExecuted(false);
     setTransactionCancelled(false);
@@ -530,7 +515,7 @@ export const DdcaSetupModal = (props: {
     const ddcaClient = new DdcaClient(props.endpoint, wallet, { commitment: "confirmed" })
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey && ddcaAccountPda) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -539,11 +524,7 @@ export const DdcaSetupModal = (props: {
 
         const swapPayload = {
           ddcaAccountPda: ddcaAccountPda,
-          fromMint: new PublicKey(props.fromToken?.address as string),
-          toMint: new PublicKey(props.toToken?.address as string),
-          hlaAmmAccounts: hlaAmmAccounts,
-          swapMinimumOutAmount: 0,      // TODO: where to get this from?
-          swapSlippage: props.slippage
+          hlaInfo: props.hlaInfo
         };
 
         consoleOut('ddca swap params:', swapPayload, 'brown');
@@ -557,11 +538,8 @@ export const DdcaSetupModal = (props: {
         // Create a transaction
         return await ddcaClient.createWakeAndSwapTx(
           ddcaAccountPda,
-          swapPayload.fromMint,
-          swapPayload.toMint,
-          hlaAmmAccounts,
-          swapPayload.swapMinimumOutAmount,
-          swapPayload.swapSlippage)
+          props.hlaInfo
+        )
         .then(value => {
           consoleOut('createWakeAndSwapTx returned transaction:', value);
           setTransactionStatus({
@@ -734,55 +712,55 @@ export const DdcaSetupModal = (props: {
 
     if (wallet && publicKey) {
       // Simulation via setTimeout
-      consoleOut('Simulating TxStart...', '', 'purple');
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction
-      });
-      consoleOut('Simulating TxSign for 2 seconds...', '', 'purple');
-      await delay(2000);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.InitTransactionSuccess,
-        currentOperation: TransactionStatus.SignTransaction
-      });
-      consoleOut('Set SignTransactionSuccess...', '', 'purple');
-      await delay(350);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.SignTransactionSuccess,
-        currentOperation: TransactionStatus.SendTransaction
-      });
-      consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
-      await delay(2000);
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.ConfirmTransaction
-      });
-      consoleOut('Simulating TxConfirm for 2 second', '', 'purple');
-      await delay(2000);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-        currentOperation: TransactionStatus.TransactionFinished
-      });
-      setIsBusy(false);
-      setSwapExecuted(true);
+      // consoleOut('Simulating TxStart...', '', 'purple');
+      // setTransactionStatus({
+      //   lastOperation: TransactionStatus.TransactionStart,
+      //   currentOperation: TransactionStatus.InitTransaction
+      // });
+      // consoleOut('Simulating TxSign for 2 seconds...', '', 'purple');
+      // await delay(2000);
+      // setTransactionStatus({
+      //   lastOperation: TransactionStatus.InitTransactionSuccess,
+      //   currentOperation: TransactionStatus.SignTransaction
+      // });
+      // consoleOut('Set SignTransactionSuccess...', '', 'purple');
+      // await delay(350);
+      // setTransactionStatus({
+      //   lastOperation: TransactionStatus.SignTransactionSuccess,
+      //   currentOperation: TransactionStatus.SendTransaction
+      // });
+      // consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
+      // await delay(2000);
+      // setTransactionStatus({
+      //   lastOperation: transactionStatus.currentOperation,
+      //   currentOperation: TransactionStatus.ConfirmTransaction
+      // });
+      // consoleOut('Simulating TxConfirm for 2 second', '', 'purple');
+      // await delay(2000);
+      // setTransactionStatus({
+      //   lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+      //   currentOperation: TransactionStatus.TransactionFinished
+      // });
+      // setIsBusy(false);
+      // setSwapExecuted(true);
 
-      // const create = await createTx();
-      // consoleOut('create:', create);
-      // if (create && !transactionCancelled) {
-      //   const sign = await signTx();
-      //   consoleOut('sign:', sign);
-      //   if (sign && !transactionCancelled) {
-      //     const sent = await sendTx();
-      //     consoleOut('sent:', sent);
-      //     if (sent && !transactionCancelled) {
-      //       const confirmed = await confirmTx();
-      //       if (confirmed && !transactionCancelled) {
-      //         setIsBusy(false);
-      //         setSwapExecuted(true);
-      //       } else { setIsBusy(false); }
-      //     } else { setIsBusy(false); }
-      //   } else { setIsBusy(false); }
-      // } else { setIsBusy(false); }
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            const confirmed = await confirmTx();
+            if (confirmed && !transactionCancelled) {
+              setIsBusy(false);
+              setSwapExecuted(true);
+            } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
     }
 
   };
@@ -866,7 +844,7 @@ export const DdcaSetupModal = (props: {
           <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
         </span>
       </div>
-      {!isOperationValid && (
+      {!hasMinimumTokenBalance && (
         <div className="mb-2 text-center">
           <span className="fg-error">
             {
@@ -888,9 +866,22 @@ export const DdcaSetupModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            disabled={!isOperationValid || !isUserAllowed() || !hasEnoughNativeBalance() || !isProd()}
+            disabled={!hasMinimumTokenBalance || !isUserAllowed() || !hasEnoughNativeBalance() || !isProd()}
             onClick={() => onCreateVaultTxStart()}>
               {
+                !vaultCreated && isBusy
+                  ? t('ddca-setup-modal.cta-label-depositing')
+                  : vaultCreated
+                  ? t('ddca-setup-modal.cta-label-vault-created')
+                  : !hasMinimumTokenBalance
+                      ? t('transactions.validation.amount-low')
+                      : !isUserAllowed()
+                        ? 'Repeating buy temporarily unavailable'
+                        : !hasEnoughNativeBalance()
+                          ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
+                          : t('ddca-setup-modal.cta-label-deposit')
+              }
+              {/* {
                 !isOperationValid
                   ? t('transactions.validation.amount-low')
                   : !isUserAllowed()
@@ -900,7 +891,7 @@ export const DdcaSetupModal = (props: {
                       : vaultCreated
                         ? t('ddca-setup-modal.cta-label-vault-created')
                         : t('ddca-setup-modal.cta-label-deposit')
-              }
+              } */}
           </Button>
         </div>
         <div className="col-6">
