@@ -123,7 +123,7 @@ export const SwapUi = (props: {
     const hlaInfo: HlaInfo = {
       exchangeRate: exchangeInfo ? exchangeInfo.outPrice as number : 0,
       protocolFees: exchangeInfo ? exchangeInfo.protocolFees as number : 0,
-      aggregatorFees: 0.05,
+      aggregatorPercentFees: 0.05,
       remainingAccounts: swapClient.hlaExchangeAccounts
     };
 

@@ -57,8 +57,8 @@ export const DdcaSetupModal = (props: {
   const [swapExecuted, setSwapExecuted] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
 
-  console.log('HLA INFO', props.hlaInfo);
-  console.log('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
+  consoleOut('HLA INFO', props.hlaInfo);
+  consoleOut('HLA INFO ACCOUNTS', props.hlaInfo?.remainingAccounts.map(a => a.toBase58()));
 
   const isProd = (): boolean => {
     return environment === 'production';

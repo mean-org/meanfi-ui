@@ -74,7 +74,7 @@ export type FeesInfo = {
 export type HlaInfo = {
   exchangeRate: number,
   protocolFees: number,
-  aggregatorFees: number,
+  aggregatorPercentFees: number,
   remainingAccounts: PublicKey[]
 }
 
