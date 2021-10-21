@@ -1521,6 +1521,7 @@ section.content {
 
 .interaction-area {
   width: 100%;
+  height: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1531,6 +1532,9 @@ section.content {
   @media (max-width: 575.98px) {
     padding-top: 74px;
     height: 100%;
+  }
+  @media (min-width: 576px) and (max-width: 767.98px) {
+    margin-bottom: 1rem;
   }
   .notifications {
     position: relative;
@@ -2487,14 +2491,9 @@ section.content {
     }
   }
   @media (min-width: 576px) and (max-width: 767.98px) {
-    flex-direction: column;
     .stream-details-container {
       .streams-heading {
-        .title {
-          padding: 0;
-          font-size: 20px;
-          letter-spacing: normal;
-        }
+        margin-top: 1rem;
       }
     }
   }
@@ -2506,16 +2505,14 @@ section.content {
     }
   }
   @media (min-width: 768px) {
-    height: 80vh;
-    min-height: 564px;
-    max-height: 80vh;
+    height: calc(100% - 20px);
     .streams-container,
     .stream-details-container {
       flex: 0 0 50%;
       max-width: 50%;
       height: auto;
-      max-height: 74vh;
-      min-height: 600px;
+      max-height: calc(100% - 20px);
+      min-height: 450px;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -2968,7 +2965,7 @@ section.content {
   }
   .rate-cell {
     flex: auto;
-    padding: 0 4px;
+    padding: 0 4px 0 0;
     text-align: right;
     .rate-amount,
     .interval {
@@ -3203,13 +3200,10 @@ section.content {
     }
   }
   @media (min-width: 576px) and (max-width: 767.98px) {
-    flex-direction: column;
     .transaction-list-container {
       .transactions-heading {
         .title {
-          padding: 0;
-          font-size: 20px;
-          letter-spacing: normal;
+          margin-top: 1rem;
         }
       }
     }
@@ -3222,14 +3216,12 @@ section.content {
     }
   }
   @media (min-width: 768px) {
-    height: 80vh;
-    min-height: 564px;
-    max-height: 80vh;
+    height: calc(100% - 20px);
     .tokens-container,
     .transaction-list-container {
       height: auto;
-      max-height: 74vh;
-      min-height: 600px;
+      max-height: calc(100% - 20px);
+      min-height: 450px;
       display: flex;
       position: relative;
       flex-direction: column;
@@ -3275,8 +3267,8 @@ section.content {
               min-width: auto;
             }
             .rate-cell {
-              flex: 0 0 100px;
-              padding: 0 4px;
+              flex: 0 0 72px;
+              padding: 0 4px 0 0;
               text-align: right;
             }
           }
@@ -4368,6 +4360,9 @@ code {
   &.main-container {
     flex: 1 1 auto;
     position: relative;
+    @media (min-width: 768px) {
+      min-height: 620px;
+    }
     .debug-bar {
       position: fixed;
       top: var(--main-navigation-bar-height);
