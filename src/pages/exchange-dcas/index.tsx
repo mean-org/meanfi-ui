@@ -15,7 +15,7 @@ import { Identicon } from '../../components/Identicon';
 import "./style.less";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, useLocalStorageState } from '../../utils/utils';
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
-import { IconClock, IconExchange, IconExternalLink } from '../../Icons';
+import { IconClock, IconExchange, IconExternalLink, IconRefresh } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
@@ -1092,11 +1092,13 @@ export const ExchangeDcasView = () => {
             <div className="tokens-container">
               <div className="transactions-heading">
                 <span className="title">{t('ddcas.screen-title')}</span>
-                <Tooltip placement="bottom" title={t('ddcas.streams-ddcas')}>
-                  <div className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`} onClick={() => reloadRecurringBuys(true)}>
+                <Tooltip placement="bottom" title="Reload">
+                  <div className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
+                       onClick={() => reloadRecurringBuys(true)}>
                     <Spin size="small" />
                     <span className="transaction-legend">
                       <span>{formatThousands(recurringBuys.length || 0)}</span>
+                      <IconRefresh className="mean-svg-icons"/>
                     </span>
                   </div>
                 </Tooltip>
