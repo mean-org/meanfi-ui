@@ -220,6 +220,7 @@
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
 		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au faucet dans mainnet",
 		"error-cannot-fund-account-message": "Nous n'avons pas pu approvisionner votre compte. Veuillez réessayer plus tard.",
+		"error-creating-vault-message": "Could not create the DCA vault, please try again later",
 		"error-ledger-title": "Erreur du Ledger",
 		"error-loading-streamid-message": "Nous n'avons pas pu trouver ou charger le flux avec l'ID {{streamId}}",
 		"error-title": "Erreur",

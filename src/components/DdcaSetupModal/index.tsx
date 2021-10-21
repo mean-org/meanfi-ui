@@ -21,6 +21,7 @@ import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '../../hybrid-liquidity-ag/types';
+import { notify } from '../../utils/notifications';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -149,10 +150,6 @@ export const DdcaSetupModal = (props: {
     })}</span>`;
   }
 
-  const onSliderChange = (value?: number) => {
-    setRecurrencePeriod(value || 0);
-  }
-
   function sliderTooltipFormatter(value?: number) {
     return (
       <>
@@ -235,6 +232,19 @@ export const DdcaSetupModal = (props: {
   ////////////////
   //   Events   //
   ////////////////
+
+  const onSliderChange = (value?: number) => {
+    setRecurrencePeriod(value || 0);
+  }
+
+  const onTxErrorCreatingVaultWithNotify = () => {
+    notify({
+      message: t('notifications.error-title'),
+      description: t('notifications.error-creating-vault-message'),
+      type: "error"
+    });
+    setIsBusy(false);
+  }
 
   const onOperationCancel = () => {
     if (isBusy) {
@@ -477,14 +487,6 @@ export const DdcaSetupModal = (props: {
       if (create && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('sign:', sign);
-
-        // if (sign && !transactionCancelled) {
-        //   consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
-        //   await delay(2000);
-        //   setVaultCreated(true);
-        //   setIsBusy(false);
-        // }  else { setIsBusy(false); }
-
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
@@ -493,10 +495,10 @@ export const DdcaSetupModal = (props: {
             if (confirmed && !transactionCancelled) {
               setVaultCreated(true);
               setIsBusy(false);
-            } else { setIsBusy(false); }
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+            } else { onTxErrorCreatingVaultWithNotify(); }
+          } else { onTxErrorCreatingVaultWithNotify(); }
+        } else { onTxErrorCreatingVaultWithNotify(); }
+      } else { onTxErrorCreatingVaultWithNotify(); }
     }
 
   };
@@ -753,11 +755,13 @@ export const DdcaSetupModal = (props: {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            if (confirmed && !transactionCancelled) {
-              setIsBusy(false);
-              setSwapExecuted(true);
-            } else { setIsBusy(false); }
+            setIsBusy(false);
+            setSwapExecuted(true);
+            // const confirmed = await confirmTx();
+            // if (confirmed && !transactionCancelled) {
+            //   setIsBusy(false);
+            //   setSwapExecuted(true);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -861,37 +865,26 @@ export const DdcaSetupModal = (props: {
       <div className="row two-col-ctas">
         <div className="col-6">
           <Button
-            className={`main-cta ${vaultCreated ? 'completed' : ''}`}
+            className={`main-cta ${!vaultCreated && isBusy ? 'inactive' : vaultCreated ? 'completed' : ''}`}
             block
             type="primary"
             shape="round"
             size="large"
             disabled={!hasMinimumTokenBalance || !isUserAllowed() || !hasEnoughNativeBalance() || !isProd()}
             onClick={() => onCreateVaultTxStart()}>
-              {
-                !vaultCreated && isBusy
-                  ? t('ddca-setup-modal.cta-label-depositing')
-                  : vaultCreated
-                  ? t('ddca-setup-modal.cta-label-vault-created')
-                  : !hasMinimumTokenBalance
-                      ? t('transactions.validation.amount-low')
-                      : !isUserAllowed()
-                        ? 'Repeating buy temporarily unavailable'
-                        : !hasEnoughNativeBalance()
-                          ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
-                          : t('ddca-setup-modal.cta-label-deposit')
-              }
-              {/* {
-                !isOperationValid
-                  ? t('transactions.validation.amount-low')
-                  : !isUserAllowed()
-                    ? 'Repeating buy temporarily unavailable'
-                    : !hasEnoughNativeBalance()
-                      ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
-                      : vaultCreated
-                        ? t('ddca-setup-modal.cta-label-vault-created')
+            {
+              !vaultCreated && isBusy
+                ? t('ddca-setup-modal.cta-label-depositing')
+                : vaultCreated
+                ? t('ddca-setup-modal.cta-label-vault-created')
+                : !hasMinimumTokenBalance
+                    ? t('transactions.validation.amount-low')
+                    : !isUserAllowed()
+                      ? 'Repeating buy temporarily unavailable'
+                      : !hasEnoughNativeBalance()
+                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
                         : t('ddca-setup-modal.cta-label-deposit')
-              } */}
+            }
           </Button>
         </div>
         <div className="col-6">

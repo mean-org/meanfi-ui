@@ -220,6 +220,7 @@
 		"account-address-not-copied-message": "No se pudo copiar la cuenta",
 		"error-cannot-faucet-mainnet-message": "No se puede hacer faucet en mainnet",
 		"error-cannot-fund-account-message": "No pudimos depositar fondos en su cuenta. Inténtelo más tarde.",
+		"error-creating-vault-message": "Could not create the DCA vault, please try again later",
 		"error-ledger-title": "Error de Ledger",
 		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
 		"error-title": "Error",

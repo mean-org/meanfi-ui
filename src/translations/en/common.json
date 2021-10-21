@@ -220,6 +220,7 @@
 		"account-address-not-copied-message": "Could not copy Account Address",
 		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
 		"error-cannot-fund-account-message": "Could not fund your account, please try again later",
+		"error-creating-vault-message": "Could not create the DCA vault, please try again later",
 		"error-ledger-title": "Ledger Error",
 		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
 		"error-title": "Error",
