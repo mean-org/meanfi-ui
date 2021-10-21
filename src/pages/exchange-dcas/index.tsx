@@ -27,6 +27,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
+import { environment } from '../../environments/environment';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -852,6 +853,7 @@ export const ExchangeDcasView = () => {
               </div>
             )}
 
+            {/* Total deposits / Total left */}
             {ddcaDetails && (
               <Row className="mb-3">
                 <Col span={11}>
@@ -945,88 +947,67 @@ export const ExchangeDcasView = () => {
           </div>
         </Spin>
 
-        <Divider className="activity-divider" plain></Divider>
-        <div className="activity-title">
-          {t("streams.stream-activity.heading")}
-        </div>
         <div className="activity-list">
           <>
             <div className="item-list-header compact">
               <div className="header-row">
                 <div className="std-table-cell first-cell">&nbsp;</div>
-                <div className="std-table-cell responsive-cell">&nbsp;</div>
+                <div className="std-table-cell responsive-cell">
+                  {t('streams.stream-activity.heading')}
+                </div>
                 <div className="std-table-cell fixed-width-150">
                   {t("streams.stream-activity.label-date")}
                 </div>
               </div>
             </div>
             <div className="item-list-body compact">
-              {(ddcaDetails?.ddcaAccountAddress as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
+            </div>
+            <div className="item-list-body compact">
+              {ddcaDetails && (
                 <>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <IconExchange className="mean-svg-icons"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Exchanged 1 wSOL for 0.0413 ETH</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/12/2021 14:53 PM</span>
-                  </div>
-                </span>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <ArrowDownOutlined className="incoming"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Deposited 5 wSOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/12/2021 14:53 PM</span>
-                  </div>
-                </span>
-                </>
-              ) : (
-                <>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <IconExchange className="mean-svg-icons"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Exchanged 50 USDC for 0.3118 SOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/15/2021 14:53 PM</span>
-                  </div>
-                </span>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <ArrowDownOutlined className="incoming"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Deposited 200 USDC</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/15/2021 14:53 PM</span>
-                  </div>
-                </span>
+                  {/* <span className="item-list-row simplelink">
+                    <div className="std-table-cell first-cell">
+                      <IconExchange className="mean-svg-icons"/>
+                    </div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">Exchanged 50 USDC for 0.3118 SOL</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-150">
+                      <span className="align-middle">10/15/2021 14:53 PM</span>
+                    </div>
+                  </span> */}
+                  <span className="item-list-row simplelink">
+                    <div className="std-table-cell first-cell">
+                      <ArrowDownOutlined className="incoming"/>
+                    </div>
+                    <div className="std-table-cell responsive-cell">
+                      <span className="align-middle">Deposited {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
+                    </div>
+                    <div className="std-table-cell fixed-width-150">
+                      <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                    </div>
+                  </span>
                 </>
               )}
-
-              {activity.map((item, index) => {
-                return (
-                  <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                      href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                    <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                    <div className="std-table-cell responsive-cell">
-                      <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-120" >
-                      <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                    </div>
-                  </a>
-                );
-              })}
+              {environment === 'local' && (
+                <div className="mt-3">
+                  <Divider/>
+                  {activity.map((item, index) => {
+                    return (
+                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-120" >
+                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </>
         </div>

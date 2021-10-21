@@ -3356,6 +3356,13 @@ section.content {
             &:extend(.flex-center);
           }
         }
+        .item-list-header.compact {
+          .header-row {
+            .std-table-cell {
+              padding: 0px 0px 0px 8px;
+            }
+          }
+        }
         .item-list-body.compact {
           .item-list-row {
             height: 40px;
@@ -3457,14 +3464,9 @@ section.content {
       .ant-divider.ant-divider-horizontal.activity-divider {
         margin: 12px 0;
       }
-      .activity-title {
-        font-size: 0.7rem;
-        color: var(--color-secondary-alpha-50);
-        text-transform: uppercase;
-        margin-bottom: 0.5rem;
-      }
       .activity-list {
         min-height: 80px;
+        padding-top: 0.4rem;
       }
     }
     @media (min-width: 768px) {
