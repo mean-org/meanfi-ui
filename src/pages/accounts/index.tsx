@@ -797,10 +797,12 @@ export const AccountsView = () => {
                   <div className="item-block vertical-scroll">
                     {renderTokenList}
                   </div>
-                  <div className="bottom-ctas">
-                    <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-                    <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-                  </div>
+                  {(accountTokens && accountTokens.length > 0) && (
+                    <div className="bottom-ctas">
+                      <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+                      <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

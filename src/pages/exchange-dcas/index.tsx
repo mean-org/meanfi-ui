@@ -982,8 +982,6 @@ export const ExchangeDcasView = () => {
               </div>
             </div>
             <div className="item-list-body compact">
-            </div>
-            <div className="item-list-body compact">
               {ddcaDetails && (
                 <>
                   {isNextRoundScheduled(ddcaDetails) && (
