@@ -219,6 +219,7 @@ export const DdcaSetupModal = (props: {
       }
 
       consoleOut('HLA INFO', props.hlaInfo, 'blue');
+      consoleOut('remainingAccounts', props.hlaInfo.remainingAccounts.map(a => a.pubkey.toBase58()), 'blue');
     }
   }, [
     ddcaOption,
@@ -399,10 +400,15 @@ export const DdcaSetupModal = (props: {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
+      let encodedTx: Buffer;
+      try {
+        encodedTx = signedTransaction.serialize();
+      } catch (error) {
+        throw new Error("Transaction serialization error");
+      }
       if (wallet) {
         return await props.connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "finalized" })
+          .sendRawTransaction(encodedTx, { preflightCommitment: "finalized" })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -633,7 +639,7 @@ export const DdcaSetupModal = (props: {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await props.connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "finalized" })
+          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -678,7 +684,7 @@ export const DdcaSetupModal = (props: {
     const confirmTx = async (): Promise<boolean> => {
 
       return await props.connection
-        .confirmTransaction(signature, "finalized")
+        .confirmTransaction(signature, "confirmed")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -766,10 +772,10 @@ export const DdcaSetupModal = (props: {
             // if (confirmed && !transactionCancelled) {
             //   setIsBusy(false);
             //   setSwapExecuted(true);
-            // } else { setIsBusy(false); }
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+            // } else { onFinishedSwapTx(); }
+          } else { onFinishedSwapTx(); }
+        } else { onFinishedSwapTx(); }
+      } else { onFinishedSwapTx(); }
     }
 
   };
@@ -891,6 +897,7 @@ export const DdcaSetupModal = (props: {
                         : t('ddca-setup-modal.cta-label-deposit')
             }
           </Button>
+          {/* TODO: Validation takes into account token amount vs balance first, native balance then */}
         </div>
         <div className="col-6">
           <Button
