@@ -213,7 +213,7 @@ export const DdcaSetupModal = (props: {
       setMarks(marks);
 
       // Set minimum required and valid flag
-      const minimumRequired = props.fromTokenAmount * (rangeMin + 1);
+      const minimumRequired = props.fromTokenAmount * (minRangeSelectable + 1);
       const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
       setMinimumRequiredBalance(minimumRequired);
       setHasMinimumTokenBalance(isOpValid);
@@ -230,7 +230,6 @@ export const DdcaSetupModal = (props: {
     }
   }, [
     ddcaOption,
-    rangeMin,
     props.fromTokenAmount,
     props.fromTokenBalance,
     props.hlaInfo,
