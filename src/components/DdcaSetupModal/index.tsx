@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
-import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { consoleOut, delay, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import "./style.less";
@@ -44,6 +44,7 @@ export const DdcaSetupModal = (props: {
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
   const [recurrencePeriod, setRecurrencePeriod] = useState(0);
+  const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [minimumRequiredBalance, setMinimumRequiredBalance] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
   const [hasMinimumTokenBalance, setHasMinimumTokenBalance] = useState(false);
@@ -63,8 +64,17 @@ export const DdcaSetupModal = (props: {
     return environment === 'production';
   }
 
+  const getGasFeeAmount = (): number => {
+    return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1));
+  }
+
   const hasEnoughNativeBalance = (): boolean => {
-    return props.userBalance >= props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1) ? true : false;
+    return props.userBalance >= getGasFeeAmount() ? true : false;
+  }
+
+  const getTotalSolAmount = (): number => {
+    const depositAmount = props.fromTokenAmount * (recurrencePeriod + 1);
+    return depositAmount + getGasFeeAmount();
   }
 
   const isUserAllowed = (): boolean => {
@@ -72,11 +82,8 @@ export const DdcaSetupModal = (props: {
     return EXCEPTION_LIST.some(a => a === publicKey.toBase58());
   }
 
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionSuccess ||
-           transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-      ? true
-      : false;
+  const isNative = (): boolean => {
+    return props.fromToken && props.fromToken.symbol === 'SOL' ? true : false;
   }
 
   const getInterval = (): number => {
@@ -236,6 +243,7 @@ export const DdcaSetupModal = (props: {
 
   const onSliderChange = (value?: number) => {
     setRecurrencePeriod(value || 0);
+    setLockedSliderValue(value || 0);
   }
 
   const onTxErrorCreatingVaultWithNotify = () => {
@@ -248,9 +256,11 @@ export const DdcaSetupModal = (props: {
   }
 
   const onFinishedSwapTx = () => {
-    setIsBusy(false);
-    setSwapExecuted(true);
-    props.handleOk();
+    delay(1500).then(() => {
+      setIsBusy(false);
+      setSwapExecuted(true);
+      props.handleOk();
+    });
   }
 
   const onOperationCancel = () => {
@@ -271,6 +281,7 @@ export const DdcaSetupModal = (props: {
     let signature: any;
     const transactionLog: any[] = [];
 
+    setLockedSliderValue(recurrencePeriod);
     setDdcaAccountPda(undefined);
     setVaultCreated(false);
     setSwapExecuted(false);
@@ -818,7 +829,7 @@ export const DdcaSetupModal = (props: {
           max={rangeMax}
           included={false}
           tipFormatter={sliderTooltipFormatter}
-          value={recurrencePeriod}
+          value={lockedSliderValue}
           onChange={onSliderChange}
           tooltipVisible
           dots={false}/>
@@ -830,7 +841,7 @@ export const DdcaSetupModal = (props: {
             {
               t('ddca-setup-modal.help.help-item-01', {
                 fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  props.fromTokenAmount * (recurrencePeriod + 1),
+                  props.fromTokenAmount * (lockedSliderValue + 1),
                   props.fromToken?.address as string)
               })
             }
@@ -838,7 +849,7 @@ export const DdcaSetupModal = (props: {
           <li>
             {
               t('ddca-setup-modal.help.help-item-02', {
-                recurrencePeriod: getRecurrencePeriod(),
+                lockedSliderValue: getRecurrencePeriod(),
               })
             }
           </li>
@@ -859,13 +870,13 @@ export const DdcaSetupModal = (props: {
           <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
         </span>
       </div>
-      {!hasMinimumTokenBalance && (
+      {!vaultCreated && !isBusy && ((!isNative() && !hasMinimumTokenBalance) || (isNative() && props.fromTokenBalance < minimumRequiredBalance + getGasFeeAmount())) && (
         <div className="mb-2 text-center">
           <span className="fg-error">
             {
               t('transactions.validation.minimum-repeating-buy-amount', {
                 fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  minimumRequiredBalance,
+                  !isNative() ? minimumRequiredBalance : minimumRequiredBalance + getGasFeeAmount(),
                   props.fromToken?.address as string
                 )
               })
@@ -881,23 +892,32 @@ export const DdcaSetupModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            disabled={!hasMinimumTokenBalance || !isUserAllowed() || !hasEnoughNativeBalance() || !isProd()}
+            disabled={
+              !isProd() || !isUserAllowed() ||
+              (isNative() && props.userBalance < getTotalSolAmount()) ||
+              (!isNative() && !hasMinimumTokenBalance)
+            }
             onClick={() => onCreateVaultTxStart()}>
             {
               !vaultCreated && isBusy
                 ? t('ddca-setup-modal.cta-label-depositing')
                 : vaultCreated
                 ? t('ddca-setup-modal.cta-label-vault-created')
-                : !hasMinimumTokenBalance
+                : isNative()
+                  ? !isUserAllowed()
+                    ? 'Repeating buy temporarily unavailable'
+                    : getTotalSolAmount() > props.userBalance
+                      ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalSolAmount(), NATIVE_SOL_MINT.toBase58())}`
+                      : t('ddca-setup-modal.cta-label-deposit')
+                  : !hasMinimumTokenBalance
                     ? t('transactions.validation.amount-low')
                     : !isUserAllowed()
                       ? 'Repeating buy temporarily unavailable'
                       : !hasEnoughNativeBalance()
-                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1), NATIVE_SOL_MINT.toBase58())}`
+                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1), NATIVE_SOL_MINT.toBase58())}`
                         : t('ddca-setup-modal.cta-label-deposit')
             }
           </Button>
-          {/* TODO: Validation takes into account token amount vs balance first, native balance then */}
         </div>
         <div className="col-6">
           <Button
