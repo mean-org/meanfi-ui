@@ -85,7 +85,7 @@
       "address": "APDFRM3HMr8CAGXwKHiu2f5ePSpaiEJhaURwhsRrUUt9",
       "name": "SOL_USDC",
       "tokenAddresses": [
-        "11111111111111111111111111111111",
+        "So11111111111111111111111111111111111111112",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ]
     },
@@ -119,7 +119,7 @@
       "name": "ETH_SOL",
       "tokenAddresses": [
         "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
-        "11111111111111111111111111111111"
+        "So11111111111111111111111111111111111111112"
       ]
     },
     {
@@ -151,7 +151,7 @@
       "address": "FZthQCuYHhcfiDma7QrX7buDHwrZEd7vL8SjS6LQa3Tx",
       "name": "SOL_USDT",
       "tokenAddresses": [
-        "11111111111111111111111111111111",
+        "So11111111111111111111111111111111111111112",
         "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
       ]
     },
