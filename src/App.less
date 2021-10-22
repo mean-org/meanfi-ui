@@ -2427,7 +2427,7 @@ section.content {
     @media (max-width: 575.98px) {
       padding: 0;
       border: none;
-      height: calc(100% - 1rem);
+      height: calc(100% - var(--footer-bar-height));
     }
   }
   @media (max-width: 575.98px) {
@@ -2443,10 +2443,7 @@ section.content {
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }
-    flex-direction: column;
-    justify-content: flex-start;
-    overflow: hidden;
-    &:not(details-open) {
+    &:not(.details-open) {
       .streams-container {
         z-index: 2;
       }
@@ -3132,6 +3129,13 @@ section.content {
       }
     }
   }
+  @media (max-width: 575.98px) {
+    .tokens-container {
+      .inner-container {
+        height: calc(100% - var(--footer-bar-height));
+      }
+    }
+  }
   .inner-container {
     position: relative;
     border-style: solid;
@@ -3144,7 +3148,6 @@ section.content {
     @media (max-width: 575.98px) {
       padding: 0;
       border: none;
-      height: calc(100% - var(--footer-bar-height));
       .bottom-ctas {
         padding-left: 0.6rem;
       }
@@ -3163,13 +3166,14 @@ section.content {
       transition: transform 0.5s ease-in-out;
       height: 100%;
     }
-    &:not(details-open) {
+    &:not(.details-open) {
       .tokens-container {
         z-index: 2;
       }
       .transaction-list-container {
         z-index: 1;
         max-height: 0;
+        display: none;
       }
     }
     .tokens-container {
@@ -3200,16 +3204,27 @@ section.content {
     }
     &.details-open {
       .tokens-container {
+        display: none;
         transform: translateY(80%);
         max-height: 0;
         opacity: 0;
         z-index: 1;
       }
       .transaction-list-container {
+        display: block;
         transform: translateY(0%);
         max-height: initial;
         opacity: 1;
         z-index: 2;
+      }
+      .transaction-list-data-wrapper {
+        &:not(.empty) {
+          max-height: calc(100% - 6.5rem);
+        }
+        &.empty {
+          display: block;
+          height: 100%;
+        }
       }
     }  
   }
@@ -3353,20 +3368,9 @@ section.content {
         }
       }
       .transaction-list-data-wrapper {
-        @media (max-width: 575.98px) {
-          &:not(.empty) {
-            max-height: calc(100% - 6.5rem);
-          }
-        }
         @media (min-width: 576px) {
           &:not(.empty) {
             max-height: calc(100% - 3.6rem);
-          }
-        }
-        @media (max-width: 575.98px) {
-          &.empty {
-            display: block;
-            height: 100%;
           }
         }
         @media (min-width: 576px) {
