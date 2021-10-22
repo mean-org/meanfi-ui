@@ -53,7 +53,9 @@ export class OrcaClient implements LPClient {
     }
 
     const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === poolInfo.address)[0];
+    console.log('poolConfig', poolConfig);
     this.currentPool = this.orcaSwap.getPool(poolConfig[1]);
+    console.log('currentPool', this.currentPool);
 
     return this.currentPool;
   }
@@ -381,14 +383,16 @@ export class OrcaClient implements LPClient {
       const toAddress = to === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : to;
 
       this.exchangeAccounts = [
-        { pubkey: ORCA_TOKEN_SWAP_ID, isSigner: false, isWritable: false },
-        { pubkey: this.currentPool.poolParams.address, isSigner: false, isWritable: false },
+        { pubkey: this.currentPool.poolParams.poolTokenMint, isSigner: false, isWritable: true },
+        { pubkey: ORCA_TOKEN_SWAP_ID, isSigner: false, isWritable: false },   
+        { pubkey: this.currentPool.poolParams.address, isSigner: false, isWritable: false },   
         { pubkey: authorityForPoolAddress, isSigner: false, isWritable: false },
         { pubkey: this.currentPool.poolParams.tokens[fromAddress].addr, isSigner: false, isWritable: true },
         { pubkey: this.currentPool.poolParams.tokens[toAddress].addr, isSigner: false, isWritable: true },
-        { pubkey: this.currentPool.poolParams.poolTokenMint, isSigner: false, isWritable: false },
-        { pubkey: this.currentPool.poolParams.feeAccount, isSigner: false, isWritable: false }
+        { pubkey: this.currentPool.poolParams.feeAccount, isSigner: false, isWritable: true }
       ];
+
+      console.log('exchangeAccounts', this.exchangeAccounts.map(a => a.pubkey.toBase58()))
 
     } catch (_error) {
       throw _error;
