@@ -888,7 +888,7 @@ export const ExchangeDcasView = () => {
                   {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
                     {getTokenAmountAndSymbolByTokenAddress(
-                      ddcaDetails.exchangedForAmount,
+                      ddcaDetails.toBalance,
                       ddcaDetails.toMint
                     )}
                   </span>

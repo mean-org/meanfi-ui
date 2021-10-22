@@ -80,10 +80,10 @@
   "AMM_POOLS": [
     {
       "chainId": 101,
-      "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-      "ammAddress": "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
-      "address": "8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu",
-      "name": "SOL-USDC LP",
+      "protocolAddress": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
+      "ammAddress": "EGZ7tiLeH62TPV1gL8WwbXGzEPa9zmcpVnnkPKKnrE2U",
+      "address": "APDFRM3HMr8CAGXwKHiu2f5ePSpaiEJhaURwhsRrUUt9",
+      "name": "SOL_USDC",
       "tokenAddresses": [
         "11111111111111111111111111111111",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -91,10 +91,10 @@
     },
     {
       "chainId": 101,
-      "protocolAddress": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
-      "ammAddress": "EGZ7tiLeH62TPV1gL8WwbXGzEPa9zmcpVnnkPKKnrE2U",
-      "address": "APDFRM3HMr8CAGXwKHiu2f5ePSpaiEJhaURwhsRrUUt9",
-      "name": "SOL_USDC",
+      "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      "ammAddress": "58oQChx4yWmvKdwLLZzBi4ChoCc2fqCUWBkwMihLYQo2",
+      "address": "8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu",
+      "name": "SOL-USDC LP",
       "tokenAddresses": [
         "11111111111111111111111111111111",
         "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
@@ -124,17 +124,6 @@
     },
     {
       "chainId": 101,
-      "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-      "ammAddress": "AoPebtuJC4f2RweZSxcVCcdeTgaEXY64Uho8b5HdPxAR",
-      "address": "13PoKid6cZop4sj2GfoBeujnGfthUbTERdE5tpLCDLEY",
-      "name": "ETH-USDC LP",
-      "tokenAddresses": [
-        "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
-        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-      ]
-    },
-    {
-      "chainId": 101,
       "protocolAddress": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
       "ammAddress": "FgZut2qVQEyPBibaTJbbX2PxaMZvT1vjDebiVaDp5BWP",
       "address": "3e1W6Aqcbuk2DfHUwRiRcyzpyYRRjg6yhZZcyEARydUX",
@@ -147,12 +136,12 @@
     {
       "chainId": 101,
       "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
-      "ammAddress": "7XawhbbxtsRcQA8KTkHT9f9nc6d69UwqCDh6U5EEbEmX",
-      "address": "Epm4KfTj4DMrvqn6Bwg2Tr2N8vhQuNbuK8bESFp4k33K",
-      "name": "SOL-USDT LP",
+      "ammAddress": "AoPebtuJC4f2RweZSxcVCcdeTgaEXY64Uho8b5HdPxAR",
+      "address": "13PoKid6cZop4sj2GfoBeujnGfthUbTERdE5tpLCDLEY",
+      "name": "ETH-USDC LP",
       "tokenAddresses": [
-        "11111111111111111111111111111111",
-        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+        "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
       ]
     },
     {
@@ -161,6 +150,17 @@
       "ammAddress": "Dqk7mHQBx2ZWExmyrR2S8X6UG75CrbbpK2FSBZsNYsw6",
       "address": "FZthQCuYHhcfiDma7QrX7buDHwrZEd7vL8SjS6LQa3Tx",
       "name": "SOL_USDT",
+      "tokenAddresses": [
+        "11111111111111111111111111111111",
+        "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+      ]
+    },
+    {
+      "chainId": 101,
+      "protocolAddress": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      "ammAddress": "7XawhbbxtsRcQA8KTkHT9f9nc6d69UwqCDh6U5EEbEmX",
+      "address": "Epm4KfTj4DMrvqn6Bwg2Tr2N8vhQuNbuK8bESFp4k33K",
+      "name": "SOL-USDT LP",
       "tokenAddresses": [
         "11111111111111111111111111111111",
         "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
