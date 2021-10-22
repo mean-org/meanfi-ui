@@ -85,7 +85,7 @@ export const ExchangeDcasView = () => {
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
     if (connection && wallet && publicKey && endpoint) {
-      return new DdcaClient(endpoint, wallet, { commitment: connection.commitment }, true);
+      return new DdcaClient(endpoint, wallet, { commitment: "confirmed" }, true);
     } else {
       return undefined;
     }
@@ -318,7 +318,7 @@ export const ExchangeDcasView = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -876,6 +876,7 @@ export const ExchangeDcasView = () => {
               </Row>
             )}
 
+            {/* Exchanged for */}
             {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">

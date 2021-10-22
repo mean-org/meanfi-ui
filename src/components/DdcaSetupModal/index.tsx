@@ -256,11 +256,9 @@ export const DdcaSetupModal = (props: {
   }
 
   const onFinishedSwapTx = () => {
-    delay(1500).then(() => {
-      setIsBusy(false);
-      setSwapExecuted(true);
-      props.handleOk();
-    });
+    setIsBusy(false);
+    setSwapExecuted(true);
+    props.handleOk();
   }
 
   const onOperationCancel = () => {
@@ -419,7 +417,7 @@ export const DdcaSetupModal = (props: {
       }
       if (wallet) {
         return await props.connection
-          .sendRawTransaction(encodedTx, { preflightCommitment: "finalized" })
+          .sendRawTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -650,7 +648,7 @@ export const DdcaSetupModal = (props: {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await props.connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -695,7 +693,7 @@ export const DdcaSetupModal = (props: {
     const confirmTx = async (): Promise<boolean> => {
 
       return await props.connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -736,39 +734,6 @@ export const DdcaSetupModal = (props: {
     }
 
     if (wallet && publicKey) {
-      // Simulation via setTimeout
-      // consoleOut('Simulating TxStart...', '', 'purple');
-      // setTransactionStatus({
-      //   lastOperation: TransactionStatus.TransactionStart,
-      //   currentOperation: TransactionStatus.InitTransaction
-      // });
-      // consoleOut('Simulating TxSign for 2 seconds...', '', 'purple');
-      // await delay(2000);
-      // setTransactionStatus({
-      //   lastOperation: TransactionStatus.InitTransactionSuccess,
-      //   currentOperation: TransactionStatus.SignTransaction
-      // });
-      // consoleOut('Set SignTransactionSuccess...', '', 'purple');
-      // await delay(350);
-      // setTransactionStatus({
-      //   lastOperation: TransactionStatus.SignTransactionSuccess,
-      //   currentOperation: TransactionStatus.SendTransaction
-      // });
-      // consoleOut('Simulating TxSend for 2 seconds', '', 'purple');
-      // await delay(2000);
-      // setTransactionStatus({
-      //   lastOperation: transactionStatus.currentOperation,
-      //   currentOperation: TransactionStatus.ConfirmTransaction
-      // });
-      // consoleOut('Simulating TxConfirm for 2 second', '', 'purple');
-      // await delay(2000);
-      // setTransactionStatus({
-      //   lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-      //   currentOperation: TransactionStatus.TransactionFinished
-      // });
-      // setIsBusy(false);
-      // setSwapExecuted(true);
-
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
@@ -778,12 +743,11 @@ export const DdcaSetupModal = (props: {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            onFinishedSwapTx();
-            // const confirmed = await confirmTx();
-            // if (confirmed && !transactionCancelled) {
-            //   setIsBusy(false);
-            //   setSwapExecuted(true);
-            // } else { onFinishedSwapTx(); }
+            // onFinishedSwapTx();
+            const confirmed = await confirmTx();
+            if (confirmed && !transactionCancelled) {
+              onFinishedSwapTx();
+            } else { onFinishedSwapTx(); }
           } else { onFinishedSwapTx(); }
         } else { onFinishedSwapTx(); }
       } else { onFinishedSwapTx(); }
