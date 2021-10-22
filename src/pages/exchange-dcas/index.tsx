@@ -802,10 +802,30 @@ export const ExchangeDcasView = () => {
     }
   }
 
+  const getActivityTitle = (item: DdcaDetails): string => {
+    // TODO: Replace toBalance with exchangedForAmount
+    const result = `Exchanged ${
+      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)
+    } for ${
+      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint)
+    }`;
+    return result;
+  }
+
   const isAddressMyAccount = (addr: string): boolean => {
     return publicKey && addr && addr === publicKey.toBase58()
            ? true
            : false;
+  }
+
+  const isNextRoundScheduled = (item: DdcaDetails): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const nextScheduledDate = new Date(item.nextScheduledSwapUtc as string);
+    if (nextScheduledDate > nowUtc) {
+      return true;
+    }
+    return false;
   }
 
   const menu = (
@@ -966,17 +986,19 @@ export const ExchangeDcasView = () => {
             <div className="item-list-body compact">
               {ddcaDetails && (
                 <>
-                  {/* <span className="item-list-row simplelink">
-                    <div className="std-table-cell first-cell">
-                      <IconExchange className="mean-svg-icons"/>
-                    </div>
-                    <div className="std-table-cell responsive-cell">
-                      <span className="align-middle">Exchanged 50 USDC for 0.3118 SOL</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-150">
-                      <span className="align-middle">10/15/2021 14:53 PM</span>
-                    </div>
-                  </span> */}
+                  {isNextRoundScheduled(ddcaDetails) && (
+                    <span className="item-list-row simplelink">
+                      <div className="std-table-cell first-cell">
+                        <IconExchange className="mean-svg-icons"/>
+                      </div>
+                      <div className="std-table-cell responsive-cell">
+                        <span className="align-middle">{getActivityTitle(ddcaDetails)}</span>
+                      </div>
+                      <div className="std-table-cell fixed-width-150">
+                        <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                      </div>
+                    </span>
+                  )}
                   <span className="item-list-row simplelink">
                     <div className="std-table-cell first-cell">
                       <ArrowDownOutlined className="incoming"/>
@@ -1098,7 +1120,7 @@ export const ExchangeDcasView = () => {
                        onClick={() => reloadRecurringBuys(true)}>
                     <Spin size="small" />
                     <span className="transaction-legend">
-                      <span>{formatThousands(recurringBuys.length || 0)}</span>
+                      (<span>{formatThousands(recurringBuys.length || 0)}</span>)
                       <IconRefresh className="mean-svg-icons"/>
                     </span>
                   </div>
