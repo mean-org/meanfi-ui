@@ -877,6 +877,20 @@ export const SwapUi = (props: {
  
       if (!btcMintInfo) { return; }
 
+      if (fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== btcMintInfo.address) {
+        const notWSolList: any[] = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol !== 'wSOL');
+
+        setShowToMintList(notWSolList);
+
+        if (toMint === WRAPPED_SOL_MINT.toBase58()) {
+          setToMint(NATIVE_SOL_MINT.toBase58());
+        }
+
+        return;
+      }
+
       if (fromMint === btcMintInfo.address) {
 
         const usdxList: any = Object
@@ -923,18 +937,6 @@ export const SwapUi = (props: {
       if (isStableSwap()) {
         setDdcaOption('One time exchange');
       }
-
-      // if (toMint === WRAPPED_SOL_MINT.toBase58()) {
-
-      //   const solList: any[] = Object
-      //     .values(mintList)
-      //     .filter((m: any) => m.symbol === 'SOL');
-
-      //   setShowFromMintList(solList);
-      //   setFromMint(NATIVE_SOL_MINT.toBase58());
-
-      //   return;
-      // }
 
       const btcMintInfo: any = Object
         .values(mintList)
