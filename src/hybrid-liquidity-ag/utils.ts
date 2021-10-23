@@ -1,6 +1,6 @@
 import { AmmPoolInfo, Client, MERCURIAL, ORCA, RAYDIUM, SABER, SERUM } from "./types";
 import { AMM_POOLS } from "./data";
-import { WRAPPED_SOL_MINT } from "../utils/ids";
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from "../utils/ids";
 import { Connection, Keypair, LAMPORTS_PER_SOL, Signer, SystemProgram, Transaction } from "@solana/web3.js";
 import { RaydiumClient } from "./raydium/client";
 import { OrcaClient } from "../hybrid-liquidity-ag/orca/client";
@@ -56,6 +56,14 @@ export const getTokensPools = (
 
     let fromMint = from;
     let toMint = to;
+
+    if (from === NATIVE_SOL_MINT.toBase58()) {
+      fromMint = WRAPPED_SOL_MINT.toBase58();
+    }
+
+    if (to === NATIVE_SOL_MINT.toBase58()) {
+      toMint = WRAPPED_SOL_MINT.toBase58();
+    }
 
     let include = (
       ammPool.tokenAddresses.includes(fromMint) &&
@@ -189,15 +197,14 @@ export const unwrap = async(
   
 ): Promise<Transaction> => {
 
-  const amountBn = new BN(parseFloat(amount.toFixed(9)) * LAMPORTS_PER_SOL);
+  const amountBn = new BN(amount * LAMPORTS_PER_SOL);
   const signers: Signer[] = [account];
   const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(connection);
   const atokenKey = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     WRAPPED_SOL_MINT,
-    wallet.publicKey,
-    true
+    wallet.publicKey
   );
 
   const tx = new Transaction().add(

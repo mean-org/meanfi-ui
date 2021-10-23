@@ -122,27 +122,22 @@ export const placeOrderTx = async (
   }
 
   console.log('forecastConfig', forecastConfig);
-
-  const sizeAmount =
-    forecastConfig.side === 'buy'
-      ? parseFloat(forecastConfig.amountOut.toFixed(6))
-      : parseFloat(forecastConfig.maxInAllow.toFixed(6));
-
-  console.log('sizeAmount', sizeAmount);
-  const decimals = forecastConfig.side === "buy" ? (toMintAccount?.decimals || 6) : (fromMintAccount?.decimals || 6);
-
+  
   tx.add(
     market.makePlaceOrderInstruction(connection, {
-      owner: owner,
+      owner,
       payer: wrappedSolAccount ?? fromTokenAccount,
       side: forecastConfig.side === "buy" ? "buy" : "sell",
       price: forecastConfig.worstPrice,
-      size: new BN(sizeAmount * 10 ** decimals).toNumber(),
-      orderType: "ioc",
-      openOrdersAddressKey: openOrdersAddress,
-      programId: serumProgramId
+      size:
+        forecastConfig.side === 'buy'
+          ? parseFloat(forecastConfig.amountOut.toFixed(toMintAccount?.decimals || 9))
+          : parseFloat(forecastConfig.maxInAllow.toFixed(fromMintAccount?.decimals || 9)),
+
+      orderType: 'ioc',
+      openOrdersAddressKey: openOrdersAddress
     })
-  );
+  )
 
   const fromTokenAccountInfo = await connection.getAccountInfo(fromTokenAccount);
 

@@ -435,6 +435,7 @@ export const SwapUi = (props: {
 
       const success = (info: ExchangeInfo) => {
         setExchangeInfo(info);
+        console.log('info', info);
       };
 
       const error = (_error: any) => {
@@ -859,17 +860,17 @@ export const SwapUi = (props: {
         setDdcaOption('One time exchange');
       }
 
-      if (fromMint === WRAPPED_SOL_MINT.toBase58()) {
+      // if (fromMint === WRAPPED_SOL_MINT.toBase58()) {
 
-        const solList: any[] = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'SOL');
+      //   const solList: any[] = Object
+      //     .values(mintList)
+      //     .filter((m: any) => m.symbol === 'SOL');
 
-        setShowToMintList(solList);
-        setToMint(NATIVE_SOL_MINT.toBase58());
+      //   setShowToMintList(solList);
+      //   setToMint(NATIVE_SOL_MINT.toBase58());
 
-        return;
-      }
+      //   return;
+      // }
 
       const btcMintInfo: any = Object
         .values(mintList)
@@ -877,19 +878,19 @@ export const SwapUi = (props: {
  
       if (!btcMintInfo) { return; }
 
-      if (fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== btcMintInfo.address) {
-        const notWSolList: any[] = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol !== 'wSOL');
+      // if (fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== btcMintInfo.address) {
+      //   const notWSolList: any[] = Object
+      //     .values(mintList)
+      //     .filter((m: any) => m.symbol !== 'wSOL');
 
-        setShowToMintList(notWSolList);
+      //   setShowToMintList(notWSolList);
 
-        if (toMint === WRAPPED_SOL_MINT.toBase58()) {
-          setToMint(NATIVE_SOL_MINT.toBase58());
-        }
+      //   if (toMint === WRAPPED_SOL_MINT.toBase58()) {
+      //     setToMint(NATIVE_SOL_MINT.toBase58());
+      //   }
 
-        return;
-      }
+      //   return;
+      // }
 
       if (fromMint === btcMintInfo.address) {
 
