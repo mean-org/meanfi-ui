@@ -2,11 +2,9 @@ import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
-import { useWallet } from '../../contexts/wallet';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { environment } from '../../environments/environment';
 
 export const DdcaCloseModal = (props: {
   handleClose: any;
@@ -17,7 +15,6 @@ export const DdcaCloseModal = (props: {
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
-  const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
@@ -60,25 +57,17 @@ export const DdcaCloseModal = (props: {
       onCancel={props.handleClose}
       width={400}>
       <div className="transaction-progress">
-        <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
         <h4 className="operation">{props.content}</h4>
 
         {/* Info */}
-
-        {/* {props.ddcaDetails && props.ddcaDetails.associatedToken && (
+        {props.ddcaDetails && props.ddcaDetails.fromBalance && (
           <div className="p-2 mb-2">
             {infoRow(
-              t('transactions.transaction-info.transaction-fee') + ':',
-              `${feeAmount
-                ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
-                : '0'
-              }`
-            )}
-            {environment === 'local' && (
-              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, streamDetail.associatedToken as string)}</p>
+              'Amount left:',
+              getTokenAmountAndSymbolByTokenAddress(props.ddcaDetails.fromBalance, props.ddcaDetails.fromMint)
             )}
           </div>
-        )} */}
+        )}
 
         <div className="mt-3">
           <Button

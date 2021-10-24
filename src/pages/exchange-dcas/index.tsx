@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { useWallet } from '../../contexts/wallet';
-import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
 import { StreamActivity } from '@mean-dao/money-streaming';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
@@ -22,12 +22,13 @@ import { calculateActionFees, DdcaAccount, DdcaClient, DdcaDetails, DDCA_ACTIONS
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Redirect } from 'react-router-dom';
-import { TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
 import { environment } from '../../environments/environment';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -43,6 +44,15 @@ export const ExchangeDcasView = () => {
     setTransactionStatus,
     setLoadingRecurringBuys,
   } = useContext(AppStateContext);
+  const {
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    startFetchTxSignatureInfo,
+    clearLastSentTx,
+  } = useContext(TransactionStatusContext);
+
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
   const [redirect, setRedirect] = useState<string | null>(null);
@@ -413,11 +423,19 @@ export const ExchangeDcasView = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsBusy(false);
+
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -426,30 +444,7 @@ export const ExchangeDcasView = () => {
   };
 
   const getStreamClosureMessage = () => {
-    let message = '';
-
-    if (publicKey && ddcaDetails) {
-
-    //   const me = publicKey.toBase58();
-    //   const treasury = streamDetail.treasuryAddress as string;
-    //   const treasurer = streamDetail.treasurerAddress as string;
-    //   const beneficiary = streamDetail.beneficiaryAddress as string;
-    //   const numTreasuryBeneficiaries = 1; // streamList.filter(s => s.treasurerAddress === me && s.treasuryAddress === treasury).length;
-
-    //   if (treasurer === me) {  // If I am the treasurer
-    //     if (numTreasuryBeneficiaries > 1) {
-    //       message = t('close-stream.context-treasurer-multiple-beneficiaries', {
-    //         beneficiary: shortenAddress(beneficiary),
-    //         treasury: shortenAddress(treasury)
-    //       });
-    //     } else {
-    //       message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
-    //     }
-    //   } else if (beneficiary === me)  {  // If I am the beneficiary
-    //     message = t('close-stream.context-beneficiary', { beneficiary: shortenAddress(beneficiary) });
-    //   }
-
-    }
+    let message = `Your recurring purchase will be cancelled, and you'll get these back in your wallet:`;
 
     return (
       <div>{message}</div>
@@ -460,13 +455,11 @@ export const ExchangeDcasView = () => {
   //   Data Related   //
   //////////////////////
 
-  const selectDdcaItem = useCallback((item: DdcaAccount) => {
+  const reloadDdcaDetail = useCallback((address: string) => {
     if (!ddcaClient) { return; }
 
-    setDtailsPanelOpen(true);
-    setSelectedDdca(item);
     setLoadingDdcaDetails(true);
-    const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
+    const ddcaAddress = new PublicKey(address as string);
     consoleOut('Calling ddcaClient.GetDdca...', '', 'brown');
     ddcaClient.getDdca(ddcaAddress)
       .then(ddca => {
@@ -478,7 +471,15 @@ export const ExchangeDcasView = () => {
       .catch(error => console.error(error))
       .finally(() => setLoadingDdcaDetails(false));
   }, [
-    ddcaClient,
+    ddcaClient
+  ]);
+
+  const selectDdcaItem = useCallback((item: DdcaAccount) => {
+    setSelectedDdca(item);
+    setDtailsPanelOpen(true);
+    reloadDdcaDetail(item.ddcaAccountAddress);
+  }, [
+    reloadDdcaDetail,
     setDtailsPanelOpen
   ]);
 
@@ -510,7 +511,6 @@ export const ExchangeDcasView = () => {
                 item = JSON.parse(JSON.stringify(dcas[0]));
               }
             }
-            consoleOut('selectedBuy:', item, 'blue');
             if (item) {
               setSelectedDdca(item);
               setLoadingDdcaDetails(true);
@@ -649,6 +649,29 @@ export const ExchangeDcasView = () => {
     setDtailsPanelOpen
   ]);
 
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+    if (!ddcaClient || !ddcaDetails) { return; }
+
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      clearLastSentTx();
+      if (lastSentTxOperationType === OperationType.Close) {
+        reloadRecurringBuys();
+      } else {
+        reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
+      }
+    }
+  }, [
+    ddcaClient,
+    ddcaDetails,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    reloadRecurringBuys,
+    reloadDdcaDetail,
+    clearLastSentTx,
+  ]);
+
   ////////////////
   //   Events   //
   ////////////////
@@ -773,7 +796,7 @@ export const ExchangeDcasView = () => {
             <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
           )}
         </span>
-        <span className="info-data">{getTokenAmountAndSymbolByTokenAddress(amount, token.address)}</span>
+        <span className="info-data ml-1">{getTokenAmountAndSymbolByTokenAddress(amount, token.address)}</span>
       </>
     );
   }
@@ -803,7 +826,7 @@ export const ExchangeDcasView = () => {
   }
 
   const getActivityTitle = (item: DdcaDetails): string => {
-    // TODO: Replace toBalance with exchangedForAmount
+    // TODO: Should I replace toBalance with exchangedForAmount ??? or is it ok like that?
     const result = `Exchanged ${
       getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)
     } for ${
@@ -834,7 +857,7 @@ export const ExchangeDcasView = () => {
         *     If exchangeFor is > 0 -> Withdraw is visible
         *     If totalLeft is > 0 -> Cancel and withdraw everything
       */}
-      {(ddcaDetails && ddcaDetails.exchangedForAmount > 0) && (
+      {(ddcaDetails && ddcaDetails.toBalance > 0) && (
         <Menu.Item key="1" onClick={() => {}}>
           <span className="menu-item-text">Withdraw</span>
         </Menu.Item>
@@ -850,7 +873,7 @@ export const ExchangeDcasView = () => {
   const renderRecurringBuy = (
     <>
       <div className="transaction-list-data-wrapper vertical-scroll">
-        <Spin spinning={loadingRecurringBuys}>
+        <Spin spinning={loadingDdcaDetails}>
           <div className="stream-fields-container">
             {ddcaDetails && (
               <h2>{getDetailsPanelTitle(ddcaDetails)}</h2>
@@ -901,18 +924,25 @@ export const ExchangeDcasView = () => {
               <div className="mb-3">
                 <div className="info-label">
                   Exchanged for (avg rate 1 {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
-                      ddcaDetails.exchangedRateAverage,
+                      ddcaDetails.swapAvgRate,
                       ddcaDetails.toMint
                     )})
                 </div>
                 <div className="transaction-detail-row">
                   {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
+                    {/* TODO: Should I replace toBalance with exchangedForAmount ??? or is it ok like that? */}
                     {getTokenAmountAndSymbolByTokenAddress(
                       ddcaDetails.toBalance,
                       ddcaDetails.toMint
                     )}
                   </span>
+                  {(fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create) && (
+                    <div className="proggress">
+                      <LoadingOutlined />
+                      <span className="info-data">Exchange in progress</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -920,7 +950,7 @@ export const ExchangeDcasView = () => {
             {/* Next schaduled exchange */}
             {ddcaDetails && (
               <div className="mb-3">
-                <div className="info-label">Next schaduled exchange</div>
+                <div className="info-label">Next scheduled exchange</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconClock className="mean-svg-icons" />
@@ -949,16 +979,18 @@ export const ExchangeDcasView = () => {
                 type="text"
                 shape="round"
                 size="small"
+                disabled={fetchTxInfoStatus === "fetching"}
                 onClick={() => {}}>
                 {t("streams.stream-detail.add-funds-cta")}
               </Button>
-              {(ddcaDetails && (ddcaDetails.exchangedForAmount > 0 || ddcaDetails.fromBalance > 0)) && (
+              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0)) && (
                 <Dropdown overlay={menu} trigger={["click"]}>
                   <Button
                     shape="round"
                     type="text"
                     size="small"
                     className="ant-btn-shaded"
+                    disabled={fetchTxInfoStatus === "fetching"}
                     onClick={(e) => e.preventDefault()}
                     icon={<EllipsisOutlined />}
                   ></Button>
@@ -1098,12 +1130,14 @@ export const ExchangeDcasView = () => {
       {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
-        {/* {window.location.hostname === 'localhost' && (
+        {window.location.hostname === 'localhost' && (
           <div className="debug-bar">
-            <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
+            <span className="secondary-link" onClick={() => clearLastSentTx()}>[STOP]</span>
+            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature || '-'}</span>
           </div>
-        )} */}
+        )}
 
         <div className="interaction-area">
 

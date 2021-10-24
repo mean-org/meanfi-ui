@@ -153,9 +153,9 @@
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
 		"close-ddca": {
-			"modal-title": "Close recurring buy",
-			"primary-cta": "Close this buy",
-			"secondary-cta": "Cancel"
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
 		}
 	},
 	"deposits": {

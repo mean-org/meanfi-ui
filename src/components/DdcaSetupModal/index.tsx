@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
-import { consoleOut, delay, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import "./style.less";
@@ -16,12 +16,13 @@ import { useWallet } from '../../contexts/wallet';
 import { EXCEPTION_LIST } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { environment } from '../../environments/environment';
-import { TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '../../hybrid-liquidity-ag/types';
 import { notify } from '../../utils/notifications';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -54,6 +55,7 @@ export const DdcaSetupModal = (props: {
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
+  const { startFetchTxSignatureInfo } = useContext(TransactionStatusContext);
   const [isBusy, setIsBusy] = useState(false);
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
@@ -153,7 +155,7 @@ export const DdcaSetupModal = (props: {
       fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(props.fromTokenAmount, props.fromToken?.address as string),
       toTokenSymbol: props.toToken?.symbol,
       recurrencePeriod: getRecurrencePeriod(),
-      totalPeriod: getTotalPeriod(recurrencePeriod)
+      totalPeriod: getTotalPeriod(lockedSliderValue)
     })}</span>`;
   }
 
@@ -271,6 +273,7 @@ export const DdcaSetupModal = (props: {
     props.handleOk();
   }
 
+  // Create vault and deposit
   const onCreateVaultTxStart = async () => {
 
     let transaction: Transaction;
@@ -523,6 +526,7 @@ export const DdcaSetupModal = (props: {
 
   };
 
+  // Exec first swap
   const onSpawnSwapTxStart = async () => {
 
     let transaction: Transaction;
@@ -742,11 +746,14 @@ export const DdcaSetupModal = (props: {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            // onFinishedSwapTx();
-            const confirmed = await confirmTx();
-            if (confirmed && !transactionCancelled) {
-              onFinishedSwapTx();
-            } else { onFinishedSwapTx(); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+            onFinishedSwapTx();
+
+            // const confirmed = await confirmTx();
+            // if (confirmed && !transactionCancelled) {
+            //   onFinishedSwapTx();
+            // } else { onFinishedSwapTx(); }
           } else { onFinishedSwapTx(); }
         } else { onFinishedSwapTx(); }
       } else { onFinishedSwapTx(); }
@@ -777,6 +784,7 @@ export const DdcaSetupModal = (props: {
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
       footer={null}
+      maskClosable={false}
       visible={props.isVisible}
       onCancel={onOperationCancel}
       afterClose={props.onAfterClose}
