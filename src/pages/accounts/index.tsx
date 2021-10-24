@@ -585,9 +585,7 @@ export const AccountsView = () => {
     <>
     {accountTokens && accountTokens.length ? (
       accountTokens.map((asset, index) => {
-        if (hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT) {
-          return null;
-        }
+        const isDivider = index === numMeanTokens - 1 && accountTokens.length > numMeanTokens;
         const onTokenAccountClick = () => selectAsset(asset, true);
         const tokenPrice = getPricePerToken(asset);
         const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -595,44 +593,50 @@ export const AccountsView = () => {
           event.currentTarget.className = "error";
         };
         return (
-          <>
-            <div key={`${index + 50}`} onClick={onTokenAccountClick}
-                className={selectedAsset && selectedAsset.symbol === asset.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>
-              <div className="icon-cell">
-                <div className="token-icon">
-                  {asset.logoURI ? (
-                    <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-                  ) : (
-                    <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-                  )}
+          <div key={isDivider ? 'group-divider' : index.toString()} onClick={onTokenAccountClick}
+              className={`${isDivider
+              ? 'pinned-token-separator'
+              : 'transaction-list-row'} ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
+                ? 'selected'
+                : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+                  ? 'hidden'
+                  : ''}`
+            }>
+            {!isDivider && (
+              <>
+                <div className="icon-cell">
+                  <div className="token-icon">
+                    {asset.logoURI ? (
+                      <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+                    ) : (
+                      <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">
-                  {asset.symbol}
-                  {tokenPrice > 0 ? (
-                    <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                      ${getFormattedRateAmount(tokenPrice)}
-                    </span>
+                <div className="description-cell">
+                  <div className="title">
+                    {asset.symbol}
+                    {tokenPrice > 0 ? (
+                      <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                        ${getFormattedRateAmount(tokenPrice)}
+                      </span>
+                    ) : (null)}
+                  </div>
+                  <div className="subtitle text-truncate">{asset.name}</div>
+                </div>
+                <div className="rate-cell">
+                  <div className="rate-amount">
+                    {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+                  </div>
+                  {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
+                    <div className="interval">
+                      ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+                    </div>
                   ) : (null)}
                 </div>
-                <div className="subtitle text-truncate">{asset.name}</div>
-              </div>
-              <div className="rate-cell">
-                <div className="rate-amount">
-                  {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
-                </div>
-                {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
-                  <div className="interval">
-                    ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
-                  </div>
-                ) : (null)}
-              </div>
-            </div>
-            {(index === numMeanTokens - 1 && accountTokens.length > numMeanTokens) && (
-              <div key="separator" className="pinned-token-separator"></div>
+              </>
             )}
-          </>
+          </div>
         );
       })
     ) : (
