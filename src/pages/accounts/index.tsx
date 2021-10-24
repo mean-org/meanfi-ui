@@ -58,19 +58,18 @@ export const AccountsView = () => {
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  // const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
+  const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
-  // const [shallWeDraw, setShallWeDraw] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
-  const [numMeanTokens, setNumMeanTokens] = useState(0);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -286,8 +285,6 @@ export const AccountsView = () => {
                     }
                   });
                   consoleOut('intersected List:', meanTokensCopy, 'blue');
-                  // Update meanTokens count
-                  setNumMeanTokens(meanTokensCopy.length);
                   // Update balances in the SPL token list
                   accTks.forEach(item => {
                     const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
@@ -334,12 +331,16 @@ export const AccountsView = () => {
                   });
                   console.table(tokenTable);
                   // Update the state
-                  consoleOut('Extra tokens (sorted):', intersectedList, 'blue');
+                  setMeanSupportedTokens(meanTokensCopy);
+                  setExtraUserTokensSorted(sortedList);
                   setAccountTokens(finalList);
+                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   setTokensLoaded(true);
                 } else {
                   console.error('could not get account tokens');
+                  setMeanSupportedTokens(meanTokensCopy);
                   setAccountTokens(meanTokensCopy);
+                  setExtraUserTokensSorted([]);
                   setTokensLoaded(true);
                   refreshCachedRpc();
                 }
@@ -348,7 +349,9 @@ export const AccountsView = () => {
               })
               .catch(error => {
                 console.error(error);
+                setMeanSupportedTokens(meanTokensCopy);
                 setAccountTokens(meanTokensCopy);
+                setExtraUserTokensSorted([]);
                 setTokensLoaded(true);
                 selectAsset(meanTokensCopy[0]);
                 refreshCachedRpc();
@@ -581,70 +584,77 @@ export const AccountsView = () => {
   // Rendering //
   ///////////////
 
+  const renderToken = (asset: UserTokenAccount, index: number) => {
+    const onTokenAccountClick = () => selectAsset(asset, true);
+    const tokenPrice = getPricePerToken(asset);
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = "error";
+    };
+    return (
+      <div key={`${index}`} onClick={onTokenAccountClick}
+          className={`transaction-list-row ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
+              ? 'selected'
+              : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+                ? 'hidden'
+                : ''}`
+          }>
+        <div className="icon-cell">
+          <div className="token-icon">
+            {asset.logoURI ? (
+              <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+            ) : (
+              <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+            )}
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="title">
+            {asset.symbol}
+            {tokenPrice > 0 ? (
+              <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                ${getFormattedRateAmount(tokenPrice)}
+              </span>
+            ) : (null)}
+          </div>
+          <div className="subtitle text-truncate">{asset.name}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+          </div>
+          {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
+            <div className="interval">
+              ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+            </div>
+          ) : (null)}
+        </div>
+      </div>
+    );
+  }
+
   const renderTokenList = (
     <>
     {accountTokens && accountTokens.length ? (
-      accountTokens.map((asset, index) => {
-        const isDivider = index === numMeanTokens - 1 && accountTokens.length > numMeanTokens;
-        const onTokenAccountClick = () => selectAsset(asset, true);
-        const tokenPrice = getPricePerToken(asset);
-        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          event.currentTarget.src = FALLBACK_COIN_IMAGE;
-          event.currentTarget.className = "error";
-        };
-        return (
-          <div key={isDivider ? 'group-divider' : index.toString()} onClick={onTokenAccountClick}
-              className={`${isDivider
-              ? 'pinned-token-separator'
-              : 'transaction-list-row'} ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
-                ? 'selected'
-                : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
-                  ? 'hidden'
-                  : ''}`
-            }>
-            {!isDivider && (
-              <>
-                <div className="icon-cell">
-                  <div className="token-icon">
-                    {asset.logoURI ? (
-                      <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-                    ) : (
-                      <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-                    )}
-                  </div>
-                </div>
-                <div className="description-cell">
-                  <div className="title">
-                    {asset.symbol}
-                    {tokenPrice > 0 ? (
-                      <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                        ${getFormattedRateAmount(tokenPrice)}
-                      </span>
-                    ) : (null)}
-                  </div>
-                  <div className="subtitle text-truncate">{asset.name}</div>
-                </div>
-                <div className="rate-cell">
-                  <div className="rate-amount">
-                    {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
-                  </div>
-                  {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
-                    <div className="interval">
-                      ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
-                    </div>
-                  ) : (null)}
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })
+      <>
+        {/* Render mean supported tokens */}
+        {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
+          meanSupportedTokens.map((asset, index) => renderToken(asset, index))
+        )}
+        {/* Render divider if there are extra tokens */}
+        {(accountTokens.length > meanSupportedTokens.length) && (
+          <div key="separator" className="pinned-token-separator"></div>
+        )}
+        {/* Render extra user tokens */}
+        {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
+          extraUserTokensSorted.map((asset, index) => renderToken(asset, index + 50))
+        )}
+      </>
     ) : (
       <div className="h-75 flex-center">
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     )}
-
     </>
   );
 
