@@ -2,6 +2,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { ConfirmedTransaction } from "@solana/web3.js";
 import { type } from "../utils/store-types";
 
+export type Confirmations = number | "max";
 export type Timestamp = number | "unavailable";
 
 export enum FetchStatus {

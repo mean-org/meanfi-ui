@@ -31,7 +31,7 @@ import { MappedTransaction } from "../utils/history";
 import { consoleOut } from "../utils/ui";
 import { appConfig } from "..";
 import { ChainId } from "@saberhq/token-utils";
-import { DdcaAccount, DdcaClient } from "@mean-dao/ddca";
+import { DdcaAccount } from "@mean-dao/ddca";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -466,7 +466,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
 
-  // TODO: referrals is tempararily persisted in localStorage but we must use an API
+  // TODO: referrals are tempararily persisted in localStorage but we must use an API
   const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
@@ -850,7 +850,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       // Update the list
       updateUserTokens(list);
-      consoleOut('AppState -> userTokens:', list);
+      // consoleOut('AppState -> userTokens:', list);
 
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
