@@ -157,6 +157,12 @@
 			"modal-title": "Are you sure?",
 			"primary-cta": "Confirm",
 			"secondary-cta": "Back"
+		},
+		"activity": {
+			"no-activity": "No activity so far",
+			"action-deposit": "Deposited {{fromAmount}}",
+			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+			"action-withdraw": "Withdrew {{toAmount}}"
 		}
 	},
 	"deposits": {

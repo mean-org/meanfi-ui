@@ -18,7 +18,7 @@ import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPEC
 import { IconClock, IconExchange, IconExternalLink, IconRefresh } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
-import { calculateActionFees, DdcaAccount, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
+import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Redirect } from 'react-router-dom';
@@ -70,8 +70,8 @@ export const ExchangeDcasView = () => {
   const [loadingDdcaDetails, setLoadingDdcaDetails] = useState<boolean>(false);
   const [firstLoadDone, setFirstLoadDone] = useState<boolean>(false);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [loadingActivity, setLoadingActivity] = useState(true);
-  const [activity, setActivity] = useState<StreamActivity[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activity, setActivity] = useState<DdcaActivity[]>([]);
 
   // Select, Connect to and test the network
   useEffect(() => {
@@ -466,6 +466,7 @@ export const ExchangeDcasView = () => {
         if (ddca) {
           setDdcaDetails(ddca);
           consoleOut('ddcaDetails:', ddca, 'blue');
+          setLoadingActivity(false);
         }
       })
       .catch(error => console.error(error))
@@ -583,29 +584,29 @@ export const ExchangeDcasView = () => {
   ]);
 
   // Load DDCA activity by ddcaAddress
-  // useEffect(() => {
+  useEffect(() => {
 
-  //   if (!ddcaDetails) { return; }
+    if (!ddcaClient || !ddcaDetails) { return; }
 
-  //   if (!loadingActivity) {
-  //     setLoadingActivity(true);
-  //     const ddcaAddress = new PublicKey(item.id as string);
-  //     ddcaClient.GetDdcaActivity(ddcaAddress)
-  //       .then(activity => {
-  //         if (activity) {
-  //           setActivity(activity);
-  //           consoleOut('Ddca activity:', activity, 'blue');
-  //         }
-  //       })
-  //       .catch(error => console.error(error))
-  //       .finally(() => setLoadingActivity(false));
-  //   }
+    if (!loadingActivity) {
+      setLoadingActivity(true);
+      const ddcaAddress = new PublicKey(ddcaDetails.ddcaAccountAddress as string);
+      ddcaClient.getActivity(ddcaAddress)
+        .then(activity => {
+          setLoadingActivity(false);
+          if (activity) {
+            setActivity(activity);
+            consoleOut('Ddca activity:', activity, 'blue');
+          }
+        })
+        .catch(error => console.error(error));
+    }
 
-  // }, [
-  //   ddcaClient,
-  //   ddcaDetails,
-  //   loadingActivity
-  // ]);
+  }, [
+    ddcaClient,
+    ddcaDetails,
+    loadingActivity
+  ]);
 
   ////////////////////
   //   UI Related   //
@@ -813,42 +814,50 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getActivityIcon = (item: StreamActivity) => {
-    if (item.action === 'withdrew') {
-      return (
-        <ArrowUpOutlined className="mean-svg-icons outgoing" />
-      );
-      } else {
-      return (
-        <IconExchange className="mean-svg-icons incoming" />
-      );
+  const getActivityIcon = (item: DdcaActivity) => {
+    switch (item.action) {
+      case "deposited":
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+        );
+      case "withdrew":
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        );
+      case "exchanged":
+        return (
+          <IconExchange className="mean-svg-icons incoming" />
+        );
+      default:
+        return '-';
     }
+
   }
 
-  const getActivityTitle = (item: DdcaDetails): string => {
-    // TODO: Should I replace toBalance with exchangedForAmount ??? or is it ok like that?
-    const result = `Exchanged ${
-      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)
-    } for ${
-      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint)
-    }`;
+  const getActivityTitle = (item: DdcaActivity): string => {
+    let result = '';
+    switch (item.action) {
+      case "deposited":
+        result = t('ddcas.activity.action-deposit', {
+          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '')
+        });
+        break;
+      case "withdrew":
+        result = t('ddcas.activity.action-withdraw', {
+          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '')
+        });
+        break;
+      case "exchanged":
+        result = t('ddcas.activity.action-exchange', {
+          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || ''),
+          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '')
+        });
+        break;
+      default:
+        result = '-';
+        break;
+    }
     return result;
-  }
-
-  const isAddressMyAccount = (addr: string): boolean => {
-    return publicKey && addr && addr === publicKey.toBase58()
-           ? true
-           : false;
-  }
-
-  const isNextRoundScheduled = (item: DdcaDetails): boolean => {
-    const now = new Date().toUTCString();
-    const nowUtc = new Date(now);
-    const nextScheduledDate = new Date(item.nextScheduledSwapUtc as string);
-    if (nextScheduledDate > nowUtc) {
-      return true;
-    }
-    return false;
   }
 
   const isCreating = (): boolean => {
@@ -885,6 +894,7 @@ export const ExchangeDcasView = () => {
   const renderRecurringBuy = (
     <>
       <div className="transaction-list-data-wrapper vertical-scroll">
+
         <Spin spinning={loadingDdcaDetails}>
           <div className="stream-fields-container">
             {ddcaDetails && (
@@ -995,14 +1005,13 @@ export const ExchangeDcasView = () => {
                 onClick={() => {}}>
                 {isClosing() ? t("ddcas.add-funds-cta-disabled-closing") : t("streams.stream-detail.add-funds-cta")}
               </Button>
-              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0)) && (
+              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && !isClosing()) && (
                 <Dropdown overlay={menu} trigger={["click"]}>
                   <Button
                     shape="round"
                     type="text"
                     size="small"
                     className="ant-btn-shaded"
-                    disabled={fetchTxInfoStatus === "fetching"}
                     onClick={(e) => e.preventDefault()}
                     icon={<EllipsisOutlined />}
                   ></Button>
@@ -1012,70 +1021,48 @@ export const ExchangeDcasView = () => {
           </div>
         </Spin>
 
+        {/* Activity list */}
         <div className="activity-list">
           <>
-            <div className="item-list-header compact">
-              <div className="header-row">
-                <div className="std-table-cell first-cell">&nbsp;</div>
-                <div className="std-table-cell responsive-cell">
-                  {t('streams.stream-activity.heading')}
-                </div>
-                <div className="std-table-cell fixed-width-150">
-                  {t("streams.stream-activity.label-date")}
+            {!activity || activity.length === 0 ? (
+              <div className="mt-3">
+                <Divider/>
+                <p>{t('ddcas.activity.no-activity')}.</p>
+              </div>
+            ) : (
+              <>
+              <div className="item-list-header compact">
+                <div className="header-row">
+                  <div className="std-table-cell first-cell">&nbsp;</div>
+                  <div className="std-table-cell responsive-cell">
+                    {t('streams.stream-activity.heading')}
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    {t("streams.stream-activity.label-date")}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="item-list-body compact">
-              {ddcaDetails && (
-                <>
-                  {isNextRoundScheduled(ddcaDetails) && (
-                    <span className="item-list-row simplelink">
-                      <div className="std-table-cell first-cell">
-                        <IconExchange className="mean-svg-icons"/>
-                      </div>
+              <div className="item-list-body compact">
+                {activity.map((item, index) => {
+                  return (
+                    <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.transactionSignature}${getSolanaExplorerClusterParam()}`}>
+                      <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
                       <div className="std-table-cell responsive-cell">
-                        <span className="align-middle">{getActivityTitle(ddcaDetails)}</span>
+                        <span className="align-middle">{getActivityTitle(item)}</span>
                       </div>
-                      <div className="std-table-cell fixed-width-150">
-                        <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                      <div className="std-table-cell fixed-width-120" >
+                        <span className="align-middle">{getShortDate(item.dateUtc as string, true)}</span>
                       </div>
-                    </span>
-                  )}
-                  <span className="item-list-row simplelink">
-                    <div className="std-table-cell first-cell">
-                      <ArrowDownOutlined className="incoming"/>
-                    </div>
-                    <div className="std-table-cell responsive-cell">
-                      <span className="align-middle">Deposited {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
-                    </div>
-                    <div className="std-table-cell fixed-width-150">
-                      <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
-                    </div>
-                  </span>
-                </>
-              )}
-              {environment === 'local' && (
-                <div className="mt-3">
-                  <Divider/>
-                  {activity.map((item, index) => {
-                    return (
-                      <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                        <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                        <div className="std-table-cell responsive-cell">
-                          <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
-                        </div>
-                        <div className="std-table-cell fixed-width-120" >
-                          <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </a>
+                  );
+                })}
+              </div>
+              </>
+            )}
           </>
         </div>
+
       </div>
       {selectedDdca && (
         <div className="stream-share-ctas">
