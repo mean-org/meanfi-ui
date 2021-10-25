@@ -1,6 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import { ArrowLeftOutlined, CopyOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import { AccountMeta, Connection, Keypair, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { AccountMeta, Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -66,19 +66,18 @@ export const AccountsView = () => {
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  // const [isInputValid, setIsInputValid] = useState(false);
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
+  const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
+  const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
-  // const [shallWeDraw, setShallWeDraw] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
-  const [numMeanTokens, setNumMeanTokens] = useState(0);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -336,7 +335,6 @@ export const AccountsView = () => {
         const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
         const pk = new PublicKey(accountAddress);
         let nativeBalance = 0;
-        setNumMeanTokens(userTokens.length);
 
         // Fetch SOL balance.
         customConnection.getBalance(pk)
@@ -353,14 +351,34 @@ export const AccountsView = () => {
             fetchAccountTokens(pk, connection.endpoint)
               .then(accTks => {
                 if (accTks) {
+                  consoleOut('fetched accountTokens:', accTks.map(i => {
+                    return {
+                      pubAddress: i.pubkey.toBase58(),
+                      mintAddress: i.parsedInfo.mint,
+                      balance: i.parsedInfo.tokenAmount.uiAmount || 0
+                    };
+                  }), 'blue');
                   // Update balances in the mean token list
                   accTks.forEach(item => {
-                    const tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                    let tokenIndex = 0;
+                    // Locate the token in meanTokensCopy
+                    tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
                     if (tokenIndex !== -1) {
-                      meanTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
-                      meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      // If we didn't already filled info for this associated token address
+                      if (!meanTokensCopy[tokenIndex].ataAddress) {
+                        // Add it
+                        meanTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
+                        meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      } else if (meanTokensCopy[tokenIndex].ataAddress !== item.pubkey.toBase58()) {
+                        // If we did and the ataAddress is different/new then duplicate this item with the new info
+                        const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex]));
+                        newItem.ataAddress = item.pubkey.toBase58();
+                        newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                        meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
+                      }
                     }
                   });
+                  consoleOut('intersected List:', meanTokensCopy, 'blue');
                   // Update balances in the SPL token list
                   accTks.forEach(item => {
                     const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
@@ -369,12 +387,12 @@ export const AccountsView = () => {
                       splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     }
                   });
-                  // Create a list containing the tokens for the user accounts not in the meanTokenList
+                  // Create a list containing the tokens for the user accounts not in the meanTokensCopy
                   const intersectedList = new Array<UserTokenAccount>();
                   accTks.forEach(item => {
                     // Loop through the user token accounts and add the token account to the list: meanTokensCopy
-                    // If it is not already on the list
-                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint);
+                    // If it is not already on the list (diferentiate associated token accounts of the same mint)
+                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.ataAddress === item.pubkey.toBase58());
                     const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
                     if (tokenFromSplTokenList && !isTokenAccountInTheList) {
                       intersectedList.push(tokenFromSplTokenList);
@@ -407,11 +425,16 @@ export const AccountsView = () => {
                   });
                   console.table(tokenTable);
                   // Update the state
+                  setMeanSupportedTokens(meanTokensCopy);
+                  setExtraUserTokensSorted(sortedList);
                   setAccountTokens(finalList);
+                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   setTokensLoaded(true);
                 } else {
                   console.error('could not get account tokens');
+                  setMeanSupportedTokens(meanTokensCopy);
                   setAccountTokens(meanTokensCopy);
+                  setExtraUserTokensSorted([]);
                   setTokensLoaded(true);
                   refreshCachedRpc();
                 }
@@ -420,7 +443,9 @@ export const AccountsView = () => {
               })
               .catch(error => {
                 console.error(error);
+                setMeanSupportedTokens(meanTokensCopy);
                 setAccountTokens(meanTokensCopy);
+                setExtraUserTokensSorted([]);
                 setTokensLoaded(true);
                 selectAsset(meanTokensCopy[0]);
                 refreshCachedRpc();
@@ -653,64 +678,77 @@ export const AccountsView = () => {
   // Rendering //
   ///////////////
 
+  const renderToken = (asset: UserTokenAccount, index: number) => {
+    const onTokenAccountClick = () => selectAsset(asset, true);
+    const tokenPrice = getPricePerToken(asset);
+    const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+      event.currentTarget.src = FALLBACK_COIN_IMAGE;
+      event.currentTarget.className = "error";
+    };
+    return (
+      <div key={`${index}`} onClick={onTokenAccountClick}
+          className={`transaction-list-row ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
+              ? 'selected'
+              : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
+                ? 'hidden'
+                : ''}`
+          }>
+        <div className="icon-cell">
+          <div className="token-icon">
+            {asset.logoURI ? (
+              <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+            ) : (
+              <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+            )}
+          </div>
+        </div>
+        <div className="description-cell">
+          <div className="title">
+            {asset.symbol}
+            {tokenPrice > 0 ? (
+              <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                ${getFormattedRateAmount(tokenPrice)}
+              </span>
+            ) : (null)}
+          </div>
+          <div className="subtitle text-truncate">{asset.name}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
+          </div>
+          {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
+            <div className="interval">
+              ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
+            </div>
+          ) : (null)}
+        </div>
+      </div>
+    );
+  }
+
   const renderTokenList = (
     <>
     {accountTokens && accountTokens.length ? (
-      accountTokens.map((asset, index) => {
-        if (hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT) {
-          return null;
-        }
-        if (index === numMeanTokens - 1 && accountTokens.length > index + 1) {
-          return <div key="separator" className="pinned-token-separator"></div>;
-        }
-        const onTokenAccountClick = () => selectAsset(asset, true);
-        const tokenPrice = getPricePerToken(asset);
-        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          event.currentTarget.src = FALLBACK_COIN_IMAGE;
-          event.currentTarget.className = "error";
-        };
-        return (
-          <div key={`${index + 50}`} onClick={onTokenAccountClick}
-               className={selectedAsset && selectedAsset.symbol === asset.symbol ? 'transaction-list-row selected' : 'transaction-list-row'}>
-            <div className="icon-cell">
-              <div className="token-icon">
-                {asset.logoURI ? (
-                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-                )}
-              </div>
-            </div>
-            <div className="description-cell">
-              <div className="title">
-                {asset.symbol}
-                {tokenPrice > 0 ? (
-                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    ${getFormattedRateAmount(tokenPrice)}
-                  </span>
-                ) : (null)}
-              </div>
-              <div className="subtitle text-truncate">{asset.name}</div>
-            </div>
-            <div className="rate-cell">
-              <div className="rate-amount">
-                {(asset.balance || 0) > 0 ? getTokenAmountAndSymbolByTokenAddress(asset.balance || 0, asset.address, true) : '0'}
-              </div>
-              {(tokenPrice > 0 && (asset.balance || 0) > 0) ? (
-                <div className="interval">
-                  ${getFormattedRateAmount((asset.balance || 0) * tokenPrice)}
-                </div>
-              ) : (null)}
-            </div>
-          </div>
-        );
-      })
+      <>
+        {/* Render mean supported tokens */}
+        {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
+          meanSupportedTokens.map((asset, index) => renderToken(asset, index))
+        )}
+        {/* Render divider if there are extra tokens */}
+        {(accountTokens.length > meanSupportedTokens.length) && (
+          <div key="separator" className="pinned-token-separator"></div>
+        )}
+        {/* Render extra user tokens */}
+        {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
+          extraUserTokensSorted.map((asset, index) => renderToken(asset, index + 50))
+        )}
+      </>
     ) : (
       <div className="h-75 flex-center">
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     )}
-
     </>
   );
 
@@ -896,6 +934,19 @@ export const AccountsView = () => {
                         />
                       </Tooltip>
                     </span>
+                    {connected && accountAddress === recoverAccountAddress.toBase58() && (
+                      <span className="icon-button-container">
+                        <Tooltip placement="bottom" title="Recover funds">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="small"
+                            icon={<IconDownload className="mean-svg-icons"/>}
+                            onClick={onRecoverFunds}
+                          />
+                        </Tooltip>
+                      </span>
+                    )}
                     {connected && accountAddress === recoverAccountAddress.toBase58() && (
                       <span className="icon-button-container">
                         <Tooltip placement="bottom" title="Recover funds">

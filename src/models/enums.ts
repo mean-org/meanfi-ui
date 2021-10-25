@@ -48,11 +48,12 @@ export enum TransactionStatus {
     CreateRecurringBuyScheduleFailure = 20,
 }
 
-export enum Operations {
+export enum OperationType {
     Transfer = 0,
-    CreateStream = 1,
-    FundStream = 2,
-    CloseStream = 3,
-    Withdraw = 4,
-    ClaimFunds = 5
+    Create = 1,
+    AddFunds = 2,
+    Withdraw = 3,
+    Close = 4,
+    Pause = 5,
+    Resume = 6
 }

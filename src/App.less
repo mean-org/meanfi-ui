@@ -628,12 +628,14 @@ footer.ant-layout-footer {
   min-height: var(--custom-control-height);
   align-items: center;
   padding: 7px 8px 7px 14px;
-  &:hover,
-  &:focus,
-  &:active {
-    border-color: var(--color-secondary-alpha-20) !important;
-    outline: none;
-    box-shadow: none;
+  &:not(:disabled) {
+    &:hover,
+    &:focus,
+    &:active {
+      border-color: var(--color-secondary-alpha-20) !important;
+      outline: none;
+      box-shadow: none;
+    }
   }
   &:disabled {
     color: var(--color-secondary-alpha-40) !important;

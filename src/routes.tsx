@@ -19,6 +19,7 @@ import {
 } from "./pages";
 import { ProcessReferals } from "./guards";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
+import TransactionStatusProvider from "./contexts/transaction-status";
 
 export function Routes() {
   return (
@@ -27,6 +28,7 @@ export function Routes() {
         <ConnectionProvider>
           <WalletProvider>
             <AccountsProvider>
+              <TransactionStatusProvider>
                 <AppStateProvider>
                   <AppLayout>
                     <Switch>
@@ -53,6 +55,7 @@ export function Routes() {
                     </Switch>
                   </AppLayout>
                 </AppStateProvider>
+              </TransactionStatusProvider>
             </AccountsProvider>
           </WalletProvider>
         </ConnectionProvider>

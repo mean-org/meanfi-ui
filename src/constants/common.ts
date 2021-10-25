@@ -69,13 +69,3 @@ export const LANGUAGES: Language[] = [
         locale: 'pt-BR'
     },
 ];
-
-export const EXCEPTION_LIST = [
-    '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
-    '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
-    'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
-    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
-    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',  // MT
-    'BYH3SgsJGZRttX7LSxwPqVpXPQFDEkX9zEhX1MxCW3Pd',
-    '7iwN3vgX9yjfW6VFzWiC1hGK261fgmC7RYrQiwu9Sukk'
-];

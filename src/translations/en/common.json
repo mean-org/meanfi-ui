@@ -19,6 +19,7 @@
 		"account-add-cta-label": "Go!",
 		"account-add-heading": "View account details for any address in",
 		"account-address-change-cta": "Scan another address",
+		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Account address",
 		"account-address-placeholder": "Enter your account address",
 		"account-address-validation": "Not a valid address format",
@@ -135,26 +136,32 @@
 		"cta-label-vault-created": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
 		},
 		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-01": "Only you can withdraw funds from your vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
 			"note-item-03": "All unused fees are returned to you upon withdrawal",
 			"notes-title": "Important Notes"
 		}
 	},
 	"ddcas": {
+		"add-funds-cta-disabled-closing": "Caceling in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
 		"close-ddca": {
-			"modal-title": "Close recurring buy",
-			"primary-cta": "Close this buy",
-			"secondary-cta": "Cancel"
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
+		},
+		"activity": {
+			"action-deposit": "Deposited {{fromAmount}}",
+			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+			"action-withdraw": "Withdrew {{toAmount}}"
 		}
 	},
 	"deposits": {
@@ -220,7 +227,7 @@
 		"account-address-not-copied-message": "Could not copy Account Address",
 		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
 		"error-cannot-fund-account-message": "Could not fund your account, please try again later",
-		"error-creating-vault-message": "Could not create the DCA vault, please try again later",
+		"error-creating-vault-message": "Could not create the vault, please try again later",
 		"error-ledger-title": "Ledger Error",
 		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
 		"error-title": "Error",
