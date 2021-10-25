@@ -45,9 +45,7 @@ export const DdcaSetupModal = (props: {
   const [rangeMax, setRangeMax] = useState(0);
   const [recurrencePeriod, setRecurrencePeriod] = useState(0);
   const [lockedSliderValue, setLockedSliderValue] = useState(0);
-  const [minimumRequiredBalance, setMinimumRequiredBalance] = useState(0);
   const [marks, setMarks] = useState<SliderMarks>();
-  const [hasMinimumTokenBalance, setHasMinimumTokenBalance] = useState(false);
   // Transaction control
   const {
     ddcaOption,
@@ -66,15 +64,15 @@ export const DdcaSetupModal = (props: {
   }
 
   const getGasFeeAmount = (): number => {
-    return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (recurrencePeriod + 1));
+    return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1));
   }
 
-  const hasEnoughNativeBalance = (): boolean => {
+  const hasEnoughNativeBalanceForFees = (): boolean => {
     return props.userBalance >= getGasFeeAmount() ? true : false;
   }
 
   const getTotalSolAmount = (): number => {
-    const depositAmount = props.fromTokenAmount * (recurrencePeriod + 1);
+    const depositAmount = props.fromTokenAmount * (lockedSliderValue + 1);
     return depositAmount + getGasFeeAmount();
   }
 
@@ -166,6 +164,10 @@ export const DdcaSetupModal = (props: {
     );
   }
 
+  const hasEnoughFromTokenBalance = (): boolean => {
+    return props.fromTokenBalance > props.fromTokenAmount * (lockedSliderValue + 1);
+  }
+
   //////////////////////////
   //   Data Preparation   //
   //////////////////////////
@@ -211,8 +213,6 @@ export const DdcaSetupModal = (props: {
       // Set minimum required and valid flag
       const minimumRequired = props.fromTokenAmount * (minRangeSelectable + 1);
       const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
-      setMinimumRequiredBalance(minimumRequired);
-      setHasMinimumTokenBalance(isOpValid);
 
       // Set the slider position
       if (isOpValid) {
@@ -835,22 +835,28 @@ export const DdcaSetupModal = (props: {
           <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
         </span>
       </div>
-      {!vaultCreated && !isBusy && ((!isNative() && !hasMinimumTokenBalance) || (isNative() && props.fromTokenBalance < minimumRequiredBalance + getGasFeeAmount())) && (
-        <div className="mb-2 text-center">
-          <span className="fg-error">
-            {
-              t('transactions.validation.minimum-repeating-buy-amount', {
-                fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  !isNative() ? minimumRequiredBalance : minimumRequiredBalance + getGasFeeAmount(),
-                  props.fromToken?.address as string
-                )
-              })
-            }
-          </span>
-        </div>
-      )}
       <div className="row two-col-ctas">
         <div className="col-6">
+          {/**
+           * repetitions = sliderPosition + 1
+           * nativeFees = maxBlockchainFee + (maxFeePerSwap * repetitions)
+           * 
+           * IF fromToken !== SOL
+           *   setting  = fromTokenAmount * repetitions
+           *   disabled = fromTokenBalance < setting || userNativeBalance < nativeFees
+           *   buttonLabel = !enoughFromTokenBalance
+           *                   ? 'Need at least {{setting}}'
+           *                   : !enoughUserNativeBalance
+           *                     ? 'Need at least {{nativeFees}}'
+           *                     : 'Deposit'
+           * 
+           * IF fromToken  === SOL
+           *   setting  = fromTokenAmount * repetitions
+           *   disabled = userNativeBalance < (setting + nativeFees)
+           *   buttonLabel = userNativeBalance < (setting + nativeFees)
+           *                   ? 'Need at least {{setting + nativeFees}}'
+           *                   : 'Deposit'
+           */}
           <Button
             className={`main-cta ${!vaultCreated && isBusy ? 'inactive' : vaultCreated ? 'completed' : ''}`}
             block
@@ -859,7 +865,7 @@ export const DdcaSetupModal = (props: {
             size="large"
             disabled={!isProd() ||
               (isNative() && props.userBalance < getTotalSolAmount()) ||
-              (!isNative() && !hasMinimumTokenBalance)
+              (!isNative() && !hasEnoughFromTokenBalance())
             }
             onClick={() => onCreateVaultTxStart()}>
             {
@@ -871,10 +877,10 @@ export const DdcaSetupModal = (props: {
                   ? getTotalSolAmount() > props.userBalance
                       ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalSolAmount(), NATIVE_SOL_MINT.toBase58())}`
                       : t('ddca-setup-modal.cta-label-deposit')
-                  : !hasMinimumTokenBalance
+                  : !hasEnoughFromTokenBalance()
                     ? t('transactions.validation.amount-low')
-                    : !hasEnoughNativeBalance()
-                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1), NATIVE_SOL_MINT.toBase58())}`
+                    : !hasEnoughNativeBalanceForFees()
+                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
                         : t('ddca-setup-modal.cta-label-deposit')
             }
           </Button>

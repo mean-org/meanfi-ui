@@ -7,7 +7,7 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
-import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
@@ -190,6 +190,7 @@ export const ExchangeDcasView = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearLastSentTx();
     setTransactionCancelled(false);
     setIsBusy(true);
 
@@ -427,6 +428,8 @@ export const ExchangeDcasView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
+            await delay(250);
             setTransactionStatus({
               lastOperation: TransactionStatus.ConfirmTransactionSuccess,
               currentOperation: TransactionStatus.TransactionFinished
@@ -656,10 +659,11 @@ export const ExchangeDcasView = () => {
     if (!ddcaClient || !ddcaDetails) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      clearLastSentTx();
       if (lastSentTxOperationType === OperationType.Close) {
+        clearLastSentTx();
         reloadRecurringBuys();
       } else {
+        clearLastSentTx();
         reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
       }
     }
