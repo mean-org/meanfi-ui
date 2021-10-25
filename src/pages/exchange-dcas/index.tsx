@@ -8,8 +8,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
 import { consoleOut, copyText, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
-import { StreamActivity } from '@mean-dao/money-streaming';
-import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
+import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
@@ -27,7 +26,6 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { DdcaCloseModal } from '../../components/DdcaCloseModal';
-import { environment } from '../../environments/environment';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -73,6 +71,10 @@ export const ExchangeDcasView = () => {
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [activity, setActivity] = useState<DdcaActivity[]>([]);
 
+  const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+  }
+
   // Select, Connect to and test the network
   useEffect(() => {
     (async () => {
@@ -95,7 +97,7 @@ export const ExchangeDcasView = () => {
   // Set and cache the DDCA client
   const ddcaClient = useMemo(() => {
     if (connection && wallet && publicKey && endpoint) {
-      return new DdcaClient(endpoint, wallet, { commitment: "confirmed" }, true);
+      return new DdcaClient(endpoint, wallet, { commitment: "confirmed" }, isLocal() ? true : false);
     } else {
       return undefined;
     }
@@ -593,7 +595,6 @@ export const ExchangeDcasView = () => {
       const ddcaAddress = new PublicKey(ddcaDetails.ddcaAccountAddress as string);
       ddcaClient.getActivity(ddcaAddress)
         .then(activity => {
-          setLoadingActivity(false);
           if (activity) {
             setActivity(activity);
             consoleOut('Ddca activity:', activity, 'blue');
@@ -826,7 +827,7 @@ export const ExchangeDcasView = () => {
         );
       case "exchanged":
         return (
-          <IconExchange className="mean-svg-icons incoming" />
+          <IconExchange className="mean-svg-icons" />
         );
       default:
         return '-';
@@ -1109,7 +1110,7 @@ export const ExchangeDcasView = () => {
                       <div className="std-table-cell responsive-cell">
                         <span className="align-middle">{getActivityTitle(item)}</span>
                       </div>
-                      <div className="std-table-cell fixed-width-120" >
+                      <div className="std-table-cell fixed-width-150" >
                         <span className="align-middle">{getShortDate(item.dateUtc as string, true)}</span>
                       </div>
                     </a>
@@ -1187,7 +1188,7 @@ export const ExchangeDcasView = () => {
       {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
-        {window.location.hostname === 'localhost' && (
+        {isLocal() && (
           <div className="debug-bar">
             <span className="secondary-link" onClick={() => clearLastSentTx()}>[STOP]</span>
             <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
