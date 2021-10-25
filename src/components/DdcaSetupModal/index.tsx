@@ -13,7 +13,6 @@ import { IconShield } from '../../Icons';
 import { InfoIcon } from '../InfoIcon';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
-import { EXCEPTION_LIST } from '../../constants';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { environment } from '../../environments/environment';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -77,11 +76,6 @@ export const DdcaSetupModal = (props: {
   const getTotalSolAmount = (): number => {
     const depositAmount = props.fromTokenAmount * (recurrencePeriod + 1);
     return depositAmount + getGasFeeAmount();
-  }
-
-  const isUserAllowed = (): boolean => {
-    if (!publicKey) { return true; }
-    return EXCEPTION_LIST.some(a => a === publicKey.toBase58());
   }
 
   const isNative = (): boolean => {
@@ -863,8 +857,7 @@ export const DdcaSetupModal = (props: {
             type="primary"
             shape="round"
             size="large"
-            disabled={
-              !isProd() || !isUserAllowed() ||
+            disabled={!isProd() ||
               (isNative() && props.userBalance < getTotalSolAmount()) ||
               (!isNative() && !hasMinimumTokenBalance)
             }
@@ -875,16 +868,12 @@ export const DdcaSetupModal = (props: {
                 : vaultCreated
                 ? t('ddca-setup-modal.cta-label-vault-created')
                 : isNative()
-                  ? !isUserAllowed()
-                    ? 'Repeating buy temporarily unavailable'
-                    : getTotalSolAmount() > props.userBalance
+                  ? getTotalSolAmount() > props.userBalance
                       ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalSolAmount(), NATIVE_SOL_MINT.toBase58())}`
                       : t('ddca-setup-modal.cta-label-deposit')
                   : !hasMinimumTokenBalance
                     ? t('transactions.validation.amount-low')
-                    : !isUserAllowed()
-                      ? 'Repeating buy temporarily unavailable'
-                      : !hasEnoughNativeBalance()
+                    : !hasEnoughNativeBalance()
                         ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue + 1), NATIVE_SOL_MINT.toBase58())}`
                         : t('ddca-setup-modal.cta-label-deposit')
             }

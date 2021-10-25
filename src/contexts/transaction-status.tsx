@@ -72,8 +72,6 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     const fetchStatus = async () => {
       try {
         const result = await fetchTransactionStatus(connection, lastSentTxSignature);
-        const status = result?.info?.confirmationStatus || 'fetching';
-        consoleOut('Transaction status:', status, 'blue');
 
         // Success with no data, retry
         if (!result || (result && !result.info)) {

@@ -54,7 +54,7 @@
     "@influxdata/influxdb-client": "^1.19",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
-    "@mean-dao/ddca": "^1.2.18",
+    "@mean-dao/ddca": "^1.2",
     "@mean-dao/money-streaming": "1.4.8",
     "@mercurial-finance/stable-swap-n-pool": "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git",
     "@orca-so/sdk": "^1.1.9",

@@ -136,20 +136,21 @@
 		"cta-label-vault-created": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
 		},
 		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-01": "Only you can withdraw funds from your vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
 			"note-item-03": "All unused fees are returned to you upon withdrawal",
 			"notes-title": "Important Notes"
 		}
 	},
 	"ddcas": {
+		"add-funds-cta-disabled-closing": "Caceling in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
 		"close-ddca": {
@@ -221,7 +222,7 @@
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
 		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au faucet dans mainnet",
 		"error-cannot-fund-account-message": "Nous n'avons pas pu approvisionner votre compte. Veuillez réessayer plus tard.",
-		"error-creating-vault-message": "Could not create the DCA vault, please try again later",
+		"error-creating-vault-message": "Could not create the vault, please try again later",
 		"error-ledger-title": "Erreur du Ledger",
 		"error-loading-streamid-message": "Nous n'avons pas pu trouver ou charger le flux avec l'ID {{streamId}}",
 		"error-title": "Erreur",

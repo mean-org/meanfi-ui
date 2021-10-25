@@ -1933,10 +1933,10 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.0.tgz#c012c1ecc1a0e53d50e6af381618dca5268461c1"
   integrity sha512-lLseUPEhSFUXYTKj6q7s2O3s2vW2ebgA11vMAlKodXGf5AFw4zUoEbTz9CoFOC9jS6xY4Qr8BmRnxP/odT4Uuw==
 
-"@mean-dao/ddca@^1.2.18":
-  version "1.2.18"
-  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.18.tgz#0272c740f60a416236d5bc996867350d5b42036c"
-  integrity sha512-Fd5JXiXLrcE+Vdy3Tow22KY74ZPMx3C7a21zNaWvSjEq+Qu2dvP6UVopRzEuMryD1fFLZph82DA0Ux17DqzZ7g==
+"@mean-dao/ddca@^1.2":
+  version "1.2.20"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.20.tgz#17704313a40d76c395b0f95ea150828c81a8d758"
+  integrity sha512-cyWyVKk/PV1qWPkPzzUghDdlFeE29bhnqZNQWdEXlotYJhzyBCh0WWg9RXsVpPuYCBHSJWA9PgVbEG7rccwThg==
   dependencies:
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"

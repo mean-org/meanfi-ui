@@ -851,6 +851,18 @@ export const ExchangeDcasView = () => {
     return false;
   }
 
+  const isCreating = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+            ? true
+            : false;
+  }
+
+  const isClosing = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+            ? true
+            : false;
+  }
+
   const menu = (
     <Menu>
       {/*
@@ -937,7 +949,7 @@ export const ExchangeDcasView = () => {
                       ddcaDetails.toMint
                     )}
                   </span>
-                  {(fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create) && (
+                  {isCreating() && (
                     <div className="proggress">
                       <LoadingOutlined />
                       <span className="info-data">Exchange in progress</span>
@@ -981,7 +993,7 @@ export const ExchangeDcasView = () => {
                 size="small"
                 disabled={fetchTxInfoStatus === "fetching"}
                 onClick={() => {}}>
-                {t("streams.stream-detail.add-funds-cta")}
+                {isClosing() ? t("ddcas.add-funds-cta-disabled-closing") : t("streams.stream-detail.add-funds-cta")}
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0)) && (
                 <Dropdown overlay={menu} trigger={["click"]}>
