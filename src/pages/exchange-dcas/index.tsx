@@ -860,6 +860,15 @@ export const ExchangeDcasView = () => {
     return result;
   }
 
+  const getOfflineActivityTitle = (item: DdcaDetails): string => {
+    const result = `Exchanged ${
+      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)
+    } for ${
+      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint)
+    }`;
+    return result;
+  }
+
   const isCreating = (): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
             ? true
@@ -870,6 +879,16 @@ export const ExchangeDcasView = () => {
     return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
             ? true
             : false;
+  }
+
+  const isNextRoundScheduled = (item: DdcaDetails): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const nextScheduledDate = new Date(item.nextScheduledSwapUtc as string);
+    if (nextScheduledDate > nowUtc) {
+      return true;
+    }
+    return false;
   }
 
   const menu = (
@@ -1025,10 +1044,49 @@ export const ExchangeDcasView = () => {
         <div className="activity-list">
           <>
             {!activity || activity.length === 0 ? (
-              <div className="mt-3">
-                <Divider/>
-                <p>{t('ddcas.activity.no-activity')}.</p>
-              </div>
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell responsive-cell">
+                      {t('streams.stream-activity.heading')}
+                    </div>
+                    <div className="std-table-cell fixed-width-150">
+                      {t("streams.stream-activity.label-date")}
+                    </div>
+                  </div>
+                </div>
+                <div className="item-list-body compact">
+                  {(ddcaDetails && loadingActivity) && (
+                    <>
+                      {isNextRoundScheduled(ddcaDetails) && (
+                        <span className="item-list-row simplelink">
+                          <div className="std-table-cell first-cell">
+                            <IconExchange className="mean-svg-icons"/>
+                          </div>
+                          <div className="std-table-cell responsive-cell">
+                            <span className="align-middle">{getOfflineActivityTitle(ddcaDetails)}</span>
+                          </div>
+                          <div className="std-table-cell fixed-width-150">
+                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                          </div>
+                        </span>
+                      )}
+                      <span className="item-list-row simplelink">
+                        <div className="std-table-cell first-cell">
+                          <ArrowDownOutlined className="incoming"/>
+                        </div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">Deposited {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-150">
+                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                        </div>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <>
               <div className="item-list-header compact">
@@ -1089,7 +1147,7 @@ export const ExchangeDcasView = () => {
 
   const renderRecurringBuys = (
     <>
-    {recurringBuys && recurringBuys.length ? (
+    {(publicKey && recurringBuys && recurringBuys.length > 0) ? (
       recurringBuys.map((item, index) => {
         const onBuyClick = () => {
           consoleOut('select buy:', item, 'blue');
