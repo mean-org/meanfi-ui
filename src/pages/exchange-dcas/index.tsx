@@ -7,13 +7,27 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { useWallet } from '../../contexts/wallet';
 import { getSolanaExplorerClusterParam } from '../../contexts/connection';
-import { consoleOut, copyText, delay, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
+import {
+  consoleOut,
+  copyText,
+  delay,
+  getTransactionModalTitle,
+  getTransactionOperationDescription,
+  getTransactionStatusForLogs
+} from '../../utils/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
 import { formatThousands, getTokenAmountAndSymbolByTokenAddress, useLocalStorageState } from '../../utils/utils';
-import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
+import {
+  SIMPLE_DATE_FORMAT,
+  SIMPLE_DATE_TIME_FORMAT,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
+  VERBOSE_DATE_FORMAT,
+  VERBOSE_DATE_TIME_FORMAT
+} from '../../constants';
 import { IconClock, IconExchange, IconExternalLink, IconRefresh } from '../../Icons';
 import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
@@ -511,8 +525,8 @@ export const ExchangeDcasView = () => {
         setWithdrawFundsAmount(amount);
 
         const data = {
-          ddcaAccountPda: ddcaAccountPda.toBase58(),              // ddcaAccountPda
-          withdrawAmount: amount                                  // amount
+          ddcaAccountAddress: ddcaAccountPda.toBase58(),              // ddcaAccountPda
+          withdrawAmount: amount                                      // amount
         }
         consoleOut('data:', data);
 
@@ -552,11 +566,12 @@ export const ExchangeDcasView = () => {
         }
 
         // Create a transaction
-        return await ddcaClient.createCloseTx(
+        return await ddcaClient.createWithdrawTx(
           ddcaAccountPda,                                   // ddcaAccountAddress
+          amount                                            // withdrawAmount
         )
         .then(value => {
-          consoleOut('createCloseTx returned transaction:', value);
+          consoleOut('createWithdrawTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -569,7 +584,7 @@ export const ExchangeDcasView = () => {
           return true;
         })
         .catch(error => {
-          console.error('createCloseTx error:', error);
+          console.error('createWithdrawTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -682,48 +697,6 @@ export const ExchangeDcasView = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     if (wallet) {
       showCloseDdcaTransactionModal();
       const create = await createTx();
@@ -736,7 +709,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
             setTransactionStatus({
@@ -744,12 +717,6 @@ export const ExchangeDcasView = () => {
               currentOperation: TransactionStatus.TransactionFinished
             });
             setIsBusy(false);
-
-            // const confirmed = await confirmTx();
-            // consoleOut('confirmed:', confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1204,7 +1171,7 @@ export const ExchangeDcasView = () => {
         *     If totalLeft is > 0 -> Cancel and withdraw everything
       */}
       {(ddcaDetails && ddcaDetails.toBalance > 0) && (
-        <Menu.Item key="1" onClick={() => showWithdrawModal}>
+        <Menu.Item key="1" onClick={showWithdrawModal}>
           <span className="menu-item-text">Withdraw</span>
         </Menu.Item>
       )}
