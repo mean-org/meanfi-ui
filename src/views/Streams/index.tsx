@@ -354,12 +354,12 @@ export const Streams = () => {
     return item.beneficiaryAddress === publicKey?.toBase58();
   }, [publicKey]);
 
-  // const isAuthority = (): boolean => {
-  //   return streamDetail && wallet && wallet.publicKey &&
-  //          (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
-  //           streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
-  //          ? true : false;
-  // }
+  const isAuthority = (): boolean => {
+    return streamDetail && wallet && wallet.publicKey &&
+           (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
+            streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
+           ? true : false;
+  }
 
   const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
@@ -1742,7 +1742,7 @@ export const Streams = () => {
               onClick={showWithdrawModal}>
               {t('streams.stream-detail.withdraw-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {isAuthority() && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -1994,7 +1994,7 @@ export const Streams = () => {
               onClick={showAddFundsModal}>
               {t('streams.stream-detail.add-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {isAuthority() && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"

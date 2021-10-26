@@ -320,10 +320,12 @@ export const AccountsView = () => {
                     // names must be equal
                     return 0;
                   });
+                  meanTokensCopy.forEach((item: UserTokenAccount, index: number) => item.displayIndex = index);
+                  sortedList.forEach((item: UserTokenAccount, index: number) => item.displayIndex = meanTokensCopy.length + index);
                   const finalList = meanTokensCopy.concat(sortedList);
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
-                  finalList.forEach(item => {
+                  finalList.forEach((item: UserTokenAccount, index: number) => {
                     if (item.ataAddress && item.address) {
                       tokenTable.push({
                         ataAddress: shortenAddress(item.ataAddress, 8),
@@ -595,9 +597,14 @@ export const AccountsView = () => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
+    const isSelectedToken = (): boolean => {
+      return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
+        ? true
+        : false;
+    }
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
+          className={`transaction-list-row ${isSelectedToken()
               ? 'selected'
               : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
                 ? 'hidden'
