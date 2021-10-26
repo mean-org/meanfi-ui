@@ -379,6 +379,8 @@
 			"tx-add-funds-operation-success": "Funds added successfully",
 			"tx-close-operation": "Close stream operation",
 			"tx-close-operation-success": "Stream successfully closed",
+			"tx-close-vault-operation": "Close vault operation",
+			"tx-close-vault-operation-success": "Vault successfully closed",
 			"tx-completed": "Operation completed",
 			"tx-confirm": "Confirming transaction",
 			"tx-confirm-failure": "The transaction could not be confirmed",

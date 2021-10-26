@@ -379,6 +379,8 @@
 			"tx-add-funds-operation-success": "Fondos adicionados con éxito",
 			"tx-close-operation": "Cerrar la operación",
 			"tx-close-operation-success": "Transferencia cerrada con éxito",
+			"tx-close-vault-operation": "Close vault operation",
+			"tx-close-vault-operation-success": "Vault successfully closed",
 			"tx-completed": "Operación completa",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
