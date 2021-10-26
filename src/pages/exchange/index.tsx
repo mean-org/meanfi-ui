@@ -1,25 +1,34 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
-import { useWallet } from '../../contexts/wallet';
-import { environment } from '../../environments/environment';
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut } from '../../utils/ui';
-import { DdcaClient, DdcaAccount } from '@mean-dao/ddca';
+import { useWallet } from '../../contexts/wallet';
+import { DdcaClient } from '@mean-dao/ddca';
+import { AppStateContext } from '../../contexts/appstate';
 import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
+import { environment } from '../../environments/environment';
 
 export const SwapView = () => {
-  const { t } = useTranslation("common");
   const location = useLocation();
   const { publicKey, wallet } = useWallet();
+  const {
+    recurringBuys,
+    setRecurringBuys,
+  } = useContext(AppStateContext);
+  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
+  const isProd = (): boolean => {
+    return environment === 'production';
+  }
+
+  // Parse query params
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     let from: TokenInfo | null = null;
@@ -47,19 +56,18 @@ export const SwapView = () => {
     }
   }, [location]);
 
-  // Recurring buys
-  const [recurringBuys, setRecurringBuys] = useState<DdcaAccount[] | undefined>();
-  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
+  // Connection management
   const [cachedRpcJson] = useLocalStorageState("cachedRpc");
   const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
   const cachedRpc = (cachedRpcJson as RpcConfig);
+  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
 
   useEffect(() => {
     (async () => {
-      if (cachedRpc.networkId !== 101) {
+      if (cachedRpc && cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
-          window.location.href = '/';
+          setRedirect('/service-unavailable');
         }
         setMainnetRpc(mainnetRpc);
       } else {
@@ -67,7 +75,7 @@ export const SwapView = () => {
       }
     })();
     return () => { }
-  }, [cachedRpc.networkId]);
+  }, [cachedRpc]);
 
   const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
     [cachedRpc.httpProvider, mainnetRpc]);
@@ -83,52 +91,46 @@ export const SwapView = () => {
 
       const ddcaClient = new DdcaClient(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, wallet, { commitment: connection.commitment });
 
-      ddcaClient.ListDdcas()
-        .then(dcas => {
-          consoleOut('Recurring buys:', dcas, 'blue');
-          setRecurringBuys(dcas);
+      ddcaClient.listDdcas()
+        .then(ddcas => {
+          consoleOut('ddcas:', ddcas, 'blue');
+          setRecurringBuys(ddcas);
         }).catch(err => {
           console.error(err);
-        }).finally(() => setLoadingRecurringBuys(false));
+        });
     }
   }, [
     wallet,
     publicKey,
-    cachedRpc.httpProvider,
     mainnetRpc,
     loadingRecurringBuys,
+    cachedRpc.httpProvider,
     connection.commitment,
+    setLoadingRecurringBuys,
+    setRecurringBuys
   ]);
 
   // Load recurring buys once if the list is empty
   useEffect(() => {
-    if (!recurringBuys) {
+    if (!loadingRecurringBuys) {
       reloadRecurringBuys();
     }
 
     return () => {};
   }, [
-    recurringBuys,
+    loadingRecurringBuys,
     reloadRecurringBuys
   ]);
 
   return (
     <>
+    {redirect && <Redirect to={redirect} />}
     <div className="container main-container">
       <div className="interaction-area">
-        {environment !== 'production' && (
-          <div className="notifications">
-            <Alert
-              message={t('swap.exchange-warning')}
-              type="warning"
-              showIcon
-            />
-          </div>
-        )}
         <div className="place-transaction-box mb-3">
-          <SwapUi connection={connection} queryFromMint={queryFromMint} queryToMint={queryToMint} />
+          <SwapUi connection={connection} endpoint={endpoint} queryFromMint={queryFromMint} queryToMint={queryToMint} />
         </div>
-        {recurringBuys && recurringBuys.length > 0 && (
+        {(recurringBuys && recurringBuys.length > 0 && isProd()) && (
           <div className="text-center mb-3">
             <Link to="/exchange-dcas"><span className="secondary-link">{`You have ${recurringBuys.length} recurring buys scheduled`}</span></Link>
           </div>

@@ -1,4 +1,4 @@
-import { bool, publicKey, struct, u32, u64, u8 } from '@project-serum/borsh'
+import { bool, publicKey, struct, u32, u64, u8 } from '@project-serum/borsh';
 import { u128 } from '@project-serum/serum/lib/layout';
 
 // https://github.com/solana-labs/solana-program-library/blob/master/token/js/client/token.js#L210

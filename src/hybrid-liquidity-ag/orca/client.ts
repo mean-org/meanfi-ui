@@ -1,4 +1,5 @@
 import { 
+  AccountMeta,
   Connection, 
   Keypair, 
   LAMPORTS_PER_SOL, 
@@ -24,14 +25,20 @@ export class OrcaClient implements LPClient {
   private connection: Connection;
   private orcaSwap: Orca;
   private currentPool: any;
+  private exchangeAccounts: AccountMeta[];
 
   constructor(connection: Connection) {
     this.connection = connection;
     this.orcaSwap = getOrca(this.connection);
+    this.exchangeAccounts = [];
   }
 
   public get protocolAddress() : string {
     return ORCA.toBase58(); 
+  }
+
+  public get hlaExchangeAccounts(): AccountMeta[] {
+    return this.exchangeAccounts;
   }
 
   public getPoolInfo = async (
@@ -46,7 +53,9 @@ export class OrcaClient implements LPClient {
     }
 
     const poolConfig = Object.entries(OrcaPoolConfig).filter(c => c[1] === poolInfo.address)[0];
+    console.log('poolConfig', poolConfig);
     this.currentPool = this.orcaSwap.getPool(poolConfig[1]);
+    console.log('currentPool', this.currentPool);
 
     return this.currentPool;
   }
@@ -89,6 +98,8 @@ export class OrcaClient implements LPClient {
       protocolFees: quote.getLPFees().toNumber() * amount
     };
 
+    await this.updateHlaExchangeAccounts(from, to);
+
     return exchangeInfo;
   };
 
@@ -128,34 +139,9 @@ export class OrcaClient implements LPClient {
     
     let tx = new Transaction();
     let sig: Signer[] = [];
+    let fromWrapAccount: Keypair | undefined = undefined;
 
-    const fromTokenAccount = await Token.getAssociatedTokenAddress(
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-      TOKEN_PROGRAM_ID,
-      fromMint,
-      owner,
-      true
-    );
-
-    const fromTokenAccountInfo = await this.connection.getAccountInfo(fromTokenAccount);
-
-    if (!fromTokenAccountInfo) {
-      tx.add(
-        Token.createAssociatedTokenAccountInstruction(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMint,
-          fromTokenAccount,
-          owner,
-          owner
-        )
-      )
-    }
-
-    let fromWrapAccount: Keypair | undefined;
-    let toWrapAccount: Keypair | undefined;
-
-    if (fromMint.equals(WRAPPED_SOL_MINT)) {
+    if (from === NATIVE_SOL_MINT.toBase58()) {
 
       fromWrapAccount = Keypair.generate();
       const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
@@ -177,6 +163,40 @@ export class OrcaClient implements LPClient {
       );
 
       sig.push(fromWrapAccount);
+    }
+
+    const fromTokenAccount = await Token.getAssociatedTokenAddress(
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+      TOKEN_PROGRAM_ID,
+      fromMint,
+      owner,
+      true
+    );
+
+    let toWrapAccount: Keypair | undefined;
+
+    if (to === NATIVE_SOL_MINT.toBase58()) {
+
+      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
+      toWrapAccount = Keypair.generate();
+
+      tx.add(
+        SystemProgram.createAccount({
+          fromPubkey: owner,
+          newAccountPubkey: toWrapAccount.publicKey,
+          lamports: minimumWrappedAccountBalance,
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          WRAPPED_SOL_MINT,
+          toWrapAccount.publicKey,
+          owner
+        )
+      );
+
+      sig.push(toWrapAccount);
     }
 
     const toTokenAccount = await Token.getAssociatedTokenAddress(
@@ -202,37 +222,13 @@ export class OrcaClient implements LPClient {
       )
     }
 
-    if (toMint.equals(WRAPPED_SOL_MINT)) {
-
-      const minimumWrappedAccountBalance = await Token.getMinBalanceRentForExemptAccount(this.connection);
-      toWrapAccount = Keypair.generate();
-
-      tx.add(
-        SystemProgram.createAccount({
-          fromPubkey: owner,
-          newAccountPubkey: toWrapAccount.publicKey,
-          lamports: minimumWrappedAccountBalance,
-          space: AccountLayout.span,
-          programId: TOKEN_PROGRAM_ID,
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          WRAPPED_SOL_MINT,
-          toWrapAccount.publicKey,
-          owner
-        )
-      );
-
-      sig.push(toWrapAccount);
-    }
-
     const minimumOutAmount = amountOut * (100 - slippage) / 100;
     const userTransferAuthority = Keypair.generate();
 
     tx.add(
       Token.createApproveInstruction(
         TOKEN_PROGRAM_ID,
-        fromWrapAccount ? fromWrapAccount.publicKey : fromTokenAccount,
+        fromWrapAccount !== undefined ? fromWrapAccount.publicKey : fromTokenAccount,
         userTransferAuthority.publicKey,
         owner,
         [],
@@ -252,10 +248,10 @@ export class OrcaClient implements LPClient {
         poolInfo.poolParams.address,
         authorityForPoolAddress,
         userTransferAuthority.publicKey,
-        fromWrapAccount ? fromWrapAccount.publicKey : fromTokenAccount,
+        fromWrapAccount !== undefined ? fromWrapAccount.publicKey : fromTokenAccount,
         tradeToken.addr,
         outputToken.addr,
-        toWrapAccount ? toWrapAccount.publicKey : toTokenAccount,
+        toWrapAccount !== undefined ? toWrapAccount.publicKey : toTokenAccount,
         poolInfo.poolParams.poolTokenMint,
         poolInfo.poolParams.feeAccount,
         null,
@@ -265,30 +261,6 @@ export class OrcaClient implements LPClient {
         U64Utils.toTokenU64(new Decimal(minimumOutAmount), outputToken, "minimumAmountOut")
       )
     );
-
-    if (fromWrapAccount) {
-      tx.add(
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          fromWrapAccount.publicKey,
-          owner,
-          owner,
-          []
-        )
-      );
-    }
-
-    if (toWrapAccount) {
-      tx.add(
-        Token.createCloseAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          toWrapAccount.publicKey,
-          owner,
-          owner,
-          []
-        )
-      );
-    }
 
     // Transfer fees
     const feeAccount = new PublicKey(feeAddress);
@@ -331,11 +303,35 @@ export class OrcaClient implements LPClient {
       tx.add(
         Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
-          fromTokenAccount,
+          fromWrapAccount !== undefined ? fromWrapAccount.publicKey : fromTokenAccount,
           feeAccountToken,
           owner,
           [],
           feeBnAmount.toNumber()
+        )
+      );
+    }
+
+    if (fromWrapAccount) {
+      tx.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          fromWrapAccount.publicKey,
+          owner,
+          owner,
+          []
+        )
+      );
+    }
+
+    if (toWrapAccount) {
+      tx.add(
+        Token.createCloseAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          toWrapAccount.publicKey,
+          owner,
+          owner,
+          []
         )
       );
     }
@@ -350,4 +346,39 @@ export class OrcaClient implements LPClient {
 
     return tx;
   };
+
+  private updateHlaExchangeAccounts = async (
+    from: string,
+    to: string
+
+  ): Promise<void> => {
+
+    try {
+
+      if (!this.currentPool) {
+        return undefined;
+      }
+
+      const [authorityForPoolAddress] = await PublicKey.findProgramAddress(
+        [this.currentPool.poolParams.address.toBuffer()],
+        ORCA_TOKEN_SWAP_ID
+      );
+
+      const fromAddress = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : from; 
+      const toAddress = to === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : to;
+
+      this.exchangeAccounts = [
+        { pubkey: this.currentPool.poolParams.poolTokenMint, isSigner: false, isWritable: true },
+        { pubkey: ORCA_TOKEN_SWAP_ID, isSigner: false, isWritable: false },   
+        { pubkey: this.currentPool.poolParams.address, isSigner: false, isWritable: false },   
+        { pubkey: authorityForPoolAddress, isSigner: false, isWritable: false },
+        { pubkey: this.currentPool.poolParams.tokens[fromAddress].addr, isSigner: false, isWritable: true },
+        { pubkey: this.currentPool.poolParams.tokens[toAddress].addr, isSigner: false, isWritable: true },
+        { pubkey: this.currentPool.poolParams.feeAccount, isSigner: false, isWritable: true }
+      ];
+
+    } catch (_error) {
+      throw _error;
+    }
+  }
 }

@@ -19,6 +19,7 @@
 		"account-add-cta-label": "Aller!",
 		"account-add-heading": "Voir les détails du compte pour n'importe quelle adresse à",
 		"account-address-change-cta": "Scannez une autre adresse",
+		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Adresse du compte",
 		"account-address-placeholder": "Entrez votre adresse de compte",
 		"account-address-validation": "Format d'adresse non valide",
@@ -130,24 +131,38 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"cta-label": "Approve",
+		"cta-label-deposit": "Deposit",
+		"cta-label-depositing": "Depositing...",
+		"cta-label-vault-created": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
 		},
 		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-01": "Only you can withdraw funds from your vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
 			"note-item-03": "All unused fees are returned to you upon withdrawal",
 			"notes-title": "Important Notes"
 		}
 	},
 	"ddcas": {
-		"screen-title": "Recurring buys"
+		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"screen-title": "Recurring buys",
+		"streams-ddcas": "Click to refresh recurring buys",
+		"close-ddca": {
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
+		},
+		"activity": {
+			"action-deposit": "Deposited {{fromAmount}}",
+			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+			"action-withdraw": "Withdrew {{toAmount}}"
+		}
 	},
 	"deposits": {
 		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
@@ -212,6 +227,7 @@
 		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
 		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au faucet dans mainnet",
 		"error-cannot-fund-account-message": "Nous n'avons pas pu approvisionner votre compte. Veuillez réessayer plus tard.",
+		"error-creating-vault-message": "Could not create the vault, please try again later",
 		"error-ledger-title": "Erreur du Ledger",
 		"error-loading-streamid-message": "Nous n'avons pas pu trouver ou charger le flux avec l'ID {{streamId}}",
 		"error-title": "Erreur",
@@ -240,7 +256,8 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"see-rules": "See rules for details",
 		"share-to": "Share to"
 	},
 	"streams": {
@@ -300,7 +317,7 @@
 		}
 	},
 	"swap": {
-		"exchange-warning": "L'échange de tokens se fait avec des actifs réels sur le Mainnet.",
+		"exchange-warning": "Mean Exchange est disponible uniquement sur",
 		"input-label-destination": "Échanger pour (est.)",
 		"input-label-source": "Échanger depuis",
 		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
@@ -349,6 +366,9 @@
 		},
 		"status": {
 			"cta-view-stream": "Voir Transfert d'argent",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"instructions": "Confirmez cette transaction dans votre portefeuille",
 			"modal-title-executing-transaction": "Exécution de la transaction",
 			"modal-title-transaction-completed": "Transaction terminée",
@@ -433,6 +453,7 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
+			"blog": "Blog",
 			"code": "Code",
 			"developers": "Développeurs",
 			"disconnect": "Déconnecter le portefeuille",
@@ -442,6 +463,7 @@
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "La langue",
 			"switch-theme": "Basculer vers",
+			"twitter": "Twitter",
 			"theme-dark": "Mode Sombre",
 			"theme-light": "Mode lumière"
 		},

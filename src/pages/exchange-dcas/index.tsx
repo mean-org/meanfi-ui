@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { AppStateContext } from '../../contexts/appstate';
@@ -6,108 +6,615 @@ import { useTranslation } from 'react-i18next';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import { useWallet } from '../../contexts/wallet';
-import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from '../../contexts/connection';
-import { consoleOut, copyText } from '../../utils/ui';
-import { StreamActivity } from '@mean-dao/money-streaming';
-import { Button, Col, Divider, Dropdown, Empty, Menu, Row, Spin } from 'antd';
+import { getSolanaExplorerClusterParam } from '../../contexts/connection';
+import { consoleOut, copyText, delay, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
+import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import dateFormat from 'dateformat';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, useLocalStorageState } from '../../utils/utils';
 import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from '../../constants';
-import { IconClock, IconDownload, IconExchange, IconExternalLink, IconUpload } from '../../Icons';
-import { ArrowDownOutlined, ArrowUpOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { IconClock, IconExchange, IconExternalLink, IconRefresh } from '../../Icons';
+import { ArrowDownOutlined, ArrowUpOutlined, CheckOutlined, EllipsisOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { notify } from '../../utils/notifications';
-import { DdcaClient, DdcaDetails } from '@mean-dao/ddca';
-import { getRecurringBuys } from '../../utils/api';
+import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
+import { Redirect } from 'react-router-dom';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import dateFormat from "dateformat";
+import { customLogger } from '../..';
+import { DdcaCloseModal } from '../../components/DdcaCloseModal';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const ExchangeDcasView = () => {
   const {
+    recurringBuys,
     detailsPanelOpen,
+    transactionStatus,
+    loadingRecurringBuys,
+    previousWalletConnectState,
+    setRecurringBuys,
     setDtailsPanelOpen,
+    setTransactionStatus,
+    setLoadingRecurringBuys,
   } = useContext(AppStateContext);
+  const {
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    startFetchTxSignatureInfo,
+    clearLastSentTx,
+  } = useContext(TransactionStatusContext);
+
   const { t } = useTranslation('common');
-  const { publicKey, wallet } = useWallet();
-  const connection = useConnection();
-  const connectionConfig = useConnectionConfig();
+  const { publicKey, wallet, connected } = useWallet();
+  const [redirect, setRedirect] = useState<string | null>(null);
+
+  // Connection management
+  const [cachedRpcJson] = useLocalStorageState("cachedRpc");
+  const [mainnetRpc, setMainnetRpc] = useState<RpcConfig | null>(null);
+  const cachedRpc = (cachedRpcJson as RpcConfig);
+  const endpoint = mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider;
+
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [recurringBuys, setRecurringBuys] = useState<DdcaDetails[] | undefined>();
-  const [recurringBuyDetails, setRecurringBuyDetails] = useState<DdcaDetails | undefined>();
-  const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
-  const [loadingActivity, setLoadingActivity] = useState(true);
-  const [activity, setActivity] = useState<StreamActivity[]>([]);
+  const [selectedDdca, setSelectedDdca] = useState<DdcaAccount | undefined>();
+  const [ddcaDetails, setDdcaDetails] = useState<DdcaDetails | undefined>();
+  const [loadingDdcaDetails, setLoadingDdcaDetails] = useState<boolean>(false);
+  const [firstLoadDone, setFirstLoadDone] = useState<boolean>(false);
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [activity, setActivity] = useState<DdcaActivity[]>([]);
+
+  const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+  }
+
+  // Select, Connect to and test the network
+  useEffect(() => {
+    (async () => {
+      if (cachedRpc.networkId !== 101) {
+        const mainnetRpc = await getLiveRpc(101);
+        if (!mainnetRpc) {
+          setRedirect('/service-unavailable');
+        }
+        setMainnetRpc(mainnetRpc);
+      } else {
+        setMainnetRpc(null);
+      }
+    })();
+    return () => { }
+  }, [cachedRpc.networkId]);
+
+  // Set and cache connection
+  const connection = useMemo(() => new Connection(endpoint, "confirmed"), [endpoint]);
+
+  // Set and cache the DDCA client
+  const ddcaClient = useMemo(() => {
+    if (connection && wallet && publicKey && endpoint) {
+      return new DdcaClient(endpoint, wallet, { commitment: "confirmed" }, isLocal() ? true : false);
+    } else {
+      return undefined;
+    }
+  }, [
+    wallet,
+    endpoint,
+    publicKey,
+    connection
+  ]);
+
+  // Transaction execution (Applies to all transactions)
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [ddcaTxFees, setdDcaTxFees] = useState<TransactionFees>({
+    flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
+  });
+
+  const getTransactionFees = useCallback(async (action: DDCA_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action, 1);
+  }, [connection]);
+
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
+  }
+
+  //////////////////////
+  //   Modal preps    //
+  //////////////////////
+
+  // Close ddca modal
+  const [isCloseDdcaModalVisible, setIsCloseDdcaModalVisibility] = useState(false);
+  const showCloseDdcaModal = useCallback(() => {
+    getTransactionFees(DDCA_ACTIONS.close).then(value => {
+      setdDcaTxFees(value);
+      setIsCloseDdcaModalVisibility(true)
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFees]);
+  const hideCloseDdcaModal = useCallback(() => setIsCloseDdcaModalVisibility(false), []);
+  const onAcceptCloseDdca = () => {
+    hideCloseDdcaModal();
+    onExecuteCloseDdcaTransaction();
+  };
+
+  // Close stream Transaction execution modal
+  const [isCloseDdcaTransactionModalVisible, setCloseDdcaTransactionModalVisibility] = useState(false);
+  const showCloseDdcaTransactionModal = useCallback(() => setCloseDdcaTransactionModalVisibility(true), []);
+  const hideCloseDdcaTransactionModal = useCallback(() => setCloseDdcaTransactionModalVisibility(false), []);
+
+  const onCloseDdcaTransactionFinished = () => {
+    resetTransactionStatus();
+    hideCloseDdcaTransactionModal();
+    // hideWithdrawFundsTransactionModal();
+    // hideAddFundsTransactionModal();
+    reloadRecurringBuys(true);
+  };
+
+  const onAfterCloseDdcaTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      reloadRecurringBuys(true);
+      hideCloseDdcaTransactionModal();
+      // hideWithdrawFundsTransactionModal();
+      // hideAddFundsTransactionModal();
+    }
+  }
+
+  const onExecuteCloseDdcaTransaction = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearLastSentTx();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && ddcaDetails && ddcaClient) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
+        const data = {
+          ddcaAccountPda: ddcaAccountPda.toBase58(),              // ddcaAccountPda
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        const lamports = await connection.getBalance(wallet.publicKey);
+        const balance = (lamports / LAMPORTS_PER_SOL) || 0;
+        setNativeBalance(balance);
+        consoleOut('maxBlockchainFee:', ddcaTxFees.maxBlockchainFee, 'blue');
+        consoleOut('nativeBalance:', balance, 'blue');
+        if (balance < ddcaTxFees.maxBlockchainFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(balance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Create a transaction
+        return await ddcaClient.createCloseTx(
+          ddcaAccountPda,                                   // ddcaAccountAddress
+        )
+        .then(value => {
+          consoleOut('createCloseTx returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: ''
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createCloseTx error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const confirmTx = async (): Promise<boolean> => {
+      return await connection
+        .confirmTransaction(signature, "confirmed")
+        .then(result => {
+          consoleOut('confirmTransaction result:', result);
+          if (result && result.value && !result.value.err) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: result.value
+            });
+            return true;
+          } else {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+            return false;
+          }
+        })
+        .catch(e => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          return false;
+        });
+    }
+
+    if (wallet) {
+      showCloseDdcaTransactionModal();
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
+            await delay(250);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            setIsBusy(false);
+
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
+  const getStreamClosureMessage = () => {
+    let message = `Your recurring purchase will be cancelled, and you'll get these back in your wallet:`;
+
+    return (
+      <div>{message}</div>
+    );
+  }
+
+  //////////////////////
+  //   Data Related   //
+  //////////////////////
+
+  const reloadDdcaDetail = useCallback((address: string) => {
+    if (!ddcaClient) { return; }
+
+    setLoadingDdcaDetails(true);
+    const ddcaAddress = new PublicKey(address as string);
+    consoleOut('Calling ddcaClient.GetDdca...', '', 'brown');
+    ddcaClient.getDdca(ddcaAddress)
+      .then(ddca => {
+        if (ddca) {
+          setDdcaDetails(ddca);
+          consoleOut('ddcaDetails:', ddca, 'blue');
+          setLoadingActivity(false);
+        }
+      })
+      .catch(error => console.error(error))
+      .finally(() => setLoadingDdcaDetails(false));
+  }, [
+    ddcaClient
+  ]);
+
+  const selectDdcaItem = useCallback((item: DdcaAccount) => {
+    setSelectedDdca(item);
+    setDtailsPanelOpen(true);
+    reloadDdcaDetail(item.ddcaAccountAddress);
+  }, [
+    reloadDdcaDetail,
+    setDtailsPanelOpen
+  ]);
 
   // Gets the recurring buys on demmand
-  const reloadRecurringBuys = useCallback(() => {
-    if (!publicKey) {
+  const reloadRecurringBuys = useCallback((reset = false) => {
+    if (!publicKey || ddcaClient === undefined) {
       return [];
     }
 
-    if (!loadingRecurringBuys) {
+    if (!loadingRecurringBuys && ddcaClient) {
       setLoadingRecurringBuys(true);
 
-      const ddcaClient = new DdcaClient(connectionConfig.endpoint, wallet, { commitment: connection.commitment });
+      consoleOut('Calling ddcaClient.ListDdcas...', '', 'brown');
+      consoleOut('ddcaClient:', ddcaClient.toString(), 'green');
 
-      getRecurringBuys()
+      ddcaClient.listDdcas()
         .then(dcas => {
           consoleOut('Recurring buys:', dcas, 'blue');
-          let item: DdcaDetails | undefined;
+          let item: DdcaAccount | undefined;
           if (dcas.length) {
-            item = JSON.parse(JSON.stringify(dcas[0]));
-            consoleOut('selectedBuy:', item, 'blue');
+            if (reset) {
+              item = JSON.parse(JSON.stringify(dcas[0]));
+            } else {
+              // Try to get current item by its ddcaAccountAddress
+              if (selectedDdca) {
+                const itemFromServer = dcas.find(i => i.ddcaAccountAddress === selectedDdca.ddcaAccountAddress);
+                item = itemFromServer || selectedDdca;
+              } else {
+                item = JSON.parse(JSON.stringify(dcas[0]));
+              }
+            }
             if (item) {
-              setRecurringBuyDetails(item);
+              setSelectedDdca(item);
+              setLoadingDdcaDetails(true);
+              const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
+              consoleOut('Calling ddcaClient.GetDca...', '', 'brown');
+              ddcaClient.getDdca(ddcaAddress)
+                .then(ddca => {
+                  if (ddca) {
+                    setDdcaDetails(ddca);
+                    consoleOut('ddcaDetails:', ddca, 'blue');
+                  }
+                })
+                .catch(error => console.error(error))
+                .finally(() => setLoadingDdcaDetails(false));
             }
           } else {
-            setActivity([]);
-            setRecurringBuyDetails(undefined);
+            setSelectedDdca(undefined);
+            setDdcaDetails(undefined);
           }
           setRecurringBuys(dcas);
         }).catch(err => {
           console.error(err);
         }).finally(() => setLoadingRecurringBuys(false));
-
-      // ddcaClient.ListDdcas()
-      //   .then(dcas => {
-      //     consoleOut('Recurring buys:', dcas, 'blue');
-      //     let item: DdcaDetails | undefined;
-      //     if (dcas.length) {
-      //       item = JSON.parse(JSON.stringify(dcas[0]));
-      //       consoleOut('selectedBuy:', item, 'blue');
-      //       if (item) {
-      //         setRecurringBuyDetails(item);
-      //       }
-      //     } else {
-      //       setActivity([]);
-      //       setRecurringBuyDetails(undefined);
-      //     }
-      //     setRecurringBuys(dcas);
-      //   }).catch(err => {
-      //     console.error(err);
-      //   }).finally(() => setLoadingRecurringBuys(false));
     }
   }, [
-    wallet,
     publicKey,
+    ddcaClient,
+    selectedDdca,
     loadingRecurringBuys,
-    connection.commitment,
-    connectionConfig.endpoint,
+    setLoadingRecurringBuys,
+    setRecurringBuys
   ]);
 
-  // Load recurring buys once if the list is empty
+  // Load recurring buys once on enter or reload if the wallet is connected
+  // It means that it will be triggered if going from disconnected to connected
   useEffect(() => {
 
-    if (!recurringBuys) {
-      reloadRecurringBuys();
+    if (previousWalletConnectState === connected && !firstLoadDone) {
+      setFirstLoadDone(true);
+      reloadRecurringBuys(true);
     }
 
     return () => {};
   }, [
-    recurringBuys,
+    connected,
+    firstLoadDone,
+    previousWalletConnectState,
     reloadRecurringBuys
   ]);
+
+  // Hook on the wallet connect/disconnect
+  useEffect(() => {
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected) {
+        consoleOut('Loading DDCAs...', '', 'blue');
+        reloadRecurringBuys(true);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('Cleaning DDCAs...', '', 'blue');
+        setSelectedDdca(undefined);
+        setDdcaDetails(undefined);
+        setRecurringBuys([]);
+      }
+    }
+  }, [
+    connected,
+    previousWalletConnectState,
+    reloadRecurringBuys,
+    setRecurringBuys
+  ]);
+
+  // Load DDCA activity by ddcaAddress
+  useEffect(() => {
+
+    if (!ddcaClient || !ddcaDetails) { return; }
+
+    if (!loadingActivity) {
+      setLoadingActivity(true);
+      const ddcaAddress = new PublicKey(ddcaDetails.ddcaAccountAddress as string);
+      ddcaClient.getActivity(ddcaAddress)
+        .then(activity => {
+          if (activity) {
+            setActivity(activity);
+            consoleOut('Ddca activity:', activity, 'blue');
+          }
+        })
+        .catch(error => console.error(error));
+    }
+
+  }, [
+    ddcaClient,
+    ddcaDetails,
+    loadingActivity
+  ]);
+
+  ////////////////////
+  //   UI Related   //
+  ////////////////////
 
   // Window resize listeners
   useEffect(() => {
@@ -135,6 +642,7 @@ export const ExchangeDcasView = () => {
     }
   }, []);
 
+  // Keep flag for small screens
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
       setIsSmallUpScreen(false);
@@ -144,6 +652,30 @@ export const ExchangeDcasView = () => {
     isSmallUpScreen,
     detailsPanelOpen,
     setDtailsPanelOpen
+  ]);
+
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+    if (!ddcaClient || !ddcaDetails) { return; }
+
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      if (lastSentTxOperationType === OperationType.Close) {
+        clearLastSentTx();
+        reloadRecurringBuys();
+      } else {
+        clearLastSentTx();
+        reloadDdcaDetail(ddcaDetails.ddcaAccountAddress);
+      }
+    }
+  }, [
+    ddcaClient,
+    ddcaDetails,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    reloadRecurringBuys,
+    reloadDdcaDetail,
+    clearLastSentTx,
   ]);
 
   ////////////////
@@ -164,9 +696,9 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  ///////////////
-  // Rendering //
-  ///////////////
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
 
   const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
@@ -177,16 +709,16 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getRecurringBuyTitle = (item: DdcaDetails) => {
+  const getRecurringBuyTitle = (item: DdcaAccount) => {
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return `Buy ${getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)} worth of ${toToken?.symbol}`;
   }
 
-  const getRecurringBuySubTitle = (item: DdcaDetails) => {
+  const getRecurringBuySubTitle = (item: DdcaAccount) => {
     return `Last purchased ${getShortDate(item.startUtc as string)}`;
   }
 
-  const getRecurrencePeriod = (item: DdcaDetails | undefined): string => {
+  const getRecurrencePeriod = (item: DdcaAccount | undefined): string => {
     if (!item) { return ''; }
     switch (item.intervalInSeconds) {
       case 86400:
@@ -202,7 +734,7 @@ export const ExchangeDcasView = () => {
     }
   }
 
-  const getBuyIconPair = (item: DdcaDetails) => {
+  const getBuyIconPair = (item: DdcaAccount) => {
     const fromToken = MEAN_TOKEN_LIST.find(t => t.address === item.fromMint);
     const toToken = MEAN_TOKEN_LIST.find(t => t.address === item.toMint);
     return (
@@ -242,7 +774,7 @@ export const ExchangeDcasView = () => {
 
   const getTokenIcon = (tokenAddress: string) => {
     const token = MEAN_TOKEN_LIST.find(t => t.address === tokenAddress);
-    if (!token || !recurringBuyDetails) {
+    if (!token || !ddcaDetails) {
       return null;
     }
     return (
@@ -250,7 +782,7 @@ export const ExchangeDcasView = () => {
         {token.logoURI ? (
           <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
         ) : (
-          <Identicon address={recurringBuyDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
+          <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
         )}
       </span>
     );
@@ -258,7 +790,7 @@ export const ExchangeDcasView = () => {
 
   const getTokenIconAndAmount = (tokenAddress: string, amount: number) => {
     const token = MEAN_TOKEN_LIST.find(t => t.address === tokenAddress);
-    if (!token || !recurringBuyDetails) {
+    if (!token || !ddcaDetails) {
       return null;
     }
     return (
@@ -267,10 +799,10 @@ export const ExchangeDcasView = () => {
           {token.logoURI ? (
             <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
           ) : (
-            <Identicon address={recurringBuyDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
+            <Identicon address={ddcaDetails.fromMint} style={{ width: "30", display: "inline-flex" }} />
           )}
         </span>
-        <span className="info-data">{getTokenAmountAndSymbolByTokenAddress(amount, token.address)}</span>
+        <span className="info-data ml-1">{getTokenAmountAndSymbolByTokenAddress(amount, token.address)}</span>
       </>
     );
   }
@@ -287,43 +819,114 @@ export const ExchangeDcasView = () => {
     );
   }
 
-  const getActivityIcon = (item: StreamActivity) => {
-    if (item.action === 'withdrew') {
-      return (
-        <ArrowUpOutlined className="mean-svg-icons outgoing" />
-      );
-      } else {
-      return (
-        <IconExchange className="mean-svg-icons incoming" />
-      );
+  const getActivityIcon = (item: DdcaActivity) => {
+    switch (item.action) {
+      case "deposited":
+        return (
+          <ArrowDownOutlined className="mean-svg-icons incoming" />
+        );
+      case "withdrew":
+        return (
+          <ArrowUpOutlined className="mean-svg-icons outgoing" />
+        );
+      case "exchanged":
+        return (
+          <IconExchange className="mean-svg-icons" />
+        );
+      default:
+        return '-';
     }
+
   }
 
-  const isAddressMyAccount = (addr: string): boolean => {
-    return publicKey && addr && addr === publicKey.toBase58()
-           ? true
-           : false;
+  const getActivityTitle = (item: DdcaActivity): string => {
+    let result = '';
+    switch (item.action) {
+      case "deposited":
+        result = t('ddcas.activity.action-deposit', {
+          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || '')
+        });
+        break;
+      case "withdrew":
+        result = t('ddcas.activity.action-withdraw', {
+          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '')
+        });
+        break;
+      case "exchanged":
+        result = t('ddcas.activity.action-exchange', {
+          fromAmount: getTokenAmountAndSymbolByTokenAddress(item.fromAmount || 0, item.fromMint || ''),
+          toAmount: getTokenAmountAndSymbolByTokenAddress(item.toAmount || 0, item.toMint || '')
+        });
+        break;
+      default:
+        result = '-';
+        break;
+    }
+    return result;
+  }
+
+  const getOfflineActivityTitle = (item: DdcaDetails): string => {
+    const result = `Exchanged ${
+      getTokenAmountAndSymbolByTokenAddress(item.amountPerSwap, item.fromMint)
+    } for ${
+      getTokenAmountAndSymbolByTokenAddress(item.toBalance, item.toMint)
+    }`;
+    return result;
+  }
+
+  const isCreating = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+            ? true
+            : false;
+  }
+
+  const isClosing = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+            ? true
+            : false;
+  }
+
+  const isNextRoundScheduled = (item: DdcaDetails): boolean => {
+    const now = new Date().toUTCString();
+    const nowUtc = new Date(now);
+    const nextScheduledDate = new Date(item.nextScheduledSwapUtc as string);
+    if (nextScheduledDate > nowUtc) {
+      return true;
+    }
+    return false;
   }
 
   const menu = (
     <Menu>
-      <Menu.Item key="1" onClick={() => {}}>
-        <span className="menu-item-text">Cancel recurring buy</span>
-      </Menu.Item>
+      {/*
+        *     If exchangeFor is > 0 -> Withdraw is visible
+        *     If totalLeft is > 0 -> Cancel and withdraw everything
+      */}
+      {(ddcaDetails && ddcaDetails.toBalance > 0) && (
+        <Menu.Item key="1" onClick={() => {}}>
+          <span className="menu-item-text">Withdraw</span>
+        </Menu.Item>
+      )}
+      {(ddcaDetails && ddcaDetails.fromBalance > 0) && (
+        <Menu.Item key="2" onClick={showCloseDdcaModal}>
+          <span className="menu-item-text">Cancel and withdraw everything</span>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
   const renderRecurringBuy = (
     <>
       <div className="transaction-list-data-wrapper vertical-scroll">
-        <Spin spinning={loadingRecurringBuys}>
+
+        <Spin spinning={loadingDdcaDetails}>
           <div className="stream-fields-container">
-            {recurringBuyDetails && (
-              <h2>{getDetailsPanelTitle(recurringBuyDetails)}</h2>
+            {ddcaDetails && (
+              <h2>{getDetailsPanelTitle(ddcaDetails)}</h2>
             )}
 
             {/* Start date */}
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
                   {t("streams.stream-detail.label-start-date-started")}
@@ -333,70 +936,88 @@ export const ExchangeDcasView = () => {
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(recurringBuyDetails.startUtc as string)}
+                    {getReadableDate(ddcaDetails.startUtc as string)}
                   </span>
                 </div>
               </div>
             )}
 
-            {recurringBuyDetails && (
+            {/* Total deposits / Total left */}
+            {ddcaDetails && (
               <Row className="mb-3">
                 <Col span={11}>
                   <div className="info-label">Total deposits</div>
                   <div className="transaction-detail-row">
                     {getTokenIconAndAmount(
-                      recurringBuyDetails.fromMint,
-                      recurringBuyDetails.totalDepositsAmount
+                      ddcaDetails.fromMint,
+                      ddcaDetails.totalDepositsAmount
                     )}
                   </div>
                 </Col>
                 <Col span={13} className="pl-4">
                   <div className="info-label">
-                    Total left (will run out by {getShortDate(recurringBuyDetails.fromBalanceWillRunOutByUtc)})
+                    Total left (will run out by {getShortDate(ddcaDetails.fromBalanceWillRunOutByUtc)})
                   </div>
                   <div className="transaction-detail-row">
-                    {getTokenIconAndAmount(recurringBuyDetails.fromMint, recurringBuyDetails.fromBalance)}
+                    {getTokenIconAndAmount(ddcaDetails.fromMint, ddcaDetails.fromBalance)}
                   </div>
                 </Col>
               </Row>
             )}
 
-            {recurringBuyDetails && (
+            {/* Exchanged for */}
+            {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
-                  Exchanged for (avg rate 1 {getToken(recurringBuyDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
-                      recurringBuyDetails.exchangedRateAverage,
-                      recurringBuyDetails.toMint
+                  Exchanged for (avg rate 1 {getToken(ddcaDetails.fromMint)?.symbol} ≈ {getTokenAmountAndSymbolByTokenAddress(
+                      ddcaDetails.swapAvgRate,
+                      ddcaDetails.toMint
                     )})
                 </div>
                 <div className="transaction-detail-row">
-                  {getTokenIcon(recurringBuyDetails.toMint)}
+                  {getTokenIcon(ddcaDetails.toMint)}
                   <span className="info-data large">
+                    {/* TODO: Should I replace toBalance with exchangedForAmount ??? or is it ok like that? */}
                     {getTokenAmountAndSymbolByTokenAddress(
-                      recurringBuyDetails.exchangedForAmount,
-                      recurringBuyDetails.toMint
+                      ddcaDetails.toBalance,
+                      ddcaDetails.toMint
                     )}
                   </span>
+                  {isCreating() && (
+                    <div className="proggress">
+                      <LoadingOutlined />
+                      <span className="info-data">Exchange in progress</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Next schaduled exchange */}
-            {recurringBuyDetails && (
+            {ddcaDetails && (
               <div className="mb-3">
-                <div className="info-label">Next schaduled exchange</div>
+                <div className="info-label">Next scheduled exchange</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
                     <IconClock className="mean-svg-icons" />
                   </span>
                   <span className="info-data">
-                    {getReadableDate(recurringBuyDetails.nextScheduledSwapUtc as string)}
+                    {getReadableDate(ddcaDetails.nextScheduledSwapUtc as string)}
                   </span>
                 </div>
               </div>
             )}
 
             {/* Top up (add funds) button */}
+            {/*
+              * Top up will always be there
+              * [...]
+              *  Visibe If exchangeFor > 0 || totalLeft is > 0
+              *  {
+              *     If exchangeFor is > 0 -> Withdraw is visible
+              *     If totalLeft is > 0 -> Cancel and withdraw everything
+              *  }
+            */}
             <div className="mt-3 mb-3 withdraw-container">
               <Button
                 block
@@ -404,145 +1025,142 @@ export const ExchangeDcasView = () => {
                 type="text"
                 shape="round"
                 size="small"
-                onClick={() => {}}
-              >
-                {t("streams.stream-detail.add-funds-cta")}
+                disabled={fetchTxInfoStatus === "fetching"}
+                onClick={() => {}}>
+                {isClosing() ? t("ddcas.add-funds-cta-disabled-closing") : t("streams.stream-detail.add-funds-cta")}
               </Button>
-              <Dropdown overlay={menu} trigger={["click"]}>
-                <Button
-                  shape="round"
-                  type="text"
-                  size="small"
-                  className="ant-btn-shaded"
-                  onClick={(e) => e.preventDefault()}
-                  icon={<EllipsisOutlined />}
-                ></Button>
-              </Dropdown>
+              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && !isClosing()) && (
+                <Dropdown overlay={menu} trigger={["click"]}>
+                  <Button
+                    shape="round"
+                    type="text"
+                    size="small"
+                    className="ant-btn-shaded"
+                    onClick={(e) => e.preventDefault()}
+                    icon={<EllipsisOutlined />}
+                  ></Button>
+                </Dropdown>
+              )}
             </div>
           </div>
         </Spin>
 
-        <Divider className="activity-divider" plain></Divider>
-        <div className="activity-title">
-          {t("streams.stream-activity.heading")}
-        </div>
+        {/* Activity list */}
         <div className="activity-list">
           <>
-            <div className="item-list-header compact">
-              <div className="header-row">
-                <div className="std-table-cell first-cell">&nbsp;</div>
-                <div className="std-table-cell responsive-cell">&nbsp;</div>
-                <div className="std-table-cell fixed-width-150">
-                  {t("streams.stream-activity.label-date")}
+            {!activity || activity.length === 0 ? (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell first-cell">&nbsp;</div>
+                    <div className="std-table-cell responsive-cell">
+                      {t('streams.stream-activity.heading')}
+                    </div>
+                    <div className="std-table-cell fixed-width-150">
+                      {t("streams.stream-activity.label-date")}
+                    </div>
+                  </div>
+                </div>
+                <div className="item-list-body compact">
+                  {(ddcaDetails && loadingActivity) && (
+                    <>
+                      {isNextRoundScheduled(ddcaDetails) && (
+                        <span className="item-list-row simplelink">
+                          <div className="std-table-cell first-cell">
+                            <IconExchange className="mean-svg-icons"/>
+                          </div>
+                          <div className="std-table-cell responsive-cell">
+                            <span className="align-middle">{getOfflineActivityTitle(ddcaDetails)}</span>
+                          </div>
+                          <div className="std-table-cell fixed-width-150">
+                            <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                          </div>
+                        </span>
+                      )}
+                      <span className="item-list-row simplelink">
+                        <div className="std-table-cell first-cell">
+                          <ArrowDownOutlined className="incoming"/>
+                        </div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">Deposited {getTokenAmountAndSymbolByTokenAddress(ddcaDetails.totalDepositsAmount, ddcaDetails.fromMint)}</span>
+                        </div>
+                        <div className="std-table-cell fixed-width-150">
+                          <span className="align-middle">{getShortDate(ddcaDetails.startUtc as string, true)}</span>
+                        </div>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+              <div className="item-list-header compact">
+                <div className="header-row">
+                  <div className="std-table-cell first-cell">&nbsp;</div>
+                  <div className="std-table-cell responsive-cell">
+                    {t('streams.stream-activity.heading')}
+                  </div>
+                  <div className="std-table-cell fixed-width-150">
+                    {t("streams.stream-activity.label-date")}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="item-list-body compact">
-              {(recurringBuyDetails?.id as string) === '4zKTVctw52NLD7zKtwHoYkePeYjNo8cPFyiokXrnBMbz' ? (
-                <>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <IconExchange className="mean-svg-icons"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Exchanged 1 wSOL for 0.0413 ETH</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/12/2021 14:53 PM</span>
-                  </div>
-                </span>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <ArrowDownOutlined className="incoming"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Deposited 5 wSOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/12/2021 14:53 PM</span>
-                  </div>
-                </span>
-                </>
-              ) : (
-                <>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <IconExchange className="mean-svg-icons"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Exchanged 50 USDC for 0.3118 SOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/15/2021 14:53 PM</span>
-                  </div>
-                </span>
-                <span className="item-list-row simplelink">
-                  <div className="std-table-cell first-cell">
-                    <ArrowDownOutlined className="incoming"/>
-                  </div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">Deposited 200 USDC</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-150">
-                    <span className="align-middle">10/15/2021 14:53 PM</span>
-                  </div>
-                </span>
-                </>
-              )}
-
-              {/* {activity.map((item, index) => {
-              return (
-                <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                    href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                  <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                  <div className="std-table-cell responsive-cell">
-                    <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>action + #.## SYMBOL for #.## SYMBOL</span>
-                  </div>
-                  <div className="std-table-cell fixed-width-120" >
-                    <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                  </div>
-                </a>
-              );
-            })} */}
-            </div>
+              <div className="item-list-body compact">
+                {activity.map((item, index) => {
+                  return (
+                    <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.transactionSignature}${getSolanaExplorerClusterParam()}`}>
+                      <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                      <div className="std-table-cell responsive-cell">
+                        <span className="align-middle">{getActivityTitle(item)}</span>
+                      </div>
+                      <div className="std-table-cell fixed-width-150" >
+                        <span className="align-middle">{getShortDate(item.dateUtc as string, true)}</span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+              </>
+            )}
           </>
         </div>
+
       </div>
-      {/* {recurringBuyDetails && (
+      {selectedDdca && (
         <div className="stream-share-ctas">
           <span
             className="copy-cta overflow-ellipsis-middle"
-            onClick={() => onCopyRecurringBuyAddress(recurringBuyDetails.id)}
+            onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}
           >
-            {recurringBuyDetails.id}
+            {selectedDdca.ddcaAccountAddress}
           </span>
           <a
             className="explorer-cta"
             target="_blank"
             rel="noopener noreferrer"
             href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${
-              recurringBuyDetails.id
+              selectedDdca.ddcaAccountAddress
             }${getSolanaExplorerClusterParam()}`}
           >
             <IconExternalLink className="mean-svg-icons" />
           </a>
         </div>
-      )} */}
+      )}
     </>
   );
 
   const renderRecurringBuys = (
     <>
-    {recurringBuys && recurringBuys.length ? (
+    {(publicKey && recurringBuys && recurringBuys.length > 0) ? (
       recurringBuys.map((item, index) => {
         const onBuyClick = () => {
           consoleOut('select buy:', item, 'blue');
-          setRecurringBuyDetails(item);
-          setDtailsPanelOpen(true);
+          selectDdcaItem(item);
         };
         return (
           <div key={`${index + 50}`} onClick={onBuyClick}
-               className={`transaction-list-row ${recurringBuyDetails && recurringBuyDetails.id === item.id ? 'selected' : ''}`}>
+               className={`transaction-list-row ${ddcaDetails && ddcaDetails.ddcaAccountAddress === item.ddcaAccountAddress ? 'selected' : ''}`}>
             <div className="icon-cell">
               {getBuyIconPair(item)}
             </div>
@@ -571,14 +1189,17 @@ export const ExchangeDcasView = () => {
 
   return (
     <>
+      {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
-        {/* {window.location.hostname === 'localhost' && (
+        {isLocal() && (
           <div className="debug-bar">
-            <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
+            <span className="secondary-link" onClick={() => clearLastSentTx()}>[STOP]</span>
+            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature || '-'}</span>
           </div>
-        )} */}
+        )}
 
         <div className="interaction-area">
 
@@ -588,6 +1209,16 @@ export const ExchangeDcasView = () => {
             <div className="tokens-container">
               <div className="transactions-heading">
                 <span className="title">{t('ddcas.screen-title')}</span>
+                <Tooltip placement="bottom" title="Reload">
+                  <div className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
+                       onClick={() => reloadRecurringBuys(true)}>
+                    <Spin size="small" />
+                    <span className="transaction-legend">
+                      (<span>{formatThousands(recurringBuys.length || 0)}</span>)
+                      <IconRefresh className="mean-svg-icons"/>
+                    </span>
+                  </div>
+                </Tooltip>
               </div>
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
@@ -602,7 +1233,7 @@ export const ExchangeDcasView = () => {
             <div className="transaction-list-container">
               <div className="transactions-heading"><span className="title">Exchange details</span></div>
               <div className="inner-container">
-                {recurringBuyDetails ? renderRecurringBuy : (
+                {ddcaDetails ? renderRecurringBuy : (
                   <div className="h-75 flex-center">
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                   </div>
@@ -615,6 +1246,86 @@ export const ExchangeDcasView = () => {
         </div>
 
       </div>
+
+      <DdcaCloseModal
+        isVisible={isCloseDdcaModalVisible}
+        transactionFees={ddcaTxFees}
+        handleOk={onAcceptCloseDdca}
+        handleClose={hideCloseDdcaModal}
+        content={getStreamClosureMessage()}
+        ddcaDetails={ddcaDetails}
+      />
+
+      {/* Close stream transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterCloseDdcaTransactionModalClosed}
+        visible={isCloseDdcaTransactionModalVisible}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
+        onCancel={hideCloseDdcaTransactionModal}
+        width={330}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onCloseDdcaTransactionFinished}>
+                {t('general.cta-finish')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      NATIVE_SOL_MINT.toBase58(),
+                      true
+                    )} SOL`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
+                      ddcaTxFees.maxBlockchainFee,
+                      NATIVE_SOL_MINT.toBase58(),
+                      true
+                    )} SOL`})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideCloseDdcaTransactionModal}>
+                {t('general.cta-close')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
       <PreFooter />
     </>
   );

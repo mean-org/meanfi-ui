@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Redirect, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -46,6 +46,7 @@ export const AppBar = (props: { menuType: string }) => {
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
   const isProd = (): boolean => {
     return environment === 'production' ? true : false;
@@ -66,6 +67,7 @@ export const AppBar = (props: { menuType: string }) => {
           if (streams && streams.length > 0) {
             consoleOut('streams are available, opening streams...', '', 'blue');
             setCurrentScreen('streams');
+            setRedirect('/transfers');
           }
         });
     }
@@ -207,61 +209,64 @@ export const AppBar = (props: { menuType: string }) => {
     );
   } else {
     return (
-      <div className="mobile-menu">
-        <input type="checkbox" id="overlay-input" />
-        <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
-        <div id="overlay">
-          <ul onClick={dismissMenu}>
-            <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
-              <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
-            </li>
-            <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
-              <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
-            </li>
-            <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
-                className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                onClick={() => onGoToTransfersClick()}>
-              <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
-            </li>
-            <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
-              <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
-            </li>
-            <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-              <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
-            </li>
-            <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
-              <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
-            </li>
-            {!isProd() && (
-              <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
-                <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+      <>
+        {redirect && (<Redirect to={redirect} />)}
+        <div className="mobile-menu">
+          <input type="checkbox" id="overlay-input" />
+          <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
+          <div id="overlay">
+            <ul onClick={dismissMenu}>
+              <li key="/accounts" className={location.pathname === '/accounts' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 1} as CustomCSSProps}>
+                <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
               </li>
-            )}
-            {!isProd() && (
-              <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
-                <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+              <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
+                <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
               </li>
-            )}
-            <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 7 : 9} as CustomCSSProps}>
-              <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
-                &nbsp;<IconExternalLink className="mean-svg-icons link" />
-              </a>
-            </li>
-            {/* Charts */}
-            {/* <li key="charts" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
-              <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
-                <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
-                &nbsp;<IconExternalLink className="mean-svg-icons link" />
-              </a>
-            </li> */}
-          </ul>
+              <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
+                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
+                  onClick={() => onGoToTransfersClick()}>
+                <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+              </li>
+              <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
+                <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
+              </li>
+              <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
+              </li>
+              <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
+              </li>
+              {!isProd() && (
+                <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
+                  <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
+                </li>
+              )}
+              {!isProd() && (
+                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
+                  <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
+                </li>
+              )}
+              <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 7 : 9} as CustomCSSProps}>
+                <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
+                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
+                </a>
+              </li>
+              {/* Charts */}
+              {/* <li key="charts" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
+                <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
+                  <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
+                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
+                </a>
+              </li> */}
+            </ul>
+          </div>
+          <DepositOptions
+            isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'}
+            key="deposit-modal2"
+            handleClose={hideDepositOptionsModal} />
         </div>
-        <DepositOptions
-          isVisible={isDepositOptionsModalVisible && props.menuType !== 'desktop'}
-          key="deposit-modal2"
-          handleClose={hideDepositOptionsModal} />
-      </div>
+      </>
     );
   }
 };

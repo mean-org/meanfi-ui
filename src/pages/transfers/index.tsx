@@ -44,7 +44,7 @@ export const TransfersView = () => {
       case 1:   return <OneTimePayment />;
       case 2:   return <RepeatingPayment />;
       case 3:   return <PayrollPayment />;
-      default:  return <h4>{t(`general.not-implemented`)}</h4>
+      default:  return null;
     }
   }
 
@@ -56,7 +56,7 @@ export const TransfersView = () => {
         {currentScreen === 'streams' ? (
           <Streams />
         ) : (
-          <div className="place-transaction-box">
+          <div className="place-transaction-box mb-3">
             <div className="position-relative mb-2">
               {contract && (
                 <>

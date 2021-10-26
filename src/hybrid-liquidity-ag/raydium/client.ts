@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountMeta, Connection, PublicKey, Transaction } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { LPClient, ExchangeInfo, RAYDIUM } from "../types";
 import { getSwapOutAmount, getSwapTx } from "./swap";
@@ -25,6 +25,10 @@ export class RaydiumClient implements LPClient {
 
   public get protocolAddress(): string {
     return RAYDIUM.toBase58();
+  }
+
+  public get hlaExchangeAccounts(): AccountMeta[] {
+    return [];
   }
 
   public getPoolInfo = async (

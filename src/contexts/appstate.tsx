@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
+  BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   PRICE_REFRESH_TIMEOUT,
   STREAMING_PAYMENT_CONTRACTS,
@@ -30,6 +31,7 @@ import { MappedTransaction } from "../utils/history";
 import { consoleOut } from "../utils/ui";
 import { appConfig } from "..";
 import { ChainId } from "@saberhq/token-utils";
+import { DdcaAccount } from "@mean-dao/ddca";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -75,6 +77,9 @@ interface AppStateConfig {
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
   canShowAccountDetails: boolean;
+  // DDCAs
+  recurringBuys: DdcaAccount[];
+  loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
   setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
@@ -112,6 +117,9 @@ interface AppStateConfig {
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
   setCanShowAccountDetails: (state: boolean) => void;
+  // DDCAs
+  setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
+  setLoadingRecurringBuys: (state: boolean) => void;
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -156,6 +164,9 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   addAccountPanelOpen: true,
   canShowAccountDetails: false,
+  // DDCAs
+  recurringBuys: [],
+  loadingRecurringBuys: false,
   setTheme: () => {},
   setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
@@ -193,6 +204,9 @@ const contextDefaultValues: AppStateConfig = {
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
   setCanShowAccountDetails: () => {},
+  // DDCAs
+  setRecurringBuys: () => {},
+  setLoadingRecurringBuys: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -452,7 +466,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
 
-  // TODO: referrals is tempararily persisted in localStorage but we must use an API
+  // TODO: referrals are tempararily persisted in localStorage but we must use an API
   const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
@@ -634,7 +648,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   });
               }
             }
-            if (currentScreen === 'contract') {
+            if (reset && currentScreen === 'contract') {
               setSelectedTab('streams');
             }
           } else {
@@ -836,7 +850,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       // Update the list
       updateUserTokens(list);
-      consoleOut('AppState -> userTokens:', list);
+      // consoleOut('AppState -> userTokens:', list);
 
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
@@ -844,8 +858,10 @@ const AppStateProvider: React.FC = ({ children }) => {
         .filterByChainId(ChainId.MainnetBeta)
         .excludeByTag("nft")
         .getList() as UserTokenAccount[];
+      // Filter out the banned tokens
+      const filteredTokens = mainnetList.filter(t => !BANNED_TOKENS.some(bt => bt === t.symbol));
       // Sort the big list
-      const sortedMainnetList = mainnetList.sort((a, b) => {
+      const sortedMainnetList = filteredTokens.sort((a, b) => {
         var nameA = a.symbol.toUpperCase();
         var nameB = b.symbol.toUpperCase();
         if (nameA < nameB) {
@@ -864,6 +880,21 @@ const AppStateProvider: React.FC = ({ children }) => {
     return () => { }
 
   }, [connectionConfig.cluster]);
+
+  /////////////////////////////////////
+  // Added to support /accounts page //
+  /////////////////////////////////////
+
+  const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
+  const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);
+
+  const setLoadingRecurringBuys = (value: boolean) => {
+    updateLoadingRecurringBuys(value);
+  }
+
+  const setRecurringBuys = (recurringBuys: DdcaAccount[]) => {
+    updateRecurringBuys(recurringBuys);
+  }
 
   return (
     <AppStateContext.Provider
@@ -905,6 +936,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         addAccountPanelOpen,
         canShowAccountDetails,
+        recurringBuys,
+        loadingRecurringBuys,
         setTheme,
         setCurrentScreen,
         setDtailsPanelOpen,
@@ -940,7 +973,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setSelectedAsset,
         setAccountAddress,
         setAddAccountPanelOpen,
-        setCanShowAccountDetails
+        setCanShowAccountDetails,
+        setRecurringBuys,
+        setLoadingRecurringBuys
       }}>
       {children}
     </AppStateContext.Provider>

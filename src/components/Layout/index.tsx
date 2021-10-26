@@ -19,8 +19,7 @@ import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect"
 import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
-import { useLocalStorageState } from "../../utils/utils";
-import { RpcConfig } from "../../models/connections-hq";
+import { reportConnectedAccount } from "../../utils/api";
 
 const { Header, Content, Footer } = Layout;
 
@@ -54,7 +53,18 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const [cachedRpc] = useLocalStorageState("cachedRpc");
+
+  // Clear cachedRpc on App destroy (window is being reloaded)
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    }
+  })
+
+  const handleTabClosingOrPageRefresh = () => {
+    window.localStorage.removeItem('cachedRpc');
+  }
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -137,10 +147,14 @@ export const AppLayout = React.memo((props: any) => {
 
           // Record pending referral, get referrals count and clear referralAddress from localStorage
           // Only record if referral address is valid and different from wallet address
-          // TODO: referrals is tempararily persisted in localStorage but we must use an API
           if (referralAddress && isValidAddress(referralAddress) && referralAddress !== walletAddress) {
-            // setReferrals(referrals + 1);
-            setReferralAddress('');
+            reportConnectedAccount(walletAddress, referralAddress)
+              .then(result => {
+                setReferralAddress('');
+              })
+              .catch(error => console.error(error));
+          } else {
+            reportConnectedAccount(walletAddress).then(result => consoleOut('reportConnectedAccount hit'));
           }
           // Let the AppState know which wallet address is connected and save it
           setAccountAddress(walletAddress);
@@ -215,12 +229,6 @@ export const AppLayout = React.memo((props: any) => {
   ]);
 
   useEffect(() => {
-    if (!cachedRpc || !(cachedRpc as RpcConfig).httpProvider) {
-      setRedirect('/service-unavailable');
-    }
-  }, [cachedRpc]);
-
-  useEffect(() => {
     const bodyClass = location.pathname.split('/')[1];
 
     const addRouteNameClass = () => {
@@ -265,9 +273,12 @@ export const AppLayout = React.memo((props: any) => {
             <AppBar menuType="desktop" />
           </div>
           <AppBar menuType="mobile" />
-          {/* {environment === 'local' && (
+          {/* {window.location.hostname === 'localhost' && (
             <div className="debug-bar">
-              <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen}</span>
+              <span className="secondary-link" onClick={() => testTx()}>[test tx]</span>
+              <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchingTxStatus ? 'fetching' : 'idle'}</span>
+              <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{fetchingTxStatus ? 'fetching' : lastSentTxStatus || 'error'}</span>
+              <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature || '-'}</span>
             </div>
           )} */}
         </Header>

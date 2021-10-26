@@ -497,7 +497,7 @@ export const PayrollPayment = () => {
 
   const renderAvailableTokenList = (
     <>
-      {destinationToken && tokenList ? (
+      {(destinationToken && tokenList) && (
         tokenList.map((token, index) => {
           const onClick = () => {
             setDestinationToken(token);
@@ -533,15 +533,13 @@ export const PayrollPayment = () => {
             </div>
           );
         })
-      ) : (
-        <p>{t('general.loading')}...</p>
       )}
     </>
   );
 
   const renderUserTokenList = (
     <>
-      {selectedToken && tokenList ? (
+      {(selectedToken && tokenList) && (
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
@@ -577,8 +575,6 @@ export const PayrollPayment = () => {
             </div>
           );
         })
-      ) : (
-        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -735,7 +731,7 @@ export const PayrollPayment = () => {
         });
       } else {
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
         customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
@@ -777,10 +773,10 @@ export const PayrollPayment = () => {
         console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.SignTransactionFailure
+          currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
         customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
@@ -823,10 +819,10 @@ export const PayrollPayment = () => {
         console.error('Cannot send transaction! Wallet not found!');
         setTransactionStatus({
           lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.SendTransactionFailure
+          currentOperation: TransactionStatus.WalletNotFound
         });
         transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
         customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });

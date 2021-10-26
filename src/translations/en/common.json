@@ -19,6 +19,7 @@
 		"account-add-cta-label": "Go!",
 		"account-add-heading": "View account details for any address in",
 		"account-address-change-cta": "Scan another address",
+		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Account address",
 		"account-address-placeholder": "Enter your account address",
 		"account-address-validation": "Not a valid address format",
@@ -130,24 +131,38 @@
 		}
 	},
 	"ddca-setup-modal": {
-		"cta-label": "Approve",
+		"cta-label-deposit": "Deposit",
+		"cta-label-depositing": "Depositing...",
+		"cta-label-vault-created": "Approved",
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
-			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal DCA Vault.",
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
 		},
 		"modal-title": "Review Repeating Buy",
 		"notes": {
-			"note-item-01": "Only you can withdraw funds from your DCA Vault",
+			"note-item-01": "Only you can withdraw funds from your vault",
 			"note-item-02": "Fees for the scheduled swaps are charged upfront",
 			"note-item-03": "All unused fees are returned to you upon withdrawal",
 			"notes-title": "Important Notes"
 		}
 	},
 	"ddcas": {
-		"screen-title": "Recurring buys"
+		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"screen-title": "Recurring buys",
+		"streams-ddcas": "Click to refresh recurring buys",
+		"close-ddca": {
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
+		},
+		"activity": {
+			"action-deposit": "Deposited {{fromAmount}}",
+			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+			"action-withdraw": "Withdrew {{toAmount}}"
+		}
 	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
@@ -212,6 +227,7 @@
 		"account-address-not-copied-message": "Could not copy Account Address",
 		"error-cannot-faucet-mainnet-message": "Cannot faucet in mainnet",
 		"error-cannot-fund-account-message": "Could not fund your account, please try again later",
+		"error-creating-vault-message": "Could not create the vault, please try again later",
 		"error-ledger-title": "Ledger Error",
 		"error-loading-streamid-message": "Could not find or load stream with ID {{streamId}}",
 		"error-title": "Error",
@@ -240,7 +256,8 @@
 		"address-processed": "Please connect your wallet to record this referral.",
 		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
 		"modal-title": "Refer a friend",
-		"refer-friend-hint": "Refer a friend and earn $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"see-rules": "See rules for details",
 		"share-to": "Share to"
 	},
 	"streams": {
@@ -300,7 +317,7 @@
 		}
 	},
 	"swap": {
-		"exchange-warning": "Token exchange happen with real assets in Mainnet",
+		"exchange-warning": "Mean Exchange is only available on",
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
@@ -349,6 +366,9 @@
 		},
 		"status": {
 			"cta-view-stream": "View Stream",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",
@@ -433,6 +453,7 @@
 	},
 	"ui-menus": {
 		"app-context-menu": {
+			"blog": "Blog",
 			"code": "Code",
 			"developers": "Developers",
 			"disconnect": "Disconnect wallet",
@@ -442,6 +463,7 @@
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Language",
 			"switch-theme": "Switch to",
+			"twitter": "Twitter",
 			"theme-dark": "Dark Mode",
 			"theme-light": "Light Mode"
 		},

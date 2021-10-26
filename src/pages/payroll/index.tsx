@@ -14,7 +14,7 @@ export const PayrollView = () => {
     <>
     <div className="container main-container">
       <div className="interaction-area">
-        <div className="place-transaction-box">
+        <div className="place-transaction-box mb-3">
           <div className="position-relative mb-2">
             {contract && (
               <>

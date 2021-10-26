@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { AccountMeta, Connection, PublicKey, SYSVAR_CLOCK_PUBKEY, Transaction } from "@solana/web3.js";
 import { cloneDeep } from "lodash-es";
 import { AMM_POOLS, PROTOCOLS } from "../data";
 import { ExchangeInfo, LPClient, SABER } from "../types";
@@ -28,13 +28,19 @@ export class SaberClient implements LPClient {
   private connection: Connection;
   private saberSwap: any;
   private currentPool: any;
+  private exchangeAccounts: AccountMeta[];
 
   constructor(connection: Connection) {
     this.connection = connection;
+    this.exchangeAccounts = [];
   }
 
   public get protocolAddress() : string {
     return SABER.toBase58(); 
+  }
+
+  public get hlaExchangeAccounts(): AccountMeta[] {
+    return this.exchangeAccounts || [];
   }
 
   public getPoolInfo = async (
@@ -220,6 +226,8 @@ export class SaberClient implements LPClient {
         .toFixed(tokenA.decimals, undefined, 1)
     };
 
+    await this.updateHlaExchangeAccounts(from, to);
+
     return exchange;    
   };
 
@@ -346,5 +354,51 @@ export class SaberClient implements LPClient {
 
     return tx; 
   };
+
+  private updateHlaExchangeAccounts = async (
+    from: string,
+    to: string
+
+  ): Promise<void> => {
+
+    try {
+
+      if (!this.currentPool || !this.saberSwap) {
+        return undefined;
+      }
+
+      const saberPool = this.currentPool as SLPInfo;
+      const saberSwap = this.saberSwap as StableSwap;
+      const fromMint = new PublicKey(from);
+      const toMint = new PublicKey(to);
+
+      let inputReserveAccount = saberSwap.state.tokenA.reserve;
+      let outputReserveAccount = saberSwap.state.tokenB.reserve;
+      let adminFeeAccount = saberSwap.state.tokenB.adminFeeAccount;
+
+      if (
+        saberSwap.state.tokenA.mint.equals(toMint) && 
+        saberSwap.state.tokenB.mint.equals(fromMint)) 
+      {
+        inputReserveAccount = saberSwap.state.tokenB.reserve;
+        outputReserveAccount = saberSwap.state.tokenA.reserve;
+        adminFeeAccount = saberSwap.state.tokenA.adminFeeAccount;
+      }
+
+      this.exchangeAccounts = [
+        { pubkey: new PublicKey(saberPool.address), isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.swapProgramID, isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.swapAccount, isSigner: false, isWritable: false },
+        { pubkey: saberSwap.config.authority, isSigner: false, isWritable: false },
+        { pubkey: inputReserveAccount, isSigner: false, isWritable: true },
+        { pubkey: outputReserveAccount, isSigner: false, isWritable: true },
+        { pubkey: adminFeeAccount, isSigner: false, isWritable: true },
+        { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false }
+      ];
+
+    } catch (_error) {
+      throw _error;
+    }
+  }
 
 }

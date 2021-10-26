@@ -21,7 +21,7 @@ export const TextInput = (props: {
                 <input
                     id={props.id || 'token-search-input'}
                     className="general-text-input"
-                    inputMode="decimal"
+                    inputMode="text"
                     autoComplete="off"
                     autoCorrect="off"
                     type="text"
