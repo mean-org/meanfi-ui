@@ -698,7 +698,7 @@ export const ExchangeDcasView = () => {
     }
 
     if (wallet) {
-      showCloseDdcaTransactionModal();
+      showWithdrawTransactionModal();
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
@@ -1154,6 +1154,18 @@ export const ExchangeDcasView = () => {
             : false;
   }
 
+  const isWithdrawing = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Withdraw
+            ? true
+            : false;
+  }
+
+  const isAddingFunds = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.AddFunds
+            ? true
+            : false;
+  }
+
   const isNextRoundScheduled = (item: DdcaDetails): boolean => {
     const now = new Date().toUTCString();
     const nowUtc = new Date(now);
@@ -1250,12 +1262,6 @@ export const ExchangeDcasView = () => {
                       ddcaDetails.toMint
                     )}
                   </span>
-                  {isCreating() && (
-                    <div className="proggress">
-                      <LoadingOutlined />
-                      <span className="info-data">Exchange in progress</span>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -1294,9 +1300,19 @@ export const ExchangeDcasView = () => {
                 size="small"
                 disabled={fetchTxInfoStatus === "fetching"}
                 onClick={() => {}}>
-                {isClosing() ? t("ddcas.add-funds-cta-disabled-closing") : t("streams.stream-detail.add-funds-cta")}
+                {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                {isCreating()
+                  ? t("ddcas.add-funds-cta-disabled-executing-swap")
+                  : isClosing()
+                    ? t("ddcas.add-funds-cta-disabled-closing")
+                    : isAddingFunds()
+                      ? t("ddcas.add-funds-cta-disabled-funding")
+                      : isWithdrawing()
+                        ? t("ddcas.add-funds-cta-disabled-withdrawing")
+                        : t("streams.stream-detail.add-funds-cta")
+                }
               </Button>
-              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && !isClosing()) && (
+              {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
                 <Dropdown overlay={menu} trigger={["click"]}>
                   <Button
                     shape="round"
