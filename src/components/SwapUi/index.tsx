@@ -12,7 +12,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
@@ -90,6 +90,7 @@ export const SwapUi = (props: {
     flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
   });
   // AGGREGATOR
+  const [currentTxSignature, setCurrentTxSignature] = useState("");
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
   const [toMint, setToMint] = useState<string | undefined>(undefined);
@@ -1559,6 +1560,53 @@ export const SwapUi = (props: {
     transactionStatus.currentOperation
   ]);
 
+  const tryGetTxStatus = useCallback(async (signature: string) => {
+
+    try {
+
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      const response = await connection.getSignatureStatus(signature);
+
+      if(!response || !response.value || response.value.err) {
+
+        const err = response && response.value && response.value.err 
+          ? response.value.err 
+          : new Error('Cannot confirm transaction');
+
+        // Log error
+        setTransactionLog(current => [...current, {
+          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+          result: `${err}`
+        }]);
+
+        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+        return false;
+      }
+
+      if (!response.value.confirmationStatus) {
+        return false;
+      }
+
+      return response.value.confirmationStatus
+
+    } catch (_error) {
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+        result: `${_error}`
+      }]);
+
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+      return false;
+    }
+
+  }, [connection])
+
   const confirmTx = useCallback(async (signature: string) => {
 
     try {
@@ -1570,11 +1618,20 @@ export const SwapUi = (props: {
       const response = await connection.confirmTransaction(signature, 'confirmed');
 
       if(!response || !response.value || response.value.err) {
+
         const err = response && response.value && response.value.err 
           ? response.value.err 
           : new Error('Cannot confirm transaction');
 
-        throw(err);
+        // Log error
+        setTransactionLog(current => [...current, {
+          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+          result: `${err}`
+        }]);
+
+        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+        return await tryGetTxStatus(signature);
       }
 
       setTransactionStatus({
@@ -1587,10 +1644,9 @@ export const SwapUi = (props: {
         result: response.value  // TODO: Log this perhaps?
       }]);
 
-      return response;
+      return response.value;
 
     } catch (_error) {
-      console.error(_error);
       setTransactionStatus({
         lastOperation: TransactionStatus.ConfirmTransaction,
         currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -1601,7 +1657,8 @@ export const SwapUi = (props: {
         result: `${_error}`
       }]);
       customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      throw(_error);
+      // throw(_error);
+      return tryGetTxStatus(signature);
     }
 
   },[
@@ -1643,10 +1700,11 @@ export const SwapUi = (props: {
         return;
       }
 
+      setCurrentTxSignature(signature);
       let confirmed = await confirmTx(signature);
 
       if (!confirmed) {
-        setIsBusy(false);
+        setIsBusy(false);  
         return;
       }
 
@@ -2188,9 +2246,25 @@ export const SwapUi = (props: {
                       })}
                     </h4>
                   ) : (
-                    <h4 className="font-bold mb-1 text-uppercase">
-                      { getTransactionOperationDescription(transactionStatus, t) }
-                    </h4>
+                    <>
+                      <h4 className="font-bold mb-1 text-uppercase">
+                        { getTransactionOperationDescription(transactionStatus, t) }
+                      </h4>
+                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
+                        <>
+                          <p className="operation">
+                            {t("transactions.status.tx-confirm-failure-check")}
+                          </p>
+                          <a className="primary-link" 
+                              style={{ marginBottom:20 }} 
+                              href={`https://explorer.solana.com/tx/${currentTxSignature}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer">
+                              {currentTxSignature}
+                          </a>
+                        </>
+                      )}
+                    </>
                   )}
                   <Button
                     block
