@@ -26,18 +26,34 @@ export enum TimesheetRequirementOption {
 
 export enum TransactionStatus {
     Iddle = 0,
-    TransactionStart = 1,
-    CreateTransaction = 2,
-    CreateTransactionSuccess = 3,
-    CreateTransactionFailure = 4,
-    SignTransaction = 5,
-    SignTransactionSuccess = 6,
-    SignTransactionFailure = 7,
-    SendTransaction = 8,
-    SendTransactionSuccess = 9,
-    SendTransactionFailure = 10,
-    ConfirmTransaction = 11,
-    ConfirmTransactionSuccess = 12,
-    ConfirmTransactionFailure = 13,
-    TransactionFinished = 14
+    WalletNotFound = 1,
+    TransactionStart = 2,
+    TransactionStartFailure = 3,
+    InitTransaction = 4,
+    InitTransactionSuccess = 5,
+    InitTransactionFailure = 6,
+    SignTransaction = 7,
+    SignTransactionSuccess = 8,
+    SignTransactionFailure = 9,
+    SendTransaction = 10,
+    SendTransactionSuccess = 11,
+    SendTransactionFailure = 12,
+    ConfirmTransaction = 13,
+    ConfirmTransactionSuccess = 14,
+    ConfirmTransactionFailure = 15,
+    TransactionFinished = 16,
+    SendTransactionFailureByMinimumAmount = 17,
+    CreateRecurringBuySchedule = 18,
+    CreateRecurringBuyScheduleSuccess = 19,
+    CreateRecurringBuyScheduleFailure = 20,
+}
+
+export enum OperationType {
+    Transfer = 0,
+    Create = 1,
+    AddFunds = 2,
+    Withdraw = 3,
+    Close = 4,
+    Pause = 5,
+    Resume = 6
 }

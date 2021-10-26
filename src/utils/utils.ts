@@ -1,12 +1,17 @@
-import BN from "bn.js";
 import { useCallback, useState } from "react";
-import { MintInfo } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { PublicKey } from "@solana/web3.js";
-import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN, WAD, ZERO } from "../constants";
+import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
+import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
-import { maxTrailingZeroes } from "./ui";
+import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
+import { NATIVE_SOL } from './tokens';
+import { ACCOUNT_LAYOUT } from './layouts';
+import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
+import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -50,36 +55,6 @@ export function shortenAddress(address: string, chars = 4): string {
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
 
-export function getTokenName(
-  map: KnownTokenMap,
-  mint?: string | PublicKey,
-  shorten = true
-): string {
-  const mintAddress = typeof mint === "string" ? mint : mint?.toBase58();
-
-  if (!mintAddress) {
-    return "N/A";
-  }
-
-  const knownSymbol = map.get(mintAddress)?.symbol;
-  if (knownSymbol) {
-    return knownSymbol;
-  }
-
-  return shorten ? `${mintAddress.substring(0, 5)}...` : mintAddress;
-}
-
-export function getTokenByName(tokenMap: KnownTokenMap, name: string) {
-  let token: TokenInfo | null = null;
-  for (const val of tokenMap.values()) {
-    if (val.symbol === name) {
-      token = val;
-      break;
-    }
-  }
-  return token;
-}
-
 export function getTokenIcon(
   map: KnownTokenMap,
   mintAddress?: string | PublicKey
@@ -93,10 +68,6 @@ export function getTokenIcon(
   return map.get(address)?.logoURI;
 }
 
-export function isKnownMint(map: KnownTokenMap, mintAddress: string) {
-  return !!map.get(mintAddress);
-}
-
 export const STABLE_COINS = new Set(["USDC", "wUSDC", "USDT"]);
 
 export function chunks<T>(array: T[], size: number): T[][] {
@@ -106,44 +77,8 @@ export function chunks<T>(array: T[], size: number): T[][] {
   ).map((_, index) => array.slice(index * size, (index + 1) * size));
 }
 
-export function toLamports(
-  account?: TokenAccount | number,
-  mint?: MintInfo
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount =
-    typeof account === "number" ? account : account.info.amount?.toNumber();
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  return Math.floor(amount * precision);
-}
-
-export function wadToLamports(amount?: BN): BN {
-  return amount?.div(WAD) || ZERO;
-}
-
-export function fromLamports(
-  account?: TokenAccount | number | BN,
-  mint?: MintInfo,
-  rate: number = 1.0
-): number {
-  if (!account) {
-    return 0;
-  }
-
-  const amount = Math.floor(
-    typeof account === "number"
-      ? account
-      : BN.isBN(account)
-      ? account.toNumber()
-      : account.info.amount.toNumber()
-  );
-
-  const precision = Math.pow(10, mint?.decimals || 0);
-  return (amount / precision) * rate;
+export const getAmountFromLamports = (amount: number): number => {
+  return (amount || 0) / LAMPORTS_PER_SOL;
 }
 
 var SI_SYMBOL = ["", "k", "M", "G", "T", "P", "E"];
@@ -177,26 +112,6 @@ export const formatAmount = (
   }
   return '0';
 };
-
-export function formatTokenAmount(
-  account?: TokenAccount,
-  mint?: MintInfo,
-  rate: number = 1.0,
-  prefix = "",
-  suffix = "",
-  precision = 6,
-  abbr = false
-): string {
-  if (!account) {
-    return "";
-  }
-
-  return `${[prefix]}${formatAmount(
-    fromLamports(account, mint, rate),
-    precision,
-    abbr
-  )}${suffix}`;
-}
 
 export const formatUSD = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -238,6 +153,11 @@ export const formatPct = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
+export const formatThousands = (val: number) => {
+  const integerWithThousands = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  return integerWithThousands.format(val);
+}
+
 export function convert(
   account?: TokenAccount | number,
   mint?: MintInfo,
@@ -266,6 +186,14 @@ export function isPositiveNumber(str: string): boolean {
   return POSITIVE_NUMBER_PATTERN.test(str);
 }
 
+export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
+  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
+  if (tokenFromTokenList) {
+    return tokenFromTokenList;
+  }
+  return undefined;
+}
+
 export const getTokenSymbol = (address: string): string => {
   const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
   if (tokenFromTokenList) {
@@ -282,16 +210,306 @@ export const getTokenDecimals = (address: string): number => {
   return 0;
 }
 
-export const getTokenAmountAndSymbolByTokenAddress = (amount: any, address: string, onlyValue = false): string => {
-  const tokenFromTokenList = MEAN_TOKEN_LIST.find(t => t.address === address);
-  const inputAmount = amount ? parseFloat(amount.toString()) : 0;
-  if (tokenFromTokenList) {
-    const formatted = `${formatAmount(inputAmount, tokenFromTokenList.decimals) || 0}`;
+export const getFormattedRateAmount = (amount: number): string => {
+  return `${getFormattedNumberToLocale(formatAmount(amount, 2))}`;
+}
+
+export const getTokenAmountAndSymbolByTokenAddress = (
+  amount: number,
+  address: string,
+  onlyValue = false
+): string => {
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+    }
+  }
+  const inputAmount = amount || 0;
+  if (token) {
+    let formatted = getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals));
     if (onlyValue) {
       return maxTrailingZeroes(formatted, 2);
     }
-    return `${maxTrailingZeroes(formatted, 2)} ${tokenFromTokenList.symbol}`;
-  } else {
-    return `${maxTrailingZeroes(inputAmount.toString(), 2)}`;
+    return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
+  } else if (address && !token) {
+    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
+    return onlyValue ? maxTrailingZeroes(formatted, 2) : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
   }
+  return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
+}
+
+export const truncateFloat = (value: any, decimals = 2): string => {
+  const numericString = value.toString();
+  const splitted = numericString.split('.');
+
+  if (splitted.length === 1 || splitted[1].length <= decimals) {
+    return numericString;
+  }
+
+  const reshapedDecimals = splitted[1].slice(0, decimals);
+  splitted[1] = reshapedDecimals;
+  return splitted.join('.');
+}
+
+export const getComputedFees = (fees: TransactionFees): number => {
+  return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
+}
+
+export async function fetchAccountTokens(
+  pubkey: PublicKey,
+  cluster: string,
+) {
+  let data;
+  try {
+    const { value } = await new Connection(
+      cluster,
+      "processed"
+    ).getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
+    data = value.map((accountInfo) => {
+      const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
+      return { parsedInfo, pubkey: accountInfo.pubkey };
+    });
+    return data as AccountTokenParsedInfo[];
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// from raydium
+export async function signTransaction(
+  connection: Connection,
+  wallet: any,
+  transaction: Transaction,
+  signers: Array<Account> = []
+) {
+  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash
+  transaction.setSigners(wallet.publicKey, ...signers.map((s) => s.publicKey))
+  if (signers.length > 0) {
+    transaction.partialSign(...signers)
+  }
+  return await wallet.signTransaction(transaction)
+}
+
+export async function sendTransaction(
+  connection: Connection,
+  wallet: any,
+  transaction: Transaction,
+  signers: Array<Account> = []
+  
+) {
+  
+  if (wallet.isProgramWallet) {
+    const programWalletTransaction = await covertToProgramWalletTransaction(
+      connection, 
+      wallet, 
+      transaction, signers
+    );
+
+    return await wallet.signAndSendTransaction(programWalletTransaction);
+
+  } else {
+    const signedTransaction = await signTransaction(
+      connection, 
+      wallet, 
+      transaction, 
+      signers
+    );
+
+    return await sendSignedTransaction(connection, signedTransaction)
+  }
+}
+
+export async function sendSignedTransaction(
+  connection: Connection, 
+  signedTransaction: Transaction
+): Promise<string> {
+
+  const rawTransaction = signedTransaction.serialize()
+
+  const txid: TransactionSignature = await connection.sendRawTransaction(rawTransaction, {
+    skipPreflight: true,
+    preflightCommitment: connection.commitment
+  });
+
+  return txid;
+}
+
+export function mergeTransactions(transactions: (Transaction | undefined)[]) {
+  const transaction = new Transaction();
+
+  transactions
+    .filter((t): t is Transaction => t !== undefined)
+    .forEach((t) => {
+      transaction.add(t)
+    });
+
+  return transaction;
+}
+
+async function covertToProgramWalletTransaction(
+  connection: Connection,
+  wallet: any,
+  transaction: Transaction,
+  signers: Array<Account> = []
+
+) {
+
+  const { blockhash } = await connection.getRecentBlockhash(connection.commitment);
+
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = wallet.publicKey;
+
+  if (signers.length > 0) {
+    transaction = await wallet.convertToProgramWalletTransaction(transaction);
+    transaction.partialSign(...signers);
+  }
+
+  return transaction;
+}
+
+export async function createProgramAccountIfNotExist(
+  connection: Connection,
+  account: string | undefined | null,
+  owner: PublicKey,
+  programId: PublicKey,
+  lamports: number | null,
+  layout: any,
+  transaction: Transaction,
+  signer: Signer[]
+
+) {
+
+  let publicKey;
+
+  if (account) {
+    publicKey = new PublicKey(account);
+  } else {
+    const newAccount = Keypair.generate();
+    publicKey = newAccount.publicKey;
+
+    transaction.add(
+      SystemProgram.createAccount({
+        fromPubkey: owner,
+        newAccountPubkey: publicKey,
+        lamports: lamports ?? (await connection.getMinimumBalanceForRentExemption(layout.span)),
+        space: layout.span,
+        programId
+      })
+    );
+
+    signer.push(newAccount);
+  }
+
+  return publicKey;
+}
+
+export async function createAssociatedTokenAccount(
+  tokenMintAddress: PublicKey,
+  owner: PublicKey,
+  transaction: Transaction
+  
+) {
+
+  const associatedTokenAddress = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    owner, 
+    tokenMintAddress
+  );
+
+  const keys = [
+    {
+      pubkey: owner,
+      isSigner: true,
+      isWritable: true
+    },
+    {
+      pubkey: associatedTokenAddress,
+      isSigner: false,
+      isWritable: true
+    },
+    {
+      pubkey: owner,
+      isSigner: false,
+      isWritable: false
+    },
+    {
+      pubkey: tokenMintAddress,
+      isSigner: false,
+      isWritable: false
+    },
+    {
+      pubkey: SYSTEM_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false
+    },
+    {
+      pubkey: TOKEN_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false
+    },
+    {
+      pubkey: RENT_PROGRAM_ID,
+      isSigner: false,
+      isWritable: false
+    }
+  ]
+
+  transaction.add(
+    new TransactionInstruction({
+      keys,
+      programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+      data: Buffer.from([])
+    })
+  );
+
+  return associatedTokenAddress;
+}
+
+export async function createTokenAccountIfNotExist(
+  connection: Connection,
+  account: string | undefined | null,
+  owner: PublicKey,
+  mintAddress: string,
+  lamports: number | null,
+  transaction: Transaction,
+  signer: Array<Signer>
+
+) {
+  let publicKey;
+
+  if (account) {
+    publicKey = new PublicKey(account);
+  } else {
+    publicKey = await createProgramAccountIfNotExist(
+      connection,
+      account,
+      owner,
+      TOKEN_PROGRAM_ID,
+      lamports,
+      ACCOUNT_LAYOUT,
+      transaction,
+      signer
+    );
+
+    transaction.add(
+      initializeAccount({
+        account: publicKey,
+        mint: new PublicKey(mintAddress),
+        owner
+      })
+    );
+  }
+
+  return publicKey;
+}
+
+export async function createAmmAuthority(programId: PublicKey) {
+  const seeds = [new Uint8Array(Buffer.from('amm authority'.replace('\u00A0', ' '), 'utf-8'))];
+  const [publicKey, nonce] = await PublicKey.findProgramAddress(seeds, programId);
+
+  return { publicKey, nonce }
 }

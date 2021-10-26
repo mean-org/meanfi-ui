@@ -1,32 +1,16 @@
+import React from 'react';
 import { Button } from "antd";
-import { LABELS } from "../../constants";
+import { useTranslation } from "react-i18next";
 import { useWallet } from "../../contexts/wallet";
 
 export const ConnectButton = () => {
   const { connected, select } = useWallet();
-
-  // const { wallet, connected, provider, lastWalletProviderSuccess, select, connect } = useWallet();
-
-  // if (wallet && !connected && provider?.url === lastWalletProviderSuccess) {
-  //   return (
-  //     <Button type="primary" shape="round" size="large" onClick={connect}>
-  //       {LABELS.CONNECT_LABEL}
-  //     </Button>
-  //   );
-  // }
-  
-  // if (!provider || !connected) {
-  //   return (
-  //     <Button type="primary" shape="round" size="large" onClick={select}>
-  //       {LABELS.CONNECT_LABEL}
-  //     </Button>
-  //   );
-  // }
+  const { t } = useTranslation("common");
 
   if (!connected) {
     return (
       <Button type="primary" shape="round" size="large" onClick={select}>
-        {LABELS.CONNECT_LABEL}
+        {t('account-area.connect-button')}
       </Button>
     );
   }

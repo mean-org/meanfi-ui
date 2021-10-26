@@ -1,90 +1,40 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext } from 'react';
+import { useCallback, useMemo, useState } from "react";
 import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
 import { shortenAddress, useLocalStorageState } from "../../utils/utils";
-import { IconCopy, IconDownload, IconExternalLink, IconUpload, IconWallet } from "../../Icons";
-import { Button, Col, Modal, Row, Spin } from "antd";
-import { SOLANA_EXPLORER_URI } from "../../constants";
+import {
+  IconCopy,
+  IconExternalLink,
+  IconLogout,
+  IconWallet,
+} from "../../Icons";
+import { Button, Col, Modal, Row } from "antd";
+import { SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from "../../constants";
 import { Identicon } from "../Identicon";
 import { notify } from "../../utils/notifications";
-import { AppStateContext } from "../../contexts/appstate";
-import { StreamInfo } from "../../money-streaming/money-streaming";
-import { PublicKey } from "@solana/web3.js";
-import { listStreams } from "../../money-streaming/utils";
-import { useConnection } from "../../contexts/connection";
 import { copyText } from "../../utils/ui";
+import { getSolanaExplorerClusterParam } from "../../contexts/connection";
+import { useTranslation } from "react-i18next";
+import { AppStateContext } from '../../contexts/appstate';
 
-interface StreamStats {
-  incoming: number;
-  outgoing: number;
-}
+export const CurrentUserBadge = () => {
 
-const defaultStreamStats = {
-  incoming: 0,
-  outgoing: 0
-};
-
-export const CurrentUserBadge = (props: {}) => {
+  const { t } = useTranslation("common");
+  const {
+    setSelectedStream,
+    setStreamList
+  } = useContext(AppStateContext);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
   const [providerUrl] = useLocalStorageState("walletProvider");
-  const {
-    streamList,
-    loadingStreams,
-    streamProgramAddress,
-    setCurrentScreen,
-    setLoadingStreams,
-    setStreamList,
-    setSelectedStream,
-    setStreamDetail,
-  } = useContext(AppStateContext);
-  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
-  const connection = useConnection();
-  const { wallet, publicKey, select } = useWallet();
+  const { wallet, select, disconnect, resetWalletProvider } = useWallet();
+
   const usedProvider = useMemo(
     () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
     [providerUrl]
   );
-
-  const refreshStreamList = () => {
-    if (publicKey && !loadingStreams) {
-      const programId = new PublicKey(streamProgramAddress);
-  
-      setLoadingStreams(true);
-      listStreams(connection, programId, publicKey, publicKey, 'confirmed', true)
-        .then(async streams => {
-          setStreamList(streams);
-          setLoadingStreams(false);
-          console.log('streamList:', streamList);
-          setSelectedStream(streams[0]);
-          setStreamDetail(streams[0]);
-          setCurrentScreen("streams");
-        });
-    }
-  };
-
-  useEffect(() => {
-
-    const isInboundStream = (item: StreamInfo): boolean => {
-      return item.beneficiaryAddress === publicKey?.toBase58();
-    }
-
-    const updateStats = () => {
-      if (streamList && streamList.length) {
-        const incoming = streamList.filter(s => isInboundStream(s));
-        const outgoing = streamList.filter(s => !isInboundStream(s));
-        const stats: StreamStats = {
-          incoming: incoming.length,
-          outgoing: outgoing.length
-        }
-        setStreamStats(stats);
-      }
-    }
-
-    updateStats();
-    return () => {};
-  }, [publicKey, streamList]);
 
   const switchWallet = () => {
     setTimeout(() => {
@@ -96,23 +46,31 @@ export const CurrentUserBadge = (props: {}) => {
   const onCopyAddress = () => {
     if (copyText(wallet?.publicKey)) {
       notify({
-        message: "Copy to Clipboard",
-        description: "Account Address successfully copied",
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
       });
     } else {
       notify({
-        message: "Copy to Clipboard",
-        description: "Could not copy Account Address",
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
       });
     }
   }
 
-  const onGoToStreamsClick = () => {
-    refreshStreamList();
-  };
-
   if (!wallet?.publicKey) {
     return null;
+  }
+
+  const getUiTranslation = (translationId: string) => {
+    return t(`account-area.${translationId}`);
+  }
+
+  const onDisconnectWallet = () => {
+    setSelectedStream(undefined);
+    setStreamList(undefined);
+    close();
+    disconnect();
+    resetWalletProvider();
   }
 
   return (
@@ -121,35 +79,21 @@ export const CurrentUserBadge = (props: {}) => {
         <span className="wallet-key" onClick={showAccount}>
           {shortenAddress(`${wallet.publicKey}`)}
         </span>
-        <div className={`wallet-balance ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onGoToStreamsClick}>
-          {/* <span className="effective-amount">
-            {formatNumber.format((account?.lamports || 0) / LAMPORTS_PER_SOL)} SOL
-          </span> */}
-          <Spin size="small" />
-          <span className="transaction-legend incoming">
-            <IconDownload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">{streamStats.incoming}</span>
-          </span>
-          <span className="transaction-legend outgoing">
-            <IconUpload className="mean-svg-icons"/>
-            <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
-          </span>
-        </div>
       </div>
       <Modal
         className="mean-modal"
         visible={isModalVisible}
-        title="Account"
+        title={getUiTranslation('modal-title')}
         onCancel={close}
         width={450}
         footer={null}>
         <div className="account-settings-group">
           {/* Wallet */}
           <Row>
-            <Col span={12}>
-              Connected with {usedProvider?.name}
+            <Col span={16}>
+              {getUiTranslation('wallet-provider')} {usedProvider?.name}
             </Col>
-            <Col span={12} className="text-right">
+            <Col span={8} className="text-right">
               <Button
                 shape="round"
                 size="small"
@@ -157,13 +101,13 @@ export const CurrentUserBadge = (props: {}) => {
                 className="mean-icon-button"
                 onClick={switchWallet}>
                 <IconWallet className="mean-svg-icons" />
-                <span className="icon-button-text">Change</span>
+                <span className="icon-button-text">{getUiTranslation('wallet-change')}</span>
               </Button>
             </Col>
           </Row>
           {/* Account id */}
           <Row>
-            <Col span={24}>
+            <Col span={14}>
               <div className="account-settings-row font-bold font-size-120">
                 <Identicon
                   address={wallet.publicKey.toBase58()}
@@ -173,19 +117,31 @@ export const CurrentUserBadge = (props: {}) => {
                 </span>
               </div>
             </Col>
+            <Col span={10} className="text-right">
+              <Button
+                shape="round"
+                size="small"
+                type="ghost"
+                className="mean-icon-button"
+                onClick={onDisconnectWallet}>
+                <IconLogout className="mean-svg-icons" />
+                <span className="icon-button-text">{getUiTranslation('disconnect')}</span>
+              </Button>
+            </Col>
           </Row>
           {/* Account helpers */}
           <Row>
             <Col span={10}>
               <span className="secondary-link" role="link" onClick={onCopyAddress}>
                 <IconCopy className="mean-svg-icons link" />
-                <span className="link-text">Copy Address</span>
+                <span className="link-text">{getUiTranslation('copy-address')}</span>
               </span>
             </Col>
             <Col span={14}>
-              <a className="secondary-link" href={`${SOLANA_EXPLORER_URI}${wallet.publicKey}`} target="_blank" rel="noopener noreferrer">
+              <a className="secondary-link" target="_blank" rel="noopener noreferrer"
+                 href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons link" />
-                <span className="link-text">View on Solana Explorer</span>
+                <span className="link-text">{getUiTranslation('explorer-link')}</span>
               </a>
             </Col>
           </Row>

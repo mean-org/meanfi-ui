@@ -1,58 +1,148 @@
-import EventEmitter from "eventemitter3";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import { WalletAdapter } from "../../contexts/wallet";
-import { notify } from "../../utils/notifications";
+import {
+    BaseSignerWalletAdapter,
+    pollUntilReady,
+    WalletAccountError,
+    WalletNotConnectedError,
+    WalletPublicKeyError,
+    WalletSignTransactionError,
+} from '@solana/wallet-adapter-base';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { notify } from '../../utils/notifications';
+import { consoleOut } from '../../utils/ui';
 
-export class SolongWalletAdapter extends EventEmitter implements WalletAdapter {
-  _publicKey: PublicKey | null;
-  _onProcess: boolean;
-  constructor() {
-    super();
-    this._publicKey = null;
-    this._onProcess = false;
-    this.connect = this.connect.bind(this);
-  }
+interface SolongWallet {
+    currentAccount?: string | null;
+    selectAccount(): Promise<string>;
+    signTransaction(transaction: Transaction): Promise<Transaction>;
+}
 
-  get publicKey() {
-    return this._publicKey;
-  }
+interface SolongWindow extends Window {
+    solong?: SolongWallet;
+}
 
-  async signTransaction(transaction: Transaction) {
-    return (window as any).solong.signTransaction(transaction);
-  }
+declare const window: SolongWindow;
 
-  connect() {
-    if (this._onProcess) {
-      return;
+export interface SolongWalletAdapterConfig {
+    pollInterval?: number;
+    pollCount?: number;
+}
+
+export class SolongWalletAdapter extends BaseSignerWalletAdapter {
+    private _connecting: boolean;
+    private _wallet: SolongWallet | null;
+    private _publicKey: PublicKey | null;
+
+    constructor(config: SolongWalletAdapterConfig = {}) {
+        super();
+        this._connecting = false;
+        this._wallet = null;
+        this._publicKey = null;
+
+        if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
-    if ((window as any).solong === undefined) {
-      notify({
-        message: "Solong Error",
-        description: "Please install solong wallet from Chrome ",
-      });
-      return;
+    get publicKey(): PublicKey | null {
+        return this._publicKey;
     }
 
-    this._onProcess = true;
-    (window as any).solong
-      .selectAccount()
-      .then((account: any) => {
-        this._publicKey = new PublicKey(account);
-        this.emit("connect", this._publicKey);
-      })
-      .catch(() => {
-        this.disconnect();
-      })
-      .finally(() => {
-        this._onProcess = false;
-      });
-  }
-
-  disconnect() {
-    if (this._publicKey) {
-      this._publicKey = null;
-      this.emit("disconnect");
+    get ready(): boolean {
+        return typeof window !== 'undefined' && !!window.solong;
     }
-  }
+
+    get connecting(): boolean {
+        return this._connecting;
+    }
+
+    get connected(): boolean {
+        return !!this._wallet?.currentAccount;
+    }
+
+    get autoApprove(): boolean {
+        return false;
+    }
+
+    async connect(): Promise<void> {
+        try {
+            if (this.connected || this.connecting) return;
+            this._connecting = true;
+
+            const wallet = typeof window !== 'undefined' && window.solong;
+            if (!wallet) {
+                notify({
+                    message: "Solong Error",
+                    description: "Please install solong wallet extension",
+                    type: 'error'
+                });
+                return;
+            }
+            // if (!wallet) throw new WalletNotFoundError();
+
+            let account: string;
+            try {
+                account = await wallet.selectAccount();
+            } catch (error: any) {
+                throw new WalletAccountError(error?.message, error);
+            }
+
+            let publicKey: PublicKey;
+            try {
+                publicKey = new PublicKey(account);
+            } catch (error: any) {
+                throw new WalletPublicKeyError(error?.message, error);
+            }
+
+            this._wallet = wallet;
+            this._publicKey = publicKey;
+
+            this.emit('connect');
+        } catch (error: any) {
+            this.emit('error', error);
+            consoleOut(error?.message, error);
+            // throw error;
+            return;
+        } finally {
+            this._connecting = false;
+        }
+    }
+
+    async disconnect(): Promise<void> {
+        if (this._wallet) {
+            this._wallet = null;
+            this._publicKey = null;
+
+            this.emit('disconnect');
+        }
+    }
+
+    async signTransaction(transaction: Transaction): Promise<Transaction> {
+        try {
+            const wallet = this._wallet;
+            if (!wallet) throw new WalletNotConnectedError();
+
+            try {
+                return await wallet.signTransaction(transaction);
+            } catch (error: any) {
+                throw new WalletSignTransactionError(error?.message, error);
+            }
+        } catch (error: any) {
+            this.emit('error', error);
+            throw error;
+        }
+    }
+
+    async signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
+        try {
+            const wallet = this._wallet;
+            if (!wallet) throw new WalletNotConnectedError();
+
+            try {
+                return await Promise.all(transactions.map((transaction) => wallet.signTransaction(transaction)));
+            } catch (error: any) {
+                throw new WalletSignTransactionError(error?.message, error);
+            }
+        } catch (error: any) {
+            this.emit('error', error);
+            throw error;
+        }
+    }
 }

@@ -1,0 +1,495 @@
+{
+	"account-area": {
+		"connect-button": "Connecter un portefeuille",
+		"copy-address": "Copier l'adresse",
+		"disconnect": "Déconnecter",
+		"explorer-link": "Voir dans Solana Explorer",
+		"modal-title": "Compte",
+		"network-unknown": "Inconnu",
+		"streams-tooltip": "Click pour mettre à jour les transferts",
+		"wallet-change": "Changement",
+		"wallet-provider": "Connecté avec"
+	},
+	"add-funds": {
+		"label": "Quantité",
+		"label-right": "Solde",
+		"modal-title": "Ajouter des fonds"
+	},
+	"assets": {
+		"account-add-cta-label": "Aller!",
+		"account-add-heading": "Voir les détails du compte pour n'importe quelle adresse à",
+		"account-address-change-cta": "Scannez une autre adresse",
+		"account-address-copy-cta": "Copy account address",
+		"account-address-label": "Adresse du compte",
+		"account-address-placeholder": "Entrez votre adresse de compte",
+		"account-address-validation": "Format d'adresse non valide",
+		"back-to-assets-cta": "Retour à la liste des actifs",
+		"create-account-help-link": "En savoir plus sur les portefeuilles",
+		"create-account-help-post": "d'ouvrir un compte",
+		"create-account-help-pre": "Nouveau à Solana?",
+		"history-load-more-cta-label": "Load more",
+		"history-panel-title": "Transactions sur les actifs",
+		"history-table-activity": "Activités",
+		"history-table-amount": "Solde",
+		"history-table-date": "Date",
+		"history-table-postbalance": "Post solde",
+		"loading-error": "Nous n'avons pas pu charger les transactions. Veuillez recharger la page.",
+		"no-asset-selected": "Aucun actif sélectionné. Veuillez en choisir un à gauche!",
+		"no-balance": {
+			"cta1": "Buy/Deposit {{tokenSymbol}}",
+			"cta2": "Échanger",
+			"line1": "Votre compte {{tokenSymbol}} est vide.",
+			"line2": "Que voulez-vous faire à ce sujet ?",
+			"line3": "Ou scannez le code QR pour recevoir des fonds",
+			"line4": "Cette adresse ne peut être utilisée que pour recevoir",
+			"line5": "SOL et SPL tokens dans Solana."
+		},
+		"no-transactions": "Aucune transaction n'a été trouvée",
+		"qr-scan-title": "Obtenir l'adresse à partir du code QR",
+		"screen-title": "Asset balances",
+		"switch-hide-low-balances": "Hide low balances"
+	},
+	"close-stream": {
+		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
+		"context-treasurer-multiple-beneficiaries": "À la fin de ce transfert monétaire, le flux d'argent s'arrêtera immédiatement, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront retournés à la trésorerie d'origine ({{treasury}}).",
+		"context-treasurer-single-beneficiary": "À l'issue de ce transfert monétaire, le flux d'argent sera immédiatement arrêté, les fonds acquis seront envoyés au bénéficiaire ({{beneficiary}}), et les fonds en attente seront restitués au contributeur d'origine.",
+		"modal-title": "Terminer le transfert",
+		"primary-cta": "Terminer le transfert",
+		"return-unvested-amount": "Montant en suspens",
+		"return-vested-amount": "Montant acquis",
+		"secondary-cta": "Annuler"
+	},
+	"contract-selector": {
+		"donation-fund": {
+			"description": "Créez un compte où n'importe qui peut faire un don avec l'assurance que les fonds seront utilisés pour la bonne cause.",
+			"name": "Fonds de dons"
+		},
+		"fundraising": {
+			"description": "Vous souhaitez lever des fonds pour vos Seeds, Series, ICO, DAICO, Private Rounds ? Ne cherchez pas plus loin, votre meilleure option est l'accord de Collecte de Fonds.",
+			"name": "Collecte de fonds"
+		},
+		"modal-title": "Sélectionnez le type de transfert",
+		"otp": {
+			"description": "Envoyez de l'argent ou programmez un paiement à quelqu'un d'autre une seule fois. Utilisez cette option pour payer ce que vous voulez.",
+			"name": "Envoyer le paiement"
+		},
+		"payroll": {
+			"description": "Configurez la paie d'un employé ou d'un entrepreneur, partout dans le monde, sans les frais généraux des services bancaires traditionnels.",
+			"name": "Paie"
+		},
+		"pension-fund": {
+			"description": "Pour les employeurs qui établissent des régimes de retraite qui rémunèrent les employés lors d'événements qualifiants, comme l'atteinte de l'âge de la retraite.",
+			"name": "Fonds de pension"
+		},
+		"primary-action": "Suivant",
+		"real-estate-sale-escrow": {
+			"description": "Configurez le compte séquestre pour une transaction immobilière. Le vendeur et l'acheteur bénéficient d'un accès direct et d'un audit complet gratuitement.",
+			"name": "Vente immobilière (Escroc)"
+		},
+		"rent-collection": {
+			"description": "Configurez la perception des loyers pour vos locataires. Recevez des paiements en temps réel pour chaque minute qu'ils occupent votre propriété.",
+			"name": "Paiement du loyer"
+		},
+		"repeating": {
+			"description": "Envoyez de l'argent à toute personne disposant d'un flux d'argent constant au fil du temps. Idéal pour les allocations familiales, les allocations familiales, etc.",
+			"name": "Paiement récurrent"
+		},
+		"setup-everything": {
+			"description": "Recommandé pour les professionnels qui souhaitent mettre en place un contrat avec des conditions uniques, pas couramment utilisées.",
+			"name": "Tout configurer (avancé)"
+		},
+		"subscription": {
+			"description": "Configurez un contrat d'abonnement SaaS pour les paiements d'adhésion réguliers. Pensez à Netflix ou à votre abonnement mensuel au Gym Club.",
+			"name": "Abonnement"
+		}
+	},
+	"ddca-selector": {
+		"modal-title": "Repeat this trade?",
+		"ote": {
+			"description": "Exchange now. One time.",
+			"name": "One time exchange"
+		},
+		"repeating-daily": {
+			"description": "Buy every day, starting now.",
+			"name": "Repeat daily",
+			"recurrence-period": "every day"
+		},
+		"repeating-once-month": {
+			"description": "Every 30 days, starting today.",
+			"name": "Repeat monthly",
+			"recurrence-period": "every 30 days"
+		},
+		"repeating-twice-month": {
+			"description": "Every other week on {{dayOfWeek}}, starting today.",
+			"name": "Every two weeks",
+			"recurrence-period": "every two weeks"
+		},
+		"repeating-weekly": {
+			"description": "Buy every {{dayOfWeek}}, starting today.",
+			"name": "Repeat weekly",
+			"recurrence-period": "every week"
+		}
+	},
+	"ddca-setup-modal": {
+		"cta-label-deposit": "Deposit",
+		"cta-label-depositing": "Depositing...",
+		"cta-label-vault-created": "Approved",
+		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
+		"help": {
+			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
+			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
+			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
+			"how-does-it-work": "How does it work?"
+		},
+		"modal-title": "Review Repeating Buy",
+		"notes": {
+			"note-item-01": "Only you can withdraw funds from your vault",
+			"note-item-02": "Fees for the scheduled swaps are charged upfront",
+			"note-item-03": "All unused fees are returned to you upon withdrawal",
+			"notes-title": "Important Notes"
+		}
+	},
+	"ddcas": {
+		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"screen-title": "Recurring buys",
+		"streams-ddcas": "Click to refresh recurring buys",
+		"close-ddca": {
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
+		},
+		"activity": {
+			"action-deposit": "Deposited {{fromAmount}}",
+			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
+			"action-withdraw": "Withdrew {{toAmount}}"
+		}
+	},
+	"deposits": {
+		"address-share-disclaimer": "Cette adresse ne peut être utilisée que pour recevoir des tokens SOL et SPL dans Solana.",
+		"back-to-deposit-options": "Retour à Options de dépôt",
+		"ftx-cta-label-enabled": "Dépôt de FTX",
+		"heading": "Déposez depuis votre carte, votre compte bancaire ou depuis une autre blockchain directement dans votre portefeuille Solana.\nSélectionnez l'une des options suivantes",
+		"modal-title": "Options de Dépôt",
+		"move-from-ethereum-cta-label": "Déplacer des actifs d'Ethereum",
+		"move-from-polygon-cta-label": "Déplacer les ressources de Polygon",
+		"move-from-renbridge-cta-label": "Transférez vos bitcoins",
+		"not-connected": "Veuillez connecter votre portefeuille",
+		"operation-cta-label-disabled": "Portefeuille déconnecté",
+		"renbridge-cta-warning": "Les cartes de crédit et de débit de la Chase Bank (US) ne fonctionnent pas pour acheter des crypto. Toutes les autres banques sont OK!",
+		"send-from-wallet-cta-label": "Envoyer depuis Portefeuille/Exchange",
+		"transak-cta-label": "Acheter par carte de débit/crédit"
+	},
+	"error-screens": {
+		"network-status": "Check network status",
+		"report-problem": "Report a problem",
+		"service-unavailable-message": "It appears there's congestion on the network at the moment. Please wait a few minutes and try again."
+	},
+	"faucet": {
+		"current-sol-balance": "Solde SOL actuel",
+		"current-wsol-balance": "Solde wSOL actuel",
+		"fund-cta": "Obtenez SOL",
+		"funding-amount": "Votre compte aura le solde de",
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
+		"wrap-sol-cta": "WRAP",
+		"wrap-sol-cta-toggle": "Wrap some SOL",
+		"wrap-transaction-fee": "Wrap transaction fee",
+		"wrapped-amount": "Wrapped amount"
+	},
+	"general": {
+		"app-background-disclaimer": "Ce produit est en version bêta. Ne déposez pas et n'échangez pas de grandes quantités de fonds.",
+		"cta-close": "Fermer",
+		"cta-finish": "Terminer",
+		"day": "journée",
+		"days": "",
+		"hour": "heure",
+		"loading": "Chargement",
+		"minute": "minute",
+		"month": "mois",
+		"months": "",
+		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
+		"not-implemented": "Pas mis en œuvre",
+		"reload-cta": "Try again now",
+		"reload-cta-disabled": "You can try again in",
+		"seconds": "seconds",
+		"today": "aujourd'hui",
+		"week": "la semaine",
+		"weeks": "",
+		"year": "année",
+		"you": "vous"
+	},
+	"language-selector": {
+		"modal-title": "Sélecteur de langue",
+		"primary-action": "Sélectionner",
+		"secondary-action": "Fermer"
+	},
+	"notifications": {
+		"account-address-copied-message": "Adresse du compte copiée avec succès",
+		"account-address-not-copied-message": "Impossible de copier l'adresse du compte",
+		"error-cannot-faucet-mainnet-message": "Impossible d'accéder au faucet dans mainnet",
+		"error-cannot-fund-account-message": "Nous n'avons pas pu approvisionner votre compte. Veuillez réessayer plus tard.",
+		"error-creating-vault-message": "Could not create the vault, please try again later",
+		"error-ledger-title": "Erreur du Ledger",
+		"error-loading-streamid-message": "Nous n'avons pas pu trouver ou charger le flux avec l'ID {{streamId}}",
+		"error-title": "Erreur",
+		"friend-referral-completed": "Friend referral completed",
+		"invalid-publickey-message": "Clé publique non valide. Veuillez vérifier la saisie",
+		"invalid-streamid-message": "ID de transfert erroné",
+		"referral-link-copied-message": "Friend referral link copied to clipboard",
+		"referral-link-not-copied-message": "Could not copy your Friend referral link",
+		"streamid-copied-message": "Le compte de transfert a été copié avec succès dans le clipboard",
+		"streamid-not-copied-message": "Impossible de copier l'adresse de transfert",
+		"success-account-funded-message": "Compte financé",
+		"success-loading-stream-message": "Le transfert a été chargé avec l'ID {{streamId}}",
+		"wallet-connect-message": "Connecté au portefeuille {{address}}",
+		"wallet-connection-event-title": "Mise à jour du portefeuille",
+		"wallet-disconnect-message": "Déconnecté du portefeuille"
+	},
+	"open-stream": {
+		"label-streamid-input": "Entrez l'id du transfert",
+		"modal-title": "Commencer le transfert d'argent",
+		"streamid-empty": "Entrez l'id du transfert",
+		"streamid-open-cta": "Commencer le transfert",
+		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"referrals": {
+		"address-invalid": "The referral address is not a valid solana address",
+		"address-processed": "Please connect your wallet to record this referral.",
+		"connect-to-refer-friend": "Please connect your wallet to refer a friend",
+		"modal-title": "Refer a friend",
+		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
+		"see-rules": "See rules for details",
+		"share-to": "Share to"
+	},
+	"streams": {
+		"back-to-my-streams-cta": "Retour aux transferts",
+		"create-new-stream-cta": "New transfer",
+		"lookup-stream-cta-tooltip": "Recherche de transfert",
+		"screen-title": "Transferts  ",
+		"stream-activity": {
+			"action-deposit": "Dépôt",
+			"action-withdraw": "Retirer",
+			"heading": "Activité",
+			"label-action": "Action",
+			"label-amount": "Solde",
+			"label-date": "Date",
+			"no-activity": "Aucune activité à ce jour"
+		},
+		"stream-detail": {
+			"add-funds-cta": "Recharger (ajouter des fonds)",
+			"amount-funded-date": "financé sur",
+			"close-money-stream-menu-item": "Fermer le transfert d'argent",
+			"heading": "Détails du transfert",
+			"label-amount": "Solde",
+			"label-funds-available-to-withdraw": "Fonds disponibles pour un retrait immédiat",
+			"label-funds-left-in-account": "Fonds laissés sur le compte",
+			"label-funds-runout": "ce sera fini pour",
+			"label-funds-runout-today": "ce sera fini pour",
+			"label-funds-sent": "Fonds envoyés au destinataire",
+			"label-payment-rate": "Taux de paiement",
+			"label-receiving-from": "Réception de",
+			"label-sending-to": "Envoi à",
+			"label-start-date-default": "Date de début",
+			"label-start-date-scheduled": "Prévu",
+			"label-start-date-scheduled-otp": "Livraison programmée",
+			"label-start-date-started": "Commencé",
+			"label-total-deposits": "Montant total que vous avez déposé depuis le début du transfert",
+			"label-total-withdrawals": "Montant total que vous avez retiré depuis le début du transfert",
+			"no-stream": "Sélectionnez ou recherchez un transfert pour afficher les détails",
+			"withdraw-funds-cta": "Retirer des fonds"
+		},
+		"stream-list": {
+			"no-streams": "Aucun transfert disponible",
+			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-paused-inbound": "Ce transfert est en attente faute de fonds.",
+			"subtitle-paused-outbound": "Ce transfert est en attente faute de fonds.",
+			"subtitle-pending-inbound": "Ce contrat est en attente de votre approbation",
+			"subtitle-pending-outbound": "Ce contrat est en attente d'approbation du bénéficiaire",
+			"subtitle-running-inbound": "Reçoit de l'argent depuis",
+			"subtitle-running-outbound": "Envoi d'argent depuis",
+			"subtitle-scheduled-inbound": "Prêt à recevoir de l'argent le",
+			"subtitle-scheduled-outbound": "Prêt à démarrer le",
+			"title-paused-from": "Transfert interrompu",
+			"title-paused-to": "Transfert interrompu",
+			"title-pending-from": "En attente d'exécution",
+			"title-pending-to": "En attente d'exécution",
+			"title-receiving-from": "Réception de",
+			"title-sending-to": "Envoi à"
+		}
+	},
+	"swap": {
+		"exchange-warning": "Mean Exchange est disponible uniquement sur",
+		"input-label-destination": "Échanger pour (est.)",
+		"input-label-source": "Échanger depuis",
+		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
+		"token-select-destination": "Sélectionnez un token",
+		"token-select-source": "Sélectionnez un token",
+		"transaction-settings": "Tolérance de slippage"
+	},
+	"token-selector": {
+		"modal-title": "Sélectionnez un token",
+		"search-input-placeholder": "Rechercher un token par nom, symbole ou adresse"
+	},
+	"transactions": {
+		"memo": {
+			"label": "Note",
+			"placeholder": "Ajouter une note supplémentaire"
+		},
+		"memo2": {
+			"label": "Remarque / Sujet",
+			"placeholder": "A quoi sert ce paiement ?"
+		},
+		"rate-and-frequency": {
+			"payment-rates": {
+				"per-day": "par jour",
+				"per-hour": "par heure",
+				"per-minute": "par minute",
+				"per-month": "par mois",
+				"per-week": "par semaine",
+				"per-year": "par an"
+			},
+			"rate-label": "Taux et fréquence",
+			"token-label": "Le destinataire reçoit"
+		},
+		"recipient": {
+			"label": "Bénéficiaire",
+			"placeholder": "Adresse publique",
+			"qr-scan-title": "Obtenir l'adresse à partir du code QR",
+			"recipient-is-own-account": "Impossible d'envoyer vers votre propre compte"
+		},
+		"send-amount": {
+			"label": "Envoyer",
+			"label-right": "Solde du compte"
+		},
+		"send-date": {
+			"label": "Envoyer le",
+			"placeholder": "Veuillez choisir une date"
+		},
+		"status": {
+			"cta-view-stream": "Voir Transfert d'argent",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"instructions": "Confirmez cette transaction dans votre portefeuille",
+			"modal-title-executing-transaction": "Exécution de la transaction",
+			"modal-title-transaction-completed": "Transaction terminée",
+			"modal-title-transaction-disabled": "Transaction annulée",
+			"stream-started-post": "a démarré avec succès",
+			"stream-started-pre": "Votre transfert d'argent pour",
+			"tx-add-funds-operation": "Ajouter des fonds avec",
+			"tx-add-funds-operation-success": "Fonds ajoutés avec succès",
+			"tx-close-operation": "Fermer l'opération",
+			"tx-close-operation-success": "Transfert clôturé avec succès",
+			"tx-completed": "Opération terminée",
+			"tx-confirm": "Confirmation de la transaction",
+			"tx-confirm-failure": "La transaction n'a pas pu être confirmée",
+			"tx-idle": "Idle",
+			"tx-init": "Initialiser la transaction",
+			"tx-init-failure": "Impossible d'initialiser la transaction",
+			"tx-rejected": "Transaction rejetée",
+			"tx-send": "Envoi de l'opération",
+			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-send-failure-smallamount": "Échec de la soumission de la transaction. Quantité trop petite",
+			"tx-send-operation": "Envoi",
+			"tx-send-operation-success": "a été envoyé avec succès",
+			"tx-sign": "En attente de confirmation",
+			"tx-start": "La collecte de données",
+			"tx-start-failure": "Le solde de votre compte {{accountBalance}} est inférieur au montant des frais de {{feeAmount}} requis pour payer les frais de réseau",
+			"tx-swap-operation": "Échange de {{fromAmount}} à {{toAmount}}",
+			"tx-swap-operation-success": "Opération d'échange terminée avec succès",
+			"tx-wait": "Fonctionne, veuillez patienter",
+			"tx-withdraw-operation": "Se désister",
+			"tx-withdraw-operation-success": "Fonds retirés avec succès",
+			"tx-wrap-operation": "Wrapping",
+			"tx-wrap-operation-success": "Opération de wrap terminée avec succès"
+		},
+		"timeshift-requirement": {
+			"clock-in-out": "Pointage d'entrée / Pointage de sortie",
+			"label": "Exigence de feuille de temps",
+			"not-required": "Non requis (flux 24/7)",
+			"submit-timesheets": "Soumettre des feuilles de temps"
+		},
+		"transaction-info": {
+			"add-funds-payroll-advice": "Vous devez ajouter des fonds pour commencer une paie",
+			"add-funds-repeating-payment-advice": "Vous devez ajouter des fonds pour commencer le paiement répété",
+			"beneficiary-receives": "Le bénéficiaire reçoit",
+			"exchange-on": "Échange sur",
+			"min-recommended-amount": "Montant minimum recommandé",
+			"price-impact": "Price impact",
+			"recipient-receives": "Le destinataire reçoit",
+			"slippage": "Tolérance de slippage",
+			"transaction-fee": "Frais de transaction",
+			"you-receive": "Vous recevez"
+		},
+		"validation": {
+			"amount-high": "Le montant dépasse votre solde",
+			"amount-low": "Pas assez de solde",
+			"amount-lt-fee": "Le montant doit être supérieur aux frais de transaction",
+			"amount-sol-high": "Le montant dépasse votre solde SOL",
+			"amount-withdraw-high": "Le montant est supérieur aux fonds disponibles",
+			"insufficient-amount-needed": "Il vous faut au moins {{amount}} {symbol}} à échanger",
+			"insufficient-balance-needed": "Il faut au moins {{balance}} SOL",
+			"invalid-amount": "Montant invalide",
+			"invalid-exchange": "Échange non valide",
+			"minimum-repeating-buy-amount": "",
+			"minimum-swap-amount": "Il faut au moins {{mintAmount}} pour passer à {{toMint}}.",
+			"no-amount": "Entrer le montant",
+			"no-balance": "Aucun solde",
+			"no-payment-rate": "Ajouter un taux de paiement",
+			"no-recipient": "Sélectionnez le destinataire",
+			"no-valid-date": "Définir une date valide",
+			"not-connected": "Connectez votre portefeuille",
+			"payment-rate-high": "Le taux de paiement dépasse votre solde",
+			"valid-approve": "Approuver sur votre portefeuille",
+			"valid-ddca-review": "Review",
+			"valid-start-funding": "Commencer le financement",
+			"valid-start-withdrawal": "Commencer le retrait"
+		}
+	},
+	"ui-language": {
+		"en": "Anglais",
+		"es": "Espanol",
+		"fr": "Français",
+		"pt": "Português"
+	},
+	"ui-menus": {
+		"app-context-menu": {
+			"blog": "Blog",
+			"code": "Code",
+			"developers": "Développeurs",
+			"disconnect": "Déconnecter le portefeuille",
+			"discord": "Discord",
+			"faucet": "Faucet",
+			"how-to-use": "Documents",
+			"refer-a-friend": "Refer a friend {{referrals}}",
+			"switch-language": "La langue",
+			"switch-theme": "Basculer vers",
+			"twitter": "Twitter",
+			"theme-dark": "Mode Sombre",
+			"theme-light": "Mode lumière"
+		},
+		"main-menu": {
+			"accounts": "Comptes",
+			"charts": "Graphiques",
+			"deposits": "Dépôts",
+			"services": {
+				"custody": "Custody",
+				"faucet": "Faucet",
+				"payroll": "Paie",
+				"submenu-title": "Services",
+				"wallet-guide": "Guide du Portefeuille",
+				"wrap": "Wrap"
+			},
+			"swap": "Échanger",
+			"transfers": "Transferts"
+		}
+	},
+	"wallet-selector": {
+		"primary-action": "Sélectionner"
+	},
+	"withdraw-funds": {
+		"label-available-amount": "Fonds disponibles pour un retrait immédiat",
+		"label-input-amount": "Saisissez le montant à retirer",
+		"label-input-right": "Pourcentage automatique",
+		"modal-title": "Retirer des fonds"
+	}
+}

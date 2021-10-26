@@ -1,13 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection } from "./connection";
 import { useWallet } from "./wallet";
-import {
-  AccountInfo,
-  ConfirmedSignatureInfo,
-  ConfirmedTransaction,
-  Connection,
-  PublicKey,
-} from "@solana/web3.js";
+import { AccountInfo, ConfirmedSignatureInfo, ConfirmedTransaction, Connection, PublicKey } from "@solana/web3.js";
 import { AccountLayout, u64, MintInfo, MintLayout } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
 import { chunks } from "./../utils/utils";
@@ -233,7 +227,6 @@ export const cache = {
 
 export const useAccountsContext = () => {
   const context = useContext(AccountsContext);
-
   return context;
 };
 
@@ -252,7 +245,7 @@ function wrapNativeAccount(
       address: pubkey,
       mint: WRAPPED_SOL_MINT,
       owner: pubkey,
-      amount: new u64(account.lamports),
+      amount: new u64(account.lamports || 0),
       delegate: null,
       delegatedAmount: new u64(0),
       isInitialized: true,
@@ -267,7 +260,6 @@ function wrapNativeAccount(
 const UseNativeAccount = () => {
   const connection = useConnection();
   const { wallet, publicKey } = useWallet();
-
   const [nativeAccount, setNativeAccount] = useState<AccountInfo<Buffer>>();
 
   const updateCache = useCallback(
@@ -277,6 +269,7 @@ const UseNativeAccount = () => {
       }
 
       const wrapped = wrapNativeAccount(publicKey, account);
+
       if (wrapped !== undefined) {
         const id = publicKey.toBase58();
         cache.registerParser(id, TokenAccountParser);
@@ -296,14 +289,26 @@ const UseNativeAccount = () => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
+      } else {
+        updateCache(undefined);
+        setNativeAccount(undefined);
       }
+    })
+    .catch(error => {
+      throw(error);
     });
-    connection.onAccountChange(publicKey, (acc) => {
+    const listener = connection.onAccountChange(publicKey, (acc) => {
       if (acc) {
         updateCache(acc);
         setNativeAccount(acc);
       }
     });
+
+    return () => {
+      if (listener) {
+        connection.removeAccountChangeListener(listener);
+      }
+    };
   }, [setNativeAccount, wallet, publicKey, connection, updateCache]);
 
   return { nativeAccount };
@@ -322,12 +327,17 @@ const precacheUserTokenAccounts = async (
   PRECACHED_OWNERS.add(owner.toBase58());
 
   // user accounts are update via ws subscription
-  const accounts = await connection.getTokenAccountsByOwner(owner, {
-    programId: programIds().token,
-  });
-  accounts.value.forEach((info) => {
-    cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
-  });
+  try {
+    const accounts = await connection.getTokenAccountsByOwner(owner, {
+      programId: programIds().token,
+    });
+    accounts.value.forEach((info) => {
+      cache.add(info.pubkey.toBase58(), info.account, TokenAccountParser);
+    });
+  } catch (error) {
+    console.log('getTokenAccountsByOwner failed.', error);
+    throw(error);
+  }
 };
 
 export function AccountsProvider({ children = null as any }) {
@@ -364,9 +374,10 @@ export function AccountsProvider({ children = null as any }) {
       if (args.isNew) {
         let id = args.id;
         let deserialize = args.parser;
-        connection.onAccountChange(new PublicKey(id), (info) => {
+        const listenerId = connection.onAccountChange(new PublicKey(id), (info) => {
           cache.add(id, info, deserialize);
         });
+        subs.push(listenerId);
       }
     });
 
@@ -434,6 +445,7 @@ export const getMultipleAccounts = async (
   keys: string[],
   commitment: string
 ) => {
+  
   const result = await Promise.all(
     chunks(keys, 99).map((chunk) =>
       getMultipleAccountsCore(connection, chunk, commitment)
@@ -467,9 +479,10 @@ const getMultipleAccountsCore = async (
   keys: string[],
   commitment: string
 ) => {
-  const args = connection._buildArgs([keys], commitment, "base64");
 
+  const args = connection._buildArgs([keys], commitment, "base64");
   const unsafeRes = await connection._rpcRequest("getMultipleAccounts", args);
+  
   if (unsafeRes.error) {
     throw new Error(
       "failed to get info about account " + unsafeRes.error.message
@@ -488,7 +501,7 @@ const getMultipleAccountsCore = async (
 export function useMint(key?: string | PublicKey) {
   const connection = useConnection();
   const [mint, setMint] = useState<MintInfo>();
-
+  
   const id = typeof key === "string" ? key : key?.toBase58();
 
   useEffect(() => {
@@ -498,10 +511,8 @@ export function useMint(key?: string | PublicKey) {
 
     cache
       .query(connection, id, MintParser)
-      .then((acc) => {
-        setMint(acc.info as any);
-      })
-      .catch((err) => console.log(err));
+      .then((acc) => setMint(acc.info as any))
+      .catch((err) => console.error(err));
 
     const dispose = cache.emitter.onCache((e) => {
       const event = e;
@@ -546,9 +557,11 @@ export function useAccount(pubKey?: PublicKey) {
 
         const acc = await cache
           .query(connection, key, TokenAccountParser)
-          .catch((err) => console.log(err));
+          .catch((err) => console.error(err));
         if (acc) {
           setAccount(acc);
+        } else {
+          setAccount(undefined);
         }
       } catch (err) {
         console.error(err);

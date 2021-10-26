@@ -1,5 +1,5 @@
-import { Connection, PublicKey, ConfirmedTransaction, TransactionInstruction } from "@solana/web3.js";
-import { MEMO_PROGRAM_ID } from "./ids";
+import { Connection, PublicKey, ConfirmedTransaction, TransactionSignature } from "@solana/web3.js";
+import { Confirmations, Timestamp } from "../models/transactions";
 
 export class TransactionWithSignature {
     constructor(
@@ -31,10 +31,41 @@ export async function getTransactions(
     return transactions;
 }
 
-export function memoInstruction(memo: string) {
-    return new TransactionInstruction({
-        keys: [],
-        data: Buffer.from(memo, 'utf-8'),
-        programId: MEMO_PROGRAM_ID
-    })
+export async function fetchTransactionStatus(
+    connection: Connection,
+    signature: TransactionSignature
+) {
+    let data;
+    try {
+        const { value } = await connection.getSignatureStatus(signature, { searchTransactionHistory: true });
+
+        let info = null;
+        if (value !== null) {
+            let confirmations: Confirmations;
+            if (typeof value.confirmations === "number") {
+                confirmations = value.confirmations;
+            } else {
+                confirmations = "max";
+            }
+            let blockTime = null;
+            try {
+                blockTime = await connection.getBlockTime(value.slot);
+            } catch (error) {
+                throw new Error(`${error}`);
+            }
+            let timestamp: Timestamp = blockTime !== null ? blockTime : "unavailable";
+
+            info = {
+                slot: value.slot,
+                timestamp,
+                confirmations,
+                confirmationStatus: value.confirmationStatus,
+                err: value.err,
+            };
+        }
+        data = { signature, info };
+        return data;
+    } catch (error) {
+        throw (error);
+    }
 }
