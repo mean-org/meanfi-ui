@@ -150,7 +150,7 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
 		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
 		"add-funds-cta-disabled-funding": "Add funds in progress...",
 		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
