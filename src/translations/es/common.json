@@ -372,6 +372,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
