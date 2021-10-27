@@ -31,13 +31,10 @@ export const AppBar = (props: { menuType: string }) => {
   const {
     detailsPanelOpen,
     addAccountPanelOpen,
-    streamProgramAddress,
     isDepositOptionsModalVisible,
-    setStreamList,
-    setStreamDetail,
     setCurrentScreen,
     setLoadingStreams,
-    setSelectedStream,
+    refreshStreamList,
     setDtailsPanelOpen,
     setCustomStreamDocked,
     showDepositOptionsModal,
@@ -52,24 +49,14 @@ export const AppBar = (props: { menuType: string }) => {
     return environment === 'production' ? true : false;
   }
 
-  const onGoToTransfersClick = () => {
+  const onGoToTransfersClick = (e: any) => {
     setCustomStreamDocked(false);
     if (publicKey) {
-      const programId = new PublicKey(streamProgramAddress);
       setLoadingStreams(true);
-      listStreams(connection, programId, publicKey, publicKey)
-        .then(async streams => {
-          setStreamList(streams);
-          setLoadingStreams(false);
-          consoleOut('Layout -> streamList:', streams, 'blue');
-          setSelectedStream(streams[0]);
-          setStreamDetail(streams[0]);
-          if (streams && streams.length > 0) {
-            consoleOut('streams are available, opening streams...', '', 'blue');
-            setCurrentScreen('streams');
-            setRedirect('/transfers');
-          }
-        });
+      refreshStreamList(true);
+    } else {
+      setCurrentScreen('contract');
+      setRedirect('/transfers');
     }
   };
 
@@ -138,8 +125,8 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="/exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
-      <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
-        <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+      <Menu.Item key="/transfers">
+        <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
@@ -223,9 +210,8 @@ export const AppBar = (props: { menuType: string }) => {
                 <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
               </li>
               <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
-                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  onClick={() => onGoToTransfersClick()}>
-                <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
               </li>
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>

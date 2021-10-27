@@ -150,7 +150,7 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
 		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
 		"add-funds-cta-disabled-funding": "Add funds in progress...",
 		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
@@ -372,6 +372,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",

@@ -23,6 +23,7 @@ export class TransactionWithSignature {
 export interface UserTokenAccount extends TokenInfo {
     ataAddress?: string;    // Associated Token Account Address
     balance?: number;
+    displayIndex?: number;
     isMeanSupportedToken?: boolean;
 }
 

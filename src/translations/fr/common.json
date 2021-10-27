@@ -150,7 +150,7 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
 		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
 		"add-funds-cta-disabled-funding": "Add funds in progress...",
 		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
@@ -372,6 +372,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirmez cette transaction dans votre portefeuille",
 			"modal-title-executing-transaction": "Exécution de la transaction",
 			"modal-title-transaction-completed": "Transaction terminée",
@@ -387,6 +389,7 @@
 			"tx-completed": "Opération terminée",
 			"tx-confirm": "Confirmation de la transaction",
 			"tx-confirm-failure": "La transaction n'a pas pu être confirmée",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Initialiser la transaction",
 			"tx-init-failure": "Impossible d'initialiser la transaction",

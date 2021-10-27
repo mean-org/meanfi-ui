@@ -150,7 +150,7 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
 		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
 		"add-funds-cta-disabled-funding": "Add funds in progress...",
 		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
@@ -372,6 +372,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
@@ -387,6 +389,7 @@
 			"tx-completed": "Operación completa",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo iniciar la transacción",
