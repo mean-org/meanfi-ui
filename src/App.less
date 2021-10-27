@@ -159,6 +159,9 @@
 body {
   color: var(--text-color);
   background-color: var(--bg-color);
+  @media (max-width: 575.98px) {
+    background-color: var(--color-panel-background);
+  }
 }
 .loading-screen-container {
   position: relative;
@@ -1636,6 +1639,17 @@ section.content {
 .exchange .place-transaction-box {
   min-width: 320px;
   max-width: 360px;
+}
+
+.payroll .place-transaction-box,
+.transfers .place-transaction-box {
+  min-width: 320px;
+  max-width: 540px;
+  @media (min-width: 576px) {
+    .contract-wrapper {
+      padding: 0.5rem;
+    }
+  }
 }
 
 .boxed-area {

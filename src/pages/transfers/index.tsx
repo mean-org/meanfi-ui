@@ -97,16 +97,18 @@ export const TransfersView = () => {
           <Streams />
         ) : (
           <div className="place-transaction-box mb-3">
-            <div className="position-relative mb-2">
-              {contract && (
-                <>
-                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
-                  <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
-                </>
-              )}
+            <div className="contract-wrapper">
+              <div className="position-relative mb-2">
+                {contract && (
+                  <>
+                    <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                    <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
+                  </>
+                )}
+              </div>
+              {/* Display apropriate contract setup screen */}
+              {renderContract()}
             </div>
-            {/* Display apropriate contract setup screen */}
-            {renderContract()}
             <ContractSelectorModal
               isVisible={isContractSelectorModalVisible}
               handleOk={onAcceptContractSelector}

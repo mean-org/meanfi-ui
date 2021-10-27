@@ -15,15 +15,17 @@ export const PayrollView = () => {
     <div className="container main-container">
       <div className="interaction-area">
         <div className="place-transaction-box mb-3">
-          <div className="position-relative mb-2">
-            {contract && (
-              <>
-                <h2 className="contract-heading">{t(`contract-selector.${contract.translationId}.name`)}</h2>
-                <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
-              </>
-            )}
+          <div className="contract-wrapper">
+            <div className="position-relative mb-2">
+              {contract && (
+                <>
+                  <h2 className="contract-heading">{t(`contract-selector.${contract.translationId}.name`)}</h2>
+                  <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
+                </>
+              )}
+            </div>
+            <PayrollPayment />
           </div>
-          <PayrollPayment />
         </div>
       </div>
     </div>
