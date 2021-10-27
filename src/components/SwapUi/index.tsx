@@ -47,6 +47,7 @@ export const SwapUi = (props: {
   queryToMint: string | null;
   connection: Connection;
   endpoint: string;
+  isRepeating: boolean;
 }) => {
 
   const { t } = useTranslation("common");
@@ -65,7 +66,6 @@ export const SwapUi = (props: {
 
   const connection = useMemo(() => props.connection, [props.connection]);
 
-  // Added by YAF (Token balance)
   const [refreshing, setRefreshing] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
@@ -141,10 +141,9 @@ export const SwapUi = (props: {
   const onFinishedDdca = useCallback(() => {
     setFromAmount("");
     setFromSwapAmount(0);
-    setDdcaOption('One time exchange');
     setDdcaSetupModalVisibility(false);
     setRedirect('/exchange-dcas');
-  }, [setDdcaOption]);
+  }, []);
 
   const isWrap = useCallback(() => {
 
@@ -203,6 +202,18 @@ export const SwapUi = (props: {
   },[
     fromMint, 
     toMint
+  ]);
+
+  // Preset ddcaOption based on the component input "isRepeating"
+  useEffect(() => {
+    if (props.isRepeating) {
+      setDdcaOption('Repeat weekly'); // Set to the first available option that is repeating
+    } else {
+      setDdcaOption('One time exchange'); // Leave it as ont time
+    }
+  }, [
+    props.isRepeating,
+    setDdcaOption
   ]);
 
   // Automatically updates the user account
@@ -856,7 +867,7 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      if (isStableSwap()) {
+      if (isStableSwap() && !props.isRepeating) {
         setDdcaOption('One time exchange');
       }
 
@@ -924,6 +935,7 @@ export const SwapUi = (props: {
     fromMint,
     toMint,
     mintList,
+    props.isRepeating,
     isStableSwap,
     setDdcaOption
   ]);
@@ -935,7 +947,7 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
       
-      if (isStableSwap()) {
+      if (isStableSwap() && !props.isRepeating) {
         setDdcaOption('One time exchange');
       }
 
@@ -971,6 +983,7 @@ export const SwapUi = (props: {
     fromMint,
     toMint,
     mintList,
+    props.isRepeating,
     isStableSwap,
     setDdcaOption
   ]);
@@ -1899,18 +1912,23 @@ export const SwapUi = (props: {
       <Spin spinning={isBusy || refreshing}>
         <div className="swap-wrapper">
 
-          {/* Title bar with settings */}
-          <div className="swap-title-and-settings flexible-left flex-column-xs">
-            <div className="left title">
-              <span>{t('ui-menus.main-menu.swap')}</span>
-              {/* TESTING BLOCK FOR STYLING THE UI */}
-              {environment === 'local' && (
-                <span className="primary-link font-regular font-size-80 ml-3" onClick={toggleInputPosition}>Toggle input position</span>
+          {/* DDCA Option selector */}
+          {props.isRepeating && (
+            <div className="ddca-option-select-row">
+              <span className="label">{t('swap.frequency-label')}</span>
+              {ddcaOption && (
+                <Button
+                  type="default"
+                  size="middle"
+                  disabled={isStableSwap()}
+                  className="dropdown-like-button"
+                  onClick={showDdcaOptionSelector}>
+                  <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
+                  <IconCaretDown className="mean-svg-icons" />
+                </Button>
               )}
-              {/* END OF TESTING BLOCK */}
             </div>
-            <div className="right"><SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/></div>
-          </div>
+          )}
 
           {/* Source token / amount */}
           <CoinInput
@@ -1951,33 +1969,11 @@ export const SwapUi = (props: {
             <div className="flip-button" onClick={flipMintsCallback}>
               <IconSwapFlip className="mean-svg-icons" />
             </div>
-            {/* Info */}
-            <div className="info-line">
-              {
-                fromMint && toMint && exchangeInfo && exchangeInfo.outPrice && (
-                  <>
-                  {!refreshing && (
-                    <>
-                      <div className="left">
-                        {
-                          (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
-                        }
-                      </div>
-                      <div className="right pl-1">
-                        {
-                          fromAmount ? (
-                            <InfoIcon content={txInfoContent()} placement="leftBottom">
-                              <InfoCircleOutlined />
-                            </InfoIcon>
-                          ) : null
-                        }
-                      </div>
-                    </>
-                  )}
-                  </>
-                )        
-              }
-            </div>
+            {/* TESTING BLOCK FOR STYLING THE UI */}
+            {window.location.hostname === 'localhost' && (
+              <span className="helper-line primary-link font-regular font-size-80" onClick={toggleInputPosition}>Toggle input position</span>
+            )}
+            {/* END OF TESTING BLOCK */}
           </div>
 
           {/* Destination token / amount */}
@@ -2012,20 +2008,38 @@ export const SwapUi = (props: {
             }
           />
 
-          {/* DDCA Option selector */}
-          <div className="text-center mt-3 mb-3">
-            {ddcaOption && (
-              <Button
-                type="default"
-                shape="round"
-                size="middle"
-                disabled={isStableSwap()}
-                className={`dropdown-like-button ${ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange ? 'active' : ''}`}
-                onClick={showDdcaOptionSelector}>
-                <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
-                <IconCaretDown className="mean-svg-icons" />
-              </Button>
-            )}
+          {/* Title bar with settings */}
+          <div className="info-line-and-settings flexible-left flex-column-xs">
+            <div className="left">
+              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/>
+            </div>
+            {/* Info */}
+            <div className="right info-line">
+              {
+                fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
+                  <>
+                  {!refreshing && (
+                    <>
+                      <div className="left">
+                        {
+                          (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
+                        }
+                      </div>
+                      <div className="right pl-1">
+                        {
+                          fromAmount ? (
+                            <InfoIcon content={txInfoContent()} placement="leftBottom">
+                              <InfoCircleOutlined />
+                            </InfoIcon>
+                          ) : null
+                        }
+                      </div>
+                    </>
+                  )}
+                  </>
+                ) : (<span>-</span>)
+              }
+            </div>
           </div>
 
           {/* Action button */}

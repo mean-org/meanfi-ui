@@ -1,11 +1,22 @@
 .swap-wrapper {
-    .swap-title-and-settings {
-        padding: 0 6px 16px;
-        .title {
-            font-size: 1.2rem;
-            color: var(--color-secondary-alpha-85);
-            font-weight: 600;
+    padding: 0.5rem;
+    .ddca-option-select-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        margin-top: 1rem;
+        .label {
+            flex: 1 1 calc(50% - 20px);
+            color: var(--color-secondary-alpha-60);
         }
+        .dropdown-like-button {
+            flex: 1 1 auto;
+        }
+    }
+    .info-line-and-settings {
+        padding: 1rem 4px 1rem 4px;
         button.ant-btn-round.ant-btn-icon-only.settings-button {
             padding: 0;
             border: none;
@@ -14,6 +25,13 @@
             &:hover {
                 color: var(--color-secondary-alpha-60);
             }
+        }
+        .info-line {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-end;
+            align-items: center;
+            flex: 0 0 auto;
         }
     }
     .transaction-field {
@@ -124,7 +142,7 @@
                 }
             }
         }
-        .info-line {
+        .helper-line {
             display: flex;
             flex-direction: row;
             justify-content: flex-end;

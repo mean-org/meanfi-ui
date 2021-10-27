@@ -1,6 +1,7 @@
 export { IconAdd } from "./IconAdd";
 export { IconBank } from "./IconBank";
 export { IconBookOpen } from "./IconBookOpen";
+export { IconCallSplit } from "./IconCallSplit";
 export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";
 export { IconCheckedBox } from "./IconCheckedBox";
