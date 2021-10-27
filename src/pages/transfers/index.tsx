@@ -38,6 +38,7 @@ export const TransfersView = () => {
     publicKey,
     streamList,
     currentScreen,
+    loadingStreams,
     setCurrentScreen
   ]);
 

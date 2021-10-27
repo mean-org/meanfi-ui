@@ -4,23 +4,23 @@ import { useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
 import { OperationType } from "../models/enums";
+import { TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
 
 export type TxStatus = "fetching" | "fetched" | "error";
-
-const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
-const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
 
 interface TransactionStatusConfig {
   lastSentTxSignature: string;
   lastSentTxStatus: TransactionConfirmationStatus | undefined;
   lastSentTxOperationType: OperationType | undefined;
   fetchTxInfoStatus: TxStatus | undefined;
+  recentlyCreatedVault: string;
   startFetchTxSignatureInfo: (
     signature: string,
     finality: TransactionConfirmationStatus,
     type: OperationType
   ) => void;
-  clearLastSentTx: () => void;
+  setRecentlyCreatedVault: (ddcaAccountPda: string) => void;
+  clearTransactionStatusContext: () => void;
 }
 
 const defaultCtxValues: TransactionStatusConfig = {
@@ -28,8 +28,10 @@ const defaultCtxValues: TransactionStatusConfig = {
   lastSentTxStatus: undefined,
   lastSentTxOperationType: undefined,
   fetchTxInfoStatus: undefined,
+  recentlyCreatedVault: '',
   startFetchTxSignatureInfo: () => {},
-  clearLastSentTx: () => {},
+  setRecentlyCreatedVault: () => {},
+  clearTransactionStatusContext: () => {},
 };
 
 export const TransactionStatusContext = React.createContext<TransactionStatusConfig>(defaultCtxValues);
@@ -45,6 +47,11 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const [lastSentTxOperationType, setLastSentTxOperationType] = useState<OperationType | undefined>(defaultCtxValues.lastSentTxOperationType);
   const [fetchTxInfoStatus, setFetchingTxStatus] = useState<TxStatus | undefined>(defaultCtxValues.fetchTxInfoStatus);
   const [finality, setExpectedFinality] = useState<TransactionConfirmationStatus | undefined>();
+  const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState('');
+
+  const setRecentlyCreatedVault = (ddcaAccountPda: string) => {
+    updateRecentlyCreatedVault(ddcaAccountPda);
+  }
 
   const startFetchTxSignatureInfo = (signature: string, finality: TransactionConfirmationStatus, type: OperationType) => {
     const now = new Date().getTime();
@@ -56,8 +63,9 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     setFetchingTxStatus(undefined);
   }
 
-  const clearLastSentTx = () => {
+  const clearTransactionStatusContext = () => {
     setLastSentTxSignature('');
+    updateRecentlyCreatedVault('');
     setExpectedFinality(undefined);
     setLastSentTxStatus(undefined);
     setLastSentTxOperationType(undefined);
@@ -140,8 +148,10 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
         lastSentTxSignature,
         lastSentTxStatus,
         lastSentTxOperationType,
-        clearLastSentTx,
+        recentlyCreatedVault,
+        clearTransactionStatusContext,
         startFetchTxSignatureInfo,
+        setRecentlyCreatedVault
       }}>
       {children}
     </TransactionStatusContext.Provider>

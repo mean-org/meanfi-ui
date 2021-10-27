@@ -389,6 +389,7 @@
 			"tx-completed": "Operación completa",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo iniciar la transacción",

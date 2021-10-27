@@ -406,6 +406,24 @@ export async function createProgramAccountIfNotExist(
   return publicKey;
 }
 
+export async function findATokenAddress(
+  walletAddress: PublicKey,
+  tokenMintAddress: PublicKey
+
+): Promise<PublicKey> {
+
+  return (
+      await PublicKey.findProgramAddress(
+          [
+              walletAddress.toBuffer(),
+              TOKEN_PROGRAM_ID.toBuffer(),
+              tokenMintAddress.toBuffer(),
+          ],
+          ASSOCIATED_TOKEN_PROGRAM_ID
+      )
+  )[0];
+}
+
 export async function createAssociatedTokenAccount(
   tokenMintAddress: PublicKey,
   owner: PublicKey,

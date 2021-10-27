@@ -1,9 +1,11 @@
 import { Language } from "../models/languages";
 
-export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
 export const TRANSACTIONS_PER_PAGE = 15;
+export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
 export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
+export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
+export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
 export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
 export const POSITIVE_NUMBER_PATTERN = /^([0]*?([1-9]\d*)(\.0{1,2})?)$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
