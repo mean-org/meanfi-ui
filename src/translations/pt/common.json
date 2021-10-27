@@ -150,7 +150,10 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
+		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
+		"add-funds-cta-disabled-funding": "Add funds in progress...",
+		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
 		"close-ddca": {
@@ -376,6 +379,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirme esta transação em sua carteira",
 			"modal-title-executing-transaction": "Executando transação",
 			"modal-title-transaction-completed": "Transação Completa",
@@ -386,9 +391,12 @@
 			"tx-add-funds-operation-success": "Fundos adicionados com sucesso",
 			"tx-close-operation": "Feche a negociação",
 			"tx-close-operation-success": "Transferência fechada com sucesso",
+			"tx-close-vault-operation": "Close vault operation",
+			"tx-close-vault-operation-success": "Vault successfully closed",
 			"tx-completed": "Operação completa",
 			"tx-confirm": "Confirmando transação",
 			"tx-confirm-failure": "A transação não pôde ser confirmada",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transação",
 			"tx-init-failure": "A transação não pôde ser iniciada",

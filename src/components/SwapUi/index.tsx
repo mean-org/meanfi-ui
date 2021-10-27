@@ -5,18 +5,18 @@ import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, InteractionOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, HlaInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
@@ -74,8 +74,6 @@ export const SwapUi = (props: {
   const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  const [isValidBalance, setIsValidBalance] = useState(false);
-  const [isValidSwapAmount, setIsValidSwapAmount] = useState(false);
   // SWAP Transaction execution modal
   const showSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(true), []);
   const hideSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(false), []);
@@ -90,11 +88,11 @@ export const SwapUi = (props: {
     flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
   });
   // AGGREGATOR
+  const [currentTxSignature, setCurrentTxSignature] = useState("");
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
   const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
-  const [maxFromAmount, setMaxFromAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
   const [toBalance, setToBalance] = useState('');
   const [userAccount, setUserAccount] = useState<any | undefined>();
@@ -438,13 +436,18 @@ export const SwapUi = (props: {
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
-      let amount = fromSwapAmount - aggregatorFees;
+      let fromAmount = fromSwapAmount === 0 ? parseFloat(fromBalance) : fromSwapAmount;
+      let amount = fromAmount - aggregatorFees;
 
       if (amount < 0) {
         amount = 0;
       }
 
       const success = (info: ExchangeInfo) => {
+        if (info && fromSwapAmount === 0) {
+          info.amountIn = 0;
+          info.amountOut = 0;
+        }
         setExchangeInfo(info);
         console.log('info', info);
       };
@@ -475,6 +478,7 @@ export const SwapUi = (props: {
   }, [
     connection, 
     fromMint,
+    fromBalance,
     fromSwapAmount, 
     isUnwrap, 
     isWrap, 
@@ -502,8 +506,8 @@ export const SwapUi = (props: {
       const fees = {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
-        network: exchangeInfo.networkFees === 0 ? txFees.blockchainFee : exchangeInfo.networkFees,
-        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees
+        network: exchangeInfo.networkFees,
+        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees + exchangeInfo.networkFees 
 
       } as FeesInfo;
 
@@ -795,34 +799,24 @@ export const SwapUi = (props: {
   ]);
 
   // Automatically updates if the balance is valid
-  useEffect(() => {
+  const isValidBalance = useCallback(() => {
 
-    if (!connection) {
-      return;
+    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
+      return false;
     }
 
-    if (!connected || !fromMint || !feesInfo || !userBalances) {
-      setIsValidBalance(false);
-      return;
+    let valid = false;
+    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+
+    if (isWrap()) {
+      valid = balance >= feesInfo.network;
+    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+      valid = balance >= (feesInfo.total + feesInfo.network);
+    } else {
+      valid = balance >= feesInfo.network;
     }
 
-    const timeout = setTimeout(() => {
-
-      let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
-
-      if (isWrap()) {
-        setIsValidBalance(balance >= feesInfo.network);
-      } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        setIsValidBalance(balance >= (feesInfo.total + feesInfo.network));
-      } else {
-        setIsValidBalance(balance >= feesInfo.network);
-      }
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
+    return valid;
 
   }, [
     connected, 
@@ -834,30 +828,20 @@ export const SwapUi = (props: {
   ]);
 
   // Automatically updates if the swap amount is valid
-  useEffect(() => {
+  const isSwapAmountValid = useCallback(() => {
 
-    if (!connection) {
-      return;
+    if (!connection || !connected) {
+      return false;
     }
 
-    if (!connected) {
-      setIsValidSwapAmount(false);
-      return;
-    }
+    const maxFromAmount = getMaxAllowedSwapAmount();
     
-    const timeout = setTimeout(() => {      
-      setIsValidSwapAmount(fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
+    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
 
   }, [
     connected, 
     connection,
-    fromSwapAmount, 
-    maxFromAmount
+    fromSwapAmount
   ])
 
   // Updates the allowed to mints to select 
@@ -871,37 +855,11 @@ export const SwapUi = (props: {
         setDdcaOption('One time exchange');
       }
 
-      // if (fromMint === WRAPPED_SOL_MINT.toBase58()) {
-
-      //   const solList: any[] = Object
-      //     .values(mintList)
-      //     .filter((m: any) => m.symbol === 'SOL');
-
-      //   setShowToMintList(solList);
-      //   setToMint(NATIVE_SOL_MINT.toBase58());
-
-      //   return;
-      // }
-
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
  
       if (!btcMintInfo) { return; }
-
-      // if (fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== btcMintInfo.address) {
-      //   const notWSolList: any[] = Object
-      //     .values(mintList)
-      //     .filter((m: any) => m.symbol !== 'wSOL');
-
-      //   setShowToMintList(notWSolList);
-
-      //   if (toMint === WRAPPED_SOL_MINT.toBase58()) {
-      //     setToMint(NATIVE_SOL_MINT.toBase58());
-      //   }
-
-      //   return;
-      // }
 
       if (fromMint === btcMintInfo.address) {
 
@@ -1003,7 +961,9 @@ export const SwapUi = (props: {
         label = t("transactions.validation.not-connected");
       } else if (!fromMint || !toMint || !feesInfo) {
         label = t("transactions.validation.invalid-exchange");
-      } else if(!isValidBalance || (!isValidBalance && fromMint === NATIVE_SOL_MINT.toBase58())) {
+      } else if (fromSwapAmount === 0 && isValidBalance()) {
+        label = t("transactions.validation.no-amount");
+      } else if(!isValidBalance()) {
 
         let needed = 0;
 
@@ -1015,17 +975,16 @@ export const SwapUi = (props: {
           needed = feesInfo.network;
         }
 
-        needed = parseFloat(needed.toFixed(4));
+        needed = parseFloat(needed.toFixed(6));
 
         if (needed === 0) {
-          needed = parseFloat(needed.toFixed(6));
+          needed = parseFloat(needed.toFixed(9));
         }
 
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
-      } else if (fromSwapAmount === 0) {
-        label = t("transactions.validation.no-amount");
-      } else if (!isValidSwapAmount) {
+      } else if (!isSwapAmountValid()) {
+        console.log('fromSwapAmount', fromSwapAmount);
 
         let needed = 0;
         const symbol = mintList[fromMint].symbol;
@@ -1074,47 +1033,35 @@ export const SwapUi = (props: {
     feesInfo, 
     fromSwapAmount, 
     fromMint, 
-    isUnwrap, 
-    isValidBalance, 
-    isValidSwapAmount, 
+    isUnwrap,
     isWrap, 
     mintList,  
     toMint
   ]);
 
   // Calculates the max allowed amount to swap
-  useEffect(() => {
+  const getMaxAllowedSwapAmount = useCallback(() => {
 
-    if (!fromMint || !toMint || !fromBalance || !userBalances || !exchangeInfo) {
-      setMaxFromAmount(0);
-      return;
+    if (!fromMint || !toMint || !fromBalance || !userBalances || !feesInfo) {
+      return 0;
     }
 
-    const timeout = setTimeout(() => {
+    let maxAmount = 0;
+    let balance = parseFloat(fromBalance);
 
-      let maxAmount = 0;
-      let balance = parseFloat(fromBalance);
-
-      if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = userBalances[fromMint];
-        maxAmount = balance - exchangeInfo.networkFees;
-      } else {
-        maxAmount = balance;
-      }
-
-      setMaxFromAmount(maxAmount < 0 ? 0 : maxAmount);
-
-    });
-
-    return () => {
-      clearTimeout(timeout);
+    if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+      maxAmount = balance - feesInfo.network;
+    } else {
+      maxAmount = balance;
     }
+
+    return maxAmount;
     
   }, [
-    exchangeInfo, 
+    feesInfo,
     fromBalance, 
     fromMint, 
-    toMint, 
+    toMint,
     mintList,
     userBalances
   ]);
@@ -1572,6 +1519,53 @@ export const SwapUi = (props: {
     transactionStatus.currentOperation
   ]);
 
+  const tryGetTxStatus = useCallback(async (signature: string) => {
+
+    try {
+
+      if (!connection) {
+        throw new Error('Not connected');
+      }
+
+      const response = await connection.getSignatureStatus(signature);
+
+      if(!response || !response.value || response.value.err) {
+
+        const err = response && response.value && response.value.err 
+          ? response.value.err 
+          : new Error('Cannot confirm transaction');
+
+        // Log error
+        setTransactionLog(current => [...current, {
+          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+          result: `${err}`
+        }]);
+
+        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+        return false;
+      }
+
+      if (!response.value.confirmationStatus) {
+        return false;
+      }
+
+      return response.value.confirmationStatus
+
+    } catch (_error) {
+      // Log error
+      setTransactionLog(current => [...current, {
+        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+        result: `${_error}`
+      }]);
+
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+      return false;
+    }
+
+  }, [connection])
+
   const confirmTx = useCallback(async (signature: string) => {
 
     try {
@@ -1583,11 +1577,20 @@ export const SwapUi = (props: {
       const response = await connection.confirmTransaction(signature, 'confirmed');
 
       if(!response || !response.value || response.value.err) {
+
         const err = response && response.value && response.value.err 
           ? response.value.err 
           : new Error('Cannot confirm transaction');
 
-        throw(err);
+        // Log error
+        setTransactionLog(current => [...current, {
+          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+          result: `${err}`
+        }]);
+
+        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+
+        return await tryGetTxStatus(signature);
       }
 
       setTransactionStatus({
@@ -1600,10 +1603,9 @@ export const SwapUi = (props: {
         result: response.value  // TODO: Log this perhaps?
       }]);
 
-      return response;
+      return response.value;
 
     } catch (_error) {
-      console.error(_error);
       setTransactionStatus({
         lastOperation: TransactionStatus.ConfirmTransaction,
         currentOperation: TransactionStatus.ConfirmTransactionFailure
@@ -1614,7 +1616,8 @@ export const SwapUi = (props: {
         result: `${_error}`
       }]);
       customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      throw(_error);
+      // throw(_error);
+      return tryGetTxStatus(signature);
     }
 
   },[
@@ -1656,10 +1659,11 @@ export const SwapUi = (props: {
         return;
       }
 
+      setCurrentTxSignature(signature);
       let confirmed = await confirmTx(signature);
 
       if (!confirmed) {
-        setIsBusy(false);
+        setIsBusy(false);  
         return;
       }
 
@@ -1942,6 +1946,8 @@ export const SwapUi = (props: {
             onInputChange={handleSwapFromAmountChange}
             onMaxAmount={
               () => {
+                const maxFromAmount = getMaxAllowedSwapAmount();
+                console.log('maxFromAmount', maxFromAmount);
                 if (fromMint && toMint && mintList[fromMint] && maxFromAmount && maxFromAmount > 0) {
                   setFromSwapAmount(maxFromAmount);
                   const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
@@ -2056,7 +2062,7 @@ export const SwapUi = (props: {
                 onTransactionStart();
               }
             }}
-            disabled={!isValidBalance || !isValidSwapAmount || (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) }
+            disabled={!isValidBalance() || !isSwapAmountValid() || (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) }
             >
             {transactionStartButtonLabel}
           </Button>
@@ -2202,9 +2208,25 @@ export const SwapUi = (props: {
                       })}
                     </h4>
                   ) : (
-                    <h4 className="font-bold mb-1 text-uppercase">
-                      { getTransactionOperationDescription(transactionStatus, t) }
-                    </h4>
+                    <>
+                      <h4 className="font-bold mb-1 text-uppercase">
+                        { getTransactionOperationDescription(transactionStatus, t) }
+                      </h4>
+                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
+                        <>
+                          <p className="operation">
+                            {t("transactions.status.tx-confirm-failure-check")}
+                          </p>
+                          <a className="primary-link" 
+                              style={{ marginBottom:20 }} 
+                              href={`https://explorer.solana.com/tx/${currentTxSignature}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer">
+                              {currentTxSignature}
+                          </a>
+                        </>
+                      )}
+                    </>
                   )}
                   <Button
                     block
