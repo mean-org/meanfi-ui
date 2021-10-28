@@ -3,7 +3,7 @@ import { SwapSettings } from "../SwapSettings";
 import { CoinInput } from "../CoinInput";
 import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
@@ -2043,7 +2043,7 @@ export const SwapUi = (props: {
                               href={`https://explorer.solana.com/tx/${currentTxSignature}`} 
                               target="_blank" 
                               rel="noopener noreferrer">
-                              {currentTxSignature}
+                              {shortenAddress(currentTxSignature, 8)}
                           </a>
                         </>
                       )}
