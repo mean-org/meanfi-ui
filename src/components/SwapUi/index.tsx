@@ -5,18 +5,18 @@ import { TextInput } from "../TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../Identicon";
-import { CheckOutlined, InfoCircleOutlined, InteractionOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { clusterApiUrl, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
-import { AccountLayout, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, HlaInfo } from "../../hybrid-liquidity-ag/types";
 import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
@@ -25,20 +25,16 @@ import { cloneDeep } from "lodash";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
 import { InfoIcon } from "../InfoIcon";
 import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
-import useLocalStorage from "../../hooks/useLocalStorage";
-import "./style.less";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
 import { DcaInterval } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../DdcaSetupModal";
-import {
-  calculateActionFees as calculateDdcaActionFees,
-  TransactionFees as DdcaTxFees,
-  DDCA_ACTIONS
-} from '@mean-dao/ddca';
+import { calculateActionFees as calculateDdcaActionFees, TransactionFees as DdcaTxFees, DDCA_ACTIONS } from '@mean-dao/ddca';
 import { Redirect } from "react-router-dom";
+import useLocalStorage from "../../hooks/useLocalStorage";
+import "./style.less";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -200,6 +196,32 @@ export const SwapUi = (props: {
   },[
     fromMint, 
     toMint
+  ]);
+
+  // Calculates the max allowed amount to swap
+  const getMaxAllowedSwapAmount = useCallback(() => {
+
+    if (!fromMint || !toMint || !fromBalance || !userBalances || !feesInfo) {
+      return 0;
+    }
+
+    let maxAmount = 0;
+    let balance = parseFloat(fromBalance);
+
+    if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+      maxAmount = balance - feesInfo.network;
+    } else {
+      maxAmount = balance;
+    }
+
+    return maxAmount;
+    
+  }, [
+    feesInfo, 
+    fromBalance, 
+    fromMint, 
+    toMint, 
+    userBalances
   ]);
 
   // Preset ddcaOption based on the component input "isRepeating"
@@ -840,8 +862,9 @@ export const SwapUi = (props: {
 
   }, [
     connected, 
-    connection,
-    fromSwapAmount
+    connection, 
+    fromSwapAmount, 
+    getMaxAllowedSwapAmount
   ])
 
   // Updates the allowed to mints to select 
@@ -1026,44 +1049,20 @@ export const SwapUi = (props: {
     }
 
   }, [
-    t,
-    ddcaOption?.dcaInterval,
+    t, 
+    ddcaOption?.dcaInterval, 
     connected, 
     connection, 
     feesInfo, 
     fromSwapAmount, 
     fromMint, 
-    isUnwrap,
+    isUnwrap, 
     isWrap, 
-    mintList,  
-    toMint
-  ]);
-
-  // Calculates the max allowed amount to swap
-  const getMaxAllowedSwapAmount = useCallback(() => {
-
-    if (!fromMint || !toMint || !fromBalance || !userBalances || !feesInfo) {
-      return 0;
-    }
-
-    let maxAmount = 0;
-    let balance = parseFloat(fromBalance);
-
-    if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-      maxAmount = balance - feesInfo.network;
-    } else {
-      maxAmount = balance;
-    }
-
-    return maxAmount;
-    
-  }, [
-    feesInfo,
-    fromBalance, 
-    fromMint, 
-    toMint,
-    mintList,
-    userBalances
+    getMaxAllowedSwapAmount, 
+    mintList, 
+    toMint, 
+    isValidBalance, 
+    isSwapAmountValid
   ]);
 
   // Set toMint appropriately
@@ -1564,7 +1563,10 @@ export const SwapUi = (props: {
       return false;
     }
 
-  }, [connection])
+  }, [
+    connection, 
+    transactionLog
+  ])
 
   const confirmTx = useCallback(async (signature: string) => {
 
@@ -1621,9 +1623,10 @@ export const SwapUi = (props: {
     }
 
   },[
-    connection,
-    transactionLog,
-    setTransactionStatus
+    connection, 
+    setTransactionStatus, 
+    transactionLog, 
+    tryGetTxStatus
   ]);
 
   const onTransactionStart = useCallback(async () => {
