@@ -791,6 +791,22 @@ footer.ant-layout-footer {
   background-color: var(--color-selection);
 }
 
+// Number inputs
+.ant-input-number {
+  background-color: var(--color-wells);
+  color: inherit;
+  border-width: 1px;
+  border-color: var(--color-secondary-alpha-10);
+  border-radius: var(--custom-control-border-radius);
+  &:focus,
+  &:hover,
+  &.ant-input-number-focused {
+    border-color: var(--color-secondary-alpha-20);
+    outline: 0;
+    box-shadow: none;
+  }
+}
+
 // Notification icons
 .anticon {
   &.ant-notification-notice-icon-info {

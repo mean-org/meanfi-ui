@@ -6,6 +6,11 @@ export const PRICE_REFRESH_TIMEOUT = 10 * 60 * 1000;
 export const STREAMS_REFRESH_TIMEOUT = 5 * 60 * 1000;
 export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch transaction status every 3 seconds
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
+
+export const MIN_SLIPPAGE_VALUE = 0.1;
+export const DEFAULT_SLIPPAGE_PERCENT = 1;
+export const MAX_SLIPPAGE_VALUE = 20;
+
 export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
 export const POSITIVE_NUMBER_PATTERN = /^([0]*?([1-9]\d*)(\.0{1,2})?)$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';

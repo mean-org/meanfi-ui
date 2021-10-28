@@ -31,8 +31,6 @@ import { ACCOUNT_LAYOUT } from './layouts';
 
 const BufferLayout = require('buffer-layout');
 
-export const DEFAULT_SLIPPAGE_PERCENT = 1;
-
 export function getOutAmount(
   market: any,
   asks: any,

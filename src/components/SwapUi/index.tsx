@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TransactionStatus } from "../../models/enums";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
@@ -31,6 +30,7 @@ import { appConfig, customLogger } from "../..";
 import { Redirect } from "react-router-dom";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
+import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -60,7 +60,7 @@ export const SwapUi = (props: {
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
-  const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
+  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   // SWAP Transaction execution modal

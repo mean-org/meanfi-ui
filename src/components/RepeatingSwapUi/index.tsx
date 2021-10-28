@@ -14,7 +14,6 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../utils/swap";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { TOKENS } from "../../hybrid-liquidity-ag/data";
 import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo, HlaInfo } from "../../hybrid-liquidity-ag/types";
@@ -33,6 +32,7 @@ import { calculateActionFees as calculateDdcaActionFees, TransactionFees as Ddca
 import { Redirect } from "react-router-dom";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
+import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 
 export const RepeatingSwapUi = (props: {
   queryFromMint: string | null;
@@ -59,7 +59,7 @@ export const RepeatingSwapUi = (props: {
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
   // Continue normal flow
   const [fromAmount, setFromAmount] = useState("");
-  const [slippage, setSlippage] = useState(DEFAULT_SLIPPAGE_PERCENT);
+  const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
