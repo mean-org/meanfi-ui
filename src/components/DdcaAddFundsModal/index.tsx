@@ -1,19 +1,24 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Button, Col, Modal, Progress, Row } from 'antd';
 import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { percentage, percentual } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, percentage, percentual } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
-import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../utils/ids';
 import { environment } from '../../environments/environment';
 import { LoadingOutlined } from '@ant-design/icons';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
+import { AppStateContext } from '../../contexts/appstate';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { customLogger } from '../..';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 export const DdcaAddFundsModal = (props: {
+  endpoint: string;
   connection: Connection;
   ddcaDetails: DdcaDetails | undefined;
   handleClose: any;
@@ -23,7 +28,16 @@ export const DdcaAddFundsModal = (props: {
   ddcaTxFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
-  const { publicKey } = useWallet();
+  const { publicKey, wallet } = useWallet();
+  const {
+    transactionStatus,
+    setTransactionStatus,
+  } = useContext(AppStateContext);
+  const {
+    lastSentTxSignature,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
 
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
@@ -34,6 +48,7 @@ export const DdcaAddFundsModal = (props: {
   const [usableTokenAmount, setUsableTokenAmount] = useState(0);
   const [fromTokenPercentualAmount, setFromTokenPercentualAmount] = useState(0);
   const [solPercentualAmount, setSolPercentualAmount] = useState(0);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
   const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
@@ -145,11 +160,6 @@ export const DdcaAddFundsModal = (props: {
       <span className="fg-primary-highlight font-bold">{getTotalPeriod(value || 0)}</span>
       </>
     );
-  }
-
-  const onSliderChange = (value?: number) => {
-    setRecurrencePeriod(value || 0);
-    setLockedSliderValue(value || 0);
   }
 
   const isWrappedSol = useCallback((): boolean => {
@@ -273,6 +283,209 @@ export const DdcaAddFundsModal = (props: {
     props.ddcaDetails,
     props.userBalance
   ]);
+
+  ////////////////////////
+  //  Events & Actions  //
+  ////////////////////////
+
+  const onSliderChange = (value?: number) => {
+    setRecurrencePeriod(value || 0);
+    setLockedSliderValue(value || 0);
+  }
+
+  const onFinishedAddFundsTx = () => {
+    setIsBusy(false);
+    props.handleOk();
+  }
+
+  // Execute Add funds transaction
+  const onExecuteAddFundsTx = async () => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const ddcaClient = new DdcaClient(props.endpoint, wallet, { commitment: "confirmed" })
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && publicKey && props.ddcaDetails) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const ddcaAccountAddress = new PublicKey(props.ddcaDetails.ddcaAccountAddress);
+        const payload = {
+          ddcaAccountAddress: props.ddcaDetails.ddcaAccountAddress,
+          swapsCount: lockedSliderValue
+        };
+
+        consoleOut('createAddFundsTx params:', payload, 'brown');
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        // Create a transaction
+        return await ddcaClient.createAddFundsTx(
+          ddcaAccountAddress,
+          payload.swapsCount,
+          isWrappedSol()
+        )
+        .then(value => {
+          consoleOut('createAddFundsTx returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: 'createAddFundsTx succeeded'
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createAddFundsTx error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: `Signer: ${wallet.publicKey.toBase58()}`
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+          });
+          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await props.connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendSignedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet && publicKey) {
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.AddFunds);
+            onFinishedAddFundsTx();
+          } else { onFinishedAddFundsTx(); }
+        } else { onFinishedAddFundsTx(); }
+      } else { onFinishedAddFundsTx(); }
+    }
+
+  };
 
   ////////////////////
   //   Validation   //
@@ -460,17 +673,19 @@ export const DdcaAddFundsModal = (props: {
           shape="round"
           size="large"
           disabled={!isValidSetting()}
-          onClick={() => {}}>
+          onClick={onExecuteAddFundsTx}>
           {isBusy && (<LoadingOutlined className="mr-1" />)}
           {isBusy
             ? t('ddca-setup-modal.cta-label-depositing')
-            : isWrappedSol()
-              ? getTotalCombinedSolanaAmount() > (props.userBalance + fromTokenBalance)
+            : lastSentTxSignature
+              ? t('general.finished')
+              : isWrappedSol()
+                ? getTotalCombinedSolanaAmount() > (props.userBalance + fromTokenBalance)
                   ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalCombinedSolanaAmount() - usableTokenAmount, NATIVE_SOL_MINT.toBase58())}`
                   : t('ddca-setup-modal.cta-label-deposit')
-              : !hasEnoughFromTokenBalance()
-                ? t('transactions.validation.amount-low')
-                : !hasEnoughNativeBalanceForFees()
+                : !hasEnoughFromTokenBalance()
+                  ? t('transactions.validation.amount-low')
+                  : !hasEnoughNativeBalanceForFees()
                     ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
                     : t('ddca-setup-modal.cta-label-deposit')
           }
