@@ -321,7 +321,7 @@ export const DdcaAddFundsModal = (props: {
         <span className="right pl-3 position-relative">
           <Progress
             percent={fromTokenPercentualAmount}
-            status={fromTokenPercentualAmount <= 99 ? "success" : "exception"}
+            status={fromTokenPercentualAmount < 100 ? "success" : "exception"}
             showInfo={true}
           />
           <span className="amount">
@@ -347,7 +347,7 @@ export const DdcaAddFundsModal = (props: {
           <span className="right pl-3 position-relative">
             <Progress
               percent={solPercentualAmount}
-              status={solPercentualAmount <= 90 ? "success" : "exception"}
+              status={solPercentualAmount < 100 ? "success" : "exception"}
               showInfo={true}
             />
             <span className="amount">
@@ -362,7 +362,7 @@ export const DdcaAddFundsModal = (props: {
         </div>
       )}
       <div className="mb-3">
-        {(props.ddcaDetails && isLocal()) && (
+        {(props.ddcaDetails && isWrappedSol() && isLocal()) && (
           <>
             {infoRow(
               'Slider setting',
