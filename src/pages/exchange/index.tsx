@@ -13,6 +13,7 @@ import { Connection } from '@solana/web3.js';
 import { environment } from '../../environments/environment';
 import { useTranslation } from 'react-i18next';
 import { IconCallSplit } from '../../Icons';
+import { RepeatingSwapUi } from '../../components/RepeatingSwapUi';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -155,23 +156,27 @@ export const SwapView = () => {
                 {t('swap.tabset.recurring')}
               </div>
             </div>
-            {currentTab === "one-time" ? (
-              <SwapUi
-                connection={connection}
-                endpoint={endpoint}
-                queryFromMint={queryFromMint}
-                queryToMint={queryToMint}
-                isRepeating={false}
-              />
-            ) : (
-              <SwapUi
-                connection={connection}
-                endpoint={endpoint}
-                queryFromMint={queryFromMint}
-                queryToMint={queryToMint}
-                isRepeating={true}
-              />
-            )}
+            {/* One time exchange */}
+            {
+              currentTab === "one-time" && (
+                <SwapUi
+                  connection={connection}
+                  queryFromMint={queryFromMint}
+                  queryToMint={queryToMint}
+                />
+              )
+            }
+            {/* Repeating exchange */}
+            {
+              currentTab === "recurring" && (
+                <RepeatingSwapUi
+                  connection={connection}
+                  endpoint={endpoint}
+                  queryFromMint={queryFromMint}
+                  queryToMint={queryToMint}
+                />
+              )
+            }
           </div>
           {recurringBuys && recurringBuys.length > 0 && isProd() && (
             <div className="text-center mb-3">
