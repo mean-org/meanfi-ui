@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Button, Col, Modal, Progress, Row } from 'antd';
-import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { consoleOut, percentage, percentual } from '../../utils/ui';
+import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { percentage, percentual } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
@@ -11,6 +11,7 @@ import Slider, { SliderMarks } from 'antd/lib/slider';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../utils/ids';
 import { environment } from '../../environments/environment';
 import { LoadingOutlined } from '@ant-design/icons';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 
 export const DdcaAddFundsModal = (props: {
   connection: Connection;
@@ -35,6 +36,8 @@ export const DdcaAddFundsModal = (props: {
   const [solPercentualAmount, setSolPercentualAmount] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
 
+  const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
+
   const isProd = (): boolean => {
     return environment === 'production';
   }
@@ -43,9 +46,14 @@ export const DdcaAddFundsModal = (props: {
     return window.location.hostname === 'localhost' ? true : false;
   }
 
-  // const getModalHeadline = () => {
-  //   return `<span>Modal headline here</span>`;
-  // }
+  const getModalHeadline = () => {
+    if (!props.ddcaDetails) { return ''; }
+    return `<span>${t('ddcas.add-funds.headline', {
+      fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
+        props.ddcaDetails.amountPerSwap * lockedSliderValue,
+        props.ddcaDetails.fromMint)
+    })}</span>`;
+  }
 
   const getGasFeeAmount = (): number => {
     return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue));
@@ -75,6 +83,29 @@ export const DdcaAddFundsModal = (props: {
       default:
         return 12;
     }
+  }
+
+  const getRecurrencePeriod = (): string => {
+    let strOut = '';
+    if (props.ddcaDetails) {
+      switch (props.ddcaDetails.intervalInSeconds) {
+        case 86400:
+          strOut = t('ddca-selector.repeating-daily.recurrence-period');
+          break;
+        case 604800:
+          strOut = t('ddca-selector.repeating-weekly.recurrence-period');
+          break;
+        case 1209600:
+          strOut = t('ddca-selector.repeating-twice-month.recurrence-period');
+          break;
+        case 2629750:
+          strOut = t('ddca-selector.repeating-once-month.recurrence-period');
+          break;
+        default:
+          break;
+      }
+    }
+    return strOut;
   }
 
   const getTotalPeriod = useCallback((periodValue: number): string => {
@@ -210,7 +241,7 @@ export const DdcaAddFundsModal = (props: {
   useEffect(() => {
     if (lockedSliderValue && props.ddcaDetails) {
       const effectiveTokenAmount = props.ddcaDetails.amountPerSwap * lockedSliderValue;
-      if (effectiveTokenAmount < fromTokenBalance) {
+      if (effectiveTokenAmount <= fromTokenBalance) {
         setUsableTokenAmount(effectiveTokenAmount);
         const percentualValue = percentual(effectiveTokenAmount, fromTokenBalance);
         setFromTokenPercentualAmount(percentualValue);
@@ -294,8 +325,7 @@ export const DdcaAddFundsModal = (props: {
       onCancel={props.handleClose}
       width={480}>
       <div className="mb-3">
-        {/* <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div> */}
-        <div className="ddca-setup-heading">{t('ddcas.add-funds.headline')}</div>
+        <div className="ddca-setup-heading" dangerouslySetInnerHTML={{ __html: getModalHeadline() }}></div>
       </div>
       <div className="slider-container">
         <Slider
@@ -362,39 +392,66 @@ export const DdcaAddFundsModal = (props: {
         </div>
       )}
       <div className="mb-3">
-        {(props.ddcaDetails && isWrappedSol() && isLocal()) && (
-          <>
-            {infoRow(
-              'Slider setting',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.ddcaDetails.amountPerSwap * lockedSliderValue,
-                props.ddcaDetails.fromMint
-              )
-            )}
-            {infoRow(
-              'Gas Fees',
-              getTokenAmountAndSymbolByTokenAddress(
-                getGasFeeAmount(),
-                NATIVE_SOL_MINT.toBase58()
-              )
-            )}
-            {infoRow(
-              'Combined amount',
-              getTokenAmountAndSymbolByTokenAddress(
-                getTotalCombinedSolanaAmount(),
-                NATIVE_SOL_MINT.toBase58()
-              )
-            )}
-            {infoRow(
-              'Usable token amount',
-              getTokenAmountAndSymbolByTokenAddress(
-                usableTokenAmount,
-                NATIVE_SOL_MINT.toBase58()
-              )
-            )}
-          </>
-        )}
+        <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
+        <ol className="greek">
+          <li>
+            {props.ddcaDetails &&
+              t('ddca-setup-modal.help.help-item-01-topup', {
+                fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
+                  props.ddcaDetails.amountPerSwap * lockedSliderValue,
+                  props.ddcaDetails.fromMint
+                )
+              })
+            }
+          </li>
+          <li>
+            {
+              t('ddca-setup-modal.help.help-item-02', {
+                lockedSliderValue: getRecurrencePeriod(),
+              })
+            }
+          </li>
+          <li>
+            {props.ddcaDetails &&
+              t('ddca-setup-modal.help.help-item-03', {
+                toTokenSymbol: fromToken ? fromToken.symbol : shortenAddress(props.ddcaDetails.toMint),
+              })
+            }
+          </li>
+        </ol>
       </div>
+      {(props.ddcaDetails && isWrappedSol() && isLocal()) && (
+        <div className="mb-3">
+          {infoRow(
+            'Slider setting',
+            getTokenAmountAndSymbolByTokenAddress(
+              props.ddcaDetails.amountPerSwap * lockedSliderValue,
+              props.ddcaDetails.fromMint
+            )
+          )}
+          {infoRow(
+            'Gas Fees',
+            getTokenAmountAndSymbolByTokenAddress(
+              getGasFeeAmount(),
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
+          {infoRow(
+            'Combined amount',
+            getTokenAmountAndSymbolByTokenAddress(
+              getTotalCombinedSolanaAmount(),
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
+          {infoRow(
+            'Usable token amount',
+            getTokenAmountAndSymbolByTokenAddress(
+              usableTokenAmount,
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
+        </div>
+      )}
       <div className="mt-3">
         <Button
           className={`main-cta ${isBusy ? 'inactive' : ''}`}

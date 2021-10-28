@@ -22,6 +22,15 @@ import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 
 export function Routes() {
+
+  const isProd = (): boolean => {
+    return environment === 'production';
+  }
+
+  const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+  }
+
   return (
     <>
       <BrowserRouter basename={"/"}>
@@ -40,9 +49,11 @@ export function Routes() {
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />
                       <Route exact path="/exchange" children={<SwapView />} />
-                      <Route exact path="/exchange-dcas" children={<ExchangeDcasView />} />
+                      {(isProd() || isLocal()) && (
+                        <Route exact path="/exchange-dcas" children={<ExchangeDcasView />} />
+                      )}
                       <Route exact path="/wrap" children={<WrapView />} />
-                      {environment === 'local' && (
+                      {isLocal() && (
                         <Route exact path="/playground" children={<PlaygroundView />} />
                       )}
                       <Route exact path="/custody" children={<CustodyView />} />

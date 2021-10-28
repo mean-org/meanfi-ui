@@ -1049,6 +1049,7 @@ export const ExchangeDcasView = () => {
     ddcaClient,
     selectedDdca,
     loadingRecurringBuys,
+    recentlyCreatedVault,
     setLoadingRecurringBuys,
     setRecurringBuys
   ]);

@@ -137,6 +137,7 @@
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
+			"help-item-01-topup": "Deposit an additional {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
@@ -157,8 +158,8 @@
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
 		"add-funds": {
-			"modal-title": "Add funds",
-			"headline": "Modal headline here"
+			"modal-title": "Top Up/Add Funds",
+			"headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault."
 		},
 		"close-ddca": {
 			"modal-title": "Are you sure?",
