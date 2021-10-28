@@ -156,6 +156,10 @@
 		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
+		"add-funds": {
+			"modal-title": "Add funds",
+			"headline": "Modal headline here"
+		},
 		"close-ddca": {
 			"modal-title": "Are you sure?",
 			"primary-cta": "Confirm",

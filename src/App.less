@@ -1708,6 +1708,39 @@ section.content {
     flex: 0 0 auto;
   }
 }
+.flexible-right {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 0 0 auto;
+    &.from-token-balance {
+      width: 130px;
+      text-align: center;
+      line-height: 1.2;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-style: solid;
+      border-width: 1px;
+      padding: 4px 0;
+      border-color: var(--color-secondary-alpha-20)
+    }
+  }
+  .right {
+    flex: 1 1 auto;
+  }
+  .amount {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    top: -0.5rem;
+  }
+}  
 
 .transaction-field {
   width: 100%;

@@ -1535,7 +1535,7 @@ export const ExchangeDcasView = () => {
                 shape="round"
                 size="small"
                 disabled={fetchTxInfoStatus === "fetching"}
-                onClick={() => {}}>
+                onClick={showAddFundsModal}>
                 {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                 {isCreating()
                   ? t("ddcas.add-funds-cta-disabled-executing-swap")
