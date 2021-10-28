@@ -1,17 +1,17 @@
-import React, { useCallback, useEffect } from 'react';
-import { useContext, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
-import { IconSort } from "../../Icons";
-import { AppStateContext } from '../../contexts/appstate';
-import { findATokenAddress, formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { Identicon } from '../Identicon';
-import { consoleOut, percentage } from '../../utils/ui';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { useState } from 'react';
+import { Button, Col, Modal, Progress, Row } from 'antd';
+import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { percentage, percentual } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
-import { getTokenByMintAddress, TokenInfo } from '../../utils/tokens';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import Slider, { SliderMarks } from 'antd/lib/slider';
+import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../utils/ids';
+import { environment } from '../../environments/environment';
+import { LoadingOutlined } from '@ant-design/icons';
+import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 
 export const DdcaAddFundsModal = (props: {
   connection: Connection;
@@ -23,7 +23,7 @@ export const DdcaAddFundsModal = (props: {
   ddcaTxFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
-  const { publicKey, wallet } = useWallet();
+  const { publicKey } = useWallet();
 
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(0);
@@ -31,25 +31,81 @@ export const DdcaAddFundsModal = (props: {
   const [recurrencePeriod, setRecurrencePeriod] = useState(0);
   const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [fromTokenBalance, setFromTokenBalance] = useState(0);
+  const [usableTokenAmount, setUsableTokenAmount] = useState(0);
+  const [fromTokenPercentualAmount, setFromTokenPercentualAmount] = useState(0);
+  const [solPercentualAmount, setSolPercentualAmount] = useState(0);
+  const [isBusy, setIsBusy] = useState(false);
+
+  const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
+
+  const isProd = (): boolean => {
+    return environment === 'production';
+  }
+
+  const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+  }
 
   const getModalHeadline = () => {
-    return `<span>Modal headline here</span>`;
+    if (!props.ddcaDetails) { return ''; }
+    return `<span>${t('ddcas.add-funds.headline', {
+      fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
+        props.ddcaDetails.amountPerSwap * lockedSliderValue,
+        props.ddcaDetails.fromMint)
+    })}</span>`;
+  }
+
+  const getGasFeeAmount = (): number => {
+    return props.ddcaTxFees.maxBlockchainFee + (props.ddcaTxFees.maxFeePerSwap * (lockedSliderValue));
+  }
+
+  const hasEnoughNativeBalanceForFees = (): boolean => {
+    return props.userBalance >= getGasFeeAmount() ? true : false;
+  }
+
+  const getTotalCombinedSolanaAmount = (): number => {
+    if (!props.ddcaDetails) { return 0; }
+    const settingAmount = lockedSliderValue * props.ddcaDetails.amountPerSwap
+    return settingAmount + getGasFeeAmount();
   }
 
   const getMaxRangeFromInterval = (intervalInSeconds: number): number => {
     if (!intervalInSeconds) { return 12; }
     switch (intervalInSeconds) {
-      case 86400:
+      case 86400: // every day
         return 365;
-      case 604800:
+      case 604800:  // week
         return 52;
-      case 1209600:
+      case 1209600: // every two weeks
         return 26;
-      case 2629750:
+      case 2629750: // every month
         return 12;
       default:
         return 12;
     }
+  }
+
+  const getRecurrencePeriod = (): string => {
+    let strOut = '';
+    if (props.ddcaDetails) {
+      switch (props.ddcaDetails.intervalInSeconds) {
+        case 86400:
+          strOut = t('ddca-selector.repeating-daily.recurrence-period');
+          break;
+        case 604800:
+          strOut = t('ddca-selector.repeating-weekly.recurrence-period');
+          break;
+        case 1209600:
+          strOut = t('ddca-selector.repeating-twice-month.recurrence-period');
+          break;
+        case 2629750:
+          strOut = t('ddca-selector.repeating-once-month.recurrence-period');
+          break;
+        default:
+          break;
+      }
+    }
+    return strOut;
   }
 
   const getTotalPeriod = useCallback((periodValue: number): string => {
@@ -96,6 +152,10 @@ export const DdcaAddFundsModal = (props: {
     setLockedSliderValue(value || 0);
   }
 
+  const isWrappedSol = useCallback((): boolean => {
+    return props.ddcaDetails?.fromMint === WRAPPED_SOL_MINT.toBase58() ? true : false;
+  }, [props.ddcaDetails])
+
   //////////////////////////
   //   Data Preparation   //
   //////////////////////////
@@ -137,7 +197,11 @@ export const DdcaAddFundsModal = (props: {
 
     if (props.ddcaDetails) {
       const maxRangeFromSelection = getMaxRangeFromInterval(props.ddcaDetails.intervalInSeconds);
-      const maxRangeFromBalance = Math.floor(fromTokenBalance / props.ddcaDetails.amountPerSwap);
+      const maxRangeFromBalance = Math.floor(
+        isWrappedSol()
+          ? (fromTokenBalance + props.userBalance) / props.ddcaDetails.amountPerSwap
+          : fromTokenBalance / props.ddcaDetails.amountPerSwap
+      );
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -156,24 +220,105 @@ export const DdcaAddFundsModal = (props: {
       // Set minimum required and valid flag
       const minimumRequired = props.ddcaDetails.amountPerSwap * (minRangeSelectable + 1);
       const isOpValid = minimumRequired < fromTokenBalance ? true : false;
-
+      let period = 0;
       // Set the slider position
       if (isOpValid) {
-        setRecurrencePeriod(initialValue);
+        period = initialValue;
       } else {
-        setRecurrencePeriod(minRangeSelectable);
+        period = minRangeSelectable;
       }
+      setRecurrencePeriod(period);
     }
   }, [
     props.ddcaDetails,
     fromTokenBalance,
+    props.userBalance,
+    isWrappedSol,
     getTotalPeriod
   ]);
+
+  // Calculate token amount progress bar percentual value
+  useEffect(() => {
+    if (lockedSliderValue && props.ddcaDetails) {
+      const effectiveTokenAmount = props.ddcaDetails.amountPerSwap * lockedSliderValue;
+      if (effectiveTokenAmount <= fromTokenBalance) {
+        setUsableTokenAmount(effectiveTokenAmount);
+        const percentualValue = percentual(effectiveTokenAmount, fromTokenBalance);
+        setFromTokenPercentualAmount(percentualValue);
+      } else {
+        setFromTokenPercentualAmount(100);
+      }
+    }
+  }, [
+    fromTokenBalance,
+    lockedSliderValue,
+    props.ddcaDetails
+  ]);
+
+  // Calculate native amount progress bar percentual value
+  useEffect(() => {
+    if (lockedSliderValue && props.ddcaDetails && props.userBalance) {
+      const effectiveTokenAmount = props.ddcaDetails.amountPerSwap * lockedSliderValue;
+      if (effectiveTokenAmount > fromTokenBalance) {
+        const additionalNativeBalance = effectiveTokenAmount - fromTokenBalance;
+        const percentualValue = percentual(additionalNativeBalance, props.userBalance);
+        setSolPercentualAmount(percentualValue);
+      } else {
+        setSolPercentualAmount(0);
+      }
+    }
+  }, [
+    fromTokenBalance,
+    lockedSliderValue,
+    props.ddcaDetails,
+    props.userBalance
+  ]);
+
+  ////////////////////
+  //   Validation   //
+  ////////////////////
+
+  const hasEnoughFromTokenBalance = (): boolean => {
+    if (!props.ddcaDetails) { return false; }
+
+    const settingAmount = lockedSliderValue * props.ddcaDetails.amountPerSwap
+    return fromTokenBalance > settingAmount;
+  }
+
+  const isValidSetting = (): boolean => {
+    if (!props.ddcaDetails) { return false; }
+
+    const settingAmount = lockedSliderValue * props.ddcaDetails.amountPerSwap
+    const gasFeeAmount = getGasFeeAmount();
+
+    if (isWrappedSol()) {
+      return getTotalCombinedSolanaAmount() <= (props.userBalance + fromTokenBalance) ? true : false;
+    }
+
+    const hasEnoughFromTokenBalance = settingAmount < fromTokenBalance ? true : false;
+    return hasEnoughFromTokenBalance && props.userBalance > gasFeeAmount ? true : false;
+  }
+
+  const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+    return (
+      <Row>
+        <Col span={11} className="text-right">
+          {caption}
+        </Col>
+        <Col span={1} className="text-center fg-secondary-70">
+          {separator}
+        </Col>
+        <Col span={11} className="text-left fg-secondary-70">
+          {value}
+        </Col>
+      </Row>
+    );
+  };
 
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
+      title={<div className="modal-title">{t('ddcas.add-funds.modal-title')}</div>}
       footer={null}
       maskClosable={false}
       visible={props.isVisible}
@@ -194,16 +339,68 @@ export const DdcaAddFundsModal = (props: {
           tooltipVisible
           dots={false}/>
       </div>
-
-      {/* <div className="mb-3">
+      <div className="flexible-right mb-2">
+        <span className="left from-token-balance">Token balance<br />
+          {props.ddcaDetails &&
+            getTokenAmountAndSymbolByTokenAddress(
+              fromTokenBalance,
+              props.ddcaDetails.fromMint
+            )
+          }
+        </span>
+        <span className="right pl-3 position-relative">
+          <Progress
+            percent={fromTokenPercentualAmount}
+            status={fromTokenPercentualAmount < 100 ? "success" : "exception"}
+            showInfo={true}
+          />
+          <span className="amount">
+            {props.ddcaDetails &&
+              getTokenAmountAndSymbolByTokenAddress(
+                usableTokenAmount,
+                props.ddcaDetails.fromMint
+              )
+            }
+          </span>
+        </span>
+      </div>
+      {isWrappedSol() && (
+        <div className="flexible-right mb-2">
+          <span className="left from-token-balance">SOL balance<br />
+            {props.userBalance &&
+              getTokenAmountAndSymbolByTokenAddress(
+                props.userBalance,
+                NATIVE_SOL_MINT.toBase58()
+              )
+            }
+          </span>
+          <span className="right pl-3 position-relative">
+            <Progress
+              percent={solPercentualAmount}
+              status={solPercentualAmount < 100 ? "success" : "exception"}
+              showInfo={true}
+            />
+            <span className="amount">
+              {props.ddcaDetails &&
+                getTokenAmountAndSymbolByTokenAddress(
+                  (props.ddcaDetails.amountPerSwap * lockedSliderValue) - usableTokenAmount,
+                  props.ddcaDetails.fromMint
+                )
+              }
+            </span>
+          </span>
+        </div>
+      )}
+      <div className="mb-3">
         <div className="font-bold">{t('ddca-setup-modal.help.how-does-it-work')}</div>
         <ol className="greek">
           <li>
-            {
-              t('ddca-setup-modal.help.help-item-01', {
+            {props.ddcaDetails &&
+              t('ddca-setup-modal.help.help-item-01-topup', {
                 fromTokenAmount: getTokenAmountAndSymbolByTokenAddress(
-                  props.ddcaDetails.amountPerSwap * (lockedSliderValue + 1),
-                  props.fromToken?.address as string)
+                  props.ddcaDetails.amountPerSwap * lockedSliderValue,
+                  props.ddcaDetails.fromMint
+                )
               })
             }
           </li>
@@ -215,321 +412,72 @@ export const DdcaAddFundsModal = (props: {
             }
           </li>
           <li>
-            {
+            {props.ddcaDetails &&
               t('ddca-setup-modal.help.help-item-03', {
-                toTokenSymbol: props.toToken?.symbol,
+                toTokenSymbol: fromToken ? fromToken.symbol : shortenAddress(props.ddcaDetails.toMint),
               })
             }
           </li>
         </ol>
       </div>
-      <div className="mb-2 text-center">
-        <span className="yellow-pill">
-          <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
-            <IconShield className="mean-svg-icons"/>
-          </InfoIcon>
-          <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
-        </span>
-      </div>
-      <div className="row two-col-ctas">
-        <div className="col-6">
-          <Button
-            className={`main-cta ${!vaultCreated && isBusy ? 'inactive' : vaultCreated ? 'completed' : ''}`}
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            disabled={!isProd() ||
-              (isNative() && props.userBalance < getTotalSolAmount()) ||
-              (!isNative() && !hasEnoughFromTokenBalance())
-            }
-            onClick={() => onCreateVaultTxStart()}>
-            {
-              !vaultCreated && isBusy
-                ? t('ddca-setup-modal.cta-label-depositing')
-                : vaultCreated
-                ? t('ddca-setup-modal.cta-label-vault-created')
-                : isNative()
-                  ? getTotalSolAmount() > props.userBalance
-                      ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalSolAmount(), NATIVE_SOL_MINT.toBase58())}`
-                      : t('ddca-setup-modal.cta-label-deposit')
-                  : !hasEnoughFromTokenBalance()
-                    ? t('transactions.validation.amount-low')
-                    : !hasEnoughNativeBalanceForFees()
-                        ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
-                        : t('ddca-setup-modal.cta-label-deposit')
-            }
-          </Button>
+      {(props.ddcaDetails && isWrappedSol() && isLocal()) && (
+        <div className="mb-3">
+          {infoRow(
+            'Slider setting',
+            getTokenAmountAndSymbolByTokenAddress(
+              props.ddcaDetails.amountPerSwap * lockedSliderValue,
+              props.ddcaDetails.fromMint
+            )
+          )}
+          {infoRow(
+            'Gas Fees',
+            getTokenAmountAndSymbolByTokenAddress(
+              getGasFeeAmount(),
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
+          {infoRow(
+            'Combined amount',
+            getTokenAmountAndSymbolByTokenAddress(
+              getTotalCombinedSolanaAmount(),
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
+          {infoRow(
+            'Usable token amount',
+            getTokenAmountAndSymbolByTokenAddress(
+              usableTokenAmount,
+              NATIVE_SOL_MINT.toBase58()
+            )
+          )}
         </div>
-        <div className="col-6">
-          <Button
-            className={`main-cta ${isBusy ? 'inactive' : ''}`}
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            disabled={!vaultCreated}
-            onClick={() => {
-              if (vaultCreated && swapExecuted) {
-                onOperationSuccess();
-              } else {
-                onSpawnSwapTxStart();
-              }
-            }}>
-            {vaultCreated && isBusy ? 'Starting' : vaultCreated && swapExecuted ? 'Finished' : 'Start'}
-          </Button>
-        </div>
+      )}
+      <div className="mt-3">
+        <Button
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          disabled={!isValidSetting()}
+          onClick={() => {}}>
+          {isBusy && (<LoadingOutlined className="mr-1" />)}
+          {isBusy
+            ? t('ddca-setup-modal.cta-label-depositing')
+            : isWrappedSol()
+              ? getTotalCombinedSolanaAmount() > (props.userBalance + fromTokenBalance)
+                  ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getTotalCombinedSolanaAmount() - usableTokenAmount, NATIVE_SOL_MINT.toBase58())}`
+                  : t('ddca-setup-modal.cta-label-deposit')
+              : !hasEnoughFromTokenBalance()
+                ? t('transactions.validation.amount-low')
+                : !hasEnoughNativeBalanceForFees()
+                    ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(getGasFeeAmount(), NATIVE_SOL_MINT.toBase58())}`
+                    : t('ddca-setup-modal.cta-label-deposit')
+          }
+        </Button>
       </div>
-      <div className="transaction-timeline-wrapper">
-        <ul className="transaction-timeline">
-          <li>
-            {!vaultCreated && !swapExecuted && isBusy ? (
-              <span className="value"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            ) : vaultCreated ? (
-              <span className="value">✔︎</span>
-            ) : (
-              <span className="value">1</span>
-            )}
-          </li>
-          <li>
-            {vaultCreated && isBusy ? (
-              <span className="value"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            ) : vaultCreated && swapExecuted ? (
-              <span className="value">✔︎</span>
-            ) : (
-              <span className="value">2</span>
-            )}
-          </li>
-        </ul>
-      </div> */}
 
     </Modal>
   );
-
-
-  // const { coinPrices } = useContext(AppStateContext);
-  // const { t } = useTranslation('common');
-  // const [topupAmount, setTopupAmount] = useState<string>('');
-  // const [effectiveRate, setEffectiveRate] = useState(0);
-  // const [selectedToken, setSelectedToken] = useState<TokenInfo>();
-
-  // Set selected token and price per token
-  // useEffect(() => {
-
-  //   if (!coinPrices || !props.ddcaDetails) { return; }
-
-  //   const getPricePerToken = (token: TokenInfo): number => {
-  //     const tokenSymbol = token.symbol.toUpperCase();
-  //     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-  
-  //     return coinPrices && coinPrices[symbol]
-  //       ? coinPrices[symbol]
-  //       : 0;
-  //   }
-
-  //   if (coinPrices && props.ddcaDetails) {
-  //     const token = getTokenByMintAddress(props.ddcaDetails.fromMint);
-  //     if (token) {
-  //       setSelectedToken(token);
-  //       setEffectiveRate(getPricePerToken(token));
-  //     }
-  //   }
-  // }, [
-  //   coinPrices,
-  //   props.ddcaDetails
-  // ]);
-
-  // const onAcceptTopup = () => {
-  //   props.handleOk(topupAmount);
-  // }
-
-  // const setValue = (value: string) => {
-  //   setTopupAmount(value);
-  // }
-
-  // const handleAmountChange = (e: any) => {
-  //   const newValue = isValidNumber(e.target.value) ? e.target.value : '';
-  //   setValue(newValue);
-  // };
-
-  // const getFeeAmount = (amount?: any): number => {
-  //   let fee = 0;
-  //   const inputAmount = amount ? parseFloat(amount) : 0;
-  //   if (props && props.ddcaTxFees) {
-  //     if (props.ddcaTxFees.percentFee) {
-  //       fee = percentage(props.ddcaTxFees.percentFee, inputAmount);
-  //     } else if (props.ddcaTxFees.flatFee) {
-  //       fee = props.ddcaTxFees.flatFee;
-  //     }
-  //   }
-  //   return fee;
-  // }
-
-  // Validation
-
-  // const isValidInput = (): boolean => {
-  //   return selectedToken &&
-  //          props.ddcaDetails?.fromBalance &&
-  //          topupAmount && parseFloat(topupAmount) > 0 &&
-  //          parseFloat(topupAmount) <= props.ddcaDetails.fromBalance &&
-  //          parseFloat(topupAmount) > getFeeAmount(topupAmount)
-  //           ? true
-  //           : false;
-  // }
-
-  // const getTransactionStartButtonLabel = (): string => {
-  //   return !selectedToken || !props.ddcaDetails?.fromBalance
-  //     ? t('transactions.validation.no-balance')
-  //     : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
-  //     ? t('transactions.validation.no-amount')
-  //     : parseFloat(topupAmount) > props.ddcaDetails.fromBalance
-  //     ? t('transactions.validation.amount-high')
-  //     : props.ddcaDetails.fromBalance < getFeeAmount(topupAmount)
-  //     ? t('transactions.validation.amount-low')
-  //     : t('transactions.validation.valid-approve');
-  // }
-
-  // const infoRow = (caption: string, value: string) => {
-  //   return (
-  //     <Row>
-  //       <Col span={12} className="text-right pr-1">{caption}</Col>
-  //       <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-  //     </Row>
-  //   );
-  // }
-
-  // return (
-  //   <Modal
-  //     className="mean-modal"
-  //     title={<div className="modal-title">{t('add-funds.modal-title')}</div>}
-  //     footer={null}
-  //     visible={props.isVisible}
-  //     onOk={onAcceptTopup}
-  //     onCancel={props.handleClose}
-  //     afterClose={() => setValue('')}
-  //     width={480}>
-
-  //     {props.ddcaDetails && (
-  //       <div className="mb-3">
-  //         <div className="transaction-field mb-1">
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left" style={{marginBottom: '-6px'}}>
-  //               {t('add-funds.label')} ~${topupAmount && effectiveRate
-  //                 ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-  //                 : "0.00"}
-  //               <IconSort className="mean-svg-icons usd-switcher fg-red" />
-  //               <span className="fg-red">USD</span>
-  //             </span>
-  //             <span className="field-label-right">
-  //               <span>{t('add-funds.label-right')}:</span>
-  //               <span className="balance-amount">
-  //                 {`${selectedToken && props.ddcaDetails.fromBalance
-  //                   ? getTokenAmountAndSymbolByTokenAddress(props.ddcaDetails.fromBalance, selectedToken.address, true)
-  //                   : "0"
-  //                 }`}
-  //               </span>
-  //               <span className="balance-amount">
-  //                 (~$
-  //                 {props.ddcaDetails.fromBalance && effectiveRate
-  //                   ? formatAmount(props.ddcaDetails.fromBalance as number * effectiveRate, 2)
-  //                   : "0.00"})
-  //               </span>
-  //             </span>
-  //           </div>
-  //           <div className="transaction-field-row main-row">
-  //             <span className="input-left">
-  //               <input
-  //                 id="topup-amount-field"
-  //                 className="general-text-input"
-  //                 inputMode="decimal"
-  //                 autoComplete="off"
-  //                 autoCorrect="off"
-  //                 type="text"
-  //                 onChange={handleAmountChange}
-  //                 pattern="^[0-9]*[.,]?[0-9]*$"
-  //                 placeholder="0.0"
-  //                 minLength={1}
-  //                 maxLength={79}
-  //                 spellCheck="false"
-  //                 value={topupAmount}
-  //               />
-  //             </span>
-  //             {selectedToken && (
-  //               <div className="addon-right">
-  //                 <div className="token-group">
-  //                   {props.ddcaDetails.fromBalance > 0 && (
-  //                     <div
-  //                       className="token-max simplelink"
-  //                       onClick={() => {
-  //                         setValue(
-  //                           getTokenAmountAndSymbolByTokenAddress(props.ddcaDetails?.fromBalance || 0, selectedToken.address, true)
-  //                         );
-  //                       }}>
-  //                       MAX
-  //                     </div>
-  //                   )}
-  //                   <div className="token-selector">
-  //                     <div className="token-icon">
-  //                       {selectedToken.logoURI ? (
-  //                         <img
-  //                           alt={`${selectedToken.name}`}
-  //                           width={20}
-  //                           height={20}
-  //                           src={selectedToken.logoURI}
-  //                         />
-  //                       ) : (
-  //                         <Identicon
-  //                           address={selectedToken.address}
-  //                           style={{ width: "24", display: "inline-flex" }}
-  //                         />
-  //                       )}
-  //                     </div>
-  //                     <div className="token-symbol">{selectedToken.symbol}</div>
-  //                   </div>
-  //                 </div>
-  //               </div>
-  //             )}
-  //           </div>
-  //           <div className="transaction-field-row">
-  //             <span className="field-label-left">{
-  //               parseFloat(topupAmount) > props.ddcaDetails.fromBalance
-  //                 ? (<span className="fg-red">{t('transactions.validation.amount-high')}</span>)
-  //                 : (<span>&nbsp;</span>)
-  //             }</span>
-  //             <span className="field-label-right">&nbsp;</span>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     )}
-
-  //     {(selectedToken) && (
-  //       <div className="p-2 mb-2">
-  //         {infoRow(
-  //           `1 ${selectedToken.symbol}:`,
-  //           effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-  //         )}
-  //         {isValidInput() && infoRow(
-  //           t('transactions.transaction-info.transaction-fee') + ':',
-  //           `~${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(topupAmount), selectedToken?.address)}`
-  //         )}
-  //         {isValidInput() && infoRow(
-  //           t('transactions.transaction-info.beneficiary-receives') + ':',
-  //           `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - getFeeAmount(topupAmount), selectedToken?.address)}`
-  //         )}
-  //       </div>
-  //     )}
-
-  //     <Button
-  //       className="main-cta"
-  //       block
-  //       type="primary"
-  //       shape="round"
-  //       size="large"
-  //       disabled={!isValidInput()}
-  //       onClick={onAcceptTopup}>
-  //       {getTransactionStartButtonLabel()}
-  //     </Button>
-  //   </Modal>
-  // );
 
 };

@@ -1116,7 +1116,8 @@ export const RepeatingPayment = () => {
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
-                        getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                        // getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                        tokenBalance.toFixed(selectedToken.decimals)
                       )
                     }>
                     MAX

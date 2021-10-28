@@ -213,6 +213,7 @@ export const OneTimePayment = () => {
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
+    console.log('valid?', isValidNumber(newValue));
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
     } else if (isValidNumber(newValue)) {
@@ -766,7 +767,7 @@ export const OneTimePayment = () => {
                     className="token-max simplelink"
                     onClick={() =>
                       setFromCoinAmount(
-                        getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                        tokenBalance.toFixed(selectedToken.decimals)
                       )
                     }>
                     MAX
