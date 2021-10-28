@@ -223,7 +223,10 @@
 		"week": "la semaine",
 		"weeks": "",
 		"year": "année",
-		"you": "vous"
+		"you": "vous",
+		"start": "start",
+		"starting": "starting",
+		"finished": "finished"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",

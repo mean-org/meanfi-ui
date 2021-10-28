@@ -53,7 +53,6 @@ export const DdcaSetupModal = (props: {
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
-    recentlyCreatedVault,
     setRecentlyCreatedVault,
     startFetchTxSignatureInfo
   } = useContext(TransactionStatusContext);
@@ -299,7 +298,6 @@ export const DdcaSetupModal = (props: {
 
         const payload = {
           ownerAccountAddress: publicKey,
-          depositAmount: props.fromTokenAmount * (recurrencePeriod + 1),
           amountPerSwap: props.fromTokenAmount,
           fromMint: new PublicKey(props.fromToken?.address as string),
           toMint: new PublicKey(props.toToken?.address as string),
@@ -324,8 +322,8 @@ export const DdcaSetupModal = (props: {
         return await ddcaClient.createDdcaTx(
           payload.fromMint,
           payload.toMint,
-          payload.depositAmount,
           payload.amountPerSwap,
+          payload.totalSwaps,
           payload.intervalinSeconds)
         .then((value: [PublicKey, Transaction]) => {
           consoleOut('createDdca returned transaction:', value);
@@ -581,6 +579,8 @@ export const DdcaSetupModal = (props: {
         })
         .catch(error => {
           console.error('createWakeAndSwapTx error:', error);
+          const parsedError = ddcaClient.tryParseRpcError(error);
+          consoleOut('tryParseRpcError -> createWakeAndSwapTx', parsedError, 'red');
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -666,7 +666,9 @@ export const DdcaSetupModal = (props: {
             return true;
           })
           .catch(error => {
-            console.error(error);
+            console.error('createWakeAndSwapTx -> sendSignedTransaction error:', error);
+            const parsedError = ddcaClient.tryParseRpcError(error);
+            consoleOut('tryParseRpcError -> createWakeAndSwapTx -> sendSignedTransaction', parsedError, 'red');
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -858,7 +860,7 @@ export const DdcaSetupModal = (props: {
                 onSpawnSwapTxStart();
               }
             }}>
-            {vaultCreated && isBusy ? 'Starting' : vaultCreated && swapExecuted ? 'Finished' : 'Start'}
+            {vaultCreated && isBusy ? t('general.starting') : vaultCreated && swapExecuted ? t('general.finished') : t('general.start')}
           </Button>
         </div>
       </div>
