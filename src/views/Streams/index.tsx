@@ -79,6 +79,7 @@ export const Streams = () => {
     streamList,
     streamDetail,
     selectedToken,
+    currentScreen,
     loadingStreams,
     loadingStreamActivity,
     streamActivity,
@@ -86,6 +87,7 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
+    setStreamList,
     setSelectedToken,
     setCurrentScreen,
     setStreamDetail,
@@ -134,7 +136,7 @@ export const Streams = () => {
 
   const updateLiveStreamData = useCallback(() => {
 
-    if (!streamDetail) { return; }
+    if (!streamDetail || currentScreen === 'contract') { return; }
 
     if (isStreamScheduled(streamDetail.startUtc as string)) {
       return;
@@ -178,8 +180,9 @@ export const Streams = () => {
     setStreamDetail(clonedDetail);
 
   },[
-    setStreamDetail, 
-    streamDetail
+    streamDetail,
+    currentScreen,
+    setStreamDetail,
   ]);
 
   // Live data calculation
@@ -187,7 +190,6 @@ export const Streams = () => {
 
     const timeout = setTimeout(() => {
       updateLiveStreamData();
-
     }, 1000);
 
     return () => {
@@ -229,6 +231,7 @@ export const Streams = () => {
   const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
   const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
   const onAcceptContractSelector = () => {
+    setStreamList([]);
     setCurrentScreen('contract');
     setCustomStreamDocked(false);
     closeContractSelectorModal();

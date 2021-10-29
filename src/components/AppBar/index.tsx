@@ -14,9 +14,6 @@ import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
-import { PublicKey } from '@solana/web3.js';
-import { listStreams } from '@mean-dao/money-streaming/lib/utils';
-import { consoleOut } from '../../utils/ui';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
 
@@ -25,14 +22,12 @@ const { SubMenu } = Menu;
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const connection = useConnection();
   const { publicKey, connected } = useWallet();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
     addAccountPanelOpen,
     isDepositOptionsModalVisible,
-    setCurrentScreen,
     setLoadingStreams,
     refreshStreamList,
     setDtailsPanelOpen,
@@ -54,9 +49,6 @@ export const AppBar = (props: { menuType: string }) => {
     if (publicKey) {
       setLoadingStreams(true);
       refreshStreamList(true);
-    } else {
-      setCurrentScreen('contract');
-      setRedirect('/transfers');
     }
   };
 

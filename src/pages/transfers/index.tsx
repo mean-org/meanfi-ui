@@ -7,6 +7,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { IconCaretDown, IconMoneyTransfer } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
+import { consoleOut } from '../../utils/ui';
 
 export const TransfersView = () => {
   const { publicKey } = useWallet();
@@ -15,6 +16,7 @@ export const TransfersView = () => {
     streamList,
     currentScreen,
     loadingStreams,
+    setStreamList,
     setCurrentScreen,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -23,13 +25,24 @@ export const TransfersView = () => {
   // If the last known screen was 'streams' but there are no streams, fallback to 'contract'
   useEffect(() => {
     if (publicKey) {
-      if (!streamList && loadingStreams) {
-        setIsLoading(true);
-      } else if (!loadingStreams && currentScreen === 'streams' && streamList && streamList.length === 0) {
-        setCurrentScreen('contract');
-        setIsLoading(false);
+      if (currentScreen === 'contract') {
+        // While the contract screen is set, lets see what happens while loading and after loading
+        if (loadingStreams) {
+          setIsLoading(true);
+        } else {
+          if (streamList && streamList.length > 0) {
+            setIsLoading(false);
+            setCurrentScreen('streams');
+          } else {
+            setIsLoading(false);
+            setCurrentScreen('contract');
+          }
+        }
       } else {
-        setIsLoading(false);
+        if (!loadingStreams && streamList && streamList.length === 0) {
+          setIsLoading(false);
+          setCurrentScreen('contract');
+        }
       }
     } else {
       setIsLoading(false);
@@ -48,6 +61,9 @@ export const TransfersView = () => {
   const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
   const onAcceptContractSelector = () => {
     // Do something and close the modal
+    setStreamList([]);
+    setCurrentScreen('contract');
+    setIsLoading(false);
     closeContractSelectorModal();
   };
 
@@ -93,9 +109,7 @@ export const TransfersView = () => {
     <>
     <div className="container main-container">
       <div className="interaction-area">
-        {currentScreen === 'streams' ? (
-          <Streams />
-        ) : (
+        {currentScreen === 'contract' ? (
           <>
           <div className="title-and-subtitle">
             <div className="title">
@@ -125,6 +139,8 @@ export const TransfersView = () => {
               handleClose={closeContractSelectorModal}/>
           </div>
           </>
+        ) : (
+          <Streams />
         )}
       </div>
     </div>

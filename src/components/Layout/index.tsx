@@ -30,6 +30,8 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     referrals,
+    // currentScreen,
+    // loadingStreams,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
@@ -273,12 +275,10 @@ export const AppLayout = React.memo((props: any) => {
             <AppBar menuType="desktop" />
           </div>
           <AppBar menuType="mobile" />
-          {/* {window.location.hostname === 'localhost' && (
+          {/* {isLocal() && (
             <div className="debug-bar">
-              <span className="secondary-link" onClick={() => testTx()}>[test tx]</span>
-              <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchingTxStatus ? 'fetching' : 'idle'}</span>
-              <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{fetchingTxStatus ? 'fetching' : lastSentTxStatus || 'error'}</span>
-              <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature || '-'}</span>
+              <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen || '-'}</span>
+              <span className="ml-1">loadingStreams:</span><span className="ml-1 font-bold fg-dark-active">{loadingStreams ? 'true' : 'false'}</span>
             </div>
           )} */}
         </Header>
