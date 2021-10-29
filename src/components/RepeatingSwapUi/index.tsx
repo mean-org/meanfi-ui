@@ -48,11 +48,11 @@ export const RepeatingSwapUi = (props: {
     coinPrices,
     ddcaOption,
     previousWalletConnectState,
-    setDdcaOption,
-    setPreviousWalletConnectState
+    setPreviousWalletConnectState,
+    setDdcaOption
 
   } = useContext(AppStateContext);
-
+  
   const connection = useMemo(() => props.connection, [props.connection]);
   const [refreshing, setRefreshing] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
@@ -87,6 +87,7 @@ export const RepeatingSwapUi = (props: {
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
+  const [defaultDdcaOption] = useState("Repeat weekly");
 
   // DDCA Option selector modal
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
@@ -153,34 +154,34 @@ export const RepeatingSwapUi = (props: {
     toMint
   ])
 
-  const isStableSwap = useCallback(() => {
+  const isStableSwap = (
+    from: string | undefined,
+    to: string | undefined
 
-    if (!fromMint || !toMint) { return false; }
+  ) => {
+
+    if (!from || !to) { return false; }
 
     const usdStables = [
       USDC_MINT.toBase58(), 
       USDT_MINT.toBase58()
     ];
 
+    if (usdStables.includes(from) && usdStables.includes(to)) {
+      return true;
+    }
+
     const solStables = [
       NATIVE_SOL_MINT.toBase58(), 
       WRAPPED_SOL_MINT.toBase58()
     ];
 
-    if (usdStables.includes(fromMint) && usdStables.includes(toMint)) {
-      return true;
-    }
-
-    if (solStables.includes(fromMint) && solStables.includes(toMint)) {
+    if (solStables.includes(from) && solStables.includes(to)) {
       return true;
     }
 
     return false;
-
-  },[
-    fromMint, 
-    toMint
-  ]);
+  }
 
   // Calculates the max allowed amount to swap
   const getMaxAllowedSwapAmount = useCallback(() => {
@@ -208,10 +209,33 @@ export const RepeatingSwapUi = (props: {
     userBalances
   ]);
 
-  // Preset ddcaOption based on the component input "isRepeating"
-  useMemo(() => {
-    setDdcaOption('Repeat weekly');
-  }, [
+  const updateRenderCount = useCallback(() => {
+
+    setRenderCount(renderCount + 1);
+
+  },[
+    renderCount
+  ]);
+
+  useEffect(() => {
+
+    if (!ddcaOption || ddcaOption.name !== defaultDdcaOption) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      setDdcaOption(ddcaOption.name);
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    ddcaOption,
+    defaultDdcaOption,
     setDdcaOption
   ]);
 
@@ -853,10 +877,6 @@ export const RepeatingSwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
-      if (isStableSwap()) {
-        setDdcaOption('One time exchange');
-      }
-
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
@@ -894,9 +914,7 @@ export const RepeatingSwapUi = (props: {
   },[
     fromMint,
     toMint,
-    mintList,
-    isStableSwap,
-    setDdcaOption
+    mintList
   ]);
 
   // Updates the allowed from mints to select 
@@ -905,10 +923,6 @@ export const RepeatingSwapUi = (props: {
     if (!toMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-      
-      if (isStableSwap()) {
-        setDdcaOption('One time exchange');
-      }
 
       const btcMintInfo: any = Object
         .values(mintList)
@@ -941,9 +955,7 @@ export const RepeatingSwapUi = (props: {
   },[
     fromMint,
     toMint,
-    mintList,
-    isStableSwap,
-    setDdcaOption
+    mintList
   ]);
 
   // Updates the label of the Swap button
@@ -1196,14 +1208,6 @@ export const RepeatingSwapUi = (props: {
     toMint
   ]);
 
-  const updateRenderCount = useCallback(() => {
-
-    setRenderCount(renderCount + 1);
-
-  },[
-    renderCount
-  ]);
-
   const onAfterTransactionModalClosed = useCallback(() => {
 
     setFromAmount("");
@@ -1317,7 +1321,7 @@ export const RepeatingSwapUi = (props: {
               className={`token-item ${
                 fromMint && fromMint === token.address
                   ? "selected"
-                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined))
+                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined)) || isStableSwap(token.address, toMint)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -1381,7 +1385,7 @@ export const RepeatingSwapUi = (props: {
               className={`token-item ${
                 toMint && toMint === token.address
                   ? "selected"
-                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
+                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined)) || isStableSwap(fromMint, token.address)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -1449,10 +1453,9 @@ export const RepeatingSwapUi = (props: {
               <Button
                 type="default"
                 size="middle"
-                disabled={isStableSwap()}
                 className="dropdown-like-button"
                 onClick={showDdcaOptionSelector}>
-                <span className="mr-2">{t(`ddca-selector.${ddcaOption?.translationId}.name`)}</span>
+                <span className="mr-2">{t(`ddca-selector.${ddcaOption.translationId}.name`)}</span>
                 <IconCaretDown className="mean-svg-icons" />
               </Button>
             )}
