@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from "../../contexts/appstate";
-import { IconCaretDown } from "../../Icons";
+import { IconCaretDown, IconMoneyTransfer } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 
@@ -96,6 +96,16 @@ export const TransfersView = () => {
         {currentScreen === 'streams' ? (
           <Streams />
         ) : (
+          <>
+          <div className="title-and-subtitle">
+            <div className="title">
+              <IconMoneyTransfer className="mean-svg-icons" />
+              <div>{t('transfers.screen-title')}</div>
+            </div>
+            <div className="subtitle">
+              {t('transfers.screen-subtitle')}
+            </div>
+          </div>
           <div className="place-transaction-box mb-3">
             <div className="contract-wrapper">
               <div className="position-relative mb-2">
@@ -114,6 +124,7 @@ export const TransfersView = () => {
               handleOk={onAcceptContractSelector}
               handleClose={closeContractSelectorModal}/>
           </div>
+          </>
         )}
       </div>
     </div>

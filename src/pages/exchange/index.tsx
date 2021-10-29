@@ -12,7 +12,7 @@ import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { environment } from '../../environments/environment';
 import { useTranslation } from 'react-i18next';
-import { IconCallSplit } from '../../Icons';
+import { IconExchange } from '../../Icons';
 import { RepeatingSwapUi } from '../../components/RepeatingSwapUi';
 
 type SwapOption = "one-time" | "recurring";
@@ -140,7 +140,7 @@ export const SwapView = () => {
         <div className="interaction-area">
           <div className="title-and-subtitle">
             <div className="title">
-              <IconCallSplit className="mean-svg-icons" />
+              <IconExchange className="mean-svg-icons" />
               <div>{t('swap.screen-title')}</div>
             </div>
             <div className="subtitle">

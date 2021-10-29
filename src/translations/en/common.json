@@ -468,6 +468,10 @@
 			"valid-start-withdrawal": "Start withdrawal"
 		}
 	},
+	"transfers": {
+		"screen-title": "Transfers",
+		"screen-subtitle": "Send money to anyone in the world faster"
+	},
 	"ui-language": {
 		"en": "English",
 		"es": "Spanish",
