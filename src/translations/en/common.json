@@ -224,9 +224,9 @@
 		"weeks": "weeks",
 		"year": "year",
 		"you": "you",
-		"start": "start",
-		"starting": "starting",
-		"finished": "finished"
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
