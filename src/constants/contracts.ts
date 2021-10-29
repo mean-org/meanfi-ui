@@ -19,7 +19,7 @@ export const STREAMING_PAYMENT_CONTRACTS: ContractDefinition[] = [
     {
         id: 2,
         translationId: 'repeating',
-        name: 'Repeating Payment ',
+        name: 'Repeating Payment',
         categoryId: 'cat1',
         disabled: false,
     },

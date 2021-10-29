@@ -40,7 +40,6 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
 } from "../../utils/ui";
-import { ContractSelectorModal } from '../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../components/OpenStreamModal';
 import { WithdrawModal } from '../../components/WithdrawModal';
 import {
@@ -226,17 +225,6 @@ export const Streams = () => {
     }
   }, []);
 
-  // Contract switcher modal
-  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
-  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
-  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
-  const onAcceptContractSelector = () => {
-    setStreamList([]);
-    setCurrentScreen('contract');
-    setCustomStreamDocked(false);
-    closeContractSelectorModal();
-  };
-
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
@@ -351,6 +339,12 @@ export const Streams = () => {
     closeWithdrawModal();
     consoleOut('Withdraw amount:', parseFloat(amount));
     onExecuteWithdrawFundsTransaction(amount);
+  };
+
+  const onActivateContractScreen = () => {
+    setStreamList([]);
+    setCurrentScreen('contract');
+    setCustomStreamDocked(false);
   };
 
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
@@ -2165,7 +2159,7 @@ export const Streams = () => {
                   type="primary"
                   shape="round"
                   size="small"
-                  onClick={showContractSelectorModal}>
+                  onClick={onActivateContractScreen}>
                   {t('streams.create-new-stream-cta')}
                 </Button>
               </div>
@@ -2200,10 +2194,6 @@ export const Streams = () => {
           )}
         </div>
       </div>
-      <ContractSelectorModal
-        isVisible={isContractSelectorModalVisible}
-        handleOk={onAcceptContractSelector}
-        handleClose={closeContractSelectorModal}/>
       <OpenStreamModal
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}

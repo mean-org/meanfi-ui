@@ -3,14 +3,13 @@ import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
 import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
-import { environment } from '../../environments/environment';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { RepeatingSwapUi } from '../../components/RepeatingSwapUi';
@@ -30,10 +29,6 @@ export const SwapView = () => {
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [redirect, setRedirect] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
-
-  const isProd = (): boolean => {
-    return environment === 'production';
-  }
 
   // Parse query params
   useEffect(() => {
