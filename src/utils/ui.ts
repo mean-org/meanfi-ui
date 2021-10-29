@@ -86,11 +86,15 @@ export function getTransactionStatusForLogs (status: TransactionStatus): string 
         case TransactionStatus.InitTransactionSuccess:
             return 'Transaction successfully initialized';
         case TransactionStatus.SignTransaction:
-            return 'Waiting for confirmation';
+            return 'Waiting for wallet approval';
         case TransactionStatus.SendTransaction:
             return 'Sending transaction';
         case TransactionStatus.ConfirmTransaction:
             return 'Confirming transaction';
+        case TransactionStatus.ConfirmTransactionSuccess:
+            return 'Confirm transaction succeeded';
+        case TransactionStatus.ConfirmTransactionFailure:
+            return 'Confirm transaction failed';
         case TransactionStatus.InitTransactionFailure:
             return 'Could not init transaction';
         case TransactionStatus.SignTransactionFailure:
@@ -101,8 +105,6 @@ export function getTransactionStatusForLogs (status: TransactionStatus): string 
             return 'Failure submitting transaction';
         case TransactionStatus.SendTransactionSuccess:
             return 'Transaction sent successfully';
-        case TransactionStatus.ConfirmTransactionFailure:
-            return 'The transaction could not be confirmed';
         case TransactionStatus.CreateRecurringBuySchedule:
             return 'Create recurring exchange schedule';
         case TransactionStatus.CreateRecurringBuyScheduleSuccess:

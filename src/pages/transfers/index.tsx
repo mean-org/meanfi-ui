@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from "../../contexts/appstate";
-import { IconCaretDown } from "../../Icons";
+import { IconCaretDown, IconMoneyTransfer } from "../../Icons";
 import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 
@@ -96,22 +96,35 @@ export const TransfersView = () => {
         {currentScreen === 'streams' ? (
           <Streams />
         ) : (
-          <div className="place-transaction-box mb-3">
-            <div className="position-relative mb-2">
-              {contract && (
-                <>
-                  <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
-                  <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
-                </>
-              )}
+          <>
+          <div className="title-and-subtitle">
+            <div className="title">
+              <IconMoneyTransfer className="mean-svg-icons" />
+              <div>{t('transfers.screen-title')}</div>
             </div>
-            {/* Display apropriate contract setup screen */}
-            {renderContract()}
+            <div className="subtitle">
+              {t('transfers.screen-subtitle')}
+            </div>
+          </div>
+          <div className="place-transaction-box mb-3">
+            <div className="contract-wrapper">
+              <div className="position-relative mb-2">
+                {contract && (
+                  <>
+                    <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                    <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
+                  </>
+                )}
+              </div>
+              {/* Display apropriate contract setup screen */}
+              {renderContract()}
+            </div>
             <ContractSelectorModal
               isVisible={isContractSelectorModalVisible}
               handleOk={onAcceptContractSelector}
               handleClose={closeContractSelectorModal}/>
           </div>
+          </>
         )}
       </div>
     </div>

@@ -33,6 +33,7 @@ export const DdcaFrequencySelectorModal = (props: {
     return (
       <div className="items-card-list vertical-scroll">
         {DDCA_FREQUENCY_OPTIONS.map(option => {
+          if (option.dcaInterval < 2) { return null; }
           return (
             <div key={`${option.dcaInterval}`} className={`item-card ${option.name === ddcaOption?.name
               ? "selected"

@@ -328,13 +328,20 @@
 		}
 	},
 	"swap": {
+		"screen-title": "Exchange",
+		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange est disponible uniquement sur",
 		"input-label-destination": "Échanger pour (est.)",
 		"input-label-source": "Échanger depuis",
 		"insufficient-liquidity": "Liquidité insuffisante pour cette transaction",
 		"token-select-destination": "Sélectionnez un token",
 		"token-select-source": "Sélectionnez un token",
-		"transaction-settings": "Tolérance de slippage"
+		"transaction-settings": "Tolérance de slippage",
+		"frequency-label": "Frequency",
+		"tabset": {
+			"one-time": "One time",
+			"recurring": "Recurring"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Sélectionnez un token",
@@ -460,6 +467,10 @@
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait"
 		}
+	},
+	"transfers": {
+		"screen-title": "Transfers",
+		"screen-subtitle": "Send money to anyone in the world faster"
 	},
 	"ui-language": {
 		"en": "Anglais",
