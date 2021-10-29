@@ -7,6 +7,10 @@ import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "
 import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
 
+export const isDev = (): boolean => {
+    return environment === 'development';
+}
+
 export const isProd = (): boolean => {
     return environment === 'production';
 }

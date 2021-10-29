@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, Redirect, useLocation } from 'react-router-dom';
-import { Menu } from 'antd';
+import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentBalance } from "../CurrentBalance";
-import { useConnection, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
@@ -16,6 +16,8 @@ import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { isDev } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -23,6 +25,7 @@ export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected } = useWallet();
+  const isOnline = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
@@ -175,6 +178,15 @@ export const AppBar = (props: { menuType: string }) => {
             </>
           ) : (
             <ConnectButton />
+          )}
+          {isDev() && (
+            <div className="flex">
+              <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
+                  ? t('notifications.network-connection-good')
+                  : t('notifications.network-connection-poor')}>
+                <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
+              </Tooltip>
+            </div>
           )}
           <div className="app-context-menu">
             <AppContextMenu />

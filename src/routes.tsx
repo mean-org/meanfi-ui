@@ -20,11 +20,13 @@ import { ProcessReferals } from "./guards";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
+import { OnlineStatusProvider } from "./hooks/useOnlineStatus";
 
 export function Routes() {
 
   return (
     <>
+    <OnlineStatusProvider>
       <BrowserRouter basename={"/"}>
         <ConnectionProvider>
           <WalletProvider>
@@ -63,6 +65,7 @@ export function Routes() {
           </WalletProvider>
         </ConnectionProvider>
       </BrowserRouter>
+    </OnlineStatusProvider>
     </>
   );
 }

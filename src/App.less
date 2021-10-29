@@ -1410,12 +1410,87 @@ em {
   border: none;
 }
 
+.flex {
+  flex: 1 1 auto;
+}
+.flexible-left {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  @media (min-width: 576px) {
+    .transaction-field {
+      margin: 0 1rem 0 0;
+    }
+  }
+  .transaction-field {
+    height: 70px;
+    .transaction-field-row.main-row {
+      #payment-recipient-field.general-text-input,
+      #payment-recipient-static-field {
+        font-size: 20px;
+        top: 4px;
+      }
+      .addon-right {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+  }
+  button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
+    min-width: 90px;
+    text-transform: uppercase;
+    font-weight: 600;
+    height: 56px;
+    line-height: 20px;
+    font-size: 20px;
+  }
+  .left {
+    flex: 1 1 auto;
+  }
+  .right {
+    flex: 0 0 auto;
+  }
+}
+.flexible-right {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 0 0 auto;
+    &.from-token-balance {
+      width: 130px;
+      text-align: center;
+      line-height: 1.2;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-style: solid;
+      border-width: 1px;
+      padding: 4px 0;
+      border-color: var(--color-secondary-alpha-20)
+    }
+  }
+  .right {
+    flex: 1 1 auto;
+  }
+  .amount {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    top: -0.5rem;
+  }
+}
 .flexColumn {
   display: flex;
   flex-direction: column;
   flex: 1;
 }
-
 .card-fill {
   height: 100%;
 }
@@ -1783,79 +1858,6 @@ section.content {
   margin: 0 2px;
   vertical-align: -4px;
 }
-.flexible-left {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  @media (min-width: 576px) {
-    .transaction-field {
-      margin: 0 1rem 0 0;
-    }
-  }
-  .transaction-field {
-    height: 70px;
-    .transaction-field-row.main-row {
-      #payment-recipient-field.general-text-input,
-      #payment-recipient-static-field {
-        font-size: 20px;
-        top: 4px;
-      }
-      .addon-right {
-        display: inline-flex;
-        align-items: center;
-      }
-    }
-  }
-  button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
-    min-width: 90px;
-    text-transform: uppercase;
-    font-weight: 600;
-    height: 56px;
-    line-height: 20px;
-    font-size: 20px;
-  }
-  .left {
-    flex: 1 1 auto;
-  }
-  .right {
-    flex: 0 0 auto;
-  }
-}
-.flexible-right {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  .left {
-    flex: 0 0 auto;
-    &.from-token-balance {
-      width: 130px;
-      text-align: center;
-      line-height: 1.2;
-      font-size: 12.5px;
-      font-weight: 700;
-      border-style: solid;
-      border-width: 1px;
-      padding: 4px 0;
-      border-color: var(--color-secondary-alpha-20)
-    }
-  }
-  .right {
-    flex: 1 1 auto;
-  }
-  .amount {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1;
-    top: -0.5rem;
-  }
-}  
 
 .transaction-field {
   width: 100%;
@@ -5571,6 +5573,22 @@ code {
 .emoji {
   font-weight: 400;
   font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol;
+}
+
+.online-status {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-notify-warning);
+  border-radius: 50%;
+  box-shadow: 1px 1px 1px 0px rgb(0 0 0 / 30%);
+  opacity: 0.5;
+  &.success {
+    background-color: var(--color-notify-success);
+  }
+  &.error {
+    background-color: var(--color-notify-error);
+  }
 }
 
 .debug-bar {
