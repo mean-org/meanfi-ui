@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, InputNumber, Popover } from "antd";
 import { useTranslation } from "react-i18next";
-import { SettingOutlined } from "@ant-design/icons";
+import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
 import { MAX_SLIPPAGE_VALUE, MIN_SLIPPAGE_VALUE } from "../../constants";
 
@@ -11,6 +11,7 @@ export const SwapSettings = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { width } = useWindowSize();
+  const [visible, setVisible] = useState(false);
 
   const isSmScreen = ():boolean => {
     return width < 768 ? true : false;
@@ -30,21 +31,40 @@ export const SwapSettings = (props: {
     }
   }
 
-  const text = <span>{t('swap.transaction-settings')}</span>;
+  const handleVisibleChange = (visibleChange: boolean) => {
+    setVisible(visibleChange);
+  };
+
+  const text = (
+    <div className="flexible-left">
+      <div className="left">
+        {t('swap.transaction-settings')}
+      </div>
+      <div className="right">
+        <Button
+          type="default"
+          shape="circle"
+          icon={<CloseOutlined />}
+          onClick={() => handleVisibleChange(false)}
+        />
+      </div>
+    </div>
+  );
   const content = (
     <div className="flexible-left">
       <div className="left token-group">
-        <div key="preset-01" className="token-max simplelink" onClick={() => onChangeValue(0.25)}>0.25%</div>
         <div key="preset-02" className="token-max simplelink" onClick={() => onChangeValue(0.5)}>0.5%</div>
         <div key="preset-03" className="token-max simplelink" onClick={() => onChangeValue(1)}>1%</div>
         <div key="preset-04" className="token-max simplelink" onClick={() => onChangeValue(2)}>2%</div>
       </div>
       <div className="right">
         <InputNumber
-          style={{ width: 100 }}
+          style={{ width: 64 }}
           min={MIN_SLIPPAGE_VALUE}
           max={MAX_SLIPPAGE_VALUE}
           step={0.1}
+          formatter={value => `${value}%`}
+          parser={value => parseFloat(value ? value.replace('%', '') : '0.1')}
           value={props.currentValue}
           onChange={onChange}
         />
@@ -54,7 +74,13 @@ export const SwapSettings = (props: {
 
   return (
     <>
-      <Popover placement={isSmScreen() ? "bottomRight" : 'bottom'} title={text} content={content} trigger="click">
+      <Popover
+        placement={isSmScreen() ? "bottomRight" : 'bottom'}
+        title={text}
+        content={content}
+        visible={visible}
+        onVisibleChange={handleVisibleChange}
+        trigger="click">
         <Button
           shape="round"
           type="text"

@@ -622,7 +622,6 @@ footer.ant-layout-footer {
     font-size: 14px;
   }
 }
-
 // Dropdown-like button (type=default)
 .ant-btn.ant-btn-default.dropdown-like-button {
   display: inline-flex;
@@ -804,6 +803,33 @@ footer.ant-layout-footer {
     border-color: var(--color-secondary-alpha-20);
     outline: 0;
     box-shadow: none;
+  }
+  input.ant-input-number-input {
+    padding: 0 8px;
+    text-align: right;
+  }
+  .ant-input-number-handler-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background: var(--darken);
+    border-radius: 2px 0 0 2px;
+    opacity: 0;
+    transition: opacity 0.24s linear 0.1s;
+    .ant-input-number-handler {
+      color: var(--color-secondary-alpha-20);
+      border-left: none;
+      border-right-style: solid;
+      border-right-width: 1px;
+      border-right-color: var(--color-secondary-alpha-20);
+      border-top-color: var(--color-secondary-alpha-20);
+    }
+    .ant-input-number-handler-up-inner,
+    .ant-input-number-handler-down-inner {
+      color: var(--color-secondary-alpha-40);
+    }
   }
 }
 
@@ -5505,6 +5531,18 @@ code {
       .ant-popover-title {
         color: var(--color-secondary-alpha-70);
         border-bottom: 1px solid var(--color-secondary-alpha-20);
+        .ant-btn.ant-btn-circle.ant-btn-icon-only {
+          height: 24px;
+          width: 24px;
+          min-width: auto;
+          background-color: inherit;
+          color: inherit;
+          padding: 14px;
+          margin: 4px -4px;
+          &:hover {
+            background-color: var(--color-secondary-alpha-05);
+          }
+        }
       }
       .ant-popover-inner-content {
         color: var(--text-color);
