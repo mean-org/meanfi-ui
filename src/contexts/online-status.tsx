@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 
 const PING_RESOURCE = "/ping.txt";
 const TIMEOUT_TIME_MS = 3000;
-const onlinePollingInterval = 10000;
+const onlinePollingInterval = 30000;
 
 const timeout = (time: number, promise: Promise<any>) => {
   return new Promise(function(resolve, reject) {

@@ -16,7 +16,7 @@ import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { useOnlineStatus } from '../../contexts/online-status';
 import { isDev } from '../../utils/ui';
 
 const { SubMenu } = Menu;

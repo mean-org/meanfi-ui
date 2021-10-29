@@ -20,7 +20,7 @@ import { ProcessReferals } from "./guards";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
-import { OnlineStatusProvider } from "./hooks/useOnlineStatus";
+import { OnlineStatusProvider } from "./contexts/online-status";
 
 export function Routes() {
 

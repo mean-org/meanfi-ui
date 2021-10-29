@@ -4,7 +4,7 @@ import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
 import { CurrentBalance } from '../CurrentBalance';
-import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import { useOnlineStatus } from '../../contexts/online-status';
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { isDev } from '../../utils/ui';
