@@ -92,6 +92,7 @@ export const AccountsView = () => {
   }, [])
 
   const reloadSwitch = useCallback(() => {
+    setShouldLoadTokens(true);
     setSolAccountItems(0);
     setTransactions(undefined);
     startSwitch();
