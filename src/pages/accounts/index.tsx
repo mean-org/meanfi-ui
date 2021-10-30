@@ -952,7 +952,7 @@ export const AccountsView = () => {
             </div>
           ) : (
             <>
-              <div className="boxed-area">
+              <div className="boxed-area add-account">
                 {accountAddress && (
                   <div className="back-button">
                     <span className="icon-button-container">
@@ -969,7 +969,7 @@ export const AccountsView = () => {
                     </span>
                   </div>
                 )}
-                <h2 className="text-center mb-3 px-3">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+                <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
                 <div className="flexible-left mb-3">
                   <div className="transaction-field left">
                     <div className="transaction-field-row">

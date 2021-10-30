@@ -1771,15 +1771,22 @@ section.content {
     }
   }
 }
-
+.add-account {
+  @media (max-width: 575.98px) {
+    .flexible-left {
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+  }
+}
 .boxed-area {
   position: relative;
   width: 100%;
   max-width: 600px;
-  background: var(--bg-color);
+  background: var(--color-panel-background);
   border-radius: var(--custom-border-radius);
-  border: 2px solid var(--color-secondary-alpha-10);
   padding: 2rem;
+  box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
   &.align-center {
     margin: 0 auto;
   }
