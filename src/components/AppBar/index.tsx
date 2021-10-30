@@ -158,6 +158,16 @@ export const AppBar = (props: { menuType: string }) => {
     </Menu>
   );
 
+  const renderOnlineStatus = (
+    <div className="flex">
+      <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
+          ? t('notifications.network-connection-good')
+          : t('notifications.network-connection-poor')}>
+        <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
+      </Tooltip>
+    </div>
+  );
+
   if (props.menuType === 'desktop' ) {
     return (
       <>
@@ -171,22 +181,17 @@ export const AppBar = (props: { menuType: string }) => {
                 <span className="network-name">{connectionConfig.cluster}</span>
               </div>
             )}
+            {renderOnlineStatus}
             <div className="connection-and-account-bar">
               <CurrentBalance />
               <CurrentUserBadge />
             </div>
             </>
           ) : (
-            <ConnectButton />
-          )}
-          {isDev() && (
-            <div className="flex">
-              <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
-                  ? t('notifications.network-connection-good')
-                  : t('notifications.network-connection-poor')}>
-                <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
-              </Tooltip>
-            </div>
+            <>
+              {renderOnlineStatus}
+              <ConnectButton />
+            </>
           )}
           <div className="app-context-menu">
             <AppContextMenu />
