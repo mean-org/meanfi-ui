@@ -1,6 +1,7 @@
 export { IconAdd } from "./IconAdd";
 export { IconBank } from "./IconBank";
 export { IconBookOpen } from "./IconBookOpen";
+export { IconCallSplit } from "./IconCallSplit";
 export { IconCaretDown } from "./IconCaretDown";
 export { IconChat } from "./IconChat";
 export { IconCheckedBox } from "./IconCheckedBox";
@@ -23,6 +24,7 @@ export { IconInfoTriangle } from "./IconInfoTriangle";
 export { IconInstagram } from "./IconInstagram";
 export { IconLinkedin } from "./IconLinkedin";
 export { IconLogout } from "./IconLogout";
+export { IconMoneyTransfer } from "./IconMoneyTransfer";
 export { IconMoon } from "./IconMoon";
 export { IconOutgoingPaused } from "./IconOutgoingPaused";
 export { IconPause } from "./IconPause";

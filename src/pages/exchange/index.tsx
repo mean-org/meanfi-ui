@@ -3,17 +3,22 @@ import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { SwapUi } from "../../components/SwapUi";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { DdcaClient } from '@mean-dao/ddca';
 import { AppStateContext } from '../../contexts/appstate';
 import { useLocalStorageState } from '../../utils/utils';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
-import { environment } from '../../environments/environment';
+import { useTranslation } from 'react-i18next';
+import { IconExchange } from '../../Icons';
+import { RepeatingSwapUi } from '../../components/RepeatingSwapUi';
+
+type SwapOption = "one-time" | "recurring";
 
 export const SwapView = () => {
   const location = useLocation();
+  const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
     recurringBuys,
@@ -23,10 +28,7 @@ export const SwapView = () => {
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
   const [redirect, setRedirect] = useState<string | null>(null);
-
-  const isProd = (): boolean => {
-    return environment === 'production';
-  }
+  const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
 
   // Parse query params
   useEffect(() => {
@@ -122,22 +124,65 @@ export const SwapView = () => {
     reloadRecurringBuys
   ]);
 
+  const onTabChange = (option: SwapOption) => {
+    setCurrentTab(option);
+  }
+
   return (
     <>
-    {redirect && <Redirect to={redirect} />}
-    <div className="container main-container">
-      <div className="interaction-area">
-        <div className="place-transaction-box mb-3">
-          <SwapUi connection={connection} endpoint={endpoint} queryFromMint={queryFromMint} queryToMint={queryToMint} />
-        </div>
-        {(recurringBuys && recurringBuys.length > 0 && isProd()) && (
-          <div className="text-center mb-3">
-            <Link to="/exchange-dcas"><span className="secondary-link">{`You have ${recurringBuys.length} recurring buys scheduled`}</span></Link>
+      {redirect && <Redirect to={redirect} />}
+      <div className="container main-container">
+        <div className="interaction-area">
+          <div className="title-and-subtitle">
+            <div className="title">
+              <IconExchange className="mean-svg-icons" />
+              <div>{t('swap.screen-title')}</div>
+            </div>
+            <div className="subtitle">
+              {t('swap.screen-subtitle')}
+            </div>
           </div>
-        )}
+          <div className="place-transaction-box mb-3">
+            <div className="button-tabset-container">
+              <div className={`tab-button ${currentTab === "one-time" ? 'active' : ''}`} onClick={() => onTabChange("one-time")}>
+                {t('swap.tabset.one-time')}
+              </div>
+              <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
+                {t('swap.tabset.recurring')}
+              </div>
+            </div>
+            {/* One time exchange */}
+            {
+              currentTab === "one-time" && (
+                <SwapUi
+                  connection={connection}
+                  queryFromMint={queryFromMint}
+                  queryToMint={queryToMint}
+                />
+              )
+            }
+            {/* Repeating exchange */}
+            {
+              currentTab === "recurring" && (
+                <RepeatingSwapUi
+                  connection={connection}
+                  endpoint={endpoint}
+                  queryFromMint={queryFromMint}
+                  queryToMint={queryToMint}
+                />
+              )
+            }
+          </div>
+          {recurringBuys && recurringBuys.length > 0 && isProd() && (
+            <div className="text-center mb-3">
+              <Link to="/exchange-dcas">
+                <span className="secondary-link">{`You have ${recurringBuys.length} recurring buys scheduled`}</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-    <PreFooter />
+      <PreFooter />
     </>
   );
 }

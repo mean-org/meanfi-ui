@@ -1,12 +1,12 @@
 import { DdcaFrequencyOption, DcaInterval } from "../models/ddca-models";
 
 export const DDCA_FREQUENCY_OPTIONS: DdcaFrequencyOption[] = [
-    {
-        dcaInterval: DcaInterval.OneTimeExchange,
-        translationId: 'ote',
-        name: 'One time exchange',
-        disabled: false,
-    },
+    // {
+    //     dcaInterval: DcaInterval.OneTimeExchange,
+    //     translationId: 'ote',
+    //     name: 'One time exchange',
+    //     disabled: false,
+    // },
     // {
     //     dcaInterval: DcaInterval.RepeatingDaily,
     //     translationId: 'repeating-daily',

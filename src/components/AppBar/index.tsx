@@ -1,43 +1,38 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, Redirect, useLocation } from 'react-router-dom';
-import { Menu } from 'antd';
+import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
 import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from "../AppContextMenu";
 import { CurrentBalance } from "../CurrentBalance";
-import { useConnection, useConnectionConfig } from '../../contexts/connection';
+import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
-import { PublicKey } from '@solana/web3.js';
-import { listStreams } from '@mean-dao/money-streaming/lib/utils';
-import { consoleOut } from '../../utils/ui';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
+import { useOnlineStatus } from '../../contexts/online-status';
+import { isDev } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const connection = useConnection();
   const { publicKey, connected } = useWallet();
+  const isOnline = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
     addAccountPanelOpen,
-    streamProgramAddress,
     isDepositOptionsModalVisible,
-    setStreamList,
-    setStreamDetail,
-    setCurrentScreen,
     setLoadingStreams,
-    setSelectedStream,
+    refreshStreamList,
     setDtailsPanelOpen,
     setCustomStreamDocked,
     showDepositOptionsModal,
@@ -52,24 +47,11 @@ export const AppBar = (props: { menuType: string }) => {
     return environment === 'production' ? true : false;
   }
 
-  const onGoToTransfersClick = () => {
+  const onGoToTransfersClick = (e: any) => {
     setCustomStreamDocked(false);
     if (publicKey) {
-      const programId = new PublicKey(streamProgramAddress);
       setLoadingStreams(true);
-      listStreams(connection, programId, publicKey, publicKey)
-        .then(async streams => {
-          setStreamList(streams);
-          setLoadingStreams(false);
-          consoleOut('Layout -> streamList:', streams, 'blue');
-          setSelectedStream(streams[0]);
-          setStreamDetail(streams[0]);
-          if (streams && streams.length > 0) {
-            consoleOut('streams are available, opening streams...', '', 'blue');
-            setCurrentScreen('streams');
-            setRedirect('/transfers');
-          }
-        });
+      refreshStreamList(true);
     }
   };
 
@@ -138,8 +120,8 @@ export const AppBar = (props: { menuType: string }) => {
       <Menu.Item key="/exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
-      <Menu.Item key="/transfers" onClick={() => onGoToTransfersClick()}>
-        <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+      <Menu.Item key="/transfers">
+        <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
@@ -176,6 +158,16 @@ export const AppBar = (props: { menuType: string }) => {
     </Menu>
   );
 
+  const renderOnlineStatus = (
+    <div className="flex">
+      <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
+          ? t('notifications.network-connection-good')
+          : t('notifications.network-connection-poor')}>
+        <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
+      </Tooltip>
+    </div>
+  );
+
   if (props.menuType === 'desktop' ) {
     return (
       <>
@@ -189,13 +181,17 @@ export const AppBar = (props: { menuType: string }) => {
                 <span className="network-name">{connectionConfig.cluster}</span>
               </div>
             )}
+            {renderOnlineStatus}
             <div className="connection-and-account-bar">
               <CurrentBalance />
               <CurrentUserBadge />
             </div>
             </>
           ) : (
-            <ConnectButton />
+            <>
+              {renderOnlineStatus}
+              <ConnectButton />
+            </>
           )}
           <div className="app-context-menu">
             <AppContextMenu />
@@ -223,9 +219,8 @@ export const AppBar = (props: { menuType: string }) => {
                 <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
               </li>
               <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
-                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}
-                  onClick={() => onGoToTransfersClick()}>
-                <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
+                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+                <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
               </li>
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>

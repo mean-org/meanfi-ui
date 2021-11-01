@@ -40,7 +40,6 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
 } from "../../utils/ui";
-import { ContractSelectorModal } from '../../components/ContractSelectorModal';
 import { OpenStreamModal } from '../../components/OpenStreamModal';
 import { WithdrawModal } from '../../components/WithdrawModal';
 import {
@@ -79,6 +78,7 @@ export const Streams = () => {
     streamList,
     streamDetail,
     selectedToken,
+    currentScreen,
     loadingStreams,
     loadingStreamActivity,
     streamActivity,
@@ -86,6 +86,7 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
+    setStreamList,
     setSelectedToken,
     setCurrentScreen,
     setStreamDetail,
@@ -134,7 +135,7 @@ export const Streams = () => {
 
   const updateLiveStreamData = useCallback(() => {
 
-    if (!streamDetail) { return; }
+    if (!streamDetail || currentScreen === 'contract') { return; }
 
     if (isStreamScheduled(streamDetail.startUtc as string)) {
       return;
@@ -178,8 +179,9 @@ export const Streams = () => {
     setStreamDetail(clonedDetail);
 
   },[
-    setStreamDetail, 
-    streamDetail
+    streamDetail,
+    currentScreen,
+    setStreamDetail,
   ]);
 
   // Live data calculation
@@ -187,7 +189,6 @@ export const Streams = () => {
 
     const timeout = setTimeout(() => {
       updateLiveStreamData();
-
     }, 1000);
 
     return () => {
@@ -223,16 +224,6 @@ export const Streams = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, []);
-
-  // Contract switcher modal
-  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
-  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
-  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
-  const onAcceptContractSelector = () => {
-    setCurrentScreen('contract');
-    setCustomStreamDocked(false);
-    closeContractSelectorModal();
-  };
 
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
@@ -350,16 +341,22 @@ export const Streams = () => {
     onExecuteWithdrawFundsTransaction(amount);
   };
 
+  const onActivateContractScreen = () => {
+    setStreamList([]);
+    setCurrentScreen('contract');
+    setCustomStreamDocked(false);
+  };
+
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
     return item.beneficiaryAddress === publicKey?.toBase58();
   }, [publicKey]);
 
-  // const isAuthority = (): boolean => {
-  //   return streamDetail && wallet && wallet.publicKey &&
-  //          (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
-  //           streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
-  //          ? true : false;
-  // }
+  const isAuthority = (): boolean => {
+    return streamDetail && wallet && wallet.publicKey &&
+           (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
+            streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
+           ? true : false;
+  }
 
   const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
@@ -1742,7 +1739,7 @@ export const Streams = () => {
               onClick={showWithdrawModal}>
               {t('streams.stream-detail.withdraw-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {isAuthority() && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -1994,7 +1991,7 @@ export const Streams = () => {
               onClick={showAddFundsModal}>
               {t('streams.stream-detail.add-funds-cta')}
             </Button>
-            {!customStreamDocked && (
+            {isAuthority() && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -2162,7 +2159,7 @@ export const Streams = () => {
                   type="primary"
                   shape="round"
                   size="small"
-                  onClick={showContractSelectorModal}>
+                  onClick={onActivateContractScreen}>
                   {t('streams.create-new-stream-cta')}
                 </Button>
               </div>
@@ -2197,10 +2194,6 @@ export const Streams = () => {
           )}
         </div>
       </div>
-      <ContractSelectorModal
-        isVisible={isContractSelectorModalVisible}
-        handleOk={onAcceptContractSelector}
-        handleClose={closeContractSelectorModal}/>
       <OpenStreamModal
         isVisible={isOpenStreamModalVisible}
         handleOk={onAcceptOpenStream}

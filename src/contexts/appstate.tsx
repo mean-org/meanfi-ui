@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
@@ -12,7 +12,7 @@ import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { findATokenAddress, getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
+import { getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -648,9 +648,6 @@ const AppStateProvider: React.FC = ({ children }) => {
                   });
               }
             }
-            if (reset && currentScreen === 'contract') {
-              setSelectedTab('streams');
-            }
           } else {
             setStreamActivity([]);
             updateSelectedStream(undefined);
@@ -666,7 +663,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [
     connection,
-    currentScreen,
     streamProgramAddress,
     loadingStreamActivity,
     selectedStream,

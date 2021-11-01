@@ -52,7 +52,10 @@ export const DdcaSetupModal = (props: {
     transactionStatus,
     setTransactionStatus,
   } = useContext(AppStateContext);
-  const { startFetchTxSignatureInfo } = useContext(TransactionStatusContext);
+  const {
+    setRecentlyCreatedVault,
+    startFetchTxSignatureInfo
+  } = useContext(TransactionStatusContext);
   const [isBusy, setIsBusy] = useState(false);
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
@@ -276,6 +279,7 @@ export const DdcaSetupModal = (props: {
     const transactionLog: any[] = [];
 
     setLockedSliderValue(recurrencePeriod);
+    setRecentlyCreatedVault('')
     setDdcaAccountPda(undefined);
     setVaultCreated(false);
     setSwapExecuted(false);
@@ -294,7 +298,6 @@ export const DdcaSetupModal = (props: {
 
         const payload = {
           ownerAccountAddress: publicKey,
-          depositAmount: props.fromTokenAmount * (recurrencePeriod + 1),
           amountPerSwap: props.fromTokenAmount,
           fromMint: new PublicKey(props.fromToken?.address as string),
           toMint: new PublicKey(props.toToken?.address as string),
@@ -319,8 +322,8 @@ export const DdcaSetupModal = (props: {
         return await ddcaClient.createDdcaTx(
           payload.fromMint,
           payload.toMint,
-          payload.depositAmount,
           payload.amountPerSwap,
+          payload.totalSwaps,
           payload.intervalinSeconds)
         .then((value: [PublicKey, Transaction]) => {
           consoleOut('createDdca returned transaction:', value);
@@ -510,6 +513,7 @@ export const DdcaSetupModal = (props: {
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             if (confirmed && !transactionCancelled) {
+              setRecentlyCreatedVault(ddcaAccountPda?.toBase58() || '');
               setVaultCreated(true);
               setIsBusy(false);
             } else { onTxErrorCreatingVaultWithNotify(); }
@@ -575,6 +579,8 @@ export const DdcaSetupModal = (props: {
         })
         .catch(error => {
           console.error('createWakeAndSwapTx error:', error);
+          const parsedError = ddcaClient.tryParseRpcError(error);
+          consoleOut('tryParseRpcError -> createWakeAndSwapTx', parsedError, 'red');
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -660,7 +666,9 @@ export const DdcaSetupModal = (props: {
             return true;
           })
           .catch(error => {
-            console.error(error);
+            console.error('createWakeAndSwapTx -> sendSignedTransaction error:', error);
+            const parsedError = ddcaClient.tryParseRpcError(error);
+            consoleOut('tryParseRpcError -> createWakeAndSwapTx -> sendSignedTransaction', parsedError, 'red');
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransaction,
               currentOperation: TransactionStatus.SendTransactionFailure
@@ -687,49 +695,6 @@ export const DdcaSetupModal = (props: {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-
-      return await props.connection
-        .confirmTransaction(signature, "finalized")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransactionSuccess
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionSuccess),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     if (wallet && publicKey) {
       const create = await createTx();
       consoleOut('create:', create);
@@ -743,11 +708,6 @@ export const DdcaSetupModal = (props: {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
             onFinishedSwapTx();
-
-            // const confirmed = await confirmTx();
-            // if (confirmed && !transactionCancelled) {
-            //   onFinishedSwapTx();
-            // } else { onFinishedSwapTx(); }
           } else { onFinishedSwapTx(); }
         } else { onFinishedSwapTx(); }
       } else { onFinishedSwapTx(); }
@@ -900,7 +860,7 @@ export const DdcaSetupModal = (props: {
                 onSpawnSwapTxStart();
               }
             }}>
-            {vaultCreated && isBusy ? 'Starting' : vaultCreated && swapExecuted ? 'Finished' : 'Start'}
+            {vaultCreated && isBusy ? t('general.starting') : vaultCreated && swapExecuted ? t('general.finished') : t('general.start')}
           </Button>
         </div>
       </div>

@@ -4,9 +4,14 @@ import { CurrentUserBadge } from "../CurrentUserBadge";
 import { ConnectButton } from "../ConnectButton";
 import { AppContextMenu } from '../AppContextMenu';
 import { CurrentBalance } from '../CurrentBalance';
+import { useOnlineStatus } from '../../contexts/online-status';
+import { Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 export const FooterBar = () => {
+  const { t } = useTranslation('common');
   const { connected } = useWallet();
+  const isOnline = useOnlineStatus();
 
   return (
     <div className="app-footer">
@@ -20,6 +25,13 @@ export const FooterBar = () => {
           ) : (
             <ConnectButton />
           )}
+          <div className="flex">
+            <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
+                ? t('notifications.network-connection-good')
+                : t('notifications.network-connection-poor')}>
+              <span className={`online-status ${isOnline ? 'success' : 'error'} ml-1`}></span>
+            </Tooltip>
+          </div>
           <div className="app-context-menu">
             <AppContextMenu />
           </div>

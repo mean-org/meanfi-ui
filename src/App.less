@@ -37,7 +37,10 @@
   --color-section-contrast: #f1f1f1;
   --color-white: #ffffff;
   --color-black: #000000;
-  --component-background: #ffffff;
+  --color-wells: #f8f8f8;
+  --color-main-navigation: #FFFFFF;
+  --color-panel-background: #FCFCFC;
+  --color-component-background: #FFFFFF;
 
   /* Black with alpha */
   --color-secondary-alpha-01: rgba(0, 0, 0, 0.01);
@@ -59,7 +62,7 @@
   --gradEnd: #d2d2d2;
 
   /* Properties */
-  --custom-border-radius: 10px;
+  --custom-border-radius: 7px;
   --custom-control-height: 40px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
   --color-flat-btn: var(--color-secondary-alpha-20);
@@ -69,14 +72,14 @@
   --wallet-wrapper-bg: var(--color-black);
   --wallet-provider-background: var(--color-secondary-alpha-85);
   --bottom-shadow-up-05: 1px -2px 6px rgba(64,64,64, 0.05);
+  --darken: rgba(0, 0, 0, 0.05);
 
-  --main-navigation-bar-height: 64px;
+  --main-navigation-bar-height: 60px;
   --main-navigation-bar-shadow: 0px 1px 2px rgba(0,0,0,0.2);
   --footer-bar-shadow: 0px -1px 2px rgba(0,0,0,0.2);
   --soft-shadow: 1px 1px 1px rgba(0,0,0,0.25);
   --hard-shadow: 1px 1px 0px rgba(0,0,0,0.25);
   --footer-bar-height: 56px;
-
 }
 
 // Inverted / Dark theme
@@ -98,7 +101,7 @@
   --color-notify-warning: #d89614;
   --color-notify-error: #a61d24;
   --text-color: #e1e1ff;
-  --bg-color: #161625;
+  --bg-color: #181a2a;
   
   /* Grays */
   --color-dark: #ffffff;
@@ -114,9 +117,12 @@
   --color-section-contrast: #0a0a13;
   --color-white: #ffffff;
   --color-black: #000000;
-  --component-background: #1f1f1f;
+  --color-wells: #181c2a;
+  --color-main-navigation: #0f121d;
+  --color-panel-background: #1C1F30;
+  --color-component-background: #141523;
 
-  /* Black with alpha */
+  /* White with alpha */
   --color-secondary-alpha-01: rgba(255, 255, 255, 0.01);
   --color-secondary-alpha-02: rgba(255, 255, 255, 0.02);
   --color-secondary-alpha-05: rgba(255, 255, 255, 0.05);
@@ -136,8 +142,9 @@
   --gradStart: #142944;
 
   /* Properties */
-  --custom-border-radius: 10px;
+  --custom-border-radius: 7px;
   --custom-control-height: 40px;
+  --custom-control-border-radius: 2px;
   --custom-border-style: 1px solid var(--color-secondary-alpha-20);
   --color-flat-btn: var(--color-secondary-alpha-40);
   --color-flat-btn-hover: var(--color-secondary-alpha-50);
@@ -146,13 +153,14 @@
   --wallet-wrapper-bg: var(--color-black);
   --wallet-provider-background: var(--color-secondary-alpha-10);
   --bottom-shadow-up-05: 1px -2px 6px rgba(92,92,92, 0.05);
+  --darken: rgba(0, 0, 0, 0.20);
 }
 
 body {
   color: var(--text-color);
   background-color: var(--bg-color);
-  @media (min-width: 576px) {
-    background: linear-gradient(to bottom, var(--gradStart), var(--gradEnd));
+  @media (max-width: 575.98px) {
+    background-color: var(--color-panel-background);
   }
 }
 .loading-screen-container {
@@ -369,7 +377,7 @@ footer.ant-layout-footer {
   width: 100%;
   z-index: 100;
   color: var(--text-color);
-  background-color: var(--bg-color);
+  background-color: var(--color-main-navigation);
   height: var(--footer-bar-height);
   box-shadow: var(--footer-bar-shadow);
   @media (min-width: 1200px) {
@@ -526,7 +534,7 @@ footer.ant-layout-footer {
 }
 
 .ant-btn.ant-btn-primary.ant-btn-round.main-cta {
-  padding: 14px;
+  padding: 10px 14px;
   height: auto;
 }
 
@@ -614,20 +622,26 @@ footer.ant-layout-footer {
     font-size: 14px;
   }
 }
-
-// Dropdown-like button (type=default shape=round)
-.ant-btn.ant-btn-default.ant-btn-round.dropdown-like-button {
+// Dropdown-like button (type=default)
+.ant-btn.ant-btn-default.dropdown-like-button {
   display: inline-flex;
-  background-color: var(--color-whitesmoke);
+  background-color: transparent;
   color: inherit;
-  border-color: transparent !important;
-  border-width: 2px;
+  border-color: var(--color-secondary-alpha-10) !important;
+  border-width: 1px;
   outline: none;
   box-shadow: none;
-  border-radius: var(--custom-border-radius);
+  border-radius: var(--custom-control-border-radius);
   min-height: var(--custom-control-height);
+  justify-content: space-between;
   align-items: center;
   padding: 7px 8px 7px 14px;
+  > span {
+    width: calc(100% - (1rem + 24px));
+    text-align: left;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
   &:not(:disabled) {
     &:hover,
     &:focus,
@@ -783,6 +797,49 @@ footer.ant-layout-footer {
   background-color: var(--color-selection);
 }
 
+// Number inputs
+.ant-input-number {
+  background-color: var(--color-wells);
+  color: inherit;
+  border-width: 1px;
+  border-color: var(--color-secondary-alpha-10);
+  border-radius: var(--custom-control-border-radius);
+  &:focus,
+  &:hover,
+  &.ant-input-number-focused {
+    border-color: var(--color-secondary-alpha-20);
+    outline: 0;
+    box-shadow: none;
+  }
+  input.ant-input-number-input {
+    padding: 0 8px;
+    text-align: right;
+  }
+  .ant-input-number-handler-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 100%;
+    background: var(--darken);
+    border-radius: 2px 0 0 2px;
+    opacity: 0;
+    transition: opacity 0.24s linear 0.1s;
+    .ant-input-number-handler {
+      color: var(--color-secondary-alpha-20);
+      border-left: none;
+      border-right-style: solid;
+      border-right-width: 1px;
+      border-right-color: var(--color-secondary-alpha-20);
+      border-top-color: var(--color-secondary-alpha-20);
+    }
+    .ant-input-number-handler-up-inner,
+    .ant-input-number-handler-down-inner {
+      color: var(--color-secondary-alpha-40);
+    }
+  }
+}
+
 // Notification icons
 .anticon {
   &.ant-notification-notice-icon-info {
@@ -835,7 +892,7 @@ footer.ant-layout-footer {
   line-height: 1;
   z-index: 100;
   height: var(--main-navigation-bar-height);
-  background-color: var(--bg-color);
+  background-color: var(--color-main-navigation);
   box-shadow: var(--main-navigation-bar-shadow);
   @media (max-width: 575.98px) {
     .app-bar-inner {
@@ -1193,7 +1250,7 @@ footer.ant-layout-footer {
 
 // Dropdown menus
 .ant-dropdown-menu {
-  background-color: var(--component-background);
+  background-color: var(--color-component-background);
   .ant-dropdown-menu-item-divider,
   .ant-dropdown-menu-submenu-title-divider {
     background-color: var(--color-secondary-alpha-15);
@@ -1223,7 +1280,7 @@ footer.ant-layout-footer {
   color: var(--color-secondary-alpha-80);
 }
 .ant-picker-panel-container {
-  background: var(--component-background);
+  background: var(--color-component-background);
   .ant-picker-panel-focused {
     border-color: var(--color-secondary-alpha-20);
   }
@@ -1353,12 +1410,87 @@ em {
   border: none;
 }
 
+.flex {
+  flex: 1 1 auto;
+}
+.flexible-left {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  @media (min-width: 576px) {
+    .transaction-field {
+      margin: 0 1rem 0 0;
+    }
+  }
+  .transaction-field {
+    height: 70px;
+    .transaction-field-row.main-row {
+      #payment-recipient-field.general-text-input,
+      #payment-recipient-static-field {
+        font-size: 20px;
+        top: 4px;
+      }
+      .addon-right {
+        display: inline-flex;
+        align-items: center;
+      }
+    }
+  }
+  button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
+    min-width: 90px;
+    text-transform: uppercase;
+    font-weight: 600;
+    height: 56px;
+    line-height: 20px;
+    font-size: 20px;
+  }
+  .left {
+    flex: 1 1 auto;
+  }
+  .right {
+    flex: 0 0 auto;
+  }
+}
+.flexible-right {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 0 0 auto;
+    &.from-token-balance {
+      width: 130px;
+      text-align: center;
+      line-height: 1.2;
+      font-size: 12.5px;
+      font-weight: 700;
+      border-style: solid;
+      border-width: 1px;
+      padding: 4px 0;
+      border-color: var(--color-secondary-alpha-20)
+    }
+  }
+  .right {
+    flex: 1 1 auto;
+  }
+  .amount {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    top: -0.5rem;
+  }
+}
 .flexColumn {
   display: flex;
   flex-direction: column;
   flex: 1;
 }
-
 .card-fill {
   height: 100%;
 }
@@ -1550,40 +1682,111 @@ section.content {
     position: relative;
     max-width: 480px;
     width: 100%;
-    background: var(--bg-color);
+    background: var(--color-panel-background);
     border-radius: var(--custom-border-radius);
     padding: 1rem;
+    box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
     @media (max-width: 575.98px) {
       padding: 0;
       border: none !important;
       box-shadow: none !important;
       margin-bottom: calc(2rem + var(--footer-bar-height));
     }
+    @media (min-width: 576px) {
+      .button-tabset-container {
+        margin: -1rem -1rem 1rem -1rem;
+      }
+    }
     p {
       line-height: 1.3;
     }
   }
-}
-
-[data-theme="light"] {
-  .place-transaction-box {
-    box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0, 0.12);
+  .title-and-subtitle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.8rem;
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: inline-flex;
+      justify-content: flex-start;
+      align-items: center;
+      .mean-svg-icons {
+        margin-right: 6px;
+        color: var(--color-primary-highlight);
+        width: 32px;
+        height: 32px;
+      }
+    }
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--color-secondary-alpha-60);
+    }
   }
 }
-[data-theme="dark"] {
-  .place-transaction-box {
-    border: 2px solid var(--color-secondary-alpha-10);
+.button-tabset-container {
+  border-top-left-radius: var(--custom-border-radius);
+  border-top-right-radius: var(--custom-border-radius);
+  background-color: var(--color-secondary-alpha-02);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  .tab-button {
+    flex: 1 1 auto;
+    height: 42px;
+    justify-content: center;
+    align-items: center;
+    display: inline-flex;
+    text-transform: uppercase;
+    color: var(--color-secondary-alpha-40);
+    border-top: 2px solid transparent;
+    cursor: pointer;
+    &:first-of-type {
+      border-top-left-radius: var(--custom-border-radius);
+    }
+    &:last-of-type {
+      border-top-right-radius: var(--custom-border-radius);
+    }
+    &.active {
+      color: var(--color-secondary-alpha-85);
+      border-top: 2px solid var(--color-primary-highlight);
+      background-color: var(--color-panel-background);
+      pointer-events: none;
+    }
   }
 }
 
+.payroll .place-transaction-box,
+.exchange .place-transaction-box,
+.transfers .place-transaction-box {
+  min-width: 320px;
+  max-width: 450px;
+  @media (min-width: 576px) {
+    .contract-wrapper {
+      padding: 0.5rem;
+    }
+  }
+}
+.add-account {
+  @media (max-width: 575.98px) {
+    .flexible-left {
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+  }
+}
 .boxed-area {
   position: relative;
   width: 100%;
   max-width: 600px;
-  background: var(--bg-color);
+  background: var(--color-panel-background);
   border-radius: var(--custom-border-radius);
-  border: 2px solid var(--color-secondary-alpha-10);
   padding: 2rem;
+  box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
   &.align-center {
     margin: 0 auto;
   }
@@ -1662,52 +1865,6 @@ section.content {
   margin: 0 2px;
   vertical-align: -4px;
 }
-.flexible-left {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  @media (max-width: 575.98px) {
-    &:not(.flex-column-xs) {
-      flex-direction: column;
-      justify-content: flex-start;
-    }
-  }
-  @media (min-width: 576px) {
-    .transaction-field {
-      margin: 0 1rem 0 0;
-    }
-  }
-  .transaction-field {
-    height: 70px;
-    .transaction-field-row.main-row {
-      #payment-recipient-field.general-text-input,
-      #payment-recipient-static-field {
-        font-size: 20px;
-        top: 4px;
-      }
-      .addon-right {
-        display: inline-flex;
-        align-items: center;
-      }
-    }
-  }
-  button.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
-    min-width: 90px;
-    text-transform: uppercase;
-    font-weight: 600;
-    height: 56px;
-    line-height: 20px;
-    font-size: 20px;
-  }
-  .left {
-    flex: 1 1 auto;
-  }
-  .right {
-    flex: 0 0 auto;
-  }
-}
 
 .transaction-field {
   width: 100%;
@@ -1717,10 +1874,8 @@ section.content {
   flex-direction: column;
   justify-content: center;
   padding: 0.25rem 0.8rem;
-  border-style: solid;
-  border-width: 2px;
   border-radius: var(--custom-border-radius);
-  border-color: var(--color-secondary-alpha-10);
+  background-color: var(--color-wells);
   margin-bottom: 20px;
   transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
   &.medium {
@@ -1753,8 +1908,7 @@ section.content {
     background-color: var(--color-secondary-alpha-02);
   }
   &:hover {
-    background-color: var(--color-secondary-alpha-02);
-    border-color: var(--color-secondary-alpha-20);
+    background-color: var(--darken);
   }
   .transaction-field-row {
     display: flex;
@@ -2098,7 +2252,7 @@ section.content {
       height: auto;
       overflow: hidden;
       color: var(--text-color);
-      background-color: var(--bg-color);
+      background-color: var(--color-panel-background);
       border-radius: var(--custom-border-radius);
       @media (max-width: 575.98px) {
         border-radius: 0;
@@ -2514,6 +2668,8 @@ section.content {
   }
   @media (min-width: 768px) {
     height: calc(100% - 20px);
+    max-height: 78vh;
+    min-height: 540px;
     .streams-container,
     .stream-details-container {
       flex: 0 0 50%;
@@ -3135,6 +3291,7 @@ section.content {
     .tokens-container {
       .inner-container {
         height: calc(100% - var(--footer-bar-height));
+        background-color: transparent;
       }
     }
   }
@@ -3202,6 +3359,7 @@ section.content {
       }
       .inner-container {
         width: 100%;
+        background-color: transparent;
       }
     }
     &.details-open {
@@ -3253,6 +3411,8 @@ section.content {
   }
   @media (min-width: 768px) {
     height: calc(100% - 20px);
+    max-height: 78vh;
+    min-height: 540px;
     .tokens-container,
     .transaction-list-container {
       height: auto;
@@ -4387,9 +4547,6 @@ code {
   &.main-container {
     flex: 1 1 auto;
     position: relative;
-    @media (min-width: 768px) {
-      min-height: 620px;
-    }
     .debug-bar {
       position: fixed;
       top: var(--main-navigation-bar-height);
@@ -5378,18 +5535,30 @@ code {
     color: var(--text-color);
     .ant-popover-arrow {
       .ant-popover-arrow-content {
-        background-color: var(--component-background);
+        background-color: var(--color-component-background);
       }
     }
     .ant-popover-inner {
-      background-color: var(--component-background);
+      background-color: var(--color-component-background);
       .ant-popover-title {
         color: var(--color-secondary-alpha-70);
         border-bottom: 1px solid var(--color-secondary-alpha-20);
+        .ant-btn.ant-btn-circle.ant-btn-icon-only {
+          height: 24px;
+          width: 24px;
+          min-width: auto;
+          background-color: inherit;
+          color: inherit;
+          padding: 14px;
+          margin: 4px -4px;
+          &:hover {
+            background-color: var(--color-secondary-alpha-05);
+          }
+        }
       }
       .ant-popover-inner-content {
         color: var(--text-color);
-        background-color: var(--component-background);
+        background-color: var(--color-component-background);
         .ant-radio-group {
           .ant-radio-button-wrapper {
             color: var(--text-color);
@@ -5413,6 +5582,22 @@ code {
   font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol;
 }
 
+.online-status {
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-notify-warning);
+  border-radius: 50%;
+  box-shadow: 1px 1px 1px 0px rgb(0 0 0 / 30%);
+  opacity: 0.5;
+  &.success {
+    background-color: var(--color-notify-success);
+  }
+  &.error {
+    background-color: var(--color-notify-error);
+  }
+}
+
 .debug-bar {
   @media (max-width: 1199.98px) {
     display: none;
@@ -5420,7 +5605,7 @@ code {
   position: absolute;
   height: auto;
   width: 100%;
-  top: 100%;
+  top: var(--main-navigation-bar-height);
   left: 0;
   padding: 8px;
   color: var(--color-secondary-alpha-60);

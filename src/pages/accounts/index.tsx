@@ -1,6 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import { ArrowLeftOutlined, CopyOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
-import { AccountMeta, Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { TransactionItemView } from '../../components/TransactionItemView';
@@ -13,7 +13,7 @@ import { Identicon } from '../../components/Identicon';
 import { fetchAccountTokens, getAmountFromLamports, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
-import { NATIVE_SOL_MINT, USDC_MINT } from '../../utils/ids';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
@@ -25,10 +25,6 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { refreshCachedRpc } from '../../models/connections-hq';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/index';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-
-const BufferLayout = require('buffer-layout');
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -89,92 +85,6 @@ export const AccountsView = () => {
     closeQrScannerModal();
   };
 
-  //TODO: Temporal REMOVE
-  const [recoverAccountAddress] = useState(new PublicKey('AxcGiLUr8rDZ4JgUFTa8cZbuiHHE3woLe2cobmHP78k6'));
-  const [recoverTokenAccountAddress] = useState(new PublicKey('sBxoUCoH92v4aAgBN8jcvGdBDxmQtXzx57GSfbyMGu9'));
-  const [recoverFromTreasury] = useState(new PublicKey('5Y4CKCM2Z9zaYHmbH7LU4QSnqK2E1FFTUyWLZXpKGwpe'));
-  const [recoverFromTreasuryUsdcToken] = useState(new PublicKey('6u9sRx1ELniiTQ36xYFiKCbdJFQ9db76Z1mbWFzAWB9M'));
-  //
-  //TODO: Temporal REMOVE
-  const onRecoverFunds = useCallback(async () => {
-
-    if (!connected || !wallet || !publicKey || !publicKey.equals(recoverAccountAddress) || accountAddress !== recoverAccountAddress.toBase58()) {
-      return;
-    }
-
-    try {
-
-      const moneyStreaming = new MoneyStreaming(connection.endpoint, streamProgramAddress, "confirmed");
-      const recoverTreasury = await moneyStreaming.getTreasury(recoverFromTreasury, "confirmed");
-      console.log('treasury', recoverTreasury);
-      const conn = new Connection(connection.endpoint, "confirmed");
-      const tokenAmount = await conn.getTokenAccountBalance(recoverFromTreasuryUsdcToken);
-
-      const keys: AccountMeta[] = [
-        { pubkey: recoverAccountAddress, isSigner: true, isWritable: false },
-        { pubkey: recoverTokenAccountAddress, isSigner: false, isWritable: true },
-        { pubkey: USDC_MINT, isSigner: false, isWritable: true },
-        { pubkey: recoverFromTreasury, isSigner: false, isWritable: true },
-        { pubkey: recoverFromTreasuryUsdcToken, isSigner: false, isWritable: true },
-        { pubkey: new PublicKey(streamProgramAddress), isSigner: false, isWritable: false },
-        { pubkey: new PublicKey('CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr'), isSigner: false, isWritable: true },
-        { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false }
-      ];
-
-      const layout = BufferLayout.struct([
-        BufferLayout.u8('tag'),
-        BufferLayout.f64('recover_amount')
-      ]);
-
-      let data = Buffer.alloc(layout.span)
-      {
-          const decodedData = {
-              tag: 11,
-              recover_amount: tokenAmount.value.uiAmount as number
-          };
-
-          const encodeLength = layout.encode(decodedData, data);
-          data = data.slice(0, encodeLength);
-      };
-
-      const ix = new TransactionInstruction({
-          keys,
-          programId: new PublicKey(streamProgramAddress),
-          data,
-      });
-
-      
-      const tx = new Transaction().add(ix);
-
-      tx.feePayer = recoverAccountAddress;
-      let hash = await conn.getRecentBlockhash("confirmed");
-      tx.recentBlockhash = hash.blockhash;
-      const signedTx = await wallet.signTransaction(tx);
-      console.log('signedTx', signedTx);
-      const serializedTx = signedTx.serialize();
-      const encodedTx = serializedTx.toString('base64');
-      console.log('encodedTx', encodedTx);
-      const sig = await conn.sendRawTransaction(serializedTx);
-      console.log('tx => ', sig);
-
-    } catch (_error) {
-      console.log(_error);
-      return;
-    }
-
-  },[
-    accountAddress,
-    connected, 
-    wallet,
-    connection.endpoint, 
-    publicKey, 
-    recoverAccountAddress, 
-    recoverFromTreasury, 
-    recoverFromTreasuryUsdcToken, 
-    recoverTokenAccountAddress, 
-    streamProgramAddress
-  ])
-
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
     setLoadingTransactions(false);
@@ -182,6 +92,7 @@ export const AccountsView = () => {
   }, [])
 
   const reloadSwitch = useCallback(() => {
+    setShouldLoadTokens(true);
     setSolAccountItems(0);
     setTransactions(undefined);
     startSwitch();
@@ -410,10 +321,12 @@ export const AccountsView = () => {
                     // names must be equal
                     return 0;
                   });
+                  meanTokensCopy.forEach((item: UserTokenAccount, index: number) => item.displayIndex = index);
+                  sortedList.forEach((item: UserTokenAccount, index: number) => item.displayIndex = meanTokensCopy.length + index);
                   const finalList = meanTokensCopy.concat(sortedList);
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
-                  finalList.forEach(item => {
+                  finalList.forEach((item: UserTokenAccount, index: number) => {
                     if (item.ataAddress && item.address) {
                       tokenTable.push({
                         ataAddress: shortenAddress(item.ataAddress, 8),
@@ -685,9 +598,14 @@ export const AccountsView = () => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
     };
+    const isSelectedToken = (): boolean => {
+      return selectedAsset && asset && selectedAsset.displayIndex === asset.displayIndex
+        ? true
+        : false;
+    }
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
-          className={`transaction-list-row ${selectedAsset && selectedAsset.ataAddress === asset.ataAddress
+          className={`transaction-list-row ${isSelectedToken()
               ? 'selected'
               : hideLowBalances && !asset.isMeanSupportedToken && (asset.balance || 0) < ACCOUNTS_LOW_BALANCE_LIMIT
                 ? 'hidden'
@@ -934,32 +852,6 @@ export const AccountsView = () => {
                         />
                       </Tooltip>
                     </span>
-                    {connected && accountAddress === recoverAccountAddress.toBase58() && (
-                      <span className="icon-button-container">
-                        <Tooltip placement="bottom" title="Recover funds">
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="small"
-                            icon={<IconDownload className="mean-svg-icons"/>}
-                            onClick={onRecoverFunds}
-                          />
-                        </Tooltip>
-                      </span>
-                    )}
-                    {connected && accountAddress === recoverAccountAddress.toBase58() && (
-                      <span className="icon-button-container">
-                        <Tooltip placement="bottom" title="Recover funds">
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="small"
-                            icon={<IconDownload className="mean-svg-icons"/>}
-                            onClick={onRecoverFunds}
-                          />
-                        </Tooltip>
-                      </span>
-                    )}
                   </div>
                 </div>
                 <div className="inner-container">
@@ -1060,7 +952,7 @@ export const AccountsView = () => {
             </div>
           ) : (
             <>
-              <div className="boxed-area">
+              <div className="boxed-area add-account">
                 {accountAddress && (
                   <div className="back-button">
                     <span className="icon-button-container">
@@ -1077,7 +969,7 @@ export const AccountsView = () => {
                     </span>
                   </div>
                 )}
-                <h2 className="text-center mb-3 px-3">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+                <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
                 <div className="flexible-left mb-3">
                   <div className="transaction-field left">
                     <div className="transaction-field-row">

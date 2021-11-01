@@ -137,6 +137,7 @@
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
+			"help-item-01-topup": "Deposit an additional {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
@@ -150,9 +151,16 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
+		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
+		"add-funds-cta-disabled-funding": "Add funds in progress...",
+		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
+		"add-funds": {
+			"modal-title": "Top Up/Add Funds",
+			"headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault."
+		},
 		"close-ddca": {
 			"modal-title": "Are you sure?",
 			"primary-cta": "Confirm",
@@ -208,6 +216,7 @@
 		"months": "months",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"not-implemented": "Not implemented",
+		"now": "now",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
@@ -215,7 +224,10 @@
 		"week": "week",
 		"weeks": "weeks",
 		"year": "year",
-		"you": "you"
+		"you": "you",
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
@@ -234,6 +246,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
+		"network-connection-good": "Network connection is good",
+		"network-connection-poor": "Poor network connection detected",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",
@@ -317,13 +331,20 @@
 		}
 	},
 	"swap": {
+		"screen-title": "Exchange",
+		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange is only available on",
 		"input-label-destination": "Exchange to (est.)",
 		"input-label-source": "Exchange from",
 		"insufficient-liquidity": "Insufficient liquidity for this trade",
 		"token-select-destination": "Select token",
 		"token-select-source": "Select token",
-		"transaction-settings": "Slippage Tolerance"
+		"transaction-settings": "Slippage Tolerance",
+		"frequency-label": "Frequency",
+		"tabset": {
+			"one-time": "One time",
+			"recurring": "Recurring"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Select a token",
@@ -369,6 +390,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirm this transaction in your wallet",
 			"modal-title-executing-transaction": "Executing transaction",
 			"modal-title-transaction-completed": "Transaction completed",
@@ -379,9 +402,12 @@
 			"tx-add-funds-operation-success": "Funds added successfully",
 			"tx-close-operation": "Close stream operation",
 			"tx-close-operation-success": "Stream successfully closed",
+			"tx-close-vault-operation": "Close vault operation",
+			"tx-close-vault-operation-success": "Vault successfully closed",
 			"tx-completed": "Operation completed",
 			"tx-confirm": "Confirming transaction",
 			"tx-confirm-failure": "The transaction could not be confirmed",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Initialize transaction",
 			"tx-init-failure": "Could not initialize transaction",
@@ -444,6 +470,10 @@
 			"valid-start-funding": "Start funding",
 			"valid-start-withdrawal": "Start withdrawal"
 		}
+	},
+	"transfers": {
+		"screen-title": "Transfers",
+		"screen-subtitle": "Send money to anyone in the world faster"
 	},
 	"ui-language": {
 		"en": "English",

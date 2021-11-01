@@ -137,6 +137,7 @@
 		"headline": "Buy <strong>{{fromTokenAmount}}</strong> worth of <strong>{{toTokenSymbol}}</strong> {{recurrencePeriod}} for <strong>{{totalPeriod}}</strong>, starting today.",
 		"help": {
 			"help-item-01": "You'll deposit {{fromTokenAmount}} into your personal vault.",
+			"help-item-01-topup": "Deposit an additional {{fromTokenAmount}} into your personal vault.",
 			"help-item-02": "The vault uses the deposit to make the exchanges {{recurrencePeriod}}.",
 			"help-item-03": "When you are ready, get your fresh {{toTokenSymbol}} from the vault.",
 			"how-does-it-work": "How does it work?"
@@ -150,9 +151,16 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Caceling in progress...",
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
+		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
+		"add-funds-cta-disabled-funding": "Add funds in progress...",
+		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
 		"screen-title": "Recurring buys",
 		"streams-ddcas": "Click to refresh recurring buys",
+		"add-funds": {
+			"modal-title": "Top Up/Add Funds",
+			"headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault."
+		},
 		"close-ddca": {
 			"modal-title": "Are you sure?",
 			"primary-cta": "Confirm",
@@ -208,6 +216,7 @@
 		"months": "",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
+		"now": "now",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
@@ -215,7 +224,10 @@
 		"week": "semana",
 		"weeks": "",
 		"year": "año",
-		"you": "usted"
+		"you": "usted",
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
@@ -234,6 +246,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
+		"network-connection-good": "Network connection is good",
+		"network-connection-poor": "Poor network connection detected",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
@@ -317,13 +331,20 @@
 		}
 	},
 	"swap": {
+		"screen-title": "Exchange",
+		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange solo está disponible en",
 		"input-label-destination": "Intercambiar a (est.)",
 		"input-label-source": "Intercambiar de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
 		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Tolerancia al deslizamiento"
+		"transaction-settings": "Tolerancia al deslizamiento",
+		"frequency-label": "Frequency",
+		"tabset": {
+			"one-time": "One time",
+			"recurring": "Recurring"
+		}
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
@@ -369,6 +390,8 @@
 			"ddca-create-tx": "Create scheduled recurring exchange",
 			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-add-funds": "Funding vault with",
+			"ddca-add-funds-success": "Funds added successfully",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
@@ -379,9 +402,12 @@
 			"tx-add-funds-operation-success": "Fondos adicionados con éxito",
 			"tx-close-operation": "Cerrar la operación",
 			"tx-close-operation-success": "Transferencia cerrada con éxito",
+			"tx-close-vault-operation": "Close vault operation",
+			"tx-close-vault-operation-success": "Vault successfully closed",
 			"tx-completed": "Operación completa",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
+			"tx-confirm-failure-check": "Check your transaction in the link below",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo iniciar la transacción",
@@ -444,6 +470,10 @@
 			"valid-start-funding": "Empezar a financiar",
 			"valid-start-withdrawal": "Iniciar retiro"
 		}
+	},
+	"transfers": {
+		"screen-title": "Transfers",
+		"screen-subtitle": "Send money to anyone in the world faster"
 	},
 	"ui-language": {
 		"en": "Inglés",
