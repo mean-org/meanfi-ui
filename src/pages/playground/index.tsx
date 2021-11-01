@@ -1,19 +1,24 @@
-import { Button, Collapse, Divider, Form, InputNumber, Modal, Select } from "antd";
+import { Button, Collapse, Divider, Form, InputNumber, Select } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
-import { getAmountWithTokenSymbol, getTransactionModalTitle, getTransactionStatusForLogs } from "../../utils/ui";
+import { getAmountWithTokenSymbol, getTransactionStatusForLogs } from "../../utils/ui";
 import { getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
 
 const { Panel } = Collapse;
 const { Option } = Select;
 
 const CRYPTO_VALUES: number[] = [
-  0.1, 0.02, 0.003, 0.0004, 0.00005, 0.000004, 0.0000003, 0.00000002,
-  0.00000012345678, 1.5, 10.5, 1200.55, 18560.5, 1000.000009,
+  0.0004,
+  0.0000003,
+  0.000000001,
+  0.00000012345678,
+  1200.5,
+  1500.000009,
+  100500.000009226,
 ];
 
 interface TxStatusConfig {
@@ -242,9 +247,9 @@ export const PlaygroundView = () => {
                 <div className="item-list-body">{renderTable()}</div>
                 <Divider />
                 <div>
-                    Format1: <code>value.toFixed(decimals)</code><br />
-                    Format2:{" "}<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code><br />
-                    Format3: <code>formatAmount(value, decimals)</code>
+                  Format1: <code>value.toFixed(decimals)</code><br />
+                  Format2:{" "}<code>getTokenAmountAndSymbolByTokenAddress(value, mintAddress)</code><br />
+                  Format3: <code>formatAmount(value, decimals)</code>
                 </div>
             </div>
           </div>

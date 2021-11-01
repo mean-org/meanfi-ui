@@ -46,6 +46,14 @@ export class PaymentRateTypeOption {
     }
 }
 
+export const formatters = {
+    default: new Intl.NumberFormat(),
+    currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    whole: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    oneDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+};
+
 export function isValidAddress(value: any): boolean {
     if (typeof value === 'string') {
         try {
@@ -410,9 +418,9 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
     return result;
 }
 
-export const getFormattedNumberToLocale = (value: any) => {
+export const getFormattedNumberToLocale = (value: any, minDigits = 0) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9, minimumSignificantDigits: 3, minimumFractionDigits: 2 }).format(converted);
+    const formatted = new Intl.NumberFormat(undefined, { minimumSignificantDigits: 1, minimumFractionDigits: minDigits }).format(converted);
     return formatted || '';
 }
 

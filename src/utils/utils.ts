@@ -12,6 +12,7 @@ import { NATIVE_SOL } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
+import { BigNumber } from "bignumber.js";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -211,7 +212,7 @@ export const getTokenDecimals = (address: string): number => {
 }
 
 export const getFormattedRateAmount = (amount: number): string => {
-  return `${getFormattedNumberToLocale(formatAmount(amount, 2))}`;
+  return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (
@@ -229,14 +230,16 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   }
   const inputAmount = amount || 0;
   if (token) {
-    let formatted = getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals));
-    if (onlyValue) {
-      return maxTrailingZeroes(formatted, 2);
-    }
-    return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
+    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+    const formatted2 = formatted.toFixed(token.decimals);
+    const toLocale = getFormattedNumberToLocale(formatted2, 2);
+    if (onlyValue) { return toLocale; }
+    return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
     const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
-    return onlyValue ? maxTrailingZeroes(formatted, 2) : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
+    return onlyValue
+      ? maxTrailingZeroes(formatted, 2)
+      : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
