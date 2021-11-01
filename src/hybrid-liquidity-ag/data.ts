@@ -44,14 +44,17 @@ const initialize = () => {
 
   // init amm pools
   for (const pool of Amm_Pools) {
-    AMM_POOLS.push({
-      chainId: pool.chainId,
-      address: pool.address,
-      name: pool.name,
-      protocolAddress: pool.protocolAddress,
-      ammAddress: pool.ammAddress,
-      tokenAddresses: pool.tokenAddresses
-    });
+    if (pool as AmmPoolInfo) {
+      const ammPoolInfo = pool as AmmPoolInfo;
+      AMM_POOLS.push({
+        chainId: ammPoolInfo.chainId,
+        address: ammPoolInfo.address,
+        name: ammPoolInfo.name,
+        protocolAddress: ammPoolInfo.protocolAddress,
+        ammAddress: ammPoolInfo.ammAddress,
+        tokenAddresses: ammPoolInfo.tokenAddresses
+      });
+    }
   }
 };
 

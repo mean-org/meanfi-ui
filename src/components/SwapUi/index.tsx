@@ -28,9 +28,10 @@ import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
 import { Redirect } from "react-router-dom";
+import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
+import { Market } from "@project-serum/serum";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -87,6 +88,7 @@ export const SwapUi = (props: {
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
   const [swapClient, setSwapClient] = useState<any>();
+  const [serumMarketInfo, setSerumMarketInfo] = useState<Market | undefined>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
@@ -126,7 +128,7 @@ export const SwapUi = (props: {
   // Calculates the max allowed amount to swap
   const getMaxAllowedSwapAmount = useCallback(() => {
 
-    if (!fromMint || !toMint || !fromBalance || !userBalances || !feesInfo) {
+    if (!fromMint || !toMint || !fromBalance || !userBalances || !exchangeInfo || !feesInfo) {
       return 0;
     }
 
@@ -139,15 +141,85 @@ export const SwapUi = (props: {
       maxAmount = balance;
     }
 
-    return maxAmount;
+    if (exchangeInfo.fromAmm === 'Serum DEX' && serumMarketInfo !== undefined) {
+      if (serumMarketInfo.baseMintAddress.equals(WRAPPED_SOL_MINT)) {
+        maxAmount = balance - balance / (exchangeInfo.outPrice || 1) - feesInfo.network;
+      } else if (serumMarketInfo.quoteMintAddress.equals(WRAPPED_SOL_MINT)) {
+        maxAmount = balance - balance * (exchangeInfo.outPrice || 1) - feesInfo.network;
+      }
+    }
+
+    return maxAmount < 0 ? 0 : maxAmount;
     
   }, [
     feesInfo, 
     fromBalance, 
     fromMint, 
     toMint, 
+    userBalances,
+    exchangeInfo,
+    serumMarketInfo
+  ]);
+
+  // Automatically updates if the balance is valid
+  const isValidBalance = useCallback(() => {
+
+    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
+      return false;
+    }
+
+    let valid = false;
+    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+
+    if (isWrap()) {
+      valid = balance >= feesInfo.network;
+    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+      valid = balance >= (feesInfo.total + feesInfo.network);
+    } else {
+      valid = balance;
+    }
+
+    return valid;
+
+  }, [
+    connected, 
+    connection, 
+    feesInfo, 
+    fromMint, 
+    isWrap, 
     userBalances
   ]);
+
+  // Automatically updates if the swap amount is valid
+  const isSwapAmountValid = useCallback(() => {
+
+    if (!connection || !connected || !exchangeInfo) {
+      return false;
+    }
+
+    const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
+    const maxFromAmount = getMaxAllowedSwapAmount();
+    let minFromAmount = 0;
+
+    if (serumMarketInfo && exchangeInfo.fromAmm === 'Serum DEX') {
+      if (serumMarketInfo.baseMintAddress.toBase58() === from) {
+        minFromAmount = serumMarketInfo.minOrderSize + exchangeInfo.protocolFees;
+      } else {
+        minFromAmount = serumMarketInfo.minOrderSize / (exchangeInfo.outPrice || 1) + exchangeInfo.protocolFees;
+      }
+    }
+    
+    return fromSwapAmount > minFromAmount && fromSwapAmount <= maxFromAmount;
+
+  }, [
+    connected, 
+    connection,
+    fromMint,
+    fromSwapAmount, 
+    exchangeInfo,
+    serumMarketInfo,
+    getMaxAllowedSwapAmount
+  ])
 
   // Automatically updates the user account
   useEffect(() => {
@@ -464,15 +536,17 @@ export const SwapUi = (props: {
       const success = (info: any) => {
 
         if (tokensPools.length) {
-          console.info(consoleMsg, info);
+          consoleOut(consoleMsg, info);
           setSwapClient(client);
           setRefreshing(false);
 
         } else {
 
+          setSerumMarketInfo(info);
+
           const orderBooksSuccess = (orderbooks: any) => {
-            console.info(consoleMsg, info);
-            console.info('Orderbooks', orderbooks);
+            consoleOut(consoleMsg, info);
+            consoleOut('Orderbooks', orderbooks);
             setSwapClient(client);
             setRefreshing(false);
           }
@@ -706,53 +780,6 @@ export const SwapUi = (props: {
     setPreviousWalletConnectState
   ]);
 
-  // Automatically updates if the balance is valid
-  const isValidBalance = useCallback(() => {
-
-    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
-      return false;
-    }
-
-    let valid = false;
-    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
-
-    if (isWrap()) {
-      valid = balance >= feesInfo.network;
-    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-      valid = balance >= (feesInfo.total + feesInfo.network);
-    } else {
-      valid = balance >= feesInfo.network;
-    }
-
-    return valid;
-
-  }, [
-    connected, 
-    connection, 
-    feesInfo, 
-    fromMint, 
-    isWrap, 
-    userBalances
-  ]);
-
-  // Automatically updates if the swap amount is valid
-  const isSwapAmountValid = useCallback(() => {
-
-    if (!connection || !connected) {
-      return false;
-    }
-
-    const maxFromAmount = getMaxAllowedSwapAmount();
-    
-    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
-
-  }, [
-    connected, 
-    connection, 
-    fromSwapAmount, 
-    getMaxAllowedSwapAmount
-  ])
-
   // Updates the allowed to mints to select 
   useEffect(() => {
 
@@ -879,22 +906,31 @@ export const SwapUi = (props: {
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
       } else if (!isSwapAmountValid()) {
-        console.log('fromSwapAmount', fromSwapAmount);
 
         let needed = 0;
-        const symbol = mintList[fromMint].symbol;
+        const fromSymbol = mintList[fromMint].symbol;
+        const isFromSerum = serumMarketInfo && exchangeInfo && exchangeInfo.fromAmm === 'Serum DEX';
 
-        if (isWrap()) {
-          needed = fromSwapAmount + feesInfo.network;
-        } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-        } else if (isUnwrap()) {
-          needed = fromSwapAmount;
+        if (isFromSerum) {
+          const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
+          if (serumMarketInfo.baseMintAddress.toBase58() === from) {
+            needed = serumMarketInfo.minOrderSize + feesInfo.protocol;
+          } else {
+            needed = serumMarketInfo.minOrderSize / (exchangeInfo.outPrice || 1) + feesInfo.protocol;
+          }
         } else {
-          needed = fromSwapAmount + feesInfo.total;
+          if (isWrap()) {
+            needed = fromSwapAmount + feesInfo.network;
+          } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+            needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+          } else if (isUnwrap()) {
+            needed = fromSwapAmount;
+          } else {
+            needed = fromSwapAmount + feesInfo.total;
+          }
         }
 
-        needed = parseFloat(needed.toFixed(4));
+        needed = parseFloat(needed.toFixed(6));
 
         if (needed === 0) {
           needed = parseFloat(needed.toFixed(mintList[fromMint].decimals));
@@ -902,8 +938,24 @@ export const SwapUi = (props: {
 
         if (needed === 0) {
           label = t("transactions.validation.amount-low");
+        } else if (!isFromSerum) {
+          label = t("transactions.validation.insufficient-amount-needed", { 
+            amount: needed.toString(), 
+            symbol: fromSymbol 
+          });
         } else {
-          label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
+          const balance = parseFloat(fromBalance);
+          if (fromSwapAmount > (balance - feesInfo.network)) {
+            label = t("transactions.validation.insufficient-amount-needed", { 
+              amount: fromSwapAmount.toString(), 
+              symbol: fromSymbol 
+            });
+          } else {
+            label = t("transactions.validation.minimum-swap-amount", { 
+              mintAmount: needed.toString(),
+              fromMint: fromSymbol
+            });
+          }
         }
 
       } else {    
@@ -920,15 +972,17 @@ export const SwapUi = (props: {
 
   }, [
     t, 
+    exchangeInfo,
+    serumMarketInfo,
     ddcaOption?.dcaInterval, 
     connected, 
     connection, 
     feesInfo, 
+    fromBalance,
     fromSwapAmount, 
     fromMint, 
     isUnwrap, 
     isWrap, 
-    getMaxAllowedSwapAmount, 
     mintList, 
     toMint, 
     isValidBalance, 

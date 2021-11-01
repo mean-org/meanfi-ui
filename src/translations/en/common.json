@@ -454,7 +454,7 @@
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Invalid exchange",
 			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
-			"minimum-swap-amount": "Need at least {{mintAmount}} to exchange for {{toMint}}",
+			"minimum-swap-amount": "Minimum required amount to swap is {{mintAmount}} {{fromMint}}",
 			"no-amount": "Enter amount",
 			"no-balance": "No balance",
 			"no-payment-rate": "Add payment rate",

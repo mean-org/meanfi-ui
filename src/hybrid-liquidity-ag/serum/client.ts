@@ -4,7 +4,7 @@ import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 import BN from "bn.js";
 import { cloneDeep } from "lodash";
 import { getMultipleAccounts } from "../../utils/accounts";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, SERUM_PROGRAM_ID_V3, TOKEN_PROGRAM_ID } from "../../utils/ids";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, NATIVE_SOL_MINT, SERUM_PROGRAM_ID_V3, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { TokenAmount } from "../../utils/safe-math";
 import { PROTOCOLS } from "../data";
 import { ExchangeInfo, SERUM } from "../types";
@@ -105,7 +105,8 @@ export class SerumClient implements Client {
       throw new Error('Raydium pool info not found');
     }
 
-    const fromDecimals = from === market.baseMintAddress.toBase58() 
+    const fromMint = from === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : from;
+    const fromDecimals = fromMint === market.baseMintAddress.toBase58() 
       ? market._baseSplTokenDecimals : market._quoteSplTokenDecimals;
 
     const fromAccount = await Token.getAssociatedTokenAddress(

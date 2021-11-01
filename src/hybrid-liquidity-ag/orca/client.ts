@@ -80,12 +80,15 @@ export class OrcaClient implements LPClient {
       tradeToken = cloneDeep(tokenB);
     }
 
-    const recentBlockhash = await this.connection.getRecentBlockhash("recent");
-    const lamportsPerSignatureFee = recentBlockhash.feeCalculator.lamportsPerSignature;
     const decimalTradeAmount = new Decimal(1);
     const decimalSlippage = new Decimal(slippage / 10);
     const quote = await poolInfo.getQuote(tradeToken, decimalTradeAmount, decimalSlippage);
     const protocol = PROTOCOLS.filter(p => p.address === ORCA.toBase58())[0];
+    const recentBlockhash = await this.connection.getRecentBlockhash("recent");
+    const lamportsPerSignatureFee = recentBlockhash.feeCalculator.lamportsPerSignature;
+    const maxLamportsPerSignatureFee = 3 * lamportsPerSignatureFee;
+    const allTokenAccountsBalance = 2 * await this.connection.getMinimumBalanceForRentExemption(AccountLayout.span);
+    const networkFees = (quote.getNetworkFees().toNumber() + maxLamportsPerSignatureFee + allTokenAccountsBalance);
 
     const exchangeInfo: ExchangeInfo = {
       fromAmm: protocol.name,
@@ -94,14 +97,9 @@ export class OrcaClient implements LPClient {
       amountIn: amount,
       amountOut: quote.getExpectedOutputAmount().toNumber() * amount,
       minAmountOut: quote.getMinOutputAmount().toNumber() * amount,
-      networkFees: amount === 0 ? 0 : (quote.getNetworkFees().toNumber() + lamportsPerSignatureFee) / LAMPORTS_PER_SOL,
+      networkFees: amount === 0 ? 0 : networkFees / LAMPORTS_PER_SOL,
       protocolFees: amount === 0 ? 0 : quote.getLPFees().toNumber() * amount / LAMPORTS_PER_SOL
     };
-
-    if (from === NATIVE_SOL_MINT.toBase58() || to === NATIVE_SOL_MINT.toBase58()) {
-      const minTokenAccountBalance = await this.connection.getMinimumBalanceForRentExemption(AccountLayout.span);
-      exchangeInfo.networkFees = exchangeInfo.networkFees + (minTokenAccountBalance + lamportsPerSignatureFee) / LAMPORTS_PER_SOL;
-    }
 
     await this.updateHlaExchangeAccounts(from, to);
 
