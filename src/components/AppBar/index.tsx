@@ -25,7 +25,7 @@ export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected } = useWallet();
-  const isOnline = useOnlineStatus();
+  const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
@@ -160,9 +160,10 @@ export const AppBar = (props: { menuType: string }) => {
 
   const renderOnlineStatus = (
     <div className="flex">
-      <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
-          ? t('notifications.network-connection-good')
-          : t('notifications.network-connection-poor')}>
+      <Tooltip
+        placement="bottom"
+        destroyTooltipOnHide={true}
+        title={`${isOnline ? t('notifications.network-connection-good') : t('notifications.network-connection-poor')} (${responseTime}ms)`}>
         <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
       </Tooltip>
     </div>

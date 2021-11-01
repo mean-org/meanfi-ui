@@ -11,7 +11,7 @@ import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconSort } from "../../Icons";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { TransactionStatus } from "../../models/enums";
 import {
@@ -36,7 +36,7 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { NATIVE_MINT, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -316,18 +316,20 @@ export const OneTimePayment = () => {
   }
 
   const isSendAmountValid = (): boolean => {
-    return connected &&
-           selectedToken &&
-           tokenBalance &&
-           fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(otpFees, fromCoinAmount)
-            ? true
-            : false;
+    const isSafeAmount = connected && selectedToken && tokenBalance && fromCoinAmount &&
+                         parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance
+                         ? true
+                         : false;
+    if (isScheduledPayment()) {
+      return isSafeAmount && parseFloat(fromCoinAmount) > getTxFeeAmount(otpFees, fromCoinAmount)
+              ? true
+              : false;
+    }
+    return isSafeAmount;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
-    return isSendAmountValid() && paymentStartDate ? true : false;
+    return paymentStartDate && isSendAmountValid() ? true : false;
   }
 
   // Ui helpers
@@ -342,11 +344,13 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(otpFees, fromCoinAmount)
-      ? t('transactions.validation.amount-low')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : t('transactions.validation.valid-approve');
+      : isScheduledPayment()
+        ? tokenBalance < getTxFeeAmount(otpFees, fromCoinAmount)
+          ? t('transactions.validation.amount-low')
+          : !paymentStartDate
+            ? t('transactions.validation.no-valid-date')
+            : t('transactions.validation.valid-approve')
+        : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -420,10 +424,10 @@ export const OneTimePayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_MINT.toBase58())
+            })`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
@@ -990,8 +994,8 @@ export const OneTimePayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)} SOL`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_MINT.toBase58())}`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_MINT.toBase58())}`})
                   }
                 </h4>
               ) : (

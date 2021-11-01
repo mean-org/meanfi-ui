@@ -77,6 +77,7 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
+    tokenBalance,
     selectedToken,
     currentScreen,
     loadingStreams,
@@ -230,10 +231,14 @@ export const Streams = () => {
   const showCloseStreamModal = useCallback(() => {
     getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
       setTransactionFees(value);
-      setIsCloseStreamModalVisibility(true)
+      setIsCloseStreamModalVisibility(true);
+      consoleOut('tokenBalance:', tokenBalance, 'orange');
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+  }, [
+    tokenBalance,
+    getTransactionFees,
+  ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = () => {
     hideCloseStreamModal();
@@ -256,7 +261,7 @@ export const Streams = () => {
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string)
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("selected token:", token?.symbol);
     if (token) {
       setOldSelectedToken(selectedToken);
@@ -264,7 +269,7 @@ export const Streams = () => {
     }
     getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
       setTransactionFees(value);
-      setIsAddFundsModalVisibility(true)
+      setIsAddFundsModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
   }, [
@@ -300,7 +305,7 @@ export const Streams = () => {
           setLastStreamDetail(detail);
           getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
             setTransactionFees(value);
-            setIsWithdrawModalVisibility(true)
+            setIsWithdrawModalVisibility(true);
             consoleOut('transactionFees:', value, 'orange');
           });
         } else {
@@ -329,7 +334,7 @@ export const Streams = () => {
     connection,
     streamDetail,
     t,
-    getTransactionFees
+    getTransactionFees,
   ]);
   const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
   const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
@@ -594,6 +599,7 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
+      refreshTokenBalance();
     }
   }
 
@@ -882,6 +888,7 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
+      refreshTokenBalance();
     }
   }
 
@@ -1169,6 +1176,7 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
+      refreshTokenBalance();
     }
   }
 
@@ -2201,6 +2209,8 @@ export const Streams = () => {
       <CloseStreamModal
         isVisible={isCloseStreamModalVisible}
         transactionFees={transactionFees}
+        tokenBalance={tokenBalance}
+        streamDetail={streamDetail}
         handleOk={onAcceptCloseStream}
         handleClose={hideCloseStreamModal}
         content={getStreamClosureMessage()} />

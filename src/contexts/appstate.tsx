@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
@@ -632,6 +632,9 @@ const AppStateProvider: React.FC = ({ children }) => {
               console.log(item);
               updateSelectedStream(item);
               updateStreamDetail(item);
+              // setSelectedToken
+              const token = getTokenByMintAddress(item.associatedToken as string);
+              setSelectedToken(token);
               if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
