@@ -161,7 +161,7 @@ export const OneTimePayment = () => {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.oneTimePayment);
+      return await calculateActionFees(connection, MSP_ACTIONS.scheduleOneTimePayment);
     }
     if (!otpFees.mspPercentFee) {
       getTransactionFees().then(values => {

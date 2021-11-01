@@ -1191,10 +1191,17 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.2", "@babel/runtime@^7.10.4", "@babel/runtime@^7.10.5", "@babel/runtime@^7.11.1", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.0", "@babel/runtime@^7.12.1", "@babel/runtime@^7.12.13", "@babel/runtime@^7.12.5", "@babel/runtime@^7.14.5", "@babel/runtime@^7.14.6", "@babel/runtime@^7.3.1", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
+"@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.2", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.12.0", "@babel/runtime@^7.12.1", "@babel/runtime@^7.12.13", "@babel/runtime@^7.14.5", "@babel/runtime@^7.14.6", "@babel/runtime@^7.3.1", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
   version "7.15.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.15.4.tgz#fd17d16bfdf878e6dd02d19753a39fa8a8d9c84a"
   integrity sha512-99catp6bHCaxr4sJ/DbTGgHS4+Rs2RVd2g7iOap6SLGPDknRK9ztKNsE/Fg6QhSeh1FGE5f6gHGQmvvn3I3xhw==
+  dependencies:
+    regenerator-runtime "^0.13.4"
+
+"@babel/runtime@^7.10.5", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.5":
+  version "7.16.0"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.16.0.tgz#e27b977f2e2088ba24748bf99b5e1dece64e4f0b"
+  integrity sha512-Nht8L0O8YCktmsDV6FqFue7vQLRx3Hb0B37lS5y0jDRqRxlBG4wIJHnf9/bgSE2UyipKFA01YtS+npRdTWBUyw==
   dependencies:
     regenerator-runtime "^0.13.4"
 
@@ -1634,10 +1641,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/money-streaming@1.4.9":
-  version "1.4.9"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.9.tgz#c2a0278091444f4bbd4a39bc9717690d29f14cc0"
-  integrity sha512-fxwWXfCO9BLUIgVKvLlpQILeRzbuK9shgLJ2lQ4sSWazskvrAy3IdeGTLyA/OAUTu4Xf758BAVTtBWjbTm7u8Q==
+"@mean-dao/money-streaming@1.4.10":
+  version "1.4.10"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.10.tgz#b9ae11b5a41742c073219e3433e859df5a4ea7bd"
+  integrity sha512-jcmXnhQl7Q8ECd/Md+eex7M+w1+rBe5Xolimxw5vufuSx877nk7wFsuKX7q824APKrLdiYpf7sURYlwGjaTo1A==
   dependencies:
     "@project-serum/anchor" "^0.15.0"
     "@solana/spl-token" "^0.1.7"
@@ -1942,14 +1949,14 @@
   dependencies:
     buffer "~6.0.3"
 
-"@solana/spl-token-registry@^0.2":
+"@solana/spl-token-registry@^0.2", "@solana/spl-token-registry@^0.2.235":
   version "0.2.287"
   resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.287.tgz#c0d2ed68b7b2f805c7be897a617dc772dceef67b"
   integrity sha512-ZAs2lhYhqRqqbVBwU+z4ggbA9ERwjx9kFZuz0o7CJHus+ZRlmpjh2mK/ym5t35GoIR4lvoj0+OilxnfD1Ho7Jg==
   dependencies:
     cross-fetch "3.0.6"
 
-"@solana/spl-token-registry@^0.2.214", "@solana/spl-token-registry@^0.2.235":
+"@solana/spl-token-registry@^0.2.214":
   version "0.2.286"
   resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.286.tgz#53a9108c30582a6057f4bc80af2fbc57e8107557"
   integrity sha512-zkn59e1Wm49o3dKAa2I4VHslG/BmA0GX3jZJA4bRU6Xci1EjLNu2McXRXxTCEzjod26MXFMq4bkBjOtjmQrnwg==
