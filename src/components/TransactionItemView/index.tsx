@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { ParsedConfirmedTransactionMeta, ParsedMessageAccount, PublicKey, TokenBalance } from "@solana/web3.js";
+import { TokenBalance } from "@solana/web3.js";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { getSolanaExplorerClusterParam } from "../../contexts/connection";
@@ -10,9 +10,8 @@ import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
 import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
-import { IconGasStation } from "../../Icons";
 import { environment } from "../../environments/environment";
-import { consoleOut } from "../../utils/ui";
+import { isLocal } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
   accountAddress: string;
@@ -29,10 +28,6 @@ export const TransactionItemView = (props: {
   const [balanceChange, setBalanceChange] = useState(0);
   const [postTokenBalance, setPostTokenBalance] = useState<TokenBalance | null>(null);
   const [isTxRenderable, setIsTxRenderable] = useState(true);
-
-  const isLocal = (): boolean => {
-    return environment === 'local' ? true : false;
-  }
 
   useEffect(() => {
 

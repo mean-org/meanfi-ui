@@ -2,14 +2,13 @@ import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Button, Col, Modal, Progress, Row } from 'antd';
 import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { consoleOut, getTransactionStatusForLogs, percentage, percentual } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
 import Slider, { SliderMarks } from 'antd/lib/slider';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from '../../utils/ids';
-import { environment } from '../../environments/environment';
 import { LoadingOutlined } from '@ant-design/icons';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { AppStateContext } from '../../contexts/appstate';
@@ -52,14 +51,6 @@ export const DdcaAddFundsModal = (props: {
   const [isBusy, setIsBusy] = useState(false);
 
   const fromToken = useMemo(() => MEAN_TOKEN_LIST.find(t => t.address === props.ddcaDetails?.fromMint), [props.ddcaDetails]);
-
-  const isProd = (): boolean => {
-    return environment === 'production';
-  }
-
-  const isLocal = (): boolean => {
-    return window.location.hostname === 'localhost' ? true : false;
-  }
 
   const getModalHeadline = () => {
     if (!props.ddcaDetails) { return ''; }

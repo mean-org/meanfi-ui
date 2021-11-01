@@ -77,7 +77,6 @@ export const OneTimePayment = () => {
   const { t } = useTranslation('common');
 
   const [isBusy, setIsBusy] = useState(false);
-  const [isScheduledPayment, setIsScheduledPayment] = useState(false);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
@@ -193,6 +192,13 @@ export const OneTimePayment = () => {
   const closeTransactionModal = useCallback(() => setTransactionModalVisibility(false), []);
 
   // Event handling
+
+  const isScheduledPayment = (): boolean => {
+    const now = new Date();
+    const parsedDate = Date.parse(paymentStartDate as string);
+    const fromParsedDate = new Date(parsedDate);
+    return fromParsedDate.getDate() > now.getDate() ? true : false;
+  }
 
   const onAfterTransactionModalClosed = () => {
     if (isBusy) {
@@ -374,11 +380,6 @@ export const OneTimePayment = () => {
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const fromParsedDate = new Date(parsedDate);
-        if (fromParsedDate.getDate() === now.getDate()) {
-          setIsScheduledPayment(false);
-        } else {
-          setIsScheduledPayment(true);
-        }
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
@@ -891,9 +892,9 @@ export const OneTimePayment = () => {
           <span className="field-label-right">&nbsp;</span>
         </div>
         <div className="transaction-field-row main-row">
-          <span className="field-select-left">
+          <span className="field-select-left text-capitalize">
             {isToday(paymentStartDate || '')
-              ? `${paymentStartDate} (${t('common:general.today')})`
+              ? `${paymentStartDate} (${t('common:general.now')})`
               : `${paymentStartDate}`}
           </span>
           <div className="addon-right">
@@ -917,7 +918,7 @@ export const OneTimePayment = () => {
       </div>
 
       {/* Info */}
-      {selectedToken && (
+      {(selectedToken && isScheduledPayment()) && (
         <div className="p-2 mb-2">
           {infoRow(
             `1 ${selectedToken.symbol}:`,
@@ -979,8 +980,8 @@ export const OneTimePayment = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={isScheduledPayment ? handleGoToStreamsClick : closeTransactionModal}>
-                {isScheduledPayment ? t('transactions.status.cta-view-stream') : t('general.cta-close')}
+                onClick={isScheduledPayment() ? handleGoToStreamsClick : closeTransactionModal}>
+                {isScheduledPayment() ? t('transactions.status.cta-view-stream') : t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (

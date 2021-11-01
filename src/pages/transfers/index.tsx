@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
-import { useCallback, useContext, useState } from "react";
+import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ContractSelectorModal } from "../../components/ContractSelectorModal";
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from "../../contexts/appstate";
-import { IconCaretDown, IconMoneyTransfer } from "../../Icons";
-import { OneTimePayment, RepeatingPayment, PayrollPayment, Streams } from "../../views";
+import { IconMoneyTransfer } from "../../Icons";
+import { OneTimePayment, RepeatingPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
+
+type SwapOption = "one-time" | "recurring";
 
 export const TransfersView = () => {
   const { publicKey } = useWallet();
@@ -15,21 +16,34 @@ export const TransfersView = () => {
     streamList,
     currentScreen,
     loadingStreams,
+    setContract,
     setCurrentScreen,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
 
   // If the last known screen was 'streams' but there are no streams, fallback to 'contract'
   useEffect(() => {
     if (publicKey) {
-      if (!streamList && loadingStreams) {
-        setIsLoading(true);
-      } else if (!loadingStreams && currentScreen === 'streams' && streamList && streamList.length === 0) {
-        setCurrentScreen('contract');
-        setIsLoading(false);
+      if (currentScreen === 'contract') {
+        // While the contract screen is set, lets see what happens while loading and after loading
+        if (loadingStreams) {
+          setIsLoading(true);
+        } else {
+          if (streamList && streamList.length > 0) {
+            setIsLoading(false);
+            setCurrentScreen('streams');
+          } else {
+            setIsLoading(false);
+            setCurrentScreen('contract');
+          }
+        }
       } else {
-        setIsLoading(false);
+        if (!loadingStreams && streamList && streamList.length === 0) {
+          setIsLoading(false);
+          setCurrentScreen('contract');
+        }
       }
     } else {
       setIsLoading(false);
@@ -42,21 +56,20 @@ export const TransfersView = () => {
     setCurrentScreen
   ]);
 
-  // Contract switcher modal
-  const [isContractSelectorModalVisible, setIsContractSelectorModalVisibility] = useState(false);
-  const showContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(true), []);
-  const closeContractSelectorModal = useCallback(() => setIsContractSelectorModalVisibility(false), []);
-  const onAcceptContractSelector = () => {
-    // Do something and close the modal
-    closeContractSelectorModal();
-  };
-
   const renderContract = () => {
-    switch(contract?.id) {
-      case 1:   return <OneTimePayment />;
-      case 2:   return <RepeatingPayment />;
-      case 3:   return <PayrollPayment />;
-      default:  return null;
+    if (currentTab === "one-time") {
+      return <OneTimePayment />;
+    } else {
+      return <RepeatingPayment />;
+    }
+  }
+
+  const onTabChange = (option: SwapOption) => {
+    setCurrentTab(option);
+    if (option === "one-time") {
+      setContract('One Time Payment');
+    } else {
+      setContract('Repeating Payment');
     }
   }
 
@@ -93,9 +106,7 @@ export const TransfersView = () => {
     <>
     <div className="container main-container">
       <div className="interaction-area">
-        {currentScreen === 'streams' ? (
-          <Streams />
-        ) : (
+        {currentScreen === 'contract' ? (
           <>
           <div className="title-and-subtitle">
             <div className="title">
@@ -107,11 +118,19 @@ export const TransfersView = () => {
             </div>
           </div>
           <div className="place-transaction-box mb-3">
+            <div className="button-tabset-container">
+              <div className={`tab-button ${currentTab === "one-time" ? 'active' : ''}`} onClick={() => onTabChange("one-time")}>
+                {t('swap.tabset.one-time')}
+              </div>
+              <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
+                {t('swap.tabset.recurring')}
+              </div>
+            </div>
             <div className="contract-wrapper">
               <div className="position-relative mb-2">
                 {contract && (
                   <>
-                    <h2 className="contract-heading simplelink" onClick={showContractSelectorModal}>{t(`contract-selector.${contract.translationId}.name`)}<IconCaretDown className="mean-svg-icons" /></h2>
+                    <h2 className="contract-heading">{t(`contract-selector.${contract.translationId}.name`)}</h2>
                     <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
                   </>
                 )}
@@ -119,12 +138,10 @@ export const TransfersView = () => {
               {/* Display apropriate contract setup screen */}
               {renderContract()}
             </div>
-            <ContractSelectorModal
-              isVisible={isContractSelectorModalVisible}
-              handleOk={onAcceptContractSelector}
-              handleClose={closeContractSelectorModal}/>
           </div>
           </>
+        ) : (
+          <Streams />
         )}
       </div>
     </div>

@@ -216,6 +216,7 @@
 		"months": "",
 		"not-connected": "Votre portefeuille n'est pas connecté, veuillez connecter votre portefeuille",
 		"not-implemented": "Pas mis en œuvre",
+		"now": "now",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
@@ -224,9 +225,9 @@
 		"weeks": "",
 		"year": "année",
 		"you": "vous",
-		"start": "start",
-		"starting": "starting",
-		"finished": "finished"
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
@@ -245,6 +246,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clé publique non valide. Veuillez vérifier la saisie",
 		"invalid-streamid-message": "ID de transfert erroné",
+		"network-connection-good": "Network connection is good",
+		"network-connection-poor": "Poor network connection detected",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Le compte de transfert a été copié avec succès dans le clipboard",

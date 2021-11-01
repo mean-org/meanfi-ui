@@ -1,5 +1,4 @@
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
-import { environment } from "./environments/environment";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
@@ -20,19 +19,14 @@ import {
 import { ProcessReferals } from "./guards";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
+import { isLocal, isProd } from "./utils/ui";
+import { OnlineStatusProvider } from "./contexts/online-status";
 
 export function Routes() {
 
-  const isProd = (): boolean => {
-    return environment === 'production';
-  }
-
-  const isLocal = (): boolean => {
-    return window.location.hostname === 'localhost' ? true : false;
-  }
-
   return (
     <>
+    <OnlineStatusProvider>
       <BrowserRouter basename={"/"}>
         <ConnectionProvider>
           <WalletProvider>
@@ -71,6 +65,7 @@ export function Routes() {
           </WalletProvider>
         </ConnectionProvider>
       </BrowserRouter>
+    </OnlineStatusProvider>
     </>
   );
 }

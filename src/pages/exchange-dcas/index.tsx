@@ -13,7 +13,8 @@ import {
   delay,
   getTransactionModalTitle,
   getTransactionOperationDescription,
-  getTransactionStatusForLogs
+  getTransactionStatusForLogs,
+  isLocal
 } from '../../utils/ui';
 import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'antd';
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
@@ -90,10 +91,6 @@ export const ExchangeDcasView = () => {
   const [firstLoadDone, setFirstLoadDone] = useState<boolean>(false);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [activity, setActivity] = useState<DdcaActivity[]>([]);
-
-  const isLocal = (): boolean => {
-    return window.location.hostname === 'localhost' ? true : false;
-  }
 
   // Select, Connect to and test the network
   useEffect(() => {

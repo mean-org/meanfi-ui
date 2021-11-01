@@ -648,9 +648,6 @@ const AppStateProvider: React.FC = ({ children }) => {
                   });
               }
             }
-            if (reset && currentScreen === 'contract') {
-              setSelectedTab('streams');
-            }
           } else {
             setStreamActivity([]);
             updateSelectedStream(undefined);
@@ -666,7 +663,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }, [
     connection,
-    currentScreen,
     streamProgramAddress,
     loadingStreamActivity,
     selectedStream,

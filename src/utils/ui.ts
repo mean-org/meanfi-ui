@@ -5,9 +5,22 @@ import { TransactionFees } from "@mean-dao/money-streaming/lib/types";
 import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
+import { environment } from "../environments/environment";
+
+export const isDev = (): boolean => {
+    return environment === 'development';
+}
+
+export const isProd = (): boolean => {
+    return environment === 'production';
+}
+
+export const isLocal = (): boolean => {
+    return window.location.hostname === 'localhost' ? true : false;
+}
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (window.location.hostname !== 'localhost') { return; }
+    if (!isLocal()) { return; }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);

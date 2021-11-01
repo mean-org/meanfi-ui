@@ -216,6 +216,7 @@
 		"months": "",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
+		"now": "now",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
@@ -224,9 +225,9 @@
 		"weeks": "",
 		"year": "año",
 		"you": "usted",
-		"start": "start",
-		"starting": "starting",
-		"finished": "finished"
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
@@ -245,6 +246,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
+		"network-connection-good": "Network connection is good",
+		"network-connection-poor": "Poor network connection detected",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",

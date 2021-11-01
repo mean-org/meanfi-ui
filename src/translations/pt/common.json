@@ -216,6 +216,7 @@
 		"months": "",
 		"not-connected": "Sua carteira não está conectada, conecte sua carteira",
 		"not-implemented": "Não implementado",
+		"now": "now",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
@@ -224,9 +225,9 @@
 		"weeks": "",
 		"year": "ano",
 		"you": "tu",
-		"start": "start",
-		"starting": "starting",
-		"finished": "finished"
+		"start": "Start",
+		"starting": "Starting",
+		"finished": "Finished"
 	},
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
@@ -245,6 +246,8 @@
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Chave pública inválida. Verifique a senha e tente novamente",
 		"invalid-streamid-message": "ID de transferência errado",
+		"network-connection-good": "Network connection is good",
+		"network-connection-poor": "Poor network connection detected",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "A conta de transferência foi copiada com sucesso para el clipboard",
