@@ -59,7 +59,7 @@ export const SwapSettings = (props: {
       </div>
       <div className="right">
         <InputNumber
-          style={{ width: 64 }}
+          style={{ width: 82 }}
           min={MIN_SLIPPAGE_VALUE}
           max={MAX_SLIPPAGE_VALUE}
           step={0.1}

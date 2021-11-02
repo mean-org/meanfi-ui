@@ -812,26 +812,22 @@ footer.ant-layout-footer {
     box-shadow: none;
   }
   input.ant-input-number-input {
-    padding: 0 8px;
     text-align: right;
+    padding: 0 24px 0 0;
   }
   .ant-input-number-handler-wrap {
-    position: absolute;
-    top: 0;
-    left: 0;
     width: 20px;
     height: 100%;
-    background: var(--darken);
+    background: transparent;
     border-radius: 2px 0 0 2px;
-    opacity: 0;
-    transition: opacity 0.24s linear 0.1s;
+    opacity: 1;
+    border-left: 1px solid var(--color-secondary-alpha-20);
     .ant-input-number-handler {
       color: var(--color-secondary-alpha-20);
       border-left: none;
-      border-right-style: solid;
-      border-right-width: 1px;
-      border-right-color: var(--color-secondary-alpha-20);
-      border-top-color: var(--color-secondary-alpha-20);
+      &.ant-input-number-handler-down {
+        border-top: 1px solid var(--color-secondary-alpha-20);
+      }
     }
     .ant-input-number-handler-up-inner,
     .ant-input-number-handler-down-inner {
@@ -1413,6 +1409,38 @@ em {
 .flex {
   flex: 1 1 auto;
 }
+.flex-fixed-right {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  &.align-items-center {
+    align-items: center;
+  }
+  .left {
+    flex: 1 1 auto;
+    margin-right: 1rem;
+  }
+  .right {
+    flex: 0 0 auto;
+  }
+}
+.flex-fixed-left {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  &.align-items-center {
+    align-items: center;
+  }
+  .left {
+    flex: 0 0 auto;
+  }
+  .right {
+    flex: 1 1 auto;
+    margin-left: 1rem;
+  }
+}
 .flexible-left {
   display: flex;
   align-items: center;
@@ -1866,6 +1894,167 @@ section.content {
   vertical-align: -4px;
 }
 
+//////////////////
+// Modern forms //
+//////////////////
+
+// Fields go inside wells
+.well {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  border-radius: var(--custom-border-radius);
+  background-color: var(--color-wells);
+  padding: 12px 15px;
+  margin-bottom: 24px;
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.6;
+    background-color: var(--color-secondary-alpha-02);
+  }
+  &:hover {
+    background-color: var(--darken);
+  }
+  .add-on {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    .anticon.anticon-qrcode svg {
+      height: 24px;
+      width: 24px;
+      color: var(--color-secondary-alpha-50);
+    }
+  }
+  #payment-recipient-field,
+  #payment-recipient-static-field {
+    position: absolute;
+    font-size: 1.3rem;
+    line-height: 1.3rem;
+  }
+  #payment-recipient-field {
+    top: -1px;
+  }
+  #payment-recipient-static-field {
+    top: 2px;
+  }
+  .general-text-input {
+    width: 100%;
+    position: relative;
+    color: var(--text-color);
+    font-weight: 500;
+    outline: none;
+    border: none;
+    background-color: transparent;
+    font-size: 20px;
+    line-height: 20px;
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0px;
+    appearance: textfield;
+    &[readonly] {
+      cursor: not-allowed;
+    }
+    @media (max-width: 575.98px) {
+      font-size: 18px;
+    }
+    &.ant-input-number {
+      &:hover {
+        .ant-input-number-handler-wrap {
+          opacity: 1;
+        }
+      }
+      .ant-input-number-input-wrap {
+        padding-right: 1.3rem;
+      }
+      .ant-input-number-handler-wrap {
+        position: absolute;
+        right: 0;
+        left: auto;
+        border: 1px solid var(--color-secondary-alpha-20);
+        border-radius: 2px;
+        width: 22px;
+        opacity: 0;
+        background: transparent;
+      }
+      input.ant-input-number-input {
+        padding: 0 8px 0 0;
+        text-align: left;
+        height: auto;
+      }
+    }
+  }
+  .recipient-field-wrapper {
+    display: block;
+    height: 100%;
+    overflow: hidden;
+  }
+  .well-divider {
+    display: block;
+    width: 1px;
+    flex: 0 0 1px;
+    background-color: var(--color-secondary-alpha-05);
+    margin: -12px 0 -12px 8px;
+  }
+}
+// Labels go before the well
+.form-label {
+  width: 100%;
+  font-size: 0.7rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: var(--color-secondary-alpha-60);
+  line-height: 1.3rem;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+.form-field-error {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--color-orange-red);
+  margin: 4px 0 -4px 0;
+}
+
+// General purpose token selector
+.token-selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: flex-start;
+  .token-icon {
+    border-radius: 50%;
+    overflow: hidden;
+    width: 20px;
+    height: 20px;
+    justify-content: center;
+    align-items: center;
+    display: inline-flex;
+    margin: 2px 6px 0 0;
+    @media (max-width: 575.98px) {
+      width: 18px;
+      height: 18px;
+      margin: 2px 4px 0 0;
+    }
+  }
+  .token-symbol {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1;
+    @media (max-width: 575.98px) {
+      font-size: 20px !important;
+      letter-spacing: -0.5px;
+    }
+  }
+  .field-caret-down {
+    position: relative;
+  }
+}
+
 .transaction-field {
   width: 100%;
   height: 70px;
@@ -2043,7 +2232,6 @@ section.content {
         font-size: 20px !important;
       }
     }
-
     .add-ons,
     .addon-left {
       display: flex;
@@ -3877,7 +4065,6 @@ section.content {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 #payment-recipient-field {
   position: absolute;
   top: 6px;

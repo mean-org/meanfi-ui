@@ -360,6 +360,7 @@
 			"placeholder": "¿Para que é esse pagamento?"
 		},
 		"rate-and-frequency": {
+			"amount-label": "Quantia",
 			"payment-rates": {
 				"per-day": "por dia",
 				"per-hour": "por tempo",
@@ -368,7 +369,7 @@
 				"per-week": "por semana",
 				"per-year": "por ano"
 			},
-			"rate-label": "Taxa e frequência",
+			"rate-label": "Frequência",
 			"token-label": "O destinatário recebe"
 		},
 		"recipient": {

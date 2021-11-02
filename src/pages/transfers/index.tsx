@@ -12,7 +12,6 @@ type SwapOption = "one-time" | "recurring";
 export const TransfersView = () => {
   const { publicKey } = useWallet();
   const {
-    contract,
     streamList,
     currentScreen,
     loadingStreams,
@@ -127,15 +126,6 @@ export const TransfersView = () => {
               </div>
             </div>
             <div className="contract-wrapper">
-              <div className="position-relative mb-2">
-                {contract && (
-                  <>
-                    <h2 className="contract-heading">{t(`contract-selector.${contract.translationId}.name`)}</h2>
-                    <p>{t(`contract-selector.${contract.translationId}.description`)}</p>
-                  </>
-                )}
-              </div>
-              {/* Display apropriate contract setup screen */}
               {renderContract()}
             </div>
           </div>

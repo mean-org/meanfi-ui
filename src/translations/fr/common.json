@@ -360,6 +360,7 @@
 			"placeholder": "A quoi sert ce paiement ?"
 		},
 		"rate-and-frequency": {
+			"amount-label": "Quantité",
 			"payment-rates": {
 				"per-day": "par jour",
 				"per-hour": "par heure",
@@ -368,7 +369,7 @@
 				"per-week": "par semaine",
 				"per-year": "par an"
 			},
-			"rate-label": "Taux et fréquence",
+			"rate-label": "Fréquence",
 			"token-label": "Le destinataire reçoit"
 		},
 		"recipient": {
