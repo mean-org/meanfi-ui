@@ -176,7 +176,7 @@ export const RepeatingPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees.mspPercentFee) {
+    if (!repeatingPaymentFees.mspFlatFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
         consoleOut("repeatingPaymentFees:", values);

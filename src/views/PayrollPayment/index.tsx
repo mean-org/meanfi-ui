@@ -180,7 +180,7 @@ export const PayrollPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!payrollFees.mspPercentFee) {
+    if (!payrollFees.mspFlatFee) {
       getTransactionFees().then(values => {
         setPayrollFees(values);
         consoleOut("payrollFees:", values);
