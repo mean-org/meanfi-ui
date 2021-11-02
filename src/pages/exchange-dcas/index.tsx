@@ -362,8 +362,8 @@ export const ExchangeDcasView = () => {
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             transactionLog.push({
@@ -413,13 +413,10 @@ export const ExchangeDcasView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            setIsBusy(false);
+            onCloseDdcaTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -628,8 +625,8 @@ export const ExchangeDcasView = () => {
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.SendTransactionSuccess
             });
             signature = sig;
             transactionLog.push({
@@ -679,13 +676,10 @@ export const ExchangeDcasView = () => {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
+            setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            setIsBusy(false);
+            onWithdrawTransactionFinished();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
