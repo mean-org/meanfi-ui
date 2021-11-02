@@ -708,24 +708,55 @@ export const ExchangeDcasView = () => {
   //   Data Related   //
   //////////////////////
 
+  // Load DDCA activity by ddcaAddress
+  const reloadDdcaItemActivity = useCallback((ddcaAccountAddress: string) => {
+    if (!ddcaClient) { return; }
+
+    setLoadingActivity(true);
+    consoleOut('Loading activity...', '', 'blue');
+    const ddcaAddress = new PublicKey(ddcaAccountAddress as string);
+    ddcaClient.getActivity(ddcaAddress)
+      .then(activity => {
+        if (activity) {
+          setActivity(activity);
+          consoleOut('Ddca activity:', activity, 'blue');
+        } else {
+          setActivity([]);
+        }
+        setLoadingActivity(false);
+      })
+      .catch(error => {
+        console.error(error);
+        setActivity([]);
+        setLoadingActivity(false);
+      });
+  }, [
+    ddcaClient
+  ]);
+
   const reloadDdcaDetail = useCallback((address: string) => {
     if (!ddcaClient) { return; }
 
     setLoadingDdcaDetails(true);
     const ddcaAddress = new PublicKey(address as string);
-    consoleOut('Calling ddcaClient.GetDdca...', '', 'brown');
     ddcaClient.getDdca(ddcaAddress)
       .then(ddca => {
         if (ddca) {
           setDdcaDetails(ddca);
           consoleOut('ddcaDetails:', ddca, 'blue');
-          setLoadingActivity(false);
+          reloadDdcaItemActivity(ddca.ddcaAccountAddress);
+        } else {
+          setActivity([]);
         }
       })
-      .catch(error => console.error(error))
+      .catch(error => {
+        console.error(error);
+        setActivity([]);
+      })
       .finally(() => setLoadingDdcaDetails(false));
   }, [
-    ddcaClient
+    ddcaClient,
+    reloadDdcaItemActivity
   ]);
 
   const selectDdcaItem = useCallback((item: DdcaAccount) => {
@@ -772,18 +803,8 @@ export const ExchangeDcasView = () => {
             }
             if (item) {
               setSelectedDdca(item);
-              setLoadingDdcaDetails(true);
-              const ddcaAddress = new PublicKey(item.ddcaAccountAddress as string);
-              consoleOut('Calling ddcaClient.GetDca...', '', 'brown');
-              ddcaClient.getDdca(ddcaAddress)
-                .then(ddca => {
-                  if (ddca) {
-                    setDdcaDetails(ddca);
-                    consoleOut('ddcaDetails:', ddca, 'blue');
-                  }
-                })
-                .catch(error => console.error(error))
-                .finally(() => setLoadingDdcaDetails(false));
+              consoleOut('Calling ddcaClient.getDdca...', '', 'brown');
+              reloadDdcaDetail(item.ddcaAccountAddress);
             }
           } else {
             setSelectedDdca(undefined);
@@ -801,6 +822,7 @@ export const ExchangeDcasView = () => {
     loadingRecurringBuys,
     recentlyCreatedVault,
     setLoadingRecurringBuys,
+    reloadDdcaDetail,
     setRecurringBuys
   ]);
 
@@ -840,30 +862,6 @@ export const ExchangeDcasView = () => {
     previousWalletConnectState,
     reloadRecurringBuys,
     setRecurringBuys
-  ]);
-
-  // Load DDCA activity by ddcaAddress
-  useEffect(() => {
-
-    if (!ddcaClient || !ddcaDetails) { return; }
-
-    if (!loadingActivity) {
-      setLoadingActivity(true);
-      const ddcaAddress = new PublicKey(ddcaDetails.ddcaAccountAddress as string);
-      ddcaClient.getActivity(ddcaAddress)
-        .then(activity => {
-          if (activity) {
-            setActivity(activity);
-            consoleOut('Ddca activity:', activity, 'blue');
-          }
-        })
-        .catch(error => console.error(error));
-    }
-
-  }, [
-    ddcaClient,
-    ddcaDetails,
-    loadingActivity
   ]);
 
   ////////////////////
