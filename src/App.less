@@ -1788,6 +1788,35 @@ section.content {
   }
 }
 
+.stepper-wrapper {
+  @media (min-width: 576px) {
+    padding: 0.5rem;
+  }
+  .stepper-label {
+    font-size: 14px;
+  }
+  .stepper-handles {
+    display: inline-flex;
+    justify-content: flex-start;
+    align-items: center;
+    .step-handle {
+      cursor: pointer;
+      width: 17px;
+      height: 5px;
+      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+      &:not(:first-child) {
+        margin-left: 7px;
+      }
+      &.active {
+        background-color: var(--color-secondary-alpha-85);
+      }
+      &:not(.active) {
+        background-color: var(--color-secondary-alpha-05);
+      }
+    }
+  }
+}
+
 .payroll .place-transaction-box,
 .exchange .place-transaction-box,
 .transfers .place-transaction-box {
@@ -1925,12 +1954,43 @@ section.content {
       width: 24px;
       color: var(--color-secondary-alpha-50);
     }
+    .ant-picker.ant-picker-middle.ant-picker-borderless.addon-date-picker {
+      padding: 0;
+      .ant-picker-input {
+        input {
+          display: none;
+        }
+        .ant-picker-suffix {
+          margin: 0;
+          color: var(--color-secondary-alpha-50);
+          .anticon.anticon-calendar {
+            > svg {
+              width: 20px;
+              height: 20px;
+              color: var(--color-secondary-alpha-50);
+            }
+          }
+        }
+      }
+    }
+  }
+  .field-select-left {
+    font-size: 20px;
+    font-weight: 500;
+    width: calc(100% - 36px);
+    line-height: 1.2;
+    @media (max-width: 575.98px) {
+      font-size: 18px;
+    }
   }
   #payment-recipient-field,
   #payment-recipient-static-field {
     position: absolute;
-    font-size: 1.3rem;
-    line-height: 1.3rem;
+    font-size: 20px;
+    line-height: 1.2rem;
+    @media (max-width: 575.98px) {
+      font-size: 18px;
+    }
   }
   #payment-recipient-field {
     top: -1px;
@@ -1990,6 +2050,13 @@ section.content {
     display: block;
     height: 100%;
     overflow: hidden;
+  }
+  .dropdown-trigger.no-decoration {
+    font-size: 20px;
+    line-height: 1.2;
+    @media (max-width: 575.98px) {
+      font-size: 18px;
+    }
   }
   .well-divider {
     display: block;
@@ -4124,7 +4191,10 @@ section.content {
   text-transform: capitalize;
 }
 .capitalize-first-letter {
-  
+  display: inline-block;
+  &::first-letter {
+    text-transform: uppercase;
+  }
 }
 // Text alignment
 .text-left {

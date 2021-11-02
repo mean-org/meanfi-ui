@@ -227,7 +227,8 @@
 		"you": "you",
 		"start": "Start",
 		"starting": "Starting",
-		"finished": "Finished"
+		"finished": "Finished",
+		"stepper-label": "Step {{step}} of {{steps}}"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",

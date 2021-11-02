@@ -46,6 +46,7 @@ import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
+import { StepSelector } from '../../components/StepSelector';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -95,6 +96,7 @@ export const RPayment = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
 
@@ -900,50 +902,282 @@ export const RPayment = () => {
     );
   }
 
+  const onStepperChange = (value: number) => {
+    setCurrentStep(value);
+  }
+
   return (
     <>
-      {/* Recipient */}
-      <div className="form-label">{t('transactions.recipient.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left position-relative">
-            <span className="recipient-field-wrapper">
-              <input id="payment-recipient-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onFocus={handleRecipientAddressFocusIn}
-                onChange={handleRecipientAddressChange}
-                onBlur={handleRecipientAddressFocusOut}
-                placeholder={t('transactions.recipient.placeholder')}
-                required={true}
-                spellCheck="false"
-                value={recipientAddress}/>
-              <span id="payment-recipient-static-field"
-                    className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                {recipientAddress || t('transactions.recipient.placeholder')}
+      <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
+      <div className="contract-wrapper">
+        {/* Recipient */}
+        <div className="form-label">{t('transactions.recipient.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left position-relative">
+              <span className="recipient-field-wrapper">
+                <input id="payment-recipient-field"
+                  className="general-text-input"
+                  autoComplete="on"
+                  autoCorrect="off"
+                  type="text"
+                  onFocus={handleRecipientAddressFocusIn}
+                  onChange={handleRecipientAddressChange}
+                  onBlur={handleRecipientAddressFocusOut}
+                  placeholder={t('transactions.recipient.placeholder')}
+                  required={true}
+                  spellCheck="false"
+                  value={recipientAddress}/>
+                <span id="payment-recipient-static-field"
+                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                  {recipientAddress || t('transactions.recipient.placeholder')}
+                </span>
               </span>
-            </span>
+            </div>
+            <div className="right">
+              <div className="add-on simplelink" onClick={showQrScannerModal}>
+                <QrcodeOutlined />
+              </div>
+            </div>
           </div>
-          <div className="right">
-            <div className="add-on simplelink" onClick={showQrScannerModal}>
-              <QrcodeOutlined />
+          {
+            recipientAddress && !isValidAddress(recipientAddress) ? (
+              <span className="form-field-error">
+                {t("assets.account-address-validation")}
+              </span>
+            ) : isAddressOwnAccount() ? (
+              <span className="form-field-error">
+                {t('transactions.recipient.recipient-is-own-account')}
+              </span>
+            ) : (null)
+          }
+        </div>
+
+        {/* Receive rate */}
+        <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                <div className="token-selector" onClick={() => {
+                  setSubjectTokenSelection('beneficiary');
+                  showTokenSelector();
+                  }}>
+                  <div className="token-icon">
+                    {destinationToken?.logoURI ? (
+                      <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
+                    ) : (
+                      <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                    )}
+                  </div>
+                  <div className="token-symbol">{destinationToken?.symbol}</div>
+                  <span className="flex-center">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </span>
+                </div>
+              </span>
+            </div>
+            <div className="well-divider"></div>
+            <div className="right">
+              <InputNumber
+                className="general-text-input"
+                min={0}
+                step={1}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                value={parseFloat(paymentRateAmount)}
+                onChange={onRateAmountChange}
+              />
             </div>
           </div>
         </div>
-        {
-          recipientAddress && !isValidAddress(recipientAddress) ? (
-            <span className="form-field-error">
-              {t("assets.account-address-validation")}
+
+        {/* Receive frequency */}
+        <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
+        <div className="well">
+          <Dropdown
+            overlay={paymentRateOptionsMenu}
+            trigger={["click"]}>
+            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+              <div className="left">
+                <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+              </div>
+              <div className="right">
+                <IconCaretDown className="mean-svg-icons" />
+              </div>
             </span>
-          ) : isAddressOwnAccount() ? (
-            <span className="form-field-error">
-              {t('transactions.recipient.recipient-is-own-account')}
+          </Dropdown>
+        </div>
+
+        {/* Send date */}
+        <div className="form-label">{t('transactions.send-date.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left field-select-left">
+              {isToday(paymentStartDate || '')
+                ? `${paymentStartDate} (${t('common:general.today')})`
+                : `${paymentStartDate}`}
+            </div>
+            <div className="right">
+              <div className="add-on simplelink">
+                <DatePicker
+                  size="middle"
+                  bordered={false}
+                  className="addon-date-picker"
+                  aria-required={true}
+                  allowClear={false}
+                  disabledDate={disabledDate}
+                  placeholder={t('transactions.send-date.placeholder')}
+                  onChange={(value, date) => handleDateChange(date)}
+                  value={moment(
+                    paymentStartDate,
+                    DATEPICKER_FORMAT
+                  )}
+                  format={DATEPICKER_FORMAT}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3 text-center">
+          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
+          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+        </div>
+
+        {/* Send amount */}
+        <div className="transaction-field mb-1">
+          <div className="transaction-field-row">
+            <span className="field-label-left" style={{marginBottom: '-6px'}}>
+              {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
+                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                : "0.00"}
+              <IconSort className="mean-svg-icons usd-switcher fg-red" />
+              <span className="fg-red">USD</span>
             </span>
-          ) : (null)
-        }
+            <span className="field-label-right">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span className="balance-amount">
+                {`${selectedToken && tokenBalance
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+              <span className="balance-amount">
+                (~$
+                {tokenBalance && effectiveRate
+                  ? formatAmount(tokenBalance as number * effectiveRate, 2)
+                  : "0.00"})
+              </span>
+            </span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="input-left">
+              <input
+                className="general-text-input"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleFromCoinAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={fromCoinAmount}
+              />
+            </span>
+            {selectedToken && (
+              <div className="addon-right">
+                <div className="token-group">
+                  {selectedToken && (
+                    <div
+                      className="token-max simplelink"
+                      onClick={() =>
+                        setFromCoinAmount(
+                          // getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                          tokenBalance.toFixed(selectedToken.decimals)
+                        )
+                      }>
+                      MAX
+                    </div>
+                  )}
+                  <div className="token-selector simplelink" onClick={() => {
+                      setSubjectTokenSelection('payer');
+                      showTokenSelector();
+                    }}>
+                    <div className="token-icon">
+                      {selectedToken.logoURI ? (
+                        <img
+                          alt={`${selectedToken.name}`}
+                          width={20}
+                          height={20}
+                          src={selectedToken.logoURI}
+                        />
+                      ) : (
+                        <Identicon
+                          address={selectedToken.address}
+                          style={{ width: "24", display: "inline-flex" }}
+                        />
+                      )}
+                    </div>
+                    <div className="token-symbol">{selectedToken.symbol}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <span className="field-caret-down">
+              <IconCaretDown className="mean-svg-icons" />
+            </span>
+          </div>
+        </div>
+
+        {/* Info */}
+        {selectedToken && (
+          <div className="p-2 mb-2">
+            {infoRow(
+              `1 ${selectedToken.symbol}:`,
+              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.transaction-fee') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.recipient-receives') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+          </div>
+        )}
       </div>
+
       {/* QR scan modal */}
       {isQrScannerModalVisible && (
         <QrScannerModal
@@ -951,265 +1185,6 @@ export const RPayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Memo */}
-      <div className="form-label">{t('transactions.memo2.label')}</div>
-      <div className="well">
-        <div className="flex-fixed-right">
-          <div className="left">
-            <input
-              id="payment-memo-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
-              onChange={handleRecipientNoteChange}
-              placeholder={t('transactions.memo2.placeholder')}
-              spellCheck="false"
-              value={recipientNote}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Receive rate */}
-      <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-      <div className="well">
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on simplelink">
-              <div className="token-selector" onClick={() => {
-                setSubjectTokenSelection('beneficiary');
-                showTokenSelector();
-                }}>
-                <div className="token-icon">
-                  {destinationToken?.logoURI ? (
-                    <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
-                  ) : (
-                    <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                  )}
-                </div>
-                <div className="token-symbol">{destinationToken?.symbol}</div>
-                <span className="flex-center">
-                  <IconCaretDown className="mean-svg-icons" />
-                </span>
-              </div>
-            </span>
-          </div>
-          <div className="well-divider"></div>
-          <div className="right">
-            <InputNumber
-              className="general-text-input"
-              min={0}
-              step={1}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              value={parseFloat(paymentRateAmount)}
-              onChange={onRateAmountChange}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Receive frequency */}
-      <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
-      <div className="well">
-        <Dropdown
-          overlay={paymentRateOptionsMenu}
-          trigger={["click"]}>
-          <span className="dropdown-trigger no-decoration flex-fixed-right">
-            <div className="left">
-              {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
-            </div>
-            <div className="right">
-              <IconCaretDown className="mean-svg-icons" />
-            </div>
-          </span>
-        </Dropdown>
-      </div>
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left cell-1">{t('transactions.rate-and-frequency.token-label')}</span>
-          <span className="field-label-left cell-2 flex-center">&nbsp;</span>
-          <span className="field-label-left cell-3">{t('transactions.rate-and-frequency.rate-label')}</span>
-          <span className="field-label-left cell-4">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="addon-left cell-1">
-            <div className="token-selector simplelink" onClick={() => {
-              setSubjectTokenSelection('beneficiary');
-              showTokenSelector();
-              }}>
-              <div className="token-icon">
-                {destinationToken?.logoURI ? (
-                  <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
-                ) : (
-                  <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-symbol">{destinationToken?.symbol}</div>
-              <span className="flex-center">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-          </span>
-          <span className="static-field-text cell-2 flex-center">
-            <span className="symbol-at">@</span>
-          </span>
-          <span className="static-field-text cell-3">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              required={true}
-              onChange={handlePaymentRateAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={paymentRateAmount}
-            />
-          </span>
-          <span className="static-field-text cell-4">
-            <Dropdown
-              overlay={paymentRateOptionsMenu}
-              trigger={["click"]}>
-              <span className="dropdown-trigger no-decoration flex-center">
-                {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </Dropdown>
-          </span>
-        </div>
-      </div>
-
-      {/* Send date */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.send-date.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="field-select-left">
-            {isToday(paymentStartDate || '')
-              ? `${paymentStartDate} (${t('common:general.today')})`
-              : `${paymentStartDate}`}
-          </span>
-          <div className="addon-right">
-            <DatePicker
-              size="middle"
-              bordered={false}
-              className="addon-date-picker"
-              aria-required={true}
-              allowClear={false}
-              disabledDate={disabledDate}
-              placeholder={t('transactions.send-date.placeholder')}
-              onChange={(value, date) => handleDateChange(date)}
-              value={moment(
-                paymentStartDate,
-                DATEPICKER_FORMAT
-              )}
-              format={DATEPICKER_FORMAT}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3 text-center">
-        <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-        <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
-      </div>
-
-      {/* Send amount */}
-      <div className="transaction-field mb-1">
-        <div className="transaction-field-row">
-          <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
-              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-              : "0.00"}
-            <IconSort className="mean-svg-icons usd-switcher fg-red" />
-            <span className="fg-red">USD</span>
-          </span>
-          <span className="field-label-right">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span className="balance-amount">
-              {`${selectedToken && tokenBalance
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
-            </span>
-            <span className="balance-amount">
-              (~$
-              {tokenBalance && effectiveRate
-                ? formatAmount(tokenBalance as number * effectiveRate, 2)
-                : "0.00"})
-            </span>
-          </span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </span>
-          {selectedToken && (
-            <div className="addon-right">
-              <div className="token-group">
-                {selectedToken && (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        // getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
-                    MAX
-                  </div>
-                )}
-                <div className="token-selector simplelink" onClick={() => {
-                    setSubjectTokenSelection('payer');
-                    showTokenSelector();
-                  }}>
-                  <div className="token-icon">
-                    {selectedToken.logoURI ? (
-                      <img
-                        alt={`${selectedToken.name}`}
-                        width={20}
-                        height={20}
-                        src={selectedToken.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={selectedToken.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken.symbol}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-      </div>
 
       {/* Token selection modal */}
       <Modal
@@ -1224,30 +1199,6 @@ export const RPayment = () => {
         </div>
       </Modal>
 
-      {/* Info */}
-      {selectedToken && (
-        <div className="p-2 mb-2">
-          {infoRow(
-            `1 ${selectedToken.symbol}:`,
-            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.transaction-fee') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.recipient-receives') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-        </div>
-      )}
-
       {/* Action button */}
       <Button
         className="main-cta"
@@ -1259,6 +1210,7 @@ export const RPayment = () => {
         disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+
       {/* Transaction execution modal */}
       <Modal
         className="mean-modal"

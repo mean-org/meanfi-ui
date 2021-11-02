@@ -921,50 +921,304 @@ export const PayrollPayment = () => {
   return (
     <>
       {redirect && (<Redirect to={redirect} />)}
-      {/* Recipient */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.recipient.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left recipient-field-wrapper">
-            <input id="payment-recipient-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
-              onFocus={handleRecipientAddressFocusIn}
-              onChange={handleRecipientAddressChange}
-              onBlur={handleRecipientAddressFocusOut}
-              placeholder={t('transactions.recipient.placeholder')}
-              required={true}
-              spellCheck="false"
-              value={recipientAddress}/>
-            <span id="payment-recipient-static-field"
-                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-              {recipientAddress || t('transactions.recipient.placeholder')}
+
+      <div className="contract-wrapper">
+        {/* Recipient */}
+        <div className="transaction-field">
+          <div className="transaction-field-row">
+            <span className="field-label-left">{t('transactions.recipient.label')}</span>
+            <span className="field-label-right">&nbsp;</span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="input-left recipient-field-wrapper">
+              <input id="payment-recipient-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onFocus={handleRecipientAddressFocusIn}
+                onChange={handleRecipientAddressChange}
+                onBlur={handleRecipientAddressFocusOut}
+                placeholder={t('transactions.recipient.placeholder')}
+                required={true}
+                spellCheck="false"
+                value={recipientAddress}/>
+              <span id="payment-recipient-static-field"
+                    className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                {recipientAddress || t('transactions.recipient.placeholder')}
+              </span>
             </span>
-          </span>
-          <div className="addon-right simplelink" onClick={showQrScannerModal}>
-            <QrcodeOutlined />
+            <div className="addon-right simplelink" onClick={showQrScannerModal}>
+              <QrcodeOutlined />
+            </div>
+          </div>
+          <div className="transaction-field-row">
+            <span className="field-label-left">
+              {recipientAddress && !isValidAddress(recipientAddress) ? (
+                <span className="fg-red">
+                  {t("assets.account-address-validation")}
+                </span>
+              ) : isAddressOwnAccount() ? (
+                <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
+              ) : (
+                <span>&nbsp;</span>
+              )}
+            </span>
+            <span className="field-label-right">&nbsp;</span>
           </div>
         </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">
-            {recipientAddress && !isValidAddress(recipientAddress) ? (
-              <span className="fg-red">
-                {t("assets.account-address-validation")}
-              </span>
-            ) : isAddressOwnAccount() ? (
-              <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
-            ) : (
-              <span>&nbsp;</span>
-            )}
-          </span>
-          <span className="field-label-right">&nbsp;</span>
+
+        {/* Memo */}
+        <div className="transaction-field">
+          <div className="transaction-field-row">
+            <span className="field-label-left">{t('transactions.memo2.label')}</span>
+            <span className="field-label-right">&nbsp;</span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="input-left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote} />
+            </span>
+          </div>
         </div>
+
+        {/* Receive rate and frequency */}
+        <div className="transaction-field">
+          <div className="transaction-field-row">
+            <span className="field-label-left cell-1">{t('transactions.rate-and-frequency.token-label')}</span>
+            <span className="field-label-left cell-2 flex-center">&nbsp;</span>
+            <span className="field-label-left cell-3">{t('transactions.rate-and-frequency.rate-label')}</span>
+            <span className="field-label-left cell-4">&nbsp;</span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="addon-left cell-1">
+              <div className="token-selector simplelink" onClick={() => {
+                setSubjectTokenSelection('beneficiary');
+                showTokenSelector();
+              }}>
+                <div className="token-icon">
+                  {destinationToken?.logoURI ? (
+                    <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
+                  ) : (
+                    <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </div>
+                <div className="token-symbol">{destinationToken?.symbol}</div>
+                <span className="flex-center">
+                  <IconCaretDown className="mean-svg-icons" />
+                </span>
+              </div>
+            </span>
+            <span className="static-field-text cell-2 flex-center">
+              <span className="symbol-at">@</span>
+            </span>
+            <span className="static-field-text cell-3">
+              <input
+                className="general-text-input"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                required={true}
+                onChange={handlePaymentRateAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={paymentRateAmount}
+              />
+            </span>
+            <span className="static-field-text cell-4">
+              <Dropdown
+                overlay={paymentRateOptionsMenu}
+                trigger={["click"]}>
+                <span className="dropdown-trigger no-decoration flex-center">
+                  {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
+                  <IconCaretDown className="mean-svg-icons" />
+                </span>
+              </Dropdown>
+            </span>
+          </div>
+        </div>
+
+        {/* Timesheet requirement */}
+        {/* <div className="transaction-field">
+          <div className="transaction-field-row">
+            <span className="field-label-left">{t('transactions.rate-and-frequency.rate-label')}</span>
+            <span className="field-label-right">&nbsp;</span>
+          </div>
+          <Dropdown
+            overlay={timeSheetRequirementOptionsMenu}
+            trigger={["click"]}>
+            <div className="transaction-field-row main-row simplelink">
+              <span className="field-select-left">
+                {getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}
+              </span>
+              <span className="field-caret-down">
+                <IconCaretDown className="mean-svg-icons" />
+              </span>
+            </div>
+          </Dropdown>
+        </div> */}
+
+        {/* Send date */}
+        <div className="transaction-field">
+          <div className="transaction-field-row">
+            <span className="field-label-left">{t('transactions.send-date.label')}</span>
+            <span className="field-label-right">&nbsp;</span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="field-select-left">
+              {isToday(paymentStartDate || '')
+                ? `${paymentStartDate} (${t('common:general.today')})`
+                : `${paymentStartDate}`}
+            </span>
+            <div className="addon-right">
+              <DatePicker
+                size="middle"
+                bordered={false}
+                className="addon-date-picker"
+                aria-required={true}
+                allowClear={false}
+                disabledDate={disabledDate}
+                placeholder={t('transactions.send-date.placeholder')}
+                onChange={(value, date) => handleDateChange(date)}
+                value={moment(
+                  paymentStartDate,
+                  DATEPICKER_FORMAT
+                )}
+                format={DATEPICKER_FORMAT}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-3 text-center">
+          <div>{t('transactions.transaction-info.add-funds-payroll-advice')}.</div>
+          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+        </div>
+
+        {/* Send amount */}
+        <div className="transaction-field mb-1">
+          <div className="transaction-field-row">
+            <span className="field-label-left" style={{marginBottom: '-6px'}}>
+              {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
+                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                : "0.00"}
+              <IconSort className="mean-svg-icons usd-switcher fg-red" />
+              <span className="fg-red">USD</span>
+            </span>
+            <span className="field-label-right">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span className="balance-amount">
+                {`${selectedToken && tokenBalance
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+              <span className="balance-amount">
+                (~$
+                {tokenBalance && effectiveRate
+                  ? formatAmount(tokenBalance as number * effectiveRate, 2)
+                  : "0.00"})
+              </span>
+            </span>
+          </div>
+          <div className="transaction-field-row main-row">
+            <span className="input-left">
+              <input
+                className="general-text-input"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleFromCoinAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={fromCoinAmount}
+              />
+            </span>
+            {selectedToken && (
+              <div className="addon-right">
+                <div className="token-group">
+                  {selectedToken && (
+                    <div
+                      className="token-max simplelink"
+                      onClick={() =>
+                        setFromCoinAmount(
+                          tokenBalance.toFixed(selectedToken.decimals)
+                        )
+                      }>
+                      MAX
+                    </div>
+                  )}
+                  <div className="token-selector simplelink" onClick={() => {
+                      setSubjectTokenSelection('payer');
+                      showTokenSelector();
+                    }}>
+                    <div className="token-icon">
+                      {selectedToken.logoURI ? (
+                        <img
+                          alt={`${selectedToken.name}`}
+                          width={20}
+                          height={20}
+                          src={selectedToken.logoURI}
+                        />
+                      ) : (
+                        <Identicon
+                          address={selectedToken.address}
+                          style={{ width: "24", display: "inline-flex" }}
+                        />
+                      )}
+                    </div>
+                    <div className="token-symbol">{selectedToken.symbol}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <span className="field-caret-down">
+              <IconCaretDown className="mean-svg-icons" />
+            </span>
+          </div>
+        </div>
+
+        {/* Info */}
+        {selectedToken && (
+          <div className="p-2 mb-2">
+            {infoRow(
+              `1 ${selectedToken.symbol}:`,
+              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.transaction-fee') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.recipient-receives') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+          </div>
+        )}
       </div>
+
       {/* QR scan modal */}
       {isQrScannerModalVisible && (
         <QrScannerModal
@@ -972,232 +1226,6 @@ export const PayrollPayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Memo */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.memo2.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              id="payment-memo-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
-              onChange={handleRecipientNoteChange}
-              placeholder={t('transactions.memo2.placeholder')}
-              spellCheck="false"
-              value={recipientNote} />
-          </span>
-        </div>
-      </div>
-
-      {/* Receive rate and frequency */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left cell-1">{t('transactions.rate-and-frequency.token-label')}</span>
-          <span className="field-label-left cell-2 flex-center">&nbsp;</span>
-          <span className="field-label-left cell-3">{t('transactions.rate-and-frequency.rate-label')}</span>
-          <span className="field-label-left cell-4">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="addon-left cell-1">
-            <div className="token-selector simplelink" onClick={() => {
-              setSubjectTokenSelection('beneficiary');
-              showTokenSelector();
-            }}>
-              <div className="token-icon">
-                {destinationToken?.logoURI ? (
-                  <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
-                ) : (
-                  <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-symbol">{destinationToken?.symbol}</div>
-              <span className="flex-center">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-          </span>
-          <span className="static-field-text cell-2 flex-center">
-            <span className="symbol-at">@</span>
-          </span>
-          <span className="static-field-text cell-3">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              required={true}
-              onChange={handlePaymentRateAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={paymentRateAmount}
-            />
-          </span>
-          <span className="static-field-text cell-4">
-            <Dropdown
-              overlay={paymentRateOptionsMenu}
-              trigger={["click"]}>
-              <span className="dropdown-trigger no-decoration flex-center">
-                {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </Dropdown>
-          </span>
-        </div>
-      </div>
-
-      {/* Timesheet requirement */}
-      {/* <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.rate-and-frequency.rate-label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <Dropdown
-          overlay={timeSheetRequirementOptionsMenu}
-          trigger={["click"]}>
-          <div className="transaction-field-row main-row simplelink">
-            <span className="field-select-left">
-              {getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}
-            </span>
-            <span className="field-caret-down">
-              <IconCaretDown className="mean-svg-icons" />
-            </span>
-          </div>
-        </Dropdown>
-      </div> */}
-
-      {/* Send date */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.send-date.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="field-select-left">
-            {isToday(paymentStartDate || '')
-              ? `${paymentStartDate} (${t('common:general.today')})`
-              : `${paymentStartDate}`}
-          </span>
-          <div className="addon-right">
-            <DatePicker
-              size="middle"
-              bordered={false}
-              className="addon-date-picker"
-              aria-required={true}
-              allowClear={false}
-              disabledDate={disabledDate}
-              placeholder={t('transactions.send-date.placeholder')}
-              onChange={(value, date) => handleDateChange(date)}
-              value={moment(
-                paymentStartDate,
-                DATEPICKER_FORMAT
-              )}
-              format={DATEPICKER_FORMAT}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3 text-center">
-        <div>{t('transactions.transaction-info.add-funds-payroll-advice')}.</div>
-        <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
-      </div>
-
-      {/* Send amount */}
-      <div className="transaction-field mb-1">
-        <div className="transaction-field-row">
-          <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
-              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-              : "0.00"}
-            <IconSort className="mean-svg-icons usd-switcher fg-red" />
-            <span className="fg-red">USD</span>
-          </span>
-          <span className="field-label-right">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span className="balance-amount">
-              {`${selectedToken && tokenBalance
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
-            </span>
-            <span className="balance-amount">
-              (~$
-              {tokenBalance && effectiveRate
-                ? formatAmount(tokenBalance as number * effectiveRate, 2)
-                : "0.00"})
-            </span>
-          </span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </span>
-          {selectedToken && (
-            <div className="addon-right">
-              <div className="token-group">
-                {selectedToken && (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
-                    MAX
-                  </div>
-                )}
-                <div className="token-selector simplelink" onClick={() => {
-                    setSubjectTokenSelection('payer');
-                    showTokenSelector();
-                  }}>
-                  <div className="token-icon">
-                    {selectedToken.logoURI ? (
-                      <img
-                        alt={`${selectedToken.name}`}
-                        width={20}
-                        height={20}
-                        src={selectedToken.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={selectedToken.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken.symbol}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-      </div>
 
       {/* Token selection modal */}
       <Modal
@@ -1212,30 +1240,6 @@ export const PayrollPayment = () => {
         </div>
       </Modal>
 
-      {/* Info */}
-      {selectedToken && (
-        <div className="p-2 mb-2">
-          {infoRow(
-            `1 ${selectedToken.symbol}:`,
-            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.transaction-fee') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.recipient-receives') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-        </div>
-      )}
-
       {/* Action button */}
       <Button
         className="main-cta"
@@ -1247,6 +1251,7 @@ export const PayrollPayment = () => {
         disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
         {getTransactionStartButtonLabel()}
       </Button>
+
       {/* Transaction execution modal */}
       <Modal
         className="mean-modal"

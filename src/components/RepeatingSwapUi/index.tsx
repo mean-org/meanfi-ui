@@ -717,7 +717,7 @@ export const RepeatingSwapUi = (props: {
       return;
     }
     
-    if (!connected || !userAccount || !fromMint || !userBalances) {
+    if (!connected || !fromMint || !userBalances) {
       setFromBalance('0');
       return;
     }
@@ -727,7 +727,7 @@ export const RepeatingSwapUi = (props: {
       let balance = 0;
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = userAccount ? 0 : userAccount.lamports / LAMPORTS_PER_SOL;
+        balance = !userAccount ? 0 : userAccount.lamports / LAMPORTS_PER_SOL;
       } else {
         balance = userBalances[fromMint] ? userBalances[fromMint] : 0;
       }

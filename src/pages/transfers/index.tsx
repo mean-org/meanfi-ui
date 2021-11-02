@@ -126,9 +126,7 @@ export const TransfersView = () => {
                 {t('swap.tabset.recurring')}
               </div>
             </div>
-            <div className="contract-wrapper">
-              {renderContract()}
-            </div>
+            {renderContract()}
           </div>
           </>
         ) : (
