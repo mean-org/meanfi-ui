@@ -176,7 +176,7 @@ export const RPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees.mspPercentFee) {
+    if (!repeatingPaymentFees.blockchainFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
         consoleOut("repeatingPaymentFees:", values);
@@ -1014,7 +1014,18 @@ export const RPayment = () => {
       {/* Receive frequency */}
       <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
       <div className="well">
-        <p>srtfsrgsdfghsfgh</p>
+        <Dropdown
+          overlay={paymentRateOptionsMenu}
+          trigger={["click"]}>
+          <span className="dropdown-trigger no-decoration flex-fixed-right">
+            <div className="left">
+              {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
+            </div>
+            <div className="right">
+              <IconCaretDown className="mean-svg-icons" />
+            </div>
+          </span>
+        </Dropdown>
       </div>
       <div className="transaction-field">
         <div className="transaction-field-row">

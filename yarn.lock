@@ -1641,10 +1641,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/money-streaming@1.4.12":
-  version "1.4.12"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.12.tgz#68fa12a4557210fbedbb4ddebe2fd95142216276"
-  integrity sha512-GDa9Yu00cn+BlSjm5nhesiLtiqrcQW5xiJF8zxVouWGHDFqNghMhXlm9iNVoQVKV1WbjzVQBgZRe8EmEx5Ma0g==
+"@mean-dao/money-streaming@1.4.15":
+  version "1.4.15"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.4.15.tgz#8c0b68a59faace0022e3ee3916bbd1766bb212a6"
+  integrity sha512-he/QK89tPa9/dnfyrj2S7CsFBuz0aUhGk8MWJaPwuZNyWKyy+6gGvLTla+qOBJyQb3gyxUJaNYooKW7VCRShxg==
   dependencies:
     "@project-serum/anchor" "^0.15.0"
     "@solana/spl-token" "^0.1.7"

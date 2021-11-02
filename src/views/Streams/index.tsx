@@ -917,8 +917,8 @@ export const Streams = () => {
         setWithdrawFundsAmount(amount);
 
         const data = {
-          stream: stream,
-          beneficiary: beneficiary,
+          stream: stream.toBase58(),
+          beneficiary: beneficiary.toBase58(),
           amount: amount
         };
         consoleOut('withdraw params:', data, 'brown');
