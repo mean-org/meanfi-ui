@@ -57,16 +57,16 @@ export const SwapSettings = (props: {
         <div key="preset-03" className="token-max simplelink" onClick={() => onChangeValue(1)}>1%</div>
         <div key="preset-04" className="token-max simplelink" onClick={() => onChangeValue(2)}>2%</div>
       </div>
-      <div className="right">
+      <div className="right position-relative">
         <InputNumber
-          style={{ width: 64 }}
+          style={{ width: '4.6rem' }}
           min={MIN_SLIPPAGE_VALUE}
           max={MAX_SLIPPAGE_VALUE}
           step={0.1}
           value={props.currentValue}
           onChange={onChange}
         />
-        <span className="ml-1">%</span>
+        <span className="leading-percent">%</span>
       </div>
     </div>
   );
