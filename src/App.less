@@ -1769,6 +1769,9 @@ section.content {
       border: none !important;
       box-shadow: none !important;
       margin-bottom: calc(2rem + var(--footer-bar-height));
+      .button-tabset-container {
+        margin: 0 0 1rem 0;
+      }
     }
     @media (min-width: 576px) {
       .button-tabset-container {
@@ -1839,6 +1842,10 @@ section.content {
 }
 
 .stepper-wrapper {
+  @media (max-width: 575.98px) {
+    padding: 0 0.4rem 0;
+    margin-bottom: 1rem;
+  }
   @media (min-width: 576px) {
     padding: 0.4rem 0.7rem 0.5rem;
   }
@@ -2156,6 +2163,17 @@ section.content {
     margin-top: 6px;
     > span:not(:last-child) {
       margin-right: 4px;
+    }
+    &.memo {
+      margin-top: 0;
+      max-width: 184px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      @media (max-width: 575.98px) {
+        max-width: 146px;
+      }
     }
   }
 }

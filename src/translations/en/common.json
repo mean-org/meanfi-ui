@@ -316,6 +316,7 @@
 		"stream-list": {
 			"no-streams": "No streams available",
 			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-paused-otp": "Scheduled one-time payment",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
 			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
 			"subtitle-pending-inbound": "This contract is pending your approval",
