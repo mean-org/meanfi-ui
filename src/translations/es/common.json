@@ -205,6 +205,7 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
+		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
 		"cta-finish": "Terminar",
 		"day": "día",
@@ -248,7 +249,7 @@
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"network-connection-good": "Network connection is good",
-		"network-connection-poor": "Poor network connection detected",
+		"network-connection-poor": "No network connection. App is OFFLINE!",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
@@ -432,7 +433,7 @@
 			"tx-wrap-operation": "Wrapping",
 			"tx-wrap-operation-success": "La operación de wrap se completó exitosamente"
 		},
-		"timeshift-requirement": {
+		"timesheet-requirement": {
 			"clock-in-out": "Hora de entrada / salida",
 			"label": "Requisito del parte de horas",
 			"not-required": "Innecesario (transmisiones 24/7)",

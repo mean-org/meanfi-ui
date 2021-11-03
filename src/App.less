@@ -507,6 +507,34 @@ footer.ant-layout-footer {
 }
 
 // Buttons
+.flat-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: inherit;
+  font-style: normal;
+  font-weight: 600;
+  height: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  border-width: 0px;
+  text-decoration: none;
+  border-radius: 3px;
+  padding: 2px 4px;
+  transition: background 0.1s ease-out 0s;
+  outline: none !important;
+  &:hover,
+  &.active,
+  &:focus {
+    background-color: var(--darken);
+    text-decoration: none;
+  }
+  .mean-svg-icons {
+    width: 1.4em;
+    height: 1.4em;
+    margin-right: 3px;
+  }
+}
 
 // Primary rounded corners
 .ant-btn.ant-btn-primary {
@@ -2144,6 +2172,13 @@ section.content {
   line-height: 1rem;
   color: var(--color-orange-red);
   margin: 4px 0 -4px 0;
+}
+.flat-button {
+  &.change-button {
+    font-size: 13px;
+    color: var(--color-orange-red);
+    text-transform: uppercase;
+  }
 }
 
 // General purpose token selector

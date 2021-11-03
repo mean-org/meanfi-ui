@@ -24,8 +24,8 @@ export const StepSelector = (props: {
                         [...Array(props.steps)].map((step: any, index: number) => {
                             return (
                                 <>
-                                    <div className="handle-wrapper" onClick={() => onChangeValue(index)}>
-                                        <span key={`step-${index}`} className={index === props.step ? 'step-handle active' : 'step-handle'}></span>
+                                    <div key={`${index + 1}`} className="handle-wrapper" onClick={() => onChangeValue(index)}>
+                                        <span className={index === props.step ? 'step-handle active' : 'step-handle'}></span>
                                     </div>
                                 </>
                             );

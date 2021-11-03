@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown, IconSort } from "../../Icons";
+import { IconCaretDown, IconEdit, IconSort } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
@@ -930,6 +930,7 @@ export const RepeatingPayment = () => {
     <>
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+
         {/* Recipient */}
         <div className="form-label">{t('transactions.recipient.label')}</div>
         <div className="well">
@@ -1099,7 +1100,17 @@ export const RepeatingPayment = () => {
         {/* Resume */}
         {publicKey && recipientAddress && (
           <>
-            <div className="form-label">{t('transactions.resume')}</div>
+            <div className="flex-fixed-right">
+              <div className="left">
+                <div className="form-label">{t('transactions.resume')}</div>
+              </div>
+              <div className="right">
+                <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                  <IconEdit className="mean-svg-icons" />
+                  <span>{t('general.cta-change')}</span>
+                </span>
+              </div>
+            </div>
             <div className="well">
               <div className="three-col-flexible-middle">
                 <div className="left flex-row">
@@ -1114,7 +1125,7 @@ export const RepeatingPayment = () => {
                   </div>
                 </div>
                 <div className="middle flex-center">
-                  <div className="well-divider"></div>
+                  <div className="vertical-bar"></div>
                 </div>
                 <div className="right flex-column">
                   <div className="rate">
