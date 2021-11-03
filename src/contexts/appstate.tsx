@@ -225,7 +225,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
   }
 
-  const today = new Date().toLocaleDateString("en-US");
+  const today = new Date().toLocaleDateString();
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
