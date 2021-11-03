@@ -19,7 +19,7 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
 import { LoadingOutlined } from '@ant-design/icons';
-import { HlaInfo } from '../../hybrid-liquidity-ag/types';
+import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 
