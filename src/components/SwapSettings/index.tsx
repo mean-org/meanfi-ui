@@ -59,15 +59,14 @@ export const SwapSettings = (props: {
       </div>
       <div className="right">
         <InputNumber
-          style={{ width: 82 }}
+          style={{ width: 64 }}
           min={MIN_SLIPPAGE_VALUE}
           max={MAX_SLIPPAGE_VALUE}
           step={0.1}
-          formatter={value => `${value}%`}
-          parser={value => parseFloat(value ? value.replace('%', '') : '0.1')}
           value={props.currentValue}
           onChange={onChange}
         />
+        <span className="ml-1">%</span>
       </div>
     </div>
   );
