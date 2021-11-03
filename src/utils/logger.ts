@@ -1,6 +1,6 @@
 import { environment } from "../environments/environment";
 import { osName, isBrowser, browserName, browserVersion } from "react-device-detect";
-import { consoleOut } from "./ui";
+import { consoleOut, isLocal } from "./ui";
 import { appConfig } from "..";
 import { WALLET_PROVIDERS } from "../contexts/wallet";
 
@@ -58,6 +58,11 @@ export class CustomLoggerService {
 
     public async logError(message: string, data?: any) {
         const errorData = this.getLoggerJsonData(message, LogLevel.Error, data);
+        if (isLocal()) {
+            consoleOut('Loggly logger not available for localhost', 'consoleOut then', 'orange');
+            consoleOut('loggerJsonData:', errorData, 'blue');
+            return;
+        }
         logger.push(errorData);
     }
 
