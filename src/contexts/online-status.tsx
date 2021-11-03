@@ -61,7 +61,7 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
     const tsStart = new Date().getTime();
     const online = await checkOnlineStatus();
     const tsEnd = new Date().getTime();
-    setResponseTime(tsEnd - tsStart);
+    setResponseTime(online ? tsEnd - tsStart : 0);
     setOnlineStatus(online);
   };
 

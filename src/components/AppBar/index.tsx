@@ -17,7 +17,6 @@ import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
 import { useOnlineStatus } from '../../contexts/online-status';
-import { isDev } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -163,7 +162,7 @@ export const AppBar = (props: { menuType: string }) => {
       <Tooltip
         placement="bottom"
         destroyTooltipOnHide={true}
-        title={`${isOnline ? t('notifications.network-connection-good') : t('notifications.network-connection-poor')} (${responseTime}ms)`}>
+        title={isOnline ? `${t('notifications.network-connection-good')} (${responseTime}ms)` : t('notifications.network-connection-poor')}>
         <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
       </Tooltip>
     </div>
