@@ -1441,6 +1441,21 @@ em {
     margin-left: 1rem;
   }
 }
+.three-col-flexible-middle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  .left {
+    flex: 0 0 auto;
+  }
+  .middle {
+    flex: 1 1 auto;
+  }
+  .right {
+    flex: 0 0 auto;
+  }
+}
 .flexible-left {
   display: flex;
   align-items: center;
@@ -1790,28 +1805,37 @@ section.content {
 
 .stepper-wrapper {
   @media (min-width: 576px) {
-    padding: 0.5rem;
+    padding: 0.4rem 0.7rem 0.5rem;
   }
   .stepper-label {
     font-size: 14px;
+    text-transform: uppercase;
+    color: var(--color-secondary-alpha-85);
+    font-weight: 700;
   }
   .stepper-handles {
-    display: inline-flex;
+    display: flex;
     justify-content: flex-start;
     align-items: center;
-    .step-handle {
+    .handle-wrapper {
+      width: 18px;
+      height: 17px;
       cursor: pointer;
-      width: 17px;
-      height: 5px;
-      box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
       &:not(:first-child) {
         margin-left: 7px;
       }
-      &.active {
-        background-color: var(--color-secondary-alpha-85);
-      }
-      &:not(.active) {
-        background-color: var(--color-secondary-alpha-05);
+      .step-handle {
+        width: 16px;
+        height: 5px;
+        box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.10);
+        &.active {
+          background-color: var(--color-secondary-alpha-85);
+        }
+        &:not(.active) {
+          background-color: var(--color-secondary-alpha-10);
+        }
       }
     }
   }
@@ -1973,6 +1997,22 @@ section.content {
         }
       }
     }
+    .token-max {
+      margin: 0 8px;
+      min-width: 30px;
+      padding: 3px 6px;
+      color: var(--color-white);
+      font-weight: 800;
+      font-size: 10px;
+      line-height: 11px;
+      white-space: nowrap;
+      text-align: center;
+      background: var(--color-primary);
+      border-radius: var(--custom-border-radius);
+      &:hover {
+        color: var(--color-white);
+      }
+    }
   }
   .field-select-left {
     font-size: 20px;
@@ -2065,7 +2105,26 @@ section.content {
     background-color: var(--color-secondary-alpha-05);
     margin: -12px 0 -12px 8px;
   }
+  .vertical-bar {
+    display: block;
+    width: 1px;
+    height: 100%;
+    background-color: var(--color-secondary-alpha-05);
+  }
+  .inner-label {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--color-secondary-alpha-40);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 6px;
+    > span:not(:last-child) {
+      margin-right: 4px;
+    }
+  }
 }
+
 // Labels go before the well
 .form-label {
   width: 100%;
@@ -2074,7 +2133,7 @@ section.content {
   text-transform: uppercase;
   color: var(--color-secondary-alpha-60);
   line-height: 1.3rem;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding-left: 4px;
 }
 .form-field-error {
@@ -5872,6 +5931,29 @@ code {
   font-size: 0.7rem;
   background-color: var(--color-secondary-alpha-05);
   border-top: 1px solid var(--color-secondary-alpha-40);
+}
+
+.panel1,
+.panel2 {
+    width: 100%;
+}
+.panel1.show,
+.panel2.show {
+    height: auto;
+    opacity: 1;
+    transition-property: height, opacity;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
+}
+.panel1.hide,
+.panel2.hide {
+    height: 0;
+    opacity: 0;
+    padding: 0 !important;
+    overflow: hidden;
+    transition-property: height, opacity;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-in-out;
 }
 
 // Animations

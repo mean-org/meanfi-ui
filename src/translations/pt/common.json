@@ -352,6 +352,7 @@
 		"search-input-placeholder": "Pesquisar token nome, símbolo ou endereço"
 	},
 	"transactions": {
+		"resume": "Resume",
 		"memo": {
 			"label": "Nota",
 			"placeholder": "Adicione uma nota opcional"
@@ -381,7 +382,8 @@
 		},
 		"send-amount": {
 			"label": "Mandar",
-			"label-right": "Saldo"
+			"label-right": "Saldo",
+			"label-amount": "Adicionar fundos"
 		},
 		"send-date": {
 			"label": "Enviar",
@@ -468,6 +470,7 @@
 			"not-connected": "Conecte sua carteira",
 			"payment-rate-high": "A taxa de pagamento excede seu saldo",
 			"valid-approve": "Aprovar na sua carteira",
+			"valid-continue": "Prosseguir",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Comece a financiar",
 			"valid-start-withdrawal": "Iniciar retirada"

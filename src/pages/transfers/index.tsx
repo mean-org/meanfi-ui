@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from "../../contexts/appstate";
 import { IconMoneyTransfer } from "../../Icons";
-import { OneTimePayment, RepeatingPayment, RPayment, Streams } from "../../views";
+import { OneTimePayment, RepeatingPayment, Streams } from "../../views";
 import { PreFooter } from "../../components/PreFooter";
 
 type SwapOption = "one-time" | "recurring";
@@ -60,7 +60,6 @@ export const TransfersView = () => {
       return <OneTimePayment />;
     } else {
       return <RepeatingPayment />;
-      // return <RPayment />;
     }
   }
 

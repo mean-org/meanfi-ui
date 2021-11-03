@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
+import { Button, Modal, DatePicker, Spin, Row, Col, InputNumber } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -670,81 +670,85 @@ export const OneTimePayment = () => {
   return (
     <>
       <div className="contract-wrapper">
+
         {/* Recipient */}
-        <div className="transaction-field">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('transactions.recipient.label')}</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left recipient-field-wrapper">
-              <input id="payment-recipient-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onFocus={handleRecipientAddressFocusIn}
-                onChange={handleRecipientAddressChange}
-                onBlur={handleRecipientAddressFocusOut}
-                placeholder={t('transactions.recipient.placeholder')}
-                required={true}
-                spellCheck="false"
-                value={recipientAddress}/>
-              <span id="payment-recipient-static-field"
-                    className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                {recipientAddress || t('transactions.recipient.placeholder')}
+        <div className="form-label">{t('transactions.recipient.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left position-relative">
+              <span className="recipient-field-wrapper">
+                <input id="payment-recipient-field"
+                  className="general-text-input"
+                  autoComplete="on"
+                  autoCorrect="off"
+                  type="text"
+                  onFocus={handleRecipientAddressFocusIn}
+                  onChange={handleRecipientAddressChange}
+                  onBlur={handleRecipientAddressFocusOut}
+                  placeholder={t('transactions.recipient.placeholder')}
+                  required={true}
+                  spellCheck="false"
+                  value={recipientAddress}/>
+                <span id="payment-recipient-static-field"
+                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                  {recipientAddress || t('transactions.recipient.placeholder')}
+                </span>
               </span>
-            </span>
-            <div className="addon-right simplelink" onClick={showQrScannerModal}>
-              <QrcodeOutlined />
+            </div>
+            <div className="right">
+              <div className="add-on simplelink" onClick={showQrScannerModal}>
+                <QrcodeOutlined />
+              </div>
             </div>
           </div>
-          <div className="transaction-field-row">
-            <span className="field-label-left">
-              {recipientAddress && !isValidAddress(recipientAddress) ? (
-                <span className="fg-red">
-                  {t("assets.account-address-validation")}
-                </span>
-              ) : isAddressOwnAccount() ? (
-                <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
-              ) : (
-                <span>&nbsp;</span>
-              )}
-            </span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
+          {
+            recipientAddress && !isValidAddress(recipientAddress) ? (
+              <span className="form-field-error">
+                {t("assets.account-address-validation")}
+              </span>
+            ) : isAddressOwnAccount() ? (
+              <span className="form-field-error">
+                {t('transactions.recipient.recipient-is-own-account')}
+              </span>
+            ) : (null)
+          }
         </div>
 
         {/* Send amount */}
-        <div className="transaction-field">
-          <div className="transaction-field-row">
-            <span className="field-label-left" style={{marginBottom: '-6px'}}>
-              {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
-              <IconSort className="mean-svg-icons usd-switcher fg-red" />
-              <span className="fg-red">USD</span>
-            </span>
-            <span className="field-label-right">
-              <span>{t('transactions.send-amount.label-right')}:</span>
-              <span className="balance-amount">
-                {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                    : "0"
-              }`}
+        <div className="form-label">{t('transactions.send-amount.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                <div className="token-selector" onClick={() => showTokenSelector()}>
+                  <div className="token-icon">
+                    {selectedToken?.logoURI ? (
+                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
+                    ) : (
+                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                    )}
+                  </div>
+                  <div className="token-symbol">{selectedToken?.symbol}</div>
+                  <span className="flex-center">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </span>
+                </div>
+                {selectedToken && tokenBalance ? (
+                  <div
+                    className="token-max simplelink"
+                    onClick={() =>
+                      setFromCoinAmount(
+                        tokenBalance.toFixed(selectedToken.decimals)
+                      )
+                    }>
+                    MAX
+                  </div>
+                ) : null}
               </span>
-              <span className="balance-amount">
-                (~$
-                {tokenBalance && effectiveRate
-                  ? formatAmount(tokenBalance * effectiveRate, 2)
-                  : "0.00"})
-              </span>
-            </span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
+            </div>
+            <div className="right">
               <input
-                className="general-text-input"
+                className="general-text-input text-right"
                 inputMode="decimal"
                 autoComplete="off"
                 autoCorrect="off"
@@ -757,58 +761,31 @@ export const OneTimePayment = () => {
                 spellCheck="false"
                 value={fromCoinAmount}
               />
-            </span>
-            {selectedToken && (
-              <div className="addon-right">
-                <div className="token-group">
-                  {tokenBalance ? (
-                    <div
-                      className="token-max simplelink"
-                      onClick={() =>
-                        setFromCoinAmount(
-                          tokenBalance.toFixed(selectedToken.decimals)
-                        )
-                      }>
-                      MAX
-                    </div>
-                  ) : null}
-                  <div
-                    className="token-selector simplelink"
-                    onClick={showTokenSelector}>
-                    <div className="token-icon">
-                      {selectedToken.logoURI ? (
-                        <img
-                          alt={`${selectedToken.name}`}
-                          width={20}
-                          height={20}
-                          src={selectedToken.logoURI}
-                        />
-                      ) : (
-                        <Identicon
-                          address={selectedToken.address}
-                          style={{ width: "24", display: "inline-flex" }}
-                        />
-                      )}
-                    </div>
-                    <div className="token-symbol">{selectedToken.symbol}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <span className="field-caret-down">
-              <IconCaretDown className="mean-svg-icons" />
-            </span>
+            </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">
+              ~${fromCoinAmount && effectiveRate
+                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                : "0.00"}
+            </div>
           </div>
         </div>
 
         {/* Optional note */}
-        <div className="transaction-field">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('transactions.memo.label')}</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
+        <div className="form-label">{t('transactions.memo.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
               <input
                 id="payment-memo-field"
                 className="w-100 general-text-input"
@@ -818,39 +795,39 @@ export const OneTimePayment = () => {
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo.placeholder')}
                 spellCheck="false"
-                value={recipientNote} />
-            </span>
+                value={recipientNote}
+              />
+            </div>
           </div>
         </div>
 
         {/* Send date */}
-        <div className="transaction-field">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('transactions.send-date.label')}</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="field-select-left text-capitalize">
+        <div className="form-label">{t('transactions.send-date.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left field-select-left">
               {isToday(paymentStartDate || '')
-                ? `${paymentStartDate} (${t('common:general.now')})`
+                ? `${paymentStartDate} (${t('common:general.today')})`
                 : `${paymentStartDate}`}
-            </span>
-            <div className="addon-right">
-              <DatePicker
-                size="middle"
-                bordered={false}
-                className="addon-date-picker"
-                aria-required={true}
-                allowClear={false}
-                disabledDate={disabledDate}
-                placeholder={t('transactions.send-date.placeholder')}
-                onChange={(value, date) => handleDateChange(date)}
-                value={moment(
-                  paymentStartDate,
-                  DATEPICKER_FORMAT
-                )}
-                format={DATEPICKER_FORMAT}
-              />
+            </div>
+            <div className="right">
+              <div className="add-on simplelink">
+                <DatePicker
+                  size="middle"
+                  bordered={false}
+                  className="addon-date-picker"
+                  aria-required={true}
+                  allowClear={false}
+                  disabledDate={disabledDate}
+                  placeholder={t('transactions.send-date.placeholder')}
+                  onChange={(value, date) => handleDateChange(date)}
+                  value={moment(
+                    paymentStartDate,
+                    DATEPICKER_FORMAT
+                  )}
+                  format={DATEPICKER_FORMAT}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -878,6 +855,18 @@ export const OneTimePayment = () => {
             )}
           </div>
         )}
+
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onTransactionStart}
+          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
+          {getTransactionStartButtonLabel()}
+        </Button>
       </div>
 
       {/* Token selection modal */}
@@ -948,17 +937,6 @@ export const OneTimePayment = () => {
           handleClose={closeQrScannerModal}/>
       )}
 
-      {/* Action button */}
-      <Button
-        className="main-cta"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={onTransactionStart}
-        disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
-        {getTransactionStartButtonLabel()}
-      </Button>
       {/* Transaction execution modal */}
       <Modal
         className="mean-modal"

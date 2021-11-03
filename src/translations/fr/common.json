@@ -352,6 +352,7 @@
 		"search-input-placeholder": "Rechercher un token par nom, symbole ou adresse"
 	},
 	"transactions": {
+		"resume": "Resume",
 		"memo": {
 			"label": "Note",
 			"placeholder": "Ajouter une note supplémentaire"
@@ -381,7 +382,8 @@
 		},
 		"send-amount": {
 			"label": "Envoyer",
-			"label-right": "Solde du compte"
+			"label-right": "Solde du compte",
+			"label-amount": "Ajouter des fonds"
 		},
 		"send-date": {
 			"label": "Envoyer le",
@@ -468,6 +470,7 @@
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
 			"valid-approve": "Approuver sur votre portefeuille",
+			"valid-continue": "Continuer",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Commencer le financement",
 			"valid-start-withdrawal": "Commencer le retrait"
