@@ -1036,7 +1036,7 @@ export const RepeatingPayment = () => {
           <div className="flex-fixed-right">
             <div className="left field-select-left">
               {isToday(paymentStartDate || '')
-                ? `${paymentStartDate} (${t('common:general.today')})`
+                ? `${paymentStartDate} (${t('common:general.now')})`
                 : `${paymentStartDate}`}
             </div>
             <div className="right">
