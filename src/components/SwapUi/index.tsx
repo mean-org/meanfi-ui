@@ -1980,7 +1980,7 @@ export const SwapUi = (props: {
             shape="round"
             size="large"
             onClick={onTransactionStart}
-            disabled={!isValidBalance() || !isSwapAmountValid()} >
+            disabled={!isValidBalance() || !isSwapAmountValid() || !exchangeInfo?.amountOut} >
             {transactionStartButtonLabel}
           </Button>
 
