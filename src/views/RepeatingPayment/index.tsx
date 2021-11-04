@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown, IconEdit, IconSort } from "../../Icons";
+import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
@@ -500,106 +500,6 @@ export const RepeatingPayment = () => {
       : 0;
   }
 
-  // Prefabrics
-
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
-
-  const renderAvailableTokenList = (
-    <>
-      {(destinationToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setDestinationToken(token);
-            setSelectedToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                destinationToken && destinationToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
-  const renderUserTokenList = (
-    <>
-      {(selectedToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setSelectedToken(token);
-            setDestinationToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
   // Main action
 
   const onTransactionStart = async () => {
@@ -626,20 +526,15 @@ export const RepeatingPayment = () => {
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-
         consoleOut('beneficiaryMint:', destinationToken?.address);
         const beneficiaryMint = new PublicKey(destinationToken?.address as string);
-
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        consoleOut('Parsed paymentStartDate:', parsedDate);
         const fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
-        consoleOut('Local time added to parsed date!');
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
@@ -712,7 +607,7 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: value.signature
           });
           transaction = value;
           return true;
@@ -758,7 +653,7 @@ export const RepeatingPayment = () => {
           return true;
         })
         .catch(error => {
-          console.error('Signing transaction failed!');
+          console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -876,10 +771,10 @@ export const RepeatingPayment = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      consoleOut('create:', create);
+      consoleOut('created:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        consoleOut('sign:', sign);
+        consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
@@ -925,6 +820,108 @@ export const RepeatingPayment = () => {
   const onContinueButtonClick = () => {
     setCurrentStep(1);  // Go to step 2
   }
+
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
+
+  const paymentRateOptionsMenu = (
+    <Menu>
+      {getOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
+  const renderAvailableTokenList = (
+    <>
+      {(destinationToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setDestinationToken(token);
+            setSelectedToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                destinationToken && destinationToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
+  const renderUserTokenList = (
+    <>
+      {(selectedToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setSelectedToken(token);
+            setDestinationToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                selectedToken && selectedToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
 
   return (
     <>
