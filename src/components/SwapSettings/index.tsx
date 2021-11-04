@@ -35,7 +35,7 @@ export const SwapSettings = (props: {
     setVisible(visibleChange);
   };
 
-  const text = (
+  const titleContent = (
     <div className="flexible-left">
       <div className="left">
         {t('swap.transaction-settings')}
@@ -50,7 +50,8 @@ export const SwapSettings = (props: {
       </div>
     </div>
   );
-  const content = (
+
+  const bodyContent = (
     <div className="flexible-left">
       <div className="left token-group">
         <div key="preset-02" className="token-max simplelink" onClick={() => onChangeValue(0.5)}>0.5%</div>
@@ -75,8 +76,8 @@ export const SwapSettings = (props: {
     <>
       <Popover
         placement={isSmScreen() ? "bottomRight" : 'bottom'}
-        title={text}
-        content={content}
+        title={titleContent}
+        content={bodyContent}
         visible={visible}
         onVisibleChange={handleVisibleChange}
         trigger="click">

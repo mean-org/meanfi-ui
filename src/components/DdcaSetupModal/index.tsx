@@ -41,11 +41,6 @@ export const DdcaSetupModal = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
-  const [rangeMin, setRangeMin] = useState(0);
-  const [rangeMax, setRangeMax] = useState(0);
-  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
-  const [lockedSliderValue, setLockedSliderValue] = useState(0);
-  const [marks, setMarks] = useState<SliderMarks>();
   // Transaction control
   const {
     ddcaOption,
@@ -57,10 +52,26 @@ export const DdcaSetupModal = (props: {
     startFetchTxSignatureInfo
   } = useContext(TransactionStatusContext);
   const [isBusy, setIsBusy] = useState(false);
+  const [rangeMin, setRangeMin] = useState(0);
+  const [rangeMax, setRangeMax] = useState(0);
+  const [marks, setMarks] = useState<SliderMarks>();
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
+  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
+  const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ddcaAccountPda, setDdcaAccountPda] = useState<PublicKey | undefined>();
+  const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<number | undefined>(undefined);
+
+  // Set lockedFromTokenBalance from injected props.fromTokenBalance once por modal open
+  useEffect(() => {
+    if (!lockedFromTokenBalance) {
+      setLockedFromTokenBalance(props.fromTokenBalance);
+    }
+  }, [
+    lockedFromTokenBalance,
+    props.fromTokenBalance
+  ]);
 
   const isProd = (): boolean => {
     return environment === 'production';
@@ -168,7 +179,7 @@ export const DdcaSetupModal = (props: {
   }
 
   const hasEnoughFromTokenBalance = (): boolean => {
-    return props.fromTokenBalance > props.fromTokenAmount * (lockedSliderValue + 1);
+    return (lockedFromTokenBalance || 0) > props.fromTokenAmount * (lockedSliderValue + 1);
   }
 
   //////////////////////////
@@ -188,7 +199,7 @@ export const DdcaSetupModal = (props: {
    * Set minimum required and valid flag
   */
   useEffect(() => {
-    if (ddcaOption && props.fromTokenAmount && props.fromTokenBalance) {
+    if (ddcaOption && props.fromTokenAmount && lockedFromTokenBalance) {
       const maxRangeFromSelection =
         ddcaOption.dcaInterval === DcaInterval.RepeatingDaily
           ? 365
@@ -197,7 +208,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = Math.floor(props.fromTokenBalance / props.fromTokenAmount);
+      const maxRangeFromBalance = Math.floor(lockedFromTokenBalance / props.fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -215,7 +226,7 @@ export const DdcaSetupModal = (props: {
 
       // Set minimum required and valid flag
       const minimumRequired = props.fromTokenAmount * (minRangeSelectable + 1);
-      const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
+      const isOpValid = minimumRequired < lockedFromTokenBalance ? true : false;
 
       // Set the slider position
       if (isOpValid) {
@@ -230,7 +241,7 @@ export const DdcaSetupModal = (props: {
   }, [
     ddcaOption,
     props.fromTokenAmount,
-    props.fromTokenBalance,
+    lockedFromTokenBalance,
     props.hlaInfo,
     getTotalPeriod
   ]);
