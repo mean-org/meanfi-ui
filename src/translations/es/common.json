@@ -16,6 +16,7 @@
 		"modal-title": "Añadir fondos"
 	},
 	"assets": {
+		"accounts-label": "accounts",
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
 		"account-address-change-cta": "Escanear otra dirección",
@@ -34,6 +35,8 @@
 		"history-table-date": "Fecha",
 		"history-table-postbalance": "Post saldo",
 		"loading-error": "No pudimos cargar las transacciones. Por favor, recargue la página.",
+		"merge-accounts-link": "Merge token accounts",
+		"merge-accounts-cta": "Merge",
 		"no-asset-selected": "No ha seleccionado ningún activo. Por favor, elija uno de la izquierda.",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -249,7 +252,8 @@
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"network-connection-good": "Network connection is good",
-		"network-connection-poor": "No network connection. App is OFFLINE!",
+		"network-connection-down": "No network connection. App is OFFLINE!",
+		"network-connection-poor": "Network connection quality is very poor",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",

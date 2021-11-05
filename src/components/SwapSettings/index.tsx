@@ -11,7 +11,7 @@ export const SwapSettings = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { width } = useWindowSize();
-  const [visible, setVisible] = useState(false);
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   const isSmScreen = ():boolean => {
     return width < 768 ? true : false;
@@ -31,8 +31,8 @@ export const SwapSettings = (props: {
     }
   }
 
-  const handleVisibleChange = (visibleChange: boolean) => {
-    setVisible(visibleChange);
+  const handlePopoverVisibleChange = (visibleChange: boolean) => {
+    setPopoverVisible(visibleChange);
   };
 
   const titleContent = (
@@ -45,7 +45,7 @@ export const SwapSettings = (props: {
           type="default"
           shape="circle"
           icon={<CloseOutlined />}
-          onClick={() => handleVisibleChange(false)}
+          onClick={() => handlePopoverVisibleChange(false)}
         />
       </div>
     </div>
@@ -78,8 +78,8 @@ export const SwapSettings = (props: {
         placement={isSmScreen() ? "bottomRight" : 'bottom'}
         title={titleContent}
         content={bodyContent}
-        visible={visible}
-        onVisibleChange={handleVisibleChange}
+        visible={popoverVisible}
+        onVisibleChange={handlePopoverVisibleChange}
         trigger="click">
         <Button
           shape="round"

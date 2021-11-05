@@ -3,6 +3,7 @@ import { PublicKey, TokenAmount } from "@solana/web3.js";
 export class AccountTokenParsedInfo {
   parsedInfo!: TokenAccountInfo;
   pubkey!: PublicKey;
+  description?: string;
 }
 
 export type TokenAccountInfo = {
