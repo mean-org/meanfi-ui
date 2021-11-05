@@ -564,6 +564,10 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-primary.ant-btn-round.main-cta {
   padding: 10px 14px;
   height: auto;
+  &.inactive {
+    cursor:not-allowed;
+    pointer-events: none;
+  }
 }
 
 // Secondary rounded corners
@@ -3423,7 +3427,38 @@ section.content {
     flex-shrink: 0;
   }
 }
-
+.token-merger {
+  .transaction-list-row {
+    border-radius: var(--custom-border-radius);
+  }
+}
+.merged-token-list {
+  .merged-token-item {
+    &:not(:last-of-type) {
+      border-bottom: 1px solid var(--color-secondary-alpha-05);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .token-selector {
+      .token-icon {
+        width: 16px;
+        height: 16px;
+        margin: 1px 4px 0 0;
+      }
+      .token-symbol {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1;
+      }
+    }
+    .public-address {
+      text-align: left;
+      font-size: 12px;
+      margin-top: 3px;
+      color: var(--color-secondary-alpha-50);
+    }
+  }
+}
 .transaction-list-row {
   display: flex;
   flex-direction: row;
@@ -5830,9 +5865,13 @@ code {
       color: var(--color-notify-warning);
     }
   }
+  .operation {
+    font-size: 0.75rem;
+    color: var(--color-secondary-alpha-60);
+  }
   .indication {
-    font-size: 0.62rem;
-    color: var(--color-secondary-alpha-40);
+    font-size: 0.65rem;
+    color: var(--color-secondary-alpha-60);
   }
   h4, h5 {
     color: var(--color-secondary-alpha-85);
@@ -5968,9 +6007,12 @@ code {
   background-color: var(--color-notify-warning);
   border-radius: 50%;
   box-shadow: 1px 1px 1px 0px rgb(0 0 0 / 30%);
-  opacity: 0.5;
+  opacity: 0.6;
   &.success {
     background-color: var(--color-notify-success);
+  }
+  &.warning {
+    background-color: var(--color-notify-warning);
   }
   &.error {
     background-color: var(--color-notify-error);

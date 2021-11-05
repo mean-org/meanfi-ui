@@ -26,10 +26,19 @@ export const FooterBar = () => {
             <ConnectButton />
           )}
           <div className="flex">
-            <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
-              ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
-              : t('notifications.network-connection-poor')}>
-              <span className={`online-status ${isOnline ? 'success' : 'error'} ml-1`}></span>
+            <Tooltip
+              placement="bottom"
+              destroyTooltipOnHide={true}
+              title={!isOnline
+                ? t('notifications.network-connection-down')
+                : responseTime < 1000
+                  ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
+                  : `${t('notifications.network-connection-poor')} (${responseTime}ms)`}>
+              <span className={`online-status ml-1 ${!isOnline
+                ? 'error'
+                : responseTime < 1000
+                  ? 'success'
+                  : 'warning'}`}></span>
             </Tooltip>
           </div>
           <div className="app-context-menu">

@@ -162,8 +162,16 @@ export const AppBar = (props: { menuType: string }) => {
       <Tooltip
         placement="bottom"
         destroyTooltipOnHide={true}
-        title={isOnline ? `${t('notifications.network-connection-good')} (${responseTime}ms)` : t('notifications.network-connection-poor')}>
-        <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
+        title={!isOnline
+          ? t('notifications.network-connection-down')
+          : responseTime < 1000
+            ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
+            : `${t('notifications.network-connection-poor')} (${responseTime}ms)`}>
+        <span className={`online-status mr-1 ${!isOnline
+          ? 'error'
+          : responseTime < 1000
+            ? 'success'
+            : 'warning'}`}></span>
       </Tooltip>
     </div>
   );
