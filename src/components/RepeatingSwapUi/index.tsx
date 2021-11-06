@@ -29,25 +29,25 @@ import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
 
 import {
-  getClient,
-  getExchangeInfo,
-  getOptimalPool,
-  getTokensPools,
+  getClients,
   LPClient,
   ExchangeInfo,
   SERUM,
   TokenInfo,
   FeesInfo,
-  SerumClient,
   TOKENS,
   NATIVE_SOL_MINT, 
   USDC_MINT, 
   USDT_MINT, 
   WRAPPED_SOL_MINT,
   ACCOUNT_LAYOUT,
-  HlaInfo
+  HlaInfo,
+  Client,
+  SRM_MINT
 
 } from "@mean-dao/hybrid-liquidity-ag";
+
+import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 
 export const RepeatingSwapUi = (props: {
   queryFromMint: string | null;
@@ -95,7 +95,8 @@ export const RepeatingSwapUi = (props: {
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
-  const [swapClient, setSwapClient] = useState<any>();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [optimalClient, setOptimalClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
@@ -115,20 +116,20 @@ export const RepeatingSwapUi = (props: {
 
   const showDdcaSetup = useCallback(() => {
 
-    if (!swapClient) { return; }
+    if (!optimalClient || !exchangeInfo) { return; }
 
     const hlaInfo: HlaInfo = {
-      exchangeRate: exchangeInfo ? exchangeInfo.outPrice as number : 0,
-      protocolFees: exchangeInfo ? exchangeInfo.protocolFees as number : 0,
+      exchangeRate: exchangeInfo.outPrice as number || 0,
+      protocolFees: exchangeInfo.protocolFees as number || 0,
       aggregatorPercentFees: 0.05,
-      remainingAccounts: swapClient.hlaExchangeAccounts
+      remainingAccounts: optimalClient.accounts
     };
 
     setHlaInfo(hlaInfo);
     setDdcaSetupModalVisibility(true);
     
   }, [
-    swapClient, 
+    optimalClient, 
     exchangeInfo
   ]);
 
@@ -465,49 +466,34 @@ export const RepeatingSwapUi = (props: {
   // Automatically updates the exchange info
   useEffect(() => {
 
-    if (!connection) {
-      return;
-    }
-
-    if (!fromMint || !toMint || !txFees || !swapClient || isWrap() || isUnwrap()) { 
+    if (!connection || !fromMint || !toMint || !txFees || !optimalClient || !optimalClient.exchange || isWrap() || isUnwrap()) { 
       return; 
     }
     
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
-      let fromAmount = fromSwapAmount === 0 ? parseFloat(fromBalance) : fromSwapAmount;
-      let amount = fromAmount - aggregatorFees;
+      let amount = fromSwapAmount - aggregatorFees;
 
       if (amount < 0) {
         amount = 0;
       }
 
-      const success = (info: ExchangeInfo) => {
-        if (info && fromSwapAmount === 0) {
-          info.amountIn = 0;
-          info.amountOut = 0;
-        }
-        setExchangeInfo(info);
-        console.log('info', info);
-      };
+      const price = optimalClient.exchange.outPrice || 0;
+      const outAmount = (price * amount);
+      const minOutAmount = outAmount * (100 - slippage) / 100;
 
-      const error = (_error: any) => {
-        console.error(_error);
-        throw(_error);
-      };
+      setExchangeInfo({
+        fromAmm: optimalClient.exchange.fromAmm,
+        amountIn: amount,
+        amountOut: outAmount,
+        minAmountOut: minOutAmount,
+        outPrice: price,
+        priceImpact: optimalClient.exchange.priceImpact,
+        networkFees: optimalClient.exchange.networkFees,
+        protocolFees: optimalClient.exchange.protocolFees
 
-      const promise = getExchangeInfo(
-        swapClient,
-        fromMint,
-        toMint,
-        amount,
-        slippage
-      );
-
-      promise
-        .then((info: ExchangeInfo) => success(info))
-        .catch((_error: any) => error(_error));
+      } as ExchangeInfo);
 
     });
 
@@ -523,10 +509,10 @@ export const RepeatingSwapUi = (props: {
     isUnwrap, 
     isWrap, 
     slippage, 
-    swapClient, 
     toMint,
     mintList,
-    txFees
+    txFees,
+    optimalClient
   ]);
 
   // Automatically updates the fees info
@@ -570,82 +556,52 @@ export const RepeatingSwapUi = (props: {
     txFees
   ]);
   
-  // Updates liquidity pool info
+  // Updates clients
   useEffect(() => {
 
-    if (!connection) {
-      return;
-    }
-
-    if (!fromMint || !toMint || isWrap() || isUnwrap()) {
+    if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
       return;
     }
 
     const timeout = setTimeout(() => {
 
       setRefreshing(true);
-
-      const tokensPools = getTokensPools(fromMint, toMint);
-      const consoleMsg = tokensPools.length ? 'Liquidity Pool' : 'Serum Market';
+      setExchangeInfo(undefined);
 
       const error = (_error: any) => {
-        consoleOut(_error);
+        console.error(_error);
         setRefreshing(false); 
       };
 
-      const success = (info: any) => {
+      const success = (clients: Client[] | null) => {
 
-        if (tokensPools.length) {
-          console.info(consoleMsg, info);
-          setSwapClient(client);
-          setRefreshing(false);
-
-        } else {
-
-          const orderBooksSuccess = (orderbooks: any) => {
-            console.info(consoleMsg, info);
-            console.info('Orderbooks', orderbooks);
-            setSwapClient(client);
-            setRefreshing(false);
-          }
-
-          client.getMarketOrderbooks(info)
-            .then((orderbooks: any) => orderBooksSuccess(orderbooks))
-            .catch((_error: any) => error(_error));
+        if (!clients || clients.length === 0) {
+          error(new Error("Client not found"));
+          return;
         }
+
+        setClients(clients);
+        console.log('clients', clients);
+
+        const client = clients[0].protocol.equals(SERUM) 
+          ? clients[0] as SerumClient 
+          : clients[0] as LPClient;
+
+        setOptimalClient(client);
+        console.log('optimal client', client);
+        setExchangeInfo(client.exchange);
+        setRefreshing(false);
+        setRefreshTime(30);
       };
 
-      let client: any;
+      getClients(
+        connection, 
+        fromMint, 
+        toMint
+      )
+      .then((clients: Client[] | null) => success(clients))
+      .catch((_error: any) => error(_error));
 
-      if (tokensPools.length) {
-
-        const optimalPool = getOptimalPool(tokensPools);
-        client = getClient(connection, optimalPool.protocolAddress) as LPClient;
-
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-
-        client
-          .getPoolInfo(optimalPool.address)
-          .then((info: any) => success(info))
-          .catch((_error: any) => error(_error));
-
-      } else {
-
-        client = getClient(connection, SERUM.toBase58()) as SerumClient;
-
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-
-        client
-          .getMarketInfo(fromMint, toMint)
-          .then((info: any) => success(info))
-          .catch((_error: any) => error(_error));
-      }
     });
 
     return () => {
@@ -657,7 +613,8 @@ export const RepeatingSwapUi = (props: {
     fromMint, 
     isUnwrap, 
     isWrap, 
-    toMint
+    toMint,
+    refreshTime
   ]);
 
   // Automatically update all tokens balance
@@ -892,34 +849,57 @@ export const RepeatingSwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      const orcaMintInfo: any = Object
+        .values(mintList)
+        .filter((m: any) => m.symbol === 'ORCA')[0];
+
+      if (orcaMintInfo && fromMint === orcaMintInfo.address) {
+
+        const orcaList: any = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
+
+        let allowedMints: any = {};
+
+        for (let item of orcaList) {
+          allowedMints[item.address] = item;
+        }
+    
+        setShowToMintList(allowedMints);
+
+        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== NATIVE_SOL_MINT.toBase58() && toMint !== WRAPPED_SOL_MINT.toBase58()) {
+          setToMint(USDC_MINT.toBase58());
+        }
+
+        return;
+      }
+
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
  
-      if (!btcMintInfo) { return; }
+      if (btcMintInfo && fromMint === btcMintInfo.address) {
 
-      if (fromMint === btcMintInfo.address) {
-
-        const usdxList: any = Object
+        const btcList: any = Object
           .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
 
         let usdxMints: any = {};
 
-        for (let item of usdxList) {
+        for (let item of btcList) {
           usdxMints[item.address] = item;
         }
     
         setShowToMintList(usdxMints);
         
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58()) {
+        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58() && toMint !== SRM_MINT.toBase58()) {
           setToMint(USDC_MINT.toBase58());
         }
 
-      } else {
-        setShowToMintList(mintList);
+        return;
       }
 
+      setShowToMintList(mintList);
     });
 
     return () => { 
@@ -939,6 +919,31 @@ export const RepeatingSwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      const orcaMintInfo: any = Object
+        .values(mintList)
+        .filter((m: any) => m.symbol === 'ORCA')[0];
+
+      if (orcaMintInfo && toMint === orcaMintInfo.address) {
+
+        const orcaList: any = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
+
+        let allowedMints: any = {};
+
+        for (let item of orcaList) {
+          allowedMints[item.address] = item;
+        }
+    
+        setShowFromMintList(allowedMints);
+
+        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== WRAPPED_SOL_MINT.toBase58()) {
+          setFromMint(USDC_MINT.toBase58());
+        }
+
+        return;
+      }
+
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
@@ -947,19 +952,20 @@ export const RepeatingSwapUi = (props: {
 
       if (toMint && (toMint === btcMintInfo.address)) {
 
-        const usdxList: any[] = Object
+        const btcList: any = Object
           .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
+          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
     
-        setShowFromMintList(usdxList);
+        setShowFromMintList(btcList);
         
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58()) {
+        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58() && fromMint !== SRM_MINT.toBase58()) {
           setFromMint(USDC_MINT.toBase58());
         }
 
-      } else {
-        setShowFromMintList(mintList);
+        return;
       }
+
+      setShowFromMintList(mintList);
 
     });
 
@@ -1321,8 +1327,6 @@ export const RepeatingSwapUi = (props: {
         Object.values(showFromMintList).map((token: any, index) => {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
               setFromMint(token.address);
               setLastFromMint(token.address);
             }
@@ -1386,8 +1390,6 @@ export const RepeatingSwapUi = (props: {
         Object.values(showToMintList).map((token: any, index) => {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
               setToMint(token.address);
             }
             onCloseTokenSelector();
