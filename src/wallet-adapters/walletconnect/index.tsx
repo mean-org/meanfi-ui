@@ -1,8 +1,10 @@
 import {
     BaseSignerWalletAdapter,
     WalletAccountError,
+    WalletConnectionError,
     WalletDisconnectedError,
     WalletDisconnectionError,
+    WalletError,
     WalletNotConnectedError,
     WalletPublicKeyError,
     WalletSignTransactionError,
@@ -12,7 +14,6 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import WalletConnectClient, { CLIENT_EVENTS } from '@walletconnect/client';
 import QRCodeModal from '@walletconnect/qrcode-modal';
 import { ClientOptions, ClientTypes, PairingTypes, SessionTypes } from '@walletconnect/types';
-import { consoleOut } from '../../utils/ui';
 
 export enum WalletConnectChainID {
     Mainnet = 'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ',
@@ -24,7 +25,6 @@ export enum WalletConnectRPCMethod {
 }
 
 export interface WalletConnectWalletAdapterConfig {
-    chainId: WalletConnectChainID;
     options: ClientOptions;
     params?: ClientTypes.ConnectParams;
 }
@@ -66,10 +66,6 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
         return !!this._publicKey;
     }
 
-    get autoApprove(): boolean {
-        return false;
-    }
-
     async connect(): Promise<void> {
         try {
             if (this.connected || this.connecting) return;
@@ -80,6 +76,7 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
             try {
                 client = await WalletConnectClient.init(this._options);
 
+                // eslint-disable-next-line no-async-promise-executor
                 session = await new Promise<SessionTypes.Settled>(async (resolve, reject) => {
                     let session: SessionTypes.Settled;
 
@@ -112,9 +109,8 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
                     }
                 });
             } catch (error: any) {
-                consoleOut(error?.message, error);
-                // throw new WalletConnectionError(error?.message, error);
-                return;
+                if (error instanceof WalletError) throw error;
+                throw new WalletConnectionError(error?.message, error);
             }
 
             if (!session.state.accounts.length) throw new WalletAccountError();
@@ -159,9 +155,9 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
             } catch (error: any) {
                 this.emit('error', new WalletDisconnectionError(error?.message, error));
             }
-
-            this.emit('disconnect');
         }
+
+        this.emit('disconnect');
     }
 
     async signTransaction(transaction: Transaction): Promise<Transaction> {
