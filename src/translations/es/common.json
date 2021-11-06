@@ -16,6 +16,7 @@
 		"modal-title": "Añadir fondos"
 	},
 	"assets": {
+		"accounts-label": "accounts",
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
 		"account-address-change-cta": "Escanear otra dirección",
@@ -34,6 +35,8 @@
 		"history-table-date": "Fecha",
 		"history-table-postbalance": "Post saldo",
 		"loading-error": "No pudimos cargar las transacciones. Por favor, recargue la página.",
+		"merge-accounts-link": "Merge token accounts",
+		"merge-accounts-cta": "Merge",
 		"no-asset-selected": "No ha seleccionado ningún activo. Por favor, elija uno de la izquierda.",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -205,6 +208,7 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
+		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
 		"cta-finish": "Terminar",
 		"day": "día",
@@ -248,7 +252,8 @@
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"network-connection-good": "Network connection is good",
-		"network-connection-poor": "Poor network connection detected",
+		"network-connection-down": "No network connection. App is OFFLINE!",
+		"network-connection-poor": "Network connection quality is very poor",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
@@ -314,7 +319,8 @@
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
-			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-ended": "Transferencia no financiada por 72h",
+			"subtitle-paused-otp": "Pago único programado",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
@@ -432,7 +438,7 @@
 			"tx-wrap-operation": "Wrapping",
 			"tx-wrap-operation-success": "La operación de wrap se completó exitosamente"
 		},
-		"timeshift-requirement": {
+		"timesheet-requirement": {
 			"clock-in-out": "Hora de entrada / salida",
 			"label": "Requisito del parte de horas",
 			"not-required": "Innecesario (transmisiones 24/7)",

@@ -16,6 +16,7 @@
 		"modal-title": "Add funds"
 	},
 	"assets": {
+		"accounts-label": "accounts",
 		"account-add-cta-label": "Go!",
 		"account-add-heading": "View account details for any address in",
 		"account-address-change-cta": "Scan another address",
@@ -34,6 +35,8 @@
 		"history-table-date": "Date",
 		"history-table-postbalance": "Post balance",
 		"loading-error": "Could not load transactions. Please reload the page.",
+		"merge-accounts-link": "Merge token accounts",
+		"merge-accounts-cta": "Merge",
 		"no-asset-selected": "No asset selected. Please chose one on the left!",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -205,6 +208,7 @@
 	},
 	"general": {
 		"app-background-disclaimer": "This product is in beta. Do not deposit or swap large amounts of funds.",
+		"cta-change": "Change",
 		"cta-close": "Close",
 		"cta-finish": "Finish",
 		"day": "day",
@@ -248,7 +252,8 @@
 		"invalid-publickey-message": "Invalid public key. Please check input",
 		"invalid-streamid-message": "Invalid stream id",
 		"network-connection-good": "Network connection is good",
-		"network-connection-poor": "Poor network connection detected",
+		"network-connection-down": "No network connection. App is OFFLINE!",
+		"network-connection-poor": "Network connection quality is very poor",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",
@@ -315,6 +320,7 @@
 		"stream-list": {
 			"no-streams": "No streams available",
 			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-paused-otp": "Scheduled one-time payment",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
 			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
 			"subtitle-pending-inbound": "This contract is pending your approval",
@@ -432,7 +438,7 @@
 			"tx-wrap-operation": "Wrapping",
 			"tx-wrap-operation-success": "Wrap operation completed successfully"
 		},
-		"timeshift-requirement": {
+		"timesheet-requirement": {
 			"clock-in-out": "Clock-in / Clock-out",
 			"label": "Timesheet requirement",
 			"not-required": "Not required (streams 24/7)",

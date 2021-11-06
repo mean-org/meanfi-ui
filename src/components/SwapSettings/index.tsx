@@ -11,7 +11,7 @@ export const SwapSettings = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { width } = useWindowSize();
-  const [visible, setVisible] = useState(false);
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   const isSmScreen = ():boolean => {
     return width < 768 ? true : false;
@@ -31,11 +31,11 @@ export const SwapSettings = (props: {
     }
   }
 
-  const handleVisibleChange = (visibleChange: boolean) => {
-    setVisible(visibleChange);
+  const handlePopoverVisibleChange = (visibleChange: boolean) => {
+    setPopoverVisible(visibleChange);
   };
 
-  const text = (
+  const titleContent = (
     <div className="flexible-left">
       <div className="left">
         {t('swap.transaction-settings')}
@@ -45,29 +45,29 @@ export const SwapSettings = (props: {
           type="default"
           shape="circle"
           icon={<CloseOutlined />}
-          onClick={() => handleVisibleChange(false)}
+          onClick={() => handlePopoverVisibleChange(false)}
         />
       </div>
     </div>
   );
-  const content = (
+
+  const bodyContent = (
     <div className="flexible-left">
       <div className="left token-group">
         <div key="preset-02" className="token-max simplelink" onClick={() => onChangeValue(0.5)}>0.5%</div>
         <div key="preset-03" className="token-max simplelink" onClick={() => onChangeValue(1)}>1%</div>
         <div key="preset-04" className="token-max simplelink" onClick={() => onChangeValue(2)}>2%</div>
       </div>
-      <div className="right">
+      <div className="right position-relative">
         <InputNumber
-          style={{ width: 82 }}
+          style={{ width: '4.6rem' }}
           min={MIN_SLIPPAGE_VALUE}
           max={MAX_SLIPPAGE_VALUE}
           step={0.1}
-          formatter={value => `${value}%`}
-          parser={value => parseFloat(value ? value.replace('%', '') : '0.1')}
           value={props.currentValue}
           onChange={onChange}
         />
+        <span className="leading-percent">%</span>
       </div>
     </div>
   );
@@ -76,10 +76,10 @@ export const SwapSettings = (props: {
     <>
       <Popover
         placement={isSmScreen() ? "bottomRight" : 'bottom'}
-        title={text}
-        content={content}
-        visible={visible}
-        onVisibleChange={handleVisibleChange}
+        title={titleContent}
+        content={bodyContent}
+        visible={popoverVisible}
+        onVisibleChange={handlePopoverVisibleChange}
         trigger="click">
         <Button
           shape="round"

@@ -229,13 +229,13 @@ export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOpti
     let result = '';
     switch (val) {
         case TimesheetRequirementOption.NotRequired:
-            result = trans ? trans('transactions.timeshift-requirement.not-required') : 'Not required (streams 24/7)';
+            result = trans ? trans('transactions.timesheet-requirement.not-required') : 'Not required (streams 24/7)';
             break;
         case TimesheetRequirementOption.SubmitTimesheets:
-            result = trans ? trans('transactions.timeshift-requirement.submit-timesheets') : 'Submit timesheets';
+            result = trans ? trans('transactions.timesheet-requirement.submit-timesheets') : 'Submit timesheets';
             break;
         case TimesheetRequirementOption.ClockinClockout:
-            result = trans ? trans('transactions.timeshift-requirement.clock-in-out') : 'Clock-in / Clock-out';
+            result = trans ? trans('transactions.timesheet-requirement.clock-in-out') : 'Clock-in / Clock-out';
             break;
         default:
             break;

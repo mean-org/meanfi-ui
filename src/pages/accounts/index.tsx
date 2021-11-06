@@ -1,5 +1,15 @@
 import React, { useCallback, useContext } from 'react';
-import { ArrowLeftOutlined, CopyOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  CloseOutlined,
+  CopyOutlined,
+  EditOutlined,
+  LoadingOutlined,
+  MergeCellsOutlined,
+  QrcodeOutlined,
+  ReloadOutlined,
+  SyncOutlined
+} from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -10,14 +20,27 @@ import { FetchStatus, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { fetchAccountTokens, getAmountFromLamports, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
-import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import {
+  fetchAccountTokens,
+  getAmountFromLamports,
+  getFormattedRateAmount,
+  getTokenAmountAndSymbolByTokenAddress,
+  shortenAddress
+} from '../../utils/utils';
+import { Button, Empty, Popover, Result, Space, Spin, Switch, Tooltip } from 'antd';
+import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE } from '../../constants';
+import {
+  SOLANA_WALLET_GUIDE,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  EMOJIS,
+  TRANSACTIONS_PER_PAGE,
+  ACCOUNTS_LOW_BALANCE_LIMIT,
+  FALLBACK_COIN_IMAGE
+} from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconCopy, IconDownload } from '../../Icons';
+import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
 import { useHistory } from 'react-router-dom';
@@ -25,13 +48,16 @@ import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { refreshCachedRpc } from '../../models/connections-hq';
+import { AccountTokenParsedInfo } from '../../models/token';
+import { getTokenByMintAddress } from '../../utils/tokens';
+import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
   const connection = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
@@ -52,9 +78,6 @@ export const AccountsView = () => {
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     showDepositOptionsModal,
-    //temp
-    streamProgramAddress
-
   } = useContext(AppStateContext);
 
   const { t } = useTranslation('common');
@@ -68,6 +91,9 @@ export const AccountsView = () => {
   const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
   const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
+  const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
+  const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
+  const [popoverVisible, setPopoverVisible] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -217,6 +243,24 @@ export const AccountsView = () => {
       : 0;
   }
 
+  const handlePopoverVisibleChange = (visibleChange: boolean) => {
+    setPopoverVisible(visibleChange);
+  };
+
+  const onTokenAccountGroupClick = (e: any) => {
+    consoleOut('onTokenAccountGroupClick event:', e, 'blue');
+  }
+
+  // Token Merger Modal
+  // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
+  const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
+  const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
+  const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
+  const onFinishedTokenMerge = useCallback(() => {
+    hideTokenMergerModal();
+    setShouldLoadTokens(true);
+  }, [hideTokenMergerModal]);
+
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
     if (!customConnection) {
@@ -269,6 +313,37 @@ export const AccountsView = () => {
                       balance: i.parsedInfo.tokenAmount.uiAmount || 0
                     };
                   }), 'blue');
+
+                  // Group the token accounts by mint.
+                  const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
+                  const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
+                  accTks.forEach((ta) => {
+                    const key = ta.parsedInfo.mint;
+                    const info = getTokenByMintAddress(key);
+                    const updatedTa = Object.assign({}, ta, {
+                      description: info ? `${info.name} (${info.symbol})` : ''
+                    });
+                    if (groupedTokenAccounts.has(key)) {
+                      const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
+                      current.push(updatedTa);
+                    } else {
+                      groupedTokenAccounts.set(key, [updatedTa]);
+                    }
+                  });
+                  // Keep only groups with more than 1 item
+                  groupedTokenAccounts.forEach((item, key) => {
+                    if (item.length > 1) {
+                      tokenGroups.set(key, item);
+                    }
+                  });
+                  consoleOut('tokenGroups:', tokenGroups, 'blue');
+                  // Save groups for possible further merging
+                  if (tokenGroups.size) {
+                    setTokenAccountGroups(tokenGroups);
+                  } else {
+                    setTokenAccountGroups(undefined);
+                  }
+
                   // Update balances in the mean token list
                   accTks.forEach(item => {
                     let tokenIndex = 0;
@@ -290,6 +365,7 @@ export const AccountsView = () => {
                     }
                   });
                   consoleOut('intersected List:', meanTokensCopy, 'blue');
+
                   // Update balances in the SPL token list
                   accTks.forEach(item => {
                     const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
@@ -298,6 +374,7 @@ export const AccountsView = () => {
                       splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     }
                   });
+
                   // Create a list containing the tokens for the user accounts not in the meanTokensCopy
                   const intersectedList = new Array<UserTokenAccount>();
                   accTks.forEach(item => {
@@ -792,6 +869,79 @@ export const AccountsView = () => {
       : false;
   }
 
+  const popoverTitleContent = (
+    <div className="flexible-left">
+      <div className="left">
+        {t('assets.merge-accounts-link')}
+      </div>
+      <div className="right">
+        <Button
+          type="default"
+          shape="circle"
+          icon={<CloseOutlined />}
+          onClick={() => handlePopoverVisibleChange(false)}
+        />
+      </div>
+    </div>
+  );
+
+  const popoverBodyContent = () => {
+    const output: JSX.Element[] = [];
+    <>
+      {(tokenAccountGroups && tokenAccountGroups.size) && (
+        <>
+        {tokenAccountGroups.forEach((value, keyName) => {
+          const asset = getTokenByMintAddress(keyName);
+          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            event.currentTarget.src = FALLBACK_COIN_IMAGE;
+            event.currentTarget.className = "error";
+          };
+          output.push(
+            <div className="transaction-list-row" key={keyName} onClick={onTokenAccountGroupClick}>
+              <div className="icon-cell">
+                <div className="token-icon">
+                  {asset?.logoURI ? (
+                    <img alt={`${asset.name}`} width={30} height={30} src={asset?.logoURI} onError={imageOnErrorHandler} />
+                  ) : (
+                    <Identicon address={keyName} style={{ width: "30", display: "inline-flex" }} />
+                  )}
+                </div>
+              </div>
+              <div className="description-cell">
+                <div className="title">
+                  {asset ? asset.symbol : '-'}
+                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                    {value.length} {t('assets.accounts-label')}
+                  </span>
+                </div>
+                <div className="subtitle text-truncate">{asset ? asset.name : '-'}</div>
+              </div>
+              <div className="rate-cell">
+                <span className="flat-button fg-orange-red" onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  consoleOut('Merge onClick event:', e, 'blue');
+                  setSelectedTokenMergeGroup(value);
+                  showTokenMergerModal();
+                  setPopoverVisible(false);
+                }}>
+                  <MergeCellsOutlined />
+                  <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
+                </span>
+              </div>
+            </div>
+          );
+        })}
+        </>
+      )}
+    </>
+    return (
+      <div className="token-merger">
+        {output}
+      </div>
+    );
+  }
+
   return (
     <>
       <Helmet>
@@ -802,10 +952,10 @@ export const AccountsView = () => {
       </Helmet>
       <div className="container main-container">
 
-        {/* {window.location.hostname === 'localhost' && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
+            <span className="ml-1">tokenAccountGroups:</span><span className="ml-1 font-bold fg-dark-active">{tokenAccountGroups && tokenAccountGroups.size ? 'true' : 'false'}</span>
           </div>
         )} */}
 
@@ -817,7 +967,7 @@ export const AccountsView = () => {
           {canShowAccountDetails && accountAddress ? (
             <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-              {/* Left / top panel*/}
+              {/* Left / top panel */}
               <div className="tokens-container">
                 <div className="transactions-heading">
                   <span className="title">{t('assets.screen-title')}</span>
@@ -860,8 +1010,22 @@ export const AccountsView = () => {
                   </div>
                   {(accountTokens && accountTokens.length > 0) && (
                     <div className="bottom-ctas">
-                      <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-                      <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+                      <div>
+                        <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+                        <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+                      </div>
+                      {(tokenAccountGroups && publicKey) && (
+                        <div className="ml-2">
+                          <Popover
+                            title={popoverTitleContent}
+                            content={popoverBodyContent}
+                            visible={popoverVisible}
+                            onVisibleChange={handlePopoverVisibleChange}
+                            trigger="click">
+                            <span className="secondary-link">{t('assets.merge-accounts-link')}</span>
+                          </Popover>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1043,6 +1207,16 @@ export const AccountsView = () => {
         </div>
 
       </div>
+      {(customConnection && selectedTokenMergeGroup && isTokenMergerModalVisible) && (
+        <AccountsMergeModal
+          connection={customConnection}
+          isVisible={isTokenMergerModalVisible}
+          handleOk={onFinishedTokenMerge}
+          handleClose={hideTokenMergerModal}
+          tokenMint={selectedTokenMergeGroup[0].parsedInfo.mint}
+          tokenGroup={selectedTokenMergeGroup}
+        />
+      )}
       <PreFooter />
     </>
   );

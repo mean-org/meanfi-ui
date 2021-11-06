@@ -507,6 +507,34 @@ footer.ant-layout-footer {
 }
 
 // Buttons
+.flat-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: inherit;
+  font-style: normal;
+  font-weight: 600;
+  height: auto;
+  white-space: nowrap;
+  cursor: pointer;
+  border-width: 0px;
+  text-decoration: none;
+  border-radius: 3px;
+  padding: 2px 4px;
+  transition: background 0.1s ease-out 0s;
+  outline: none !important;
+  &:hover,
+  &.active,
+  &:focus {
+    background-color: var(--darken);
+    text-decoration: none;
+  }
+  .mean-svg-icons {
+    width: 1.4em;
+    height: 1.4em;
+    margin-right: 3px;
+  }
+}
 
 // Primary rounded corners
 .ant-btn.ant-btn-primary {
@@ -536,6 +564,10 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-primary.ant-btn-round.main-cta {
   padding: 10px 14px;
   height: auto;
+  &.inactive {
+    cursor:not-allowed;
+    pointer-events: none;
+  }
 }
 
 // Secondary rounded corners
@@ -813,7 +845,7 @@ footer.ant-layout-footer {
   }
   input.ant-input-number-input {
     text-align: right;
-    padding: 0 24px 0 0;
+    padding: 0 38px 0 0;
   }
   .ant-input-number-handler-wrap {
     width: 20px;
@@ -833,6 +865,13 @@ footer.ant-layout-footer {
     .ant-input-number-handler-down-inner {
       color: var(--color-secondary-alpha-40);
     }
+  }
+  ~.leading-percent {
+    position: absolute;
+    right: 24px;
+    transform: translateY(-44%);
+    top: 50%;
+    font-weight: 600;
   }
 }
 
@@ -1734,6 +1773,9 @@ section.content {
       border: none !important;
       box-shadow: none !important;
       margin-bottom: calc(2rem + var(--footer-bar-height));
+      .button-tabset-container {
+        margin: 0 0 1rem 0;
+      }
     }
     @media (min-width: 576px) {
       .button-tabset-container {
@@ -1804,6 +1846,10 @@ section.content {
 }
 
 .stepper-wrapper {
+  @media (max-width: 575.98px) {
+    padding: 0 0.4rem 0;
+    margin-bottom: 1rem;
+  }
   @media (min-width: 576px) {
     padding: 0.4rem 0.7rem 0.5rem;
   }
@@ -2122,6 +2168,17 @@ section.content {
     > span:not(:last-child) {
       margin-right: 4px;
     }
+    &.memo {
+      margin-top: 0;
+      max-width: 184px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      @media (max-width: 575.98px) {
+        max-width: 146px;
+      }
+    }
   }
 }
 
@@ -2144,6 +2201,13 @@ section.content {
   line-height: 1rem;
   color: var(--color-orange-red);
   margin: 4px 0 -4px 0;
+}
+.flat-button {
+  &.change-button {
+    font-size: 13px;
+    color: var(--color-orange-red);
+    text-transform: uppercase;
+  }
 }
 
 // General purpose token selector
@@ -3363,7 +3427,38 @@ section.content {
     flex-shrink: 0;
   }
 }
-
+.token-merger {
+  .transaction-list-row {
+    border-radius: var(--custom-border-radius);
+  }
+}
+.merged-token-list {
+  .merged-token-item {
+    &:not(:last-of-type) {
+      border-bottom: 1px solid var(--color-secondary-alpha-05);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .token-selector {
+      .token-icon {
+        width: 16px;
+        height: 16px;
+        margin: 1px 4px 0 0;
+      }
+      .token-symbol {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1;
+      }
+    }
+    .public-address {
+      text-align: left;
+      font-size: 12px;
+      margin-top: 3px;
+      color: var(--color-secondary-alpha-50);
+    }
+  }
+}
 .transaction-list-row {
   display: flex;
   flex-direction: row;
@@ -5770,9 +5865,13 @@ code {
       color: var(--color-notify-warning);
     }
   }
+  .operation {
+    font-size: 0.75rem;
+    color: var(--color-secondary-alpha-60);
+  }
   .indication {
-    font-size: 0.62rem;
-    color: var(--color-secondary-alpha-40);
+    font-size: 0.65rem;
+    color: var(--color-secondary-alpha-60);
   }
   h4, h5 {
     color: var(--color-secondary-alpha-85);
@@ -5908,9 +6007,12 @@ code {
   background-color: var(--color-notify-warning);
   border-radius: 50%;
   box-shadow: 1px 1px 1px 0px rgb(0 0 0 / 30%);
-  opacity: 0.5;
+  opacity: 0.6;
   &.success {
     background-color: var(--color-notify-success);
+  }
+  &.warning {
+    background-color: var(--color-notify-warning);
   }
   &.error {
     background-color: var(--color-notify-error);

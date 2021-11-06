@@ -1,82 +1,11 @@
-import { AccountInfo, Commitment, Connection, PublicKey } from "@solana/web3.js"
+import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { AccountInfo, Commitment, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { AccountTokenParsedInfo } from "../models/token";
 
-export async function getFilteredProgramAccounts(
-  connection: Connection,
-  programId: PublicKey,
-  filters: any
-  
-): Promise<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }[]> {
-
-  // @ts-ignore
-  const resp = await connection._rpcRequest('getProgramAccounts', [
-    programId.toBase58(),
-    {
-      commitment: connection.commitment,
-      filters,
-      encoding: 'base64'
-    }
-  ]);
-
-  if (resp.error) {
-    throw new Error(resp.error.message);
-  }
-
-  // @ts-ignore
-  return resp.result.map(({ pubkey, account: { data, executable, owner, lamports } }) => ({
-    publicKey: new PublicKey(pubkey),
-    accountInfo: {
-      data: Buffer.from(data[0], 'base64'),
-      executable,
-      owner: new PublicKey(owner),
-      lamports
-    }
-  }));
-}
-  
-export async function getFilteredProgramAccountsCache(
-  connection: Connection,
-  programId: PublicKey,
-  filters: any
-
-): Promise<{ publicKey: PublicKey; accountInfo: AccountInfo<Buffer> }[]> {
-
-  try {
-    const resp = await (
-      await fetch('https://api.raydium.io/cache/rpc', {
-        method: 'POST',
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'getProgramAccounts',
-          params: [
-            programId.toBase58(),
-            {
-              commitment: connection.commitment,
-              filters,
-              encoding: 'base64'
-            }
-          ]
-        })
-      })
-    ).json();
-
-    if (resp.error) {
-      throw new Error(resp.error.message);
-    }
-
-    // @ts-ignore
-    return resp.result.map(({ pubkey, account: { data, executable, owner, lamports } }) => ({
-      publicKey: new PublicKey(pubkey),
-      accountInfo: {
-        data: Buffer.from(data[0], 'base64'),
-        executable,
-        owner: new PublicKey(owner),
-        lamports
-      }
-    }));
-
-  } catch (e) {
-    return getFilteredProgramAccounts(connection, programId, filters);
-  }
+export type AccountsDictionary = {
+  publicKey: PublicKey;
+  account: AccountInfo<Buffer>;
+  owner?: PublicKey;
 }
 
 // getMultipleAccounts
@@ -84,8 +13,7 @@ export async function getMultipleAccounts(
   connection: Connection,
   publicKeys: PublicKey[],
   commitment?: Commitment
-
-): Promise<Array<null | { publicKey: PublicKey; account: AccountInfo<Buffer> }>> {
+): Promise<Array<null | AccountsDictionary>> {
 
   const keys: PublicKey[][] = [];
   let tempKeys: PublicKey[] = [];
@@ -136,4 +64,63 @@ export async function getMultipleAccounts(
       account
     }
   });
+}
+
+export async function createTokenMergeTx(
+  connection: Connection,
+  mint: PublicKey,
+  owner: PublicKey,
+  mergeGroup: AccountTokenParsedInfo[]
+) {
+  let ixs: TransactionInstruction[] = [];
+
+  const ataKey = await Token.getAssociatedTokenAddress(
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+    TOKEN_PROGRAM_ID,
+    mint,
+    owner,
+    true
+  );
+
+  const ownerAta = mergeGroup.filter(a => a.pubkey.equals(ataKey))[0];
+
+  if (ownerAta === null) {
+    ixs.push(
+      Token.createAssociatedTokenAccountInstruction(
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+        TOKEN_PROGRAM_ID,
+        mint,
+        ataKey,
+        owner,
+        owner
+      )
+    );
+  }
+
+  for (let token of mergeGroup.filter(a => !a.pubkey.equals(ataKey))) {
+    ixs.push(
+      Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        token.pubkey,
+        ataKey,
+        owner,
+        [],
+        (token.parsedInfo.tokenAmount.uiAmount || 0) * 10 ** token.parsedInfo.tokenAmount.decimals
+      ),
+      Token.createCloseAccountInstruction(
+        TOKEN_PROGRAM_ID,
+        token.pubkey,
+        owner,
+        owner,
+        []
+      )
+    );
+  }
+
+  let tx = new Transaction().add(...ixs);
+  tx.feePayer = owner;
+  let hash = await connection.getRecentBlockhash("recent");
+  tx.recentBlockhash = hash.blockhash;
+
+  return tx;
 }

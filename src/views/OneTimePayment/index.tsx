@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Row, Col, InputNumber } from "antd";
+import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown, IconSort } from "../../Icons";
+import { IconCaretDown } from "../../Icons";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
@@ -36,8 +36,9 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { NATIVE_MINT, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -370,13 +371,14 @@ export const OneTimePayment = () => {
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         consoleOut("Start transaction for contract type:", contract?.name);
-        consoleOut('Beneficiary address:', recipientAddress);
+        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
+        consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('associatedToken:', selectedToken?.address);
         const associatedToken = new PublicKey(selectedToken?.address as string);
@@ -424,9 +426,9 @@ export const OneTimePayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
@@ -451,7 +453,7 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: value.signature
           });
           transaction = value;
           return true;
@@ -467,7 +469,7 @@ export const OneTimePayment = () => {
             result: `${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          throw(error);
+          return false;
         });
       } else {
         transactionLog.push({
@@ -497,7 +499,7 @@ export const OneTimePayment = () => {
           return true;
         })
         .catch(error => {
-          console.error('Signing transaction failed!');
+          console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -507,7 +509,7 @@ export const OneTimePayment = () => {
             result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-          throw(error);
+          return false;
         });
       } else {
         console.error("Cannot sign transaction! Wallet not found!");
@@ -553,7 +555,7 @@ export const OneTimePayment = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
-            throw(error);
+            return false;
           });
       } else {
         console.error('Cannot send transaction! Wallet not found!');
@@ -807,7 +809,7 @@ export const OneTimePayment = () => {
           <div className="flex-fixed-right">
             <div className="left field-select-left">
               {isToday(paymentStartDate || '')
-                ? `${paymentStartDate} (${t('common:general.today')})`
+                ? `${paymentStartDate} (${t('common:general.now')})`
                 : `${paymentStartDate}`}
             </div>
             <div className="right">
@@ -975,8 +977,8 @@ export const OneTimePayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_MINT.toBase58())}`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_MINT.toBase58())}`})
+                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())}`,
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())}`})
                   }
                 </h4>
               ) : (

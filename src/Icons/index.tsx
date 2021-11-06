@@ -11,6 +11,7 @@ export { IconCopy } from "./IconCopy";
 export { IconDiscord } from "./IconDiscord";
 export { IconDocument } from "./IconDocument";
 export { IconDownload } from "./IconDownload";
+export { IconEdit } from "./IconEdit";
 export { IconEllipsis } from "./IconEllipsis";
 export { IconEnvelope } from "./IconEnvelope";
 export { IconExchange } from "./IconExchange";

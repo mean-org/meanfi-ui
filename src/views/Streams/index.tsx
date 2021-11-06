@@ -468,20 +468,22 @@ export const Streams = () => {
   const getTransactionSubTitle = (item: StreamInfo): string => {
     let title = '';
 
-    if (item.state === STREAM_STATE.Ended) {
-      return t('streams.stream-list.subtitle-ended');
-    }
-
     const isInbound = isInboundStream(item);
 
     if (isInbound) {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-inbound');
       } else if (item.state === STREAM_STATE.Paused) {
-        title = t('streams.stream-list.subtitle-paused-inbound');
+        if (isOtp()) {
+          title = t('streams.stream-list.subtitle-paused-otp');
+        } else {
+          title = t('streams.stream-list.subtitle-paused-inbound');
+        }
       } else if (item.state === STREAM_STATE.Schedule) {
         title = t('streams.stream-list.subtitle-scheduled-inbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
+      } else if (item.state === STREAM_STATE.Ended) {
+        title = t('streams.stream-list.subtitle-ended');
       } else {
         title = t('streams.stream-list.subtitle-running-inbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
@@ -490,10 +492,16 @@ export const Streams = () => {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-outbound');
       } else if (item.state === STREAM_STATE.Paused) {
-        title = t('streams.stream-list.subtitle-paused-outbound');
+        if (isOtp()) {
+          title = t('streams.stream-list.subtitle-paused-otp');
+        } else {
+          title = t('streams.stream-list.subtitle-paused-outbound');
+        }
       } else if (item.state === STREAM_STATE.Schedule) {
         title = t('streams.stream-list.subtitle-scheduled-outbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
+      } else if (item.state === STREAM_STATE.Ended) {
+        title = t('streams.stream-list.subtitle-ended');
       } else {
         title = t('streams.stream-list.subtitle-running-outbound');
         title += ` ${getShortDate(item.startUtc as string)}`;
@@ -1563,6 +1571,10 @@ export const Streams = () => {
     }
     return false;
   }
+
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
 
   const menu = (
     <Menu>
