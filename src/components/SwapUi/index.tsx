@@ -551,8 +551,7 @@ export const SwapUi = (props: {
       getClients(
         connection, 
         fromMint, 
-        toMint,
-        fromSwapAmount
+        toMint
       )
       .then((clients: Client[] | null) => success(clients))
       .catch((_error: any) => error(_error));
@@ -570,7 +569,8 @@ export const SwapUi = (props: {
     isWrap, 
     toMint,
     refreshTime,
-    fromSwapAmount
+    // fromSwapAmount
+    fromBalance
   ]);
 
   // Automatically update all tokens balance

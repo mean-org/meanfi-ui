@@ -613,8 +613,7 @@ export const RepeatingSwapUi = (props: {
       getClients(
         connection, 
         fromMint, 
-        toMint,
-        fromSwapAmount
+        toMint
       )
       .then((clients: Client[] | null) => success(clients))
       .catch((_error: any) => error(_error));
