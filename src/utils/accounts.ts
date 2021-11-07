@@ -74,7 +74,7 @@ export async function createTokenMergeTx(
 ) {
   let ixs: TransactionInstruction[] = [];
 
-  const ataKey = await Token.getAssociatedTokenAddress(
+  const associatedAddress = await Token.getAssociatedTokenAddress(
     ASSOCIATED_TOKEN_PROGRAM_ID,
     TOKEN_PROGRAM_ID,
     mint,
@@ -82,27 +82,27 @@ export async function createTokenMergeTx(
     true
   );
 
-  const ownerAta = mergeGroup.filter(a => a.pubkey.equals(ataKey))[0];
+  const ataInfo = await connection.getAccountInfo(associatedAddress);
 
-  if (ownerAta === null) {
+  if (ataInfo === null) {
     ixs.push(
       Token.createAssociatedTokenAccountInstruction(
         ASSOCIATED_TOKEN_PROGRAM_ID,
         TOKEN_PROGRAM_ID,
         mint,
-        ataKey,
+        associatedAddress,
         owner,
         owner
       )
     );
   }
 
-  for (let token of mergeGroup.filter(a => !a.pubkey.equals(ataKey))) {
+  for (let token of mergeGroup.filter(a => !a.pubkey.equals(associatedAddress))) {
     ixs.push(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
         token.pubkey,
-        ataKey,
+        associatedAddress,
         owner,
         [],
         (token.parsedInfo.tokenAmount.uiAmount || 0) * 10 ** token.parsedInfo.tokenAmount.decimals

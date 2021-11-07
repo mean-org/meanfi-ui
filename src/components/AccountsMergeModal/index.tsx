@@ -5,7 +5,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
 import { consoleOut, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
-import { CheckOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { getTokenByMintAddress } from '../../utils/tokens';
@@ -370,18 +370,16 @@ export const AccountsMergeModal = (props: {
                             <p>Up to 4 token accounts can be merged at once. Please review your remaining tokens after the merge and run merge again as needed.</p>
                         )}
                         <p>Merging your {props.tokenGroup && props.tokenGroup[0].description} token accounts will send funds to the <strong>Associated Token Account</strong>.</p>
-                        <p>If the associated token account do not exist, then it will be created.</p>
                     </div>
                 </div>
                 ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
                 <div className="transaction-progress">
                     <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-                    <h4 className="font-bold">Your tokens have been merged into the associated token account!</h4>
-                    <p>After closing this modal the token list will be reloaded.</p>
+                    <h4 className="font-bold">Your tokens have been merged into the <strong>Associated Token Account</strong>!</h4>
                 </div>
                 ) : (
                 <div className="transaction-progress">
-                    <WarningOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+                  <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                     <h4 className="font-bold">Merge token accounts failed</h4>
                     <div className="operation">{getTransactionOperationDescription(transactionStatus, t)}</div>
                 </div>
@@ -414,7 +412,7 @@ export const AccountsMergeModal = (props: {
                     : transactionStatus.currentOperation === TransactionStatus.Iddle
                         ? 'Start merge'
                         : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                            ? 'Finish'
+                            ? 'Completed'
                             : 'Try again'
                 }
             </Button>
