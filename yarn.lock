@@ -1641,10 +1641,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@1.1.8":
-  version "1.1.8"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.8.tgz#1377d6821d7667763ddeebd625ea6197378f66ce"
-  integrity sha512-DMangTkP6pw/w63quUkZpMKHwqJ5m8Vx0T+dzg2vozAvb6PieH3lUFQMfiVLf7+XVUL1H3g9JoEOi/rFIe0++Q==
+"@mean-dao/hybrid-liquidity-ag@1.1.9":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.9.tgz#a61f9891d853a99581bd338396082665eb939a7e"
+  integrity sha512-BD9+sP1BEG1SPqR+ntdSAuH7j2yBG4cidoObZyY4AIQ+JW1V56L6NO0jWdUEJKDC1hGVstg8fv912bEB+bBD3Q==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.9"
@@ -2414,10 +2414,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/dateformat@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@types/dateformat/-/dateformat-3.0.1.tgz#98d747a2e5e9a56070c6bf14e27bff56204e34cc"
-  integrity sha512-KlPPdikagvL6ELjWsljbyDIPzNCeliYkqRpI+zea99vBBbCIA5JNshZAwQKTON139c87y9qvTFVgkFd14rtS4g==
+"@types/dateformat@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/dateformat/-/dateformat-5.0.0.tgz#17ce64b0318f3f36d1c830c58a7a915445f1f93d"
+  integrity sha512-SZg4JdHIWHQGEokbYGZSDvo5wA4TLYPXaqhigs/wH+REDOejcJzgH+qyY+HtEUtWOZxEUkbhbdYPqQDiEgrXeA==
 
 "@types/eslint@^7.2.6":
   version "7.28.2"
@@ -7379,10 +7379,10 @@ html-webpack-plugin@4.5.0:
     tapable "^1.1.3"
     util.promisify "1.0.0"
 
-html5-qrcode@2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/html5-qrcode/-/html5-qrcode-2.1.1.tgz#fc1cc8a020a5846230aa5be71ac6118c8f2b0c6d"
-  integrity sha512-F+oqQ8vyOE2RbuTbtEGBiD4HYQqI3x69bF60jJHCHW/H0qgS7cdPoA0ySTZaF3S/+7WbSZkEHEqqVzRXLvehSQ==
+html5-qrcode@2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/html5-qrcode/-/html5-qrcode-2.1.2.tgz#c93a23d877a35a0b88f8080798204b08f4793dc5"
+  integrity sha512-AaXE5tQA1NIPX0VkJg9d7ZtQiZEXkg5kP0TlyG+6ld2cPUi6PAE1gdNqq0NgseSz8P4zhkP2j/R6FFImWk52EA==
 
 htmlparser2@^3.9.1:
   version "3.10.1"
@@ -7510,10 +7510,10 @@ i18next-browser-languagedetector@^6.1.2:
   dependencies:
     "@babel/runtime" "^7.14.6"
 
-i18next@^21.3:
-  version "21.3.3"
-  resolved "https://registry.yarnpkg.com/i18next/-/i18next-21.3.3.tgz#1065d557328db29a2e1f33526ed37608cdb0242c"
-  integrity sha512-Wv5arCT9pK35nfhOzTdS64T7JpPcoqnkOEidxc4zF0DZ8KetpvmnkO+uWkXy+DFz6zWzPX7U9bIemwBqpFRprw==
+i18next@^21.4:
+  version "21.4.0"
+  resolved "https://registry.yarnpkg.com/i18next/-/i18next-21.4.0.tgz#59d0129e9e3974313300b0f60a0e01812ba5689e"
+  integrity sha512-H8QwhJXxnPWDvRlLn3nqDvbry7PM7i3UYa0+5EHWvlVkvNNy5WJVTzZe2tZH+HnaGVAE5MaujasyOca8mbQN+w==
   dependencies:
     "@babel/runtime" "^7.12.0"
 
@@ -11955,10 +11955,10 @@ react-helmet@^6.1.0:
     react-fast-compare "^3.1.1"
     react-side-effect "^2.1.0"
 
-react-i18next@^11.12.0:
-  version "11.12.0"
-  resolved "https://registry.yarnpkg.com/react-i18next/-/react-i18next-11.12.0.tgz#2a053321b9b7a876d5baa7af55a12d986117bffc"
-  integrity sha512-M9BT+hqVG03ywrl+L7CK74ugK+4jIo7AeKJ17+g9BoqJz2+/aVbs8SIVXT4KMQ1rjIdcw+GcSRDy1CXjcz6tLQ==
+react-i18next@^11.13.0:
+  version "11.13.0"
+  resolved "https://registry.yarnpkg.com/react-i18next/-/react-i18next-11.13.0.tgz#7b6f23f717154a44cf3f70d62a9368152bf8a73f"
+  integrity sha512-AY8ydSqx8LVm1Tn5yXFA0JwCeSWpcFOSr96HrjUXXVAWWbptamZOY2iMxVaGNlGxSLnRY0U2sdCIPVYHcmhBxQ==
   dependencies:
     "@babel/runtime" "^7.14.5"
     html-parse-stringify "^3.0.1"

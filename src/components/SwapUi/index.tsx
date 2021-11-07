@@ -551,7 +551,8 @@ export const SwapUi = (props: {
       getClients(
         connection, 
         fromMint, 
-        toMint
+        toMint,
+        fromSwapAmount
       )
       .then((clients: Client[] | null) => success(clients))
       .catch((_error: any) => error(_error));
@@ -568,7 +569,8 @@ export const SwapUi = (props: {
     isUnwrap, 
     isWrap, 
     toMint,
-    refreshTime
+    refreshTime,
+    fromSwapAmount
   ]);
 
   // Automatically update all tokens balance
@@ -755,6 +757,33 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      //SABER
+      const saberMintInfo: any = Object
+        .values(mintList)
+        .filter((m: any) => m.symbol === 'SBR')[0];
+
+      if (saberMintInfo && fromMint === saberMintInfo.address) {
+
+        const saberList: any = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol === 'USDC');
+
+        let allowedMints: any = {};
+
+        for (let item of saberList) {
+          allowedMints[item.address] = item;
+        }
+    
+        setShowToMintList(allowedMints);
+
+        if (toMint && toMint !== USDC_MINT.toBase58()) {
+          setToMint(USDC_MINT.toBase58());
+        }
+
+        return;
+      }
+
+      //ORCA
       const orcaMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'ORCA')[0];
@@ -780,6 +809,7 @@ export const SwapUi = (props: {
         return;
       }
 
+      //BTC
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
@@ -825,6 +855,33 @@ export const SwapUi = (props: {
 
     const timeout = setTimeout(() => {
 
+      //SABER
+      const saberMintInfo: any = Object
+        .values(mintList)
+        .filter((m: any) => m.symbol === 'SBR')[0];
+
+      if (saberMintInfo && toMint === saberMintInfo.address) {
+
+        const saberList: any = Object
+          .values(mintList)
+          .filter((m: any) => m.symbol === 'USDC');
+
+        let allowedMints: any = {};
+
+        for (let item of saberList) {
+          allowedMints[item.address] = item;
+        }
+    
+        setShowFromMintList(allowedMints);
+
+        if (fromMint && fromMint !== USDC_MINT.toBase58()) {
+          setFromMint(USDC_MINT.toBase58());
+        }
+
+        return;
+      }
+
+      //ORCA
       const orcaMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'ORCA')[0];
@@ -850,13 +907,12 @@ export const SwapUi = (props: {
         return;
       }
 
+      //BTC
       const btcMintInfo: any = Object
         .values(mintList)
         .filter((m: any) => m.symbol === 'BTC')[0];
 
-      if (!btcMintInfo) { return; }
-
-      if (toMint && (toMint === btcMintInfo.address)) {
+      if (btcMintInfo && toMint === btcMintInfo.address) {
 
         const btcList: any = Object
           .values(mintList)

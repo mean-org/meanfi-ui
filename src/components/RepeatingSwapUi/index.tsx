@@ -43,7 +43,8 @@ import {
   ACCOUNT_LAYOUT,
   HlaInfo,
   Client,
-  SRM_MINT
+  SRM_MINT,
+  ORCA
 
 } from "@mean-dao/hybrid-liquidity-ag";
 
@@ -388,7 +389,20 @@ export const RepeatingSwapUi = (props: {
 
       const list: any = { };
 
-      for (let info of TOKENS) {
+      //TODO: Remove token filtering when HLA program implementation covers all tokens
+      for (let info of TOKENS.filter(t => {
+        if (
+          t.symbol === "SOL" || 
+          t.symbol === "wSOL" || 
+          t.symbol === "USDC" || 
+          t.symbol === "USDT" ||
+          t.symbol === "ETH" || 
+          t.symbol === "BTC"
+        ) {
+          return true;
+        }
+        return false;
+      })) {
         let mint = cloneDeep(info);
         if (mint.logoURI) {
           list[mint.address] = mint;
@@ -580,15 +594,17 @@ export const RepeatingSwapUi = (props: {
           return;
         }
 
-        setClients(clients);
-        console.log('clients', clients);
+        //TODO: Remove clients filtering when HLA program implementation covers every client
+        const allowedClients = clients.filter(c => c.protocol.equals(ORCA));
+        setClients(allowedClients);
+        console.log(allowedClients);
 
-        const client = clients[0].protocol.equals(SERUM) 
-          ? clients[0] as SerumClient 
-          : clients[0] as LPClient;
+        const client = allowedClients[0];
+        // const client = clients[0].protocol.equals(SERUM) 
+        //   ? clients[0] as SerumClient 
+        //   : clients[0] as LPClient;
 
         setOptimalClient(client);
-        console.log('optimal client', client);
         setExchangeInfo(client.exchange);
         setRefreshing(false);
         setRefreshTime(30);
@@ -597,7 +613,8 @@ export const RepeatingSwapUi = (props: {
       getClients(
         connection, 
         fromMint, 
-        toMint
+        toMint,
+        fromSwapAmount
       )
       .then((clients: Client[] | null) => success(clients))
       .catch((_error: any) => error(_error));
@@ -614,7 +631,8 @@ export const RepeatingSwapUi = (props: {
     isUnwrap, 
     isWrap, 
     toMint,
-    refreshTime
+    refreshTime,
+    fromSwapAmount
   ]);
 
   // Automatically update all tokens balance
