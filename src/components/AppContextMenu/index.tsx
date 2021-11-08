@@ -5,6 +5,7 @@ import {
   IconBookOpen,
   IconChat,
   IconCodeBlock,
+  IconLiveHelp,
   IconLogout,
   IconMoon,
   IconSettings,
@@ -13,7 +14,7 @@ import {
 import { useWallet } from "../../contexts/wallet";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { AppStateContext } from "../../contexts/appstate";
-import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_URL, LANGUAGES } from "../../constants";
+import { MEAN_FINANCE_DISCORD_URL, MEAN_DAO_GITHUB_ORG_URL, MEAN_DAO_GITBOOKS_URL, LANGUAGES, MEANFI_SUPPORT_URL } from "../../constants";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 import { ReferFriendModal } from '../ReferFriendModal';
@@ -141,12 +142,12 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.discord')}</span>
         </a>
       </Menu.Item>
-      {connected && (
-        <Menu.Item key="7" onClick={onDisconnectWallet}>
-          <IconLogout className="mean-svg-icons" />
-          <span className="menu-item-text">{t('ui-menus.app-context-menu.disconnect')}</span>
-        </Menu.Item>
-      )}
+      <Menu.Item key="7">
+        <a href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+          <IconLiveHelp className="mean-svg-icons" />
+          <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
+        </a>
+      </Menu.Item>
     </Menu>
   );
 

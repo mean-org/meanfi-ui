@@ -1191,14 +1191,14 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.2", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.12.0", "@babel/runtime@^7.12.1", "@babel/runtime@^7.12.13", "@babel/runtime@^7.14.5", "@babel/runtime@^7.14.6", "@babel/runtime@^7.3.1", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
+"@babel/runtime@^7.1.2", "@babel/runtime@^7.10.1", "@babel/runtime@^7.10.2", "@babel/runtime@^7.10.4", "@babel/runtime@^7.11.1", "@babel/runtime@^7.12.1", "@babel/runtime@^7.12.13", "@babel/runtime@^7.14.5", "@babel/runtime@^7.14.6", "@babel/runtime@^7.3.1", "@babel/runtime@^7.5.5", "@babel/runtime@^7.7.2", "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
   version "7.15.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.15.4.tgz#fd17d16bfdf878e6dd02d19753a39fa8a8d9c84a"
   integrity sha512-99catp6bHCaxr4sJ/DbTGgHS4+Rs2RVd2g7iOap6SLGPDknRK9ztKNsE/Fg6QhSeh1FGE5f6gHGQmvvn3I3xhw==
   dependencies:
     regenerator-runtime "^0.13.4"
 
-"@babel/runtime@^7.10.5", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.5":
+"@babel/runtime@^7.10.5", "@babel/runtime@^7.11.2", "@babel/runtime@^7.12.0", "@babel/runtime@^7.12.5":
   version "7.16.0"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.16.0.tgz#e27b977f2e2088ba24748bf99b5e1dece64e4f0b"
   integrity sha512-Nht8L0O8YCktmsDV6FqFue7vQLRx3Hb0B37lS5y0jDRqRxlBG4wIJHnf9/bgSE2UyipKFA01YtS+npRdTWBUyw==
@@ -1641,10 +1641,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@1.1.13":
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.13.tgz#c51778d8d6f4217cf33bb6a99941b014e040c8e2"
-  integrity sha512-UtXMScQp8FudGkWJ7HzA+qFtN/XfhI2z9E3/08pPeapuoQeozT93F3WF7YUIrG5f9YAjYUy2BZcUoeM92B8Nqg==
+"@mean-dao/hybrid-liquidity-ag@1.1.15":
+  version "1.1.15"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.15.tgz#e1550385512a9746366c7ae6d76cf4d38fabe458"
+  integrity sha512-y1txXl4i71ayVxrC+vqB9r9rTuYcZz+Lwz86vrjmN8rtGrDo1TzphNF8A3rvSlg2jUOSLN9rSE05GsCnX1E5MQ==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.9"
@@ -1667,7 +1667,6 @@
     buffer "6.0.3"
     buffer-layout "^1.2.2"
     decimal.js "^10.3.1"
-    lodash-es "^4.17.21"
 
 "@mean-dao/money-streaming@1.4.15":
   version "1.4.15"
@@ -7511,9 +7510,9 @@ i18next-browser-languagedetector@^6.1.2:
     "@babel/runtime" "^7.14.6"
 
 i18next@^21.4:
-  version "21.4.0"
-  resolved "https://registry.yarnpkg.com/i18next/-/i18next-21.4.0.tgz#59d0129e9e3974313300b0f60a0e01812ba5689e"
-  integrity sha512-H8QwhJXxnPWDvRlLn3nqDvbry7PM7i3UYa0+5EHWvlVkvNNy5WJVTzZe2tZH+HnaGVAE5MaujasyOca8mbQN+w==
+  version "21.4.1"
+  resolved "https://registry.yarnpkg.com/i18next/-/i18next-21.4.1.tgz#3af1a15994eb5240e9526a5c75c5d2cf931e0c48"
+  integrity sha512-uTCDfoMKTX6b/Amss7w/hQU8NV80ahmoKKNYUg0qbLbtUAMvYIWS2VvCCeNEGQIaEjyC4GV4W+iQbBcv3A/ViA==
   dependencies:
     "@babel/runtime" "^7.12.0"
 
