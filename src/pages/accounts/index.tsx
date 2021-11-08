@@ -243,6 +243,17 @@ export const AccountsView = () => {
       : 0;
   }
 
+  const hasMultipleTokenAccounts = (): boolean => {
+    if (selectedAsset && tokenAccountGroups) {
+      const acc = tokenAccountGroups.has(selectedAsset.address);
+      if (acc) {
+        const item = tokenAccountGroups.get(selectedAsset.address);
+        return item && item.length > 1 ? true : false;
+      }
+    }
+    return false;
+  }
+
   const handlePopoverVisibleChange = (visibleChange: boolean) => {
     setPopoverVisible(visibleChange);
   };
@@ -1010,21 +1021,24 @@ export const AccountsView = () => {
                   </div>
                   {(accountTokens && accountTokens.length > 0) && (
                     <div className="bottom-ctas">
-                      <div>
-                        <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-                        <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-                      </div>
-                      {(tokenAccountGroups && publicKey) && (
-                        <div className="ml-2">
-                          <Popover
-                            title={popoverTitleContent}
-                            content={popoverBodyContent}
-                            visible={popoverVisible}
-                            onVisibleChange={handlePopoverVisibleChange}
-                            trigger="click">
-                            <span className="secondary-link">{t('assets.merge-accounts-link')}</span>
-                          </Popover>
-                        </div>
+                      <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+                      <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+                      {(hasMultipleTokenAccounts()) && (
+                        <span className="flat-button ml-2" onClick={() => {
+                          if (selectedAsset && tokenAccountGroups) {
+                            const acc = tokenAccountGroups.has(selectedAsset.address);
+                            if (acc) {
+                              const item = tokenAccountGroups.get(selectedAsset.address);
+                              if (item) {
+                                setSelectedTokenMergeGroup(item);
+                                showTokenMergerModal();
+                              }
+                            }
+                          }
+                        }}>
+                          <MergeCellsOutlined />
+                          <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
+                        </span>
                       )}
                     </div>
                   )}
