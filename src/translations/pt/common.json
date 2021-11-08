@@ -36,7 +36,7 @@
 		"history-table-postbalance": "Post saldo",
 		"loading-error": "Não fomos capazes de carregar transacções. Por favor, volte a carregar a página.",
 		"merge-accounts-link": "Merge token accounts",
-		"merge-accounts-cta": "Merge",
+		"merge-accounts-cta": "Merge accounts",
 		"no-asset-selected": "Nenhum ativo selecionado. Por favor, escolha um à esquerda!",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -497,7 +497,7 @@
 			"blog": "Blog",
 			"code": "Código",
 			"developers": "Programadores",
-			"disconnect": "Desconectar carteira",
+			"help-support": "Help center",
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Docs",
