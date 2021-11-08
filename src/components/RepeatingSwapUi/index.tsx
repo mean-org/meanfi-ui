@@ -44,7 +44,8 @@ import {
   HlaInfo,
   Client,
   SRM_MINT,
-  ORCA
+  ORCA,
+  RAYDIUM
 
 } from "@mean-dao/hybrid-liquidity-ag";
 
@@ -397,7 +398,9 @@ export const RepeatingSwapUi = (props: {
           t.symbol === "USDC" || 
           t.symbol === "USDT" ||
           t.symbol === "ETH" || 
-          t.symbol === "BTC"
+          t.symbol === "BTC" ||
+          t.symbol === "RAY" ||
+          t.symbol === "SRM"
         ) {
           return true;
         }
@@ -595,14 +598,12 @@ export const RepeatingSwapUi = (props: {
         }
 
         //TODO: Remove clients filtering when HLA program implementation covers every client
-        const allowedClients = clients.filter(c => c.protocol.equals(ORCA));
+        const allowedClients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM));
         setClients(allowedClients);
         console.log(allowedClients);
-
-        const client = allowedClients[0];
-        // const client = clients[0].protocol.equals(SERUM) 
-        //   ? clients[0] as SerumClient 
-        //   : clients[0] as LPClient;
+        const client = clients[0].protocol.equals(SERUM) 
+          ? clients[0] as SerumClient 
+          : clients[0] as LPClient;
 
         setOptimalClient(client);
         setExchangeInfo(client.exchange);

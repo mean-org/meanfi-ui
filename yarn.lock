@@ -1641,10 +1641,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@1.1.13":
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.13.tgz#c51778d8d6f4217cf33bb6a99941b014e040c8e2"
-  integrity sha512-UtXMScQp8FudGkWJ7HzA+qFtN/XfhI2z9E3/08pPeapuoQeozT93F3WF7YUIrG5f9YAjYUy2BZcUoeM92B8Nqg==
+"@mean-dao/hybrid-liquidity-ag@^1.1.15":
+  version "1.1.15"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.15.tgz#e1550385512a9746366c7ae6d76cf4d38fabe458"
+  integrity sha512-y1txXl4i71ayVxrC+vqB9r9rTuYcZz+Lwz86vrjmN8rtGrDo1TzphNF8A3rvSlg2jUOSLN9rSE05GsCnX1E5MQ==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.9"
@@ -1667,7 +1667,6 @@
     buffer "6.0.3"
     buffer-layout "^1.2.2"
     decimal.js "^10.3.1"
-    lodash-es "^4.17.21"
 
 "@mean-dao/money-streaming@1.4.15":
   version "1.4.15"
