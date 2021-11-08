@@ -454,6 +454,9 @@
 			"recipient-receives": "Minimum received",
 			"slippage": "Slippage tolerance",
 			"transaction-fee": "Transaction fee",
+			"network-transaction-fee": "Network fee",
+			"protocol-transaction-fee": "{{protocol}} LP fee",
+			"hla-transaction-fee": "Aggregator fee",
 			"you-receive": "You receive"
 		},
 		"validation": {

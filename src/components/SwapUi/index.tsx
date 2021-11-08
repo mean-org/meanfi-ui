@@ -487,7 +487,7 @@ export const SwapUi = (props: {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees,
-        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees + exchangeInfo.networkFees 
+        total: isWrap() || isUnwrap() ? 0: aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
 
@@ -514,13 +514,11 @@ export const SwapUi = (props: {
   useEffect(() => {
 
     if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
+      setRefreshing(false); 
       return;
     }
 
     const timeout = setTimeout(() => {
-
-      setRefreshing(true);
-      setExchangeInfo(undefined);
 
       const error = (_error: any) => {
         console.error(_error);
@@ -569,7 +567,6 @@ export const SwapUi = (props: {
     isWrap, 
     toMint,
     refreshTime,
-    // fromSwapAmount
     fromBalance
   ]);
 
@@ -1203,6 +1200,7 @@ export const SwapUi = (props: {
       setFromBalance(oldToBalance);
       setToBalance(oldFromBalance);
       setRefreshTime(0);
+      setRefreshing(true);
     });
 
     return () => {
@@ -1738,17 +1736,24 @@ export const SwapUi = (props: {
     return fromMint && toMint && exchangeInfo ? (
       <>
       {
-        !refreshing && fromAmount && slippage &&
+        !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
-          `${slippage.toFixed(2)}%`
+          t("transactions.transaction-info.network-transaction-fee"),
+          `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.transaction-fee"),
-          `${feesInfo.total.toFixed(mintList[fromMint].decimals)} ${mintList[fromMint].symbol}`
+          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
+        )
+      }
+      {
+        !refreshing && fromAmount && slippage &&
+        infoRow(
+          t("transactions.transaction-info.slippage"),
+          `${slippage.toFixed(2)}%`
         )
       }
       {
@@ -1762,7 +1767,7 @@ export const SwapUi = (props: {
         !refreshing && fromAmount &&
         infoRow(
           t("transactions.transaction-info.price-impact"),                
-          `${exchangeInfo.priceImpact?.toFixed(2)}%`
+          `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(4))}%`
         )
       }
       {
@@ -1787,10 +1792,11 @@ export const SwapUi = (props: {
         Object.values(showFromMintList).map((token: any, index) => {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
-              setRefreshTime(0);
               setFromMint(token.address);
               setLastFromMint(token.address);
               setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };
@@ -1852,9 +1858,10 @@ export const SwapUi = (props: {
         Object.values(showToMintList).map((token: any, index) => {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
-              setRefreshTime(0);
               setToMint(token.address);
               setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };

@@ -400,7 +400,8 @@ export const RepeatingSwapUi = (props: {
           t.symbol === "ETH" || 
           t.symbol === "BTC" ||
           t.symbol === "RAY" ||
-          t.symbol === "SRM"
+          t.symbol === "SRM" ||
+          t.symbol === "ORCA"
         ) {
           return true;
         }
@@ -466,8 +467,9 @@ export const RepeatingSwapUi = (props: {
       return; 
     }
 
-    const success = () => setRefreshTime(refreshTime - 1);
-    const timeout = setTimeout(() => success, 1000);
+    const timeout = setTimeout(() => {
+      setRefreshTime(refreshTime - 1);
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
@@ -550,7 +552,7 @@ export const RepeatingSwapUi = (props: {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees,
-        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees + exchangeInfo.networkFees 
+        total: isWrap() || isUnwrap() ? 0: aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
 
@@ -577,13 +579,11 @@ export const RepeatingSwapUi = (props: {
   useEffect(() => {
 
     if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
+      setRefreshing(false); 
       return;
     }
 
     const timeout = setTimeout(() => {
-
-      setRefreshing(true);
-      setExchangeInfo(undefined);
 
       const error = (_error: any) => {
         console.error(_error);
@@ -601,7 +601,7 @@ export const RepeatingSwapUi = (props: {
         const allowedClients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM));
         setClients(allowedClients);
         console.log(allowedClients);
-        const client = clients[0].protocol.equals(SERUM) 
+        const client = allowedClients[0].protocol.equals(SERUM)
           ? clients[0] as SerumClient 
           : clients[0] as LPClient;
 
@@ -1234,6 +1234,7 @@ export const RepeatingSwapUi = (props: {
       setFromBalance(oldToBalance);
       setToBalance(oldFromBalance);
       setRefreshTime(0);
+      setRefreshing(true);
     });
 
     return () => {
@@ -1296,17 +1297,24 @@ export const RepeatingSwapUi = (props: {
     return fromMint && toMint && exchangeInfo ? (
       <>
       {
-        !refreshing && fromAmount && slippage &&
+        !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
-          `${slippage.toFixed(2)}%`
+          t("transactions.transaction-info.network-transaction-fee"),
+          `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.transaction-fee"),
-          `${feesInfo.total.toFixed(mintList[fromMint].decimals)} ${mintList[fromMint].symbol}`
+          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
+        )
+      }
+      {
+        !refreshing && fromAmount && slippage &&
+        infoRow(
+          t("transactions.transaction-info.slippage"),
+          `${slippage.toFixed(2)}%`
         )
       }
       {
@@ -1320,7 +1328,7 @@ export const RepeatingSwapUi = (props: {
         !refreshing && fromAmount &&
         infoRow(
           t("transactions.transaction-info.price-impact"),                
-          `${exchangeInfo.priceImpact?.toFixed(2)}%`
+          `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`
         )
       }
       {
@@ -1347,6 +1355,9 @@ export const RepeatingSwapUi = (props: {
             if (!fromMint || fromMint !== token.address) {
               setFromMint(token.address);
               setLastFromMint(token.address);
+              setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };
@@ -1409,6 +1420,9 @@ export const RepeatingSwapUi = (props: {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
               setToMint(token.address);
+              setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };
