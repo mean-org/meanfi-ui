@@ -1023,7 +1023,7 @@ export const AccountsView = () => {
                     <div className="bottom-ctas">
                       <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
                       <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-                      {(hasMultipleTokenAccounts()) && (
+                      {(publicKey && hasMultipleTokenAccounts()) && (
                         <span className="flat-button ml-2" onClick={() => {
                           if (selectedAsset && tokenAccountGroups) {
                             const acc = tokenAccountGroups.has(selectedAsset.address);

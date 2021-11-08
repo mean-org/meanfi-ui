@@ -36,7 +36,7 @@
 		"history-table-postbalance": "Post balance",
 		"loading-error": "Could not load transactions. Please reload the page.",
 		"merge-accounts-link": "Merge token accounts",
-		"merge-accounts-cta": "Merge",
+		"merge-accounts-cta": "Merge accounts",
 		"no-asset-selected": "No asset selected. Please chose one on the left!",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
