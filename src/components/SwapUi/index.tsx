@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../models/enums";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { cloneDeep } from "lodash";
 import { InfoIcon } from "../InfoIcon";
 import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
@@ -344,7 +343,7 @@ export const SwapUi = (props: {
       const list: any = { };
 
       for (let info of TOKENS) {
-        let mint = cloneDeep(info);
+        let mint = JSON.parse(JSON.stringify(info));
         if (mint.logoURI) {
           list[mint.address] = mint;
         }

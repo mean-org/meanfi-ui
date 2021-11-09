@@ -14,7 +14,6 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { cloneDeep } from "lodash";
 import { InfoIcon } from "../InfoIcon";
 import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
@@ -407,7 +406,7 @@ export const RepeatingSwapUi = (props: {
         }
         return false;
       })) {
-        let mint = cloneDeep(info);
+        let mint = JSON.parse(JSON.stringify(info));
         if (mint.logoURI) {
           list[mint.address] = mint;
         }

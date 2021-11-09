@@ -1,5 +1,4 @@
 import SERUM_MARKETS from '@project-serum/serum/lib/markets.json'
-import { cloneDeep } from 'lodash-es'
 import { LP_TOKENS, NATIVE_SOL, TOKENS, TokenInfo } from './tokens'
 import {
   // LIQUIDITY_POOL_PROGRAM_ID_V2,
@@ -56,10 +55,10 @@ export function getPoolByTokenMintAddresses(
   )
 
   if (pool) {
-    return cloneDeep(pool)
+    return JSON.parse(JSON.stringify(pool));
   }
 
-  return pool
+  return pool;
 }
 
 export function getPoolListByTokenMintAddresses(
@@ -75,32 +74,31 @@ export function getPoolListByTokenMintAddresses(
         pool.version === 4 &&
         pool.official
       ) {
-        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
       }
     } else {
-      return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+      return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
     }
-    return false
+    return false;
   })
   if (pool.length > 0) {
-    return cloneDeep(pool)
+    return JSON.parse(JSON.stringify(pool));
   } else {
-    return cloneDeep(
-      LIQUIDITY_POOLS.filter((pool) => {
-        if (coinMintAddress && pcMintAddress) {
-          if (
-            ((pool.coin.address === coinMintAddress && pool.pc.address === pcMintAddress) ||
-              (pool.coin.address === pcMintAddress && pool.pc.address === coinMintAddress)) &&
-            pool.version === 4
-          ) {
-            return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
-          }
-        } else {
-          return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+    const filteredPools = LIQUIDITY_POOLS.filter((pool) => {
+      if (coinMintAddress && pcMintAddress) {
+        if (
+          ((pool.coin.address === coinMintAddress && pool.pc.address === pcMintAddress) ||
+            (pool.coin.address === pcMintAddress && pool.pc.address === coinMintAddress)) &&
+          pool.version === 4
+        ) {
+          return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
         }
-        return false
-      })
-    )
+      } else {
+        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
+      }
+      return false;
+    })
+    return JSON.parse(JSON.stringify(filteredPools));
   }
 }
 
@@ -117,10 +115,10 @@ export function getLpMintByTokenMintAddresses(
   )
 
   if (pool) {
-    return pool.lp.address
+    return pool.lp.address;
   }
 
-  return null
+  return null;
 }
 
 export function getLpListByTokenMintAddresses(
@@ -137,15 +135,15 @@ export function getLpListByTokenMintAddresses(
         version.includes(pool.version) &&
         pool.official
       ) {
-        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
       }
     } else {
-      return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+      return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
     }
-    return false
+    return false;
   })
   if (pool.length > 0) {
-    return pool
+    return pool;
   } else {
     return LIQUIDITY_POOLS.filter((pool) => {
       if (coinMintAddress && pcMintAddress) {
@@ -154,28 +152,28 @@ export function getLpListByTokenMintAddresses(
             (pool.coin.address === pcMintAddress && pool.pc.address === coinMintAddress)) &&
           version.includes(pool.version)
         ) {
-          return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+          return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
         }
       } else {
-        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket)
+        return !(ammIdOrMarket !== undefined && pool.ammId !== ammIdOrMarket && pool.serumMarket !== ammIdOrMarket);
       }
-      return false
+      return false;
     })
   }
 }
 
 export function canWrap(fromMintAddress: string, toMintAddress: string): boolean {
-  return fromMintAddress === TOKENS.WUSDT.address && toMintAddress === TOKENS.USDT.address
+  return fromMintAddress === TOKENS.WUSDT.address && toMintAddress === TOKENS.USDT.address;
 }
 
 export function getPoolByLpMintAddress(lpMintAddress: string): LiquidityPoolInfo | undefined {
-  const pool = LIQUIDITY_POOLS.find((pool) => pool.lp.address === lpMintAddress)
+  const pool = LIQUIDITY_POOLS.find((pool) => pool.lp.address === lpMintAddress);
 
   if (pool) {
-    return cloneDeep(pool)
+    return JSON.parse(JSON.stringify(pool));
   }
 
-  return pool
+  return pool;
 }
 
 export function getAddressForWhat(address: string) {
@@ -183,31 +181,31 @@ export function getAddressForWhat(address: string) {
     for (const [key, value] of Object.entries(pool)) {
       if (key === 'lp') {
         if (value.address === address) {
-          return { key: 'lpMintAddress', lpMintAddress: pool.lp.address, version: pool.version }
+          return { key: 'lpMintAddress', lpMintAddress: pool.lp.address, version: pool.version };
         }
       } else if (value === address) {
-        return { key, lpMintAddress: pool.lp.address, version: pool.version }
+        return { key, lpMintAddress: pool.lp.address, version: pool.version };
       }
     }
   }
 
-  return {}
+  return {};
 }
 
 export function isOfficalMarket(marketAddress: string) {
   for (const market of SERUM_MARKETS) {
     if (market.address === marketAddress && !market.deprecated) {
-      return true
+      return true;
     }
   }
 
   for (const pool of LIQUIDITY_POOLS) {
     if (pool.serumMarket === marketAddress && pool.official === true) {
-      return true
+      return true;
     }
   }
 
-  return false
+  return false;
 }
 
 export const LIQUIDITY_POOLS: LiquidityPoolInfo[] = [

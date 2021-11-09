@@ -1,5 +1,4 @@
 import { TokenAmount } from './safe-math';
-import { cloneDeep } from 'lodash-es';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
 import { MEAN_TOKEN_LIST } from '../constants/token-list';
 
@@ -36,7 +35,7 @@ export interface TokenInfo {
  */
 export function getTokenBySymbol(symbol: string): TokenInfo | null {
   if (symbol === 'SOL') {
-    return cloneDeep(NATIVE_SOL)
+    return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
   let token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
@@ -53,7 +52,7 @@ export function getTokenBySymbol(symbol: string): TokenInfo | null {
  */
 export function getTokenByMintAddress(address: string): TokenInfo | null {
   if (address === NATIVE_SOL.address) {
-    return cloneDeep(NATIVE_SOL);
+    return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
   let token = null;
