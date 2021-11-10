@@ -1,10 +1,10 @@
 import { Row, Col, Spin, Modal, Button } from "antd";
-import { SwapSettings } from "../SwapSettings";
-import { CoinInput } from "../CoinInput";
-import { TextInput } from "../TextInput";
+import { SwapSettings } from "../../components/SwapSettings";
+import { ExchangeInput } from "../../components/ExchangeInput";
+import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, isValidNumber } from "../../utils/utils";
-import { Identicon } from "../Identicon";
+import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
 import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
@@ -14,13 +14,13 @@ import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { InfoIcon } from "../InfoIcon";
-import { DdcaFrequencySelectorModal } from "../DdcaFrequencySelectorModal";
+import { InfoIcon } from "../../components/InfoIcon";
+import { DdcaFrequencySelectorModal } from "../../components/DdcaFrequencySelectorModal";
 import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig } from "../..";
 import { DcaInterval } from "../../models/ddca-models";
-import { DdcaSetupModal } from "../DdcaSetupModal";
+import { DdcaSetupModal } from "../../components/DdcaSetupModal";
 import { calculateActionFees as calculateDdcaActionFees, TransactionFees as DdcaTxFees, DDCA_ACTIONS } from '@mean-dao/ddca';
 import { Redirect } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
@@ -49,8 +49,9 @@ import {
 } from "@mean-dao/hybrid-liquidity-ag";
 
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
+import { ExchangeOutput } from "../../components/ExchangeOutput";
 
-export const RepeatingSwapUi = (props: {
+export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
   connection: Connection;
@@ -1510,7 +1511,7 @@ export const RepeatingSwapUi = (props: {
           </div>
 
           {/* Source token / amount */}
-          <CoinInput
+          <ExchangeInput
             token={fromMint && mintList[fromMint]}
             tokenBalance={
               (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
@@ -1558,27 +1559,24 @@ export const RepeatingSwapUi = (props: {
           </div>
 
           {/* Destination token / amount */}
-          <CoinInput
-            token={toMint && mintList[toMint]}
-            tokenBalance={
+          <ExchangeOutput
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenAmount={fromAmount}
+            toToken={toMint && mintList[toMint]}
+            toTokenBalance={
               (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
                 ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
                 : '')
             }
-            tokenAmount={
+            toTokenAmount={
               (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
                 ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
                 : '')
             }
-            readonly={true}
-            onInputChange={() => {}}
-            onMaxAmount={() => {}}
             onSelectToken={() => {
               setSubjectTokenSelection("destination");
               showTokenSelector();
             }}
-            inputPosition={inputPosition}
-            translationId="destination"
             inputLabel={
               toMint && mintList[toMint]
                 ? `~$${
@@ -1587,6 +1585,11 @@ export const RepeatingSwapUi = (props: {
                   : '0.00'}`
                 : ''
             }
+            clients={clients}
+            onSelectedClient={(e: any) => {
+              consoleOut('onSelectedClient:', e, 'blue');
+              setExchangeInfo(e.exchange);
+            }}
           />
 
           {/* Title bar with settings */}

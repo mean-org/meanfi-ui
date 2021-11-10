@@ -39,7 +39,14 @@ export const CurrentBalance = () => {
         </span>
         <span className="account-balance">
         <Tooltip placement="bottom" title={getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL.address)}>
-          <span>{getAmountWithTokenSymbol(nativeBalance, NATIVE_SOL as TokenInfo, 4)}</span>
+          <span>
+            {nativeBalance ? getAmountWithTokenSymbol(
+                nativeBalance,
+                NATIVE_SOL as TokenInfo,
+                nativeBalance < 1 ? 4 : 3
+              ) : '0.0'
+            }
+          </span>
         </Tooltip>
         </span>
       </div>

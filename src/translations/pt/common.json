@@ -338,6 +338,7 @@
 		}
 	},
 	"swap": {
+		"clients-label-savings": "You save",
 		"screen-title": "Exchange",
 		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange só está disponível em",

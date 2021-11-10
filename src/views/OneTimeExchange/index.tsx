@@ -1,10 +1,10 @@
 import { Row, Col, Spin, Modal, Button } from "antd";
-import { SwapSettings } from "../SwapSettings";
-import { CoinInput } from "../CoinInput";
-import { TextInput } from "../TextInput";
+import { SwapSettings } from "../../components/SwapSettings";
+import { ExchangeInput } from "../../components/ExchangeInput";
+import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../utils/utils";
-import { Identicon } from "../Identicon";
+import { Identicon } from "../../components/Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TransactionStatus } from "../../models/enums";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { InfoIcon } from "../InfoIcon";
+import { InfoIcon } from "../../components/InfoIcon";
 import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
@@ -45,10 +45,11 @@ import {
 
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { MSP_OPS, SRM_MINT } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { ExchangeOutput } from "../../components/ExchangeOutput";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const SwapUi = (props: {
+export const OneTimeExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
   connection: Connection
@@ -1934,7 +1935,7 @@ export const SwapUi = (props: {
         <div className="swap-wrapper">
 
           {/* Source token / amount */}
-          <CoinInput
+          <ExchangeInput
             token={fromMint && mintList[fromMint]}
             tokenBalance={
               (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
@@ -1982,27 +1983,24 @@ export const SwapUi = (props: {
           </div>
 
           {/* Destination token / amount */}
-          <CoinInput
-            token={toMint && mintList[toMint]}
-            tokenBalance={
+          <ExchangeOutput
+            fromToken={fromMint && mintList[fromMint]}
+            fromTokenAmount={fromAmount}
+            toToken={toMint && mintList[toMint]}
+            toTokenBalance={
               (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
                 ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
                 : '')
             }
-            tokenAmount={
+            toTokenAmount={
               (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
                 ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
                 : '')
             }
-            readonly={true}
-            onInputChange={() => {}}
-            onMaxAmount={() => {}}
             onSelectToken={() => {
               setSubjectTokenSelection("destination");
               showTokenSelector();
             }}
-            inputPosition={inputPosition}
-            translationId="destination"
             inputLabel={
               toMint && mintList[toMint]
                 ? `~$${
@@ -2011,6 +2009,11 @@ export const SwapUi = (props: {
                   : '0.00'}`
                 : ''
             }
+            clients={clients}
+            onSelectedClient={(e: any) => {
+              consoleOut('onSelectedClient:', e, 'blue');
+              setExchangeInfo(e.exchange);
+            }}
           />
 
           {/* Title bar with settings */}

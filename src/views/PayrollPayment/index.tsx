@@ -1073,7 +1073,7 @@ export const PayrollPayment = () => {
         <div className="form-label">{t('transactions.send-date.label')}</div>
         <div className="well">
           <div className="flex-fixed-right">
-            <div className="left field-select-left">
+            <div className="left static-data-field">
               {isToday(paymentStartDate || '')
                 ? `${paymentStartDate} (${t('common:general.now')})`
                 : `${paymentStartDate}`}

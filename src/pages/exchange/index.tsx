@@ -1,7 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Link, Redirect, useLocation } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
-import { SwapUi } from "../../components/SwapUi";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
@@ -12,7 +11,7 @@ import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
-import { RepeatingSwapUi } from '../../components/RepeatingSwapUi';
+import { ExchangeOneTimeSwapUi, ExchangeRepeatingSwapUi } from '../../views';
 
 type SwapOption = "one-time" | "recurring";
 
@@ -154,7 +153,7 @@ export const SwapView = () => {
             {/* One time exchange */}
             {
               currentTab === "one-time" && (
-                <SwapUi
+                <ExchangeOneTimeSwapUi
                   connection={connection}
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
@@ -164,7 +163,7 @@ export const SwapView = () => {
             {/* Repeating exchange */}
             {
               currentTab === "recurring" && (
-                <RepeatingSwapUi
+                <ExchangeRepeatingSwapUi
                   connection={connection}
                   endpoint={endpoint}
                   queryFromMint={queryFromMint}

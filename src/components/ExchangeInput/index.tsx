@@ -7,7 +7,7 @@ import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
 
-export const CoinInput = (props: {
+export const ExchangeInput = (props: {
   token: TokenInfo | undefined;
   tokenBalance: string;
   tokenAmount: string;
