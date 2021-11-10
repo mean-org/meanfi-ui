@@ -7,7 +7,7 @@ import { TransactionStatus } from '../../models/enums';
 import { consoleOut, getTransactionOperationDescription, getTransactionStatusForLogs } from '../../utils/ui';
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { AccountTokenParsedInfo } from '../../models/token';
-import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { Identicon } from '../Identicon';
 import { createTokenMergeTx } from '../../utils/accounts';
@@ -33,14 +33,14 @@ export const AccountsMergeModal = (props: {
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
 
-    const debugInfo = () => {
-        return (
-            <div className="flex-row">
-                <div>lastOperation:<span className="ml-1">{transactionStatus ? transactionStatus.lastOperation : ''}</span></div>
-                <div className="pl-3">currentOperation:<span className="ml-1">{transactionStatus ? transactionStatus.currentOperation : ''}</span></div>
-            </div>
-        );
-    }
+    // const debugInfo = () => {
+    //     return (
+    //         <div className="flex-row">
+    //             <div>lastOperation:<span className="ml-1">{transactionStatus ? transactionStatus.lastOperation : ''}</span></div>
+    //             <div className="pl-3">currentOperation:<span className="ml-1">{transactionStatus ? transactionStatus.currentOperation : ''}</span></div>
+    //         </div>
+    //     );
+    // }
 
     const onAfterClose = () => {
         setTransactionStatus({
@@ -129,7 +129,7 @@ export const AccountsMergeModal = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-                result: value.signature
+                result: getTxIxResume(value)
               });
               transaction = value;
               return true;
@@ -170,7 +170,7 @@ export const AccountsMergeModal = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-                result: `Signer: ${wallet.publicKey.toBase58()}`
+                result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
               });
               return true;
             })
@@ -182,9 +182,9 @@ export const AccountsMergeModal = (props: {
               });
               transactionLog.push({
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+                result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
               });
-              customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
+              customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
               return false;
             });
           } else {

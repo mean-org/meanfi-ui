@@ -9,7 +9,7 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown } from "../../Icons";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
@@ -453,7 +453,7 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: value.signature
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -494,7 +494,7 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -506,9 +506,9 @@ export const OneTimePayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

@@ -4,6 +4,10 @@ import { consoleOut, isLocal } from "./ui";
 import { appConfig } from "..";
 import { WALLET_PROVIDERS } from "../contexts/wallet";
 
+export function objectToJson(obj: any): string {
+    return JSON.stringify(obj, null, 2);
+}
+
 const Loggly = require('loggly-jslogger');
 export const logger = new Loggly.LogglyTracker();
 

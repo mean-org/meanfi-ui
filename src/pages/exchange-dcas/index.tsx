@@ -20,7 +20,7 @@ import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'a
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, useLocalStorageState } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, useLocalStorageState } from '../../utils/utils';
 import {
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
@@ -281,7 +281,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -322,7 +322,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -334,9 +334,9 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -544,7 +544,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -585,7 +585,7 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -597,9 +597,9 @@ export const ExchangeDcasView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1269,7 +1269,6 @@ export const ExchangeDcasView = () => {
               *     If totalLeft is > 0 -> Cancel and withdraw everything
               *  }
             */}
-            {/* TODO: showAddFundsModal */}
             <div className="mt-3 mb-3 withdraw-container">
               <Button
                 block

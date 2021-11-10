@@ -281,6 +281,17 @@ export async function fetchAccountTokens(
   }
 }
 
+export function getTxIxResume(tx: Transaction) {
+  const programIds: string[] = [];
+  tx.instructions.forEach(t => {
+    const programId = t.programId.toBase58();
+    if (!programIds.includes(programId)) {
+      programIds.push(programId);
+    }
+  });
+  return {numIxs: tx.instructions.length, programIds: programIds};
+}
+
 // from raydium
 export async function signTransaction(
   connection: Connection,

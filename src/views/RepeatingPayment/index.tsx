@@ -12,6 +12,7 @@ import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
   isValidNumber,
   shortenAddress,
 } from "../../utils/utils";
@@ -276,14 +277,14 @@ export const RepeatingPayment = () => {
     }
   }
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setPaymentRateAmount("");
-    } else if (isValidNumber(newValue)) {
-      setPaymentRateAmount(newValue);
-    }
-  };
+  // const handlePaymentRateAmountChange = (e: any) => {
+  //   const newValue = e.target.value;
+  //   if (newValue === null || newValue === undefined || newValue === "") {
+  //     setPaymentRateAmount("");
+  //   } else if (isValidNumber(newValue)) {
+  //     setPaymentRateAmount(newValue);
+  //   }
+  // };
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
@@ -607,7 +608,7 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: value.signature
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -648,7 +649,7 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -660,9 +661,9 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

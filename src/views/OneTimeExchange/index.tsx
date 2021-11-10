@@ -3,7 +3,7 @@ import { SwapSettings } from "../../components/SwapSettings";
 import { ExchangeInput } from "../../components/ExchangeInput";
 import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../utils/utils";
+import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
@@ -46,6 +46,7 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { MSP_OPS, SRM_MINT } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
+import { objectToJson } from "../../utils/logger";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -1216,6 +1217,49 @@ export const OneTimeExchange = (props: {
     toMint
   ]);
 
+  const getSwapInfo = useCallback((toJson = true) => {
+
+    if (
+      !fromMint ||
+      !toMint ||
+      !mintList[fromMint] ||
+      !mintList[toMint] ||
+      !wallet ||
+      !feesInfo
+    ) {
+      return 'Essential data not ready for logs "fromMint, toMint, wallet and feesInfo".';
+    }
+    const logStack = [];
+
+    logStack.push({wallet: wallet.publicKey.toBase58()});
+    logStack.push({fromMint: fromMint});
+    logStack.push({toMint: toMint});
+    logStack.push({feesInfo_Network: `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`});
+    logStack.push({feesInfo_Protocol: `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`});
+    logStack.push({slippage: `${slippage.toFixed(2)}%`});
+    if (exchangeInfo) {
+      logStack.push({recipientReceives: `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`});
+      logStack.push({priceImpact: `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(4))}%`});
+      logStack.push({exchangeClient: `${exchangeInfo.fromAmm}`});
+    }
+
+    if (toJson) {
+      const flattenInfo = Object.assign({}, ...logStack);
+      return objectToJson(flattenInfo);
+    }
+
+    return logStack;
+
+  }, [
+    exchangeInfo,
+    feesInfo,
+    fromMint,
+    mintList,
+    slippage,
+    toMint,
+    wallet
+  ]);
+
   const getSwap = useCallback(async () => {
 
     try {
@@ -1370,7 +1414,7 @@ export const OneTimeExchange = (props: {
       // Log input data
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        result: '' // TODO: Discrete info converted to string (not objects)
+        result: getSwapInfo()
       }]);
 
       const swapTx = await getSwap();
@@ -1389,7 +1433,7 @@ export const OneTimeExchange = (props: {
       // Log success
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-        result: '' // TODO: Discrete info converted to string (not objects)
+        result: getTxIxResume(swapTx)
       }]);
 
       return swapTx;
@@ -1410,7 +1454,8 @@ export const OneTimeExchange = (props: {
     }
 
   },[
-    getSwap, 
+    getSwap,
+    getSwapInfo,
     setTransactionStatus,
     transactionLog,
     transactionStatus.currentOperation,
@@ -1445,7 +1490,7 @@ export const OneTimeExchange = (props: {
 
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-        result: '' // TODO: Discrete info converted to string (not objects)
+        result: {signer: wallet.publicKey.toBase58(), signature: signedTx.signature ? signedTx.signature.toString() : '-'}
       }]);
 
       return signedTx;
@@ -1459,9 +1504,9 @@ export const OneTimeExchange = (props: {
       // Log error
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-        result: `${_error}`
+        result: {signer: `${wallet?.publicKey.toBase58() || '-'}`, error: `${_error}`}
       }]);
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
+      customLogger.logWarning('Swap transaction failed', { transcript: transactionLog });
       throw(_error);
     }
 

@@ -8,16 +8,17 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown, IconSort } from "../../Icons";
+import { IconCaretDown } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
   isValidNumber,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
+import { PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -25,7 +26,6 @@ import {
   getFairPercentForInterval,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
-  getTimesheetRequirementOptionLabel,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
@@ -70,7 +70,6 @@ export const PayrollPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     streamProgramAddress,
-    timeSheetRequirement,
     previousWalletConnectState,
     setCurrentScreen,
     setSelectedToken,
@@ -84,7 +83,6 @@ export const PayrollPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
-    setTimeSheetRequirement,
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
@@ -278,14 +276,14 @@ export const PayrollPayment = () => {
     }
   }
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setPaymentRateAmount("");
-    } else if (isValidNumber(newValue)) {
-      setPaymentRateAmount(newValue);
-    }
-  };
+  // const handlePaymentRateAmountChange = (e: any) => {
+  //   const newValue = e.target.value;
+  //   if (newValue === null || newValue === undefined || newValue === "") {
+  //     setPaymentRateAmount("");
+  //   } else if (isValidNumber(newValue)) {
+  //     setPaymentRateAmount(newValue);
+  //   }
+  // };
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
@@ -588,25 +586,25 @@ export const PayrollPayment = () => {
     </>
   );
 
-  const timeSheetRequirementOptionsMenu = (
-    <Menu>
-      <Menu.Item
-        key={TimesheetRequirementOption[0]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired, t)}
-      </Menu.Item>
-      <Menu.Item
-        key={TimesheetRequirementOption[1]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets, t)}
-      </Menu.Item>
-      <Menu.Item
-        key={TimesheetRequirementOption[2]}
-        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
-        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout, t)}
-      </Menu.Item>
-    </Menu>
-  );
+  // const timeSheetRequirementOptionsMenu = (
+  //   <Menu>
+  //     <Menu.Item
+  //       key={TimesheetRequirementOption[0]}
+  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
+  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired, t)}
+  //     </Menu.Item>
+  //     <Menu.Item
+  //       key={TimesheetRequirementOption[1]}
+  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
+  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets, t)}
+  //     </Menu.Item>
+  //     <Menu.Item
+  //       key={TimesheetRequirementOption[2]}
+  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
+  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout, t)}
+  //     </Menu.Item>
+  //   </Menu>
+  // );
 
   // Main action
 
@@ -720,7 +718,7 @@ export const PayrollPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -761,7 +759,7 @@ export const PayrollPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -773,9 +771,9 @@ export const PayrollPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

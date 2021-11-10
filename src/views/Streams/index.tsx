@@ -29,6 +29,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   getTokenSymbol,
+  getTxIxResume,
   shortenAddress
 } from "../../utils/utils";
 import {
@@ -690,7 +691,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -731,7 +732,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -743,9 +744,9 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -977,7 +978,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -1018,7 +1019,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -1030,9 +1031,9 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1259,7 +1260,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -1300,7 +1301,7 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -1312,9 +1313,9 @@ export const Streams = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

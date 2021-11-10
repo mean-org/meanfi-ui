@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
 import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import "./style.less";
 import { SliderMarks } from 'antd/lib/slider';
 import { IconShield } from '../../Icons';
@@ -344,7 +344,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value[1])
           });
           setDdcaAccountPda(value[0]);
           transaction = value[1];
@@ -386,7 +386,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -398,9 +398,9 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -583,7 +583,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: 'createWakeAndSwapTx succeeded'
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -626,7 +626,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -638,9 +638,9 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
