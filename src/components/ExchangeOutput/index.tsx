@@ -226,8 +226,9 @@ export const ExchangeOutput = (props: {
                           }`}
                         >
                           {t("swap.clients-label-savings")}:{" "}
-                          {parseFloat(
-                            savings.toFixed(props.toToken?.decimals || 2)
+                          {formatAmount(
+                            savings,
+                            props.toToken?.decimals || 2
                           )}
                         </span>
                       )}
