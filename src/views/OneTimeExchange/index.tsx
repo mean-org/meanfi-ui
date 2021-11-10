@@ -513,47 +513,50 @@ export const OneTimeExchange = (props: {
   // Updates clients
   useEffect(() => {
 
+    let timeout: any;
+
     if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
-      setRefreshing(false); 
-      return;
+      timeout = setTimeout(() => setRefreshing(false));
+
+    } else {
+
+      timeout = setTimeout(() => {
+
+        const error = (_error: any) => {
+          console.error(_error);
+          setRefreshing(false); 
+        };
+  
+        const success = (clients: Client[] | null) => {
+  
+          if (!clients || clients.length === 0) {
+            error(new Error("Client not found"));
+            return;
+          }
+  
+          setClients(clients);
+          console.log('clients', clients);
+  
+          const client = clients[0].protocol.equals(SERUM) 
+            ? clients[0] as SerumClient 
+            : clients[0] as LPClient;
+  
+          setSelectedClient(client);
+          setExchangeInfo(client.exchange);
+          setRefreshing(false);
+          setRefreshTime(30);
+        };
+  
+        getClients(
+          connection, 
+          fromMint, 
+          toMint
+        )
+        .then((clients: Client[] | null) => success(clients))
+        .catch((_error: any) => error(_error));
+  
+      });
     }
-
-    const timeout = setTimeout(() => {
-
-      const error = (_error: any) => {
-        console.error(_error);
-        setRefreshing(false); 
-      };
-
-      const success = (clients: Client[] | null) => {
-
-        if (!clients || clients.length === 0) {
-          error(new Error("Client not found"));
-          return;
-        }
-
-        setClients(clients);
-        console.log('clients', clients);
-
-        const client = clients[0].protocol.equals(SERUM) 
-          ? clients[0] as SerumClient 
-          : clients[0] as LPClient;
-
-        setSelectedClient(client);
-        setExchangeInfo(client.exchange);
-        setRefreshing(false);
-        setRefreshTime(30);
-      };
-
-      getClients(
-        connection, 
-        fromMint, 
-        toMint
-      )
-      .then((clients: Client[] | null) => success(clients))
-      .catch((_error: any) => error(_error));
-
-    });
 
     return () => {
       clearTimeout(timeout);

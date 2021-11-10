@@ -578,48 +578,50 @@ export const RecurringExchange = (props: {
   // Updates clients
   useEffect(() => {
 
+    let timeout: any;
+
     if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
-      setRefreshing(false); 
-      return;
+      timeout = setTimeout(() => setRefreshing(false)); 
+    } else {
+
+      timeout = setTimeout(() => {
+
+        const error = (_error: any) => {
+          console.error(_error);
+          setRefreshing(false); 
+        };
+  
+        const success = (clients: Client[] | null) => {
+  
+          if (!clients || clients.length === 0) {
+            error(new Error("Client not found"));
+            return;
+          }
+  
+          //TODO: Remove clients filtering when HLA program implementation covers every client
+          const allowedClients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM));
+          setClients(allowedClients);
+          console.log(allowedClients);
+          const client = allowedClients[0].protocol.equals(SERUM)
+            ? clients[0] as SerumClient 
+            : clients[0] as LPClient;
+  
+          setSelectedClient(client);
+          setExchangeInfo(client.exchange);
+          setRefreshing(false);
+          setRefreshTime(30);
+        };
+  
+        getClients(
+          connection, 
+          fromMint, 
+          toMint
+        )
+        .then((clients: Client[] | null) => success(clients))
+        .catch((_error: any) => error(_error));
+  
+      });
     }
-
-    const timeout = setTimeout(() => {
-
-      const error = (_error: any) => {
-        console.error(_error);
-        setRefreshing(false); 
-      };
-
-      const success = (clients: Client[] | null) => {
-
-        if (!clients || clients.length === 0) {
-          error(new Error("Client not found"));
-          return;
-        }
-
-        //TODO: Remove clients filtering when HLA program implementation covers every client
-        const allowedClients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM));
-        setClients(allowedClients);
-        console.log(allowedClients);
-        const client = allowedClients[0].protocol.equals(SERUM)
-          ? clients[0] as SerumClient 
-          : clients[0] as LPClient;
-
-        setSelectedClient(client);
-        setExchangeInfo(client.exchange);
-        setRefreshing(false);
-        setRefreshTime(30);
-      };
-
-      getClients(
-        connection, 
-        fromMint, 
-        toMint
-      )
-      .then((clients: Client[] | null) => success(clients))
-      .catch((_error: any) => error(_error));
-
-    });
 
     return () => {
       clearTimeout(timeout);
