@@ -101,7 +101,7 @@ export const OneTimeExchange = (props: {
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
   const [clients, setClients] = useState<Client[]>([]);
-  const [optimalClient, setOptimalClient] = useState<any>();
+  const [selectedClient, setSelectedClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
@@ -154,10 +154,10 @@ export const OneTimeExchange = (props: {
       maxAmount = balance;
     }
 
-    if (optimalClient && optimalClient.market && optimalClient.protocol.equals(SERUM)) {
-      if (optimalClient.market.baseMintAddress.equals(WRAPPED_SOL_MINT)) {
+    if (selectedClient && selectedClient.market && selectedClient.protocol.equals(SERUM)) {
+      if (selectedClient.market.baseMintAddress.equals(WRAPPED_SOL_MINT)) {
         maxAmount = balance - balance / (exchangeInfo.outPrice || 1) - feesInfo.network;
-      } else if (optimalClient.market.quoteMintAddress.equals(WRAPPED_SOL_MINT)) {
+      } else if (selectedClient.market.quoteMintAddress.equals(WRAPPED_SOL_MINT)) {
         maxAmount = balance - balance * (exchangeInfo.outPrice || 1) - feesInfo.network;
       }
     }
@@ -170,7 +170,7 @@ export const OneTimeExchange = (props: {
     fromMint, 
     toMint, 
     userBalances,
-    optimalClient,
+    selectedClient,
     exchangeInfo
   ]);
 
@@ -214,12 +214,12 @@ export const OneTimeExchange = (props: {
     const maxFromAmount = getMaxAllowedSwapAmount();
     let minFromAmount = 0;
 
-    if (optimalClient && optimalClient.market && optimalClient.protocol.equals(SERUM)) {
-      if (optimalClient.market.baseMintAddress.toBase58() === from) {
-        minFromAmount = optimalClient.market.minOrderSize + exchangeInfo.protocolFees;
+    if (selectedClient && selectedClient.market && selectedClient.protocol.equals(SERUM)) {
+      if (selectedClient.market.baseMintAddress.toBase58() === from) {
+        minFromAmount = selectedClient.market.minOrderSize + exchangeInfo.protocolFees;
       } else {
         minFromAmount = 
-          optimalClient.market.minOrderSize / 
+          selectedClient.market.minOrderSize / 
           (exchangeInfo.outPrice || 1) + 
           exchangeInfo.protocolFees;
       }
@@ -233,7 +233,7 @@ export const OneTimeExchange = (props: {
     exchangeInfo, 
     fromMint, 
     fromSwapAmount, 
-    optimalClient,
+    selectedClient,
     getMaxAllowedSwapAmount
   ])
 
@@ -420,7 +420,7 @@ export const OneTimeExchange = (props: {
   // Automatically updates the exchange info
   useEffect(() => {
 
-    if (!connection || !fromMint || !toMint || !txFees || !optimalClient || !optimalClient.exchange || isWrap() || isUnwrap()) { 
+    if (!connection || !fromMint || !toMint || !txFees || !selectedClient || !selectedClient.exchange || isWrap() || isUnwrap()) { 
       return; 
     }
     
@@ -433,19 +433,19 @@ export const OneTimeExchange = (props: {
         amount = 0;
       }
 
-      const price = optimalClient.exchange.outPrice || 0;
+      const price = selectedClient.exchange.outPrice || 0;
       const outAmount = (price * amount);
       const minOutAmount = outAmount * (100 - slippage) / 100;
 
       setExchangeInfo({
-        fromAmm: optimalClient.exchange.fromAmm,
+        fromAmm: selectedClient.exchange.fromAmm,
         amountIn: amount,
         amountOut: outAmount,
         minAmountOut: minOutAmount,
         outPrice: price,
-        priceImpact: optimalClient.exchange.priceImpact,
-        networkFees: optimalClient.exchange.networkFees,
-        protocolFees: optimalClient.exchange.protocolFees
+        priceImpact: selectedClient.exchange.priceImpact,
+        networkFees: selectedClient.exchange.networkFees,
+        protocolFees: selectedClient.exchange.protocolFees
 
       } as ExchangeInfo);
 
@@ -466,7 +466,7 @@ export const OneTimeExchange = (props: {
     toMint,
     mintList,
     txFees,
-    optimalClient
+    selectedClient
   ]);
 
   // Automatically updates the fees info
@@ -539,8 +539,7 @@ export const OneTimeExchange = (props: {
           ? clients[0] as SerumClient 
           : clients[0] as LPClient;
 
-        setOptimalClient(client);
-        console.log('optimal client', client);
+        setSelectedClient(client);
         setExchangeInfo(client.exchange);
         setRefreshing(false);
         setRefreshTime(30);
@@ -979,15 +978,15 @@ export const OneTimeExchange = (props: {
 
         let needed = 0;
         const fromSymbol = mintList[fromMint].symbol;
-        const isFromSerum = optimalClient && optimalClient.market && optimalClient.protocol.equals(SERUM);
-        const exchange = !exchangeInfo ? optimalClient.exchange : exchangeInfo;
+        const isFromSerum = selectedClient && selectedClient.market && selectedClient.protocol.equals(SERUM);
+        const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
         if (isFromSerum) {
           const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
-          if (optimalClient.market.baseMintAddress.toBase58() === from) {
-            needed = optimalClient.market.minOrderSize + feesInfo.protocol;
+          if (selectedClient.market.baseMintAddress.toBase58() === from) {
+            needed = selectedClient.market.minOrderSize + feesInfo.protocol;
           } else {
-            needed = optimalClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
           }
         } else {
           if (isWrap()) {
@@ -1043,7 +1042,7 @@ export const OneTimeExchange = (props: {
 
   }, [
     t, 
-    optimalClient,
+    selectedClient,
     exchangeInfo,
     connected, 
     connection, 
@@ -1259,11 +1258,11 @@ export const OneTimeExchange = (props: {
   
       } else {
   
-        if (!optimalClient) {
+        if (!selectedClient) {
           throw new Error("Error: Unknown AMM client");
         }
   
-        return optimalClient.swapTx(
+        return selectedClient.swapTx(
           wallet.publicKey,
           fromMint,
           toMint,
@@ -1289,7 +1288,7 @@ export const OneTimeExchange = (props: {
     mintList, 
     slippage, 
     exchangeInfo,
-    optimalClient,
+    selectedClient,
     toMint, 
     wallet
   ]);
@@ -2010,9 +2009,9 @@ export const OneTimeExchange = (props: {
                 : ''
             }
             clients={clients}
-            onSelectedClient={(e: any) => {
-              consoleOut('onSelectedClient:', e, 'blue');
-              setExchangeInfo(e.exchange);
+            onSelectedClient={(client: Client) => {
+              consoleOut('onSelectedClient:', client, 'blue');
+              setSelectedClient(client);
             }}
           />
 

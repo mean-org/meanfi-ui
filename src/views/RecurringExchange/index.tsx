@@ -98,7 +98,7 @@ export const RecurringExchange = (props: {
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
   const [clients, setClients] = useState<Client[]>([]);
-  const [optimalClient, setOptimalClient] = useState<any>();
+  const [selectedClient, setSelectedClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
@@ -118,20 +118,20 @@ export const RecurringExchange = (props: {
 
   const showDdcaSetup = useCallback(() => {
 
-    if (!optimalClient || !exchangeInfo) { return; }
+    if (!selectedClient || !exchangeInfo) { return; }
 
     const hlaInfo: HlaInfo = {
       exchangeRate: exchangeInfo.outPrice as number || 0,
       protocolFees: exchangeInfo.protocolFees as number || 0,
       aggregatorPercentFees: 0.05,
-      remainingAccounts: optimalClient.accounts
+      remainingAccounts: selectedClient.accounts
     };
 
     setHlaInfo(hlaInfo);
     setDdcaSetupModalVisibility(true);
     
   }, [
-    optimalClient, 
+    selectedClient, 
     exchangeInfo
   ]);
 
@@ -485,7 +485,7 @@ export const RecurringExchange = (props: {
   // Automatically updates the exchange info
   useEffect(() => {
 
-    if (!connection || !fromMint || !toMint || !txFees || !optimalClient || !optimalClient.exchange || isWrap() || isUnwrap()) { 
+    if (!connection || !fromMint || !toMint || !txFees || !selectedClient || !selectedClient.exchange || isWrap() || isUnwrap()) { 
       return; 
     }
     
@@ -498,19 +498,19 @@ export const RecurringExchange = (props: {
         amount = 0;
       }
 
-      const price = optimalClient.exchange.outPrice || 0;
+      const price = selectedClient.exchange.outPrice || 0;
       const outAmount = (price * amount);
       const minOutAmount = outAmount * (100 - slippage) / 100;
 
       setExchangeInfo({
-        fromAmm: optimalClient.exchange.fromAmm,
+        fromAmm: selectedClient.exchange.fromAmm,
         amountIn: amount,
         amountOut: outAmount,
         minAmountOut: minOutAmount,
         outPrice: price,
-        priceImpact: optimalClient.exchange.priceImpact,
-        networkFees: optimalClient.exchange.networkFees,
-        protocolFees: optimalClient.exchange.protocolFees
+        priceImpact: selectedClient.exchange.priceImpact,
+        networkFees: selectedClient.exchange.networkFees,
+        protocolFees: selectedClient.exchange.protocolFees
 
       } as ExchangeInfo);
 
@@ -531,7 +531,7 @@ export const RecurringExchange = (props: {
     toMint,
     mintList,
     txFees,
-    optimalClient
+    selectedClient
   ]);
 
   // Automatically updates the fees info
@@ -605,7 +605,7 @@ export const RecurringExchange = (props: {
           ? clients[0] as SerumClient 
           : clients[0] as LPClient;
 
-        setOptimalClient(client);
+        setSelectedClient(client);
         setExchangeInfo(client.exchange);
         setRefreshing(false);
         setRefreshTime(30);
@@ -1586,9 +1586,9 @@ export const RecurringExchange = (props: {
                 : ''
             }
             clients={clients}
-            onSelectedClient={(e: any) => {
-              consoleOut('onSelectedClient:', e, 'blue');
-              setExchangeInfo(e.exchange);
+            onSelectedClient={(client: Client) => {
+              consoleOut('onSelectedClient:', client, 'blue');
+              setSelectedClient(client);
             }}
           />
 
