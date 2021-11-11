@@ -723,6 +723,9 @@ export const AccountsView = () => {
         ? true
         : false;
     }
+    const isNonAta = asset.address !== NATIVE_SOL_MINT.toBase58() && !asset.isAta && asset.publicAddress
+          ? true
+          : false;
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken()
@@ -732,13 +735,25 @@ export const AccountsView = () => {
                 : ''}`
           }>
         <div className="icon-cell">
-          <div className="token-icon">
-            {asset.logoURI ? (
-              <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-            ) : (
-              <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-            )}
-          </div>
+          {isNonAta ? (
+            <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
+              <div className="token-icon grayed-out">
+                {asset.logoURI ? (
+                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+                ) : (
+                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+                )}
+              </div>
+            </Tooltip>
+          ) : (
+            <div className="token-icon">
+              {asset.logoURI ? (
+                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+              ) : (
+                <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+              )}
+            </div>
+          )}
         </div>
         <div className="description-cell">
           <div className="title">
@@ -749,15 +764,7 @@ export const AccountsView = () => {
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">
-            {
-              asset.address === NATIVE_SOL_MINT.toBase58() || asset.isAta
-              ? asset.name
-              : !asset.publicAddress
-                ? asset.name
-                : 'Non Associated Token Account'
-            }
-          </div>
+          <div className="subtitle text-truncate">{isNonAta ? t('account-area.non-ata-label') : asset.name}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">

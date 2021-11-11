@@ -6,6 +6,8 @@
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
+		"non-ata-label": "Non Associated Token Account",
+		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
 		"streams-tooltip": "Click para actualizar las transferencias",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
