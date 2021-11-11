@@ -21,10 +21,11 @@ export class TransactionWithSignature {
 }
 
 export interface UserTokenAccount extends TokenInfo {
-    ataAddress?: string;    // Associated Token Account Address
-    balance?: number;
-    displayIndex?: number;
+    publicAddress?: string;     // Token Account Public Address
+    balance?: number;           // To pre-fill balance instead of having to get balance on the fly
+    displayIndex?: number;      // To keep consecutive indexing while merging lists
     isMeanSupportedToken?: boolean;
+    isAta?: boolean;
 }
 
 export class TransactionStats {

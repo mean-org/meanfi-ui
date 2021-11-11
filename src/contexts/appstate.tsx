@@ -839,7 +839,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         decimals: NATIVE_SOL.decimals,
         name: NATIVE_SOL.name,
         symbol: NATIVE_SOL.symbol,
-        ataAddress: '',
+        publicAddress: '',
         tags: NATIVE_SOL.tags,
         logoURI: NATIVE_SOL.logoURI
       };

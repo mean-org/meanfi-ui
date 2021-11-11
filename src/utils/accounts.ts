@@ -1,5 +1,5 @@
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { AccountInfo, Commitment, Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
+import { AccountInfo, Commitment, Connection, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js"
 import { AccountTokenParsedInfo } from "../models/token";
 
 export type AccountsDictionary = {
@@ -8,7 +8,6 @@ export type AccountsDictionary = {
   owner?: PublicKey;
 }
 
-// getMultipleAccounts
 export async function getMultipleAccounts(
   connection: Connection,
   publicKeys: PublicKey[],
