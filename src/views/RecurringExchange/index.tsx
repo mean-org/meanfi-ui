@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
-import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
+import { consoleOut, getTxPercentFeeAmount, isProd } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -1561,68 +1561,70 @@ export const RecurringExchange = (props: {
           </div>
 
           {/* Destination token / amount */}
-          <ExchangeInput
-            token={toMint && mintList[toMint]}
-            tokenBalance={
-              (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            tokenAmount={
-              (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-                ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            onInputChange={() => {}}
-            onMaxAmount={() => {}}
-            onSelectToken={() => {
-              setSubjectTokenSelection("destination");
-              showTokenSelector();
-            }}
-            inputPosition={inputPosition}
-            translationId="destination"
-            inputLabel={
-              toMint && mintList[toMint]
-                ? `~$${
-                  exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                  ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
-                  : '0.00'}`
-                : ''
-            }
-          />
-
-          {/* <ExchangeOutput
-            fromToken={fromMint && mintList[fromMint]}
-            fromTokenAmount={fromAmount}
-            toToken={toMint && mintList[toMint]}
-            toTokenBalance={
-              (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            toTokenAmount={
-              (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-                ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            onSelectToken={() => {
-              setSubjectTokenSelection("destination");
-              showTokenSelector();
-            }}
-            inputLabel={
-              toMint && mintList[toMint]
-                ? `~$${
-                  exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                  ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
-                  : '0.00'}`
-                : ''
-            }
-            clients={clients}
-            onSelectedClient={(client: Client) => {
-              consoleOut('onSelectedClient:', client, 'blue');
-              setSelectedClient(client);
-            }}
-          /> */}
+          {isProd() ? (
+            <ExchangeInput
+              token={toMint && mintList[toMint]}
+              tokenBalance={
+                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              tokenAmount={
+                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
+                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              onInputChange={() => {}}
+              onMaxAmount={() => {}}
+              onSelectToken={() => {
+                setSubjectTokenSelection("destination");
+                showTokenSelector();
+              }}
+              inputPosition={inputPosition}
+              translationId="destination"
+              inputLabel={
+                toMint && mintList[toMint]
+                  ? `~$${
+                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    : '0.00'}`
+                  : ''
+              }
+            />
+          ) : (
+            <ExchangeOutput
+              fromToken={fromMint && mintList[fromMint]}
+              fromTokenAmount={fromAmount}
+              toToken={toMint && mintList[toMint]}
+              toTokenBalance={
+                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              toTokenAmount={
+                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
+                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              onSelectToken={() => {
+                setSubjectTokenSelection("destination");
+                showTokenSelector();
+              }}
+              inputLabel={
+                toMint && mintList[toMint]
+                  ? `~$${
+                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    : '0.00'}`
+                  : ''
+              }
+              clients={clients}
+              onSelectedClient={(client: Client) => {
+                consoleOut('onSelectedClient:', client, 'blue');
+                setSelectedClient(client);
+              }}
+            />
+          )}
 
           {/* Title bar with settings */}
           <div className="info-line-and-settings flexible-left">
