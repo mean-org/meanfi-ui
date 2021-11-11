@@ -466,7 +466,7 @@
 			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
 			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL",
 			"invalid-amount": "Monto no válido",
-			"invalid-exchange": "Intercambio no válido",
+			"invalid-exchange": "Seleccione un token",
 			"minimum-repeating-buy-amount": "",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
