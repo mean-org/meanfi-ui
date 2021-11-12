@@ -353,7 +353,7 @@
 		"slippage-tolerance": "Tolérance de slippage",
 		"frequency-label": "Frequency",
 		"pools-and-routes": "Pools and routes",
-		"show-routes": "Show routes",
+		"show-routes": "Show routing options",
 		"tabset": {
 			"one-time": "One time",
 			"recurring": "Recurring"

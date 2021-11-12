@@ -726,6 +726,12 @@ export const DdcaSetupModal = (props: {
 
   };
 
+  function confirm(e: any) {
+  }
+
+  function cancel(e: any) {
+  }
+
   ///////////////////
   //   Rendering   //
   ///////////////////

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Button, InputNumber, Popover, Switch } from "antd";
+import { Button, InputNumber, Popover, Switch, Tooltip } from "antd";
 import { useTranslation } from "react-i18next";
-import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
+import { CloseOutlined, InfoCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
 import { MAX_SLIPPAGE_VALUE, MIN_SLIPPAGE_VALUE } from "../../constants";
 import "./style.less";
+import { InfoIcon } from "../InfoIcon";
 
 export const SwapSettings = (props: {
   currentValue: number;
@@ -75,7 +76,9 @@ export const SwapSettings = (props: {
     </div>
     <div className="inner-label">{t('swap.pools-and-routes')}</div>
     <div className="flexible-left">
-      <div className="left"><span>{t('swap.show-routes')}</span></div>
+      <div className="left">
+        <span>{t('swap.show-routes')}</span>
+      </div>
       <div className="right">
         <Switch size="default"
           checked={props.showLpList}

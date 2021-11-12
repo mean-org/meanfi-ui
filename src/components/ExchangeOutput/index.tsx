@@ -189,7 +189,7 @@ export const ExchangeOutput = (props: {
         {props.fromTokenAmount &&
          props.showLpList &&
          props.clients &&
-         props.clients.length > 1 && (
+         props.clients.length > 0 && (
           <div className="mt-2" style={{marginTop:'2rem'}}>
             {props.clients.map((c: any, index: number) => {
               if (c.exchange) {
