@@ -13,6 +13,7 @@ import { Identicon } from '../Identicon';
 import { createTokenMergeTx } from '../../utils/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
+import { UserTokenAccount } from '../../models/transactions';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -23,6 +24,7 @@ export const AccountsMergeModal = (props: {
     isVisible: boolean;
     tokenMint: string;
     tokenGroup: AccountTokenParsedInfo[] | undefined;
+    accountTokens: UserTokenAccount[];
 }) => {
     const { t } = useTranslation('common');
     const { publicKey, wallet } = useWallet();
@@ -331,13 +333,13 @@ export const AccountsMergeModal = (props: {
                     {props.tokenGroup && props.tokenGroup.length > 0 && (
                         <div className="well merged-token-list">
                         {props.tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
-                            const token = getTokenByMintAddress(item.parsedInfo.mint);
+                            const token = props.accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
                             return (
                                 <div className="flex-fixed-right align-items-center merged-token-item">
                                     <div className="left flex-column">
                                         <span className="add-on">
                                             <div className="token-selector">
-                                                <div className="token-icon">
+                                                <div className={token?.isAta ?  'token-icon' : 'token-icon grayed-out'}>
                                                 {token?.logoURI ? (
                                                     <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
                                                 ) : (

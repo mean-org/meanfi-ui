@@ -261,9 +261,9 @@ export const AccountsView = () => {
   //   setPopoverVisible(visibleChange);
   // };
 
-  const onTokenAccountGroupClick = (e: any) => {
-    consoleOut('onTokenAccountGroupClick event:', e, 'blue');
-  }
+  // const onTokenAccountGroupClick = (e: any) => {
+  //   consoleOut('onTokenAccountGroupClick event:', e, 'blue');
+  // }
 
   // Token Merger Modal
   // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
@@ -287,6 +287,15 @@ export const AccountsView = () => {
     connection.endpoint,
     customConnection
   ]);
+
+  const updateAtaFlag = useCallback((tokenList: UserTokenAccount[]) => {
+    if (tokenList && tokenList.length) {
+      tokenList.forEach(async item => {
+        const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(item.address));
+        item.isAta = ata && ata.toBase58() === item.publicAddress ? true : false;
+      });
+    }
+  }, [accountAddress]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   useEffect(() => {
@@ -414,14 +423,19 @@ export const AccountsView = () => {
                   });
                   meanTokensCopy.forEach((item: UserTokenAccount, index: number) => item.displayIndex = index);
                   sortedList.forEach((item: UserTokenAccount, index: number) => item.displayIndex = meanTokensCopy.length + index);
+                  // Update isAta flag
+                  updateAtaFlag(meanTokensCopy);
+                  updateAtaFlag(sortedList);
+                  // Concatenate both lists
                   const finalList = meanTokensCopy.concat(sortedList);
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
                   finalList.forEach((item: UserTokenAccount, index: number) => {
                     if (item.publicAddress && item.address) {
                       tokenTable.push({
-                        ataAddress: shortenAddress(item.publicAddress, 8),
-                        address: shortenAddress(item.address, 8),
+                        isAta: item.isAta ? 'yes' : 'no',
+                        pubAddress: shortenAddress(item.publicAddress, 6),
+                        mintAddress: shortenAddress(item.address, 6),
                         symbol: item.symbol,
                         balance: item.balance
                       });
@@ -473,36 +487,8 @@ export const AccountsView = () => {
     connection,
     customConnection,
     shouldLoadTokens,
+    updateAtaFlag,
     selectAsset
-  ]);
-
-  useEffect(() => {
-
-    const updateAtaFlag = () => {
-      if (meanSupportedTokens && meanSupportedTokens.length) {
-        meanSupportedTokens.forEach(async item => {
-          const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(item.address));
-          item.isAta = ata && ata.toBase58() === item.publicAddress ? true : false;
-        });
-      }
-      if (extraUserTokensSorted && extraUserTokensSorted.length) {
-        extraUserTokensSorted.forEach(async item => {
-          const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(item.address));
-          item.isAta = ata && ata.toBase58() === item.publicAddress ? true : false;
-        });
-      }
-    }
-
-    if (tokensLoaded && !shouldLoadTokens && (meanSupportedTokens || extraUserTokensSorted)) {
-      consoleOut('Tokens loaded, adding isAta flag...', '', 'info');
-      updateAtaFlag();
-    }
-  }, [
-    tokensLoaded,
-    shouldLoadTokens,
-    meanSupportedTokens,
-    extraUserTokensSorted,
-    accountAddress
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -1283,6 +1269,7 @@ export const AccountsView = () => {
           handleClose={hideTokenMergerModal}
           tokenMint={selectedTokenMergeGroup[0].parsedInfo.mint}
           tokenGroup={selectedTokenMergeGroup}
+          accountTokens={accountTokens}
         />
       )}
       <PreFooter />
