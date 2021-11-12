@@ -394,7 +394,7 @@ export const RepeatingPayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.no-recipient')
+      ? t('transactions.validation.select-recipient')
       : !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
@@ -408,7 +408,7 @@ export const RepeatingPayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.no-recipient')
+      ? t('transactions.validation.select-recipient')
       : !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
@@ -1114,11 +1114,15 @@ export const RepeatingPayment = () => {
                 <div className="left flex-row">
                   <div className="flex-center">
                     <Identicon
-                      address={recipientAddress || WRAPPED_SOL_MINT_ADDRESS}
+                      address={isValidAddress(recipientAddress) ? recipientAddress : WRAPPED_SOL_MINT_ADDRESS}
                       style={{ width: "30", display: "inline-flex" }} />
                   </div>
                   <div className="flex-column pl-3">
-                    <div className="address">{publicKey ? shortenAddress(recipientAddress) : '-'}</div>
+                    <div className="address">
+                      {publicKey && isValidAddress(recipientAddress)
+                        ? shortenAddress(recipientAddress)
+                        : t('transactions.validation.no-recipient')}
+                    </div>
                     <div className="inner-label mt-0">{recipientNote || '-'}</div>
                   </div>
                 </div>

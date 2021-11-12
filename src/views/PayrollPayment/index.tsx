@@ -393,7 +393,7 @@ export const PayrollPayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.no-recipient')
+      ? t('transactions.validation.select-recipient')
       : !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
