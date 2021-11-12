@@ -16,7 +16,7 @@ export const ExchangeOutput = (props: {
   onSelectedClient: any;
   inputLabel: string;
   clients: any[];
-
+  showLpList: boolean;
 }) => {
 
   const { t } = useTranslation("common");
@@ -173,9 +173,10 @@ export const ExchangeOutput = (props: {
             </span>
           </div>
           <div className="right">
-            {props.toTokenAmount &&
+            {props.showLpList &&
+             props.toTokenAmount &&
              props.clients &&
-             props.clients.length > 0 ? (
+             props.clients.length > 1 ? (
               <span>&nbsp;</span>
             ) : (
               <div className="static-data-field text-right">
@@ -185,7 +186,10 @@ export const ExchangeOutput = (props: {
           </div>
         </div>
 
-        {props.fromTokenAmount && props.clients && props.clients.length > 0 && (
+        {props.fromTokenAmount &&
+         props.showLpList &&
+         props.clients &&
+         props.clients.length > 1 && (
           <div className="mt-2" style={{marginTop:'2rem'}}>
             {props.clients.map((c: any, index: number) => {
               if (c.exchange) {

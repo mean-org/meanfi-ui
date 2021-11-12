@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, InputNumber, Popover } from "antd";
+import { Button, InputNumber, Popover, Switch } from "antd";
 import { useTranslation } from "react-i18next";
 import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
@@ -9,6 +9,8 @@ import "./style.less";
 export const SwapSettings = (props: {
   currentValue: number;
   onValueSelected: any;
+  onToggleShowLpList: any;
+  showLpList: boolean;
 }) => {
   const { t } = useTranslation("common");
   const { width } = useWindowSize();
@@ -38,9 +40,7 @@ export const SwapSettings = (props: {
 
   const titleContent = (
     <div className="flexible-left">
-      <div className="left">
-        {t('swap.transaction-settings')}
-      </div>
+      <div className="left">{t('swap.transaction-settings')}</div>
       <div className="right">
         <Button
           type="default"
@@ -53,6 +53,8 @@ export const SwapSettings = (props: {
   );
 
   const bodyContent = (
+    <>
+    <div className="inner-label">{t('swap.slippage-tolerance')}</div>
     <div className="flexible-left">
       <div className="left token-group">
         <div key="preset-02" className="token-max simplelink" onClick={() => onChangeValue(0.5)}>0.5%</div>
@@ -71,6 +73,16 @@ export const SwapSettings = (props: {
         <span className="leading-percent">%</span>
       </div>
     </div>
+    <div className="inner-label">{t('swap.pools-and-routes')}</div>
+    <div className="flexible-left">
+      <div className="left"><span>{t('swap.show-routes')}</span></div>
+      <div className="right">
+        <Switch size="default"
+          checked={props.showLpList}
+          onClick={() => props.onToggleShowLpList(!props.showLpList)} />
+      </div>
+    </div>
+    </>
   );
 
   return (

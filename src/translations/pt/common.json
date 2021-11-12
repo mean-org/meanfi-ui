@@ -349,8 +349,11 @@
 		"insufficient-liquidity": "Liquidez insuficiente para essa transação",
 		"token-select-destination": "Selecione um token",
 		"token-select-source": "Selecione um token",
-		"transaction-settings": "Tolerância de Deslizamento",
+		"transaction-settings": "Transaction settings",
+		"slippage-tolerance": "Tolerância de Deslizamento",
 		"frequency-label": "Frequency",
+		"pools-and-routes": "Pools and routes",
+		"show-routes": "Show routes",
 		"tabset": {
 			"one-time": "One time",
 			"recurring": "Recurring"

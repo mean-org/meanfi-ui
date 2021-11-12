@@ -104,6 +104,7 @@ export const RecurringExchange = (props: {
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
+  const [showLpList, setShowLpList] = useState(false);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
   const [defaultDdcaOption] = useState("Repeat weekly");
 
@@ -1349,6 +1350,10 @@ export const RecurringExchange = (props: {
     setSlippage(value);
   };
 
+  const onShowLpListToggled = (value: boolean) => {
+    setShowLpList(value);
+  };
+
   const renderSourceTokenList = (
     <>
       {Object.values(showFromMintList).length ? (
@@ -1548,7 +1553,11 @@ export const RecurringExchange = (props: {
             </div>
             {/* Settings icon */}
             <span className="settings-wrapper pr-3">
-              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/>
+              <SwapSettings
+                currentValue={slippage}
+                showLpList={showLpList}
+                onToggleShowLpList={onShowLpListToggled}
+                onValueSelected={onSlippageChanged}/>
             </span>
           </div>
 
@@ -1615,6 +1624,7 @@ export const RecurringExchange = (props: {
                 consoleOut('onSelectedClient:', client, 'blue');
                 setSelectedClient(client);
               }}
+              showLpList={showLpList}
             />
           )}
 
@@ -1741,4 +1751,3 @@ export const RecurringExchange = (props: {
     </>
   );
 };
-
