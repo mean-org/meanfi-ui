@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
 import { MAX_SLIPPAGE_VALUE, MIN_SLIPPAGE_VALUE } from "../../constants";
+import "./style.less";
 
 export const SwapSettings = (props: {
   currentValue: number;

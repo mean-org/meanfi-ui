@@ -181,23 +181,20 @@ export const AppBar = (props: { menuType: string }) => {
       <>
         <div className="App-Bar-left">{mainNav}</div>
         <div className="App-Bar-right">
+          {!isProd() && (
+            <div className="cluster-indicator">
+              <ThunderboltOutlined />
+              <span className="network-name">{connectionConfig.cluster}</span>
+            </div>
+          )}
+          {renderOnlineStatus}
           {connected ? (
-            <>
-            {!isProd() && (
-              <div className="cluster-indicator">
-                <ThunderboltOutlined />
-                <span className="network-name">{connectionConfig.cluster}</span>
-              </div>
-            )}
-            {renderOnlineStatus}
             <div className="connection-and-account-bar">
               <CurrentBalance />
               <CurrentUserBadge />
             </div>
-            </>
           ) : (
             <>
-              {renderOnlineStatus}
               <ConnectButton />
             </>
           )}

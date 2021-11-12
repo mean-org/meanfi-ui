@@ -335,7 +335,7 @@ export const AccountsMergeModal = (props: {
                         {props.tokenGroup.map((item: AccountTokenParsedInfo, index: number) => {
                             const token = props.accountTokens.find(t => t.publicAddress === item.pubkey.toBase58());
                             return (
-                                <div className="flex-fixed-right align-items-center merged-token-item">
+                                <div key={`${index}`} className="flex-fixed-right align-items-center merged-token-item">
                                     <div className="left flex-column">
                                         <span className="add-on">
                                             <div className="token-selector">

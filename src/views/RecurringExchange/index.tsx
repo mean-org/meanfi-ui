@@ -1480,16 +1480,9 @@ export const RecurringExchange = (props: {
     </>
   );
 
-  // TESTING BLOCK FOR STYLING THE UI
-  const [inputPosition, setInputPosition] = useState<"left" | "right">("right");
-  const toggleInputPosition = () => {
-    if (inputPosition === "left") {
-      setInputPosition("right");
-    } else {
-      setInputPosition("left");
-    }
-  }
-  // END OF TESTING BLOCK
+  // TODO: Convert the input field class "transaction-field" to the new general purpose class "well"
+  // Kept for compatibility but it must be removed after conversion
+  const inputPosition = "right";
 
   return (
     <>
@@ -1553,11 +1546,10 @@ export const RecurringExchange = (props: {
             <div className="flip-button" onClick={flipMintsCallback}>
               <IconSwapFlip className="mean-svg-icons" />
             </div>
-            {/* TESTING BLOCK FOR STYLING THE UI */}
-            {window.location.hostname === 'localhost' && (
-              <span className="helper-line primary-link font-regular font-size-80" onClick={toggleInputPosition}>Toggle input position</span>
-            )}
-            {/* END OF TESTING BLOCK */}
+            {/* Settings icon */}
+            <span className="settings-wrapper pr-3">
+              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/>
+            </span>
           </div>
 
           {/* Destination token / amount */}
@@ -1629,7 +1621,7 @@ export const RecurringExchange = (props: {
           {/* Title bar with settings */}
           <div className="info-line-and-settings flexible-left">
             <div className="left">
-              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/>
+              <span>&nbsp;</span>
             </div>
             {/* Info */}
             <div className="right info-line">

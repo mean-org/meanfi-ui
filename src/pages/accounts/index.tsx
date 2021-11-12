@@ -1,7 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import {
   ArrowLeftOutlined,
-  CloseOutlined,
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
@@ -28,8 +27,8 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Empty, Popover, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
+import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -247,7 +246,7 @@ export const AccountsView = () => {
   }
 
   const canActivateMergeTokenAccounts = (): boolean => {
-    if (publicKey && selectedAsset && tokenAccountGroups) {
+    if (selectedAsset && tokenAccountGroups) {
       const acc = tokenAccountGroups.has(selectedAsset.address);
       if (acc) {
         const item = tokenAccountGroups.get(selectedAsset.address);
@@ -288,13 +287,9 @@ export const AccountsView = () => {
     customConnection
   ]);
 
-  const updateAtaFlag = useCallback((tokenList: UserTokenAccount[]) => {
-    if (tokenList && tokenList.length) {
-      tokenList.forEach(async item => {
-        const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(item.address));
-        item.isAta = ata && ata.toBase58() === item.publicAddress ? true : false;
-      });
-    }
+  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
+    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
+    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
   }, [accountAddress]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
@@ -309,7 +304,7 @@ export const AccountsView = () => {
         setShouldLoadTokens(false);
         setTokensLoaded(false);
   
-        const meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+        let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
         const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
         const pk = new PublicKey(accountAddress);
         let nativeBalance = 0;
@@ -359,7 +354,9 @@ export const AccountsView = () => {
                       tokenGroups.set(key, item);
                     }
                   });
-                  consoleOut('tokenGroups:', tokenGroups, 'blue');
+                  if (tokenGroups.size > 0) {
+                    consoleOut('tokenGroups:', tokenGroups, 'blue');
+                  }
                   // Save groups for possible further merging
                   if (tokenGroups.size) {
                     setTokenAccountGroups(tokenGroups);
@@ -387,7 +384,6 @@ export const AccountsView = () => {
                       }
                     }
                   });
-                  consoleOut('intersected List:', meanTokensCopy, 'blue');
 
                   // Update balances in the SPL token list
                   accTks.forEach(item => {
@@ -409,7 +405,7 @@ export const AccountsView = () => {
                       intersectedList.push(tokenFromSplTokenList);
                     }
                   });
-                  const sortedList = intersectedList.sort((a, b) => {
+                  let sortedList = intersectedList.sort((a, b) => {
                     var nameA = a.symbol.toUpperCase();
                     var nameB = b.symbol.toUpperCase();
                     if (nameA < nameB) {
@@ -421,32 +417,31 @@ export const AccountsView = () => {
                     // names must be equal
                     return 0;
                   });
-                  meanTokensCopy.forEach((item: UserTokenAccount, index: number) => item.displayIndex = index);
-                  sortedList.forEach((item: UserTokenAccount, index: number) => item.displayIndex = meanTokensCopy.length + index);
-                  // Update isAta flag
-                  updateAtaFlag(meanTokensCopy);
-                  updateAtaFlag(sortedList);
+                  meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                    item.displayIndex = index;
+                    item.isAta = await updateAtaFlag(item);
+                  });
+                  sortedList.forEach(async (item: UserTokenAccount, index: number) => {
+                    item.displayIndex = meanTokensCopy.length + index;
+                    item.isAta = await updateAtaFlag(item);
+                  });
                   // Concatenate both lists
                   const finalList = meanTokensCopy.concat(sortedList);
+                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
-                  finalList.forEach((item: UserTokenAccount, index: number) => {
-                    if (item.publicAddress && item.address) {
-                      tokenTable.push({
-                        isAta: item.isAta ? 'yes' : 'no',
-                        pubAddress: shortenAddress(item.publicAddress, 6),
-                        mintAddress: shortenAddress(item.address, 6),
-                        symbol: item.symbol,
-                        balance: item.balance
-                      });
-                    }
-                  });
+                  finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                      pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                      mintAddress: shortenAddress(item.address, 6),
+                      symbol: item.symbol,
+                      balance: item.balance
+                    })
+                  );
                   console.table(tokenTable);
                   // Update the state
                   setMeanSupportedTokens(meanTokensCopy);
                   setExtraUserTokensSorted(sortedList);
                   setAccountTokens(finalList);
-                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   setTokensLoaded(true);
                 } else {
                   console.error('could not get account tokens');
