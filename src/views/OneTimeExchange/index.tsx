@@ -156,10 +156,13 @@ export const OneTimeExchange = (props: {
       maxAmount = balance;
     }
 
+    const isFromSol = fromMint === NATIVE_SOL_MINT.toBase58() || fromMint === WRAPPED_SOL_MINT.toBase58();
+    const isToSol = toMint === NATIVE_SOL_MINT.toBase58() || fromMint === WRAPPED_SOL_MINT.toBase58();
+
     if (selectedClient && selectedClient.market && selectedClient.protocol.equals(SERUM)) {
-      if (selectedClient.market.baseMintAddress.equals(WRAPPED_SOL_MINT)) {
+      if (isFromSol) {
         maxAmount = balance - balance / (exchangeInfo.outPrice || 1) - feesInfo.network;
-      } else if (selectedClient.market.quoteMintAddress.equals(WRAPPED_SOL_MINT)) {
+      } else if (isToSol) {
         maxAmount = balance - balance * (exchangeInfo.outPrice || 1) - feesInfo.network;
       }
     }
@@ -537,8 +540,7 @@ export const OneTimeExchange = (props: {
           }
   
           setClients(clients);
-          console.log('clients', clients);
-  
+          consoleOut('clients', clients, 'blue');  
           const client = clients[0].protocol.equals(SERUM) 
             ? clients[0] as SerumClient 
             : clients[0] as LPClient;

@@ -1641,17 +1641,16 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@^1.1":
-  version "1.1.17"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.17.tgz#45fcdb17f47e1d90a360bf3b4a60645dbea95f49"
-  integrity sha512-h4ZhOo5VCdKfIEx4Y61f09oJ4oqlIS8dDF86055CwgAp3cZLfi3syfwkeDhJNIdb7PfrSm+bWcHV3AZXzwwqdg==
+"@mean-dao/hybrid-liquidity-ag@^1.1.18":
+  version "1.1.18"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.18.tgz#00db83cc5380f5f55f9c7d2a355b6fc4bbc1e28b"
+  integrity sha512-LsEpyC+Gxs7vqpaDElpovYAwVb3/lYmLAj0AExYLDdN0gyzH6g/5h3SAxBnsq58uQDtWVuiXrVaXkRDG20W/1Q==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.9"
     "@project-serum/anchor" "^0.17.0"
     "@project-serum/serum" "^0.13.60"
     "@project-serum/sol-wallet-adapter" "^0.2.5"
-    "@project-serum/swap" "0.1.0-alpha.32"
     "@project-serum/tokens" "^0.0.7"
     "@saberhq/stableswap-sdk" "^1.6.2"
     "@saberhq/token-utils" "^1.6.2"
