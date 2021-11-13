@@ -175,7 +175,8 @@
 			"action-deposit": "Deposited {{fromAmount}}",
 			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
 			"action-withdraw": "Withdrew {{toAmount}}"
-		}
+		},
+		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?"
 	},
 	"deposits": {
 		"address-share-disclaimer": "This address can only be used to receive SOL and SPL tokens on Solana.",
@@ -220,6 +221,7 @@
 		"minute": "minute",
 		"month": "month",
 		"months": "months",
+		"no": "No",
 		"not-connected": "Your wallet is not connected, please connect your wallet",
 		"not-implemented": "Not implemented",
 		"now": "now",
@@ -231,6 +233,7 @@
 		"weeks": "weeks",
 		"year": "year",
 		"you": "you",
+		"yes": "Yes",
 		"start": "Start",
 		"starting": "Starting",
 		"finished": "Finished",

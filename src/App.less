@@ -6046,6 +6046,7 @@ code {
   &::after {
     background: var(--color-secondary-alpha-01);
   }
+  max-width: 300px;
   &.ant-popover-placement-leftBottom {
     .ant-popover-content,
     .ant-popover-arrow {
@@ -6062,6 +6063,15 @@ code {
   }
   .ant-popover-content {
     color: var(--text-color);
+    .ant-popover-message-title {
+      color: var(--text-color);
+    }
+    .ant-popover-buttons {
+      .ant-btn:not(.ant-btn-primary) {
+        color: var(--text-color);
+        background-color: transparent;
+      }
+    }
     .ant-popover-arrow {
       .ant-popover-arrow-content {
         background-color: var(--color-component-background);

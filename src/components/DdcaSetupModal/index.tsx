@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Modal, Slider } from "antd";
+import { Button, Modal, Popconfirm, Slider } from "antd";
 import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ import { environment } from '../../environments/environment';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
-import { LoadingOutlined } from '@ant-design/icons';
+import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
@@ -727,9 +727,12 @@ export const DdcaSetupModal = (props: {
   };
 
   function confirm(e: any) {
+    consoleOut('close confirmation accepted');
+    onOperationCancel();
   }
 
   function cancel(e: any) {
+    consoleOut('close confirmation cancelled');
   }
 
   ///////////////////
@@ -754,10 +757,21 @@ export const DdcaSetupModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
+      closeIcon={
+        <Popconfirm
+          placement="bottomRight"
+          title={t('ddcas.setup-close-warning')}
+          onConfirm={confirm}
+          onCancel={cancel}
+          okText={t('general.yes')}
+          cancelText={t('general.no')}
+          className="max-popover-width">
+          <CloseOutlined />
+        </Popconfirm>
+      }
       footer={null}
       maskClosable={false}
       visible={props.isVisible}
-      onCancel={onOperationCancel}
       afterClose={props.onAfterClose}
       width={480}>
       <div className="mb-3">

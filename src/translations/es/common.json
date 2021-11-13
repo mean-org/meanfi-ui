@@ -175,7 +175,8 @@
 			"action-deposit": "Deposited {{fromAmount}}",
 			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
 			"action-withdraw": "Withdrew {{toAmount}}"
-		}
+		},
+		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?"
 	},
 	"deposits": {
 		"address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
@@ -220,6 +221,7 @@
 		"minute": "minuto",
 		"month": "mes",
 		"months": "",
+		"no": "No",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
 		"now": "now",
@@ -231,6 +233,7 @@
 		"weeks": "",
 		"year": "año",
 		"you": "usted",
+		"yes": "Yes",
 		"start": "Start",
 		"starting": "Starting",
 		"finished": "Finished",
