@@ -47,7 +47,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
   const [lastSentTxOperationType, setLastSentTxOperationType] = useState<OperationType | undefined>(defaultCtxValues.lastSentTxOperationType);
   const [fetchTxInfoStatus, setFetchingTxStatus] = useState<TxStatus | undefined>(defaultCtxValues.fetchTxInfoStatus);
   const [finality, setExpectedFinality] = useState<TransactionConfirmationStatus | undefined>();
-  const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState('');
+  const [recentlyCreatedVault, updateRecentlyCreatedVault] = useState(defaultCtxValues.recentlyCreatedVault);
 
   const setRecentlyCreatedVault = (ddcaAccountPda: string) => {
     updateRecentlyCreatedVault(ddcaAccountPda);
@@ -65,7 +65,6 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
 
   const clearTransactionStatusContext = () => {
     setLastSentTxSignature('');
-    updateRecentlyCreatedVault('');
     setExpectedFinality(undefined);
     setLastSentTxStatus(undefined);
     setLastSentTxOperationType(undefined);

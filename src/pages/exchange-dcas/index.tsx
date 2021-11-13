@@ -20,7 +20,7 @@ import { Button, Col, Dropdown, Empty, Menu, Modal, Row, Spin, Tooltip } from 'a
 import { MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { Identicon } from '../../components/Identicon';
 import "./style.less";
-import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, useLocalStorageState } from '../../utils/utils';
+import { formatThousands, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress, useLocalStorageState } from '../../utils/utils';
 import {
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
@@ -66,6 +66,7 @@ export const ExchangeDcasView = () => {
     lastSentTxSignature,
     lastSentTxOperationType,
     recentlyCreatedVault,
+    setRecentlyCreatedVault,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
@@ -776,6 +777,7 @@ export const ExchangeDcasView = () => {
 
       ddcaClient.listDdcas()
         .then(dcas => {
+          consoleOut('recentlyCreatedVault:', recentlyCreatedVault, 'blue');
           consoleOut('Recurring buys:', dcas, 'blue');
           let item: DdcaAccount | undefined;
           if (dcas.length) {
@@ -797,6 +799,7 @@ export const ExchangeDcasView = () => {
             }
             if (item) {
               setSelectedDdca(item);
+              setRecentlyCreatedVault('');
               consoleOut('Calling ddcaClient.getDdca...', '', 'brown');
               reloadDdcaDetail(item.ddcaAccountAddress);
             }
@@ -815,6 +818,7 @@ export const ExchangeDcasView = () => {
     selectedDdca,
     loadingRecurringBuys,
     recentlyCreatedVault,
+    setRecentlyCreatedVault,
     setLoadingRecurringBuys,
     reloadDdcaDetail,
     setRecurringBuys
@@ -1458,7 +1462,8 @@ export const ExchangeDcasView = () => {
             <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
             <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
             <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
-            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature || '-'}</span>
+            <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
+            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
           </div>
         )}
 

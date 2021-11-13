@@ -256,6 +256,7 @@ export const DdcaSetupModal = (props: {
   }
 
   const onTxErrorCreatingVaultWithNotify = () => {
+    setRecentlyCreatedVault('');
     notify({
       message: t('notifications.error-title'),
       description: t('notifications.error-creating-vault-message'),
@@ -337,7 +338,7 @@ export const DdcaSetupModal = (props: {
           payload.totalSwaps,
           payload.intervalinSeconds)
         .then((value: [PublicKey, Transaction]) => {
-          consoleOut('createDdca returned transaction:', value);
+          consoleOut('createDdca returned vault pubKey and transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -346,6 +347,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
             result: getTxIxResume(value[1])
           });
+          setRecentlyCreatedVault(value[0].toBase58());
           setDdcaAccountPda(value[0]);
           transaction = value[1];
           return true;
@@ -524,7 +526,6 @@ export const DdcaSetupModal = (props: {
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             if (confirmed && !transactionCancelled) {
-              setRecentlyCreatedVault(ddcaAccountPda?.toBase58() || '');
               setVaultCreated(true);
               setIsBusy(false);
             } else { onTxErrorCreatingVaultWithNotify(); }
