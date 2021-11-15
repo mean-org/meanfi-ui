@@ -111,7 +111,7 @@ export const SwapView = () => {
     setRecurringBuys
   ]);
 
-  // Load recurring buys once if the list is empty
+  // Load recurring buys once
   useEffect(() => {
     if (!loadingRecurringBuys) {
       reloadRecurringBuys();
@@ -168,11 +168,12 @@ export const SwapView = () => {
                   endpoint={endpoint}
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
+                  onRefreshRequested={() => setLoadingRecurringBuys(false)}
                 />
               )
             }
           </div>
-          {recurringBuys && recurringBuys.length > 0 && isProd() && (
+          {publicKey && recurringBuys && recurringBuys.length > 0 && isProd() && (
             <div className="text-center mb-3">
               <Link to="/exchange-dcas">
                 <span className="secondary-link">{`You have ${recurringBuys.length} recurring buys scheduled`}</span>

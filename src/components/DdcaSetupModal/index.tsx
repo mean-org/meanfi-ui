@@ -271,11 +271,11 @@ export const DdcaSetupModal = (props: {
     props.handleOk();
   }
 
-  const onOperationCancel = () => {
+  const onOperationCancel = (shouldReload = false) => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    props.handleClose();
+    props.handleClose(shouldReload);
   }
 
   const onOperationSuccess = () => {
@@ -729,7 +729,7 @@ export const DdcaSetupModal = (props: {
 
   function confirm(e: any) {
     consoleOut('close confirmation accepted');
-    onOperationCancel();
+    onOperationCancel(true);
   }
 
   function cancel(e: any) {
@@ -773,6 +773,13 @@ export const DdcaSetupModal = (props: {
       footer={null}
       maskClosable={false}
       visible={props.isVisible}
+      onCancel={(e: any) => {
+        if (!vaultCreated) {
+          e.preventDefault();
+          e.stopPropagation();
+          onOperationCancel();
+        }
+      }}
       afterClose={props.onAfterClose}
       width={480}>
       <div className="mb-3">

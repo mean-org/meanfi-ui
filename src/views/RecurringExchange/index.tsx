@@ -55,6 +55,7 @@ export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
   connection: Connection;
+  onRefreshRequested: any;
   endpoint: string;
 }) => {
 
@@ -114,7 +115,6 @@ export const RecurringExchange = (props: {
   const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
 
   // DDCA Setup modal
-  const hideDdcaSetupModal = useCallback(() => setDdcaSetupModalVisibility(false), []);
   const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
 
   const showDdcaSetup = useCallback(() => {
@@ -142,6 +142,13 @@ export const RecurringExchange = (props: {
     setDdcaSetupModalVisibility(false);
     setRedirect('/exchange-dcas');
   }, []);
+
+  const onDdcaSetupModalClosed = useCallback((shouldReload = false) => {
+    setDdcaSetupModalVisibility(false);
+    if (shouldReload) {
+      props.onRefreshRequested();
+    }
+  }, [props]);
 
   const isWrap = useCallback(() => {
 
@@ -1733,7 +1740,7 @@ export const RecurringExchange = (props: {
               endpoint={props.endpoint}
               connection={connection}
               isVisible={isDdcaSetupModalVisible}
-              handleClose={hideDdcaSetupModal}
+              handleClose={onDdcaSetupModalClosed}
               handleOk={onFinishedDdca}
               onAfterClose={onAfterTransactionModalClosed}
               fromToken={fromMint && mintList[fromMint]}
