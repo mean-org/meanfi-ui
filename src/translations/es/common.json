@@ -325,7 +325,7 @@
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
 			"subtitle-ended": "Transferencia no financiada por 72h",
-			"subtitle-paused-otp": "Pago único programado",
+			"subtitle-paused-otp": "Pago único programado completado",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",

@@ -325,7 +325,7 @@
 		"stream-list": {
 			"no-streams": "Aucun transfert disponible",
 			"subtitle-ended": "Transfert non financé pendant 72h",
-			"subtitle-paused-otp": "Paiement unique programmé",
+			"subtitle-paused-otp": "Paiement unique planifié terminé",
 			"subtitle-paused-inbound": "Ce transfert est en attente faute de fonds.",
 			"subtitle-paused-outbound": "Ce transfert est en attente faute de fonds.",
 			"subtitle-pending-inbound": "Ce contrat est en attente de votre approbation",
