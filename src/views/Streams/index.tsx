@@ -474,38 +474,62 @@ export const Streams = () => {
     if (isInbound) {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-inbound');
-      } else if (item.state === STREAM_STATE.Paused) {
-        if (isOtp()) {
-          title = t('streams.stream-list.subtitle-paused-otp');
-        } else {
-          title = t('streams.stream-list.subtitle-paused-inbound');
-        }
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = t('streams.stream-list.subtitle-scheduled-inbound');
-        title += ` ${getShortDate(item.startUtc as string)}`;
-      } else if (item.state === STREAM_STATE.Ended) {
-        title = t('streams.stream-list.subtitle-ended');
-      } else {
-        title = t('streams.stream-list.subtitle-running-inbound');
-        title += ` ${getShortDate(item.startUtc as string)}`;
+        return title;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          title = t('streams.stream-list.subtitle-scheduled-inbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        case STREAM_STATE.Paused:
+          if (isOtp()) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-paused-inbound');
+          }
+          break;
+        case STREAM_STATE.Ended:
+          if (isOtp()) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-ended');
+          }
+          break;
+        default:
+          title = t('streams.stream-list.subtitle-running-inbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
       }
     } else {
       if (item.isUpdatePending) {
         title = t('streams.stream-list.subtitle-pending-outbound');
-      } else if (item.state === STREAM_STATE.Paused) {
-        if (isOtp()) {
-          title = t('streams.stream-list.subtitle-paused-otp');
-        } else {
-          title = t('streams.stream-list.subtitle-paused-outbound');
-        }
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = t('streams.stream-list.subtitle-scheduled-outbound');
-        title += ` ${getShortDate(item.startUtc as string)}`;
-      } else if (item.state === STREAM_STATE.Ended) {
-        title = t('streams.stream-list.subtitle-ended');
-      } else {
-        title = t('streams.stream-list.subtitle-running-outbound');
-        title += ` ${getShortDate(item.startUtc as string)}`;
+        return title;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          title = t('streams.stream-list.subtitle-scheduled-outbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        case STREAM_STATE.Paused:
+          if (isOtp()) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-paused-outbound');
+          }
+          break;
+        case STREAM_STATE.Ended:
+          if (isOtp()) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-ended');
+          }
+          break;
+        default:
+          title = t('streams.stream-list.subtitle-running-outbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
       }
     }
     return title;
