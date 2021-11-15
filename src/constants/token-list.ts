@@ -199,6 +199,54 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         extensions: {
             coingeckoId: "saber"
         }
+    },
+    {
+        chainId: 101,
+        address: "SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr",
+        symbol: "SLRS",
+        name: "Solrise Finance",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SLRSSpSLUTP7okbCUBYStWCo1vUgyt775faPqz8HUMr/logo.png",
+        tags: [],
+        extensions: {
+          coingeckoId: "solrise-finance"
+        }
+    },
+    {
+        chainId: 101,
+        address: "8upjSpvjcdpuzhfR1zriwg5NXkwDruejqNE9WNbPRtyA",
+        symbol: "GRAPE",
+        name: "Grape",
+        decimals: 6,
+        logoURI: "https://lh3.googleusercontent.com/y7Wsemw9UVBc9dtjtRfVilnS1cgpDt356PPAjne5NvMXIwWz9_x7WKMPH99teyv8vXDmpZinsJdgiFQ16_OAda1dNcsUxlpw9DyMkUk=s0",
+        tags: [],
+        extensions: {
+            coingeckoId: "grape-2",
+        }
+    },
+    {
+        chainId: 101,
+        address: "4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y",
+        symbol: "SNY",
+        name: "Synthetify",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4dmKkXNHdgYsXqBHCuMikNQWwVomZURhYvkkX5c4pQ7y/logo.png",
+        tags: [],
+        extensions: {
+            coingeckoId: "synthetify-token"
+        }
+    },
+    {
+        chainId: 101,
+        address: "JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz",
+        symbol: "JET",
+        name: "Jet Protocol",
+        decimals: 9,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JET6zMJWkCN9tpRT2v2jfAmm5VnQFDpUBCyaKojmGtz/logo.png",
+        tags: [],
+        extensions: {
+            coingeckoId: "jet"
+        }
     }
 
 ];

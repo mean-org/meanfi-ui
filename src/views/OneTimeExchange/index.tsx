@@ -189,12 +189,10 @@ export const OneTimeExchange = (props: {
     let valid = false;
     let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
 
-    if (isWrap()) {
+    if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
       valid = balance >= feesInfo.network;
-    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-      valid = balance >= (feesInfo.total + feesInfo.network);
     } else {
-      valid = balance;
+      valid = balance >= (feesInfo.total + feesInfo.network);
     }
 
     return valid;
@@ -529,24 +527,28 @@ export const OneTimeExchange = (props: {
 
         const error = (_error: any) => {
           console.error(_error);
+          setSelectedClient(undefined);
+          setExchangeInfo(undefined);
           setRefreshing(false); 
         };
   
         const success = (clients: Client[] | null) => {
   
           if (!clients || clients.length === 0) {
+            setSelectedClient(undefined);
+            setExchangeInfo(undefined);
             error(new Error("Client not found"));
             return;
           }
   
+          // clients = clients.filter(c => c.protocol.equals(RAYDIUM));
           setClients(clients);
-          consoleOut('clients', clients, 'blue');  
+          consoleOut('clients', clients, 'blue');
           const client = clients[0].protocol.equals(SERUM) 
             ? clients[0] as SerumClient 
             : clients[0] as LPClient;
   
           setSelectedClient(client);
-          setExchangeInfo(client.exchange);
           setRefreshing(false);
           setRefreshTime(30);
         };
@@ -957,18 +959,18 @@ export const OneTimeExchange = (props: {
 
       if (!connected) {
         label = t("transactions.validation.not-connected");
-      } else if (!fromMint || !toMint || !feesInfo) {
+      } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
-      } else if (fromSwapAmount === 0 && isValidBalance()) {
-        label = t("transactions.validation.no-amount");
+      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
+        label = t("transactions.validation.exchange-unavailable");
       } else if(!isValidBalance()) {
 
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo.aggregator + feesInfo.network;
+          needed = feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = feesInfo.total + feesInfo.network;
+          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
         } else {
           needed = feesInfo.network;
         }
@@ -981,11 +983,13 @@ export const OneTimeExchange = (props: {
 
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
+      } else if (fromSwapAmount === 0) {
+        label = t("transactions.validation.no-amount");
       } else if (!isSwapAmountValid()) {
 
         let needed = 0;
         const fromSymbol = mintList[fromMint].symbol;
-        const isFromSerum = selectedClient && selectedClient.market && selectedClient.protocol.equals(SERUM);
+        const isFromSerum = selectedClient && selectedClient.protocol.equals(SERUM);
         const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
         if (isFromSerum) {
@@ -1000,8 +1004,6 @@ export const OneTimeExchange = (props: {
             needed = fromSwapAmount + feesInfo.network;
           } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
             needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-          } else if (isUnwrap()) {
-            needed = fromSwapAmount;
           } else {
             needed = fromSwapAmount + feesInfo.total;
           }
@@ -2141,7 +2143,7 @@ export const OneTimeExchange = (props: {
             shape="round"
             size="large"
             onClick={onTransactionStart}
-            disabled={!isValidBalance() || !isSwapAmountValid() || !exchangeInfo?.amountOut} >
+            disabled={!isValidBalance() || !isSwapAmountValid() || !exchangeInfo || !exchangeInfo?.amountOut} >
             {transactionStartButtonLabel}
           </Button>
 

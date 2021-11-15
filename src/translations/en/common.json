@@ -478,6 +478,7 @@
 			"insufficient-balance-needed": "Need at least {{balance}} SOL",
 			"invalid-amount": "Invalid amount",
 			"invalid-exchange": "Select token",
+			"exchange-unavailable": "Exchange unavailable",
 			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
 			"minimum-swap-amount": "Min required amount to swap {{mintAmount}} {{fromMint}}",
 			"no-amount": "Enter amount",
