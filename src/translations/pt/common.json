@@ -496,6 +496,10 @@
 		"screen-title": "Transfers",
 		"screen-subtitle": "Send money to anyone in the world faster"
 	},
+	"payroll": {
+		"screen-title": "Payroll",
+		"screen-subtitle": "Setup payroll for your employees"
+	},
 	"ui-language": {
 		"en": "Inglês",
 		"es": "Espanhol",

@@ -8,24 +8,27 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown } from "../../Icons";
+import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   isValidNumber,
+  shortenAddress,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { PaymentRateType, TransactionStatus } from "../../models/enums";
+import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
   getAmountWithTokenSymbol,
   getFairPercentForInterval,
+  getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
+  getTimesheetRequirementOptionLabel,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
@@ -49,6 +52,7 @@ import { Redirect } from "react-router-dom";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
+import { StepSelector } from '../../components/StepSelector';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -70,6 +74,7 @@ export const PayrollPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     streamProgramAddress,
+    timeSheetRequirement,
     previousWalletConnectState,
     setCurrentScreen,
     setSelectedToken,
@@ -86,6 +91,7 @@ export const PayrollPayment = () => {
     setSelectedStream,
     refreshStreamList,
     refreshTokenBalance,
+    setTimeSheetRequirement,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
@@ -98,6 +104,7 @@ export const PayrollPayment = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
 
@@ -389,6 +396,20 @@ export const PayrollPayment = () => {
   }
 
   // Ui helpers
+  const getStepOneContinueButtonLabel = (): string => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : !recipientAddress || isAddressOwnAccount()
+      ? t('transactions.validation.select-recipient')
+      : !selectedToken || !tokenBalance
+      ? t('transactions.validation.no-balance')
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !arePaymentSettingsValid()
+      ? getPaymentSettingsButtonLabel()
+      : t('transactions.validation.valid-continue');
+  }
+
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
@@ -405,11 +426,11 @@ export const PayrollPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
-      ? getPaymentSettingsModalButtonLabel()
+      ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-approve');
   }
 
-  const getPaymentSettingsModalButtonLabel = (): string => {
+  const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
@@ -486,125 +507,13 @@ export const PayrollPayment = () => {
       : 0;
   }
 
-  // Prefabrics
+  const onStepperChange = (value: number) => {
+    setCurrentStep(value);
+  }
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
-
-  const renderAvailableTokenList = (
-    <>
-      {(destinationToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setDestinationToken(token);
-            setSelectedToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                destinationToken && destinationToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
-  const renderUserTokenList = (
-    <>
-      {(selectedToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setSelectedToken(token);
-            setDestinationToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
-  // const timeSheetRequirementOptionsMenu = (
-  //   <Menu>
-  //     <Menu.Item
-  //       key={TimesheetRequirementOption[0]}
-  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
-  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired, t)}
-  //     </Menu.Item>
-  //     <Menu.Item
-  //       key={TimesheetRequirementOption[1]}
-  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
-  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets, t)}
-  //     </Menu.Item>
-  //     <Menu.Item
-  //       key={TimesheetRequirementOption[2]}
-  //       onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
-  //       {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout, t)}
-  //     </Menu.Item>
-  //   </Menu>
-  // );
+  const onContinueButtonClick = () => {
+    setCurrentStep(1);  // Go to step 2
+  }
 
   // Main action
 
@@ -916,6 +825,10 @@ export const PayrollPayment = () => {
             : false;
   }
 
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -925,11 +838,131 @@ export const PayrollPayment = () => {
     );
   }
 
+  const paymentRateOptionsMenu = (
+    <Menu>
+      {getOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
+  const renderAvailableTokenList = (
+    <>
+      {(destinationToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setDestinationToken(token);
+            setSelectedToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                destinationToken && destinationToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
+  const renderUserTokenList = (
+    <>
+      {(selectedToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setSelectedToken(token);
+            setDestinationToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                selectedToken && selectedToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
+  const timeSheetRequirementOptionsMenu = (
+    <Menu>
+      <Menu.Item
+        key={TimesheetRequirementOption[0]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.NotRequired)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.NotRequired, t)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[1]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.SubmitTimesheets)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.SubmitTimesheets, t)}
+      </Menu.Item>
+      <Menu.Item
+        key={TimesheetRequirementOption[2]}
+        onClick={() => setTimeSheetRequirement(TimesheetRequirementOption.ClockinClockout)}>
+        {getTimesheetRequirementOptionLabel(TimesheetRequirementOption.ClockinClockout, t)}
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <>
       {redirect && (<Redirect to={redirect} />)}
 
-      <div className="contract-wrapper">
+      <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
+
+      <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
 
         {/* Recipient */}
         <div className="form-label">{t('transactions.recipient.label')}</div>
@@ -972,26 +1005,6 @@ export const PayrollPayment = () => {
               </span>
             ) : (null)
           }
-        </div>
-
-        {/* Memo */}
-        <div className="form-label">{t('transactions.memo2.label')}</div>
-        <div className="well">
-          <div className="flex-fixed-right">
-            <div className="left">
-              <input
-                id="payment-memo-field"
-                className="w-100 general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onChange={handleRecipientNoteChange}
-                placeholder={t('transactions.memo2.placeholder')}
-                spellCheck="false"
-                value={recipientNote}
-              />
-            </div>
-          </div>
         </div>
 
         {/* Receive rate */}
@@ -1050,23 +1063,6 @@ export const PayrollPayment = () => {
           </Dropdown>
         </div>
 
-        {/* Timesheet requirement */}
-        {/* <div className="form-label">{t('transactions.timesheet-requirement.label')}</div>
-        <div className="well">
-          <Dropdown
-            overlay={timeSheetRequirementOptionsMenu}
-            trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}</span>
-              </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
-              </div>
-            </span>
-          </Dropdown>
-        </div> */}
-
         {/* Send date */}
         <div className="form-label">{t('transactions.send-date.label')}</div>
         <div className="well">
@@ -1096,6 +1092,108 @@ export const PayrollPayment = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Continue button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onContinueButtonClick}
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          {getStepOneContinueButtonLabel()}
+        </Button>
+
+      </div>
+
+      <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+
+        {/* Resume */}
+        {publicKey && recipientAddress && (
+          <>
+            <div className="flex-fixed-right">
+              <div className="left">
+                <div className="form-label">{t('transactions.resume')}</div>
+              </div>
+              <div className="right">
+                <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                  <IconEdit className="mean-svg-icons" />
+                  <span>{t('general.cta-change')}</span>
+                </span>
+              </div>
+            </div>
+            <div className="well">
+              <div className="three-col-flexible-middle">
+                <div className="left flex-row">
+                  <div className="flex-center">
+                    <Identicon
+                      address={isValidAddress(recipientAddress) ? recipientAddress : WRAPPED_SOL_MINT_ADDRESS}
+                      style={{ width: "30", display: "inline-flex" }} />
+                  </div>
+                  <div className="flex-column pl-3">
+                    <div className="address">
+                      {publicKey && isValidAddress(recipientAddress)
+                        ? shortenAddress(recipientAddress)
+                        : t('transactions.validation.no-recipient')}
+                    </div>
+                    <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                  </div>
+                </div>
+                <div className="middle flex-center">
+                  <div className="vertical-bar"></div>
+                </div>
+                <div className="right flex-column">
+                  <div className="rate">
+                    {selectedToken
+                      ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                      : '-'
+                    }
+                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                  </div>
+                  <div className="inner-label mt-0">{paymentStartDate}</div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Timesheet requirement */}
+        <div className="form-label">{t('transactions.timesheet-requirement.label')}</div>
+        <div className="well">
+          <Dropdown
+            overlay={timeSheetRequirementOptionsMenu}
+            trigger={["click"]}>
+            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+              <div className="left">
+                <span className="capitalize-first-letter">{getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}</span>
+              </div>
+              <div className="right">
+                <IconCaretDown className="mean-svg-icons" />
+              </div>
+            </span>
+          </Dropdown>
         </div>
 
         <div className="mb-3 text-center">
@@ -1205,9 +1303,10 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
           {getTransactionStartButtonLabel()}
         </Button>
+
       </div>
 
       {/* QR scan modal */}
