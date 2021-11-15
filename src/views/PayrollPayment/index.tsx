@@ -33,7 +33,7 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   getTxFeeAmount,
-  isProd,
+  isLocal,
   isToday,
   isValidAddress,
   PaymentRateTypeOption
@@ -1181,7 +1181,7 @@ export const PayrollPayment = () => {
         )}
 
         {/* Timesheet requirement */}
-        {!isProd() && (
+        {isLocal() && (
           <>
             <div className="form-label">{t('transactions.timesheet-requirement.label')}</div>
             <div className="well">
