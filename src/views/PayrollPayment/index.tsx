@@ -33,6 +33,7 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
   getTxFeeAmount,
+  isProd,
   isToday,
   isValidAddress,
   PaymentRateTypeOption
@@ -1180,21 +1181,25 @@ export const PayrollPayment = () => {
         )}
 
         {/* Timesheet requirement */}
-        <div className="form-label">{t('transactions.timesheet-requirement.label')}</div>
-        <div className="well">
-          <Dropdown
-            overlay={timeSheetRequirementOptionsMenu}
-            trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}</span>
-              </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
-              </div>
-            </span>
-          </Dropdown>
-        </div>
+        {!isProd() && (
+          <>
+            <div className="form-label">{t('transactions.timesheet-requirement.label')}</div>
+            <div className="well">
+              <Dropdown
+                overlay={timeSheetRequirementOptionsMenu}
+                trigger={["click"]}>
+                <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                  <div className="left">
+                    <span className="capitalize-first-letter">{getTimesheetRequirementOptionLabel(timeSheetRequirement, t)}</span>
+                  </div>
+                  <div className="right">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </div>
+                </span>
+              </Dropdown>
+            </div>
+          </>
+        )}
 
         <div className="mb-3 text-center">
           <div>{t('transactions.transaction-info.add-funds-payroll-advice')}.</div>
