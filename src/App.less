@@ -824,20 +824,6 @@ footer.ant-layout-footer {
   }
 }
 
-// Select
-.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-  border-color: var(--color-primary-highlight) !important;
-}
-.ant-select.ant-select-focused:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  transition: none;
-  box-shadow: none;
-}
-.ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
-  color: var(--color-secondary-alpha-85);
-  font-weight: 600;
-  background-color: var(--color-selection);
-}
-
 // Number inputs
 .ant-input-number {
   background-color: var(--color-wells);
@@ -1288,33 +1274,6 @@ footer.ant-layout-footer {
       &:hover {
         text-decoration: underline;
       }
-    }
-  }
-}
-
-// Dropdown menus
-.ant-dropdown-menu {
-  background-color: var(--color-component-background);
-  .ant-dropdown-menu-item-divider,
-  .ant-dropdown-menu-submenu-title-divider {
-    background-color: var(--color-secondary-alpha-15);
-  }
-  .ant-dropdown-menu-item,
-  .ant-dropdown-menu-submenu-title {
-    color: var(--color-secondary-alpha-80);
-    .mean-svg-icons {
-      display: inline-block;
-      vertical-align: middle;
-      margin-right: 0.3rem;
-      width: 20px;
-      height: 20px;
-    }
-    .mean-svg-icons ~ .menu-item-text {
-      display: inline-block;
-      vertical-align: middle;
-    }
-    &:hover {
-      background-color: var(--color-selection);
     }
   }
 }
@@ -1853,7 +1812,12 @@ section.content {
     }
   }
 }
-
+.tabset-heading {
+  font-size: 14px;
+  color: var(--color-secondary-alpha-85);
+  font-weight: 700;
+  margin: 1rem 0;
+}
 .stepper-wrapper {
   @media (max-width: 575.98px) {
     padding: 0 0.4rem 0;
@@ -2006,11 +1970,117 @@ section.content {
   background-color: var(--color-panel-background);
   color: var(--text-color);
   border: 1px solid var(--color-secondary-alpha-20);
+  > .ant-collapse-item {
+    border-bottom: 1px solid var(--color-secondary-alpha-20);
+    .ant-collapse-content {
+      color: var(--color-secondary-alpha-70);
+      background-color: var(--color-panel-background);
+      border-top: 1px solid var(--color-secondary-alpha-20);
+      .ant-collapse-content-box {
+        color: inherit;
+      }
+    }
+    &:last-of-type {
+      border-bottom: none;
+    }
+    &.ant-collapse-item-active {
+      > .ant-collapse-header {
+        color: var(--color-secondary-alpha-85);
+      }
+    }
+    > .ant-collapse-header {
+      color: var(--color-secondary-alpha-70);
+    }
+  }
 }
 
-//////////////////
-// Modern forms //
-//////////////////
+///////////
+// Forms //
+///////////
+.ant-form {
+  color: inherit;
+  .ant-form-item {
+    color: inherit;
+    .ant-form-item-label > label {
+      color: var(--color-secondary-alpha-70);
+    }
+    .ant-form-item-control {
+      color: inherit;
+    }
+  }
+}
+
+// Dropdown menus
+.ant-dropdown-menu {
+  color: inherit;
+  background-color: var(--color-component-background);
+  .ant-dropdown-menu-item-divider,
+  .ant-dropdown-menu-submenu-title-divider {
+    background-color: var(--color-secondary-alpha-15);
+  }
+  .ant-dropdown-menu-item,
+  .ant-dropdown-menu-submenu-title {
+    color: var(--color-secondary-alpha-80);
+    .mean-svg-icons {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 0.3rem;
+      width: 20px;
+      height: 20px;
+    }
+    .mean-svg-icons ~ .menu-item-text {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    &:hover {
+      background-color: var(--color-selection);
+    }
+  }
+}
+
+// Select
+.ant-select-dropdown {
+  color: inherit;
+  background-color: var(--color-component-background);
+  .ant-select-item {
+    color: inherit;
+    &:not(.ant-select-item-option-selected) {
+      &.ant-select-item-option-active {
+        background-color: var(--color-secondary-alpha-02);
+      }
+    }
+    &.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+      color: var(--color-secondary-alpha-85);
+      font-weight: 600;
+      background-color: var(--color-secondary-alpha-05);
+    }
+  }
+}
+
+.ant-select {
+  color: inherit;
+  .ant-select-selector {
+    color: inherit !important;
+    background-color: var(--color-wells) !important;
+    border-width: 1px !important;
+    border-color: var(--color-secondary-alpha-10) !important;
+    border-radius: var(--custom-control-border-radius) !important;
+  }
+  &:focus,
+  &:hover,
+  &.ant-select-focused {
+    &:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+      transition: none;
+      box-shadow: none;
+    }
+    .ant-select-selector {
+      border-color: var(--color-secondary-alpha-20) !important;
+    }
+  }
+  .ant-select-arrow {
+    color: var(--color-secondary-alpha-60);
+  }
+}
 
 // Fields go inside wells
 .well {

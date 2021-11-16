@@ -427,6 +427,7 @@
 			"tx-confirm": "Confirming transaction",
 			"tx-confirm-failure": "The transaction could not be confirmed",
 			"tx-confirm-failure-check": "Check your transaction in the link below",
+			"tx-generic-operation-success": "Transaction completed successfully",
 			"tx-idle": "Idle",
 			"tx-init": "Initialize transaction",
 			"tx-init-failure": "Could not initialize transaction",

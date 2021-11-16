@@ -20,7 +20,7 @@ import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
 import { Redirect } from "react-router-dom";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
+import { DEFAULT_SLIPPAGE_PERCENT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
 
@@ -2268,13 +2268,14 @@ export const OneTimeExchange = (props: {
                           <p className="operation">
                             {t("transactions.status.tx-confirm-failure-check")}
                           </p>
-                          <a className="primary-link" 
-                              style={{ marginBottom:20 }} 
-                              href={`https://explorer.solana.com/tx/${currentTxSignature}`} 
+                          <p className="operation">
+                            <a className="secondary-link" 
+                              href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${currentTxSignature}`} 
                               target="_blank" 
                               rel="noopener noreferrer">
                               {shortenAddress(currentTxSignature, 8)}
-                          </a>
+                            </a>
+                          </p>
                         </>
                       )}
                     </>
