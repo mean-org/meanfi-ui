@@ -2150,10 +2150,10 @@ export const Streams = () => {
   );
 
   return (
-    <div className={`streams-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+    <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
       {/* Left / top panel*/}
-      <div className="streams-container">
-        <div className="streams-heading">
+      <div className="meanfi-two-panel-left">
+        <div className="meanfi-panel-heading">
           <span className="title">{t('streams.screen-title')}</span>
           <Tooltip placement="bottom" title={t('account-area.streams-tooltip')}>
             <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
@@ -2227,8 +2227,8 @@ export const Streams = () => {
         </div>
       </div>
       {/* Right / down panel */}
-      <div className="stream-details-container">
-        <div className="streams-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
+      <div className="meanfi-two-panel-right">
+        <div className="meanfi-panel-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>
         <div className="inner-container">
           {connected && streamDetail ? (
             <>

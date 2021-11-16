@@ -1469,11 +1469,11 @@ export const ExchangeDcasView = () => {
 
         <div className="interaction-area">
 
-          <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+          <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
             {/* Left / top panel*/}
-            <div className="tokens-container">
-              <div className="transactions-heading">
+            <div className="meanfi-two-panel-left">
+              <div className="meanfi-panel-heading">
                 <span className="title">{t('ddcas.screen-title')}</span>
                 <Tooltip placement="bottom" title="Reload">
                   <div className={`user-address ${loadingRecurringBuys ? 'click-disabled' : 'simplelink'}`}
@@ -1496,8 +1496,8 @@ export const ExchangeDcasView = () => {
             </div>
 
             {/* Right / down panel */}
-            <div className="transaction-list-container">
-              <div className="transactions-heading"><span className="title">Exchange details</span></div>
+            <div className="meanfi-two-panel-right">
+              <div className="meanfi-panel-heading"><span className="title">Exchange details</span></div>
               <div className="inner-container">
                 {ddcaDetails ? renderRecurringBuy : (
                   <div className="h-75 flex-center">

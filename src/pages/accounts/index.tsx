@@ -1006,11 +1006,11 @@ export const AccountsView = () => {
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
           {canShowAccountDetails && accountAddress ? (
-            <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+            <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
               {/* Left / top panel */}
-              <div className="tokens-container">
-                <div className="transactions-heading">
+              <div className="meanfi-two-panel-left">
+                <div className="meanfi-panel-heading">
                   <span className="title">{t('assets.screen-title')}</span>
                   <div className="user-address">
                     <span className="fg-secondary">
@@ -1050,7 +1050,7 @@ export const AccountsView = () => {
                     {renderTokenList}
                   </div>
                   {(accountTokens && accountTokens.length > 0) && (
-                    <div className="bottom-ctas">
+                    <div className="thin-bottom-ctas">
                       <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
                       <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
                       {(canActivateMergeTokenAccounts()) && (
@@ -1081,8 +1081,8 @@ export const AccountsView = () => {
               </div>
 
               {/* Right / down panel */}
-              <div className="transaction-list-container">
-                <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+              <div className="meanfi-two-panel-right">
+                <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
                 <div className="inner-container">
                   {/* Activity table heading */}
                   {shallWeDraw() && (
