@@ -2002,6 +2002,12 @@ section.content {
   vertical-align: -4px;
 }
 
+.ant-collapse {
+  background-color: var(--color-panel-background);
+  color: var(--text-color);
+  border: 1px solid var(--color-secondary-alpha-20);
+}
+
 //////////////////
 // Modern forms //
 //////////////////
@@ -6047,6 +6053,38 @@ code {
     background: var(--color-secondary-alpha-01);
   }
   max-width: 300px;
+  &.ant-popconfirm {
+    .ant-popover-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px;
+      .ant-btn.ant-btn-sm {
+        border-radius: var(--custom-border-radius);
+        border: none;
+        box-shadow: none;
+        transition: none;
+        height: 34px;
+        min-width: 74px;
+        padding: 0 8px;
+        margin: 0 6px;
+        &:not(.ant-btn-primary) {
+          color: var(--color-secondary);
+          background-color: transparent;
+          &:hover {
+            background-color: var(--color-secondary-alpha-05);
+          }
+        }
+        &.ant-btn-primary:not(:disabled) {
+          color: var(--color-white);
+          background-color: var(--color-primary);
+          &:hover {
+            background-color: var(--color-primary-highlight);
+          }
+        }
+      }
+    }
+  }
   &.ant-popover-placement-leftBottom {
     .ant-popover-content,
     .ant-popover-arrow {
@@ -6065,12 +6103,6 @@ code {
     color: var(--text-color);
     .ant-popover-message-title {
       color: var(--text-color);
-    }
-    .ant-popover-buttons {
-      .ant-btn:not(.ant-btn-primary) {
-        color: var(--text-color);
-        background-color: transparent;
-      }
     }
     .ant-popover-arrow {
       .ant-popover-arrow-content {

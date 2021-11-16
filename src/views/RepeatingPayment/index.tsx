@@ -400,7 +400,7 @@ export const RepeatingPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
-      ? getPaymentSettingsModalButtonLabel()
+      ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-continue');
   }
 
@@ -420,11 +420,11 @@ export const RepeatingPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
-      ? getPaymentSettingsModalButtonLabel()
+      ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-approve');
   }
 
-  const getPaymentSettingsModalButtonLabel = (): string => {
+  const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
@@ -499,6 +499,14 @@ export const RepeatingPayment = () => {
     return coinPrices && coinPrices[symbol]
       ? coinPrices[symbol]
       : 0;
+  }
+
+  const onStepperChange = (value: number) => {
+    setCurrentStep(value);
+  }
+
+  const onContinueButtonClick = () => {
+    setCurrentStep(1);  // Go to step 2
   }
 
   // Main action
@@ -805,6 +813,10 @@ export const RepeatingPayment = () => {
             : false;
   }
 
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -813,18 +825,6 @@ export const RepeatingPayment = () => {
       </Row>
     );
   }
-
-  const onStepperChange = (value: number) => {
-    setCurrentStep(value);
-  }
-
-  const onContinueButtonClick = () => {
-    setCurrentStep(1);  // Go to step 2
-  }
-
-  ///////////////////
-  //   Rendering   //
-  ///////////////////
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1087,7 +1087,7 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1251,7 +1251,7 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>

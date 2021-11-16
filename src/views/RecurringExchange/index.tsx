@@ -56,6 +56,7 @@ export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
   connection: Connection;
+  onRefreshRequested: any;
   endpoint: string;
 }) => {
 
@@ -115,7 +116,6 @@ export const RecurringExchange = (props: {
   const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
 
   // DDCA Setup modal
-  const hideDdcaSetupModal = useCallback(() => setDdcaSetupModalVisibility(false), []);
   const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
 
   const showDdcaSetup = useCallback(() => {
@@ -143,6 +143,13 @@ export const RecurringExchange = (props: {
     setDdcaSetupModalVisibility(false);
     setRedirect('/exchange-dcas');
   }, []);
+
+  const onDdcaSetupModalClosed = useCallback((shouldReload = false) => {
+    setDdcaSetupModalVisibility(false);
+    if (shouldReload) {
+      props.onRefreshRequested();
+    }
+  }, [props]);
 
   const isWrap = useCallback(() => {
 
@@ -857,57 +864,6 @@ export const RecurringExchange = (props: {
     if (!fromMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const orcaMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'ORCA')[0];
-
-      if (orcaMintInfo && fromMint === orcaMintInfo.address) {
-
-        const orcaList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
-
-        let allowedMints: any = {};
-
-        for (let item of orcaList) {
-          allowedMints[item.address] = item;
-        }
-    
-        setShowToMintList(allowedMints);
-
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== NATIVE_SOL_MINT.toBase58() && toMint !== WRAPPED_SOL_MINT.toBase58()) {
-          setToMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
- 
-      if (btcMintInfo && fromMint === btcMintInfo.address) {
-
-        const btcList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
-
-        let usdxMints: any = {};
-
-        for (let item of btcList) {
-          usdxMints[item.address] = item;
-        }
-    
-        setShowToMintList(usdxMints);
-        
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58() && toMint !== SRM_MINT.toBase58()) {
-          setToMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
       setShowToMintList(mintList);
     });
 
@@ -927,55 +883,7 @@ export const RecurringExchange = (props: {
     if (!toMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const orcaMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'ORCA')[0];
-
-      if (orcaMintInfo && toMint === orcaMintInfo.address) {
-
-        const orcaList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
-
-        let allowedMints: any = {};
-
-        for (let item of orcaList) {
-          allowedMints[item.address] = item;
-        }
-    
-        setShowFromMintList(allowedMints);
-
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== WRAPPED_SOL_MINT.toBase58()) {
-          setFromMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
-
-      if (!btcMintInfo) { return; }
-
-      if (toMint && (toMint === btcMintInfo.address)) {
-
-        const btcList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
-    
-        setShowFromMintList(btcList);
-        
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58() && fromMint !== SRM_MINT.toBase58()) {
-          setFromMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
       setShowFromMintList(mintList);
-
     });
 
     return () => { 
@@ -1753,7 +1661,7 @@ export const RecurringExchange = (props: {
               endpoint={props.endpoint}
               connection={connection}
               isVisible={isDdcaSetupModalVisible}
-              handleClose={hideDdcaSetupModal}
+              handleClose={onDdcaSetupModalClosed}
               handleOk={onFinishedDdca}
               onAfterClose={onAfterTransactionModalClosed}
               fromToken={fromMint && mintList[fromMint]}

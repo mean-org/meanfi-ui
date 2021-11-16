@@ -325,7 +325,7 @@
 		"stream-list": {
 			"no-streams": "Sem transferências disponíveis",
 			"subtitle-ended": "Transferência sem financiamento por 72h",
-			"subtitle-paused-otp": "Pagamento único agendado",
+			"subtitle-paused-otp": "Pagamento único agendado concluído",
 			"subtitle-paused-inbound": "Esta transferência está em espera devido à falta de fundos.",
 			"subtitle-paused-outbound": "Esta transferência está em espera devido à falta de fundos.",
 			"subtitle-pending-inbound": "Este contrato está aguardando sua aprovação",
@@ -495,6 +495,10 @@
 	"transfers": {
 		"screen-title": "Transfers",
 		"screen-subtitle": "Send money to anyone in the world faster"
+	},
+	"payroll": {
+		"screen-title": "Payroll",
+		"screen-subtitle": "Setup payroll for your employees"
 	},
 	"ui-language": {
 		"en": "Inglês",

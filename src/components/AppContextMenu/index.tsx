@@ -19,6 +19,8 @@ import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "../LanguageSelector";
 import { ReferFriendModal } from '../ReferFriendModal';
 import { notify } from '../../utils/notifications';
+import { isLocal } from '../../utils/ui';
+import { Link } from 'react-router-dom';
 
 export const AppContextMenu = () => {
 
@@ -148,6 +150,11 @@ export const AppContextMenu = () => {
           <span className="menu-item-text">{t('ui-menus.app-context-menu.help-support')}</span>
         </a>
       </Menu.Item>
+      {isLocal() && (
+        <Menu.Item key="/playground">
+          <Link to="/playground">Playground</Link>
+        </Menu.Item>
+      )}
     </Menu>
   );
 

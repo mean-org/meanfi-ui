@@ -325,7 +325,7 @@
 		"stream-list": {
 			"no-streams": "No streams available",
 			"subtitle-ended": "Transfer unfunded for 72h",
-			"subtitle-paused-otp": "Scheduled one-time payment",
+			"subtitle-paused-otp": "Scheduled one-time payment completed",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
 			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
 			"subtitle-pending-inbound": "This contract is pending your approval",
@@ -499,6 +499,10 @@
 	"transfers": {
 		"screen-title": "Transfers",
 		"screen-subtitle": "Send money to anyone in the world faster"
+	},
+	"payroll": {
+		"screen-title": "Payroll",
+		"screen-subtitle": "Setup payroll for your employees"
 	},
 	"ui-language": {
 		"en": "English",
