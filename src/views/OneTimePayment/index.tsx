@@ -220,9 +220,10 @@ export const OneTimePayment = () => {
 
   const handleFromCoinAmountChange = (e: any) => {
     const newValue = e.target.value;
-    console.log('valid?', isValidNumber(newValue));
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
     }

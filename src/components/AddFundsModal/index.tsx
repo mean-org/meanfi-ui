@@ -32,8 +32,14 @@ export const AddFundsModal = (props: {
   }
 
   const handleAmountChange = (e: any) => {
-    const newValue = isValidNumber(e.target.value) ? e.target.value : '';
-    setValue(newValue);
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setValue("");
+    } else if (newValue === '.') {
+      setValue(".");
+    } else if (isValidNumber(newValue)) {
+      setValue(newValue);
+    }
   };
 
   const getFeeAmount = (amount?: any): number => {

@@ -240,6 +240,8 @@ export const PayrollPayment = () => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
     }

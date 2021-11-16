@@ -371,6 +371,8 @@ export const WrapView = () => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
+    } else if (newValue === '.') {
+      setValue(".");
     } else if (isValidNumber(newValue)) {
       setValue(newValue);
     }
