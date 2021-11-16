@@ -50,6 +50,7 @@ import {
 
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
+import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 
 export const RecurringExchange = (props: {
   queryFromMint: string | null;
@@ -163,7 +164,7 @@ export const RecurringExchange = (props: {
   },[
     fromMint, 
     toMint
-  ])
+  ]);
 
   const isUnwrap = useCallback(() => {
 
@@ -178,7 +179,7 @@ export const RecurringExchange = (props: {
   },[
     fromMint, 
     toMint
-  ])
+  ]);
 
   const isStableSwap = (
     from: string | undefined,
@@ -207,7 +208,7 @@ export const RecurringExchange = (props: {
     }
 
     return false;
-  }
+  };
 
   // Calculates the max allowed amount to swap
   const getMaxAllowedSwapAmount = useCallback(() => {
@@ -241,6 +242,51 @@ export const RecurringExchange = (props: {
 
   },[
     renderCount
+  ]);
+
+  // Automatically updates if the balance is valid
+  const isValidBalance = useCallback(() => {
+
+    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
+      return false;
+    }
+
+    let valid = false;
+    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+
+    if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
+      valid = balance >= feesInfo.network;
+    } else {
+      valid = balance >= (feesInfo.total + feesInfo.network);
+    }
+
+    return valid;
+
+  }, [
+    connected, 
+    connection, 
+    feesInfo, 
+    fromMint, 
+    isWrap, 
+    userBalances
+  ]);
+
+  // Automatically updates if the swap amount is valid
+  const isSwapAmountValid = useCallback(() => {
+
+    if (!connection || !connected) {
+      return false;
+    }
+
+    const maxFromAmount = getMaxAllowedSwapAmount();
+    
+    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
+
+  }, [
+    connected, 
+    connection, 
+    fromSwapAmount, 
+    getMaxAllowedSwapAmount
   ]);
 
   useEffect(() => {
@@ -399,22 +445,7 @@ export const RecurringExchange = (props: {
       const list: any = { };
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
-      for (let info of TOKENS.filter(t => {
-        if (
-          t.symbol === "SOL" || 
-          t.symbol === "wSOL" || 
-          t.symbol === "USDC" || 
-          t.symbol === "USDT" ||
-          t.symbol === "ETH" || 
-          t.symbol === "BTC" ||
-          t.symbol === "RAY" ||
-          t.symbol === "SRM" ||
-          t.symbol === "ORCA"
-        ) {
-          return true;
-        }
-        return false;
-      })) {
+      for (let info of TOKENS) {
         let mint = JSON.parse(JSON.stringify(info));
         if (mint.logoURI) {
           list[mint.address] = mint;
@@ -596,6 +627,8 @@ export const RecurringExchange = (props: {
 
         const error = (_error: any) => {
           console.error(_error);
+          setSelectedClient(undefined);
+          setExchangeInfo(undefined);
           setRefreshing(false); 
         };
   
@@ -603,19 +636,21 @@ export const RecurringExchange = (props: {
   
           if (!clients || clients.length === 0) {
             error(new Error("Client not found"));
+            setSelectedClient(undefined);
+            setExchangeInfo(undefined);
             return;
           }
   
           //TODO: Remove clients filtering when HLA program implementation covers every client
-          const allowedClients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM));
-          setClients(allowedClients);
-          console.log(allowedClients);
-          const client = allowedClients[0].protocol.equals(SERUM)
+          clients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM) || c.protocol.equals(SABER));
+          // clients = clients.filter(c => c.protocol.equals(SERUM));
+          setClients(clients);
+          consoleOut('clients', clients, 'blue');
+          const client = clients[0].protocol.equals(SERUM)
             ? clients[0] as SerumClient 
             : clients[0] as LPClient;
   
           setSelectedClient(client);
-          setExchangeInfo(client.exchange);
           setRefreshing(false);
           setRefreshTime(30);
         };
@@ -823,110 +858,12 @@ export const RecurringExchange = (props: {
     setPreviousWalletConnectState
   ]);
 
-  // Automatically updates if the balance is valid
-  const isValidBalance = useCallback(() => {
-
-    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
-      return false;
-    }
-
-    let valid = false;
-    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
-
-    if (isWrap()) {
-      valid = balance >= feesInfo.network;
-    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-      valid = balance >= (feesInfo.total + feesInfo.network);
-    } else {
-      valid = balance >= feesInfo.network;
-    }
-
-    return valid;
-
-  }, [
-    connected, 
-    connection, 
-    feesInfo, 
-    fromMint, 
-    isWrap, 
-    userBalances
-  ]);
-
-  // Automatically updates if the swap amount is valid
-  const isSwapAmountValid = useCallback(() => {
-
-    if (!connection || !connected) {
-      return false;
-    }
-
-    const maxFromAmount = getMaxAllowedSwapAmount();
-    
-    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
-
-  }, [
-    connected, 
-    connection, 
-    fromSwapAmount, 
-    getMaxAllowedSwapAmount
-  ])
-
   // Updates the allowed to mints to select 
   useEffect(() => {
 
     if (!fromMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const orcaMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'ORCA')[0];
-
-      if (orcaMintInfo && fromMint === orcaMintInfo.address) {
-
-        const orcaList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
-
-        let allowedMints: any = {};
-
-        for (let item of orcaList) {
-          allowedMints[item.address] = item;
-        }
-    
-        setShowToMintList(allowedMints);
-
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== NATIVE_SOL_MINT.toBase58() && toMint !== WRAPPED_SOL_MINT.toBase58()) {
-          setToMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
- 
-      if (btcMintInfo && fromMint === btcMintInfo.address) {
-
-        const btcList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
-
-        let usdxMints: any = {};
-
-        for (let item of btcList) {
-          usdxMints[item.address] = item;
-        }
-    
-        setShowToMintList(usdxMints);
-        
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58() && toMint !== SRM_MINT.toBase58()) {
-          setToMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
       setShowToMintList(mintList);
     });
 
@@ -946,55 +883,7 @@ export const RecurringExchange = (props: {
     if (!toMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const orcaMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'ORCA')[0];
-
-      if (orcaMintInfo && toMint === orcaMintInfo.address) {
-
-        const orcaList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'SOL');
-
-        let allowedMints: any = {};
-
-        for (let item of orcaList) {
-          allowedMints[item.address] = item;
-        }
-    
-        setShowFromMintList(allowedMints);
-
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== NATIVE_SOL_MINT.toBase58() && fromMint !== WRAPPED_SOL_MINT.toBase58()) {
-          setFromMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
-
-      if (!btcMintInfo) { return; }
-
-      if (toMint && (toMint === btcMintInfo.address)) {
-
-        const btcList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT' || m.symbol === 'SRM');
-    
-        setShowFromMintList(btcList);
-        
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58() && fromMint !== SRM_MINT.toBase58()) {
-          setFromMint(USDC_MINT.toBase58());
-        }
-
-        return;
-      }
-
       setShowFromMintList(mintList);
-
     });
 
     return () => { 
@@ -1020,18 +909,18 @@ export const RecurringExchange = (props: {
 
       if (!connected) {
         label = t("transactions.validation.not-connected");
-      } else if (!fromMint || !toMint || !feesInfo) {
+      } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
-      } else if (fromSwapAmount === 0 && isValidBalance()) {
-        label = t("transactions.validation.no-amount");
+      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
+        label = t("transactions.validation.exchange-unavailable");
       } else if(!isValidBalance()) {
 
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo.aggregator + feesInfo.network;
+          needed = feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = feesInfo.total + feesInfo.network;
+          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
         } else {
           needed = feesInfo.network;
         }
@@ -1044,23 +933,33 @@ export const RecurringExchange = (props: {
 
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
+      } else if (fromSwapAmount === 0) {
+        label = t("transactions.validation.no-amount");
       } else if (!isSwapAmountValid()) {
-        console.log('fromSwapAmount', fromSwapAmount);
 
         let needed = 0;
-        const symbol = mintList[fromMint].symbol;
+        const fromSymbol = mintList[fromMint].symbol;
+        const isFromSerum = selectedClient && selectedClient.protocol.equals(SERUM);
+        const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
-        if (isWrap()) {
-          needed = fromSwapAmount + feesInfo.network;
-        } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-        } else if (isUnwrap()) {
-          needed = fromSwapAmount;
+        if (isFromSerum) {
+          const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
+          if (selectedClient.market.baseMintAddress.toBase58() === from) {
+            needed = selectedClient.market.minOrderSize + feesInfo.protocol;
+          } else {
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
+          }
         } else {
-          needed = fromSwapAmount + feesInfo.total;
+          if (isWrap()) {
+            needed = fromSwapAmount + feesInfo.network;
+          } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+            needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+          } else {
+            needed = fromSwapAmount + feesInfo.total;
+          }
         }
 
-        needed = parseFloat(needed.toFixed(4));
+        needed = parseFloat(needed.toFixed(6));
 
         if (needed === 0) {
           needed = parseFloat(needed.toFixed(mintList[fromMint].decimals));
@@ -1068,12 +967,26 @@ export const RecurringExchange = (props: {
 
         if (needed === 0) {
           label = t("transactions.validation.amount-low");
+        } else if (!isFromSerum) {
+          label = t("transactions.validation.insufficient-amount-needed", { 
+            amount: needed.toString(), 
+            symbol: fromSymbol 
+          });
         } else {
-          label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
+          const balance = parseFloat(fromBalance);
+          if (fromSwapAmount > (balance - feesInfo.network)) {
+            label = t("transactions.validation.insufficient-amount-needed", { 
+              amount: fromSwapAmount.toString(), 
+              symbol: fromSymbol 
+            });
+          } else {
+            label = t("transactions.validation.minimum-swap-amount", { 
+              mintAmount: needed.toString(),
+              fromMint: fromSymbol
+            });
+          }
         }
 
-      } else if (ddcaOption?.dcaInterval !== DcaInterval.OneTimeExchange) {
-        label = t("transactions.validation.valid-ddca-review");
       } else {    
         label = t("transactions.validation.valid-approve");
       }
@@ -1088,6 +1001,9 @@ export const RecurringExchange = (props: {
 
   }, [
     t, 
+    exchangeInfo,
+    selectedClient,
+    fromBalance,
     ddcaOption?.dcaInterval, 
     connected, 
     connection, 
@@ -1677,8 +1593,13 @@ export const RecurringExchange = (props: {
             shape="round"
             size="large"
             onClick={showDdcaSetup}
-            disabled={!isValidBalance() || !isSwapAmountValid() || (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) }
-            >
+            disabled={
+              !isValidBalance() || 
+              !isSwapAmountValid() || 
+              !exchangeInfo || 
+              !exchangeInfo?.amountOut || 
+              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) 
+            }>
             {transactionStartButtonLabel}
           </Button>
 
