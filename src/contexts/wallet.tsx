@@ -230,7 +230,6 @@ export function WalletProvider({ children = null as any }) {
   }, [wallet, autoConnect]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-
   const select = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
 
@@ -256,6 +255,7 @@ export function WalletProvider({ children = null as any }) {
           {WALLET_PROVIDERS.map((item, index) => {
             const isInstalled = getIsProviderInstalled(item);
             const onClick = function () {
+              if (item.name === WalletName.WalletConnect) { return; }
               if (wallet) {
                 wallet.disconnect();
               }
@@ -288,7 +288,10 @@ export function WalletProvider({ children = null as any }) {
                     style={{ marginRight: 8 }}
                   />
                 }>
-                {item.name}
+                <span className="align-middle">{item.name}</span>
+                {item.name === WalletName.WalletConnect && (
+                  <span className="badge small darken align-middle">Coming soon</span>
+                )}
               </Button>
             );
           })}

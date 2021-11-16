@@ -1123,9 +1123,12 @@ export const RecurringExchange = (props: {
     if (!input) { return; }
 
     const newValue = input.value;
-    
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount('');
+      setFromSwapAmount(0);
+    } else if (newValue === '.') {
+      setFromAmount('.');
       setFromSwapAmount(0);
     } else if (isValidNumber(newValue)) {
       setFromAmount(newValue);

@@ -11,8 +11,7 @@ export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 0.25;
 export const MAX_SLIPPAGE_VALUE = 20;
 
-export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
-export const POSITIVE_NUMBER_PATTERN = /^([0]*?([1-9]\d*)(\.0{1,2})?)$/;
+export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';

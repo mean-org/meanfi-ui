@@ -1,8 +1,19 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
-import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN } from "../constants";
+import {
+  Account,
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  TransactionSignature
+} from "@solana/web3.js";
+import { INPUT_AMOUNT_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
@@ -179,12 +190,7 @@ export function convert(
 
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
-  return NON_NEGATIVE_AMOUNT_PATTERN.test(str);
-}
-
-export function isPositiveNumber(str: string): boolean {
-  if (str === null || str === undefined ) { return false; }
-  return POSITIVE_NUMBER_PATTERN.test(str);
+  return INPUT_AMOUNT_PATTERN.test(str);
 }
 
 export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
