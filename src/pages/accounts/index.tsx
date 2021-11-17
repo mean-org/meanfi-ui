@@ -709,7 +709,7 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async (streams: StreamInfo[], userWallet: PublicKey) => {
 
-    consoleOut('Fetching updated list of streams...', '', 'blue');
+    // consoleOut('Fetching updated list of streams...', '', 'blue');
     if (!streams || !userWallet || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
@@ -736,23 +736,25 @@ export const AccountsView = () => {
         let streamBalance = 0;
 
         if (streamIsOutgoing) {
-            streamBalance = freshStream.escrowUnvestedAmount - freshStream.escrowVestedAmount;
+            streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
             resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
         } else {
-            streamBalance = freshStream.escrowVestedAmount - freshStream.escrowUnvestedAmount;
+            streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
             resume['incomingAmount'] = resume['incomingAmount'] + 1;  
         }
-        resume['totalNet'] = resume['totalNet'] + streamBalance;
+        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+        const rate = getPricePerToken(asset as UserTokenAccount);
+        resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
     }
-    
+
     resume['totalAmount'] = updatedStreams.length;
     setStreamsSummary(resume);
-    setLoadingStreamsSummary(true);
-    consoleOut('StreamsSummary:', resume, 'blue');
+    setLoadingStreamsSummary(false);
 
   }, [
     ms,
-    loadingStreamsSummary
+    loadingStreamsSummary,
+    getPricePerToken
   ]);
 
   // Live data calculation
@@ -762,7 +764,7 @@ export const AccountsView = () => {
       if (publicKey && streamList && streamList.length > 0) {
         refreshStreamSummary(streamList, publicKey);
       }
-    }, 5000);
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
@@ -772,30 +774,6 @@ export const AccountsView = () => {
     publicKey,
     streamList,
     refreshStreamSummary
-  ]);
-
-  // Streams refresh timeout
-  useEffect(() => {
-    let timer: any;
-
-    if (publicKey) {
-      if (!streamList) {
-        refreshStreamList(true);
-      }
-
-      if (streamList) {
-        timer = setInterval(() => {
-          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-          refreshStreamList(false);
-        }, STREAMS_REFRESH_TIMEOUT);
-      }
-    }
-
-    return () => clearInterval(timer);
-  }, [
-    publicKey,
-    streamList,
-    refreshStreamList
   ]);
 
   ///////////////
@@ -879,7 +857,7 @@ export const AccountsView = () => {
         {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
           <>
           <Link to="/accounts/streams">
-            <div key="streams" className="transaction-list-row">
+            <div key="streams" className="transaction-list-row money-streams-summary">
               <div className="icon-cell">
                 <div className="token-icon">
                   <div className="streams-conunt">
@@ -899,7 +877,7 @@ export const AccountsView = () => {
                 )}
               </div>
               <div className="rate-cell">
-                <div className="rate-amount">{streamsSummary.totalNet}</div>
+                <div className="rate-amount">${getFormattedRateAmount(streamsSummary.totalNet)}</div>
                 <div className="interval">net-change</div>
               </div>
             </div>
