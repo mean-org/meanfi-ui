@@ -8,7 +8,8 @@
 		"network-unknown": "Inconnu",
 		"non-ata-label": "Non Associated Token Account",
 		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
-		"streams-tooltip": "Click pour mettre à jour les transferts",
+		"money-streams": "Flux d'argent",
+		"streams-tooltip": "Cliquez pour actualiser les actifs",
 		"wallet-change": "Changement",
 		"wallet-provider": "Connecté avec"
 	},
@@ -290,6 +291,8 @@
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Recherche de transfert",
 		"screen-title": "Transferts  ",
+		"stream-stats-incoming": "Incoming",
+		"stream-stats-outgoing": "Outgoing",
 		"stream-activity": {
 			"action-deposit": "Dépôt",
 			"action-withdraw": "Retirer",
@@ -367,7 +370,7 @@
 		"search-input-placeholder": "Rechercher un token par nom, symbole ou adresse"
 	},
 	"transactions": {
-		"resume": "Resume",
+		"resume": "Summary",
 		"memo": {
 			"label": "Note",
 			"placeholder": "Ajouter une note supplémentaire"
