@@ -77,7 +77,6 @@ export const PayrollPayment = () => {
     streamProgramAddress,
     timeSheetRequirement,
     previousWalletConnectState,
-    setCurrentScreen,
     setSelectedToken,
     resetContractValues,
     setSelectedTokenBalance,
@@ -231,9 +230,8 @@ export const PayrollPayment = () => {
     resetContractValues();
     setSelectedStream(undefined);
     closeTransactionModal();
-    setCurrentScreen('streams');
-    setRedirect('/transfers');
     refreshStreamList(true);
+    setRedirect('/accounts/streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {

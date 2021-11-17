@@ -30,15 +30,12 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     referrals,
-    // currentScreen,
-    // loadingStreams,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,
     setReferrals,
     setStreamList,
-    setCurrentScreen,
     setSelectedAsset,
     setAccountAddress,
     refreshTokenBalance,
@@ -162,7 +159,7 @@ export const AppLayout = React.memo((props: any) => {
           setAccountAddress(walletAddress);
           setSelectedAsset(undefined);
 
-          if (location.pathname === '/transfers') {
+          if (location.pathname === '/accounts/streams') {
             refreshStreamList(true);
           }
         }
@@ -171,7 +168,6 @@ export const AppLayout = React.memo((props: any) => {
         consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         setStreamList([]);
-        setCurrentScreen('contract');
         refreshTokenBalance();
         notify({
           message: t('notifications.wallet-connection-event-title'),
@@ -190,7 +186,6 @@ export const AppLayout = React.memo((props: any) => {
     t,
     setReferrals,
     setStreamList,
-    setCurrentScreen,
     setSelectedAsset,
     setAccountAddress,
     refreshStreamList,
@@ -277,7 +272,6 @@ export const AppLayout = React.memo((props: any) => {
           <AppBar menuType="mobile" />
           {/* {isLocal() && (
             <div className="debug-bar">
-              <span className="ml-1">currentScreen:</span><span className="ml-1 font-bold fg-dark-active">{currentScreen || '-'}</span>
               <span className="ml-1">loadingStreams:</span><span className="ml-1 font-bold fg-dark-active">{loadingStreams ? 'true' : 'false'}</span>
             </div>
           )} */}

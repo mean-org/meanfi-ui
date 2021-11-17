@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, Redirect, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -10,12 +10,11 @@ import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { MEANFI_METRICS_URL, SOLANA_WALLET_GUIDE } from '../../constants';
+import { SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
-import { appConfig } from '../..';
 import { useOnlineStatus } from '../../contexts/online-status';
 
 const { SubMenu } = Menu;
@@ -23,36 +22,24 @@ const { SubMenu } = Menu;
 export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { connected } = useWallet();
   const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
     addAccountPanelOpen,
     isDepositOptionsModalVisible,
-    setLoadingStreams,
-    refreshStreamList,
     setDtailsPanelOpen,
-    setCustomStreamDocked,
     showDepositOptionsModal,
     hideDepositOptionsModal,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [redirect, setRedirect] = useState<string | null>(null);
 
   const isProd = (): boolean => {
     return environment === 'production' ? true : false;
   }
-
-  const onGoToTransfersClick = (e: any) => {
-    setCustomStreamDocked(false);
-    if (publicKey) {
-      setLoadingStreams(true);
-      refreshStreamList(true);
-    }
-  };
 
   const closeAllPanels = () => {
     if (detailsPanelOpen) {
@@ -71,10 +58,10 @@ export const AppBar = (props: { menuType: string }) => {
     }
   }
 
-  const getChartsLink = (): string => {
-    const bucket = appConfig.getConfig().influxDbBucket;
-    return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
-  }
+  // const getChartsLink = (): string => {
+  //   const bucket = appConfig.getConfig().influxDbBucket;
+  //   return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
+  // }
 
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
@@ -120,7 +107,7 @@ export const AppBar = (props: { menuType: string }) => {
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
       </Menu.Item>
       <Menu.Item key="/transfers">
-        <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
+        <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
       </Menu.Item>
       <Menu.Item key="deposits" onClick={showDepositOptionsModal} id="deposits-menu-item">
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
@@ -211,7 +198,6 @@ export const AppBar = (props: { menuType: string }) => {
   } else {
     return (
       <>
-        {redirect && (<Redirect to={redirect} />)}
         <div className="mobile-menu">
           <input type="checkbox" id="overlay-input" />
           <label htmlFor="overlay-input" id="overlay-button"><span></span></label>
@@ -225,7 +211,7 @@ export const AppBar = (props: { menuType: string }) => {
               </li>
               <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
                   className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
-                <Link to="/transfers" onClick={onGoToTransfersClick}>{t('ui-menus.main-menu.transfers')}</Link>
+                <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
               </li>
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>

@@ -73,7 +73,6 @@ export const RepeatingPayment = () => {
     transactionStatus,
     streamProgramAddress,
     previousWalletConnectState,
-    setCurrentScreen,
     setSelectedToken,
     resetContractValues,
     setSelectedTokenBalance,
@@ -226,7 +225,6 @@ export const RepeatingPayment = () => {
     setSelectedStream(undefined);
     closeTransactionModal();
     refreshStreamList(true);
-    setCurrentScreen('streams');
   };
 
   const handleFromCoinAmountChange = (e: any) => {

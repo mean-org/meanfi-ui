@@ -40,7 +40,6 @@ export interface TransactionStatusInfo {
 
 interface AppStateConfig {
   theme: string | undefined;
-  currentScreen: string | undefined;
   detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
@@ -81,7 +80,6 @@ interface AppStateConfig {
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
-  setCurrentScreen: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
@@ -124,7 +122,6 @@ interface AppStateConfig {
 
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
-  currentScreen: undefined,
   detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
@@ -168,7 +165,6 @@ const contextDefaultValues: AppStateConfig = {
   recurringBuys: [],
   loadingRecurringBuys: false,
   setTheme: () => {},
-  setCurrentScreen: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
@@ -227,7 +223,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
-  const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
 
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
@@ -272,10 +267,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
-
-  const setCurrentScreen = (name: string) => {
-    setSelectedTab(name);
-  }
 
   const setLoadingStreams = (state: boolean) => {
     updateLoadingStreams(state);
@@ -655,7 +646,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             setStreamActivity([]);
             updateSelectedStream(undefined);
             updateStreamDetail(undefined);
-            setSelectedTab('contract');
           }
           setStreamList(streams);
           updateLoadingStreams(false);
@@ -677,12 +667,12 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname === '/transfers' || location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
+    if (location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
       if (!streamList) {
         refreshStreamList(true);
       }
 
-      if (streamList && currentScreen === 'streams' && !customStreamDocked) {
+      if (streamList && !customStreamDocked) {
         timer = setInterval(() => {
           consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
           refreshStreamList(false);
@@ -694,7 +684,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [
     location,
     streamList,
-    currentScreen,
     customStreamDocked,
     refreshStreamList
   ]);
@@ -899,7 +888,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         theme,
-        currentScreen,
         detailsPanelOpen,
         isDepositOptionsModalVisible,
         tokenList,
@@ -938,7 +926,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         recurringBuys,
         loadingRecurringBuys,
         setTheme,
-        setCurrentScreen,
         setDtailsPanelOpen,
         showDepositOptionsModal,
         hideDepositOptionsModal,

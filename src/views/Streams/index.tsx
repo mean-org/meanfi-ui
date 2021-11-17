@@ -83,7 +83,6 @@ export const Streams = () => {
     streamDetail,
     tokenBalance,
     selectedToken,
-    currentScreen,
     loadingStreams,
     loadingStreamActivity,
     streamActivity,
@@ -93,7 +92,6 @@ export const Streams = () => {
     customStreamDocked,
     setStreamList,
     setSelectedToken,
-    setCurrentScreen,
     setStreamDetail,
     setSelectedStream,
     refreshStreamList,
@@ -141,7 +139,7 @@ export const Streams = () => {
 
   const updateLiveStreamData = useCallback(() => {
 
-    if (!streamDetail || currentScreen === 'contract') { return; }
+    if (!streamDetail) { return; }
 
     if (isStreamScheduled(streamDetail.startUtc as string)) {
       return;
@@ -186,7 +184,6 @@ export const Streams = () => {
 
   },[
     streamDetail,
-    currentScreen,
     setStreamDetail,
   ]);
 
@@ -353,7 +350,6 @@ export const Streams = () => {
 
   const onActivateContractScreen = () => {
     setStreamList([]);
-    setCurrentScreen('contract');
     setCustomStreamDocked(false);
   };
 
