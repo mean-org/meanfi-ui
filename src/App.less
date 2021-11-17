@@ -6034,6 +6034,11 @@ code {
     transition-timing-function: ease-in-out;
 }
 
+.bounce {
+  animation: bounce 0.6s infinite alternate;
+  -webkit-animation: bounce 0.6s infinite alternate;
+}
+
 // Animations
 @keyframes rotate {
   100% {
@@ -6076,5 +6081,23 @@ code {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes bounce {
+  from {
+    transform: translateY(4px);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+@-webkit-keyframes bounce {
+  from {
+    transform: translateY(4px);
+  }
+  to {
+    transform: translateY(-4px);
   }
 }

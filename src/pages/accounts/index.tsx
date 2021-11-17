@@ -869,9 +869,9 @@ export const AccountsView = () => {
               </div>
               <div className="operation-vector">
                 {streamsSummary.totalNet > 0 ? (
-                  <ArrowUpOutlined className="mean-svg-icons success" />
+                  <ArrowUpOutlined className="mean-svg-icons success bounce" />
                 ) : (
-                  <ArrowDownOutlined className="mean-svg-icons error" />
+                  <ArrowDownOutlined className="mean-svg-icons error bounce" />
                 )}
               </div>
               <div className="rate-cell">
