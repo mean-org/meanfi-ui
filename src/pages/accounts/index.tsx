@@ -30,7 +30,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isProd, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -82,7 +82,6 @@ export const AccountsView = () => {
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
-    refreshStreamList,
     setTransactions,
     setSelectedAsset,
     setAccountAddress,
@@ -250,17 +249,17 @@ export const AccountsView = () => {
             : null;
   },[accountAddress]);
 
-  const getPricePerToken = (token: UserTokenAccount): number => {
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
 
     return coinPrices && coinPrices[symbol]
       ? coinPrices[symbol]
       : 0;
-  }
+  }, [coinPrices])
 
   const canActivateMergeTokenAccounts = (): boolean => {
-    if (selectedAsset && tokenAccountGroups) {
+    if (publicKey && selectedAsset && tokenAccountGroups) {
       const acc = tokenAccountGroups.has(selectedAsset.address);
       if (acc) {
         const item = tokenAccountGroups.get(selectedAsset.address);
@@ -709,7 +708,6 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async (streams: StreamInfo[], userWallet: PublicKey) => {
 
-    // consoleOut('Fetching updated list of streams...', '', 'blue');
     if (!streams || !userWallet || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);

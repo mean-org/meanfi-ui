@@ -677,7 +677,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname === '/transfers' || location.pathname === '/accounts') {
+    if (location.pathname === '/transfers' || location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
       if (!streamList) {
         refreshStreamList(true);
       }
