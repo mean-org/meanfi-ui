@@ -1,5 +1,16 @@
-import React, { useCallback, useContext } from 'react';
-import { ArrowLeftOutlined, CopyOutlined, EditOutlined, LoadingOutlined, QrcodeOutlined, ReloadOutlined, SyncOutlined } from '@ant-design/icons';
+import React, { useCallback, useContext, useMemo } from 'react';
+import {
+  ArrowDownOutlined,
+  ArrowLeftOutlined,
+  ArrowUpOutlined,
+  CopyOutlined,
+  EditOutlined,
+  LoadingOutlined,
+  MergeCellsOutlined,
+  QrcodeOutlined,
+  ReloadOutlined,
+  SyncOutlined
+} from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, ParsedConfirmedTransactionMeta, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
@@ -10,39 +21,65 @@ import { FetchStatus, UserTokenAccount } from '../../models/transactions';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { Identicon } from '../../components/Identicon';
-import { fetchAccountTokens, getAmountFromLamports, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import {
+  fetchAccountTokens,
+  findATokenAddress,
+  getAmountFromLamports,
+  getFormattedRateAmount,
+  getTokenAmountAndSymbolByTokenAddress,
+  shortenAddress
+} from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isProd, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { SOLANA_WALLET_GUIDE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS, EMOJIS, TRANSACTIONS_PER_PAGE, ACCOUNTS_LOW_BALANCE_LIMIT, FALLBACK_COIN_IMAGE } from '../../constants';
+import {
+  SOLANA_WALLET_GUIDE,
+  SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
+  EMOJIS,
+  TRANSACTIONS_PER_PAGE,
+  ACCOUNTS_LOW_BALANCE_LIMIT,
+  FALLBACK_COIN_IMAGE,
+  STREAMS_REFRESH_TIMEOUT
+} from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
-import { IconCopy, IconDownload } from '../../Icons';
+import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { useHistory } from 'react-router-dom';
+import { Link, Redirect, Route, useHistory, useLocation } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { refreshCachedRpc } from '../../models/connections-hq';
+import { AccountTokenParsedInfo } from '../../models/token';
+import { getTokenByMintAddress } from '../../utils/tokens';
+import { AccountsMergeModal } from '../../components/AccountsMergeModal';
+import { TransactionStatus } from '../../models/enums';
+import { Streams } from '../../views';
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { initialSummary, StreamsSummary } from '../../models/streams';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
+  const location = useLocation();
   const connection = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
     coinPrices,
     userTokens,
     splTokenList,
+    streamList,
     transactions,
     selectedAsset,
     accountAddress,
     lastTxSignature,
     detailsPanelOpen,
+    streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
     setTransactions,
@@ -52,10 +89,9 @@ export const AccountsView = () => {
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     showDepositOptionsModal,
-    //temp
-    streamProgramAddress
-
+    setTransactionStatus
   } = useContext(AppStateContext);
+  const [redirect, setRedirect] = useState<string | null>(null);
 
   const { t } = useTranslation('common');
   const history = useHistory();
@@ -68,12 +104,17 @@ export const AccountsView = () => {
   const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
   const [extraUserTokensSorted, setExtraUserTokensSorted] = useState<UserTokenAccount[]>([]);
   const [solAccountItems, setSolAccountItems] = useState(0);
+  const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
+  const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
+  // const [popoverVisible, setPopoverVisible] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(false);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -201,21 +242,50 @@ export const AccountsView = () => {
      * Else
      *    Reflect no transactions
      */
-    return asset?.ataAddress
-            ? asset.ataAddress !== NATIVE_SOL_MINT.toBase58()
-              ? new PublicKey(asset.ataAddress)
+    return asset?.publicAddress
+            ? asset.publicAddress !== NATIVE_SOL_MINT.toBase58()
+              ? new PublicKey(asset.publicAddress)
               : new PublicKey(accountAddress)
             : null;
   },[accountAddress]);
 
-  const getPricePerToken = (token: UserTokenAccount): number => {
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
 
     return coinPrices && coinPrices[symbol]
       ? coinPrices[symbol]
       : 0;
+  }, [coinPrices])
+
+  const canActivateMergeTokenAccounts = (): boolean => {
+    if (publicKey && selectedAsset && tokenAccountGroups) {
+      const acc = tokenAccountGroups.has(selectedAsset.address);
+      if (acc) {
+        const item = tokenAccountGroups.get(selectedAsset.address);
+        return item && item.length > 1 ? true : false;
+      }
+    }
+    return false;
   }
+
+  // const handlePopoverVisibleChange = (visibleChange: boolean) => {
+  //   setPopoverVisible(visibleChange);
+  // };
+
+  // const onTokenAccountGroupClick = (e: any) => {
+  //   consoleOut('onTokenAccountGroupClick event:', e, 'blue');
+  // }
+
+  // Token Merger Modal
+  // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
+  const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
+  const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
+  const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
+  const onFinishedTokenMerge = useCallback(() => {
+    hideTokenMergerModal();
+    setShouldLoadTokens(true);
+  }, [hideTokenMergerModal]);
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -230,6 +300,15 @@ export const AccountsView = () => {
     customConnection
   ]);
 
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(connection.endpoint, streamProgramAddress),
+  [connection.endpoint, streamProgramAddress]);
+
+  const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
+    const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
+    return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
+  }, [accountAddress]);
+
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   useEffect(() => {
     if (!connection || !customConnection || !accountAddress || !shouldLoadTokens || !userTokens || !splTokenList) {
@@ -242,7 +321,7 @@ export const AccountsView = () => {
         setShouldLoadTokens(false);
         setTokensLoaded(false);
   
-        const meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+        let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
         const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
         const pk = new PublicKey(accountAddress);
         let nativeBalance = 0;
@@ -252,7 +331,7 @@ export const AccountsView = () => {
           .then(solBalance => {
             nativeBalance = solBalance || 0;
             meanTokensCopy[0].balance = nativeBalance / LAMPORTS_PER_SOL;
-            meanTokensCopy[0].ataAddress = accountAddress;
+            meanTokensCopy[0].publicAddress = accountAddress;
             // We have the native account balance, now get the token accounts' balance
             // but first, set all balances to zero
             for (let index = 1; index < meanTokensCopy.length; index++) {
@@ -269,6 +348,39 @@ export const AccountsView = () => {
                       balance: i.parsedInfo.tokenAmount.uiAmount || 0
                     };
                   }), 'blue');
+
+                  // Group the token accounts by mint.
+                  const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
+                  const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
+                  accTks.forEach((ta) => {
+                    const key = ta.parsedInfo.mint;
+                    const info = getTokenByMintAddress(key);
+                    const updatedTa = Object.assign({}, ta, {
+                      description: info ? `${info.name} (${info.symbol})` : ''
+                    });
+                    if (groupedTokenAccounts.has(key)) {
+                      const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
+                      current.push(updatedTa);
+                    } else {
+                      groupedTokenAccounts.set(key, [updatedTa]);
+                    }
+                  });
+                  // Keep only groups with more than 1 item
+                  groupedTokenAccounts.forEach((item, key) => {
+                    if (item.length > 1) {
+                      tokenGroups.set(key, item);
+                    }
+                  });
+                  if (tokenGroups.size > 0) {
+                    consoleOut('tokenGroups:', tokenGroups, 'blue');
+                  }
+                  // Save groups for possible further merging
+                  if (tokenGroups.size) {
+                    setTokenAccountGroups(tokenGroups);
+                  } else {
+                    setTokenAccountGroups(undefined);
+                  }
+
                   // Update balances in the mean token list
                   accTks.forEach(item => {
                     let tokenIndex = 0;
@@ -276,40 +388,41 @@ export const AccountsView = () => {
                     tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
                     if (tokenIndex !== -1) {
                       // If we didn't already filled info for this associated token address
-                      if (!meanTokensCopy[tokenIndex].ataAddress) {
+                      if (!meanTokensCopy[tokenIndex].publicAddress) {
                         // Add it
-                        meanTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
+                        meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
                         meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      } else if (meanTokensCopy[tokenIndex].ataAddress !== item.pubkey.toBase58()) {
-                        // If we did and the ataAddress is different/new then duplicate this item with the new info
-                        const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex]));
-                        newItem.ataAddress = item.pubkey.toBase58();
+                      } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+                        // If we did and the publicAddress is different/new then duplicate this item with the new info
+                        const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
+                        newItem.publicAddress = item.pubkey.toBase58();
                         newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                         meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
                       }
                     }
                   });
-                  consoleOut('intersected List:', meanTokensCopy, 'blue');
+
                   // Update balances in the SPL token list
                   accTks.forEach(item => {
                     const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
                     if (tokenIndex !== -1) {
-                      splTokensCopy[tokenIndex].ataAddress = item.pubkey.toBase58();
+                      splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
                       splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
                     }
                   });
+
                   // Create a list containing the tokens for the user accounts not in the meanTokensCopy
                   const intersectedList = new Array<UserTokenAccount>();
                   accTks.forEach(item => {
                     // Loop through the user token accounts and add the token account to the list: meanTokensCopy
-                    // If it is not already on the list (diferentiate associated token accounts of the same mint)
-                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.ataAddress === item.pubkey.toBase58());
+                    // If it is not already on the list (diferentiate token accounts of the same mint)
+                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
                     const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
                     if (tokenFromSplTokenList && !isTokenAccountInTheList) {
                       intersectedList.push(tokenFromSplTokenList);
                     }
                   });
-                  const sortedList = intersectedList.sort((a, b) => {
+                  let sortedList = intersectedList.sort((a, b) => {
                     var nameA = a.symbol.toUpperCase();
                     var nameB = b.symbol.toUpperCase();
                     if (nameA < nameB) {
@@ -321,27 +434,31 @@ export const AccountsView = () => {
                     // names must be equal
                     return 0;
                   });
-                  meanTokensCopy.forEach((item: UserTokenAccount, index: number) => item.displayIndex = index);
-                  sortedList.forEach((item: UserTokenAccount, index: number) => item.displayIndex = meanTokensCopy.length + index);
+                  meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                    item.displayIndex = index;
+                    item.isAta = await updateAtaFlag(item);
+                  });
+                  sortedList.forEach(async (item: UserTokenAccount, index: number) => {
+                    item.displayIndex = meanTokensCopy.length + index;
+                    item.isAta = await updateAtaFlag(item);
+                  });
+                  // Concatenate both lists
                   const finalList = meanTokensCopy.concat(sortedList);
+                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   // Report in the console for debugging
                   const tokenTable: any[] = [];
-                  finalList.forEach((item: UserTokenAccount, index: number) => {
-                    if (item.ataAddress && item.address) {
-                      tokenTable.push({
-                        ataAddress: shortenAddress(item.ataAddress, 8),
-                        address: shortenAddress(item.address, 8),
-                        symbol: item.symbol,
-                        balance: item.balance
-                      });
-                    }
-                  });
+                  finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                      pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                      mintAddress: shortenAddress(item.address, 6),
+                      symbol: item.symbol,
+                      balance: item.balance
+                    })
+                  );
                   console.table(tokenTable);
                   // Update the state
                   setMeanSupportedTokens(meanTokensCopy);
                   setExtraUserTokensSorted(sortedList);
                   setAccountTokens(finalList);
-                  consoleOut('Tokens (sorted):', finalList, 'blue');
                   setTokensLoaded(true);
                 } else {
                   console.error('could not get account tokens');
@@ -382,6 +499,7 @@ export const AccountsView = () => {
     connection,
     customConnection,
     shouldLoadTokens,
+    updateAtaFlag,
     selectAsset
   ]);
 
@@ -400,7 +518,7 @@ export const AccountsView = () => {
 
     if (txs && txs.length) {
 
-      const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+      const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
       // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
         const meta = tx.parsedTransaction.meta;
@@ -419,7 +537,7 @@ export const AccountsView = () => {
     }
   }, [
     accountAddress,
-    selectedAsset?.ataAddress
+    selectedAsset?.publicAddress
   ]);
 
   // Load the transactions when signaled
@@ -523,6 +641,7 @@ export const AccountsView = () => {
         consoleOut('User is disconnecting...', '', 'blue');
         setSolAccountItems(0);
         setTransactions(undefined);
+        setStreamsSummary(initialSummary);
       }
       setTimeout(() => {
         setCanShowAccountDetails(true);
@@ -587,6 +706,74 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
+  const refreshStreamSummary = useCallback(async (streams: StreamInfo[], userWallet: PublicKey) => {
+
+    if (!streams || !userWallet || loadingStreamsSummary) { return; }
+
+    setLoadingStreamsSummary(true);
+
+    let resume: StreamsSummary = {
+      totalNet: 0,
+      incomingAmount: 0,
+      outgoingAmount: 0,
+      totalAmount: 0
+    };
+
+    const updatedStreams = await ms.refreshStreams(streams, userWallet, userWallet);
+
+    for (let stream of updatedStreams) {
+
+        let freshStream = await ms.refreshStream(stream);
+
+        const streamIsOutgoing = 
+            freshStream.treasurerAddress &&
+            typeof freshStream.treasurerAddress !== 'string'
+                ? freshStream.treasurerAddress.equals(userWallet)
+                : freshStream.treasurerAddress === userWallet.toBase58();
+
+        let streamBalance = 0;
+
+        if (streamIsOutgoing) {
+            streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
+            resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+        } else {
+            streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
+            resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        }
+        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+        const rate = getPricePerToken(asset as UserTokenAccount);
+        resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
+    }
+
+    resume['totalAmount'] = updatedStreams.length;
+    setStreamsSummary(resume);
+    setLoadingStreamsSummary(false);
+
+  }, [
+    ms,
+    loadingStreamsSummary,
+    getPricePerToken
+  ]);
+
+  // Live data calculation
+  useEffect(() => {
+
+    const timeout = setTimeout(() => {
+      if (publicKey && streamList && streamList.length > 0) {
+        refreshStreamSummary(streamList, publicKey);
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    publicKey,
+    streamList,
+    refreshStreamSummary
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -603,6 +790,9 @@ export const AccountsView = () => {
         ? true
         : false;
     }
+    const isNonAta = asset.address !== NATIVE_SOL_MINT.toBase58() && !asset.isAta && asset.publicAddress
+          ? true
+          : false;
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken()
@@ -612,13 +802,25 @@ export const AccountsView = () => {
                 : ''}`
           }>
         <div className="icon-cell">
-          <div className="token-icon">
-            {asset.logoURI ? (
-              <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-            ) : (
-              <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-            )}
-          </div>
+          {isNonAta ? (
+            <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
+              <div className="token-icon grayed-out">
+                {asset.logoURI ? (
+                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+                ) : (
+                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+                )}
+              </div>
+            </Tooltip>
+          ) : (
+            <div className="token-icon">
+              {asset.logoURI ? (
+                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+              ) : (
+                <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+              )}
+            </div>
+          )}
         </div>
         <div className="description-cell">
           <div className="title">
@@ -629,7 +831,7 @@ export const AccountsView = () => {
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">{asset.name}</div>
+          <div className="subtitle text-truncate">{isNonAta ? t('account-area.non-ata-label') : asset.name}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
@@ -649,13 +851,47 @@ export const AccountsView = () => {
     <>
     {accountTokens && accountTokens.length ? (
       <>
+        {/* Render Money Streams item if they exist and wallet is connected */}
+        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
+          <>
+          <Link to="/accounts/streams">
+            <div key="streams" className="transaction-list-row money-streams-summary">
+              <div className="icon-cell">
+                <div className="token-icon">
+                  <div className="streams-conunt">
+                    <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="description-cell">
+                <div className="title">{t('account-area.money-streams')}</div>
+                <div className="subtitle text-truncate">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+              </div>
+              <div className="operation-vector">
+                {streamsSummary.totalNet > 0 ? (
+                  <ArrowUpOutlined className="mean-svg-icons success bounce" />
+                ) : (
+                  <ArrowDownOutlined className="mean-svg-icons error bounce" />
+                )}
+              </div>
+              <div className="rate-cell">
+                <div className="rate-amount">${getFormattedRateAmount(streamsSummary.totalNet)}</div>
+                <div className="interval">net-change</div>
+              </div>
+            </div>
+          </Link>
+          </>
+        )}
+        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
+          <div key="separator1" className="pinned-token-separator"></div>
+        )}
         {/* Render mean supported tokens */}
         {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
           meanSupportedTokens.map((asset, index) => renderToken(asset, index))
         )}
         {/* Render divider if there are extra tokens */}
         {(accountTokens.length > meanSupportedTokens.length) && (
-          <div key="separator" className="pinned-token-separator"></div>
+          <div key="separator2" className="pinned-token-separator"></div>
         )}
         {/* Render extra user tokens */}
         {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
@@ -675,7 +911,7 @@ export const AccountsView = () => {
   );
 
   const renderTransactions = () => {
-    const isScanningWallet = accountAddress === selectedAsset?.ataAddress ? true : false;
+    const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
     if (transactions) {
       if (isScanningWallet) {
         // Get amount change for each tx
@@ -775,7 +1011,7 @@ export const AccountsView = () => {
           <Button className="secondary-button" shape="round" size="middle" type="default"
                   onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
-          {selectedAsset?.ataAddress !== accountAddress && (
+          {selectedAsset?.publicAddress !== accountAddress && (
             <Button className="secondary-button" shape="round" size="middle" type="default"
                     onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
           )}
@@ -786,26 +1022,103 @@ export const AccountsView = () => {
   };
 
   const shallWeDraw = (): boolean => {
-    return ((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
-            (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+    return ((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
+            (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
       ? true
       : false;
   }
 
+  /*
+  const popoverTitleContent = (
+    <div className="flexible-left">
+      <div className="left">
+        {t('assets.merge-accounts-link')}
+      </div>
+      <div className="right">
+        <Button
+          type="default"
+          shape="circle"
+          icon={<CloseOutlined />}
+          onClick={() => handlePopoverVisibleChange(false)}
+        />
+      </div>
+    </div>
+  );
+
+  const popoverBodyContent = () => {
+    const output: JSX.Element[] = [];
+    <>
+      {(tokenAccountGroups && tokenAccountGroups.size) && (
+        <>
+        {tokenAccountGroups.forEach((value, keyName) => {
+          const asset = getTokenByMintAddress(keyName);
+          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            event.currentTarget.src = FALLBACK_COIN_IMAGE;
+            event.currentTarget.className = "error";
+          };
+          output.push(
+            <div className="transaction-list-row" key={keyName} onClick={onTokenAccountGroupClick}>
+              <div className="icon-cell">
+                <div className="token-icon">
+                  {asset?.logoURI ? (
+                    <img alt={`${asset.name}`} width={30} height={30} src={asset?.logoURI} onError={imageOnErrorHandler} />
+                  ) : (
+                    <Identicon address={keyName} style={{ width: "30", display: "inline-flex" }} />
+                  )}
+                </div>
+              </div>
+              <div className="description-cell">
+                <div className="title">
+                  {asset ? asset.symbol : '-'}
+                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                    {value.length} {t('assets.accounts-label')}
+                  </span>
+                </div>
+                <div className="subtitle text-truncate">{asset ? asset.name : '-'}</div>
+              </div>
+              <div className="rate-cell">
+                <span className="flat-button fg-orange-red" onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  consoleOut('Merge onClick event:', e, 'blue');
+                  setSelectedTokenMergeGroup(value);
+                  showTokenMergerModal();
+                  // setPopoverVisible(false);
+                }}>
+                  <MergeCellsOutlined />
+                  <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
+                </span>
+              </div>
+            </div>
+          );
+        })}
+        </>
+      )}
+    </>
+    return (
+      <div className="token-merger">
+        {output}
+      </div>
+    );
+  }
+  */
+
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
       <Helmet>
         <title>Accounts - Mean Finance</title>
         <link rel="canonical" href="https://app.meanfi.com/accounts" />
         <meta name="description" content="Water flows, and now, money does too. Welcome to Mean Finance, your money unleashed!" />
         <meta name="google-site-verification" content="u-gc96PrpV7y_DAaA0uoo4tc2ffcgi_1r6hqSViM-F8" />
       </Helmet>
+
       <div className="container main-container">
 
-        {/* {window.location.hostname === 'localhost' && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">shallWeDraw:</span><span className="ml-1 font-bold fg-dark-active">{shallWeDraw() ? 'true' : 'false'}</span>
+            <span className="ml-1">tokenAccountGroups:</span><span className="ml-1 font-bold fg-dark-active">{tokenAccountGroups && tokenAccountGroups.size ? 'true' : 'false'}</span>
           </div>
         )} */}
 
@@ -814,228 +1127,256 @@ export const AccountsView = () => {
 
         <div className={(canShowAccountDetails && accountAddress) ? 'interaction-area' : 'interaction-area flex-center h-75'}>
 
-          {canShowAccountDetails && accountAddress ? (
-            <div className={`transactions-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+          {location.pathname === '/accounts/streams' ? (
+            <Streams />
+          ) : (
+            <>
+              {canShowAccountDetails && accountAddress ? (
+                <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
-              {/* Left / top panel*/}
-              <div className="tokens-container">
-                <div className="transactions-heading">
-                  <span className="title">{t('assets.screen-title')}</span>
-                  <div className="user-address">
-                    <span className="fg-secondary">
-                      (<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`}>
-                        {shortenAddress(accountAddress, 5)}
-                      </a>)
-                    </span>
-                    {!connected && (
-                      <span className="icon-button-container">
-                        <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="middle"
-                            icon={<EditOutlined />}
-                            onClick={handleScanAnotherAddressButtonClick}
-                          />
-                        </Tooltip>
-                      </span>
-                    )}
-                    <span className="icon-button-container">
-                      <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          icon={<CopyOutlined />}
-                          onClick={onCopyAddress}
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                </div>
-                <div className="inner-container">
-                  <div className="item-block vertical-scroll">
-                    {renderTokenList}
-                  </div>
-                  {(accountTokens && accountTokens.length > 0) && (
-                    <div className="bottom-ctas">
-                      <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
-                      <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right / down panel */}
-              <div className="transaction-list-container">
-                <div className="transactions-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
-                <div className="inner-container">
-                  {/* Activity table heading */}
-                  {shallWeDraw() && (
-                    <div className="stats-row">
-                      <div className="fetch-control">
-                        <span className="icon-button-container">
-                          {status === FetchStatus.Fetching ? (
-                            <Tooltip placement="bottom" title="Stop">
-                              <span className="icon-container"><SyncOutlined spin /></span>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip placement="bottom" title="Refresh">
+                  {/* Left / top panel */}
+                  <div className="meanfi-two-panel-left">
+                    <div className="meanfi-panel-heading">
+                      <span className="title">{t('assets.screen-title')}</span>
+                      <div className="user-address">
+                        <span className="fg-secondary">
+                          (<a className="simplelink underline-on-hover" target="_blank" rel="noopener noreferrer"
+                              href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${accountAddress}${getSolanaExplorerClusterParam()}`}>
+                            {shortenAddress(accountAddress, 5)}
+                          </a>)
+                        </span>
+                        {!connected && (
+                          <span className="icon-button-container">
+                            <Tooltip placement="bottom" title={t('assets.account-address-change-cta')}>
                               <Button
                                 type="default"
                                 shape="circle"
-                                size="small"
-                                icon={<ReloadOutlined />}
-                                onClick={reloadSwitch}
+                                size="middle"
+                                icon={<EditOutlined />}
+                                onClick={handleScanAnotherAddressButtonClick}
                               />
                             </Tooltip>
-                          )}
+                          </span>
+                        )}
+                        <span className="icon-button-container">
+                          <Tooltip placement="bottom" title={t('assets.account-address-copy-cta')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<CopyOutlined />}
+                              onClick={onCopyAddress}
+                            />
+                          </Tooltip>
                         </span>
                       </div>
-                      <div className="item-list-header compact">
-                        <div className="header-row">
-                          <div className="std-table-cell first-cell">&nbsp;</div>
-                          <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
-                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
-                          <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
-                          <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                    </div>
+                    <div className="inner-container">
+                      <div className="item-block vertical-scroll">
+                        {renderTokenList}
+                      </div>
+                      {(accountTokens && accountTokens.length > 0) && (
+                        <div className="thin-bottom-ctas">
+                          <Switch size="small" checked={hideLowBalances} onClick={() => setHideLowBalances(value => !value)} />
+                          <span className="ml-1 simplelink" onClick={() => setHideLowBalances(value => !value)}>{t('assets.switch-hide-low-balances')}</span>
+                          {(canActivateMergeTokenAccounts()) && (
+                            <span className="flat-button ml-2" onClick={() => {
+                              if (selectedAsset && tokenAccountGroups) {
+                                const acc = tokenAccountGroups.has(selectedAsset.address);
+                                if (acc) {
+                                  const item = tokenAccountGroups.get(selectedAsset.address);
+                                  if (item) {
+                                    setSelectedTokenMergeGroup(item);
+                                    // Reset transaction status in the AppState
+                                    setTransactionStatus({
+                                      lastOperation: TransactionStatus.Iddle,
+                                      currentOperation: TransactionStatus.Iddle
+                                    });
+                                    showTokenMergerModal();
+                                  }
+                                }
+                              }
+                            }}>
+                              <MergeCellsOutlined />
+                              <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right / down panel */}
+                  <div className="meanfi-two-panel-right">
+                    <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+                    <div className="inner-container">
+                      {/* Activity table heading */}
+                      {shallWeDraw() && (
+                        <div className="stats-row">
+                          <div className="fetch-control">
+                            <span className="icon-button-container">
+                              {status === FetchStatus.Fetching ? (
+                                <Tooltip placement="bottom" title="Stop">
+                                  <span className="icon-container"><SyncOutlined spin /></span>
+                                </Tooltip>
+                              ) : (
+                                <Tooltip placement="bottom" title="Refresh">
+                                  <Button
+                                    type="default"
+                                    shape="circle"
+                                    size="small"
+                                    icon={<ReloadOutlined />}
+                                    onClick={reloadSwitch}
+                                  />
+                                </Tooltip>
+                              )}
+                            </span>
+                          </div>
+                          <div className="item-list-header compact">
+                            <div className="header-row">
+                              <div className="std-table-cell first-cell">&nbsp;</div>
+                              <div className="std-table-cell responsive-cell">{t('assets.history-table-activity')}</div>
+                              <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-amount')}</div>
+                              <div className="std-table-cell responsive-cell pr-2 text-right">{t('assets.history-table-postbalance')}</div>
+                              <div className="std-table-cell responsive-cell pl-2">{t('assets.history-table-date')}</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {/* Activity list */}
+                      <div className={((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
+                                      (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+                                      ? 'transaction-list-data-wrapper vertical-scroll'
+                                      : 'transaction-list-data-wrapper empty'}>
+                        <div className="activity-list h-100">
+                          {
+                            status === FetchStatus.Fetching && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
+                                                                (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                              <div className="h-100 flex-center">
+                                <Spin indicator={antIcon} />
+                              </div>
+                            ) : selectedAsset?.balance === 0 && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
+                                                                  (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                              renderTokenBuyOptions()
+                            ) : (transactions && transactions.length) ? (
+                              <div className="item-list-body compact">
+                                {renderTransactions()}
+                              </div>
+                            ) : status === FetchStatus.Fetched && (!transactions || transactions.length === 0) ? (
+                              <div className="h-100 flex-center">
+                                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
+                              </div>
+                            ) : status === FetchStatus.FetchFailed && (
+                              <Result status="warning" title={t('assets.loading-error')} />
+                            )
+                          }
                         </div>
                       </div>
-                    </div>
-                  )}
-                  {/* Activity list */}
-                  <div className={((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
-                                   (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0))
-                                   ? 'transaction-list-data-wrapper vertical-scroll'
-                                   : 'transaction-list-data-wrapper empty'}>
-                    <div className="activity-list h-100">
-                      {
-                        status === FetchStatus.Fetching && !((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
-                                                             (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
-                          <div className="h-100 flex-center">
-                            <Spin indicator={antIcon} />
-                          </div>
-                        ) : selectedAsset?.balance === 0 && !((accountAddress !== selectedAsset?.ataAddress && transactions && transactions.length > 0) ||
-                                                              (accountAddress === selectedAsset?.ataAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
-                          renderTokenBuyOptions()
-                        ) : (transactions && transactions.length) ? (
-                          <div className="item-list-body compact">
-                            {renderTransactions()}
-                          </div>
-                        ) : status === FetchStatus.Fetched && (!transactions || transactions.length === 0) ? (
-                          <div className="h-100 flex-center">
-                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
-                          </div>
-                        ) : status === FetchStatus.FetchFailed && (
-                          <Result status="warning" title={t('assets.loading-error')} />
-                        )
-                      }
+                      {/* Load more cta */}
+                      {lastTxSignature && (
+                        <div className="stream-share-ctas">
+                          <Button
+                            type="ghost"
+                            shape="round"
+                            size="small"
+                            disabled={status === FetchStatus.Fetching}
+                            onClick={() => startSwitch()}>
+                            {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {/* Load more cta */}
-                  {lastTxSignature && (
-                    <div className="stream-share-ctas">
+
+                </div>
+              ) : (
+                <>
+                  <div className="boxed-area add-account">
+                    {accountAddress && (
+                      <div className="back-button">
+                        <span className="icon-button-container">
+                          <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              className="hidden-xs"
+                              icon={<ArrowLeftOutlined />}
+                              onClick={handleBackToAccountDetailsButtonClick}
+                            />
+                          </Tooltip>
+                        </span>
+                      </div>
+                    )}
+                    <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
+                    <div className="flexible-left mb-3">
+                      <div className="transaction-field left">
+                        <div className="transaction-field-row">
+                          <span className="field-label-left">{t('assets.account-address-label')}</span>
+                          <span className="field-label-right">&nbsp;</span>
+                        </div>
+                        <div className="transaction-field-row main-row">
+                          <span className="input-left recipient-field-wrapper">
+                            <input id="payment-recipient-field"
+                              className="w-100 general-text-input"
+                              autoComplete="on"
+                              autoCorrect="off"
+                              type="text"
+                              onFocus={handleAccountAddressInputFocusIn}
+                              onChange={handleAccountAddressInputChange}
+                              onBlur={handleAccountAddressInputFocusOut}
+                              placeholder={t('assets.account-address-placeholder')}
+                              required={true}
+                              spellCheck="false"
+                              value={accountAddressInput}/>
+                            <span id="payment-recipient-static-field"
+                                  className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                              {accountAddressInput || t('assets.account-address-placeholder')}
+                            </span>
+                          </span>
+                          <div className="addon-right simplelink" onClick={showQrScannerModal}>
+                            <QrcodeOutlined />
+                          </div>
+                        </div>
+                        <div className="transaction-field-row">
+                          <span className="field-label-left">
+                            {accountAddressInput && !isValidAddress(accountAddressInput) ? (
+                              <span className="fg-red">
+                                {t("assets.account-address-validation")}
+                              </span>
+                            ) : (
+                              <span>&nbsp;</span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Go button */}
                       <Button
-                        type="ghost"
+                        className="main-cta right"
+                        type="primary"
                         shape="round"
-                        size="small"
-                        disabled={status === FetchStatus.Fetching}
-                        onClick={() => startSwitch()}>
-                        {status === FetchStatus.Fetching ? t('general.loading') : t('assets.history-load-more-cta-label')}
+                        size="large"
+                        onClick={onAddAccountAddress}
+                        disabled={!isValidAddress(accountAddressInput)}>
+                        {t('assets.account-add-cta-label')}
                       </Button>
                     </div>
+                    <div className="text-center">
+                      <span className="mr-1">{t('assets.create-account-help-pre')}</span>
+                      <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
+                        {t('assets.create-account-help-link')}
+                      </a>
+                      <span className="ml-1">{t('assets.create-account-help-post')}</span>
+                    </div>
+                  </div>
+                  {/* QR scan modal */}
+                  {isQrScannerModalVisible && (
+                    <QrScannerModal
+                      isVisible={isQrScannerModalVisible}
+                      handleOk={onAcceptQrScannerModal}
+                      handleClose={closeQrScannerModal}/>
                   )}
-                </div>
-              </div>
-
-            </div>
-          ) : (
-            <>
-              <div className="boxed-area add-account">
-                {accountAddress && (
-                  <div className="back-button">
-                    <span className="icon-button-container">
-                      <Tooltip placement="bottom" title={t('assets.back-to-assets-cta')}>
-                        <Button
-                          type="default"
-                          shape="circle"
-                          size="middle"
-                          className="hidden-xs"
-                          icon={<ArrowLeftOutlined />}
-                          onClick={handleBackToAccountDetailsButtonClick}
-                        />
-                      </Tooltip>
-                    </span>
-                  </div>
-                )}
-                <h2 className="text-center mb-3 px-5">{t('assets.account-add-heading')} {renderSolanaIcon} Solana</h2>
-                <div className="flexible-left mb-3">
-                  <div className="transaction-field left">
-                    <div className="transaction-field-row">
-                      <span className="field-label-left">{t('assets.account-address-label')}</span>
-                      <span className="field-label-right">&nbsp;</span>
-                    </div>
-                    <div className="transaction-field-row main-row">
-                      <span className="input-left recipient-field-wrapper">
-                        <input id="payment-recipient-field"
-                          className="w-100 general-text-input"
-                          autoComplete="on"
-                          autoCorrect="off"
-                          type="text"
-                          onFocus={handleAccountAddressInputFocusIn}
-                          onChange={handleAccountAddressInputChange}
-                          onBlur={handleAccountAddressInputFocusOut}
-                          placeholder={t('assets.account-address-placeholder')}
-                          required={true}
-                          spellCheck="false"
-                          value={accountAddressInput}/>
-                        <span id="payment-recipient-static-field"
-                              className={`${accountAddressInput ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-                          {accountAddressInput || t('assets.account-address-placeholder')}
-                        </span>
-                      </span>
-                      <div className="addon-right simplelink" onClick={showQrScannerModal}>
-                        <QrcodeOutlined />
-                      </div>
-                    </div>
-                    <div className="transaction-field-row">
-                      <span className="field-label-left">
-                        {accountAddressInput && !isValidAddress(accountAddressInput) ? (
-                          <span className="fg-red">
-                            {t("assets.account-address-validation")}
-                          </span>
-                        ) : (
-                          <span>&nbsp;</span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Go button */}
-                  <Button
-                    className="main-cta right"
-                    type="primary"
-                    shape="round"
-                    size="large"
-                    onClick={onAddAccountAddress}
-                    disabled={!isValidAddress(accountAddressInput)}>
-                    {t('assets.account-add-cta-label')}
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <span className="mr-1">{t('assets.create-account-help-pre')}</span>
-                  <a className="primary-link font-medium" href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
-                    {t('assets.create-account-help-link')}
-                  </a>
-                  <span className="ml-1">{t('assets.create-account-help-post')}</span>
-                </div>
-              </div>
-              {/* QR scan modal */}
-              {isQrScannerModalVisible && (
-                <QrScannerModal
-                  isVisible={isQrScannerModalVisible}
-                  handleOk={onAcceptQrScannerModal}
-                  handleClose={closeQrScannerModal}/>
+                </>
               )}
             </>
           )}
@@ -1043,6 +1384,18 @@ export const AccountsView = () => {
         </div>
 
       </div>
+
+      {(customConnection && selectedTokenMergeGroup && isTokenMergerModalVisible) && (
+        <AccountsMergeModal
+          connection={customConnection}
+          isVisible={isTokenMergerModalVisible}
+          handleOk={onFinishedTokenMerge}
+          handleClose={hideTokenMergerModal}
+          tokenMint={selectedTokenMergeGroup[0].parsedInfo.mint}
+          tokenGroup={selectedTokenMergeGroup}
+          accountTokens={accountTokens}
+        />
+      )}
       <PreFooter />
     </>
   );

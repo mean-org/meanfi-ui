@@ -10,7 +10,6 @@ import { NATIVE_SOL } from "../../utils/tokens";
 import { Tooltip } from "antd";
 import Moment from "react-moment";
 import { MappedTransaction } from "../../utils/history";
-import { environment } from "../../environments/environment";
 import { isLocal } from "../../utils/ui";
 
 export const TransactionItemView = (props: {
@@ -45,7 +44,7 @@ export const TransactionItemView = (props: {
       const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
 
       // Are we scanning a user token account or the user wallet?
-      const isNativeAccountSelected = props.accountAddress === props.selectedAsset?.ataAddress ? true : false;
+      const isNativeAccountSelected = props.accountAddress === props.selectedAsset?.publicAddress ? true : false;
       setIsNativeAccountSelected(isNativeAccountSelected);
 
       if (isNativeAccountSelected) {
@@ -54,7 +53,7 @@ export const TransactionItemView = (props: {
         balanceChange = postBalance - meta.preBalances[myAccounIndex];
         setPostBalance(postBalance);
       } else {
-        const selectedTokenAccountIndex = accounts.findIndex(acc => acc.pubkey.toBase58() === props.selectedAsset?.ataAddress);
+        const selectedTokenAccountIndex = accounts.findIndex(acc => acc.pubkey.toBase58() === props.selectedAsset?.publicAddress);
         if (selectedTokenAccountIndex === -1) {
           setIsTxRenderable(false);
           return;

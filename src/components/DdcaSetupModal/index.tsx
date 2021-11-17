@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Modal, Slider } from "antd";
+import { Button, Modal, Popconfirm, Slider } from "antd";
 import { useContext } from "react";
 import { AppStateContext } from "../../contexts/appstate";
 import { useTranslation } from "react-i18next";
 import { DcaInterval } from '../../models/ddca-models';
 import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import "./style.less";
 import { SliderMarks } from 'antd/lib/slider';
 import { IconShield } from '../../Icons';
@@ -18,8 +18,8 @@ import { environment } from '../../environments/environment';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { DdcaClient, TransactionFees } from '@mean-dao/ddca';
-import { LoadingOutlined } from '@ant-design/icons';
-import { HlaInfo } from '../../hybrid-liquidity-ag/types';
+import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
+import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 
@@ -41,11 +41,6 @@ export const DdcaSetupModal = (props: {
 }) => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
-  const [rangeMin, setRangeMin] = useState(0);
-  const [rangeMax, setRangeMax] = useState(0);
-  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
-  const [lockedSliderValue, setLockedSliderValue] = useState(0);
-  const [marks, setMarks] = useState<SliderMarks>();
   // Transaction control
   const {
     ddcaOption,
@@ -57,10 +52,26 @@ export const DdcaSetupModal = (props: {
     startFetchTxSignatureInfo
   } = useContext(TransactionStatusContext);
   const [isBusy, setIsBusy] = useState(false);
+  const [rangeMin, setRangeMin] = useState(0);
+  const [rangeMax, setRangeMax] = useState(0);
+  const [marks, setMarks] = useState<SliderMarks>();
   const [vaultCreated, setVaultCreated] = useState(false);
   const [swapExecuted, setSwapExecuted] = useState(false);
+  const [recurrencePeriod, setRecurrencePeriod] = useState(0);
+  const [lockedSliderValue, setLockedSliderValue] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ddcaAccountPda, setDdcaAccountPda] = useState<PublicKey | undefined>();
+  const [lockedFromTokenBalance, setLockedFromTokenBalance] = useState<number | undefined>(undefined);
+
+  // Set lockedFromTokenBalance from injected props.fromTokenBalance once por modal open
+  useEffect(() => {
+    if (!lockedFromTokenBalance) {
+      setLockedFromTokenBalance(props.fromTokenBalance);
+    }
+  }, [
+    lockedFromTokenBalance,
+    props.fromTokenBalance
+  ]);
 
   const isProd = (): boolean => {
     return environment === 'production';
@@ -168,7 +179,7 @@ export const DdcaSetupModal = (props: {
   }
 
   const hasEnoughFromTokenBalance = (): boolean => {
-    return props.fromTokenBalance > props.fromTokenAmount * (lockedSliderValue + 1);
+    return (lockedFromTokenBalance || 0) > props.fromTokenAmount * (lockedSliderValue + 1);
   }
 
   //////////////////////////
@@ -188,7 +199,7 @@ export const DdcaSetupModal = (props: {
    * Set minimum required and valid flag
   */
   useEffect(() => {
-    if (ddcaOption && props.fromTokenAmount && props.fromTokenBalance) {
+    if (ddcaOption && props.fromTokenAmount && lockedFromTokenBalance) {
       const maxRangeFromSelection =
         ddcaOption.dcaInterval === DcaInterval.RepeatingDaily
           ? 365
@@ -197,7 +208,7 @@ export const DdcaSetupModal = (props: {
           : ddcaOption.dcaInterval === DcaInterval.RepeatingTwiceMonth
           ? 26
           : 12;
-      const maxRangeFromBalance = Math.floor(props.fromTokenBalance / props.fromTokenAmount);
+      const maxRangeFromBalance = Math.floor(lockedFromTokenBalance / props.fromTokenAmount);
       const minRangeSelectable = 3;
       const maxRangeSelectable =
         maxRangeFromBalance <= maxRangeFromSelection
@@ -215,7 +226,7 @@ export const DdcaSetupModal = (props: {
 
       // Set minimum required and valid flag
       const minimumRequired = props.fromTokenAmount * (minRangeSelectable + 1);
-      const isOpValid = minimumRequired < props.fromTokenBalance ? true : false;
+      const isOpValid = minimumRequired < lockedFromTokenBalance ? true : false;
 
       // Set the slider position
       if (isOpValid) {
@@ -230,7 +241,7 @@ export const DdcaSetupModal = (props: {
   }, [
     ddcaOption,
     props.fromTokenAmount,
-    props.fromTokenBalance,
+    lockedFromTokenBalance,
     props.hlaInfo,
     getTotalPeriod
   ]);
@@ -245,6 +256,7 @@ export const DdcaSetupModal = (props: {
   }
 
   const onTxErrorCreatingVaultWithNotify = () => {
+    setRecentlyCreatedVault('');
     notify({
       message: t('notifications.error-title'),
       description: t('notifications.error-creating-vault-message'),
@@ -259,11 +271,11 @@ export const DdcaSetupModal = (props: {
     props.handleOk();
   }
 
-  const onOperationCancel = () => {
+  const onOperationCancel = (shouldReload = false) => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
-    props.handleClose();
+    props.handleClose(shouldReload);
   }
 
   const onOperationSuccess = () => {
@@ -326,15 +338,16 @@ export const DdcaSetupModal = (props: {
           payload.totalSwaps,
           payload.intervalinSeconds)
         .then((value: [PublicKey, Transaction]) => {
-          consoleOut('createDdca returned transaction:', value);
+          consoleOut('createDdca returned vault pubKey and transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value[1])
           });
+          setRecentlyCreatedVault(value[0].toBase58());
           setDdcaAccountPda(value[0]);
           transaction = value[1];
           return true;
@@ -375,7 +388,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -387,9 +400,9 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -513,7 +526,6 @@ export const DdcaSetupModal = (props: {
           if (sent && !transactionCancelled) {
             const confirmed = await confirmTx();
             if (confirmed && !transactionCancelled) {
-              setRecentlyCreatedVault(ddcaAccountPda?.toBase58() || '');
               setVaultCreated(true);
               setIsBusy(false);
             } else { onTxErrorCreatingVaultWithNotify(); }
@@ -572,7 +584,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: 'createWakeAndSwapTx succeeded'
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -615,7 +627,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -627,9 +639,9 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -715,6 +727,15 @@ export const DdcaSetupModal = (props: {
 
   };
 
+  function confirm(e: any) {
+    consoleOut('close confirmation accepted');
+    onOperationCancel(true);
+  }
+
+  function cancel(e: any) {
+    consoleOut('close confirmation cancelled');
+  }
+
   ///////////////////
   //   Rendering   //
   ///////////////////
@@ -737,10 +758,28 @@ export const DdcaSetupModal = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={<div className="modal-title">{t('ddca-setup-modal.modal-title')}</div>}
+      closeIcon={
+        <Popconfirm
+          placement="bottomRight"
+          title={t('ddcas.setup-close-warning')}
+          onConfirm={confirm}
+          onCancel={cancel}
+          okText={t('general.yes')}
+          cancelText={t('general.no')}
+          className="max-popover-width">
+          <CloseOutlined />
+        </Popconfirm>
+      }
       footer={null}
       maskClosable={false}
       visible={props.isVisible}
-      onCancel={onOperationCancel}
+      onCancel={(e: any) => {
+        if (!vaultCreated) {
+          e.preventDefault();
+          e.stopPropagation();
+          onOperationCancel();
+        }
+      }}
       afterClose={props.onAfterClose}
       width={480}>
       <div className="mb-3">

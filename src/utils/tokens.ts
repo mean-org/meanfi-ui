@@ -1,6 +1,6 @@
 import { TokenAmount } from './safe-math';
-import { cloneDeep } from 'lodash-es';
 import { NATIVE_SOL_MINT, WRAPPED_SOL_MINT } from './ids';
+import { MEAN_TOKEN_LIST } from '../constants/token-list';
 
 interface Tokens {
   [key: string]: any
@@ -30,48 +30,40 @@ export interface TokenInfo {
 
 /**
  * Get token use symbol
-
  * @param {string} symbol
-
  * @returns {TokenInfo | null} tokenInfo
  */
 export function getTokenBySymbol(symbol: string): TokenInfo | null {
   if (symbol === 'SOL') {
-    return cloneDeep(NATIVE_SOL)
+    return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
-  let token = cloneDeep(TOKENS[symbol])
+  let token = MEAN_TOKEN_LIST.find(t => t.symbol === symbol);
 
-  if (!token) {
-    token = null
-  }
+  if (!token) { return null; }
 
-  return token
+  return token as TokenInfo;
 }
 
 /**
  * Get token use mint addresses
-
  * @param {string} address
-
  * @returns {TokenInfo | null} tokenInfo
  */
 export function getTokenByMintAddress(address: string): TokenInfo | null {
   if (address === NATIVE_SOL.address) {
-    return cloneDeep(NATIVE_SOL)
+    return JSON.parse(JSON.stringify(NATIVE_SOL));
   }
 
-  let token = null
+  let token = null;
 
-  for (const symbol of Object.keys(TOKENS)) {
-    const info = cloneDeep(TOKENS[symbol])
-
+  for (const info of MEAN_TOKEN_LIST) {
     if (info.address === address) {
-      token = info
+      token = info as TokenInfo;
     }
   }
 
-  return token
+  return token;
 }
 
 export const NATIVE_SOL: TokenInfo = {

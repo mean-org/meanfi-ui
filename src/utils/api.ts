@@ -1,4 +1,3 @@
-import { DdcaAccount, DdcaDetails } from "@mean-dao/ddca";
 import { useState } from "react";
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
@@ -42,7 +41,7 @@ export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Pro
     }
     return null;
   } catch (error) {
-    throw(error);
+    return null;
   }
 };
 

@@ -1,60 +1,78 @@
 import { Row, Col, Spin, Modal, Button } from "antd";
-import { SwapSettings } from "../SwapSettings";
-import { CoinInput } from "../CoinInput";
-import { TextInput } from "../TextInput";
+import { SwapSettings } from "../../components/SwapSettings";
+import { ExchangeInput } from "../../components/ExchangeInput";
+import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from "../../utils/utils";
-import { Identicon } from "../Identicon";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
+import { formatAmount, isValidNumber } from "../../utils/utils";
+import { Identicon } from "../../components/Identicon";
+import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
+import { consoleOut, getTxPercentFeeAmount, isProd } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { NATIVE_SOL_MINT, USDC_MINT, USDT_MINT, WRAPPED_SOL_MINT } from "../../utils/ids";
-import { TransactionStatus } from "../../models/enums";
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { TOKENS } from "../../hybrid-liquidity-ag/data";
-import { LPClient, ExchangeInfo, SERUM, TokenInfo, FeesInfo } from "../../hybrid-liquidity-ag/types";
-import { SerumClient } from "../../hybrid-liquidity-ag/serum/types";
-import { getClient, getExchangeInfo, getOptimalPool, getTokensPools, unwrap, wrap } from "../../hybrid-liquidity-ag/utils";
-import { cloneDeep } from "lodash";
-import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { InfoIcon } from "../InfoIcon";
-import { MSP_OPS } from "../../hybrid-liquidity-ag/types";
-import { IconSwapFlip } from "../../Icons";
+import { InfoIcon } from "../../components/InfoIcon";
+import { DdcaFrequencySelectorModal } from "../../components/DdcaFrequencySelectorModal";
+import { IconCaretDown, IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
-import { appConfig, customLogger } from "../..";
+import { appConfig } from "../..";
+import { DcaInterval } from "../../models/ddca-models";
+import { DdcaSetupModal } from "../../components/DdcaSetupModal";
+import { calculateActionFees as calculateDdcaActionFees, TransactionFees as DdcaTxFees, DDCA_ACTIONS } from '@mean-dao/ddca';
 import { Redirect } from "react-router-dom";
+import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
-import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 
-const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+import {
+  getClients,
+  LPClient,
+  ExchangeInfo,
+  SERUM,
+  TokenInfo,
+  FeesInfo,
+  TOKENS,
+  NATIVE_SOL_MINT, 
+  USDC_MINT, 
+  USDT_MINT, 
+  WRAPPED_SOL_MINT,
+  ACCOUNT_LAYOUT,
+  HlaInfo,
+  Client,
+  SRM_MINT,
+  ORCA,
+  RAYDIUM
 
-export const SwapUi = (props: {
+} from "@mean-dao/hybrid-liquidity-ag";
+
+import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
+import { ExchangeOutput } from "../../components/ExchangeOutput";
+import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+
+export const RecurringExchange = (props: {
   queryFromMint: string | null;
   queryToMint: string | null;
-  connection: Connection
+  connection: Connection;
+  onRefreshRequested: any;
+  endpoint: string;
 }) => {
 
   const { t } = useTranslation("common");
-  const [redirect] = useState<string | null>(null);
-  const { publicKey, wallet, connected } = useWallet();
+  const [redirect, setRedirect] = useState<string | null>(null);
+  const { publicKey, connected } = useWallet();
   const {
     coinPrices,
     ddcaOption,
-    transactionStatus,
     previousWalletConnectState,
-    setTransactionStatus,
-    setPreviousWalletConnectState
+    setPreviousWalletConnectState,
+    setDdcaOption
 
   } = useContext(AppStateContext);
-
+  
   const connection = useMemo(() => props.connection, [props.connection]);
-
   const [refreshing, setRefreshing] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
@@ -63,18 +81,13 @@ export const SwapUi = (props: {
   const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
   const [tokenFilter, setTokenFilter] = useState("");
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
-  // SWAP Transaction execution modal
-  const showSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(true), []);
-  const hideSwapTransactionModal = useCallback(() => setSwapTransactionModalVisibility(false), []);
-  const [isBusy, setIsBusy] = useState(false);
-  const [transactionLog, setTransactionLog] = useState<Array<any>>([]);
-  const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [isSwapTransactionModalVisible, setSwapTransactionModalVisibility] = useState(false);
   const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
   // FEES
   const [txFees, setTxFees] = useState<TransactionFees>();
+  const [ddcaTxFees, setdDcaTxFees] = useState<DdcaTxFees>({
+    flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
+  });
   // AGGREGATOR
-  const [currentTxSignature, setCurrentTxSignature] = useState("");
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
   const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
   const [toMint, setToMint] = useState<string | undefined>(undefined);
@@ -86,12 +99,57 @@ export const SwapUi = (props: {
   const [mintList, setMintList] = useState<any>({});
   const [showFromMintList, setShowFromMintList] = useState<any>({});
   const [showToMintList, setShowToMintList] = useState<any>({});  
-  const [swapClient, setSwapClient] = useState<any>();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<any>();
   const [exchangeInfo, setExchangeInfo] = useState<ExchangeInfo>();
   const [refreshTime, setRefreshTime] = useState(0);
   const [feesInfo, setFeesInfo] = useState<FeesInfo>();
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
+  const [showLpList, setShowLpList] = useState(false);
+  const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
+  const [defaultDdcaOption] = useState("Repeat weekly");
+
+  // DDCA Option selector modal
+  const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
+  const showDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(true), []);
+  const onCloseDdcaOptionSelector = useCallback(() => setDdcaOptionSelectorModalVisibility(false), []);
+
+  // DDCA Setup modal
+  const [isDdcaSetupModalVisible, setDdcaSetupModalVisibility] = useState(false);
+
+  const showDdcaSetup = useCallback(() => {
+
+    if (!selectedClient || !exchangeInfo) { return; }
+
+    const hlaInfo: HlaInfo = {
+      exchangeRate: exchangeInfo.outPrice as number || 0,
+      protocolFees: exchangeInfo.protocolFees as number || 0,
+      aggregatorPercentFees: 0.05,
+      remainingAccounts: selectedClient.accounts
+    };
+
+    setHlaInfo(hlaInfo);
+    setDdcaSetupModalVisibility(true);
+    
+  }, [
+    selectedClient, 
+    exchangeInfo
+  ]);
+
+  const onFinishedDdca = useCallback(() => {
+    setFromAmount("");
+    setFromSwapAmount(0);
+    setDdcaSetupModalVisibility(false);
+    setRedirect('/exchange-dcas');
+  }, []);
+
+  const onDdcaSetupModalClosed = useCallback((shouldReload = false) => {
+    setDdcaSetupModalVisibility(false);
+    if (shouldReload) {
+      props.onRefreshRequested();
+    }
+  }, [props]);
 
   const isWrap = useCallback(() => {
 
@@ -106,7 +164,7 @@ export const SwapUi = (props: {
   },[
     fromMint, 
     toMint
-  ])
+  ]);
 
   const isUnwrap = useCallback(() => {
 
@@ -121,7 +179,36 @@ export const SwapUi = (props: {
   },[
     fromMint, 
     toMint
-  ])
+  ]);
+
+  const isStableSwap = (
+    from: string | undefined,
+    to: string | undefined
+
+  ) => {
+
+    if (!from || !to) { return false; }
+
+    const usdStables = [
+      USDC_MINT.toBase58(), 
+      USDT_MINT.toBase58()
+    ];
+
+    if (usdStables.includes(from) && usdStables.includes(to)) {
+      return true;
+    }
+
+    const solStables = [
+      NATIVE_SOL_MINT.toBase58(), 
+      WRAPPED_SOL_MINT.toBase58()
+    ];
+
+    if (solStables.includes(from) && solStables.includes(to)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Calculates the max allowed amount to swap
   const getMaxAllowedSwapAmount = useCallback(() => {
@@ -147,6 +234,81 @@ export const SwapUi = (props: {
     fromMint, 
     toMint, 
     userBalances
+  ]);
+
+  const updateRenderCount = useCallback(() => {
+
+    setRenderCount(renderCount + 1);
+
+  },[
+    renderCount
+  ]);
+
+  // Automatically updates if the balance is valid
+  const isValidBalance = useCallback(() => {
+
+    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
+      return false;
+    }
+
+    let valid = false;
+    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
+
+    if (isWrap() || fromMint !== NATIVE_SOL_MINT.toBase58()) {
+      valid = balance >= feesInfo.network;
+    } else {
+      valid = balance >= (feesInfo.total + feesInfo.network);
+    }
+
+    return valid;
+
+  }, [
+    connected, 
+    connection, 
+    feesInfo, 
+    fromMint, 
+    isWrap, 
+    userBalances
+  ]);
+
+  // Automatically updates if the swap amount is valid
+  const isSwapAmountValid = useCallback(() => {
+
+    if (!connection || !connected) {
+      return false;
+    }
+
+    const maxFromAmount = getMaxAllowedSwapAmount();
+    
+    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
+
+  }, [
+    connected, 
+    connection, 
+    fromSwapAmount, 
+    getMaxAllowedSwapAmount
+  ]);
+
+  useEffect(() => {
+
+    if (!ddcaOption || ddcaOption.name !== defaultDdcaOption) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      setDdcaOption(ddcaOption.name);
+
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    ddcaOption,
+    defaultDdcaOption,
+    setDdcaOption
   ]);
 
   // Automatically updates the user account
@@ -246,6 +408,33 @@ export const SwapUi = (props: {
     isUnwrap
   ]);
 
+  // Get DDCA Tx fees
+  useEffect(() => {
+
+    if (!connection) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      calculateDdcaActionFees(connection, DDCA_ACTIONS.create, 1)
+        .then((fees: DdcaTxFees) => {
+          setdDcaTxFees(fees);
+          consoleOut('ddcaTxFees:', fees, 'blue');
+        })
+        .catch((_error: any) => {
+          console.error(_error);
+          throw(_error);
+        });
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection
+  ]);
+
   // Token map for quick lookup.
   useEffect(() => {
 
@@ -255,8 +444,9 @@ export const SwapUi = (props: {
 
       const list: any = { };
 
+      //TODO: Remove token filtering when HLA program implementation covers all tokens
       for (let info of TOKENS) {
-        let mint = cloneDeep(info);
+        let mint = JSON.parse(JSON.stringify(info));
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -316,8 +506,9 @@ export const SwapUi = (props: {
       return; 
     }
 
-    const success = () => setRefreshTime(refreshTime - 1);
-    const timeout = setTimeout(() => success, 1000);
+    const timeout = setTimeout(() => {
+      setRefreshTime(refreshTime - 1);
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
@@ -333,49 +524,34 @@ export const SwapUi = (props: {
   // Automatically updates the exchange info
   useEffect(() => {
 
-    if (!connection) {
-      return;
-    }
-
-    if (!fromMint || !toMint || !txFees || !swapClient || isWrap() || isUnwrap()) { 
+    if (!connection || !fromMint || !toMint || !txFees || !selectedClient || !selectedClient.exchange || isWrap() || isUnwrap()) { 
       return; 
     }
     
     const timeout = setTimeout(() => {
 
       const aggregatorFees = getTxPercentFeeAmount(txFees, fromSwapAmount);
-      let fromAmount = fromSwapAmount === 0 ? parseFloat(fromBalance) : fromSwapAmount;
-      let amount = fromAmount - aggregatorFees;
+      let amount = fromSwapAmount - aggregatorFees;
 
       if (amount < 0) {
         amount = 0;
       }
 
-      const success = (info: ExchangeInfo) => {
-        if (info && fromSwapAmount === 0) {
-          info.amountIn = 0;
-          info.amountOut = 0;
-        }
-        setExchangeInfo(info);
-        console.log('info', info);
-      };
+      const price = selectedClient.exchange.outPrice || 0;
+      const outAmount = (price * amount);
+      const minOutAmount = outAmount * (100 - slippage) / 100;
 
-      const error = (_error: any) => {
-        console.error(_error);
-        throw(_error);
-      };
+      setExchangeInfo({
+        fromAmm: selectedClient.exchange.fromAmm,
+        amountIn: amount,
+        amountOut: outAmount,
+        minAmountOut: minOutAmount,
+        outPrice: price,
+        priceImpact: selectedClient.exchange.priceImpact,
+        networkFees: selectedClient.exchange.networkFees,
+        protocolFees: selectedClient.exchange.protocolFees
 
-      const promise = getExchangeInfo(
-        swapClient,
-        fromMint,
-        toMint,
-        amount,
-        slippage
-      );
-
-      promise
-        .then((info: ExchangeInfo) => success(info))
-        .catch((_error: any) => error(_error));
+      } as ExchangeInfo);
 
     });
 
@@ -391,10 +567,10 @@ export const SwapUi = (props: {
     isUnwrap, 
     isWrap, 
     slippage, 
-    swapClient, 
     toMint,
     mintList,
-    txFees
+    txFees,
+    selectedClient
   ]);
 
   // Automatically updates the fees info
@@ -415,7 +591,7 @@ export const SwapUi = (props: {
         aggregator: aggregatorFees,
         protocol: exchangeInfo.protocolFees,
         network: exchangeInfo.networkFees,
-        total: isWrap() || isUnwrap() ? aggregatorFees : aggregatorFees + exchangeInfo.protocolFees + exchangeInfo.networkFees 
+        total: isWrap() || isUnwrap() ? 0: aggregatorFees + exchangeInfo.protocolFees
 
       } as FeesInfo;
 
@@ -438,83 +614,57 @@ export const SwapUi = (props: {
     txFees
   ]);
   
-  // Updates liquidity pool info
+  // Updates clients
   useEffect(() => {
 
-    if (!connection) {
-      return;
-    }
+    let timeout: any;
 
-    if (!fromMint || !toMint || isWrap() || isUnwrap()) {
-      return;
-    }
+    if (!connection || !fromMint || !toMint || isWrap() || isUnwrap() || refreshTime) {
+      timeout = setTimeout(() => setRefreshing(false)); 
+    } else {
 
-    const timeout = setTimeout(() => {
+      timeout = setTimeout(() => {
 
-      setRefreshing(true);
-
-      const tokensPools = getTokensPools(fromMint, toMint);
-      const consoleMsg = tokensPools.length ? 'Liquidity Pool' : 'Serum Market';
-
-      const error = (_error: any) => {
-        consoleOut(_error);
-        setRefreshing(false); 
-      };
-
-      const success = (info: any) => {
-
-        if (tokensPools.length) {
-          console.info(consoleMsg, info);
-          setSwapClient(client);
-          setRefreshing(false);
-
-        } else {
-
-          const orderBooksSuccess = (orderbooks: any) => {
-            console.info(consoleMsg, info);
-            console.info('Orderbooks', orderbooks);
-            setSwapClient(client);
-            setRefreshing(false);
+        const error = (_error: any) => {
+          console.error(_error);
+          setSelectedClient(undefined);
+          setExchangeInfo(undefined);
+          setRefreshing(false); 
+        };
+  
+        const success = (clients: Client[] | null) => {
+  
+          if (!clients || clients.length === 0) {
+            error(new Error("Client not found"));
+            setSelectedClient(undefined);
+            setExchangeInfo(undefined);
+            return;
           }
-
-          client.getMarketOrderbooks(info)
-            .then((orderbooks: any) => orderBooksSuccess(orderbooks))
-            .catch((_error: any) => error(_error));
-        }
-      };
-
-      let client: any;
-
-      if (tokensPools.length) {
-
-        const optimalPool = getOptimalPool(tokensPools);
-        client = getClient(connection, optimalPool.protocolAddress) as LPClient;
-
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-
-        client
-          .getPoolInfo(optimalPool.address)
-          .then((info: any) => success(info))
-          .catch((_error: any) => error(_error));
-
-      } else {
-
-        client = getClient(connection, SERUM.toBase58()) as SerumClient;
-
-        if (!client) {
-          error(new Error('Exchange client not found'));
-          return;
-        }
-
-        client
-          .getMarketInfo(fromMint, toMint)
-          .then((info: any) => success(info))
-          .catch((_error: any) => error(_error));
-      }
-    });
+  
+          //TODO: Remove clients filtering when HLA program implementation covers every client
+          clients = clients.filter(c => c.protocol.equals(ORCA) || c.protocol.equals(RAYDIUM) || c.protocol.equals(SABER));
+          // clients = clients.filter(c => c.protocol.equals(SERUM));
+          setClients(clients);
+          consoleOut('clients', clients, 'blue');
+          const client = clients[0].protocol.equals(SERUM)
+            ? clients[0] as SerumClient 
+            : clients[0] as LPClient;
+  
+          setSelectedClient(client);
+          setRefreshing(false);
+          setRefreshTime(30);
+        };
+  
+        getClients(
+          connection, 
+          fromMint, 
+          toMint
+        )
+        .then((clients: Client[] | null) => success(clients))
+        .catch((_error: any) => error(_error));
+  
+      });
+    }
 
     return () => {
       clearTimeout(timeout);
@@ -525,7 +675,9 @@ export const SwapUi = (props: {
     fromMint, 
     isUnwrap, 
     isWrap, 
-    toMint
+    toMint,
+    refreshTime,
+    fromSwapAmount
   ]);
 
   // Automatically update all tokens balance
@@ -600,7 +752,7 @@ export const SwapUi = (props: {
       return;
     }
     
-    if (!connected || !userAccount || !fromMint || !userBalances) {
+    if (!connected || !fromMint || !userBalances) {
       setFromBalance('0');
       return;
     }
@@ -610,7 +762,7 @@ export const SwapUi = (props: {
       let balance = 0;
 
       if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-        balance = userAccount.lamports / LAMPORTS_PER_SOL;
+        balance = !userAccount ? 0 : userAccount.lamports / LAMPORTS_PER_SOL;
       } else {
         balance = userBalances[fromMint] ? userBalances[fromMint] : 0;
       }
@@ -706,88 +858,13 @@ export const SwapUi = (props: {
     setPreviousWalletConnectState
   ]);
 
-  // Automatically updates if the balance is valid
-  const isValidBalance = useCallback(() => {
-
-    if (!connection || !connected || !fromMint || !feesInfo || !userBalances) {
-      return false;
-    }
-
-    let valid = false;
-    let balance = userBalances[NATIVE_SOL_MINT.toBase58()];
-
-    if (isWrap()) {
-      valid = balance >= feesInfo.network;
-    } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-      valid = balance >= (feesInfo.total + feesInfo.network);
-    } else {
-      valid = balance >= feesInfo.network;
-    }
-
-    return valid;
-
-  }, [
-    connected, 
-    connection, 
-    feesInfo, 
-    fromMint, 
-    isWrap, 
-    userBalances
-  ]);
-
-  // Automatically updates if the swap amount is valid
-  const isSwapAmountValid = useCallback(() => {
-
-    if (!connection || !connected) {
-      return false;
-    }
-
-    const maxFromAmount = getMaxAllowedSwapAmount();
-    
-    return fromSwapAmount > 0 && fromSwapAmount <= maxFromAmount;
-
-  }, [
-    connected, 
-    connection, 
-    fromSwapAmount, 
-    getMaxAllowedSwapAmount
-  ])
-
   // Updates the allowed to mints to select 
   useEffect(() => {
 
     if (!fromMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
- 
-      if (!btcMintInfo) { return; }
-
-      if (fromMint === btcMintInfo.address) {
-
-        const usdxList: any = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
-
-        let usdxMints: any = {};
-
-        for (let item of usdxList) {
-          usdxMints[item.address] = item;
-        }
-    
-        setShowToMintList(usdxMints);
-        
-        if (toMint && toMint !== USDC_MINT.toBase58() && toMint !== USDT_MINT.toBase58()) {
-          setToMint(USDC_MINT.toBase58());
-        }
-
-      } else {
-        setShowToMintList(mintList);
-      }
-
+      setShowToMintList(mintList);
     });
 
     return () => { 
@@ -806,29 +883,7 @@ export const SwapUi = (props: {
     if (!toMint || !mintList) { return; }
 
     const timeout = setTimeout(() => {
-
-      const btcMintInfo: any = Object
-        .values(mintList)
-        .filter((m: any) => m.symbol === 'BTC')[0];
-
-      if (!btcMintInfo) { return; }
-
-      if (toMint && (toMint === btcMintInfo.address)) {
-
-        const usdxList: any[] = Object
-          .values(mintList)
-          .filter((m: any) => m.symbol === 'USDC' || m.symbol === 'USDT');
-    
-        setShowFromMintList(usdxList);
-        
-        if (fromMint && fromMint !== USDC_MINT.toBase58() && fromMint !== USDT_MINT.toBase58()) {
-          setFromMint(USDC_MINT.toBase58());
-        }
-
-      } else {
-        setShowFromMintList(mintList);
-      }
-
+      setShowFromMintList(mintList);
     });
 
     return () => { 
@@ -854,18 +909,18 @@ export const SwapUi = (props: {
 
       if (!connected) {
         label = t("transactions.validation.not-connected");
-      } else if (!fromMint || !toMint || !feesInfo) {
+      } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
-      } else if (fromSwapAmount === 0 && isValidBalance()) {
-        label = t("transactions.validation.no-amount");
+      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
+        label = t("transactions.validation.exchange-unavailable");
       } else if(!isValidBalance()) {
 
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo.aggregator + feesInfo.network;
+          needed = feesInfo.network;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = feesInfo.total + feesInfo.network;
+          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
         } else {
           needed = feesInfo.network;
         }
@@ -878,23 +933,33 @@ export const SwapUi = (props: {
 
         label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
 
+      } else if (fromSwapAmount === 0) {
+        label = t("transactions.validation.no-amount");
       } else if (!isSwapAmountValid()) {
-        console.log('fromSwapAmount', fromSwapAmount);
 
         let needed = 0;
-        const symbol = mintList[fromMint].symbol;
+        const fromSymbol = mintList[fromMint].symbol;
+        const isFromSerum = selectedClient && selectedClient.protocol.equals(SERUM);
+        const exchange = !exchangeInfo ? selectedClient.exchange : exchangeInfo;
 
-        if (isWrap()) {
-          needed = fromSwapAmount + feesInfo.network;
-        } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
-        } else if (isUnwrap()) {
-          needed = fromSwapAmount;
+        if (isFromSerum) {
+          const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
+          if (selectedClient.market.baseMintAddress.toBase58() === from) {
+            needed = selectedClient.market.minOrderSize + feesInfo.protocol;
+          } else {
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
+          }
         } else {
-          needed = fromSwapAmount + feesInfo.total;
+          if (isWrap()) {
+            needed = fromSwapAmount + feesInfo.network;
+          } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
+            needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+          } else {
+            needed = fromSwapAmount + feesInfo.total;
+          }
         }
 
-        needed = parseFloat(needed.toFixed(4));
+        needed = parseFloat(needed.toFixed(6));
 
         if (needed === 0) {
           needed = parseFloat(needed.toFixed(mintList[fromMint].decimals));
@@ -902,8 +967,24 @@ export const SwapUi = (props: {
 
         if (needed === 0) {
           label = t("transactions.validation.amount-low");
+        } else if (!isFromSerum) {
+          label = t("transactions.validation.insufficient-amount-needed", { 
+            amount: needed.toString(), 
+            symbol: fromSymbol 
+          });
         } else {
-          label = t("transactions.validation.insufficient-amount-needed", { amount: needed.toString(), symbol });
+          const balance = parseFloat(fromBalance);
+          if (fromSwapAmount > (balance - feesInfo.network)) {
+            label = t("transactions.validation.insufficient-amount-needed", { 
+              amount: fromSwapAmount.toString(), 
+              symbol: fromSymbol 
+            });
+          } else {
+            label = t("transactions.validation.minimum-swap-amount", { 
+              mintAmount: needed.toString(),
+              fromMint: fromSymbol
+            });
+          }
         }
 
       } else {    
@@ -920,6 +1001,9 @@ export const SwapUi = (props: {
 
   }, [
     t, 
+    exchangeInfo,
+    selectedClient,
+    fromBalance,
     ddcaOption?.dcaInterval, 
     connected, 
     connection, 
@@ -1039,9 +1123,12 @@ export const SwapUi = (props: {
     if (!input) { return; }
 
     const newValue = input.value;
-    
+
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromAmount('');
+      setFromSwapAmount(0);
+    } else if (newValue === '.') {
+      setFromAmount('.');
       setFromSwapAmount(0);
     } else if (isValidNumber(newValue)) {
       setFromAmount(newValue);
@@ -1076,6 +1163,7 @@ export const SwapUi = (props: {
       setFromBalance(oldToBalance);
       setToBalance(oldFromBalance);
       setRefreshTime(0);
+      setRefreshing(true);
     });
 
     return () => {
@@ -1089,476 +1177,14 @@ export const SwapUi = (props: {
     toMint
   ]);
 
-  const getSwap = useCallback(async () => {
-
-    try {
-
-      if (!fromMint || !toMint || !mintList[fromMint] || !mintList[toMint] || !wallet || !feesInfo || !exchangeInfo || !exchangeInfo.amountIn || !exchangeInfo.amountOut) {
-        throw new Error("Error executing transaction");
-      }
-  
-      if (isWrap() || isUnwrap()) {
-  
-        if (isWrap()) {
-  
-          return wrap(
-            connection,
-            wallet,
-            Keypair.generate(),
-            exchangeInfo.amountIn
-          );
-    
-        }
-        
-        if (isUnwrap()) {
-    
-          return unwrap(
-            connection,
-            wallet,
-            Keypair.generate(),
-            exchangeInfo.amountIn
-          );
-    
-        }
-  
-      } else {
-  
-        if (!swapClient) {
-          throw new Error("Error: Unknown AMM client");
-        }
-  
-        return swapClient.getSwap(
-          wallet.publicKey,
-          fromMint,
-          toMint,
-          exchangeInfo.amountIn,
-          exchangeInfo.amountOut,
-          slippage,
-          MSP_OPS.toBase58(),
-          feesInfo.aggregator
-        );
-      }
-
-    } catch (_error) {
-      console.error(_error);
-      throw(_error);
-    }
-
-  },[
-    connection, 
-    exchangeInfo,
-    feesInfo, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
-    mintList, 
-    slippage, 
-    swapClient, 
-    toMint, 
-    wallet
-  ]);
-
-  const isSuccess = useCallback(() => {
-
-    return (
-      transactionStatus.currentOperation ===
-      TransactionStatus.TransactionFinished
-    );
-    
-  },[
-    transactionStatus.currentOperation
-  ]);
-
-  const isError = useCallback(() => {
-    return transactionStatus.currentOperation ===
-      TransactionStatus.TransactionStartFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.InitTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.SignTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.SendTransactionFailure ||
-      transactionStatus.currentOperation ===
-        TransactionStatus.ConfirmTransactionFailure
-      ? true
-      : false;
-      
-  }, [
-    transactionStatus.currentOperation
-  ]);
-
-  const updateRenderCount = useCallback(() => {
-
-    setRenderCount(renderCount + 1);
-
-  },[
-    renderCount
-  ]);
-
   const onAfterTransactionModalClosed = useCallback(() => {
 
-    if (isBusy) {
-      setTransactionCancelled(true);
-    }
-
-    if (isSuccess()) {
-      setFromAmount("");
-      setFromSwapAmount(0);
-      updateRenderCount();
-      hideSwapTransactionModal();
-    }
+    setFromAmount("");
+    setFromSwapAmount(0);
+    updateRenderCount();
     
   }, [
-    isBusy, 
-    isSuccess, 
-    updateRenderCount, 
-    hideSwapTransactionModal
-  ]);
-
-  const createTx = useCallback(async () => {
-    setTransactionLog([]);
-   
-    try {
-
-      if (!connection) {
-        throw new Error('Not connected');
-      }
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.TransactionStart,
-        currentOperation: TransactionStatus.InitTransaction,
-      });
-
-      // Log input data
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-        result: '' // TODO: Discrete info converted to string (not objects)
-      }]);
-
-      const swapTx = await getSwap();
-
-      if (!swapTx) {
-        throw new Error('Cannot create the transaction');
-      }
-
-      console.info("SWAP returned transaction:", swapTx);
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.InitTransactionSuccess,
-        currentOperation: TransactionStatus.SignTransaction,
-      });
-
-      // Log success
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-        result: '' // TODO: Discrete info converted to string (not objects)
-      }]);
-
-      return swapTx;
-
-    } catch (_error) {
-      console.error(_error);
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.InitTransactionFailure,
-      });
-      // Log error
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-        result: `${_error}`
-      }]);
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      throw(_error);
-    }
-
-  },[
-    getSwap, 
-    setTransactionStatus,
-    transactionLog,
-    transactionStatus.currentOperation,
-    connection
-  ]);
-
-  const signTx = useCallback(async (currentTx: Transaction) => {
-
-    try {
-
-      if (!connection) {
-        throw new Error('Not connected');
-      }
-
-      if (!wallet) {
-        throw new Error('Cannot sign transaction. Wallet not found'); 
-      }
-  
-      consoleOut("Signing transaction...");
-      const signedTx = await wallet.signTransaction(currentTx);
-
-      if (!signedTx) {
-        throw new Error('Signing transaction failed!');
-      }
-
-      console.info("signTransaction returned a signed transaction:", signedTx);
-
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.SendTransaction,
-      });
-
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-        result: '' // TODO: Discrete info converted to string (not objects)
-      }]);
-
-      return signedTx;
-
-    } catch (_error) {
-      console.error(_error);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.SignTransaction,
-        currentOperation: TransactionStatus.SignTransactionFailure,
-      });
-      // Log error
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-        result: `${_error}`
-      }]);
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      throw(_error);
-    }
-
-  }, [
-    setTransactionStatus,
-    transactionLog,
-    transactionStatus.currentOperation,
-    wallet,
-    connection
-  ]);
-
-  const sendTx = useCallback(async (currentTx: Transaction) => {
-
-    const encodedTx = currentTx.serialize().toString('base64');
-    consoleOut('tx encoded => ', encodedTx);
-
-    try {
-
-      if (!connection) {
-        throw new Error('Not connected');
-      }
-
-      const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
-        preflightCommitment: 'confirmed'
-      });
-
-      if (!sentTx) {
-        throw new Error('Cannot send the transaction');   
-      }
-  
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.SendTransactionSuccess
-      });
-
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-        result: `signature: ${sentTx}`
-      }]);
-
-      return sentTx;
-
-    } catch (_error) {
-      console.error(_error);
-      setTransactionStatus({
-        lastOperation: TransactionStatus.SendTransaction,
-        currentOperation: TransactionStatus.SendTransactionFailure
-      });
-      // Log error
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-        result: { _error, encodedTx }
-      }]);
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      throw(_error);
-    }
-
-  },[
-    connection,
-    transactionLog,
-    setTransactionStatus,
-    transactionStatus.currentOperation
-  ]);
-
-  const tryGetTxStatus = useCallback(async (signature: string) => {
-
-    try {
-
-      if (!connection) {
-        throw new Error('Not connected');
-      }
-
-      const response = await connection.getSignatureStatus(signature);
-
-      if(!response || !response.value || response.value.err) {
-
-        const err = response && response.value && response.value.err 
-          ? response.value.err 
-          : new Error('Cannot confirm transaction');
-
-        // Log error
-        setTransactionLog(current => [...current, {
-          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-          result: `${err}`
-        }]);
-
-        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-
-        return false;
-      }
-
-      if (!response.value.confirmationStatus) {
-        return false;
-      }
-
-      return response.value.confirmationStatus
-
-    } catch (_error) {
-      // Log error
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-        result: `${_error}`
-      }]);
-
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-
-      return false;
-    }
-
-  }, [
-    connection, 
-    transactionLog
-  ])
-
-  const confirmTx = useCallback(async (signature: string) => {
-
-    try {
-
-      if (!connection) {
-        throw new Error('Not connected');
-      }
-
-      const response = await connection.confirmTransaction(signature, 'confirmed');
-
-      if(!response || !response.value || response.value.err) {
-
-        const err = response && response.value && response.value.err 
-          ? response.value.err 
-          : new Error('Cannot confirm transaction');
-
-        // Log error
-        setTransactionLog(current => [...current, {
-          action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-          result: `${err}`
-        }]);
-
-        customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-
-        return await tryGetTxStatus(signature);
-      }
-
-      setTransactionStatus({
-        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-        currentOperation: TransactionStatus.TransactionFinished
-      });
-
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-        result: response.value  // TODO: Log this perhaps?
-      }]);
-
-      return response.value;
-
-    } catch (_error) {
-      setTransactionStatus({
-        lastOperation: TransactionStatus.ConfirmTransaction,
-        currentOperation: TransactionStatus.ConfirmTransactionFailure
-      });
-      // Log error
-      setTransactionLog(current => [...current, {
-        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-        result: `${_error}`
-      }]);
-      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
-      // throw(_error);
-      return tryGetTxStatus(signature);
-    }
-
-  },[
-    connection, 
-    setTransactionStatus, 
-    transactionLog, 
-    tryGetTxStatus
-  ]);
-
-  const onTransactionStart = useCallback(async () => {
-
-    try {
-
-      console.info("Starting exchange");
-      setTransactionCancelled(false);
-      setRefreshTime(30);
-      setIsBusy(true);
-      showSwapTransactionModal();
-
-      const swapTxs = await createTx();
-      consoleOut("initialized:", swapTxs);
-
-      if (!swapTxs || transactionCancelled) {
-        setIsBusy(false);
-        return;
-      }
-
-      const signedTx = await signTx(swapTxs);
-      consoleOut("signed:", signedTx);
-
-      if (!signedTx || transactionCancelled) {
-        setIsBusy(false);
-        return;
-      }
-
-      const signature = await sendTx(signedTx);
-
-      if (!signature || transactionCancelled) {
-        setIsBusy(false);
-        return;
-      }
-
-      setCurrentTxSignature(signature);
-      let confirmed = await confirmTx(signature);
-
-      if (!confirmed) {
-        setIsBusy(false);  
-        return;
-      }
-
-      console.info("confirmed:", signature); // put this in a link in the UI
-      setFromAmount('');
-      setFromSwapAmount(0);
-      updateRenderCount();
-      setIsBusy(false);
-
-    } catch (_error) {
-      console.error(_error);
-      setIsBusy(false);
-    }
-
-  }, [
-    confirmTx, 
-    createTx, 
-    sendTx, 
-    showSwapTransactionModal, 
-    signTx,
-    updateRenderCount,
-    transactionCancelled
+    updateRenderCount
   ]);
 
   const areSameTokens = (source: TokenInfo, destination: TokenInfo): boolean => {
@@ -1600,17 +1226,24 @@ export const SwapUi = (props: {
     return fromMint && toMint && exchangeInfo ? (
       <>
       {
-        !refreshing && fromAmount && slippage &&
+        !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
-          `${slippage.toFixed(2)}%`
+          t("transactions.transaction-info.network-transaction-fee"),
+          `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.transaction-fee"),
-          `${feesInfo.total.toFixed(mintList[fromMint].decimals)} ${mintList[fromMint].symbol}`
+          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
+        )
+      }
+      {
+        !refreshing && fromAmount && slippage &&
+        infoRow(
+          t("transactions.transaction-info.slippage"),
+          `${slippage.toFixed(2)}%`
         )
       }
       {
@@ -1624,7 +1257,7 @@ export const SwapUi = (props: {
         !refreshing && fromAmount &&
         infoRow(
           t("transactions.transaction-info.price-impact"),                
-          `${exchangeInfo.priceImpact?.toFixed(2)}%`
+          `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`
         )
       }
       {
@@ -1643,16 +1276,21 @@ export const SwapUi = (props: {
     setSlippage(value);
   };
 
+  const onShowLpListToggled = (value: boolean) => {
+    setShowLpList(value);
+  };
+
   const renderSourceTokenList = (
     <>
       {Object.values(showFromMintList).length ? (
         Object.values(showFromMintList).map((token: any, index) => {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
               setFromMint(token.address);
               setLastFromMint(token.address);
+              setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };
@@ -1664,7 +1302,7 @@ export const SwapUi = (props: {
               className={`token-item ${
                 fromMint && fromMint === token.address
                   ? "selected"
-                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined))
+                  : areSameTokens(token, (toMint ? showFromMintList[toMint] : undefined)) || isStableSwap(token.address, toMint)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -1714,9 +1352,10 @@ export const SwapUi = (props: {
         Object.values(showToMintList).map((token: any, index) => {
           const onClick = () => {
             if (!toMint || toMint !== token.address) {
-              setExchangeInfo(undefined);
-              setSwapClient(undefined);
               setToMint(token.address);
+              setExchangeInfo(undefined);
+              setRefreshTime(0);
+              setRefreshing(true);
             }
             onCloseTokenSelector();
           };
@@ -1728,7 +1367,7 @@ export const SwapUi = (props: {
               className={`token-item ${
                 toMint && toMint === token.address
                   ? "selected"
-                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
+                  : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined)) || isStableSwap(fromMint, token.address)
                   ? 'disabled'
                   : "simplelink"
               }`}
@@ -1772,25 +1411,33 @@ export const SwapUi = (props: {
     </>
   );
 
-  // TESTING BLOCK FOR STYLING THE UI
-  const [inputPosition, setInputPosition] = useState<"left" | "right">("right");
-  const toggleInputPosition = () => {
-    if (inputPosition === "left") {
-      setInputPosition("right");
-    } else {
-      setInputPosition("left");
-    }
-  }
-  // END OF TESTING BLOCK
+  // TODO: Convert the input field class "transaction-field" to the new general purpose class "well"
+  // Kept for compatibility but it must be removed after conversion
+  const inputPosition = "right";
 
   return (
     <>
       {redirect && <Redirect to={redirect} />}
-      <Spin spinning={isBusy || refreshing}>
+      <Spin spinning={refreshing}>
         <div className="swap-wrapper">
 
+          {/* DDCA Option selector */}
+          <div className="ddca-option-select-row">
+            <span className="label">{t('swap.frequency-label')}</span>
+            {ddcaOption && (
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                onClick={showDdcaOptionSelector}>
+                <span className="mr-2">{t(`ddca-selector.${ddcaOption.translationId}.name`)}</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            )}
+          </div>
+
           {/* Source token / amount */}
-          <CoinInput
+          <ExchangeInput
             token={fromMint && mintList[fromMint]}
             tokenBalance={
               (fromMint && fromBalance && mintList[fromMint] && parseFloat(fromBalance) > 0
@@ -1830,49 +1477,87 @@ export const SwapUi = (props: {
             <div className="flip-button" onClick={flipMintsCallback}>
               <IconSwapFlip className="mean-svg-icons" />
             </div>
-            {/* TESTING BLOCK FOR STYLING THE UI */}
-            {window.location.hostname === 'localhost' && (
-              <span className="helper-line primary-link font-regular font-size-80" onClick={toggleInputPosition}>Toggle input position</span>
-            )}
-            {/* END OF TESTING BLOCK */}
+            {/* Settings icon */}
+            <span className="settings-wrapper pr-3">
+              <SwapSettings
+                currentValue={slippage}
+                showLpList={showLpList}
+                onToggleShowLpList={onShowLpListToggled}
+                onValueSelected={onSlippageChanged}/>
+            </span>
           </div>
 
           {/* Destination token / amount */}
-          <CoinInput
-            token={toMint && mintList[toMint]}
-            tokenBalance={
-              (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            tokenAmount={
-              (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-                ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                : '')
-            }
-            readonly={true}
-            onInputChange={() => {}}
-            onMaxAmount={() => {}}
-            onSelectToken={() => {
-              setSubjectTokenSelection("destination");
-              showTokenSelector();
-            }}
-            inputPosition={inputPosition}
-            translationId="destination"
-            inputLabel={
-              toMint && mintList[toMint]
-                ? `~$${
-                  exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                  ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
-                  : '0.00'}`
-                : ''
-            }
-          />
+          {isProd() ? (
+            <ExchangeInput
+              token={toMint && mintList[toMint]}
+              tokenBalance={
+                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              tokenAmount={
+                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
+                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              onInputChange={() => {}}
+              onMaxAmount={() => {}}
+              onSelectToken={() => {
+                setSubjectTokenSelection("destination");
+                showTokenSelector();
+              }}
+              inputPosition={inputPosition}
+              translationId="destination"
+              inputLabel={
+                toMint && mintList[toMint]
+                  ? `~$${
+                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    : '0.00'}`
+                  : ''
+              }
+            />
+          ) : (
+            <ExchangeOutput
+              fromToken={fromMint && mintList[fromMint]}
+              fromTokenAmount={fromAmount}
+              toToken={toMint && mintList[toMint]}
+              toTokenBalance={
+                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
+                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              toTokenAmount={
+                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
+                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
+                  : '')
+              }
+              onSelectToken={() => {
+                setSubjectTokenSelection("destination");
+                showTokenSelector();
+              }}
+              inputLabel={
+                toMint && mintList[toMint]
+                  ? `~$${
+                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
+                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
+                    : '0.00'}`
+                  : ''
+              }
+              clients={clients}
+              onSelectedClient={(client: Client) => {
+                consoleOut('onSelectedClient:', client, 'blue');
+                setSelectedClient(client);
+              }}
+              showLpList={showLpList}
+            />
+          )}
 
           {/* Title bar with settings */}
           <div className="info-line-and-settings flexible-left">
             <div className="left">
-              <SwapSettings currentValue={slippage} onValueSelected={onSlippageChanged}/>
+              <span>&nbsp;</span>
             </div>
             {/* Info */}
             <div className="right info-line">
@@ -1910,8 +1595,14 @@ export const SwapUi = (props: {
             type="primary"
             shape="round"
             size="large"
-            onClick={onTransactionStart}
-            disabled={!isValidBalance() || !isSwapAmountValid()} >
+            onClick={showDdcaSetup}
+            disabled={
+              !isValidBalance() || 
+              !isSwapAmountValid() || 
+              !exchangeInfo || 
+              !exchangeInfo?.amountOut || 
+              (environment !== 'production' && ddcaOption?.dcaInterval === DcaInterval.OneTimeExchange) 
+            }>
             {transactionStartButtonLabel}
           </Button>
 
@@ -1960,114 +1651,32 @@ export const SwapUi = (props: {
             </div>
           </Modal>
 
-          {/* SWAP Transaction execution modal */}
-          <Modal
-            className="mean-modal"
-            maskClosable={false}
-            visible={isSwapTransactionModalVisible}
-            title={getTransactionModalTitle(transactionStatus, isBusy, t)}
-            onCancel={hideSwapTransactionModal}
-            afterClose={onAfterTransactionModalClosed}
-            width={330}
-            footer={null}
-          >
-            <div className="transaction-progress">
-              {isBusy ? (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
-                  </h4>
-                  <p className="operation">
-                    {
-                      fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut &&
-                      t("transactions.status.tx-swap-operation", {
-                        fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
-                        toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
-                      })
-                    }
-                  </p>
-                  <div className="indication">
-                    {t("transactions.status.instructions")}
-                  </div>
-                </>
-              ) : isSuccess() ? (
-                <>
-                  <CheckOutlined
-                    style={{ fontSize: 48 }}
-                    className="icon"
-                  />
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
-                  </h4>
-                  <p className="operation">
-                    {t("transactions.status.tx-swap-operation-success")}.
-                  </p>
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
-                  </Button>
-                </>
-              ) : isError() ? (
-                <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                  {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                    <h4 className="mb-4">
-                      {t("transactions.status.tx-start-failure", {
-                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                          parseFloat(fromBalance),
-                          NATIVE_SOL_MINT.toBase58()
-                        ),
-                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                          getComputedFees(txFees),
-                          NATIVE_SOL_MINT.toBase58()
-                        )
-                      })}
-                    </h4>
-                  ) : (
-                    <>
-                      <h4 className="font-bold mb-1 text-uppercase">
-                        { getTransactionOperationDescription(transactionStatus, t) }
-                      </h4>
-                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
-                        <>
-                          <p className="operation">
-                            {t("transactions.status.tx-confirm-failure-check")}
-                          </p>
-                          <a className="primary-link" 
-                              style={{ marginBottom:20 }} 
-                              href={`https://explorer.solana.com/tx/${currentTxSignature}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer">
-                              {shortenAddress(currentTxSignature, 8)}
-                          </a>
-                        </>
-                      )}
-                    </>
-                  )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-4 text-uppercase">
-                    {t("transactions.status.tx-wait")}...
-                  </h4>
-                </>
-              )}
-            </div>
-          </Modal>
+          {/* DDCA Option selector modal */}
+          <DdcaFrequencySelectorModal
+            isVisible={isDdcaOptionSelectorModalVisible}
+            handleClose={onCloseDdcaOptionSelector}
+            handleOk={onCloseDdcaOptionSelector}
+          />
+
+          {/* DDCA Setup modal */}
+          {isDdcaSetupModalVisible && (
+            <DdcaSetupModal
+              endpoint={props.endpoint}
+              connection={connection}
+              isVisible={isDdcaSetupModalVisible}
+              handleClose={onDdcaSetupModalClosed}
+              handleOk={onFinishedDdca}
+              onAfterClose={onAfterTransactionModalClosed}
+              fromToken={fromMint && mintList[fromMint]}
+              fromTokenBalance={fromMint && fromBalance && mintList[fromMint] ? parseFloat(fromBalance) : 0}
+              fromTokenAmount={parseFloat(fromAmount) || 0}
+              toToken={toMint && mintList[toMint]}
+              userBalance={userBalances[NATIVE_SOL_MINT.toBase58()]}
+              ddcaTxFees={ddcaTxFees}
+              slippage={slippage}
+              hlaInfo={hlaInfo as HlaInfo}
+            />
+          )}
         </div>
       </Spin>
     </>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col, InputNumber } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -8,11 +8,13 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown, IconSort } from "../../Icons";
+import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
   getTokenAmountAndSymbolByTokenAddress,
+  getTxIxResume,
   isValidNumber,
+  shortenAddress,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
@@ -23,6 +25,7 @@ import {
   disabledDate,
   getAmountWithTokenSymbol,
   getFairPercentForInterval,
+  getIntervalFromSeconds,
   getPaymentRateOptionLabel,
   getRateIntervalInSeconds,
   getTransactionModalTitle,
@@ -46,6 +49,7 @@ import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
+import { StepSelector } from '../../components/StepSelector';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -95,6 +99,7 @@ export const RepeatingPayment = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
 
@@ -176,7 +181,7 @@ export const RepeatingPayment = () => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
       return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
-    if (!repeatingPaymentFees.mspPercentFee) {
+    if (!repeatingPaymentFees.blockchainFee) {
       getTransactionFees().then(values => {
         setRepeatingPaymentFees(values);
         consoleOut("repeatingPaymentFees:", values);
@@ -228,6 +233,8 @@ export const RepeatingPayment = () => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
     } else if (isValidNumber(newValue)) {
       setFromCoinAmount(newValue);
     }
@@ -264,14 +271,22 @@ export const RepeatingPayment = () => {
     }, 10);
   }
 
-  const handlePaymentRateAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
+  const onRateAmountChange = (value: any) => {
+    if (value === null || value === undefined || value === "") {
       setPaymentRateAmount("");
-    } else if (isValidNumber(newValue)) {
-      setPaymentRateAmount(newValue);
+    } else if (isValidNumber(value)) {
+      setPaymentRateAmount(value);
     }
-  };
+  }
+
+  // const handlePaymentRateAmountChange = (e: any) => {
+  //   const newValue = e.target.value;
+  //   if (newValue === null || newValue === undefined || newValue === "") {
+  //     setPaymentRateAmount("");
+  //   } else if (isValidNumber(newValue)) {
+  //     setPaymentRateAmount(newValue);
+  //   }
+  // };
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
@@ -377,11 +392,25 @@ export const RepeatingPayment = () => {
   }
 
   // Ui helpers
+  const getStepOneContinueButtonLabel = (): string => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : !recipientAddress || isAddressOwnAccount()
+      ? t('transactions.validation.select-recipient')
+      : !selectedToken || !tokenBalance
+      ? t('transactions.validation.no-balance')
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !arePaymentSettingsValid()
+      ? getPaymentSettingsButtonLabel()
+      : t('transactions.validation.valid-continue');
+  }
+
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.no-recipient')
+      ? t('transactions.validation.select-recipient')
       : !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
@@ -393,11 +422,11 @@ export const RepeatingPayment = () => {
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
-      ? getPaymentSettingsModalButtonLabel()
+      ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-approve');
   }
 
-  const getPaymentSettingsModalButtonLabel = (): string => {
+  const getPaymentSettingsButtonLabel = (): string => {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
@@ -474,105 +503,13 @@ export const RepeatingPayment = () => {
       : 0;
   }
 
-  // Prefabrics
+  const onStepperChange = (value: number) => {
+    setCurrentStep(value);
+  }
 
-  const paymentRateOptionsMenu = (
-    <Menu>
-      {getOptionsFromEnum(PaymentRateType).map((item) => {
-        return (
-          <Menu.Item
-            key={item.key}
-            onClick={() => handlePaymentRateOptionChange(item.value)}>
-            {item.text}
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  );
-
-  const renderAvailableTokenList = (
-    <>
-      {(destinationToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setDestinationToken(token);
-            setSelectedToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                destinationToken && destinationToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
-  const renderUserTokenList = (
-    <>
-      {(selectedToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setSelectedToken(token);
-            setDestinationToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
+  const onContinueButtonClick = () => {
+    setCurrentStep(1);  // Go to step 2
+  }
 
   // Main action
 
@@ -600,20 +537,15 @@ export const RepeatingPayment = () => {
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-
         consoleOut('beneficiaryMint:', destinationToken?.address);
         const beneficiaryMint = new PublicKey(destinationToken?.address as string);
-
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        consoleOut('Parsed paymentStartDate:', parsedDate);
         const fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
-        consoleOut('Local time added to parsed date!');
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString());
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
@@ -686,7 +618,7 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -727,21 +659,21 @@ export const RepeatingPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
         .catch(error => {
-          console.error('Signing transaction failed!');
+          console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -850,10 +782,10 @@ export const RepeatingPayment = () => {
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
-      consoleOut('create:', create);
+      consoleOut('created:', create);
       if (create && !transactionCancelled) {
         const sign = await signTx();
-        consoleOut('sign:', sign);
+        consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
           const sent = await sendTx();
           consoleOut('sent:', sent);
@@ -883,6 +815,10 @@ export const RepeatingPayment = () => {
             : false;
   }
 
+  ///////////////////
+  //   Rendering   //
+  ///////////////////
+
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>
@@ -892,52 +828,436 @@ export const RepeatingPayment = () => {
     );
   }
 
+  const paymentRateOptionsMenu = (
+    <Menu>
+      {getOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
+  const renderAvailableTokenList = (
+    <>
+      {(destinationToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setDestinationToken(token);
+            setSelectedToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                destinationToken && destinationToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
+  const renderUserTokenList = (
+    <>
+      {(selectedToken && tokenList) && (
+        tokenList.map((token, index) => {
+          const onClick = () => {
+            setSelectedToken(token);
+            setDestinationToken(token);
+            consoleOut("token selected:", token);
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+          return (
+            <div key={index + 100} onClick={onClick} className={`token-item ${
+                selectedToken && selectedToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                ) : (
+                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
   return (
     <>
-      {/* Recipient */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.recipient.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left recipient-field-wrapper">
-            <input id="payment-recipient-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
-              onFocus={handleRecipientAddressFocusIn}
-              onChange={handleRecipientAddressChange}
-              onBlur={handleRecipientAddressFocusOut}
-              placeholder={t('transactions.recipient.placeholder')}
-              required={true}
-              spellCheck="false"
-              value={recipientAddress}/>
-            <span id="payment-recipient-static-field"
-                  className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
-              {recipientAddress || t('transactions.recipient.placeholder')}
-            </span>
-          </span>
-          <div className="addon-right simplelink" onClick={showQrScannerModal}>
-            <QrcodeOutlined />
+      <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
+      <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+
+        {/* Recipient */}
+        <div className="form-label">{t('transactions.recipient.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left position-relative">
+              <span className="recipient-field-wrapper">
+                <input id="payment-recipient-field"
+                  className="general-text-input"
+                  autoComplete="on"
+                  autoCorrect="off"
+                  type="text"
+                  onFocus={handleRecipientAddressFocusIn}
+                  onChange={handleRecipientAddressChange}
+                  onBlur={handleRecipientAddressFocusOut}
+                  placeholder={t('transactions.recipient.placeholder')}
+                  required={true}
+                  spellCheck="false"
+                  value={recipientAddress}/>
+                <span id="payment-recipient-static-field"
+                      className={`${recipientAddress ? 'overflow-ellipsis-middle' : 'placeholder-text'}`}>
+                  {recipientAddress || t('transactions.recipient.placeholder')}
+                </span>
+              </span>
+            </div>
+            <div className="right">
+              <div className="add-on simplelink" onClick={showQrScannerModal}>
+                <QrcodeOutlined />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="transaction-field-row">
-          <span className="field-label-left">
-            {recipientAddress && !isValidAddress(recipientAddress) ? (
-              <span className="fg-red">
+          {
+            recipientAddress && !isValidAddress(recipientAddress) ? (
+              <span className="form-field-error">
                 {t("assets.account-address-validation")}
               </span>
             ) : isAddressOwnAccount() ? (
-              <span className="fg-red">{t('transactions.recipient.recipient-is-own-account')}</span>
-            ) : (
-              <span>&nbsp;</span>
-            )}
-          </span>
-          <span className="field-label-right">&nbsp;</span>
+              <span className="form-field-error">
+                {t('transactions.recipient.recipient-is-own-account')}
+              </span>
+            ) : (null)
+          }
         </div>
+
+        {/* Receive rate */}
+        <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                <div className="token-selector" onClick={() => {
+                  setSubjectTokenSelection('beneficiary');
+                  showTokenSelector();
+                  }}>
+                  <div className="token-icon">
+                    {destinationToken?.logoURI ? (
+                      <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
+                    ) : (
+                      <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                    )}
+                  </div>
+                  <div className="token-symbol">{destinationToken?.symbol}</div>
+                  <span className="flex-center">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </span>
+                </div>
+              </span>
+            </div>
+            <div className="well-divider"></div>
+            <div className="right">
+              <InputNumber
+                className="general-text-input"
+                min={0}
+                step={1}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                value={parseFloat(paymentRateAmount)}
+                onChange={onRateAmountChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Receive frequency */}
+        <div className="form-label">{t('transactions.rate-and-frequency.rate-label')}</div>
+        <div className="well">
+          <Dropdown
+            overlay={paymentRateOptionsMenu}
+            trigger={["click"]}>
+            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+              <div className="left">
+                <span className="capitalize-first-letter">{getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}</span>
+              </div>
+              <div className="right">
+                <IconCaretDown className="mean-svg-icons" />
+              </div>
+            </span>
+          </Dropdown>
+        </div>
+
+        {/* Send date */}
+        <div className="form-label">{t('transactions.send-date.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left static-data-field">
+              {isToday(paymentStartDate || '')
+                ? `${paymentStartDate} (${t('common:general.now')})`
+                : `${paymentStartDate}`}
+            </div>
+            <div className="right">
+              <div className="add-on simplelink">
+                <DatePicker
+                  size="middle"
+                  bordered={false}
+                  className="addon-date-picker"
+                  aria-required={true}
+                  allowClear={false}
+                  disabledDate={disabledDate}
+                  placeholder={t('transactions.send-date.placeholder')}
+                  onChange={(value, date) => handleDateChange(date)}
+                  value={moment(
+                    paymentStartDate,
+                    DATEPICKER_FORMAT
+                  )}
+                  format={DATEPICKER_FORMAT}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Memo */}
+        <div className="form-label">{t('transactions.memo2.label')}</div>
+        <div className="well">
+          <div className="flex-fixed-right">
+            <div className="left">
+              <input
+                id="payment-memo-field"
+                className="w-100 general-text-input"
+                autoComplete="on"
+                autoCorrect="off"
+                type="text"
+                onChange={handleRecipientNoteChange}
+                placeholder={t('transactions.memo2.placeholder')}
+                spellCheck="false"
+                value={recipientNote}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Continue button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onContinueButtonClick}
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          {getStepOneContinueButtonLabel()}
+        </Button>
+
       </div>
+
+      <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+
+        {/* Resume */}
+        {publicKey && recipientAddress && (
+          <>
+            <div className="flex-fixed-right">
+              <div className="left">
+                <div className="form-label">{t('transactions.resume')}</div>
+              </div>
+              <div className="right">
+                <span className="flat-button change-button" onClick={() => setCurrentStep(0)}>
+                  <IconEdit className="mean-svg-icons" />
+                  <span>{t('general.cta-change')}</span>
+                </span>
+              </div>
+            </div>
+            <div className="well">
+              <div className="three-col-flexible-middle">
+                <div className="left flex-row">
+                  <div className="flex-center">
+                    <Identicon
+                      address={isValidAddress(recipientAddress) ? recipientAddress : WRAPPED_SOL_MINT_ADDRESS}
+                      style={{ width: "30", display: "inline-flex" }} />
+                  </div>
+                  <div className="flex-column pl-3">
+                    <div className="address">
+                      {publicKey && isValidAddress(recipientAddress)
+                        ? shortenAddress(recipientAddress)
+                        : t('transactions.validation.no-recipient')}
+                    </div>
+                    <div className="inner-label mt-0">{recipientNote || '-'}</div>
+                  </div>
+                </div>
+                <div className="middle flex-center">
+                  <div className="vertical-bar"></div>
+                </div>
+                <div className="right flex-column">
+                  <div className="rate">
+                    {selectedToken
+                      ? getTokenAmountAndSymbolByTokenAddress(parseFloat(paymentRateAmount), selectedToken.address)
+                      : '-'
+                    }
+                    {getIntervalFromSeconds(getRateIntervalInSeconds(paymentRateFrequency), true, t)}
+                  </div>
+                  <div className="inner-label mt-0">{paymentStartDate}</div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="mb-3 text-center">
+          <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
+          <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
+        </div>
+
+        {/* Add funds */}
+        <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                <div className="token-selector" onClick={() => {
+                    setSubjectTokenSelection('payer');
+                    showTokenSelector();
+                  }}>
+                  <div className="token-icon">
+                    {selectedToken?.logoURI ? (
+                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
+                    ) : (
+                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                    )}
+                  </div>
+                  <div className="token-symbol">{selectedToken?.symbol}</div>
+                  <span className="flex-center">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </span>
+                </div>
+                {selectedToken && tokenBalance ? (
+                  <div
+                    className="token-max simplelink"
+                    onClick={() =>
+                      setFromCoinAmount(
+                        tokenBalance.toFixed(selectedToken.decimals)
+                      )
+                    }>
+                    MAX
+                  </div>
+                ) : null}
+              </span>
+            </div>
+            <div className="right">
+              <input
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleFromCoinAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={fromCoinAmount}
+              />
+            </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">
+              ~${fromCoinAmount && effectiveRate
+                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                : "0.00"}
+            </div>
+          </div>
+        </div>
+
+        {/* Info */}
+        {selectedToken && (
+          <div className="p-2 mb-2">
+            {infoRow(
+              `1 ${selectedToken.symbol}:`,
+              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.transaction-fee') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+            {isSendAmountValid() && infoRow(
+              t('transactions.transaction-info.recipient-receives') + ':',
+              `${areSendAmountSettingsValid()
+                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
+                : '0'
+              }`
+            )}
+          </div>
+        )}
+
+        {/* Action button */}
+        <Button
+          className="main-cta"
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onTransactionStart}
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+          {getTransactionStartButtonLabel()}
+        </Button>
+      </div>
+
       {/* QR scan modal */}
       {isQrScannerModalVisible && (
         <QrScannerModal
@@ -945,213 +1265,6 @@ export const RepeatingPayment = () => {
           handleOk={onAcceptQrScannerModal}
           handleClose={closeQrScannerModal}/>
       )}
-
-      {/* Memo */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.memo2.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              id="payment-memo-field"
-              className="w-100 general-text-input"
-              autoComplete="on"
-              autoCorrect="off"
-              type="text"
-              onChange={handleRecipientNoteChange}
-              placeholder={t('transactions.memo2.placeholder')}
-              spellCheck="false"
-              value={recipientNote} />
-          </span>
-        </div>
-      </div>
-
-      {/* Receive rate and frequency */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left cell-1">{t('transactions.rate-and-frequency.token-label')}</span>
-          <span className="field-label-left cell-2 flex-center">&nbsp;</span>
-          <span className="field-label-left cell-3">{t('transactions.rate-and-frequency.rate-label')}</span>
-          <span className="field-label-left cell-4">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="addon-left cell-1">
-            <div className="token-selector simplelink" onClick={() => {
-              setSubjectTokenSelection('beneficiary');
-              showTokenSelector();
-            }}>
-              <div className="token-icon">
-                {destinationToken?.logoURI ? (
-                  <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
-                ) : (
-                  <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-symbol">{destinationToken?.symbol}</div>
-              <span className="flex-center">
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </div>
-          </span>
-          <span className="static-field-text cell-2 flex-center">
-            <span className="symbol-at">@</span>
-          </span>
-          <span className="static-field-text cell-3">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              required={true}
-              onChange={handlePaymentRateAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={paymentRateAmount}
-            />
-          </span>
-          <span className="static-field-text cell-4">
-            <Dropdown
-              overlay={paymentRateOptionsMenu}
-              trigger={["click"]}>
-              <span className="dropdown-trigger no-decoration flex-center">
-                {getPaymentRateOptionLabel(paymentRateFrequency, t)}{" "}
-                <IconCaretDown className="mean-svg-icons" />
-              </span>
-            </Dropdown>
-          </span>
-        </div>
-      </div>
-
-      {/* Send date */}
-      <div className="transaction-field">
-        <div className="transaction-field-row">
-          <span className="field-label-left">{t('transactions.send-date.label')}</span>
-          <span className="field-label-right">&nbsp;</span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="field-select-left">
-            {isToday(paymentStartDate || '')
-              ? `${paymentStartDate} (${t('common:general.today')})`
-              : `${paymentStartDate}`}
-          </span>
-          <div className="addon-right">
-            <DatePicker
-              size="middle"
-              bordered={false}
-              className="addon-date-picker"
-              aria-required={true}
-              allowClear={false}
-              disabledDate={disabledDate}
-              placeholder={t('transactions.send-date.placeholder')}
-              onChange={(value, date) => handleDateChange(date)}
-              value={moment(
-                paymentStartDate,
-                DATEPICKER_FORMAT
-              )}
-              format={DATEPICKER_FORMAT}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3 text-center">
-        <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-        <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
-      </div>
-
-      {/* Send amount */}
-      <div className="transaction-field mb-1">
-        <div className="transaction-field-row">
-          <span className="field-label-left" style={{marginBottom: '-6px'}}>
-            {t('transactions.send-amount.label')} ~${fromCoinAmount && effectiveRate
-              ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-              : "0.00"}
-            <IconSort className="mean-svg-icons usd-switcher fg-red" />
-            <span className="fg-red">USD</span>
-          </span>
-          <span className="field-label-right">
-            <span>{t('transactions.send-amount.label-right')}:</span>
-            <span className="balance-amount">
-              {`${selectedToken && tokenBalance
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
-            </span>
-            <span className="balance-amount">
-              (~$
-              {tokenBalance && effectiveRate
-                ? formatAmount(tokenBalance as number * effectiveRate, 2)
-                : "0.00"})
-            </span>
-          </span>
-        </div>
-        <div className="transaction-field-row main-row">
-          <span className="input-left">
-            <input
-              className="general-text-input"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleFromCoinAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={fromCoinAmount}
-            />
-          </span>
-          {selectedToken && (
-            <div className="addon-right">
-              <div className="token-group">
-                {selectedToken && (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
-                      setFromCoinAmount(
-                        // getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                        tokenBalance.toFixed(selectedToken.decimals)
-                      )
-                    }>
-                    MAX
-                  </div>
-                )}
-                <div className="token-selector simplelink" onClick={() => {
-                    setSubjectTokenSelection('payer');
-                    showTokenSelector();
-                  }}>
-                  <div className="token-icon">
-                    {selectedToken.logoURI ? (
-                      <img
-                        alt={`${selectedToken.name}`}
-                        width={20}
-                        height={20}
-                        src={selectedToken.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={selectedToken.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken.symbol}</div>
-                </div>
-              </div>
-            </div>
-          )}
-          <span className="field-caret-down">
-            <IconCaretDown className="mean-svg-icons" />
-          </span>
-        </div>
-      </div>
 
       {/* Token selection modal */}
       <Modal
@@ -1166,41 +1279,6 @@ export const RepeatingPayment = () => {
         </div>
       </Modal>
 
-      {/* Info */}
-      {selectedToken && (
-        <div className="p-2 mb-2">
-          {infoRow(
-            `1 ${selectedToken.symbol}:`,
-            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.transaction-fee') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-          {isSendAmountValid() && infoRow(
-            t('transactions.transaction-info.recipient-receives') + ':',
-            `${areSendAmountSettingsValid()
-              ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(repeatingPaymentFees, fromCoinAmount), selectedToken?.address)
-              : '0'
-            }`
-          )}
-        </div>
-      )}
-
-      {/* Action button */}
-      <Button
-        className="main-cta"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={onTransactionStart}
-        disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
-        {getTransactionStartButtonLabel()}
-      </Button>
       {/* Transaction execution modal */}
       <Modal
         className="mean-modal"

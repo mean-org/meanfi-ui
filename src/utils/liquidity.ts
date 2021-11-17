@@ -7,7 +7,6 @@ import { LP_TOKENS, TokenInfo, TOKENS } from "./tokens";
 import { BN } from "bn.js";
 import { createAmmAuthority } from "./utils";
 import { getAddressForWhat, LiquidityPoolInfo, LIQUIDITY_POOLS } from "./pools";
-import { cloneDeep } from "lodash-es";
 import { TokenAmount } from "./safe-math";
 import { MARKETS } from "./markets";
 
@@ -208,7 +207,7 @@ export const getLiquidityPools = async (connection: Connection) => {
         new PublicKey(lp.address)
       )
 
-      const poolInfo = cloneDeep(pool);
+      const poolInfo = JSON.parse(JSON.stringify(pool));
       poolInfo.coin.balance = new TokenAmount(0, coin.decimals);
       poolInfo.pc.balance = new TokenAmount(0, pc.decimals);
       liquidityPools[lp.address] = poolInfo;

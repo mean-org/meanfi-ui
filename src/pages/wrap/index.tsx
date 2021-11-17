@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import { WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { Button, Col, Modal, Row, Spin } from "antd";
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from "../../utils/utils";
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { TransactionStatus } from "../../models/enums";
 import { calculateActionFees, wrapSol } from '@mean-dao/money-streaming/lib/utils';
@@ -169,7 +169,7 @@ export const WrapView = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: ''
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -214,7 +214,7 @@ export const WrapView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: `Signer: ${wallet.publicKey.toBase58()}`
+              result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
             });
             return true;
           })
@@ -226,9 +226,9 @@ export const WrapView = () => {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Wrap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -371,6 +371,8 @@ export const WrapView = () => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setValue("");
+    } else if (newValue === '.') {
+      setValue(".");
     } else if (isValidNumber(newValue)) {
       setValue(newValue);
     }

@@ -39,6 +39,7 @@ export function Routes() {
                         <Redirect to="/accounts" />
                       </Route>
                       <Route exact path="/accounts" children={<AccountsView />} />
+                      <Route exact path="/accounts/streams" children={<AccountsView />} />
                       <Route exact path="/faucet" children={<FaucetView />} />
                       <Route exact path="/transfers" children={<TransfersView />} />
                       <Route exact path="/payroll" children={<PayrollView />} />

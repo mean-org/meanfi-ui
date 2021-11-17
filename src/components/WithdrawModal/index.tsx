@@ -70,9 +70,15 @@ export const WithdrawModal = (props: {
   }
 
   const handleWithdrawAmountChange = (e: any) => {
-    const newValue = isValidNumber(e.target.value) ? e.target.value : '';
-    setValue(newValue);
-    setFeeAmount(getFeeAmount(props.transactionFees, newValue));
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setValue("");
+    } else if (newValue === '.') {
+      setValue(".");
+    } else if (isValidNumber(newValue)) {
+      setValue(newValue);
+      setFeeAmount(getFeeAmount(props.transactionFees, newValue));
+    }
   };
 
   const getFeeAmount = (fees: TransactionFees, amount?: any): number => {

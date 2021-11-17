@@ -11,8 +11,7 @@ export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 0.25;
 export const MAX_SLIPPAGE_VALUE = 20;
 
-export const NON_NEGATIVE_AMOUNT_PATTERN = /^(0*[0-9][0-9]*(\.[0-9]*)?|0*\.[0-9]*[1-9][0-9]*)$/;
-export const POSITIVE_NUMBER_PATTERN = /^([0]*?([1-9]\d*)(\.0{1,2})?)$/;
+export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';
@@ -32,6 +31,7 @@ export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
 export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
 export const MEAN_DAO_MEDIUM_BLOG_URL = 'https://meandao.medium.com/';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
+export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = 'assets/coin-error.svg';
 export const BANNED_TOKENS = [

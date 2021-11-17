@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
-
 import Jazzicon from "jazzicon";
 import bs58 from "bs58";
 import "./style.less";
 import { PublicKey } from "@solana/web3.js";
+import { isValidAddress } from "../../utils/ui";
 
 export const Identicon = (props: {
   address?: string | PublicKey;
@@ -18,7 +18,7 @@ export const Identicon = (props: {
   const ref = useRef<HTMLDivElement>();
 
   useEffect(() => {
-    if (address && ref.current) {
+    if (address && isValidAddress(address) && ref.current) {
       ref.current.innerHTML = "";
       ref.current.className = className || "";
       ref.current.appendChild(
@@ -30,7 +30,10 @@ export const Identicon = (props: {
     }
   }, [address, style, className]);
 
-  return (
-    <div className="identicon-wrapper" ref={ref as any} style={props.style} />
-  );
+  if (isValidAddress(address)) {
+    return (
+      <div className="identicon-wrapper" ref={ref as any} style={props.style} />
+    );
+  }
+  return null;
 };

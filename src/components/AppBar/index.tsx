@@ -17,7 +17,6 @@ import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { appConfig } from '../..';
 import { useOnlineStatus } from '../../contexts/online-status';
-import { isDev } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -25,7 +24,7 @@ export const AppBar = (props: { menuType: string }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected } = useWallet();
-  const isOnline = useOnlineStatus();
+  const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
     detailsPanelOpen,
@@ -160,10 +159,19 @@ export const AppBar = (props: { menuType: string }) => {
 
   const renderOnlineStatus = (
     <div className="flex">
-      <Tooltip placement="bottom" destroyTooltipOnHide={true} title={isOnline
-          ? t('notifications.network-connection-good')
-          : t('notifications.network-connection-poor')}>
-        <span className={`online-status ${isOnline ? 'success' : 'error'} mr-1`}></span>
+      <Tooltip
+        placement="bottom"
+        destroyTooltipOnHide={true}
+        title={!isOnline
+          ? t('notifications.network-connection-down')
+          : responseTime < 1000
+            ? `${t('notifications.network-connection-good')} (${responseTime}ms)`
+            : `${t('notifications.network-connection-poor')} (${responseTime}ms)`}>
+        <span className={`online-status mr-1 ${!isOnline
+          ? 'error'
+          : responseTime < 1000
+            ? 'success'
+            : 'warning'}`}></span>
       </Tooltip>
     </div>
   );
@@ -173,23 +181,20 @@ export const AppBar = (props: { menuType: string }) => {
       <>
         <div className="App-Bar-left">{mainNav}</div>
         <div className="App-Bar-right">
+          {!isProd() && (
+            <div className="cluster-indicator">
+              <ThunderboltOutlined />
+              <span className="network-name">{connectionConfig.cluster}</span>
+            </div>
+          )}
+          {renderOnlineStatus}
           {connected ? (
-            <>
-            {!isProd() && (
-              <div className="cluster-indicator">
-                <ThunderboltOutlined />
-                <span className="network-name">{connectionConfig.cluster}</span>
-              </div>
-            )}
-            {renderOnlineStatus}
             <div className="connection-and-account-bar">
               <CurrentBalance />
               <CurrentUserBadge />
             </div>
-            </>
           ) : (
             <>
-              {renderOnlineStatus}
               <ConnectButton />
             </>
           )}

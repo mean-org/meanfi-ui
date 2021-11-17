@@ -1,28 +1,24 @@
 import React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { AppStateContext } from '../../contexts/appstate';
-import { percentage } from '../../utils/ui';
+import { consoleOut, isLocal, percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
-import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { environment } from '../../environments/environment';
+import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 
 export const CloseStreamModal = (props: {
   handleClose: any;
   handleOk: any;
+  tokenBalance: number;
   content: JSX.Element;
   isVisible: boolean;
+  streamDetail: StreamInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const {
-    tokenBalance,
-    streamDetail
-  } = useContext(AppStateContext);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
@@ -33,11 +29,11 @@ export const CloseStreamModal = (props: {
     // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
     // If the Beneficiary is initializing the CloseStream Tx, both mspFlatFee and mspPercentFee
     // must be used by adding the percentFee of the vested amount to the flat fee
-    if (fees && streamDetail) {
-      const amItreasurer = isAddressMyAccount(streamDetail.treasurerAddress as string);
-      const amIbeneficiary = isAddressMyAccount(streamDetail.beneficiaryAddress as string);
+    if (fees && props.streamDetail) {
+      const amItreasurer = isAddressMyAccount(props.streamDetail.treasurerAddress as string);
+      const amIbeneficiary = isAddressMyAccount(props.streamDetail.beneficiaryAddress as string);
       if (amIbeneficiary) {
-        fee = percentage(fees.mspPercentFee, streamDetail.escrowVestedAmount) || 0;
+        fee = percentage(fees.mspPercentFee, props.streamDetail.escrowVestedAmount) || 0;
       } else if (amItreasurer) {
         fee = fees.mspFlatFee;
       }
@@ -45,36 +41,34 @@ export const CloseStreamModal = (props: {
     return fee;
   }, [
     publicKey,
-    streamDetail
+    props.streamDetail
   ]);
 
   const isUserTreasurer = (): boolean => {
-    if (publicKey && streamDetail) {
+    if (publicKey && props.streamDetail) {
       const me = publicKey.toBase58();
-      const treasurer = streamDetail.treasurerAddress as string;
+      const treasurer = props.streamDetail.treasurerAddress as string;
       return treasurer === me ? true : false;
     }
     return false;
   }
 
-  // const isUserBeneficiary = (): boolean => {
-  //   if (publicKey && streamDetail) {
-  //     const me = publicKey.toBase58();
-  //     const beneficiary = streamDetail.beneficiaryAddress as string;
-  //     return beneficiary === me ? true : false;
-  //   }
-  //   return false;
-  // }
-
   useEffect(() => {
-    if (!feeAmount && props.transactionFees && streamDetail) {
+    if (!feeAmount && props.transactionFees) {
       setFeeAmount(getFeeAmount(props.transactionFees));
     }
   }, [
     feeAmount,
-    streamDetail,
     props.transactionFees,
     getFeeAmount
+  ]);
+
+  useEffect(() => {
+    if (props.tokenBalance) {
+      consoleOut('tokenBalance:', props.tokenBalance, 'orange');
+    }
+  }, [
+    props.tokenBalance
   ]);
 
   const infoRow = (caption: string, value: string) => {
@@ -100,25 +94,25 @@ export const CloseStreamModal = (props: {
         <h4 className="operation">{props.content}</h4>
 
         {/* Info */}
-        {streamDetail && streamDetail.associatedToken && (
+        {props.streamDetail && props.streamDetail.associatedToken && (
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+              getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowVestedAmount, props.streamDetail.associatedToken as string)
             )}
             {isUserTreasurer() && infoRow(
               t('close-stream.return-unvested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(streamDetail.escrowUnvestedAmount, streamDetail.associatedToken as string)
+              getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowUnvestedAmount, props.streamDetail.associatedToken as string)
             )}
             {infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
               `${feeAmount
-                ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), streamDetail.associatedToken as string)
+                ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.streamDetail.associatedToken as string)
                 : '0'
               }`
             )}
-            {environment === 'local' && (
-              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(tokenBalance, streamDetail.associatedToken as string)}</p>
+            {isLocal() && (
+              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.streamDetail.associatedToken as string)}</p>
             )}
           </div>
         )}
@@ -136,9 +130,9 @@ export const CloseStreamModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              disabled={tokenBalance < (feeAmount || 0)}
+              disabled={props.tokenBalance < (feeAmount || 0)}
               onClick={props.handleOk}>
-              {tokenBalance >= (feeAmount || 0) ? t('close-stream.primary-cta') : t('transactions.validation.amount-low')}
+              {props.tokenBalance >= (feeAmount || 0) ? t('close-stream.primary-cta') : t('transactions.validation.amount-low')}
           </Button>
         </div>
       </div>

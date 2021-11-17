@@ -40,13 +40,28 @@ const checkOnlineStatus = async () => {
   return false;
 };
 
-const OnlineStatusContext = React.createContext(true);
+interface OnlineStatusConfig {
+  isOnline: boolean;
+  responseTime: number;
+}
+
+const defaultValues: OnlineStatusConfig = {
+  isOnline: false,
+  responseTime: 0,
+};
+
+const OnlineStatusContext = React.createContext<OnlineStatusConfig>(defaultValues);
 
 export const OnlineStatusProvider: React.FC = ({ children }) => {
   const [onlineStatus, setOnlineStatus] = useState<boolean>(true);
+  const [responseTime, setResponseTime] = useState(0);
+  const [contextStarted, setContextStarted] = useState(false);
 
   const checkStatus = async () => {
+    const tsStart = new Date().getTime();
     const online = await checkOnlineStatus();
+    const tsEnd = new Date().getTime();
+    setResponseTime(online ? tsEnd - tsStart : 0);
     setOnlineStatus(online);
   };
 
@@ -54,6 +69,11 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
     window.addEventListener("offline", () => {
       setOnlineStatus(false);
     });
+
+    if (!contextStarted) {
+      setContextStarted(true);
+      checkStatus();
+    }
 
     // Add polling incase of slow connection
     const id = setInterval(() => {
@@ -67,10 +87,14 @@ export const OnlineStatusProvider: React.FC = ({ children }) => {
 
       clearInterval(id);
     };
-  }, []);
+  }, [contextStarted]);
 
   return (
-    <OnlineStatusContext.Provider value={onlineStatus}>
+    <OnlineStatusContext.Provider
+      value={{
+        isOnline: onlineStatus,
+        responseTime
+      }}>
       {children}
     </OnlineStatusContext.Provider>
   );

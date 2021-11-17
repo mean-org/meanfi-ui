@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useState } from 'react';
 import { Button, Col, Modal, Progress, Row } from 'antd';
-import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
+import { findATokenAddress, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
 import { consoleOut, getTransactionStatusForLogs, isLocal, percentage, percentual } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { DdcaClient, DdcaDetails, TransactionFees } from '@mean-dao/ddca';
@@ -339,7 +339,7 @@ export const DdcaAddFundsModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: 'createAddFundsTx succeeded'
+            result: getTxIxResume(value)
           });
           transaction = value;
           return true;
@@ -380,7 +380,7 @@ export const DdcaAddFundsModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: `Signer: ${wallet.publicKey.toBase58()}`
+            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
           return true;
         })
@@ -392,9 +392,9 @@ export const DdcaAddFundsModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: `Signer: ${wallet.publicKey.toBase58()}\n${error}`
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

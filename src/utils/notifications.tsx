@@ -1,4 +1,5 @@
 import { notification } from "antd";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../constants";
 import { IconExternalLink } from "../Icons";
 
 export function notify({
@@ -10,7 +11,7 @@ export function notify({
 }) {
   if (txid) {
     description = (
-      <a className="secondary-link" href={`https://explorer.solana.com/tx/${txid}`}
+      <a className="secondary-link" href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${txid}`}
           target="_blank" rel="noopener noreferrer">
         <IconExternalLink className="mean-svg-icons link" />
         <span className="link-text">View transaction {txid.slice(0, 8)}...{txid.slice(txid.length - 8)}</span>

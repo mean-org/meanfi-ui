@@ -6,7 +6,10 @@
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
 		"network-unknown": "Desconocido",
-		"streams-tooltip": "Click para actualizar las transferencias",
+		"non-ata-label": "Non Associated Token Account",
+		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
+		"money-streams": "Flujos de dinero",
+		"streams-tooltip": "Haga clic para actualizar los activos",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
@@ -16,6 +19,7 @@
 		"modal-title": "Añadir fondos"
 	},
 	"assets": {
+		"accounts-label": "accounts",
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
 		"account-address-change-cta": "Escanear otra dirección",
@@ -34,6 +38,8 @@
 		"history-table-date": "Fecha",
 		"history-table-postbalance": "Post saldo",
 		"loading-error": "No pudimos cargar las transacciones. Por favor, recargue la página.",
+		"merge-accounts-link": "Merge token accounts",
+		"merge-accounts-cta": "Merge accounts",
 		"no-asset-selected": "No ha seleccionado ningún activo. Por favor, elija uno de la izquierda.",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -170,7 +176,8 @@
 			"action-deposit": "Deposited {{fromAmount}}",
 			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
 			"action-withdraw": "Withdrew {{toAmount}}"
-		}
+		},
+		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?"
 	},
 	"deposits": {
 		"address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
@@ -205,6 +212,7 @@
 	},
 	"general": {
 		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
+		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
 		"cta-finish": "Terminar",
 		"day": "día",
@@ -214,6 +222,7 @@
 		"minute": "minuto",
 		"month": "mes",
 		"months": "",
+		"no": "No",
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
 		"now": "now",
@@ -225,9 +234,11 @@
 		"weeks": "",
 		"year": "año",
 		"you": "usted",
+		"yes": "Yes",
 		"start": "Start",
 		"starting": "Starting",
-		"finished": "Finished"
+		"finished": "Finished",
+		"stepper-label": "Step {{step}} of {{steps}}"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
@@ -247,7 +258,8 @@
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
 		"network-connection-good": "Network connection is good",
-		"network-connection-poor": "Poor network connection detected",
+		"network-connection-down": "No network connection. App is OFFLINE!",
+		"network-connection-poor": "Network connection quality is very poor",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "La cuenta de transferencia se copió correctamente en el clipboard",
@@ -279,6 +291,8 @@
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
 		"screen-title": "Transferencias",
+		"stream-stats-incoming": "Incoming",
+		"stream-stats-outgoing": "Outgoing",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -313,7 +327,8 @@
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
-			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-ended": "Transferencia no financiada por 72h",
+			"subtitle-paused-otp": "Pago único programado completado",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
@@ -331,6 +346,7 @@
 		}
 	},
 	"swap": {
+		"clients-label-savings": "You save",
 		"screen-title": "Exchange",
 		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange solo está disponible en",
@@ -339,8 +355,11 @@
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
 		"token-select-destination": "Seleccione un token",
 		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Tolerancia al deslizamiento",
+		"transaction-settings": "Transaction settings",
+		"slippage-tolerance": "Tolerancia al deslizamiento",
 		"frequency-label": "Frequency",
+		"pools-and-routes": "Pools and routes",
+		"show-routes": "Show routing options",
 		"tabset": {
 			"one-time": "One time",
 			"recurring": "Recurring"
@@ -351,6 +370,7 @@
 		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección"
 	},
 	"transactions": {
+		"resume": "Summary",
 		"memo": {
 			"label": "Nota",
 			"placeholder": "Agregue nota adicional"
@@ -360,6 +380,7 @@
 			"placeholder": "¿Para qué es este pago?"
 		},
 		"rate-and-frequency": {
+			"amount-label": "Cantidad",
 			"payment-rates": {
 				"per-day": "por día",
 				"per-hour": "por hora",
@@ -368,7 +389,7 @@
 				"per-week": "por semana",
 				"per-year": "por año"
 			},
-			"rate-label": "Tasa y frecuencia",
+			"rate-label": "Frecuencia",
 			"token-label": "El destinatario recibe"
 		},
 		"recipient": {
@@ -379,7 +400,8 @@
 		},
 		"send-amount": {
 			"label": "Enviar",
-			"label-right": "Saldo"
+			"label-right": "Saldo",
+			"label-amount": "Añadir fondos"
 		},
 		"send-date": {
 			"label": "Enviar en",
@@ -408,6 +430,7 @@
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
 			"tx-confirm-failure-check": "Check your transaction in the link below",
+			"tx-generic-operation-success": "Transaction completed successfully",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo iniciar la transacción",
@@ -428,7 +451,7 @@
 			"tx-wrap-operation": "Wrapping",
 			"tx-wrap-operation-success": "La operación de wrap se completó exitosamente"
 		},
-		"timeshift-requirement": {
+		"timesheet-requirement": {
 			"clock-in-out": "Hora de entrada / salida",
 			"label": "Requisito del parte de horas",
 			"not-required": "Innecesario (transmisiones 24/7)",
@@ -455,17 +478,20 @@
 			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
 			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL",
 			"invalid-amount": "Monto no válido",
-			"invalid-exchange": "Intercambio no válido",
-			"minimum-repeating-buy-amount": "",
+			"invalid-exchange": "Seleccione un token",
+			"exchange-unavailable": "Exchange unavailable",
+			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
-			"no-recipient": "Seleccionar destinatario",
+			"no-recipient": "Sin destinatario",
+			"select-recipient": "Seleccionar destinatario",
 			"no-valid-date": "Establecer una fecha válida",
 			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
 			"valid-approve": "Aprobar en su billetera",
+			"valid-continue": "Continuar",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Empezar a financiar",
 			"valid-start-withdrawal": "Iniciar retiro"
@@ -474,6 +500,10 @@
 	"transfers": {
 		"screen-title": "Transfers",
 		"screen-subtitle": "Send money to anyone in the world faster"
+	},
+	"payroll": {
+		"screen-title": "Payroll",
+		"screen-subtitle": "Setup payroll for your employees"
 	},
 	"ui-language": {
 		"en": "Inglés",
@@ -486,7 +516,7 @@
 			"blog": "Blog",
 			"code": "Código",
 			"developers": "Desarrolladores",
-			"disconnect": "Desconectar billetera",
+			"help-support": "Help center",
 			"discord": "Discord",
 			"faucet": "Faucet",
 			"how-to-use": "Docs",

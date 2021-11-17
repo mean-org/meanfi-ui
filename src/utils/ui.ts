@@ -46,6 +46,14 @@ export class PaymentRateTypeOption {
     }
 }
 
+export const formatters = {
+    default: new Intl.NumberFormat(),
+    currency: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    whole: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+    oneDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+    twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+};
+
 export function isValidAddress(value: any): boolean {
     if (typeof value === 'string') {
         try {
@@ -90,42 +98,48 @@ export function getTransactionModalTitle(status: TransactionStatusInfo, isBusy: 
 
 export function getTransactionStatusForLogs (status: TransactionStatus): string {
     switch (status) {
+        case TransactionStatus.WalletNotFound:
+            return 'Wallet not found';
         case TransactionStatus.TransactionStart:
             return 'Collecting transaction data';
-        case TransactionStatus.InitTransaction:
-            return 'Init transaction';
+        case TransactionStatus.TransactionStarted:
+            return 'Transaction started';
         case TransactionStatus.TransactionStartFailure:
             return 'Cannot start transaction';
+        case TransactionStatus.InitTransaction:
+            return 'Init transaction';
         case TransactionStatus.InitTransactionSuccess:
             return 'Transaction successfully initialized';
+        case TransactionStatus.InitTransactionFailure:
+            return 'Could not init transaction';
         case TransactionStatus.SignTransaction:
             return 'Waiting for wallet approval';
+        case TransactionStatus.SignTransactionSuccess:
+            return 'Transaction signed by the wallet';
+        case TransactionStatus.SignTransactionFailure:
+            return 'Transaction rejected';
         case TransactionStatus.SendTransaction:
             return 'Sending transaction';
+        case TransactionStatus.SendTransactionSuccess:
+            return 'Transaction sent successfully';
+        case TransactionStatus.SendTransactionFailure:
+            return 'Failure submitting transaction';
         case TransactionStatus.ConfirmTransaction:
             return 'Confirming transaction';
         case TransactionStatus.ConfirmTransactionSuccess:
             return 'Confirm transaction succeeded';
         case TransactionStatus.ConfirmTransactionFailure:
             return 'Confirm transaction failed';
-        case TransactionStatus.InitTransactionFailure:
-            return 'Could not init transaction';
-        case TransactionStatus.SignTransactionFailure:
-            return 'Transaction rejected';
-        case TransactionStatus.SignTransactionSuccess:
-            return 'Transaction signed by the wallet';
-        case TransactionStatus.SendTransactionFailure:
-            return 'Failure submitting transaction';
-        case TransactionStatus.SendTransactionSuccess:
-            return 'Transaction sent successfully';
+        case TransactionStatus.TransactionFinished:
+            return 'Transaction finished';
+        case TransactionStatus.SendTransactionFailureByMinimumAmount:
+            return 'Send transaction failure. Minimum amount required';
         case TransactionStatus.CreateRecurringBuySchedule:
             return 'Create recurring exchange schedule';
         case TransactionStatus.CreateRecurringBuyScheduleSuccess:
             return 'Recurring exchange created successfully';
         case TransactionStatus.CreateRecurringBuyScheduleFailure:
             return 'Could not create the recurring exchange';
-        case TransactionStatus.TransactionFinished:
-            return 'Operation completed. Transaction sent and confirmed!';
         default:
             return ''; // 'Idle';
     }
@@ -221,13 +235,13 @@ export const getTimesheetRequirementOptionLabel = (val: TimesheetRequirementOpti
     let result = '';
     switch (val) {
         case TimesheetRequirementOption.NotRequired:
-            result = trans ? trans('transactions.timeshift-requirement.not-required') : 'Not required (streams 24/7)';
+            result = trans ? trans('transactions.timesheet-requirement.not-required') : 'Not required (streams 24/7)';
             break;
         case TimesheetRequirementOption.SubmitTimesheets:
-            result = trans ? trans('transactions.timeshift-requirement.submit-timesheets') : 'Submit timesheets';
+            result = trans ? trans('transactions.timesheet-requirement.submit-timesheets') : 'Submit timesheets';
             break;
         case TimesheetRequirementOption.ClockinClockout:
-            result = trans ? trans('transactions.timeshift-requirement.clock-in-out') : 'Clock-in / Clock-out';
+            result = trans ? trans('transactions.timesheet-requirement.clock-in-out') : 'Clock-in / Clock-out';
             break;
         default:
             break;
@@ -410,9 +424,9 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
     return result;
 }
 
-export const getFormattedNumberToLocale = (value: any) => {
+export const getFormattedNumberToLocale = (value: any, minDigits = 0) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat(undefined, { maximumSignificantDigits: 9, minimumSignificantDigits: 3, minimumFractionDigits: 2 }).format(converted);
+    const formatted = new Intl.NumberFormat(undefined, { minimumSignificantDigits: 1, minimumFractionDigits: minDigits }).format(converted);
     return formatted || '';
 }
 

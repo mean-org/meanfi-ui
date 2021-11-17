@@ -1,8 +1,19 @@
 import { useCallback, useState } from "react";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, MintInfo, Token } from "@solana/spl-token";
 import { TokenAccount } from "./../models";
-import { Account, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Signer, SystemProgram, Transaction, TransactionInstruction, TransactionSignature } from "@solana/web3.js";
-import { NON_NEGATIVE_AMOUNT_PATTERN, POSITIVE_NUMBER_PATTERN } from "../constants";
+import {
+  Account,
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  Signer,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+  TransactionSignature
+} from "@solana/web3.js";
+import { INPUT_AMOUNT_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
@@ -12,6 +23,7 @@ import { NATIVE_SOL } from './tokens';
 import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
+import { BigNumber } from "bignumber.js";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -178,12 +190,7 @@ export function convert(
 
 export function isValidNumber(str: string): boolean {
   if (str === null || str === undefined ) { return false; }
-  return NON_NEGATIVE_AMOUNT_PATTERN.test(str);
-}
-
-export function isPositiveNumber(str: string): boolean {
-  if (str === null || str === undefined ) { return false; }
-  return POSITIVE_NUMBER_PATTERN.test(str);
+  return INPUT_AMOUNT_PATTERN.test(str);
 }
 
 export const getTokenByMintAddress = (address: string): TokenInfo | undefined => {
@@ -211,7 +218,7 @@ export const getTokenDecimals = (address: string): number => {
 }
 
 export const getFormattedRateAmount = (amount: number): string => {
-  return `${getFormattedNumberToLocale(formatAmount(amount, 2))}`;
+  return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
 }
 
 export const getTokenAmountAndSymbolByTokenAddress = (
@@ -229,14 +236,16 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   }
   const inputAmount = amount || 0;
   if (token) {
-    let formatted = getFormattedNumberToLocale(formatAmount(inputAmount, token.decimals));
-    if (onlyValue) {
-      return maxTrailingZeroes(formatted, 2);
-    }
-    return `${maxTrailingZeroes(formatted, 2)} ${token.symbol}`;
+    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+    const formatted2 = formatted.toFixed(token.decimals);
+    const toLocale = getFormattedNumberToLocale(formatted2, 2);
+    if (onlyValue) { return toLocale; }
+    return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
     const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
-    return onlyValue ? maxTrailingZeroes(formatted, 2) : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
+    return onlyValue
+      ? maxTrailingZeroes(formatted, 2)
+      : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
@@ -276,6 +285,17 @@ export async function fetchAccountTokens(
   } catch (error) {
     console.error(error);
   }
+}
+
+export function getTxIxResume(tx: Transaction) {
+  const programIds: string[] = [];
+  tx.instructions.forEach(t => {
+    const programId = t.programId.toBase58();
+    if (!programIds.includes(programId)) {
+      programIds.push(programId);
+    }
+  });
+  return {numIxs: tx.instructions.length, programIds: programIds};
 }
 
 // from raydium

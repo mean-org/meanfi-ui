@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { findATokenAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
+import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
@@ -225,7 +225,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
   }
 
-  const today = new Date().toLocaleDateString();
+  const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [currentScreen, setSelectedTab] = useState<string>('contract');
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
@@ -632,6 +632,9 @@ const AppStateProvider: React.FC = ({ children }) => {
               console.log(item);
               updateSelectedStream(item);
               updateStreamDetail(item);
+              // setSelectedToken
+              const token = getTokenByMintAddress(item.associatedToken as string);
+              setSelectedToken(token);
               if (!loadingStreamActivity) {
                 setLoadingStreamActivity(true);
                 const streamPublicKey = new PublicKey(item.id as string);
@@ -674,7 +677,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname === '/transfers') {
+    if (location.pathname === '/transfers' || location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
       if (!streamList) {
         refreshStreamList(true);
       }
@@ -836,7 +839,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         decimals: NATIVE_SOL.decimals,
         name: NATIVE_SOL.name,
         symbol: NATIVE_SOL.symbol,
-        ataAddress: '',
+        publicAddress: '',
         tags: NATIVE_SOL.tags,
         logoURI: NATIVE_SOL.logoURI
       };

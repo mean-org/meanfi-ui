@@ -1,7 +1,6 @@
 import React from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { IconSort } from "../../Icons";
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
@@ -32,8 +31,14 @@ export const AddFundsModal = (props: {
   }
 
   const handleAmountChange = (e: any) => {
-    const newValue = isValidNumber(e.target.value) ? e.target.value : '';
-    setValue(newValue);
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setValue("");
+    } else if (newValue === '.') {
+      setValue(".");
+    } else if (isValidNumber(newValue)) {
+      setValue(newValue);
+    }
   };
 
   const getFeeAmount = (amount?: any): number => {
@@ -94,93 +99,64 @@ export const AddFundsModal = (props: {
       width={480}>
 
       {/* Top up amount */}
-      <div className="mb-3">
-        <div className="transaction-field mb-1">
-          <div className="transaction-field-row">
-            <span className="field-label-left" style={{marginBottom: '-6px'}}>
-              {t('add-funds.label')} ~${topupAmount && effectiveRate
-                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                : "0.00"}
-              <IconSort className="mean-svg-icons usd-switcher fg-red" />
-              <span className="fg-red">USD</span>
+      <div className="form-label">{t('add-funds.label')}</div>
+      <div className="well">
+        <div className="flex-fixed-left">
+          <div className="left">
+            <span className="add-on">
+              <div className="token-selector">
+                <div className="token-icon">
+                  {selectedToken?.logoURI ? (
+                    <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
+                  ) : (
+                    <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </div>
+                <div className="token-symbol">{selectedToken?.symbol}</div>
+              </div>
+              {selectedToken && tokenBalance ? (
+                <div
+                  className="token-max simplelink"
+                  onClick={() => setValue(
+                    getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                  )}>
+                  MAX
+                </div>
+              ) : null}
             </span>
-            <span className="field-label-right">
-              <span>{t('add-funds.label-right')}:</span>
-              <span className="balance-amount">
-                {`${selectedToken && tokenBalance
+          </div>
+          <div className="right">
+            <input
+              id="topup-amount-field"
+              className="general-text-input text-right"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              onChange={handleAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.0"
+              minLength={1}
+              maxLength={79}
+              spellCheck="false"
+              value={topupAmount}
+            />
+          </div>
+        </div>
+        <div className="flex-fixed-right">
+          <div className="left inner-label">
+            <span>{t('add-funds.label-right')}:</span>
+            <span>
+              {`${tokenBalance && selectedToken
                   ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
                   : "0"
-                }`}
-              </span>
-              <span className="balance-amount">
-                (~$
-                {tokenBalance && effectiveRate
-                  ? formatAmount(tokenBalance as number * effectiveRate, 2)
-                  : "0.00"})
-              </span>
+              }`}
             </span>
           </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
-              <input
-                id="topup-amount-field"
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={topupAmount}
-              />
-            </span>
-            {selectedToken && (
-              <div className="addon-right">
-                <div className="token-group">
-                  {selectedToken && (
-                    <div
-                      className="token-max simplelink"
-                      onClick={() => {
-                        setValue(
-                          getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                        );
-                      }}>
-                      MAX
-                    </div>
-                  )}
-                  <div className="token-selector">
-                    <div className="token-icon">
-                      {selectedToken.logoURI ? (
-                        <img
-                          alt={`${selectedToken.name}`}
-                          width={20}
-                          height={20}
-                          src={selectedToken.logoURI}
-                        />
-                      ) : (
-                        <Identicon
-                          address={selectedToken.address}
-                          style={{ width: "24", display: "inline-flex" }}
-                        />
-                      )}
-                    </div>
-                    <div className="token-symbol">{selectedToken.symbol}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="transaction-field-row">
-            <span className="field-label-left">{
-              parseFloat(topupAmount) > tokenBalance
-                ? (<span className="fg-red">{t('transactions.validation.amount-high')}</span>)
-                : (<span>&nbsp;</span>)
-            }</span>
-            <span className="field-label-right">&nbsp;</span>
+          <div className="right inner-label">
+            ~${topupAmount && effectiveRate
+              ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
+              : "0.00"}
           </div>
         </div>
       </div>
