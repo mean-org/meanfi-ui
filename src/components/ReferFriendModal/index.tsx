@@ -59,7 +59,7 @@ export const ReferFriendModal = (props: {
         width={450}>
         <div className="transaction-progress refer-friend-wrapper">
             <div className="refer-friend-image">
-                <img src="assets/giftbox.svg" alt="" />
+                <img src="/assets/giftbox.svg" alt="" />
                 {referrals > 0 && (
                   <span className="badge orange-red referrals-badge">{referrals}</span>
                 )}

@@ -206,7 +206,7 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={handleFtxPayButtonClick}>
-                <img src="assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t("deposits.ftx-cta-label-enabled")} />
+                <img src="/assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t("deposits.ftx-cta-label-enabled")} />
                 {t("deposits.ftx-cta-label-enabled")}
               </Button>
             </Col>
@@ -233,7 +233,7 @@ export const DepositOptions = (props: {
                   size="middle"
                   disabled={status !== 'ready'}
                   onClick={handleTransakButtonClick}>
-                  <img src="assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
+                  <img src="/assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
                   {t("deposits.transak-cta-label")}
                   <IconInfoTriangle className="mean-svg-icons warning" />
                 </Button>
@@ -247,7 +247,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromEthereumButtonClick}>
-                <img src="assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
+                <img src="/assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
                 {t("deposits.move-from-ethereum-cta-label")}
               </Button>
             </Col>
@@ -259,7 +259,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromPolygonButtonClick}>
-                <img src="assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
+                <img src="/assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
                 {t("deposits.move-from-polygon-cta-label")}
               </Button>
             </Col>
@@ -271,7 +271,7 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromRenButtonClick}>
-                <img src="assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
+                <img src="/assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
                 {t("deposits.move-from-renbridge-cta-label")}
               </Button>
             </Col> */}

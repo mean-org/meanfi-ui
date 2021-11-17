@@ -28,7 +28,7 @@ export const CurrentBalance = () => {
   }, [account]);
 
   const renderSolanaIcon = (
-    <img className="token-icon" src="solana-logo.png" alt="Solana logo" />
+    <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
   )
 
   if (publicKey) {

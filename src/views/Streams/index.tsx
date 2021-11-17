@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip } from "antd";
 import {
   ArrowDownOutlined,
@@ -107,6 +107,9 @@ export const Streams = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(endpoint, streamProgramAddress), [endpoint, streamProgramAddress]);
+
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -137,6 +140,7 @@ export const Streams = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
+  /*
   const updateLiveStreamData = useCallback(() => {
 
     if (!streamDetail) { return; }
@@ -186,12 +190,21 @@ export const Streams = () => {
     streamDetail,
     setStreamDetail,
   ]);
+  */
 
   // Live data calculation
   useEffect(() => {
 
+    const getFreshStream = async () => {
+      if (!streamDetail) { return; }
+      if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
+      consoleOut('Calling getFreshStream()...', '', 'blue');
+      const freshStream = await ms.refreshStream(streamDetail);
+      setStreamDetail(freshStream);
+    }
+
     const timeout = setTimeout(() => {
-      updateLiveStreamData();
+      getFreshStream();
     }, 1000);
 
     return () => {
@@ -199,7 +212,9 @@ export const Streams = () => {
     }
 
   }, [
-    updateLiveStreamData
+    ms,
+    streamDetail,
+    setStreamDetail,
   ])
 
   // Handle overflow-ellipsis-middle elements of resize
@@ -1621,7 +1636,7 @@ export const Streams = () => {
           {/* Background animation */}
           {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
             <div className="stream-background">
-              <img className="inbound" src="assets/incoming-crypto.svg" alt="" />
+              <img className="inbound" src="/assets/incoming-crypto.svg" alt="" />
             </div>
             ) : null
           }
@@ -1870,7 +1885,7 @@ export const Streams = () => {
           {/* Background animation */}
           {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
             <div className="stream-background">
-              <img className="inbound" src="assets/outgoing-crypto.svg" alt="" />
+              <img className="inbound" src="/assets/outgoing-crypto.svg" alt="" />
             </div>
             ) : null
           }

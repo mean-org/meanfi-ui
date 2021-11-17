@@ -41,7 +41,7 @@ export const PreFooter = () => {
             </div>
             <div className="right">
               <span >
-                Made with <span className="emoji fg-red" aria-label="love" role="img">❤️</span> on Solana <img className="small-solana-icon" src="solana-logo.png" alt="Solana logo" />
+                Made with <span className="emoji fg-red" aria-label="love" role="img">❤️</span> on Solana <img className="small-solana-icon" src="/solana-logo.png" alt="Solana logo" />
               </span>
             </div>
           </div>
