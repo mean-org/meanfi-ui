@@ -110,6 +110,7 @@ export const Streams = () => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(endpoint, streamProgramAddress), [endpoint, streamProgramAddress]);
 
+  // Keep account balance updated
   useEffect(() => {
 
     const getAccountBalance = (): number => {
@@ -191,6 +192,13 @@ export const Streams = () => {
     setStreamDetail,
   ]);
   */
+
+  // If we don't have streams to show go back to /accounts
+  useEffect(() => {
+    if (!streamList || streamList.length === 0) {
+      setRedirect("/accounts");
+    }
+  }, [streamList]);
 
   // Live data calculation
   useEffect(() => {
