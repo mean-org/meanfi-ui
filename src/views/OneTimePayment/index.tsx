@@ -171,6 +171,10 @@ export const OneTimePayment = () => {
     }
   }, [connection, otpFees]);
 
+  const getFeeAmount = () => {
+    return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -316,16 +320,14 @@ export const OneTimePayment = () => {
   }
 
   const isSendAmountValid = (): boolean => {
-    const isSafeAmount = connected && selectedToken && tokenBalance && fromCoinAmount &&
-                         parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance
-                         ? true
-                         : false;
-    if (isScheduledPayment()) {
-      return isSafeAmount && parseFloat(fromCoinAmount) > getTxFeeAmount(otpFees, fromCoinAmount)
-              ? true
-              : false;
-    }
-    return isSafeAmount;
+    return  connected &&
+            selectedToken &&
+            tokenBalance &&
+            fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= tokenBalance
+      ? true
+      : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -344,13 +346,9 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : isScheduledPayment()
-        ? tokenBalance < getTxFeeAmount(otpFees, fromCoinAmount)
-          ? t('transactions.validation.amount-low')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : t('transactions.validation.valid-approve')
-        : t('transactions.validation.valid-approve');
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -415,9 +413,9 @@ export const OneTimePayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', otpFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', getFeeAmount(), 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < otpFees.blockchainFee) {
+        if (nativeBalance < getFeeAmount()) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -427,7 +425,7 @@ export const OneTimePayment = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
             })`
           });
           customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
@@ -977,7 +975,7 @@ export const OneTimePayment = () => {
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())}`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())}`})
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())}`})
                   }
                 </h4>
               ) : (

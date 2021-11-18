@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col, InputNumber } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, InputNumber } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -17,7 +17,7 @@ import {
   shortenAddress,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DATEPICKER_FORMAT, PAYROLL_CONTRACT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
 import {
@@ -32,7 +32,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  getTxFeeAmount,
   isLocal,
   isToday,
   isValidAddress,
@@ -54,6 +53,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -373,8 +373,7 @@ export const PayrollPayment = () => {
            selectedToken &&
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(payrollFees, fromCoinAmount)
+           parseFloat(fromCoinAmount) <= tokenBalance
             ? true
             : false;
   }
@@ -422,8 +421,6 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(payrollFees, fromCoinAmount)
-      ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
@@ -588,9 +585,9 @@ export const PayrollPayment = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', payrollFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', payrollFees.blockchainFee + payrollFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < payrollFees.blockchainFee) {
+        if (nativeBalance < payrollFees.blockchainFee + payrollFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -598,10 +595,10 @@ export const PayrollPayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
@@ -829,15 +826,6 @@ export const PayrollPayment = () => {
   ///////////////////
   //   Rendering   //
   ///////////////////
-
-  const infoRow = (caption: string, value: string) => {
-    return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
-    );
-  }
 
   const paymentRateOptionsMenu = (
     <Menu>
@@ -1150,7 +1138,7 @@ export const PayrollPayment = () => {
                 <div className="left flex-row">
                   <div className="flex-center">
                     <Identicon
-                      address={isValidAddress(recipientAddress) ? recipientAddress : WRAPPED_SOL_MINT_ADDRESS}
+                      address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
                       style={{ width: "30", display: "inline-flex" }} />
                   </div>
                   <div className="flex-column pl-3">
@@ -1276,30 +1264,6 @@ export const PayrollPayment = () => {
           </div>
         </div>
 
-        {/* Info */}
-        {selectedToken && (
-          <div className="p-2 mb-2">
-            {infoRow(
-              `1 ${selectedToken.symbol}:`,
-              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.transaction-fee') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.recipient-receives') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-          </div>
-        )}
-
         {/* Action button */}
         <Button
           className="main-cta"
@@ -1373,16 +1337,14 @@ export const PayrollPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
                       nativeBalance,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      payrollFees.blockchainFee,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`})
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      payrollFees.blockchainFee + payrollFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
                   }
                 </h4>
               ) : (

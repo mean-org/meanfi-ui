@@ -51,7 +51,6 @@ import {
   VERBOSE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
@@ -70,6 +69,7 @@ import { defaultStreamStats, StreamStats } from "../../models/streams";
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { Redirect, useLocation } from "react-router-dom";
+import { NATIVE_SOL_MINT } from "../../utils/ids";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -90,7 +90,6 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
-    setStreamList,
     setSelectedToken,
     setStreamDetail,
     setSelectedStream,
@@ -371,8 +370,8 @@ export const Streams = () => {
   };
 
   const onActivateContractScreen = () => {
-    setStreamList([]);
     setCustomStreamDocked(false);
+    setRedirect("/transfers");
   };
 
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
@@ -703,9 +702,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -713,10 +712,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
           return false;
@@ -991,9 +990,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1001,10 +1000,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
           return false;
@@ -1274,9 +1273,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1284,10 +1283,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
@@ -2339,16 +2338,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
@@ -2409,16 +2406,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
@@ -2479,16 +2474,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
