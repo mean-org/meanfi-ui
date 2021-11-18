@@ -339,6 +339,8 @@
 			"subtitle-scheduled-outbound": "Establecido para comenzar en",
 			"title-paused-from": "Transferencia pausada",
 			"title-paused-to": "Transferencia pausada",
+			"title-scheduled-from": "Scheduled stream from",
+			"title-scheduled-to": "Scheduled stream to",
 			"title-pending-from": "Pendiente ejecutar",
 			"title-pending-to": "Pendiente ejecutar",
 			"title-receiving-from": "Recibiendo desde",

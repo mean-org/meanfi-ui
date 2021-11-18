@@ -21,6 +21,7 @@ import {
   IconOutgoingPaused,
   IconRefresh,
   IconShare,
+  IconTimer,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -391,41 +392,45 @@ export const Streams = () => {
 
   const getStreamIcon = (item: StreamInfo) => {
 
-    if (item.state === STREAM_STATE.Ended) {
-      return (
-        <IconCheckedBox className="mean-svg-icons ended" />
-      );
-    }
-
     const isInbound = isInboundStream(item);
 
     if (isInbound) {
       if (item.isUpdatePending) {
-        return (
-          <IconDocument className="mean-svg-icons pending" />
-        );
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
-        return (
-          <IconIncomingPaused className="mean-svg-icons incoming" />
-        );
-      } else {
-        return (
-          <IconDownload className="mean-svg-icons incoming" />
-        );
+        return <IconDocument className="mean-svg-icons pending" />;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return <IconTimer className="mean-svg-icons incoming" />;
+        case STREAM_STATE.Paused:
+          if (isOtp()) {
+            return <IconCheckedBox className="mean-svg-icons ended" />;
+          } else {
+            return <IconIncomingPaused className="mean-svg-icons incoming" />;
+          }
+        case STREAM_STATE.Ended:
+          return <IconCheckedBox className="mean-svg-icons ended" />;
+        default:
+          return <IconDownload className="mean-svg-icons incoming" />;
       }
     } else {
       if (item.isUpdatePending) {
-        return (
-          <IconDocument className="mean-svg-icons pending" />
-        );
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
-        return (
-          <IconOutgoingPaused className="mean-svg-icons outgoing" />
-        );
-      } else {
-        return (
-          <IconUpload className="mean-svg-icons outgoing" />
-        );
+        return <IconDocument className="mean-svg-icons pending" />;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return <IconTimer className="mean-svg-icons outgoing" />;
+        case STREAM_STATE.Paused:
+          if (isOtp()) {
+            return <IconCheckedBox className="mean-svg-icons ended" />;
+          } else {
+            return <IconOutgoingPaused className="mean-svg-icons outgoing" />;
+          }
+        case STREAM_STATE.Ended:
+          return <IconCheckedBox className="mean-svg-icons ended" />;
+        default:
+          return <IconUpload className="mean-svg-icons outgoing" />;
       }
     }
   }
@@ -470,7 +475,9 @@ export const Streams = () => {
     if (isInbound) {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
         title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
@@ -478,7 +485,9 @@ export const Streams = () => {
     } else {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
         title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
