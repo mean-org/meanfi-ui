@@ -599,7 +599,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     if (!loadingStreams) {
-      updateLoadingStreams(true);
+      setLoadingStreams(true);
       const programId = new PublicKey(streamProgramAddress);
 
       listStreams(connection, programId, publicKey, publicKey)
@@ -620,7 +620,6 @@ const AppStateProvider: React.FC = ({ children }) => {
             }
             consoleOut('selectedStream:', item, 'blue');
             if (item) {
-              console.log(item);
               updateSelectedStream(item);
               updateStreamDetail(item);
               // setSelectedToken

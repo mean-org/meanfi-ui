@@ -3308,13 +3308,13 @@ section.content {
       justify-content: center;
       align-items: center;
       display: inline-flex;
-      .streams-conunt {
+      .streams-count {
         justify-content: center;
         align-items: center;
         display: flex;
         width: 100%;
         height: 100%;
-        color: var(--text-color);
+        color: var(--color-white);
         background: var(--color-primary);
         border-radius: 50%;
       }
@@ -6045,6 +6045,28 @@ code {
   -webkit-animation: bounce 0.6s infinite alternate;
 }
 
+.animate-border {
+  position: relative;
+  background: transparent;
+  &:after {
+    filter: blur(6px);
+  }
+  &:before,
+  &:after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    background: linear-gradient(45deg, #fb0094, #0000ff, #00ff00,#ffff00, #ff0000, #fb0094, #0000ff, #00ff00,#ffff00, #ff0000);
+    background-size: 400%;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    z-index: -1;
+    animation: steam 10s linear infinite;
+    border-radius: 50%;
+  }
+}
+
 // Animations
 @keyframes rotate {
   100% {
@@ -6088,6 +6110,18 @@ code {
   100% {
     background-position: 0% 50%;
   }
+}
+
+@keyframes steam {
+	0% {
+		background-position: 0 0;
+	}
+	50% {
+		background-position: 400% 0;
+	}
+	100% {
+		background-position: 0 0;
+	}
 }
 
 @keyframes bounce {

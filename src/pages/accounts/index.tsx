@@ -78,6 +78,7 @@ export const AccountsView = () => {
     transactions,
     selectedAsset,
     accountAddress,
+    loadingStreams,
     lastTxSignature,
     detailsPanelOpen,
     streamProgramAddress,
@@ -86,11 +87,12 @@ export const AccountsView = () => {
     setTransactions,
     setSelectedAsset,
     setAccountAddress,
+    refreshStreamList,
     setDtailsPanelOpen,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     showDepositOptionsModal,
-    setTransactionStatus
+    setTransactionStatus,
   } = useContext(AppStateContext);
   const [redirect, setRedirect] = useState<string | null>(null);
 
@@ -616,6 +618,11 @@ export const AccountsView = () => {
       return;
     }
 
+    if (publicKey && !streamList) {
+      consoleOut('Loading streams with wallet connection...', '', 'blue');
+      refreshStreamList();
+    }
+
     const timeout = setTimeout(() => {
       consoleOut('loading user tokens...');
       setShouldLoadTokens(true);
@@ -626,10 +633,13 @@ export const AccountsView = () => {
     }
 
   }, [
-    accountTokens,
+    publicKey,
+    streamList,
     tokensLoaded,
+    accountTokens,
     accountAddress,
-    customConnection
+    customConnection,
+    refreshStreamList
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -639,31 +649,34 @@ export const AccountsView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
+        refreshStreamList();
         setShouldLoadTokens(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
-        setSolAccountItems(0);
-        setTransactions(undefined);
-        setStreamsSummary(initialSummary);
-        setLastStreamsSummary(initialSummary);
+        // setSolAccountItems(0);
+        // setTransactions(undefined);
+        // setStreamsSummary(initialSummary);
+        // setLastStreamsSummary(initialSummary);
       }
       setTimeout(() => {
-        setCanShowAccountDetails(true);
         setAddAccountPanelOpen(false);
+        setCanShowAccountDetails(true);
         startSwitch();
       }, 150);
     }
 
   }, [
     connected,
+    streamList,
     previousWalletConnectState,
     publicKey,
     startSwitch,
-    setTransactions,
-    setSelectedAsset,
-    setAccountAddress,
+    // setTransactions,
+    // setSelectedAsset,
+    // setAccountAddress,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
+    refreshStreamList
   ]);
 
   // Window resize listeners
@@ -699,6 +712,7 @@ export const AccountsView = () => {
     }
   }, [accountAddressInput]);
 
+  // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
       setIsSmallUpScreen(false);
@@ -727,26 +741,26 @@ export const AccountsView = () => {
 
     for (let stream of updatedStreams) {
 
-        let freshStream = await ms.refreshStream(stream);
+      let freshStream = await ms.refreshStream(stream);
 
-        const streamIsOutgoing = 
-            freshStream.treasurerAddress &&
-            typeof freshStream.treasurerAddress !== 'string'
-                ? freshStream.treasurerAddress.equals(userWallet)
-                : freshStream.treasurerAddress === userWallet.toBase58();
+      const streamIsOutgoing = 
+          freshStream.treasurerAddress &&
+          typeof freshStream.treasurerAddress !== 'string'
+              ? freshStream.treasurerAddress.equals(userWallet)
+              : freshStream.treasurerAddress === userWallet.toBase58();
 
-        let streamBalance = 0;
+      let streamBalance = 0;
 
-        if (streamIsOutgoing) {
-            streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
-            resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
-        } else {
-            streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
-            resume['incomingAmount'] = resume['incomingAmount'] + 1;  
-        }
-        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-        const rate = getPricePerToken(asset as UserTokenAccount);
-        resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
+      if (streamIsOutgoing) {
+          streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
+          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      } else {
+          streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
+          resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+      }
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = getPricePerToken(asset as UserTokenAccount);
+      resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
     }
 
     resume['totalAmount'] = updatedStreams.length;
@@ -792,8 +806,8 @@ export const AccountsView = () => {
         <Link to="/accounts/streams">
           <div key="streams" className="transaction-list-row money-streams-summary">
             <div className="icon-cell">
-              <div className="token-icon">
-                <div className="streams-conunt">
+              <div className={loadingStreams ? 'token-icon animate-border' : 'token-icon'}>
+                <div className="streams-count">
                   <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
                 </div>
               </div>
