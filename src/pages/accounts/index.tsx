@@ -24,6 +24,7 @@ import { Identicon } from '../../components/Identicon';
 import {
   fetchAccountTokens,
   findATokenAddress,
+  formatAmount,
   getAmountFromLamports,
   getFormattedRateAmount,
   getTokenAmountAndSymbolByTokenAddress,
@@ -114,6 +115,7 @@ export const AccountsView = () => {
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
   const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(initialSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(initialSummary);
   const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(false);
 
   // QR scan modal
@@ -643,6 +645,7 @@ export const AccountsView = () => {
         setSolAccountItems(0);
         setTransactions(undefined);
         setStreamsSummary(initialSummary);
+        setLastStreamsSummary(initialSummary);
       }
       setTimeout(() => {
         setCanShowAccountDetails(true);
@@ -747,11 +750,13 @@ export const AccountsView = () => {
     }
 
     resume['totalAmount'] = updatedStreams.length;
+    setLastStreamsSummary(streamsSummary);
     setStreamsSummary(resume);
     setLoadingStreamsSummary(false);
 
   }, [
     ms,
+    streamsSummary,
     loadingStreamsSummary,
     getPricePerToken
   ]);
@@ -778,6 +783,43 @@ export const AccountsView = () => {
   ///////////////
   // Rendering //
   ///////////////
+
+  const renderMoneyStreamsSummary = (
+    <>
+      {/* Render Money Streams item if they exist and wallet is connected */}
+      {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
+        <>
+        <Link to="/accounts/streams">
+          <div key="streams" className="transaction-list-row money-streams-summary">
+            <div className="icon-cell">
+              <div className="token-icon">
+                <div className="streams-conunt">
+                  <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
+                </div>
+              </div>
+            </div>
+            <div className="description-cell">
+              <div className="title">{t('account-area.money-streams')}</div>
+              <div className="subtitle text-truncate">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+            </div>
+            <div className="rate-cell">
+              <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+              <div className="interval">net-change</div>
+            </div>
+            <div className="operation-vector">
+              {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (
+                <ArrowUpOutlined className="mean-svg-icons success bounce" />
+              ) : (
+                <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
+              )}
+            </div>
+          </div>
+        </Link>
+        <div key="separator1" className="pinned-token-separator"></div>
+        </>
+      )}
+    </>
+  );
 
   const renderToken = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => selectAsset(asset, true);
@@ -852,40 +894,6 @@ export const AccountsView = () => {
     <>
     {accountTokens && accountTokens.length ? (
       <>
-        {/* Render Money Streams item if they exist and wallet is connected */}
-        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
-          <>
-          <Link to="/accounts/streams">
-            <div key="streams" className="transaction-list-row money-streams-summary">
-              <div className="icon-cell">
-                <div className="token-icon">
-                  <div className="streams-conunt">
-                    <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">{t('account-area.money-streams')}</div>
-                <div className="subtitle text-truncate">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
-              </div>
-              <div className="operation-vector">
-                {streamsSummary.totalNet > 0 ? (
-                  <ArrowUpOutlined className="mean-svg-icons success bounce" />
-                ) : (
-                  <ArrowDownOutlined className="mean-svg-icons error bounce" />
-                )}
-              </div>
-              <div className="rate-cell">
-                <div className="rate-amount">${getFormattedRateAmount(streamsSummary.totalNet)}</div>
-                <div className="interval">net-change</div>
-              </div>
-            </div>
-          </Link>
-          </>
-        )}
-        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
-          <div key="separator1" className="pinned-token-separator"></div>
-        )}
         {/* Render mean supported tokens */}
         {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
           meanSupportedTokens.map((asset, index) => renderToken(asset, index))
@@ -1174,6 +1182,7 @@ export const AccountsView = () => {
                     </div>
                     <div className="inner-container">
                       <div className="item-block vertical-scroll">
+                        {renderMoneyStreamsSummary}
                         {renderTokenList}
                       </div>
                       {(accountTokens && accountTokens.length > 0) && (

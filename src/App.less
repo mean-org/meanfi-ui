@@ -3707,7 +3707,11 @@ section.content {
             &.money-streams-summary {
               .rate-cell {
                 flex: 0 0 auto;
-                padding-left: 4px;
+                .rate-amount {
+                  font-size: 1rem !important;
+                  font-weight: 500;
+                  color: var(--color-secondary-alpha-70);
+                }
               }
             }
             .rate-cell {
@@ -4075,7 +4079,9 @@ section.content {
   &.warning {
     color: var(--color-notify-warning);
   }
-  &.outgoing,
+  &.outgoing {
+    color: var(--color-outgoing-transaction);
+  }
   &.error {
     color: var(--color-notify-error);
   }
