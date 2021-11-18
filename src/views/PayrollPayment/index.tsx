@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, InputNumber } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -98,7 +98,6 @@ export const PayrollPayment = () => {
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
   const [redirect, setRedirect] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
@@ -198,7 +197,6 @@ export const PayrollPayment = () => {
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
-  const [subjectTokenSelection, setSubjectTokenSelection] = useState('payer');
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -276,41 +274,28 @@ export const PayrollPayment = () => {
     }, 10);
   }
 
-  const onRateAmountChange = (value: any) => {
-    if (value === null || value === undefined || value === "") {
-      setPaymentRateAmount("");
-    } else if (isValidNumber(value)) {
-      setPaymentRateAmount(value);
-    }
-  }
-
-  // const handlePaymentRateAmountChange = (e: any) => {
-  //   const newValue = e.target.value;
-  //   if (newValue === null || newValue === undefined || newValue === "") {
+  // const onRateAmountChange = (value: any) => {
+  //   if (value === null || value === undefined || value === "") {
   //     setPaymentRateAmount("");
-  //   } else if (isValidNumber(newValue)) {
-  //     setPaymentRateAmount(newValue);
+  //   } else if (isValidNumber(value)) {
+  //     setPaymentRateAmount(value);
   //   }
-  // };
+  // }
+
+  const handlePaymentRateAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setPaymentRateAmount("");
+    } else if (newValue === '.') {
+      setPaymentRateAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setPaymentRateAmount(newValue);
+    }
+  };
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
   }
-
-  // Effect to set a default beneficiary token
-  useEffect(() => {
-
-    if (tokenList && selectedToken) {
-      // Preset a token for the beneficiary account
-      if (!destinationToken) {
-        setDestinationToken(selectedToken);
-      }
-    }
-  }, [
-    tokenList,
-    selectedToken,
-    destinationToken
-  ]);
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
@@ -540,8 +525,8 @@ export const PayrollPayment = () => {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
 
-        consoleOut('beneficiaryMint:', destinationToken?.address);
-        const beneficiaryMint = new PublicKey(destinationToken?.address as string);
+        consoleOut('beneficiaryMint:', selectedToken?.address);
+        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
 
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
@@ -841,55 +826,12 @@ export const PayrollPayment = () => {
     </Menu>
   );
 
-  const renderAvailableTokenList = (
-    <>
-      {(destinationToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setDestinationToken(token);
-            setSelectedToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                destinationToken && destinationToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-
-  const renderUserTokenList = (
+  const renderTokenList = (
     <>
       {(selectedToken && tokenList) && (
         tokenList.map((token, index) => {
           const onClick = () => {
             setSelectedToken(token);
-            setDestinationToken(token);
             consoleOut("token selected:", token);
             setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
@@ -996,24 +938,19 @@ export const PayrollPayment = () => {
           }
         </div>
 
-        {/* Receive rate */}
-        <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-        <div className="well">
+        {/* <div className="well">
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => {
-                  setSubjectTokenSelection('beneficiary');
-                  showTokenSelector();
-                  }}>
+                <div className="token-selector" onClick={() => showTokenSelector()}>
                   <div className="token-icon">
-                    {destinationToken?.logoURI ? (
-                      <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
+                    {selectedToken?.logoURI ? (
+                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
                     ) : (
-                      <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
                     )}
                   </div>
-                  <div className="token-symbol">{destinationToken?.symbol}</div>
+                  <div className="token-symbol">{selectedToken?.symbol}</div>
                   <span className="flex-center">
                     <IconCaretDown className="mean-svg-icons" />
                   </span>
@@ -1032,6 +969,58 @@ export const PayrollPayment = () => {
                 onChange={onRateAmountChange}
               />
             </div>
+          </div>
+        </div> */}
+
+        {/* Receive rate */}
+        <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
+        <div className="well">
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on simplelink">
+                <div className="token-selector" onClick={() => showTokenSelector()}>
+                  <div className="token-icon">
+                    {selectedToken?.logoURI ? (
+                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
+                    ) : (
+                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
+                    )}
+                  </div>
+                  <div className="token-symbol">{selectedToken?.symbol}</div>
+                  <span className="flex-center">
+                    <IconCaretDown className="mean-svg-icons" />
+                  </span>
+                </div>
+              </span>
+            </div>
+            <div className="right">
+              <input
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handlePaymentRateAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={paymentRateAmount}
+              />
+            </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">&nbsp;</div>
           </div>
         </div>
 
@@ -1119,7 +1108,7 @@ export const PayrollPayment = () => {
 
       <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-        {/* Resume */}
+        {/* Summary */}
         {publicKey && recipientAddress && (
           <>
             <div className="flex-fixed-right">
@@ -1200,10 +1189,7 @@ export const PayrollPayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => {
-                    setSubjectTokenSelection('payer');
-                    showTokenSelector();
-                  }}>
+                <div className="token-selector" onClick={() => showTokenSelector()}>
                   <div className="token-icon">
                     {selectedToken?.logoURI ? (
                       <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
@@ -1295,7 +1281,7 @@ export const PayrollPayment = () => {
         width={450}
         footer={null}>
         <div className="token-list">
-          {subjectTokenSelection === 'payer' ? renderUserTokenList : renderAvailableTokenList}
+          {renderTokenList}
         </div>
       </Modal>
 
