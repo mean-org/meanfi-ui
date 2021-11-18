@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -39,15 +39,14 @@ import {
   EMOJIS,
   TRANSACTIONS_PER_PAGE,
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  FALLBACK_COIN_IMAGE,
-  STREAMS_REFRESH_TIMEOUT
+  FALLBACK_COIN_IMAGE
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { Link, Redirect, Route, useHistory, useLocation } from 'react-router-dom';
+import { Link, Redirect, useHistory, useLocation } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -651,18 +650,14 @@ export const AccountsView = () => {
         consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
         refreshStreamList();
         setShouldLoadTokens(true);
-      } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'blue');
-        // setSolAccountItems(0);
-        // setTransactions(undefined);
-        // setStreamsSummary(initialSummary);
-        // setLastStreamsSummary(initialSummary);
-      }
-      setTimeout(() => {
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
         startSwitch();
-      }, 150);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
+        setAddAccountPanelOpen(false);
+        setCanShowAccountDetails(true);
+      }
     }
 
   }, [
@@ -671,9 +666,6 @@ export const AccountsView = () => {
     previousWalletConnectState,
     publicKey,
     startSwitch,
-    // setTransactions,
-    // setSelectedAsset,
-    // setAccountAddress,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     refreshStreamList
