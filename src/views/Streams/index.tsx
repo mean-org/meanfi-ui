@@ -206,7 +206,6 @@ export const Streams = () => {
     const getFreshStream = async () => {
       if (!streamDetail) { return; }
       if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
-      consoleOut('Calling getFreshStream()...', '', 'blue');
       const freshStream = await ms.refreshStream(streamDetail);
       setStreamDetail(freshStream);
     }

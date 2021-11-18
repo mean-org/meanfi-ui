@@ -600,6 +600,7 @@ export const AccountsView = () => {
     accountAddress,
     customConnection,
     loadingTransactions,
+    loadingStreamsSummary,
     shouldLoadTransactions,
     getSolAccountItems,
     setTransactions,
