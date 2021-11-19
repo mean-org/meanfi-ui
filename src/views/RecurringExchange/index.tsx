@@ -1488,37 +1488,7 @@ export const RecurringExchange = (props: {
           </div>
 
           {/* Destination token / amount */}
-          {isProd() ? (
-            <ExchangeInput
-              token={toMint && mintList[toMint]}
-              tokenBalance={
-                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                  : '')
-              }
-              tokenAmount={
-                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                  : '')
-              }
-              onInputChange={() => {}}
-              onMaxAmount={() => {}}
-              onSelectToken={() => {
-                setSubjectTokenSelection("destination");
-                showTokenSelector();
-              }}
-              inputPosition={inputPosition}
-              translationId="destination"
-              inputLabel={
-                toMint && mintList[toMint]
-                  ? `~$${
-                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
-                    : '0.00'}`
-                  : ''
-              }
-            />
-          ) : (
+          {
             <ExchangeOutput
               fromToken={fromMint && mintList[fromMint]}
               fromTokenAmount={fromAmount}
@@ -1552,7 +1522,7 @@ export const RecurringExchange = (props: {
               }}
               showLpList={showLpList}
             />
-          )}
+          }
 
           {/* Title bar with settings */}
           <div className="info-line-and-settings flexible-left">
