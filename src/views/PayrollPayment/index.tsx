@@ -687,7 +687,7 @@ export const PayrollPayment = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({

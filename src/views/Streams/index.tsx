@@ -143,58 +143,6 @@ export const Streams = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
-  /*
-  const updateLiveStreamData = useCallback(() => {
-
-    if (!streamDetail) { return; }
-
-    if (isStreamScheduled(streamDetail.startUtc as string)) {
-      return;
-    }
-
-    const clonedDetail = Object.assign({}, streamDetail);
-    const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
-    const lastTimeSnap = Math.max(clonedDetail.streamResumedBlockTime, clonedDetail.escrowVestedAmountSnapBlockTime);
-    let escrowVestedAmount = 0.0;
-    let rateAmount = clonedDetail.rateAmount;
-    let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
-    let rate = rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 1;
-    const currentBlockTime = Date.parse(new Date().toUTCString()) / 1000;
-    const elapsedTime = currentBlockTime - lastTimeSnap;
-
-    if (currentBlockTime >= lastTimeSnap) {
-      escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
-      if (escrowVestedAmount > clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
-        escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
-      }
-    }
-
-    let state: STREAM_STATE | undefined;
-    const threeDays = (3 * 24 * 3600);
-    const nowUtc = Date.parse(new Date().toUTCString());
-    const startDate = new Date(clonedDetail.startUtc as string);
-
-    if (startDate.getTime() > nowUtc) {
-        state = STREAM_STATE.Schedule;
-    } else if (escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
-        state = STREAM_STATE.Running;
-    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime < threeDays) {
-        state = STREAM_STATE.Paused;
-    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime >= threeDays) {
-        state = STREAM_STATE.Ended;
-    }
-
-    clonedDetail.escrowVestedAmount = escrowVestedAmount;
-    clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
-    clonedDetail.state = state as STREAM_STATE;
-    setStreamDetail(clonedDetail);
-
-  },[
-    streamDetail,
-    setStreamDetail,
-  ]);
-  */
-
   // If we don't have streams to show go back to /accounts
   useEffect(() => {
     if (!streamList || streamList.length === 0) {
@@ -827,7 +775,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1114,7 +1062,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1232,7 +1180,9 @@ export const Streams = () => {
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-  };
+    refreshTokenBalance();
+    refreshStreamList(true);
+};
 
   const onAfterCloseStreamTransactionModalClosed = () => {
     if (isBusy) {
@@ -1242,8 +1192,6 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      refreshTokenBalance();
-      reloadAndRedirect(true);
     }
   }
 
@@ -1395,7 +1343,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1440,7 +1388,7 @@ export const Streams = () => {
     const confirmTx = async (): Promise<boolean> => {
 
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -1631,29 +1579,6 @@ export const Streams = () => {
     return false;
   }
 
-  const reloadAndRedirect = (reset = false) => {
-    if (!loadingStreams) {
-      setLoadingStreams(true);
-      const programId = new PublicKey(streamProgramAddress);
-
-      listStreams(connection, programId, publicKey, publicKey)
-        .then(streams => {
-          consoleOut('Streams:', streams, 'blue');
-          if (streams.length) {
-            setStreamList(streams);
-            setSelectedStream(streams[0]);
-          } else {
-            setStreamList([]);
-            setSelectedStream(undefined);
-          }
-          setLoadingStreams(false);
-        }).catch(err => {
-          console.error(err);
-          setLoadingStreams(false);
-        });
-    }
-  }
-
   ///////////////////
   //   Rendering   //
   ///////////////////
@@ -1686,7 +1611,18 @@ export const Streams = () => {
           {/* Sender */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">{t('streams.stream-detail.label-receiving-from')}</div>
+              <div className="info-label">
+                {streamDetail && (
+                  <>
+                  {streamDetail.state === STREAM_STATE.Schedule
+                    ? t('streams.stream-detail.label-receive-from')
+                    : streamDetail.state === STREAM_STATE.Running
+                      ? t('streams.stream-detail.label-receiving-from')
+                      : t('streams.stream-detail.label-received-from')
+                  }
+                  </>
+                )}
+              </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
@@ -1935,7 +1871,18 @@ export const Streams = () => {
           {/* Beneficiary */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">{t('streams.stream-detail.label-sending-to')}</div>
+              <div className="info-label">
+                {streamDetail && (
+                  <>
+                  {streamDetail.state === STREAM_STATE.Schedule
+                    ? t('streams.stream-detail.label-send-to')
+                    : streamDetail.state === STREAM_STATE.Running
+                      ? t('streams.stream-detail.label-sending-to')
+                      : t('streams.stream-detail.label-sent-to')
+                  }
+                  </>
+                )}
+              </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
