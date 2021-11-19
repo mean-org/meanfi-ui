@@ -327,7 +327,7 @@
 		},
 		"stream-list": {
 			"no-streams": "Sem transferências disponíveis",
-			"subtitle-ended": "Transferência sem financiamento por 72h",
+			"subtitle-ended": "Este stream terminou",
 			"subtitle-paused-otp": "Pagamento único agendado concluído",
 			"subtitle-paused-inbound": "Esta transferência está em espera devido à falta de fundos.",
 			"subtitle-paused-outbound": "Esta transferência está em espera devido à falta de fundos.",

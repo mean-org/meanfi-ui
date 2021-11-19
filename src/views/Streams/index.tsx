@@ -62,7 +62,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../components/CloseStreamModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
+import { calculateActionFees, getStream, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
@@ -91,14 +91,16 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
-    setSelectedToken,
-    setStreamDetail,
     setSelectedStream,
     refreshStreamList,
-    setTransactionStatus,
+    setSelectedToken,
+    setStreamDetail,
     openStreamById,
+    setStreamList,
+    setLoadingStreams,
     setDtailsPanelOpen,
     refreshTokenBalance,
+    setTransactionStatus,
     setCustomStreamDocked
   } = useContext(AppStateContext);
   const [redirect, setRedirect] = useState<string | null>(null);
@@ -204,7 +206,7 @@ export const Streams = () => {
   useEffect(() => {
 
     const getFreshStream = async () => {
-      if (!streamDetail) { return; }
+      if (!streamDetail || loadingStreams) { return; }
       if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
       const freshStream = await ms.refreshStream(streamDetail);
       setStreamDetail(freshStream);
@@ -221,6 +223,7 @@ export const Streams = () => {
   }, [
     ms,
     streamDetail,
+    loadingStreams,
     setStreamDetail,
   ])
 
@@ -279,7 +282,7 @@ export const Streams = () => {
   };
   const handleCancelCustomStreamClick = () => {
     setCustomStreamDocked(false);
-    refreshStreamList(true);
+    // refreshStreamList(true);
   }
 
   // Add funds modal
@@ -390,51 +393,6 @@ export const Streams = () => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
   }
 
-  const getStreamIcon = (item: StreamInfo) => {
-
-    const isInbound = isInboundStream(item);
-
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        return <IconDocument className="mean-svg-icons pending" />;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return <IconTimer className="mean-svg-icons incoming" />;
-        case STREAM_STATE.Paused:
-          if (isOtp()) {
-            return <IconCheckedBox className="mean-svg-icons ended" />;
-          } else {
-            return <IconIncomingPaused className="mean-svg-icons incoming" />;
-          }
-        case STREAM_STATE.Ended:
-          return <IconCheckedBox className="mean-svg-icons ended" />;
-        default:
-          return <IconDownload className="mean-svg-icons incoming" />;
-      }
-    } else {
-      if (item.isUpdatePending) {
-        return <IconDocument className="mean-svg-icons pending" />;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return <IconTimer className="mean-svg-icons outgoing" />;
-        case STREAM_STATE.Paused:
-          if (isOtp()) {
-            return <IconCheckedBox className="mean-svg-icons ended" />;
-          } else {
-            return <IconOutgoingPaused className="mean-svg-icons outgoing" />;
-          }
-        case STREAM_STATE.Ended:
-          return <IconCheckedBox className="mean-svg-icons ended" />;
-        default:
-          return <IconUpload className="mean-svg-icons outgoing" />;
-      }
-    }
-  }
-
   const getShortDate = (date: string, includeTime = false): string => {
     if (!date) { return ''; }
     const localDate = new Date(date);
@@ -468,9 +426,52 @@ export const Streams = () => {
     }
   }
 
+  const getStreamIcon = useCallback((item: StreamInfo) => {
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isOtp = item.rateAmount === 0 ? true : false;
+  
+    if (item.isUpdatePending) {
+      return <IconDocument className="mean-svg-icons pending" />;
+    }
+  
+    if (isInbound) {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons incoming" />);
+        case STREAM_STATE.Ended:
+          return (<IconCheckedBox className="mean-svg-icons ended" />);
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            return (<IconCheckedBox className="mean-svg-icons ended" />);
+          } else {
+            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
+          }
+        default:
+          return (<IconDownload className="mean-svg-icons incoming" />);
+      }
+    } else {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons outgoing" />);
+        case STREAM_STATE.Ended:
+          return (<IconCheckedBox className="mean-svg-icons ended" />);
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            return (<IconCheckedBox className="mean-svg-icons ended" />);
+          } else {
+            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
+          }
+        default:
+          return (<IconUpload className="mean-svg-icons outgoing" />);
+      }
+    }
+  }, [
+    publicKey
+  ]);
+
   const getTransactionTitle = (item: StreamInfo): string => {
     let title = '';
-    const isInbound = isInboundStream(item);
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
 
     if (isInbound) {
       if (item.isUpdatePending) {
@@ -496,10 +497,10 @@ export const Streams = () => {
     return title;
   }
 
-  const getTransactionSubTitle = (item: StreamInfo): string => {
+  const getTransactionSubTitle = useCallback((item: StreamInfo) => {
     let title = '';
-
-    const isInbound = isInboundStream(item);
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isOtp = item.rateAmount === 0 ? true : false;
 
     if (isInbound) {
       if (item.isUpdatePending) {
@@ -513,14 +514,14 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-inbound');
           }
           break;
         case STREAM_STATE.Ended:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-ended');
@@ -543,14 +544,14 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-outbound');
           }
           break;
         case STREAM_STATE.Ended:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-ended');
@@ -563,7 +564,11 @@ export const Streams = () => {
       }
     }
     return title;
-  }
+
+  }, [
+    t,
+    publicKey
+  ]);
 
   const isStreamScheduled = (startUtc: string): boolean => {
     const now = new Date().toUTCString();
@@ -1227,7 +1232,6 @@ export const Streams = () => {
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-    refreshStreamList(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -1235,11 +1239,11 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList(true);
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
       refreshTokenBalance();
+      reloadAndRedirect(true);
     }
   }
 
@@ -1625,6 +1629,29 @@ export const Streams = () => {
       }
     }
     return false;
+  }
+
+  const reloadAndRedirect = (reset = false) => {
+    if (!loadingStreams) {
+      setLoadingStreams(true);
+      const programId = new PublicKey(streamProgramAddress);
+
+      listStreams(connection, programId, publicKey, publicKey)
+        .then(streams => {
+          consoleOut('Streams:', streams, 'blue');
+          if (streams.length) {
+            setStreamList(streams);
+            setSelectedStream(streams[0]);
+          } else {
+            setStreamList([]);
+            setSelectedStream(undefined);
+          }
+          setLoadingStreams(false);
+        }).catch(err => {
+          console.error(err);
+          setLoadingStreams(false);
+        });
+    }
   }
 
   ///////////////////

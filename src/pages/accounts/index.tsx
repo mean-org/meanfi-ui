@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -734,6 +734,7 @@ export const AccountsView = () => {
     for (let stream of updatedStreams) {
 
       let freshStream = await ms.refreshStream(stream);
+      if (!freshStream) { continue; }
 
       const streamIsOutgoing = 
           freshStream.treasurerAddress &&
@@ -771,7 +772,7 @@ export const AccountsView = () => {
   useEffect(() => {
 
     const timeout = setTimeout(() => {
-      if (publicKey && streamList && streamList.length > 0) {
+      if (publicKey && streamList) {
         refreshStreamSummary(streamList, publicKey);
       }
     }, 1000);
@@ -815,9 +816,9 @@ export const AccountsView = () => {
             <div className="operation-vector">
               {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (
                 <ArrowUpOutlined className="mean-svg-icons success bounce" />
-              ) : (
+              ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
                 <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
-              )}
+              ) : null}
             </div>
           </div>
         </Link>
@@ -1043,6 +1044,10 @@ export const AccountsView = () => {
       : false;
   }
 
+  // const isInboundStream = useCallback((item: StreamInfo): boolean => {
+  //   return item.beneficiaryAddress === publicKey?.toBase58();
+  // }, [publicKey]);
+
   /*
   const popoverTitleContent = (
     <div className="flexible-left">
@@ -1132,8 +1137,38 @@ export const AccountsView = () => {
 
         {/* {isLocal() && (
           <div className="debug-bar">
-            <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">tokenAccountGroups:</span><span className="ml-1 font-bold fg-dark-active">{tokenAccountGroups && tokenAccountGroups.size ? 'true' : 'false'}</span>
+            {streamList && streamList.length && (
+              <>
+                <div className="item-list-header compact">
+                  <div className="header-row">
+                    <div className="std-table-cell responsive-cell">I/O</div>
+                    <div className="std-table-cell responsive-cell">State</div>
+                    <div className="std-table-cell responsive-cell">Vested</div>
+                    <div className="std-table-cell responsive-cell">Unvested</div>
+                  </div>
+                </div>
+                <div className="item-list-body compact">
+                  {streamList.map((item, index) => {
+                    return (
+                      <div key={`${index}`} className="item-list-row">
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">{isInboundStream(item) ? 'Inbound' : 'Outbound'}</span>
+                        </div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">{item.state}</span>
+                        </div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">{getTokenAmountAndSymbolByTokenAddress(item.escrowVestedAmount, '')}</span>
+                        </div>
+                        <div className="std-table-cell responsive-cell">
+                          <span className="align-middle">{getTokenAmountAndSymbolByTokenAddress(item.escrowUnvestedAmount, '')}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         )} */}
 

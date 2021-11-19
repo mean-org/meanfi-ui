@@ -104,7 +104,7 @@ interface AppStateConfig {
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: StreamInfo[] | undefined) => void;
   setSelectedStream: (stream: StreamInfo | undefined) => void;
-  setStreamDetail: (stream: StreamInfo) => void;
+  setStreamDetail: (stream: StreamInfo | undefined) => void;
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
@@ -419,7 +419,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const setStreamDetail = (stream: StreamInfo) => {
+  const setStreamDetail = (stream: StreamInfo | undefined) => {
     updateStreamDetail(stream);
   }
 

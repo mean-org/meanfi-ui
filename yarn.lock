@@ -1669,10 +1669,10 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/money-streaming@1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.5.0.tgz#639221e659070266eea3cdba44b9155f624fc7f5"
-  integrity sha512-hVdgEkrgulBpRCSCW2KS32zhG3MkHS8EeNzwOPx8PEdqTuPSPBhZu917XlNcHCU0lC5jreePvpAMRw8uvIMl5g==
+"@mean-dao/money-streaming@1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.5.2.tgz#2c13a2e77660e985b5a274c863fc114dbe3d8a64"
+  integrity sha512-chTAxiPbBWv5Bodlq/nkTTD4B03z8VFsS0aGx5ecVMtuBFJtsE/ra+F97A8FpALs8M0uBeCo+1jSN7+ghrj/Nw==
   dependencies:
     "@project-serum/anchor" "^0.15.0"
     "@solana/spl-token" "^0.1.7"
@@ -1684,6 +1684,8 @@
     buffer-layout "^1.2.1"
     dotenv "10.0.0"
     eventemitter3 "^4.0.7"
+    moment "^2.29.1"
+    prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
 "@mercurial-finance/stable-swap-n-pool@git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git":
@@ -11230,6 +11232,13 @@ promise@^8.1.0:
   integrity sha512-W04AqnILOL/sPRXziNicCjSNRruLAuIHEOVBazepu0545DDNGYHz7ar9ZgZ1fMU8/MA4mVxp5rkBWRi6OXIy3Q==
   dependencies:
     asap "~2.0.6"
+
+prompt-sync@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/prompt-sync/-/prompt-sync-4.2.0.tgz#0198f73c5b70e3b03e4b9033a50540a7c9a1d7f4"
+  integrity sha512-BuEzzc5zptP5LsgV5MZETjDaKSWfchl5U9Luiu8SKp7iZWD5tZalOxvNcZRwv+d2phNFr8xlbxmFNcRKfJOzJw==
+  dependencies:
+    strip-ansi "^5.0.0"
 
 prompts@2.4.0:
   version "2.4.0"

@@ -327,7 +327,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No streams available",
-			"subtitle-ended": "Transfer unfunded for 72h",
+			"subtitle-ended": "This stream has ended",
 			"subtitle-paused-otp": "Scheduled one-time payment completed",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",
 			"subtitle-paused-outbound": "This stream is paused due to the lack of funds",
