@@ -1384,9 +1384,7 @@ export const OneTimeExchange = (props: {
         throw new Error('Not connected');
       }
 
-      const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
-        preflightCommitment: 'confirmed'
-      });
+      const sentTx = await connection.sendEncodedTransaction(encodedTx);
 
       if (!sentTx) {
         throw new Error('Cannot send the transaction');   

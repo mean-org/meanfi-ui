@@ -24,7 +24,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { Connection } from "@solana/web3.js";
 import { UserTokenAccount } from "../models/transactions";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
@@ -104,7 +104,7 @@ interface AppStateConfig {
   setLoadingStreams: (state: boolean) => void;
   setStreamList: (list: StreamInfo[] | undefined) => void;
   setSelectedStream: (stream: StreamInfo | undefined) => void;
-  setStreamDetail: (stream: StreamInfo) => void;
+  setStreamDetail: (stream: StreamInfo | undefined) => void;
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
@@ -419,7 +419,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const setStreamDetail = (stream: StreamInfo) => {
+  const setStreamDetail = (stream: StreamInfo | undefined) => {
     updateStreamDetail(stream);
   }
 
@@ -833,7 +833,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       };
       sol.isMeanSupportedToken = true;
       list.push(sol);
-      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       // Update the list
       updateUserTokens(list);

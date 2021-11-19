@@ -40,6 +40,7 @@ export { IconSort } from "./IconSort";
 export { IconSun } from "./IconSun";
 export { IconSwapFlip } from "./IconSwapFlip";
 export { IconTelegram } from "./IconTelegram";
+export { IconTimer } from "./IconTimer";
 export { IconTwitter } from "./IconTwitter";
 export { IconUniversity } from "./IconUniversity";
 export { IconUpload } from "./IconUpload";

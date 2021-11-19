@@ -21,6 +21,7 @@ import {
   IconOutgoingPaused,
   IconRefresh,
   IconShare,
+  IconTimer,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -51,7 +52,6 @@ import {
   VERBOSE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
-  WRAPPED_SOL_MINT_ADDRESS,
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
@@ -62,7 +62,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../components/CloseStreamModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
+import { calculateActionFees, getStream, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
@@ -70,6 +70,7 @@ import { defaultStreamStats, StreamStats } from "../../models/streams";
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { Redirect, useLocation } from "react-router-dom";
+import { NATIVE_SOL_MINT } from "../../utils/ids";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -90,15 +91,16 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
-    setStreamList,
-    setSelectedToken,
-    setStreamDetail,
     setSelectedStream,
     refreshStreamList,
-    setTransactionStatus,
+    setSelectedToken,
+    setStreamDetail,
     openStreamById,
+    setStreamList,
+    setLoadingStreams,
     setDtailsPanelOpen,
     refreshTokenBalance,
+    setTransactionStatus,
     setCustomStreamDocked
   } = useContext(AppStateContext);
   const [redirect, setRedirect] = useState<string | null>(null);
@@ -141,58 +143,6 @@ export const Streams = () => {
     return await calculateActionFees(connection, action);
   }, [connection]);
 
-  /*
-  const updateLiveStreamData = useCallback(() => {
-
-    if (!streamDetail) { return; }
-
-    if (isStreamScheduled(streamDetail.startUtc as string)) {
-      return;
-    }
-
-    const clonedDetail = Object.assign({}, streamDetail);
-    const isStreaming = clonedDetail.streamResumedBlockTime >= clonedDetail.escrowVestedAmountSnapBlockTime ? 1 : 0;
-    const lastTimeSnap = Math.max(clonedDetail.streamResumedBlockTime, clonedDetail.escrowVestedAmountSnapBlockTime);
-    let escrowVestedAmount = 0.0;
-    let rateAmount = clonedDetail.rateAmount;
-    let rateIntervalInSeconds = clonedDetail.rateIntervalInSeconds;
-    let rate = rateIntervalInSeconds > 0 ? (rateAmount / rateIntervalInSeconds * isStreaming) : 1;
-    const currentBlockTime = Date.parse(new Date().toUTCString()) / 1000;
-    const elapsedTime = currentBlockTime - lastTimeSnap;
-
-    if (currentBlockTime >= lastTimeSnap) {
-      escrowVestedAmount = clonedDetail.escrowVestedAmountSnap + rate * elapsedTime;
-      if (escrowVestedAmount > clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) {
-        escrowVestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals;
-      }
-    }
-
-    let state: STREAM_STATE | undefined;
-    const threeDays = (3 * 24 * 3600);
-    const nowUtc = Date.parse(new Date().toUTCString());
-    const startDate = new Date(clonedDetail.startUtc as string);
-
-    if (startDate.getTime() > nowUtc) {
-        state = STREAM_STATE.Schedule;
-    } else if (escrowVestedAmount < (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals)) {
-        state = STREAM_STATE.Running;
-    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime < threeDays) {
-        state = STREAM_STATE.Paused;
-    } else if (escrowVestedAmount >= (clonedDetail.totalDeposits - clonedDetail.totalWithdrawals) && elapsedTime >= threeDays) {
-        state = STREAM_STATE.Ended;
-    }
-
-    clonedDetail.escrowVestedAmount = escrowVestedAmount;
-    clonedDetail.escrowUnvestedAmount = clonedDetail.totalDeposits - clonedDetail.totalWithdrawals - escrowVestedAmount;
-    clonedDetail.state = state as STREAM_STATE;
-    setStreamDetail(clonedDetail);
-
-  },[
-    streamDetail,
-    setStreamDetail,
-  ]);
-  */
-
   // If we don't have streams to show go back to /accounts
   useEffect(() => {
     if (!streamList || streamList.length === 0) {
@@ -204,7 +154,7 @@ export const Streams = () => {
   useEffect(() => {
 
     const getFreshStream = async () => {
-      if (!streamDetail) { return; }
+      if (!streamDetail || loadingStreams) { return; }
       if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
       const freshStream = await ms.refreshStream(streamDetail);
       setStreamDetail(freshStream);
@@ -221,6 +171,7 @@ export const Streams = () => {
   }, [
     ms,
     streamDetail,
+    loadingStreams,
     setStreamDetail,
   ])
 
@@ -279,7 +230,7 @@ export const Streams = () => {
   };
   const handleCancelCustomStreamClick = () => {
     setCustomStreamDocked(false);
-    refreshStreamList(true);
+    // refreshStreamList(true);
   }
 
   // Add funds modal
@@ -371,8 +322,8 @@ export const Streams = () => {
   };
 
   const onActivateContractScreen = () => {
-    setStreamList([]);
     setCustomStreamDocked(false);
+    setRedirect("/transfers");
   };
 
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
@@ -388,47 +339,6 @@ export const Streams = () => {
 
   const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
     return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
-  }
-
-  const getStreamIcon = (item: StreamInfo) => {
-
-    if (item.state === STREAM_STATE.Ended) {
-      return (
-        <IconCheckedBox className="mean-svg-icons ended" />
-      );
-    }
-
-    const isInbound = isInboundStream(item);
-
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        return (
-          <IconDocument className="mean-svg-icons pending" />
-        );
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
-        return (
-          <IconIncomingPaused className="mean-svg-icons incoming" />
-        );
-      } else {
-        return (
-          <IconDownload className="mean-svg-icons incoming" />
-        );
-      }
-    } else {
-      if (item.isUpdatePending) {
-        return (
-          <IconDocument className="mean-svg-icons pending" />
-        );
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
-        return (
-          <IconOutgoingPaused className="mean-svg-icons outgoing" />
-        );
-      } else {
-        return (
-          <IconUpload className="mean-svg-icons outgoing" />
-        );
-      }
-    }
   }
 
   const getShortDate = (date: string, includeTime = false): string => {
@@ -464,14 +374,59 @@ export const Streams = () => {
     }
   }
 
+  const getStreamIcon = useCallback((item: StreamInfo) => {
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isOtp = item.rateAmount === 0 ? true : false;
+  
+    if (item.isUpdatePending) {
+      return <IconDocument className="mean-svg-icons pending" />;
+    }
+  
+    if (isInbound) {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons incoming" />);
+        case STREAM_STATE.Ended:
+          return (<IconCheckedBox className="mean-svg-icons ended" />);
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            return (<IconCheckedBox className="mean-svg-icons ended" />);
+          } else {
+            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
+          }
+        default:
+          return (<IconDownload className="mean-svg-icons incoming" />);
+      }
+    } else {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons outgoing" />);
+        case STREAM_STATE.Ended:
+          return (<IconCheckedBox className="mean-svg-icons ended" />);
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            return (<IconCheckedBox className="mean-svg-icons ended" />);
+          } else {
+            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
+          }
+        default:
+          return (<IconUpload className="mean-svg-icons outgoing" />);
+      }
+    }
+  }, [
+    publicKey
+  ]);
+
   const getTransactionTitle = (item: StreamInfo): string => {
     let title = '';
-    const isInbound = isInboundStream(item);
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
 
     if (isInbound) {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
         title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
@@ -479,7 +434,9 @@ export const Streams = () => {
     } else {
       if (item.isUpdatePending) {
         title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused || item.state === STREAM_STATE.Schedule) {
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
         title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       } else {
         title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
@@ -488,10 +445,10 @@ export const Streams = () => {
     return title;
   }
 
-  const getTransactionSubTitle = (item: StreamInfo): string => {
+  const getTransactionSubTitle = useCallback((item: StreamInfo) => {
     let title = '';
-
-    const isInbound = isInboundStream(item);
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isOtp = item.rateAmount === 0 ? true : false;
 
     if (isInbound) {
       if (item.isUpdatePending) {
@@ -505,14 +462,14 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-inbound');
           }
           break;
         case STREAM_STATE.Ended:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-ended');
@@ -535,14 +492,14 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-outbound');
           }
           break;
         case STREAM_STATE.Ended:
-          if (isOtp()) {
+          if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-ended');
@@ -555,7 +512,11 @@ export const Streams = () => {
       }
     }
     return title;
-  }
+
+  }, [
+    t,
+    publicKey
+  ]);
 
   const isStreamScheduled = (startUtc: string): boolean => {
     const now = new Date().toUTCString();
@@ -703,9 +664,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -713,10 +674,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
           return false;
@@ -814,7 +775,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -991,9 +952,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1001,10 +962,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
           return false;
@@ -1101,7 +1062,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendSignedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1219,19 +1180,18 @@ export const Streams = () => {
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
+    refreshTokenBalance();
     refreshStreamList(true);
-  };
+};
 
   const onAfterCloseStreamTransactionModalClosed = () => {
     if (isBusy) {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList(true);
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      refreshTokenBalance();
     }
   }
 
@@ -1274,9 +1234,9 @@ export const Streams = () => {
 
         // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < transactionFees.blockchainFee) {
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -1284,10 +1244,10 @@ export const Streams = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
           customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
@@ -1383,7 +1343,7 @@ export const Streams = () => {
       const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -1428,7 +1388,7 @@ export const Streams = () => {
     const confirmTx = async (): Promise<boolean> => {
 
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -1651,7 +1611,18 @@ export const Streams = () => {
           {/* Sender */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">{t('streams.stream-detail.label-receiving-from')}</div>
+              <div className="info-label">
+                {streamDetail && (
+                  <>
+                  {streamDetail.state === STREAM_STATE.Schedule
+                    ? t('streams.stream-detail.label-receive-from')
+                    : streamDetail.state === STREAM_STATE.Running
+                      ? t('streams.stream-detail.label-receiving-from')
+                      : t('streams.stream-detail.label-received-from')
+                  }
+                  </>
+                )}
+              </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
@@ -1900,7 +1871,18 @@ export const Streams = () => {
           {/* Beneficiary */}
           <Row className="mb-3">
             <Col span={12}>
-              <div className="info-label">{t('streams.stream-detail.label-sending-to')}</div>
+              <div className="info-label">
+                {streamDetail && (
+                  <>
+                  {streamDetail.state === STREAM_STATE.Schedule
+                    ? t('streams.stream-detail.label-send-to')
+                    : streamDetail.state === STREAM_STATE.Running
+                      ? t('streams.stream-detail.label-sending-to')
+                      : t('streams.stream-detail.label-sent-to')
+                  }
+                  </>
+                )}
+              </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
                   <IconShare className="mean-svg-icons" />
@@ -2339,16 +2321,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
@@ -2409,16 +2389,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
@@ -2479,16 +2457,14 @@ export const Streams = () => {
                 {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                   <h4 className="mb-4">
                     {t('transactions.status.tx-start-failure', {
-                      accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
                         nativeBalance,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`,
-                      feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee,
-                        WRAPPED_SOL_MINT_ADDRESS,
-                        true
-                      )} SOL`})
+                        NATIVE_SOL_MINT.toBase58()
+                      ),
+                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                        NATIVE_SOL_MINT.toBase58()
+                      )})
                     }
                   </h4>
                 ) : (
