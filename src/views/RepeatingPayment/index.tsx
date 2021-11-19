@@ -544,6 +544,8 @@ export const RepeatingPayment = () => {
         const fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
+        fromParsedDate.setSeconds(now.getSeconds());
+        fromParsedDate.setMilliseconds(now.getMilliseconds());
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
