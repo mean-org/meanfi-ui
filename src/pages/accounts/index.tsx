@@ -800,7 +800,11 @@ export const AccountsView = () => {
           <div key="streams" className="transaction-list-row money-streams-summary">
             <div className="icon-cell">
               <div className={loadingStreams ? 'token-icon animate-border' : 'token-icon'}>
-                <div className="streams-count">
+                <div className="streams-count simplelink" onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  refreshStreamList();
+                  }}>
                   <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
                 </div>
               </div>

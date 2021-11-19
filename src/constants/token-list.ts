@@ -1,5 +1,7 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL'];
+
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,

@@ -33,7 +33,7 @@ export const MEAN_DAO_MEDIUM_BLOG_URL = 'https://meandao.medium.com/';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
-export const FALLBACK_COIN_IMAGE = 'assets/coin-error.svg';
+export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
 export const BANNED_TOKENS = [
     'CRT',
     'FROG',
@@ -54,25 +54,25 @@ export const LANGUAGES: Language[] = [
     {
         code: 'en',
         name: 'English',
-        flag: 'assets/flags/us.svg',
+        flag: '/assets/flags/us.svg',
         locale: 'en-US'
     },
     {
         code: 'es',
         name: 'Español',
-        flag: 'assets/flags/es.svg',
+        flag: '/assets/flags/es.svg',
         locale: 'es-ES'
     },
     {
         code: 'fr',
         name: 'Français',
-        flag: 'assets/flags/fr.svg',
+        flag: '/assets/flags/fr.svg',
         locale: 'fr-FR'
     },
     {
         code: 'pt',
         name: 'Português',
-        flag: 'assets/flags/br.svg',
+        flag: '/assets/flags/br.svg',
         locale: 'pt-BR'
     },
 ];
