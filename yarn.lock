@@ -1642,10 +1642,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@^1.1.21":
-  version "1.1.21"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.21.tgz#799d565205321bf762e87539ad224b60fe5e5bc1"
-  integrity sha512-1dZMZXLYCtxNV8ML9pH3nvvPBe6uGLBAMft9yBkN2wEZxv/HQCgMb5of8+ewhhaa5HYu4gqq12m/knRL/BXfCw==
+"@mean-dao/hybrid-liquidity-ag@1.1.22":
+  version "1.1.22"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.22.tgz#cc3b91beda328ddb41096041d2c07fddbd2c705b"
+  integrity sha512-JHbBdLkKLyPRMWVka3wC9IB4UlDE/BS431ZjmCGG0Fi8e7fbvnnwcQUPs7h4QUqCYrFsDACtcr3eFZ/cC0sjvQ==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.13"

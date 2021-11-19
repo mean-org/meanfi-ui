@@ -249,6 +249,17 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         extensions: {
             coingeckoId: "jet"
         }
+    },
+    {
+        chainId: 101,
+        address: "PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y",
+        symbol: "PORT",
+        name: "Port Finance Token",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png",
+        tags: [],
+        extensions: {
+          serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
+        }
     }
-
 ];
