@@ -8,7 +8,7 @@ import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 
-export const AddFundsModal = (props: {
+export const StreamAddFundsModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;

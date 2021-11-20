@@ -1,11 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from "antd";
 import { useTranslation } from "react-i18next";
 import "./style.less";
-import { AppStateContext } from '../../contexts/appstate';
 import { IconCopy, IconFacebook, IconLinkedin, IconTelegram, IconTwitter, IconWhatsapp } from '../../Icons';
 import { notify } from '../../utils/notifications';
-import { consoleOut, copyText } from '../../utils/ui';
+import { copyText } from '../../utils/ui';
 import {
   FacebookShareButton,
   LinkedinShareButton,
@@ -22,7 +21,6 @@ export const ReferFriendModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
-  const { referrals } = useContext(AppStateContext);
   const [referralLink, setReferralLink] = useState('');
 
   useEffect(() => {
@@ -60,9 +58,9 @@ export const ReferFriendModal = (props: {
         <div className="transaction-progress refer-friend-wrapper">
             <div className="refer-friend-image">
                 <img src="/assets/giftbox.svg" alt="" />
-                {referrals > 0 && (
+                {/* {referrals > 0 && (
                   <span className="badge orange-red referrals-badge">{referrals}</span>
-                )}
+                )} */}
             </div>
             <h4 className="refer-friend-hint">{t('referrals.refer-friend-hint')}</h4>
             <div className="transaction-field">

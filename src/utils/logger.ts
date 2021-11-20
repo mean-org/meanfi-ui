@@ -117,7 +117,7 @@ export class CustomLoggerService {
         }
 
         if (data) {
-            logBody.Data = objectToJson(data);
+            logBody.Data = isLocal() ? data : objectToJson(data);
         }
         return logBody;
     }

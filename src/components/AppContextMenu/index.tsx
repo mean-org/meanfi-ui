@@ -27,7 +27,6 @@ export const AppContextMenu = () => {
   const { connected, disconnect, resetWalletProvider } = useWallet();
   const {
     theme,
-    referrals,
     setTheme,
     setSelectedStream,
     setStreamList
@@ -122,7 +121,8 @@ export const AppContextMenu = () => {
       <Menu.Item key="3" onClick={() => openFriendReferralModal()}>
           <IconShareBox className="mean-svg-icons" />
           <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: connected && referrals ? `(${referrals})` : '' })}
+            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}
+            {/* {t('ui-menus.app-context-menu.refer-a-friend', { referrals: connected && referrals ? `(${referrals})` : '' })} */}
           </span>
       </Menu.Item>
       <Menu.Divider />

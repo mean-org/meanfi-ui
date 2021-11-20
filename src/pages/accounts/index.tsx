@@ -54,11 +54,12 @@ import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -83,8 +84,11 @@ export const AccountsView = () => {
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
+    setStreamList,
     setTransactions,
     setSelectedAsset,
+    setSelectedStream,
+    setLoadingStreams,
     setAccountAddress,
     refreshStreamList,
     setDtailsPanelOpen,
@@ -93,6 +97,13 @@ export const AccountsView = () => {
     showDepositOptionsModal,
     setTransactionStatus,
   } = useContext(AppStateContext);
+  const {
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    clearTransactionStatusContext,
+  } = useContext(TransactionStatusContext);
   const [redirect, setRedirect] = useState<string | null>(null);
 
   const { t } = useTranslation('common');
@@ -787,6 +798,61 @@ export const AccountsView = () => {
     refreshStreamSummary
   ]);
 
+  // Handle what to do when new stream is created
+  useEffect(() => {
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      if (OperationType.Create) {
+        consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshin streams...', 'blue');
+        // refreshStreamList(true);
+        setLoadingStreams(true);
+        const signature = lastSentTxStatus || '';
+        setTimeout(() => {
+          clearTransactionStatusContext();
+        });
+        ms.listStreams(publicKey, publicKey, "finalized")
+        .then(streams => {
+          if (streams.length) {
+            let item: StreamInfo | undefined;
+            if (signature) {
+              item = streams.find(d => d.transactionSignature === signature);
+            } else {
+              item = streams[0];
+            }
+            if (item) {
+              ms.refreshStream(item, true)
+                .then(freshStream => {
+                  if (freshStream) {
+                    setSelectedStream(freshStream);
+                    // Redirect to /accounts/streams if the recently created stream has a matching Tx signature
+                    if (freshStream.transactionSignature === signature) {
+                      setRedirect("/accounts/streams");
+                    }
+                  }
+                })
+            }
+          }
+          setStreamList(streams);
+          setLoadingStreams(false);
+        }).catch(err => {
+          console.error(err);
+          setLoadingStreams(false);
+        });
+      }
+    }
+  }, [
+    ms,
+    publicKey,
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    clearTransactionStatusContext,
+    // refreshStreamList,
+    setLoadingStreams,
+    setSelectedStream,
+    setStreamList
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
@@ -1139,6 +1205,14 @@ export const AccountsView = () => {
 
       <div className="container main-container">
 
+        {isLocal() && (
+          <div className="debug-bar">
+            <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
+            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+          </div>
+        )}
         {/* {isLocal() && (
           <div className="debug-bar">
             {streamList && streamList.length && (

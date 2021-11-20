@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
   BANNED_TOKENS,
@@ -32,6 +32,8 @@ import { consoleOut } from "../utils/ui";
 import { appConfig } from "..";
 import { ChainId } from "@saberhq/token-utils";
 import { DdcaAccount } from "@mean-dao/ddca";
+import { TransactionStatusContext } from "./transaction-status";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -66,7 +68,6 @@ interface AppStateConfig {
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
-  referrals: number;
   // Accounts
   splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
@@ -108,7 +109,6 @@ interface AppStateConfig {
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
-  setReferrals: (value: number) => void;
   // Accounts
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
@@ -151,7 +151,6 @@ const contextDefaultValues: AppStateConfig = {
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
-  referrals: 0,
   // Accounts
   splTokenList: [],
   userTokens: [],
@@ -193,7 +192,6 @@ const contextDefaultValues: AppStateConfig = {
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
-  setReferrals: () => {},
   // Accounts
   setTransactions: () => {},
   setSelectedAsset: () => {},
@@ -216,10 +214,26 @@ const AppStateProvider: React.FC = ({ children }) => {
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
+  const {
+    lastSentTxStatus,
+    clearTransactionStatusContext,
+  } = useContext(TransactionStatusContext);
+
+  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
 
   if (!streamProgramAddress) {
-    setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
+    setStreamProgramAddress(streamProgramAddressFromConfig);
   }
+
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    connectionConfig.endpoint,
+    streamProgramAddressFromConfig
+  ),
+  [
+    connectionConfig.endpoint,
+    streamProgramAddressFromConfig
+  ]);
 
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
@@ -457,9 +471,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
 
-  // TODO: referrals are tempararily persisted in localStorage but we must use an API
-  const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
-
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
     setShouldUpdateToken(true);
@@ -471,12 +482,6 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setEffectiveRate = (rate: number) => {
     updateEffectiveRate(rate);
-  }
-
-  const setReferrals = (value: number) => {
-    if (publicKey) {
-      updateReferrals(value);
-    }
   }
 
   // Effect to load coin prices
@@ -600,46 +605,64 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     if (!loadingStreams) {
       setLoadingStreams(true);
+      consoleOut('reset =', reset, 'blue');
       const programId = new PublicKey(streamProgramAddress);
+      const signature = lastSentTxStatus || '';
+      setTimeout(() => {
+        clearTransactionStatusContext();
+      });
 
-      listStreams(connection, programId, publicKey, publicKey)
+      listStreams(connection, programId, publicKey, publicKey, "finalized")
         .then(streams => {
           consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;
           if (streams.length) {
             if (reset) {
-              item = streams[0];
+              if (signature) {
+                item = streams.find(d => d.transactionSignature === signature);
+              } else {
+                item = streams[0];
+              }
             } else {
-              // Try to get current item by its id
-              if (selectedStream) {
+              // Try to get current item by its original Tx signature then its id
+              if (signature) {
+                item = streams.find(d => d.transactionSignature === signature);
+              } else if (selectedStream) {
                 const itemFromServer = streams.find(i => i.id === selectedStream.id);
-                item = itemFromServer || selectedStream;
+                item = itemFromServer || streams[0];
               } else {
                 item = streams[0];
               }
             }
+            if (!item) {
+              item = JSON.parse(JSON.stringify(streams[0]));
+            }
             consoleOut('selectedStream:', item, 'blue');
             if (item) {
               updateSelectedStream(item);
-              updateStreamDetail(item);
-              // setSelectedToken
-              const token = getTokenByMintAddress(item.associatedToken as string);
-              setSelectedToken(token);
-              if (!loadingStreamActivity) {
-                setLoadingStreamActivity(true);
-                const streamPublicKey = new PublicKey(item.id as string);
-                listStreamActivity(connection, streamPublicKey)
-                  .then(value => {
-                    consoleOut('activity:', value, 'blue');
-                    setStreamActivity(value);
-                    setLoadingStreamActivity(false);
-                  })
-                  .catch(err => {
-                    console.error(err);
-                    setStreamActivity([]);
-                    setLoadingStreamActivity(false);
-                  });
-              }
+              ms.refreshStream(item, true)
+                .then(freshStream => {
+                  if (freshStream) {
+                    updateStreamDetail(freshStream);
+                    const token = getTokenByMintAddress(freshStream.associatedToken as string);
+                    setSelectedToken(token);
+                    if (!loadingStreamActivity) {
+                      setLoadingStreamActivity(true);
+                      const streamPublicKey = new PublicKey(freshStream.id as string);
+                      listStreamActivity(connection, streamPublicKey)
+                        .then(value => {
+                          consoleOut('activity:', value, 'blue');
+                          setStreamActivity(value);
+                          setLoadingStreamActivity(false);
+                        })
+                        .catch(err => {
+                          console.error(err);
+                          setStreamActivity([]);
+                          setLoadingStreamActivity(false);
+                        });
+                    }
+                  }
+                })
             }
           } else {
             setStreamActivity([]);
@@ -654,12 +677,15 @@ const AppStateProvider: React.FC = ({ children }) => {
         });
     }
   }, [
+    ms,
+    publicKey,
     connection,
-    streamProgramAddress,
+    lastSentTxStatus,
     loadingStreamActivity,
+    streamProgramAddress,
     selectedStream,
     loadingStreams,
-    publicKey
+    clearTransactionStatusContext
   ]);
 
   // Streams refresh timeout
@@ -913,7 +939,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
-        referrals,
         splTokenList,
         userTokens,
         selectedAsset,
@@ -953,7 +978,6 @@ const AppStateProvider: React.FC = ({ children }) => {
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
-        setReferrals,
         setTransactions,
         setSelectedAsset,
         setAccountAddress,

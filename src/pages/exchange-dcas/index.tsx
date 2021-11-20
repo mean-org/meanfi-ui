@@ -1162,18 +1162,15 @@ export const ExchangeDcasView = () => {
     <Menu>
       {/*
         *     If exchangeFor is > 0 -> Withdraw is visible
-        *     If totalLeft is > 0 -> Cancel and withdraw everything
       */}
       {(ddcaDetails && ddcaDetails.toBalance > 0) && (
         <Menu.Item key="1" onClick={showWithdrawModal}>
           <span className="menu-item-text">Withdraw</span>
         </Menu.Item>
       )}
-      {(ddcaDetails && ddcaDetails.fromBalance > 0) && (
-        <Menu.Item key="2" onClick={showCloseDdcaModal}>
-          <span className="menu-item-text">Cancel and withdraw everything</span>
-        </Menu.Item>
-      )}
+      <Menu.Item key="2" onClick={showCloseDdcaModal}>
+        <span className="menu-item-text">Cancel and withdraw everything</span>
+      </Menu.Item>
     </Menu>
   );
 
@@ -1270,7 +1267,6 @@ export const ExchangeDcasView = () => {
               *  Visibe If exchangeFor > 0 || totalLeft is > 0
               *  {
               *     If exchangeFor is > 0 -> Withdraw is visible
-              *     If totalLeft is > 0 -> Cancel and withdraw everything
               *  }
             */}
             <div className="mt-3 mb-3 withdraw-container">

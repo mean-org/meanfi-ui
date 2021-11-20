@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip } from "antd";
+import { Divider, Row, Col, Button, Modal, Spin, Dropdown, Menu, Tooltip, Empty } from "antd";
 import {
   ArrowDownOutlined,
   ArrowLeftOutlined,
@@ -55,14 +55,14 @@ import {
 } from "../../constants";
 import { getSolanaExplorerClusterParam, useConnection, useConnectionConfig } from "../../contexts/connection";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
-import { AddFundsModal } from "../../components/AddFundsModal";
+import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { CloseStreamModal } from "../../components/CloseStreamModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees, getStream, listStreams } from '@mean-dao/money-streaming/lib/utils';
+import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
@@ -71,6 +71,7 @@ import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { Redirect, useLocation } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
+import { TransactionStatusContext } from "../../contexts/transaction-status";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -96,13 +97,20 @@ export const Streams = () => {
     setSelectedToken,
     setStreamDetail,
     openStreamById,
-    setStreamList,
-    setLoadingStreams,
     setDtailsPanelOpen,
     refreshTokenBalance,
     setTransactionStatus,
     setCustomStreamDocked
   } = useContext(AppStateContext);
+  const {
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
+
   const [redirect, setRedirect] = useState<string | null>(null);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
@@ -145,10 +153,17 @@ export const Streams = () => {
 
   // If we don't have streams to show go back to /accounts
   useEffect(() => {
-    if (!streamList || streamList.length === 0) {
-      setRedirect("/accounts");
+    if (!lastSentTxStatus && !loadingStreams && !loadingStreamActivity) {
+      if (!streamList || streamList.length === 0) {
+        setRedirect("/accounts");
+      }
     }
-  }, [streamList]);
+  }, [
+    streamList,
+    loadingStreams,
+    lastSentTxStatus,
+    loadingStreamActivity
+  ]);
 
   // Live data calculation
   useEffect(() => {
@@ -228,9 +243,10 @@ export const Streams = () => {
     openStreamById(e);
     closeOpenStreamModal();
   };
+
   const handleCancelCustomStreamClick = () => {
     setCustomStreamDocked(false);
-    // refreshStreamList(true);
+    refreshStreamList(true);
   }
 
   // Add funds modal
@@ -565,6 +581,41 @@ export const Streams = () => {
     isInboundStream]
   );
 
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+    if (!ms || !streamDetail) { return; }
+
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      switch (lastSentTxOperationType) {
+        case OperationType.Close:
+        case OperationType.Create:
+          refreshStreamList(true);
+          break;
+        case OperationType.AddFunds:
+          if (customStreamDocked) {
+            openStreamById(streamDetail?.id as string);
+          } else {
+            refreshStreamList(false);
+          }
+          break;
+        default:
+          refreshStreamList(false);
+          break;
+      }
+      consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed, status:`, fetchTxInfoStatus, 'blue');
+    }
+  }, [
+    ms,
+    streamDetail,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    customStreamDocked,
+    refreshStreamList,
+    setSelectedStream,
+    openStreamById,
+  ]);
+
   // Transaction execution (Applies to all transactions)
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -600,11 +651,7 @@ export const Streams = () => {
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-    if (customStreamDocked) {
-      openStreamById(streamDetail?.id as string);
-    } else {
-      refreshStreamList(false);
-    }
+    refreshTokenBalance();
   };
 
   const onAfterAddFundsTransactionModalClosed = () => {
@@ -615,7 +662,6 @@ export const Streams = () => {
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      refreshTokenBalance();
     }
   }
 
@@ -625,11 +671,12 @@ export const Streams = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -817,47 +864,47 @@ export const Streams = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
+    // const confirmTx = async (): Promise<boolean> => {
+    //   return await connection
+    //     .confirmTransaction(signature, "finalized")
+    //     .then(result => {
+    //       consoleOut('confirmTransaction result:', result);
+    //       if (result && result.value && !result.value.err) {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //           currentOperation: TransactionStatus.TransactionFinished
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+    //           result: result.value
+    //         });
+    //         return true;
+    //       } else {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransaction,
+    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //           result: signature
+    //         });
+    //         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+    //         return false;
+    //       }
+    //     })
+    //     .catch(e => {
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       transactionLog.push({
+    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //         result: signature
+    //       });
+    //       customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+    //       return false;
+    //     });
+    // }
 
     if (wallet && streamDetail) {
       showAddFundsTransactionModal();
@@ -870,11 +917,15 @@ export const Streams = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.AddFunds);
+            setIsBusy(false);
+            onAddFundsTransactionFinished();
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -892,7 +943,7 @@ export const Streams = () => {
     hideWithdrawFundsTransactionModal();
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
-    refreshStreamList(false);
+    refreshTokenBalance();
   };
 
   const onAfterWithdrawFundsTransactionModalClosed = () => {
@@ -900,11 +951,9 @@ export const Streams = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
-      refreshStreamList(false);
       hideWithdrawFundsTransactionModal();
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
-      refreshTokenBalance();
     }
   }
 
@@ -914,11 +963,12 @@ export const Streams = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1104,48 +1154,48 @@ export const Streams = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
+    // const confirmTx = async (): Promise<boolean> => {
 
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
+    //   return await connection
+    //     .confirmTransaction(signature, "finalized")
+    //     .then(result => {
+    //       consoleOut('confirmTransaction result:', result);
+    //       if (result && result.value && !result.value.err) {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //           currentOperation: TransactionStatus.TransactionFinished
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+    //           result: result.value
+    //         });
+    //         return true;
+    //       } else {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransaction,
+    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //           result: signature
+    //         });
+    //         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+    //         return false;
+    //       }
+    //     })
+    //     .catch(e => {
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       transactionLog.push({
+    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //         result: signature
+    //       });
+    //       customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+    //       return false;
+    //     });
+    // }
 
     if (wallet) {
       showWithdrawFundsTransactionModal();
@@ -1158,11 +1208,15 @@ export const Streams = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
+            setIsBusy(false);
+            onWithdrawFundsTransactionFinished();
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1181,8 +1235,7 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
-    refreshStreamList(true);
-};
+  };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
     if (isBusy) {
@@ -1201,11 +1254,12 @@ export const Streams = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1385,48 +1439,48 @@ export const Streams = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
+    // const confirmTx = async (): Promise<boolean> => {
 
-      return await connection
-        .confirmTransaction(signature, "finalized")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
+    //   return await connection
+    //     .confirmTransaction(signature, "finalized")
+    //     .then(result => {
+    //       consoleOut('confirmTransaction result:', result);
+    //       if (result && result.value && !result.value.err) {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //           currentOperation: TransactionStatus.TransactionFinished
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+    //           result: result.value
+    //         });
+    //         return true;
+    //       } else {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransaction,
+    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //           result: signature
+    //         });
+    //         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+    //         return false;
+    //       }
+    //     })
+    //     .catch(e => {
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       transactionLog.push({
+    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //         result: signature
+    //       });
+    //       customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+    //       return false;
+    //     });
+    // }
 
     if (wallet) {
       showCloseStreamTransactionModal();
@@ -1439,11 +1493,15 @@ export const Streams = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            setIsBusy(false);
+            onCloseStreamTransactionFinished();
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1577,6 +1635,30 @@ export const Streams = () => {
       }
     }
     return false;
+  }
+
+  const isCreating = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+            ? true
+            : false;
+  }
+
+  const isClosing = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+            ? true
+            : false;
+  }
+
+  const isWithdrawing = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Withdraw
+            ? true
+            : false;
+  }
+
+  const isAddingFunds = (): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.AddFunds
+            ? true
+            : false;
   }
 
   ///////////////////
@@ -1773,11 +1855,22 @@ export const Streams = () => {
               type="text"
               shape="round"
               size="small"
-              disabled={isScheduledOtp() || !streamDetail?.escrowVestedAmount || publicKey?.toBase58() !== streamDetail?.beneficiaryAddress}
+              disabled={
+                isScheduledOtp() ||
+                !streamDetail?.escrowVestedAmount ||
+                publicKey?.toBase58() !== streamDetail?.beneficiaryAddress ||
+                fetchTxInfoStatus === "fetching"
+              }
               onClick={showWithdrawModal}>
-              {t('streams.stream-detail.withdraw-funds-cta')}
+              {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+              {isClosing()
+                ? t("streams.stream-detail.cta-disabled-closing")
+                : isWithdrawing()
+                  ? t("streams.stream-detail.cta-disabled-withdrawing")
+                  : t("streams.stream-detail.withdraw-funds-cta")
+              }
             </Button>
-            {isAuthority() && (
+            {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -2036,11 +2129,20 @@ export const Streams = () => {
               type="text"
               shape="round"
               size="small"
-              disabled={isOtp()}
+              disabled={
+                isOtp() ||
+                fetchTxInfoStatus === "fetching"
+              }
               onClick={showAddFundsModal}>
-              {t('streams.stream-detail.add-funds-cta')}
+              {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+              {isClosing()
+                ? t("streams.stream-detail.cta-disabled-closing")
+                : isAddingFunds()
+                  ? t("streams.stream-detail.cta-disabled-funding")
+                  : t("streams.stream-detail.add-funds-cta")
+              }
             </Button>
-            {isAuthority() && (
+            {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"
@@ -2146,7 +2248,15 @@ export const Streams = () => {
       })
     ) : (
       <>
-      <p>{t('streams.stream-list.no-streams')}</p>
+      {isCreating() ? (
+        <div className="h-100 flex-center">
+          <Spin indicator={bigLoadingIcon} />
+        </div>
+      ) : (
+        <div className="h-100 flex-center">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('streams.stream-list.no-streams')}</p>} />
+        </div>
+      )}
       </>
     )}
 
@@ -2256,7 +2366,17 @@ export const Streams = () => {
               {isInboundStream(streamDetail) ? renderInboundStream : renderOutboundStream}
               </>
             ) : (
-              <p>{t('streams.stream-detail.no-stream')}</p>
+              <>
+              {isCreating() ? (
+                <div className="h-100 flex-center">
+                  <Spin indicator={bigLoadingIcon} />
+                </div>
+              ) : (
+                <div className="h-100 flex-center">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('streams.stream-detail.no-stream')}</p>} />
+                </div>
+              )}
+              </>
             )}
           </div>
         </div>
@@ -2272,7 +2392,7 @@ export const Streams = () => {
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()} />
-        <AddFundsModal
+        <StreamAddFundsModal
           isVisible={isAddFundsModalVisible}
           transactionFees={transactionFees}
           handleOk={onAcceptAddFunds}

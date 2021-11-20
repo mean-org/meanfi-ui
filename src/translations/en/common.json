@@ -266,6 +266,8 @@
 		"streamid-not-copied-message": "Could not copy stream Address",
 		"success-account-funded-message": "Account funded",
 		"success-loading-stream-message": "The stream with ID {{streamId}} has been loaded",
+		"create-money-stream-completed": "Your money stream is created",
+		"create-money-stream-completed-wait-for-confirm": "After the transaction is confirmed it should show up in the list.",
 		"wallet-connect-message": "Connected to wallet {{address}}",
 		"wallet-connection-event-title": "Wallet update",
 		"wallet-disconnect-message": "Disconnected from wallet"
@@ -306,6 +308,9 @@
 			"add-funds-cta": "Top up (add funds)",
 			"amount-funded-date": "funded on",
 			"close-money-stream-menu-item": "Close money stream",
+			"cta-disabled-closing": "Closing money stream...",
+			"cta-disabled-funding": "Add funds in progress...",
+			"cta-disabled-withdrawing": "Withdraw in progress...",
 			"heading": "Stream details",
 			"label-amount": "Amount",
 			"label-funds-available-to-withdraw": "Funds available to withdraw now",
@@ -314,15 +319,12 @@
 			"label-funds-runout-today": "will run out today",
 			"label-funds-sent": "Funds sent to recipient",
 			"label-payment-rate": "Payment Rate",
-
 			"label-receive-from": "Receive from",
 			"label-received-from": "Received from",
 			"label-receiving-from": "Receiving from",
-
 			"label-send-to": "Send to",
 			"label-sent-to": "Sent to",
 			"label-sending-to": "Sending to",
-
 			"label-start-date-default": "Start Date",
 			"label-start-date-scheduled": "Scheduled",
 			"label-start-date-scheduled-otp": "Scheduled delivery",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, InputNumber } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -19,7 +19,7 @@ import {
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { PaymentRateType, TransactionStatus } from "../../models/enums";
+import { OperationType, PaymentRateType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -51,6 +51,8 @@ import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { Redirect } from 'react-router-dom';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { notify } from '../../utils/notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -85,13 +87,15 @@ export const RepeatingPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
-    setSelectedStream,
-    refreshStreamList,
     refreshTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
 
+  const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
   const [redirect, setRedirect] = useState<string | null>(null);
   const { account } = useNativeAccount();
@@ -222,9 +226,16 @@ export const RepeatingPayment = () => {
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
-    setSelectedStream(undefined);
+    setCurrentStep(0);
     closeTransactionModal();
-    refreshStreamList(true);
+    notify({
+      message: t('notifications.create-money-stream-completed'),
+      description: t('notifications.create-money-stream-completed-wait-for-confirm'),
+      type: "info"
+    });
+    setTimeout(() => {
+      setRedirect("/accounts");
+    }, 100);
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -501,11 +512,12 @@ export const RepeatingPayment = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -721,47 +733,47 @@ export const RepeatingPayment = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
+    // const confirmTx = async (): Promise<boolean> => {
+    //   return await connection
+    //     .confirmTransaction(signature, "finalized")
+    //     .then(result => {
+    //       consoleOut('confirmTransaction result:', result);
+    //       if (result && result.value && !result.value.err) {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //           currentOperation: TransactionStatus.TransactionFinished
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+    //           result: result.value
+    //         });
+    //         return true;
+    //       } else {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransaction,
+    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //           result: signature
+    //         });
+    //         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+    //         return false;
+    //       }
+    //     })
+    //     .catch(e => {
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       transactionLog.push({
+    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //         result: signature
+    //       });
+    //       customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+    //       return false;
+    //     });
+    // }
 
     if (wallet) {
       showTransactionModal();
@@ -774,11 +786,15 @@ export const RepeatingPayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+            setIsBusy(false);
+            handleGoToStreamsClick();
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

@@ -266,6 +266,8 @@
 		"streamid-not-copied-message": "No se pudo copiar dirección de la transferencia",
 		"success-account-funded-message": "Cuenta financiada",
 		"success-loading-stream-message": "Se cargó la transferencia con el ID {{streamId}}",
+		"create-money-stream-completed": "Your money stream is created",
+		"create-money-stream-completed-wait-for-confirm": "After the transaction is confirmed it should show up in the list.",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
 		"wallet-disconnect-message": "Desconectado de la billetera"
@@ -306,6 +308,9 @@
 			"add-funds-cta": "Recargar (agregar fondos)",
 			"amount-funded-date": "financiado en",
 			"close-money-stream-menu-item": "Cerrar transferencia de dinero",
+			"cta-disabled-closing": "Closing money stream...",
+			"cta-disabled-funding": "Add funds in progress...",
+			"cta-disabled-withdrawing": "Withdraw in progress...",
 			"heading": "Detalles de la transferencia",
 			"label-amount": "Saldo",
 			"label-funds-available-to-withdraw": "Fondos disponibles para retirar inmediatamente",
