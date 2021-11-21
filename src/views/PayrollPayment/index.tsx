@@ -19,7 +19,7 @@ import {
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT, PAYROLL_CONTRACT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
+import { OperationType, PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -54,6 +54,8 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { notify } from '../../utils/notifications';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -94,6 +96,11 @@ export const PayrollPayment = () => {
     setTimeSheetRequirement,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
+
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
   const [redirect, setRedirect] = useState<string | null>(null);
@@ -226,10 +233,16 @@ export const PayrollPayment = () => {
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
-    setSelectedStream(undefined);
+    setCurrentStep(0);
     closeTransactionModal();
-    refreshStreamList(true);
-    setRedirect('/accounts/streams');
+    notify({
+      message: t('notifications.create-money-stream-completed'),
+      description: t('notifications.create-money-stream-completed-wait-for-confirm'),
+      type: "info"
+    });
+    setTimeout(() => {
+      setRedirect("/accounts");
+    }, 100);
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -506,11 +519,12 @@ export const PayrollPayment = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -729,47 +743,47 @@ export const PayrollPayment = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
+    // const confirmTx = async (): Promise<boolean> => {
+    //   return await connection
+    //     .confirmTransaction(signature, "confirmed")
+    //     .then(result => {
+    //       consoleOut('confirmTransaction result:', result);
+    //       if (result && result.value && !result.value.err) {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+    //           currentOperation: TransactionStatus.TransactionFinished
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+    //           result: result.value
+    //         });
+    //         return true;
+    //       } else {
+    //         setTransactionStatus({
+    //           lastOperation: TransactionStatus.ConfirmTransaction,
+    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //         });
+    //         transactionLog.push({
+    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //           result: signature
+    //         });
+    //         customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+    //         return false;
+    //       }
+    //     })
+    //     .catch(e => {
+    //       setTransactionStatus({
+    //         lastOperation: TransactionStatus.ConfirmTransaction,
+    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
+    //       });
+    //       transactionLog.push({
+    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+    //         result: signature
+    //       });
+    //       customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+    //       return false;
+    //     });
+    // }
 
     if (wallet) {
       showTransactionModal();
@@ -782,11 +796,15 @@ export const PayrollPayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+            setIsBusy(false);
+            handleGoToStreamsClick();
+            // const confirmed = await confirmTx();
+            // consoleOut('confirmed:', confirmed);
+            // if (confirmed) {
+            //   setIsBusy(false);
+            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

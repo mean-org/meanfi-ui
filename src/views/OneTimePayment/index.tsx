@@ -13,7 +13,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isV
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -39,6 +39,9 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { notify } from '../../utils/notifications';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { Redirect } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -74,9 +77,14 @@ export const OneTimePayment = () => {
     refreshTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
 
+  const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
+  const [redirect, setRedirect] = useState<string | null>(null);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
@@ -217,7 +225,16 @@ export const OneTimePayment = () => {
     resetContractValues();
     setSelectedStream(undefined);
     closeTransactionModal();
-    refreshStreamList(true);
+    if (isScheduledPayment()) {
+      notify({
+        message: t('notifications.create-money-stream-completed'),
+        description: t('notifications.create-money-stream-completed-wait-for-confirm'),
+        type: "info"
+      });
+      setTimeout(() => {
+        setRedirect("/accounts");
+      }, 100);
+    }
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -359,11 +376,12 @@ export const OneTimePayment = () => {
     let signature: any;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -624,11 +642,18 @@ export const OneTimePayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
+            if (isScheduledPayment()) {
+              consoleOut('Send Tx to confirmation queue:', signature);
+              startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
               setIsBusy(false);
-            } else { setIsBusy(false); }
+              handleGoToStreamsClick();
+            } else {
+              const confirmed = await confirmTx();
+              consoleOut('confirmed:', confirmed);
+              if (confirmed) {
+                setIsBusy(false);
+              } else { setIsBusy(false); }
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -670,6 +695,8 @@ export const OneTimePayment = () => {
 
   return (
     <>
+      {redirect && (<Redirect to={redirect} />)}
+
       <div className="contract-wrapper">
 
         {/* Recipient */}
