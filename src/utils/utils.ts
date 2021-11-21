@@ -221,6 +221,36 @@ export const getFormattedRateAmount = (amount: number): string => {
   return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
 }
 
+export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+    }
+  }
+
+  const formatToLocale = (value: any, minDigits = 0) => {
+    const converted = parseFloat(value.toString());
+    const formatted = new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: minDigits, maximumFractionDigits: minDigits }).format(converted);
+    return formatted || '';
+  }
+
+  const inputAmount = amount || 0;
+  if (token) {
+    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+    const formatted2 = formatted.toFixed(token.decimals);
+    const toLocale = formatToLocale(formatted2, token.decimals);
+    if (onlyValue) { return toLocale; }
+    return `${toLocale} ${token.symbol}`;
+  } else if (address && !token) {
+    const formatted = formatToLocale(formatAmount(inputAmount, 4));
+    return onlyValue ? formatted : `${formatted} ${shortenAddress(address, 4)}`;
+  }
+  return `${formatToLocale(inputAmount)}`;
+}
+
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,

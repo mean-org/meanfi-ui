@@ -28,6 +28,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { useWallet } from "../../contexts/wallet";
 import {
   formatAmount,
+  getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTokenByMintAddress,
   getTokenSymbol,
@@ -66,7 +67,6 @@ import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/ut
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
-
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { Redirect, useLocation } from "react-router-dom";
@@ -351,10 +351,6 @@ export const Streams = () => {
            (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
             streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
            ? true : false;
-  }
-
-  const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
-    return getTokenAmountAndSymbolByTokenAddress(amount, address || '', onlyValue);
   }
 
   const getShortDate = (date: string, includeTime = false): string => {
