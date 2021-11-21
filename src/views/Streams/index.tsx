@@ -92,6 +92,7 @@ export const Streams = () => {
     transactionStatus,
     streamProgramAddress,
     customStreamDocked,
+    setStreamList,
     setSelectedStream,
     refreshStreamList,
     setSelectedToken,
@@ -153,7 +154,7 @@ export const Streams = () => {
 
   // If we don't have streams to show go back to /accounts
   useEffect(() => {
-    if (!lastSentTxStatus && !loadingStreams && !loadingStreamActivity) {
+    if (!lastSentTxStatus) {
       if (!streamList || streamList.length === 0) {
         setRedirect("/accounts");
       }
@@ -168,15 +169,42 @@ export const Streams = () => {
   // Live data calculation
   useEffect(() => {
 
-    const getFreshStream = async () => {
-      if (!streamDetail || loadingStreams) { return; }
-      if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
-      const freshStream = await ms.refreshStream(streamDetail);
-      setStreamDetail(freshStream);
+    const refreshStreams = async () => {
+      if (!streamList || !publicKey || loadingStreams) { return; }
+      const updatedStreams = await ms.refreshStreams(streamList, publicKey, publicKey);
+      const newList: StreamInfo[] = [];
+      if (updatedStreams && updatedStreams.length) {
+        let freshStream: StreamInfo;
+        for (const stream of updatedStreams) {
+          if (streamDetail && streamDetail.id === stream.id) {
+            freshStream = await ms.refreshStream(streamDetail);
+            if (freshStream) {
+              setStreamDetail(freshStream);
+            }
+          }
+          freshStream = await ms.refreshStream(stream);
+          if (freshStream) {
+            newList.push(freshStream);
+          }
+        }
+        if (newList.length) {
+          setStreamList(newList);
+        }
+      }
     }
 
+    // const getFreshStream = async () => {
+    //   if (!streamDetail || loadingStreams) { return; }
+    //   if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
+    //   const freshStream = await ms.refreshStream(streamDetail);
+    //   if (freshStream) {
+    //     setStreamDetail(freshStream);
+    //   }
+    // }
+
     const timeout = setTimeout(() => {
-      getFreshStream();
+      refreshStreams();
+      // getFreshStream();
     }, 1000);
 
     return () => {
@@ -185,9 +213,12 @@ export const Streams = () => {
 
   }, [
     ms,
+    publicKey,
+    streamList,
     streamDetail,
     loadingStreams,
     setStreamDetail,
+    setStreamList,
   ])
 
   // Handle overflow-ellipsis-middle elements of resize
@@ -585,6 +616,10 @@ export const Streams = () => {
       switch (lastSentTxOperationType) {
         case OperationType.Close:
         case OperationType.Create:
+          if (streamList && streamList.length > 1) {
+            const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
+            setStreamList(filteredStreams);
+          }
           refreshStreamList(true);
           break;
         case OperationType.AddFunds:
@@ -602,11 +637,13 @@ export const Streams = () => {
     }
   }, [
     ms,
+    streamList,
     streamDetail,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
     customStreamDocked,
+    setStreamList,
     refreshStreamList,
     setSelectedStream,
     openStreamById,
@@ -1861,9 +1898,13 @@ export const Streams = () => {
               {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
               {isClosing()
                 ? t("streams.stream-detail.cta-disabled-closing")
-                : isWithdrawing()
-                  ? t("streams.stream-detail.cta-disabled-withdrawing")
-                  : t("streams.stream-detail.withdraw-funds-cta")
+                : isCreating()
+                  ? t("streams.stream-detail.cta-disabled-creating")
+                  : isAddingFunds()
+                    ? t("streams.stream-detail.cta-disabled-funding")
+                    : isWithdrawing()
+                      ? t("streams.stream-detail.cta-disabled-withdrawing")
+                      : t("streams.stream-detail.withdraw-funds-cta")
               }
             </Button>
             {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
@@ -2133,9 +2174,13 @@ export const Streams = () => {
               {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
               {isClosing()
                 ? t("streams.stream-detail.cta-disabled-closing")
-                : isAddingFunds()
-                  ? t("streams.stream-detail.cta-disabled-funding")
-                  : t("streams.stream-detail.add-funds-cta")
+                : isCreating()
+                  ? t("streams.stream-detail.cta-disabled-creating")
+                  : isAddingFunds()
+                    ? t("streams.stream-detail.cta-disabled-funding")
+                    : isWithdrawing()
+                      ? t("streams.stream-detail.cta-disabled-withdrawing")
+                      : t("streams.stream-detail.withdraw-funds-cta")
               }
             </Button>
             {(isAuthority() && fetchTxInfoStatus !== "fetching") && (

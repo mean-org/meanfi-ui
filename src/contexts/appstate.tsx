@@ -12,7 +12,6 @@ import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -22,7 +21,6 @@ import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { Connection } from "@solana/web3.js";
 import { UserTokenAccount } from "../models/transactions";
 import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
@@ -216,6 +214,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const {
     lastSentTxStatus,
+    fetchTxInfoStatus,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
 
@@ -360,7 +359,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        const detail = await getStream(connection, streamPublicKey);
+        const detail = await ms.getStream(streamPublicKey);
         consoleOut('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
@@ -403,8 +402,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     if (!loadingStreamActivity) {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      const newConnection = new Connection(connectionConfig.endpoint, "confirmed");
-      listStreamActivity(newConnection, streamPublicKey)
+      ms.listStreamActivity(streamPublicKey)
         .then(value => {
           consoleOut('activity:', value);
           setStreamActivity(value);
@@ -418,8 +416,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
   }, [
+    ms,
     connected,
-    connectionConfig.endpoint,
     loadingStreamActivity
   ]);
 
@@ -603,16 +601,15 @@ const AppStateProvider: React.FC = ({ children }) => {
       return [];
     }
 
-    if (!loadingStreams) {
+    if (!loadingStreams && fetchTxInfoStatus !== "fetching") {
       setLoadingStreams(true);
       consoleOut('reset =', reset, 'blue');
-      const programId = new PublicKey(streamProgramAddress);
       const signature = lastSentTxStatus || '';
       setTimeout(() => {
         clearTransactionStatusContext();
       });
 
-      listStreams(connection, programId, publicKey, publicKey, "finalized")
+      ms.listStreams(publicKey, publicKey)
         .then(streams => {
           consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;
@@ -649,7 +646,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                     if (!loadingStreamActivity) {
                       setLoadingStreamActivity(true);
                       const streamPublicKey = new PublicKey(freshStream.id as string);
-                      listStreamActivity(connection, streamPublicKey)
+                      ms.listStreamActivity(streamPublicKey)
                         .then(value => {
                           consoleOut('activity:', value, 'blue');
                           setStreamActivity(value);
@@ -679,10 +676,9 @@ const AppStateProvider: React.FC = ({ children }) => {
   }, [
     ms,
     publicKey,
-    connection,
     lastSentTxStatus,
+    fetchTxInfoStatus,
     loadingStreamActivity,
-    streamProgramAddress,
     selectedStream,
     loadingStreams,
     clearTransactionStatusContext

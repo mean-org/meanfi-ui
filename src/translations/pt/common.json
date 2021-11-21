@@ -311,6 +311,7 @@
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-funding": "Add funds in progress...",
 			"cta-disabled-withdrawing": "Withdraw in progress...",
+			"cta-disabled-creating": "Create stream in progress...",
 			"heading": "Detalhes da transferência",
 			"label-amount": "Saldo",
 			"label-funds-available-to-withdraw": "Fundos disponíveis para sacar imediatamente",

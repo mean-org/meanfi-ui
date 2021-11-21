@@ -809,34 +809,34 @@ export const AccountsView = () => {
         setTimeout(() => {
           clearTransactionStatusContext();
         });
-        ms.listStreams(publicKey, publicKey, "finalized")
-        .then(streams => {
-          if (streams.length) {
-            let item: StreamInfo | undefined;
-            if (signature) {
-              item = streams.find(d => d.transactionSignature === signature);
-            } else {
-              item = streams[0];
-            }
-            if (item) {
-              ms.refreshStream(item, true)
-                .then(freshStream => {
-                  if (freshStream) {
-                    setSelectedStream(freshStream);
-                    // Redirect to /accounts/streams if the recently created stream has a matching Tx signature
-                    if (freshStream.transactionSignature === signature) {
-                      setRedirect("/accounts/streams");
+        ms.listStreams(publicKey, publicKey)
+          .then(streams => {
+            if (streams.length) {
+              let item: StreamInfo | undefined;
+              if (signature) {
+                item = streams.find(d => d.transactionSignature === signature);
+              } else {
+                item = streams[0];
+              }
+              if (item) {
+                ms.refreshStream(item, true)
+                  .then(freshStream => {
+                    if (freshStream) {
+                      setSelectedStream(freshStream);
+                      // Redirect to /accounts/streams if the recently created stream has a matching Tx signature
+                      if (freshStream.transactionSignature === signature) {
+                        setRedirect("/accounts/streams");
+                      }
                     }
-                  }
-                })
+                  })
+              }
             }
-          }
-          setStreamList(streams);
-          setLoadingStreams(false);
-        }).catch(err => {
-          console.error(err);
-          setLoadingStreams(false);
-        });
+            setStreamList(streams);
+            setLoadingStreams(false);
+          }).catch(err => {
+            console.error(err);
+            setLoadingStreams(false);
+          });
       }
     }
   }, [
