@@ -3780,37 +3780,37 @@ main section {
             padding-right: 0.8rem;
             .description-cell {
               display: inline-block;
-              flex: 0 0 calc(100% - 104px);
+              flex: 1 1 calc(100% - 122px);
               padding-left: 8px;
               min-width: 10rem;
               .title {
                 display: inline-block;
                 vertical-align: 2px;
+                .badge.small {
+                  display: inline-block;
+                  vertical-align: 2px;
+                }
               }
             }
             .rate-cell {
-              flex: 0 0 72px;
+              flex: 0 0 74px;
               padding: 0 4px 0 0;
               text-align: right;
             }
+            .icon-cell {
+              flex: 0 0 34px;
+            }
             &.money-streams-summary {
-              .icon-cell {
-                flex: 0 0 34px;
-              }
-              .description-cell {
-                flex: 1 1 calc(100% - 122px);
-              }
               .rate-cell {
-                flex: 0 0 74px;
                 .rate-amount {
                   font-size: 1rem !important;
                   font-weight: 500;
                   color: var(--color-secondary-alpha-70);
                 }
               }
-              .operation-vector {
-                flex: 0 0 14px;
-              }
+            }
+            .operation-vector {
+              flex: 0 0 14px;
             }
           }
         }
