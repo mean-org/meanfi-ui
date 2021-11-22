@@ -289,10 +289,10 @@
 		"share-to": "Share to"
 	},
 	"streams": {
-		"back-to-my-streams-cta": "Back to Transfer activity",
+		"back-to-my-streams-cta": "Back to Money Streams",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Lookup a stream",
-		"screen-title": "Transfer activity",
+		"screen-title": "Money Streams",
 		"stream-stats-incoming": "Incoming",
 		"stream-stats-outgoing": "Outgoing",
 		"stream-activity": {
@@ -337,6 +337,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No streams available",
+			"not-connected": "Please connect your wallet to see your money streams",
 			"subtitle-ended": "This stream has ended",
 			"subtitle-paused-otp": "Scheduled one-time payment completed",
 			"subtitle-paused-inbound": "This stream is paused due to the lack of funds",

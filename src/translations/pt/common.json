@@ -337,6 +337,7 @@
 		},
 		"stream-list": {
 			"no-streams": "Sem transferências disponíveis",
+			"not-connected": "Conecte sua carteira para ver seus fluxos de dinheiro",
 			"subtitle-ended": "Este stream terminou",
 			"subtitle-paused-otp": "Pagamento único agendado concluído",
 			"subtitle-paused-inbound": "Esta transferência está em espera devido à falta de fundos.",

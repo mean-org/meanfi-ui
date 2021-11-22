@@ -802,36 +802,24 @@ export const AccountsView = () => {
   useEffect(() => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       if (OperationType.Create) {
-        consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshin streams...', 'blue');
-        // refreshStreamList(true);
+        consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
         setLoadingStreams(true);
-        const signature = lastSentTxStatus || '';
-        setTimeout(() => {
-          clearTransactionStatusContext();
-        });
         ms.listStreams(publicKey, publicKey)
           .then(streams => {
+            setStreamList(streams);
             if (streams.length) {
               let item: StreamInfo | undefined;
-              if (signature) {
-                item = streams.find(d => d.transactionSignature === signature);
-              } else {
+              if (lastSentTxStatus) {
+                item = streams.find(d => d.transactionSignature === lastSentTxStatus);
+              }
+              if (!item) {
                 item = streams[0];
               }
-              if (item) {
-                ms.refreshStream(item, true)
-                  .then(freshStream => {
-                    if (freshStream) {
-                      setSelectedStream(freshStream);
-                      // Redirect to /accounts/streams if the recently created stream has a matching Tx signature
-                      if (freshStream.transactionSignature === signature) {
-                        setRedirect("/accounts/streams");
-                      }
-                    }
-                  })
-              }
+              setSelectedStream(item);
+              setTimeout(() => {
+                setRedirect("/accounts/streams");
+              }, 10);
             }
-            setStreamList(streams);
             setLoadingStreams(false);
           }).catch(err => {
             console.error(err);

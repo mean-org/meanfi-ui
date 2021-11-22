@@ -292,7 +292,7 @@
 		"back-to-my-streams-cta": "Retour aux transferts",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Recherche de transfert",
-		"screen-title": "Transferts  ",
+		"screen-title": "Transferts",
 		"stream-stats-incoming": "Incoming",
 		"stream-stats-outgoing": "Outgoing",
 		"stream-activity": {
@@ -337,6 +337,7 @@
 		},
 		"stream-list": {
 			"no-streams": "Aucun transfert disponible",
+			"not-connected": "Veuillez connecter votre portefeuille pour voir vos flux d'argent",
 			"subtitle-ended": "Ce flux est terminé",
 			"subtitle-paused-otp": "Paiement unique planifié terminé",
 			"subtitle-paused-inbound": "Ce transfert est en attente faute de fonds.",

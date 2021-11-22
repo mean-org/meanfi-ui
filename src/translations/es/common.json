@@ -337,6 +337,7 @@
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
+			"not-connected": "Conecte su billetera para ver sus transferencias de dinero",
 			"subtitle-ended": "Esta transmisión ha terminado",
 			"subtitle-paused-otp": "Pago único programado completado",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",

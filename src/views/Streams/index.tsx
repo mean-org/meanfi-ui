@@ -154,7 +154,7 @@ export const Streams = () => {
 
   // If we don't have streams to show go back to /accounts
   useEffect(() => {
-    if (!lastSentTxStatus) {
+    if (!lastSentTxStatus && fetchTxInfoStatus === "fetched") {
       if (!streamList || streamList.length === 0) {
         setRedirect("/accounts");
       }
@@ -163,6 +163,7 @@ export const Streams = () => {
     streamList,
     loadingStreams,
     lastSentTxStatus,
+    fetchTxInfoStatus,
     loadingStreamActivity
   ]);
 
@@ -2180,7 +2181,7 @@ export const Streams = () => {
                     ? t("streams.stream-detail.cta-disabled-funding")
                     : isWithdrawing()
                       ? t("streams.stream-detail.cta-disabled-withdrawing")
-                      : t("streams.stream-detail.withdraw-funds-cta")
+                      : t("streams.stream-detail.add-funds-cta")
               }
             </Button>
             {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
@@ -2295,7 +2296,9 @@ export const Streams = () => {
         </div>
       ) : (
         <div className="h-100 flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('streams.stream-list.no-streams')}</p>} />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+          ? t('streams.stream-list.no-streams')
+          : t('streams.stream-list.not-connected')}</p>} />
         </div>
       )}
       </>
@@ -2414,7 +2417,9 @@ export const Streams = () => {
                 </div>
               ) : (
                 <div className="h-100 flex-center">
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('streams.stream-detail.no-stream')}</p>} />
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+                    ? t('streams.stream-detail.no-stream')
+                    : t('streams.stream-list.not-connected')}</p>} />
                 </div>
               )}
               </>
