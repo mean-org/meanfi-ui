@@ -34,7 +34,7 @@ export const getPrices = async (path?: string): Promise<any> => {
 export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
   try {
     const response = await fetch(url, options)
-    if (response.status === 200) {
+    if (response && response.status === 200) {
       const data = (await response.json()) as RpcConfig;
       // data.httpProvider = 'https://meanfi.rpcpool.com/'; // Use this to manually test RPC endpoints
       return data;
@@ -58,7 +58,7 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
   }
   try {
     const response = await fetch(url, options)
-    if (response.status === 200) {
+    if (response && response.status === 200) {
       return true;
     }
     return false;
