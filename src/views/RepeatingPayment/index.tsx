@@ -601,7 +601,7 @@ export const RepeatingPayment = () => {
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
-          recipientNote
+          recipientNote 
             ? recipientNote.trim()
             : undefined,                                              // streamName
           amount                                                      // fundingAmount

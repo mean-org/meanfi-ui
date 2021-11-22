@@ -151,7 +151,9 @@ export const AppLayout = React.memo((props: any) => {
               })
               .catch(error => console.error(error));
           } else {
-            reportConnectedAccount(walletAddress).then(result => consoleOut('reportConnectedAccount hit'));
+            reportConnectedAccount(walletAddress)
+              .then(result => consoleOut('reportConnectedAccount hit'))
+              .catch(error => console.error(error));;
           }
           // Let the AppState know which wallet address is connected and save it
           setAccountAddress(walletAddress);
