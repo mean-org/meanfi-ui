@@ -10,7 +10,7 @@ import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { SOLANA_WALLET_GUIDE } from '../../constants';
+import { ALLOWED_ADDRESSES_LIST, SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
@@ -19,10 +19,13 @@ import { useOnlineStatus } from '../../contexts/online-status';
 
 const { SubMenu } = Menu;
 
-export const AppBar = (props: { menuType: string }) => {
+export const AppBar = (props: {
+  menuType: string;
+  topNavVisible: boolean;
+}) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
   const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
@@ -141,6 +144,11 @@ export const AppBar = (props: { menuType: string }) => {
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
       </Menu.Item> */}
+      {publicKey && ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58()) && (
+        <Menu.Item key="/ido">
+          <Link to="/ido">IDO</Link>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -166,7 +174,7 @@ export const AppBar = (props: { menuType: string }) => {
   if (props.menuType === 'desktop' ) {
     return (
       <>
-        <div className="App-Bar-left">{mainNav}</div>
+        <div className="App-Bar-left">{props.topNavVisible ? mainNav : (<span>&nbsp;</span>)}</div>
         <div className="App-Bar-right">
           {!isProd() && (
             <div className="cluster-indicator">
@@ -245,6 +253,11 @@ export const AppBar = (props: { menuType: string }) => {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li> */}
+              {publicKey && ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58()) && (
+                <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
+                  <Link to="/ido">IDO</Link>
+                </li>
+              )}
             </ul>
           </div>
           <DepositOptions

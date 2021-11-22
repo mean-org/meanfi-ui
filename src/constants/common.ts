@@ -76,3 +76,33 @@ export const LANGUAGES: Language[] = [
         locale: 'pt-BR'
     },
 ];
+
+export const ALLOWED_ADDRESSES_LIST = [
+    '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
+    '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
+    'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
+    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
+    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',  // MT
+];
+
+// Date.UTC(year, month, day, hour, minute, second, millisecond)
+
+export const IDO_START_DATE = { year: 2021, month: 12, day: 15, hour: 15, minute: 0, second: 0 };
+export const IDO_END_DATE = { year: 2021, month: 12, day: 17, hour: 15, minute: 0, second: 0 };
+/*
+export const IDO_MIN_CONTRIBUTION
+Start Date: Dec 15 @ 3pm UTC
+End Date: Dec 17 @ 3pm UTC
+Price: Bonding Curve
+Min Contribution: 100 USDC
+Max Contribution: Bonding Curve
+Cap Valuation: $210m 
+Raise Floor: $2.1m
+—————————————————
+LIVE CHANGES
+- Est $MEAN Price
+- Max cap allowed
+- Guaranteed allocation address list
+—————————————————
+NOTE: Only one active participation in the price bonding curve per wallet address.
+*/

@@ -1,10 +1,12 @@
 import React from 'react';
 import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
-import { Avatar, Button, Col, Row } from "antd";
+import { Avatar, Button, Col, Row, Timeline } from "antd";
 import { PreFooter } from "../../components/PreFooter";
-import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL } from "../../constants";
+import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL } from "../../constants";
+import { useTranslation } from 'react-i18next';
 
-export const CustodyView = () => {
+export const IdoView = () => {
+  const { t } = useTranslation('common');
 
   const onApplyToMeanfiCustody = () => {
     window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank','noreferrer');
@@ -13,8 +15,60 @@ export const CustodyView = () => {
   return (
     <div className="solid-bg">
 
-      <section className="hero">
-        <h1 className="heading">Crypto Asset Custody</h1>
+      <section className="content contrast-section no-padding">
+        <div className="container">
+          <Row gutter={[0, 24]}>
+            <Col xs={24} md={12}>
+              <div className="padded-content">
+                <h1 className="heading ido-heading">Welcome to the<br/>Mean <span className="fg-primary-highlight">IDO</span></h1>
+                <div className="boxed-area">
+                  <h2 className="subheading ido-subheading">How it works</h2>
+                  <p>The IDO consists of two consecutive 24 hour phases:</p>
+                  <ul className="vertical-list dash-bullet">
+                    <li><em className="text-underline">Sale period:</em> USDC may be deposited or withdrawn from the pool. MEAN price will fluctuate based on the size of the pool.</li>
+                    <li><em className="text-underline">Grace period:</em> USDC may only be withdrawn from the pool. MEAN price will only go down in this phase.</li>
+                  </ul>
+                  <div>Afterwards, depositors can redeem an amount of MEAN tokens proportional to their share of the pool.</div>
+                </div>
+                <div className="text-center px-5 mt-3">
+                  <h2 className="subheading ido-subheading">Timeline</h2>
+                </div>
+                <div className="position-relative">
+                  <Timeline mode="left">
+                    <Timeline.Item label="2015-09-01">Create a services</Timeline.Item>
+                    <Timeline.Item label="2015-09-01 09:12:11">Solve initial network problems</Timeline.Item>
+                    <Timeline.Item>Technical testing</Timeline.Item>
+                    <Timeline.Item label="2015-09-01 09:12:11">Network problems being solved</Timeline.Item>
+                  </Timeline>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <div className="padded-content flex-column flex-center">
+                <div className="ant-image" style={{width: '320px', height: 'auto', maxHeight: '280px'}}>
+                  <img className="ant-image-img" alt="IDO Launch" src="/assets/launch.png" />
+                </div>
+                <div className="text-center px-5 mt-3">
+                  <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
+                </div>
+                <p className="text-center">By clicking acknowledge below, I certify that I am not a resident of Afghanistan, Ivory Coast, Cuba, Iraq, Iran, Liberia, North Korea, Syria, Sudan, South Sudan, Zimbabwe, Antigua, United States, American Samoa, Guam, Northern Mariana Islands, Puerto Rico, United States Minor Outlying Islands, US Virgin Islands, Ukraine, Belarus, Albania, Burma, Central African Republic, Democratic Republic of Congo, Lybia, Somalia, Yemen, United Kingdom, Thailand.</p>
+                <p className="text-center">If you have any questions, please contact us via <a className="secondary-link" href={MEAN_FINANCE_TWITTER_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.twitter')}</a>, or <a className="secondary-link" href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.discord')}</a>.</p>
+                <Button
+                  className="main-cta"
+                  type="primary"
+                  shape="round"
+                  size="large"
+                  onClick={() => onApplyToMeanfiCustody()}>
+                  Apply to MeanFi Custody
+                </Button>
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </section>
+
+      {/* <section className="hero">
+        <h1 className="heading">Welcome to the Mean IDO</h1>
         <p className="subheading">The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.</p>
         <Button
           className="main-cta"
@@ -24,7 +78,7 @@ export const CustodyView = () => {
           onClick={() => onApplyToMeanfiCustody()}>
           Apply to MeanFi Custody
         </Button>
-      </section>
+      </section> */}
 
       <section className="content">
         <div className="container">
