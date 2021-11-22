@@ -145,7 +145,7 @@ export const PlaygroundView = () => {
       });
 
       for await (const txStep of txTestRunConfig) {
-        if (transactionCancelled) { break; }
+        if (transactionCancelled || isError()) { break; }
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: txStep.initialStatus
