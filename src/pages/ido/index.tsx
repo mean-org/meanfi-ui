@@ -1,16 +1,202 @@
-import React from 'react';
-import { CustomerServiceOutlined, SafetyOutlined, TransactionOutlined } from "@ant-design/icons";
-import { Avatar, Button, Col, Row, Timeline } from "antd";
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { Button, Col, Row, Timeline } from "antd";
 import { PreFooter } from "../../components/PreFooter";
-import { MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL } from "../../constants";
+import { IDO_END_DATE, IDO_RESTRICTED_COUNTRIES, IDO_START_DATE, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL } from "../../constants";
 import { useTranslation } from 'react-i18next';
+import { consoleOut } from '../../utils/ui';
+import "./style.less";
+import { IdoDeposit } from '../../views';
+import { IdoWithdraw } from '../../views/IdoWithdraw';
+import Countdown from 'react-countdown';
+import useScript from '../../hooks/useScript';
+import { useNativeAccount } from '../../contexts/accounts';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { AppStateContext } from '../../contexts/appstate';
+import { useWallet } from '../../contexts/wallet';
+
+type IdoTabOption = "deposit" | "withdraw";
+declare const geoip2: any;
 
 export const IdoView = () => {
   const { t } = useTranslation('common');
+  const { publicKey, connected } = useWallet();
+  const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
+  const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
+  const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
+  const [userCountryCode, setUserCountryCode] = useState();
+  const { account } = useNativeAccount();
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const {
+    previousWalletConnectState,
+    refreshTokenBalance,
+    setSelectedTokenBalance
+  } = useContext(AppStateContext);
 
-  const onApplyToMeanfiCustody = () => {
-    window.open(MEAN_FINANCE_APPLY_TO_CUSTODY_FORM_URL, '_blank','noreferrer');
+  // Date related
+  const today = new Date();
+  const idoStartUtc = useMemo(() => new Date(Date.UTC(
+    IDO_START_DATE.year,
+    IDO_START_DATE.month,
+    IDO_START_DATE.day,
+    IDO_START_DATE.hour,
+    IDO_START_DATE.minute,
+    IDO_START_DATE.second
+  )), []);
+  const idoEndUtc = useMemo(() => new Date(Date.UTC(
+    IDO_END_DATE.year,
+    IDO_END_DATE.month,
+    IDO_END_DATE.day,
+    IDO_END_DATE.hour,
+    IDO_END_DATE.minute,
+    IDO_END_DATE.second
+  )), []);
+
+  // Keep track of account changes and updates token balance
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  // Gets user countryCode
+  useEffect(() => {
+    const onSuccess = function(geoipResponse: any) {
+      setUserCountryCode(geoipResponse.country.iso_code);
+      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
+    };
+  
+    const onError = function(error: any) {
+      console.error(error);
+    };
+  
+    if (status === 'ready' && library) {
+      geoip2.city(onSuccess, onError);
+    }
+  }, [
+    status,
+    library
+  ]);
+
+  // Hook on the wallet connect/disconnect
+  useEffect(() => {
+
+    if (previousWalletConnectState !== connected) {
+      // User is connecting
+      if (!previousWalletConnectState && connected && publicKey) {
+        consoleOut('Nothing to do yet...', '', 'blue');
+        setTimeout(() => {
+          refreshTokenBalance();
+        }, 10);
+      } else if (previousWalletConnectState && !connected) {
+        consoleOut('User is disconnecting...', '', 'blue');
+        setSelectedTokenBalance(0);
+      }
+    }
+
+  }, [
+    connected,
+    publicKey,
+    previousWalletConnectState,
+    setSelectedTokenBalance,
+    refreshTokenBalance
+  ]);
+
+  const onAcknowledgeRegionLimitations = () => {
+    consoleOut('Clicked on Acknowledge');
+    setRegionLimitationAcknowledged(true);
   }
+
+  const onTabChange = (option: IdoTabOption) => {
+    setCurrentTab(option);
+  }
+
+  const getRandombgImg = () => {
+    var random= Math.floor(Math.random() * 6) + 0;
+    var bigSize = ["http://placehold.it/300&text=banner1",
+                   "http://placehold.it/300&text=banner2",
+                   "http://placehold.it/300&text=banner3",
+                   "http://placehold.it/300&text=banner4",
+                   "http://placehold.it/300&text=banner5",
+                   "http://placehold.it/300&text=banner6"];
+    return bigSize[random];
+  }
+
+  const isUserBlocked = () => {
+    return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+  }
+
+  const renderRegionAcknowledgement = (
+    <>
+      <div className="ant-image" style={{width: '320px', height: 'auto', maxHeight: '280px'}}>
+        <img className="ant-image-img" alt="IDO Launch" src="/assets/launch.png" />
+      </div>
+      <div className="text-center px-5 mt-3">
+        <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
+      </div>
+      <p className="text-center">By clicking acknowledge below, I certify that I am not a resident of Afghanistan, Ivory Coast, Cuba, Iraq, Iran, Liberia, North Korea, Syria, Sudan, South Sudan, Zimbabwe, Antigua, United States, American Samoa, Guam, Northern Mariana Islands, Puerto Rico, United States Minor Outlying Islands, US Virgin Islands, Ukraine, Belarus, Albania, Burma, Central African Republic, Democratic Republic of Congo, Lybia, Somalia, Yemen, United Kingdom, Thailand.</p>
+      <p className="text-center">If you have any questions, please contact us via <a className="secondary-link" href={MEAN_FINANCE_TWITTER_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.twitter')}</a>, or <a className="secondary-link" href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.discord')}</a>.</p>
+      <Button
+        className="main-cta"
+        type="primary"
+        shape="round"
+        size="large"
+        onClick={() => onAcknowledgeRegionLimitations()}>
+        Acknowledge
+      </Button>
+    </>
+  );
+
+  const renderForm = () => {
+    if (currentTab === "deposit") {
+      return <IdoDeposit disabled={isUserBlocked()} />;
+    } else {
+      return <IdoWithdraw disabled={isUserBlocked()} />;
+    }
+  }
+
+  const renderTabset = (
+    <>
+      <div className="ido-form-wrapper">
+        {/* Countdown timer */}
+        <div className="countdown-timer">
+          {today < idoStartUtc ? (
+            <>
+            <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
+            </>
+          ) : today > idoStartUtc && today < idoEndUtc ? (
+            <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoEndUtc} daysInHours={true} /></p>
+          ) : null}
+        </div>
+        {/* Form */}
+        <div className="deposits-and-withdrawals">
+          <div className="button-tabset-container">
+            <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
+              Deposit
+            </div>
+            <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onTabChange("withdraw")}>
+              Withdraw
+            </div>
+          </div>
+          {renderForm()}
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className="solid-bg">
@@ -45,142 +231,10 @@ export const IdoView = () => {
             </Col>
             <Col xs={24} md={12}>
               <div className="padded-content flex-column flex-center">
-                <div className="ant-image" style={{width: '320px', height: 'auto', maxHeight: '280px'}}>
-                  <img className="ant-image-img" alt="IDO Launch" src="/assets/launch.png" />
-                </div>
-                <div className="text-center px-5 mt-3">
-                  <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
-                </div>
-                <p className="text-center">By clicking acknowledge below, I certify that I am not a resident of Afghanistan, Ivory Coast, Cuba, Iraq, Iran, Liberia, North Korea, Syria, Sudan, South Sudan, Zimbabwe, Antigua, United States, American Samoa, Guam, Northern Mariana Islands, Puerto Rico, United States Minor Outlying Islands, US Virgin Islands, Ukraine, Belarus, Albania, Burma, Central African Republic, Democratic Republic of Congo, Lybia, Somalia, Yemen, United Kingdom, Thailand.</p>
-                <p className="text-center">If you have any questions, please contact us via <a className="secondary-link" href={MEAN_FINANCE_TWITTER_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.twitter')}</a>, or <a className="secondary-link" href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.discord')}</a>.</p>
-                <Button
-                  className="main-cta"
-                  type="primary"
-                  shape="round"
-                  size="large"
-                  onClick={() => onApplyToMeanfiCustody()}>
-                  Apply to MeanFi Custody
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        </div>
-      </section>
-
-      {/* <section className="hero">
-        <h1 className="heading">Welcome to the Mean IDO</h1>
-        <p className="subheading">The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.</p>
-        <Button
-          className="main-cta"
-          type="primary"
-          shape="round"
-          size="large"
-          onClick={() => onApplyToMeanfiCustody()}>
-          Apply to MeanFi Custody
-        </Button>
-      </section> */}
-
-      <section className="content">
-        <div className="container">
-          <Row gutter={[24, 24]}>
-            <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
-                  <Avatar
-                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
-                    icon={<SafetyOutlined />}
-                  />
-                </div>
-                <h2 className="highlight-title">Safeguard your investments</h2>
-                <div className="text-container">
-                  <p className="highlight-text">We provide secure custody solutions for institutions and individuals alike so they can safely invest in crypto assets.</p>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
-                  <Avatar
-                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
-                    icon={<TransactionOutlined />}
-                  />
-                </div>
-                <h2 className="highlight-title">Trade, borrow, and earn rewards</h2>
-                <div className="text-container">
-                  <p className="highlight-text">With MeanFi Trading, access multiple venues through one onboarding. Borrow crypto or USD against crypto collateral, or lend and earn returns on assets under custody.</p>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} md={8}>
-              <div className="highlight-box text-center">
-                <div className="highlight-icon">
-                  <Avatar
-                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
-                    icon={<CustomerServiceOutlined />}
-                  />
-                </div>
-                <h2 className="highlight-title">Onboarding and Support</h2>
-                <div className="text-container">
-                  <p className="highlight-text">Dedicated Support Team that guides you during the onboard process and help you resolve any challenge.</p>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </div>
-      </section>
-
-      <section className="content flex-center contrast-section min-section-height">
-        <div className="container">
-          <div className="highlight-box text-center">
-            <h2 className="highlight-title">WHY MEANFI CUSTODY</h2>
-            <div className="text-container">
-              <p className="highlight-text">We're a team of engineers, designers, and crypto experts who believe that the future is digital assets. However, with no way to securely store them right now we feel like our hands are tied behind our back. So we decided to build MeanFi Custody so that you can finally make your money work for you!</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="content flex-center min-section-height">
-        <div className="container">
-          <div className="highlight-box text-center">
-            <h2 className="highlight-title">Supported Assets</h2>
-            <div className="text-container">
-              <p className="highlight-text">MeanFi supports assets that meet our standards of quality and safety. Our list includes USDC, USDT, SOL, DAI, and more. We are always looking to grow our portfolio with new Assets. To learn more about our roadmap, please get in touch.</p>
-              <Button
-                className="main-cta"
-                type="primary"
-                shape="round"
-                size="large"
-                onClick={() => onApplyToMeanfiCustody()}>
-                Apply to MeanFi Custody
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-{/* 
-      <section className="content">
-        <div className="container">
-          <Row gutter={[24, 24]}>
-            <Col xs={24} md={12}>
-              <div className="highlight-box justify-content-center">
-                <div className="highlight-icon">
-                  <Avatar
-                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
-                    icon={<HddOutlined />}
-                  />
-                </div>
-                <h2 className="highlight-title">Feature highlights</h2>
-                <div className="text-container">
-                  <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
-                </div>
-              </div>
-            </Col>
-            <Col xs={24} md={12}>
-              <div className="ant-image" style={{width: '100%', height: 'auto'}}>
-                <img className="ant-image-img" alt=""
-                      src="https://images.squarespace-cdn.com/content/v1/58f7bc39bebafb94498d25bf/1598361043038-I1DQT0LWPTPJOSK2Z0PP/crypto-asset-custody.jpeg?format=1500w" />
+                {!regionLimitationAcknowledged
+                  ? renderRegionAcknowledgement
+                  : renderTabset
+                }
               </div>
             </Col>
           </Row>
@@ -189,31 +243,22 @@ export const IdoView = () => {
 
       <section className="content">
         <div className="container">
-          <Row gutter={[24, 24]}>
-            <Col xs={{span: 24, order: 2}} md={{span: 12, order: 1}}>
-              <div className="ant-image" style={{width: '100%', height: 'auto'}}>
-                <img className="ant-image-img" alt=""
-                      src="https://images.squarespace-cdn.com/content/v1/5475f6eae4b0821160f6ac3e/1538589349188-9CFX678L2PDDFZVCOIH1/blockchain+handshake?format=1500w" />
-              </div>
-            </Col>
-            <Col xs={{span: 24, order: 1}} md={{span: 12, order: 2}}>
-              <div className="highlight-box justify-content-center">
-                <div className="highlight-icon">
-                  <Avatar
-                    size={{ xs: 64, sm: 64, md: 64, lg: 72, xl: 80, xxl: 100 }}
-                    icon={<SafetyOutlined />}
-                  />
-                </div>
-                <h2 className="highlight-title">Feature highlights</h2>
-                <div className="text-container">
-                  <p className="highlight-text">Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates corporis temporibus obcaecati voluptate nesciunt ea aliquid eos, explicabo molestiae fuga vero pariatur.</p>
-                </div>
-              </div>
-            </Col>
+          <h1 className="heading ido-heading text-center">Investors</h1>
+          <Row gutter={[32, 32]} justify="center">
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
           </Row>
         </div>
       </section>
- */}
 
       <PreFooter />
     </div>

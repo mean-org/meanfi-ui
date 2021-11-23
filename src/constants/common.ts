@@ -1,4 +1,4 @@
-import { Language } from "../models/languages";
+import { Country, Language } from "../models/languages";
 
 export const TRANSACTIONS_PER_PAGE = 15;
 export const ACCOUNTS_LOW_BALANCE_LIMIT = 0.1; // Minimum balance to start showing user account tokens in /accounts
@@ -87,8 +87,12 @@ export const ALLOWED_ADDRESSES_LIST = [
 
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 
-export const IDO_START_DATE = { year: 2021, month: 12, day: 15, hour: 15, minute: 0, second: 0 };
-export const IDO_END_DATE = { year: 2021, month: 12, day: 17, hour: 15, minute: 0, second: 0 };
+// export const IDO_START_DATE = { year: 2021, month: 11, day: 15, hour: 14, minute: 0, second: 0 };
+// export const IDO_END_DATE = { year: 2021, month: 11, day: 17, hour: 14, minute: 0, second: 0 };
+
+export const IDO_START_DATE = { year: 2021, month: 10, day: 25, hour: 14, minute: 0, second: 0 };
+export const IDO_END_DATE = { year: 2021, month: 10, day: 27, hour: 14, minute: 0, second: 0 };
+
 /*
 export const IDO_MIN_CONTRIBUTION
 Start Date: Dec 15 @ 3pm UTC
@@ -106,3 +110,36 @@ LIVE CHANGES
 —————————————————
 NOTE: Only one active participation in the price bonding curve per wallet address.
 */
+
+export const IDO_RESTRICTED_COUNTRIES: Country[] = [
+    { isoCode: 'AF', name: 'Afghanistan' },
+    { isoCode: 'CI', name: 'Ivory Coast' },
+    { isoCode: 'CU', name: 'Cuba' },
+    { isoCode: 'IQ', name: 'Iraq' },
+    { isoCode: 'IR', name: 'Iran' },
+    { isoCode: 'LR', name: 'Liberia' },
+    { isoCode: 'KP', name: 'North Korea' },
+    { isoCode: 'SY', name: 'Syria' },
+    { isoCode: 'SD', name: 'Sudan' },
+    { isoCode: 'SS', name: 'South Sudan' },
+    { isoCode: 'ZW', name: 'Zimbabwe' },
+    { isoCode: 'AG', name: 'Antigua' },
+    { isoCode: 'US', name: 'United States' },
+    { isoCode: 'AS', name: 'American Samoa' },
+    { isoCode: 'GU', name: 'Guam' },
+    { isoCode: 'MP', name: 'Northern Mariana Islands' },
+    { isoCode: 'PR', name: 'Puerto Rico' },
+    { isoCode: 'UM', name: 'United States Minor Outlying Islands' },
+    { isoCode: 'VI', name: 'US Virgin Islands' },
+    { isoCode: 'UA', name: 'Ukraine' },
+    { isoCode: 'BY', name: 'Belarus' },
+    { isoCode: 'AL', name: 'Albania' },
+    { isoCode: 'MM', name: 'Burma' },
+    { isoCode: 'CF', name: 'Central African Republic' },
+    { isoCode: 'CD', name: 'Democratic Republic of Congo' },
+    { isoCode: 'LY', name: 'Libya' },
+    { isoCode: 'SO', name: 'Somalia' },
+    { isoCode: 'YE', name: 'Yemen' },
+    { isoCode: 'GB', name: 'United Kingdom' },
+    { isoCode: 'TH', name: 'Thailand' }
+];
