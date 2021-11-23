@@ -911,7 +911,7 @@ export const RecurringExchange = (props: {
         label = t("transactions.validation.not-connected");
       } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
-      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
+      } else if ((!selectedClient && !isWrap() && !isUnwrap()) || !exchangeInfo || !feesInfo) {
         label = t("transactions.validation.exchange-unavailable");
       } else if(!isValidBalance()) {
 
@@ -1233,7 +1233,7 @@ export const RecurringExchange = (props: {
         )
       }
       {
-        !refreshing && fromAmount && feesInfo &&
+        !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
         infoRow(
           t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
           `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
