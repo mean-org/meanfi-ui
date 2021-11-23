@@ -4,3 +4,4 @@ export { PayrollPayment } from "./PayrollPayment";
 export { RecurringExchange as ExchangeRepeatingSwapUi } from "./RecurringExchange";
 export { RepeatingPayment } from "./RepeatingPayment";
 export { Streams } from "./Streams";
+export { IdoDeposit } from "./IdoDeposit";

@@ -265,14 +265,9 @@ export const AppLayout = React.memo((props: any) => {
                 <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
               </div>
             </Link>
-            <AppBar menuType="desktop" />
+            <AppBar menuType="desktop" topNavVisible={location.pathname !== '/ido' ? true : false} />
           </div>
-          <AppBar menuType="mobile" />
-          {/* {isLocal() && (
-            <div className="debug-bar">
-              <span className="ml-1">loadingStreams:</span><span className="ml-1 font-bold fg-dark-active">{loadingStreams ? 'true' : 'false'}</span>
-            </div>
-          )} */}
+          <AppBar menuType="mobile" topNavVisible={false} />
         </Header>
         <Content>{props.children}</Content>
         <Footer>

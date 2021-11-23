@@ -54,6 +54,8 @@ export const formatters = {
     twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 };
 
+export const twoDigits = (num: number) => String(num).padStart(2, '0')
+
 export function isValidAddress(value: any): boolean {
     if (typeof value === 'string') {
         try {
@@ -166,6 +168,19 @@ export const copyText = (val: any): boolean => {
         consoleOut('copyContainerInputElement could not be ', 'created/found', 'blue');
     }
     return false;
+}
+
+export function getRemainingDays(targetDate?: string): number {
+    const date = new Date();
+    const time = new Date(date.getTime());
+    const toDate = targetDate ? new Date(targetDate) : null;
+    if ( toDate ) {
+        time.setMonth(toDate.getMonth());
+    } else {
+        time.setMonth(date.getMonth() + 1);
+    }
+    time.setDate(0);
+    return time.getDate() > date.getDate() ? time.getDate() - date.getDate() : 0;
 }
 
 export function timeConvert(n: number, decimals = 0, abbr = false): string {

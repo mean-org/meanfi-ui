@@ -1,0 +1,41 @@
+.ido-form-wrapper {
+    .form-label {
+        font-size: 0.7rem;
+        text-transform: capitalize;
+        line-height: 1.3rem;
+        margin-bottom: 0;
+    }
+    .token-group {
+        padding-right: 4px;
+        .token-max {
+            &:last-of-type {
+                margin-right: 0;
+            }
+        }
+    }
+    .deposits-and-withdrawals {
+      position: relative;
+      max-width: 400px;
+      width: 100%;
+      background: var(--color-panel-background);
+      border-radius: var(--custom-border-radius);
+      padding: 1rem;
+      box-shadow: 0 3px 3px -1px rgba(0, 0, 0, 0.08),
+        0 3px 7px 0 rgba(0, 0, 0, 0.08), 0 1px 18px 0 rgba(0, 0, 0, 0.08);
+      @media (max-width: 575.98px) {
+        padding: 0;
+        border: none !important;
+        box-shadow: none !important;
+        margin-bottom: calc(2rem + var(--footer-bar-height));
+        .button-tabset-container {
+          margin: 0 0 1rem 0;
+        }
+      }
+      @media (min-width: 576px) {
+        .button-tabset-container {
+          margin: -1rem -1rem 1rem -1rem;
+        }
+      }
+      p { line-height: 1.3; }
+    }
+}

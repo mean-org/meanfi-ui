@@ -311,21 +311,41 @@ export const ExchangeDcasView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && ddcaDetails && ddcaClient) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
+        .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
           });
-          return true;
+          const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
+          try {
+            const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
+            signedTransaction = updatedTx;
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: 'updateCloseTx returned an updated Tx'
+            });
+            return true;
+          } catch (error) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+            });
+            customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
+            return false;
+          }
         })
         .catch(error => {
           console.error('Signing transaction failed!');

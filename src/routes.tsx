@@ -9,6 +9,7 @@ import {
   CustodyView,
   ExchangeDcasView,
   FaucetView,
+  IdoView,
   NotFoundView,
   PayrollView,
   PlaygroundView,
@@ -57,6 +58,7 @@ export function Routes() {
                       </Route>
                       <Route exact path="/referrals/:address" component={ProcessReferals} />
                       <Route exact path="/service-unavailable" component={ServiceUnavailableView} />
+                      <Route exact path="/ido" component={IdoView} />
                       <Route component={NotFoundView} />
                     </Switch>
                   </AppLayout>

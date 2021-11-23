@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount, isProd } from "../../utils/ui";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -35,16 +35,15 @@ import {
   TokenInfo,
   FeesInfo,
   TOKENS,
-  NATIVE_SOL_MINT, 
-  USDC_MINT, 
-  USDT_MINT, 
+  NATIVE_SOL_MINT,
+  USDC_MINT,
   WRAPPED_SOL_MINT,
   ACCOUNT_LAYOUT
 
 } from "@mean-dao/hybrid-liquidity-ag";
 
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
-import { MSP_OPS, SRM_MINT } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { MSP_OPS } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { objectToJson } from "../../utils/logger";
 
@@ -1508,7 +1507,7 @@ export const OneTimeExchange = (props: {
 
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-        result: response.value  // TODO: Log this perhaps?
+        result: response.value
       }]);
 
       return response.value;

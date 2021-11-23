@@ -515,6 +515,16 @@ footer.ant-layout-footer {
   width: auto;
   max-height: 34px;
 }
+.partner {
+  flex: 0 1 180px;
+  padding: 0 1rem;
+  max-width: 180px;
+  .partner-logo {
+    width: 100%;
+    height: auto;
+    max-width: 200px;
+  }
+}
 
 // Buttons
 .flat-button {
@@ -3779,17 +3789,29 @@ main section {
           .transaction-list-row {
             padding-right: 0.8rem;
             .description-cell {
-              display: block;
-              flex: 0 0 calc(100% - 104px);
+              display: inline-block;
+              flex: 1 1 calc(100% - 122px);
               padding-left: 8px;
               min-width: 10rem;
               .title {
-                display: block;
+                display: inline-block;
+                vertical-align: 2px;
+                .badge.small {
+                  display: inline-block;
+                  vertical-align: 2px;
+                }
               }
+            }
+            .rate-cell {
+              flex: 0 0 74px;
+              padding: 0 4px 0 0;
+              text-align: right;
+            }
+            .icon-cell {
+              flex: 0 0 34px;
             }
             &.money-streams-summary {
               .rate-cell {
-                flex: 0 0 auto;
                 .rate-amount {
                   font-size: 1rem !important;
                   font-weight: 500;
@@ -3797,10 +3819,8 @@ main section {
                 }
               }
             }
-            .rate-cell {
-              flex: 0 0 72px;
-              padding: 0 4px 0 0;
-              text-align: right;
+            .operation-vector {
+              flex: 0 0 14px;
             }
           }
         }
@@ -3944,6 +3964,7 @@ main section {
           .info-icon {
             flex: 0 0 auto;
             width: 34px;
+            height: 34px;
             display: flex;
             align-items: center;
           }

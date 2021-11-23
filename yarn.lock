@@ -1634,10 +1634,10 @@
   resolved "https://registry.yarnpkg.com/@ledgerhq/logs/-/logs-6.10.0.tgz#c012c1ecc1a0e53d50e6af381618dca5268461c1"
   integrity sha512-lLseUPEhSFUXYTKj6q7s2O3s2vW2ebgA11vMAlKodXGf5AFw4zUoEbTz9CoFOC9jS6xY4Qr8BmRnxP/odT4Uuw==
 
-"@mean-dao/ddca@1.2.30":
-  version "1.2.30"
-  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.30.tgz#48604145f5d9bb430eb6c58e9b4158bcfc8bca88"
-  integrity sha512-vGeFJWDs35poHPM8JZxq6bsHfDaFRLmTmi5t9t6vpqmAkp/FDjCFFs9c4qOMC5W+ZIMJnXVe1CHcC89wRn+lvQ==
+"@mean-dao/ddca@1.2.32":
+  version "1.2.32"
+  resolved "https://registry.yarnpkg.com/@mean-dao/ddca/-/ddca-1.2.32.tgz#d82070f1135046c84f439a43b5d61a407d2f8b9b"
+  integrity sha512-Z6uFsVgump3AVpjJ8auLG9fl/q/qP5+aG3/BUbrlTUp4VOsXC66ZkU/lnACP6v2YzQsTAPtcA6V40t/VGftqCg==
   dependencies:
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
@@ -11839,6 +11839,13 @@ react-async-hook@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/react-async-hook/-/react-async-hook-4.0.0.tgz#1f0467586654e1f33b7433bd98c300a0c5f9b3d0"
   integrity sha512-97lgjFkOcHCTYSrsKBpsXg3iVWM0LnzedB749iP76sb3/8Ouu4nHIkCLEOrQWHVYqrYxjF05NN6GHoXWFkB3Kw==
+
+react-countdown@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/react-countdown/-/react-countdown-2.3.2.tgz#4cc27f28f2dcd47237ee66e4b9f6d2a21fc0b0ad"
+  integrity sha512-Q4SADotHtgOxNWhDdvgupmKVL0pMB9DvoFcxv5AzjsxVhzOVxnttMbAywgqeOdruwEAmnPhOhNv/awAgkwru2w==
+  dependencies:
+    prop-types "^15.7.2"
 
 react-dev-utils@^11.0.3:
   version "11.0.4"
