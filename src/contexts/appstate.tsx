@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
+  ALLOWED_ADDRESSES_LIST,
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   PRICE_REFRESH_TIMEOUT,
@@ -40,6 +41,7 @@ export interface TransactionStatusInfo {
 
 interface AppStateConfig {
   theme: string | undefined;
+  isWhitelisted: boolean;
   detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
@@ -120,6 +122,7 @@ interface AppStateConfig {
 
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
+  isWhitelisted: false,
   detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
@@ -211,6 +214,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { publicKey, connected } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const {
     lastSentTxStatus,
@@ -280,6 +284,27 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
+
+  // Update isWhitelisted
+  useEffect(() => {
+    const updateIsWhitelisted = () => {
+      if (!publicKey) {
+        setIsWhitelisted(false);
+      } else {
+        const isWl = ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58());
+        setIsWhitelisted(isWl);
+      }
+    }
+
+    updateIsWhitelisted();
+    return () => {};
+  }, [
+    publicKey
+  ]);
+
+  useEffect(() => {
+    consoleOut('isWhitelisted:', isWhitelisted, 'blue');
+  }, [isWhitelisted]);
 
   const setLoadingStreams = (state: boolean) => {
     updateLoadingStreams(state);
@@ -909,6 +934,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         theme,
+        isWhitelisted,
         detailsPanelOpen,
         isDepositOptionsModalVisible,
         tokenList,

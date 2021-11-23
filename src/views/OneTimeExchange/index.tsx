@@ -1099,7 +1099,7 @@ export const OneTimeExchange = (props: {
 
     if (toJson) {
       const flattenInfo = Object.assign({}, ...logStack);
-      return objectToJson(flattenInfo);
+      return flattenInfo;
     }
 
     return logStack;
@@ -1344,7 +1344,7 @@ export const OneTimeExchange = (props: {
 
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-        result: {signer: wallet.publicKey.toBase58(), signature: signedTx.signature ? signedTx.signature.toString() : '-'}
+        result: {signer: wallet.publicKey.toBase58()}
       }]);
 
       return signedTx;

@@ -1,4 +1,5 @@
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
+import { ProtectedRoute, ProtectedRouteProps } from "./guards/ProtectedRoute";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
@@ -24,6 +25,10 @@ import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 
 export function Routes() {
+
+  const defaultProtectedRouteProps: ProtectedRouteProps = {
+    authenticationPath: '/',
+  };
 
   return (
     <>
@@ -58,7 +63,7 @@ export function Routes() {
                       </Route>
                       <Route exact path="/referrals/:address" component={ProcessReferals} />
                       <Route exact path="/service-unavailable" component={ServiceUnavailableView} />
-                      <Route exact path="/ido" component={IdoView} />
+                      <ProtectedRoute {...defaultProtectedRouteProps} path='/ido' component={IdoView} />
                       <Route component={NotFoundView} />
                     </Switch>
                   </AppLayout>

@@ -13,6 +13,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 
 type IdoTabOption = "deposit" | "withdraw";
 declare const geoip2: any;
@@ -28,9 +29,11 @@ export const IdoView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const {
+    tokenBalance,
+    selectedToken,
     previousWalletConnectState,
+    setSelectedTokenBalance,
     refreshTokenBalance,
-    setSelectedTokenBalance
   } = useContext(AppStateContext);
 
   // Date related
@@ -182,6 +185,7 @@ export const IdoView = () => {
             <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoEndUtc} daysInHours={true} /></p>
           ) : null}
         </div>
+        <p>{selectedToken && getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address)}</p>
         {/* Form */}
         <div className="deposits-and-withdrawals">
           <div className="button-tabset-container">
