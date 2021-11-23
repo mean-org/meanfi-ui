@@ -807,18 +807,18 @@ export const OneTimeExchange = (props: {
         label = t("transactions.validation.not-connected");
       } else if (!fromMint || !toMint) {
         label = t("transactions.validation.invalid-exchange");
-      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
+      } else if ((!selectedClient || !exchangeInfo || !feesInfo) && !isWrap() && !isUnwrap()) {
         label = t("transactions.validation.exchange-unavailable");
       } else if(!isValidBalance()) {
 
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo.network;
+          needed = feesInfo?.network || 0;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+          needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
         } else {
-          needed = feesInfo.network;
+          needed = feesInfo?.network || 0;
         }
 
         needed = parseFloat(needed.toFixed(6));
@@ -841,17 +841,17 @@ export const OneTimeExchange = (props: {
         if (isFromSerum) {
           const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
           if (selectedClient.market.baseMintAddress.toBase58() === from) {
-            needed = selectedClient.market.minOrderSize + feesInfo.protocol;
+            needed = selectedClient.market.minOrderSize + (feesInfo?.protocol || 0);
           } else {
-            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + (feesInfo?.protocol || 0);
           }
         } else {
           if (isWrap()) {
-            needed = fromSwapAmount + feesInfo.network;
+            needed = fromSwapAmount + (feesInfo?.network || 0);
           } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-            needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+            needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
           } else {
-            needed = fromSwapAmount + feesInfo.total;
+            needed = fromSwapAmount + (feesInfo?.total || 0);
           }
         }
 
@@ -870,7 +870,7 @@ export const OneTimeExchange = (props: {
           });
         } else {
           const balance = parseFloat(fromBalance);
-          if (fromSwapAmount > (balance - feesInfo.network)) {
+          if (fromSwapAmount > (balance - (feesInfo?.network || 0))) {
             label = t("transactions.validation.insufficient-amount-needed", { 
               amount: fromSwapAmount.toString(), 
               symbol: fromSymbol 
@@ -1642,7 +1642,7 @@ export const OneTimeExchange = (props: {
         )
       }
       {
-        !refreshing && fromAmount && feesInfo &&
+        !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
         infoRow(
           t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
           `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
@@ -1914,7 +1914,7 @@ export const OneTimeExchange = (props: {
                 consoleOut('onSelectedClient:', client, 'blue');
                 setSelectedClient(client);
               }}
-              showLpList={showLpList}
+              showLpList={showLpList && !isWrap() && !isUnwrap()}
             />
           }
 

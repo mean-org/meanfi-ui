@@ -205,8 +205,8 @@ export const ExchangeOutput = (props: {
                   selectedClient &&
                   selectedClient.exchange.fromAmm === c.exchange.fromAmm;
 
-                if (selectedClient.pool && c.pool) {
-                  selected = selectedClient.pool.name === c.pool.name;
+                if (selected && selected.pool && c.pool) {
+                  selected = selected.pool.name === c.pool.name;
                 }
 
                 return (
