@@ -802,40 +802,42 @@ export const AccountsView = () => {
   useEffect(() => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       if (OperationType.Create) {
-        consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
-        setLoadingStreams(true);
-        ms.listStreams(publicKey, publicKey)
-          .then(streams => {
-            setStreamList(streams);
-            if (streams.length) {
-              let item: StreamInfo | undefined;
-              if (lastSentTxStatus) {
-                item = streams.find(d => d.transactionSignature === lastSentTxStatus);
+        if (!loadingStreams) {
+          consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
+          setLoadingStreams(true);
+          ms.listStreams(publicKey, publicKey)
+            .then(streams => {
+              setStreamList(streams);
+              if (streams.length) {
+                let item: StreamInfo | undefined;
+                if (lastSentTxStatus) {
+                  item = streams.find(d => d.transactionSignature === lastSentTxStatus);
+                }
+                if (!item) {
+                  item = streams[0];
+                }
+                setSelectedStream(item);
+                setTimeout(() => {
+                  setRedirect("/accounts/streams");
+                }, 10);
               }
-              if (!item) {
-                item = streams[0];
-              }
-              setSelectedStream(item);
-              setTimeout(() => {
-                setRedirect("/accounts/streams");
-              }, 10);
-            }
-            setLoadingStreams(false);
-          }).catch(err => {
-            console.error(err);
-            setLoadingStreams(false);
-          });
+              setLoadingStreams(false);
+            }).catch(err => {
+              console.error(err);
+              setLoadingStreams(false);
+            });
+        }
       }
     }
   }, [
     ms,
     publicKey,
+    loadingStreams,
     lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
     clearTransactionStatusContext,
-    // refreshStreamList,
     setLoadingStreams,
     setSelectedStream,
     setStreamList

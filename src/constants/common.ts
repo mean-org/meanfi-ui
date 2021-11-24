@@ -81,9 +81,11 @@ export const LANGUAGES: Language[] = [
 export const ALLOWED_ADDRESSES_LIST = [
     '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
     '7kjcW2QHa9pN5e9Fx7LBM3kVwxCi3KteBtM7BMVzrMX4', // MRP
+    'JAMR7AvQSbU3v6tfNidEZE3odxoRCahGFgiA4ksvdDkJ', // MRP
     'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
+    'FkRtTexEwLtYerHRKUku7ZZJx1VuTqxwGF636nAuer3B', // YAF
     'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
-    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw',  // MT
+    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
 ];
 
 // Date.UTC(year, month, day, hour, minute, second, millisecond)

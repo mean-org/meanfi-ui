@@ -1,5 +1,5 @@
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { Button, Collapse, Divider, Form, InputNumber, Modal, Select, Spin } from "antd";
+import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
@@ -19,7 +19,7 @@ import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../uti
 
 const { Panel } = Collapse;
 const { Option } = Select;
-type TabOption = "first-tab" | "second-tab";
+type TabOption = "first-tab" | "second-tab" | "misc-tab";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const SAMPLE_SIGNATURE = '43n6nSvWLULwu3Gdpkc3P2NtxzKdncvBMdmQxaf2wkWkSLtq2j7QD31TRd499UqijXfeyLWRxJ6t9Z1epWXcixPq';
 
@@ -234,6 +234,18 @@ export const PlaygroundView = () => {
       setCurrentPanelItem(loadedItem);
     }
 
+    const showMessage = () => {
+      message.success({
+        duration: 0,
+        content: 'This is a prompt message with custom className and style',
+        className: 'custom-message',
+      });
+    };
+    
+    const closeMessage = () => {
+      message.destroy();
+    }
+
     const renderDemoNumberFormatting = (
       <>
         <div className="tabset-heading">Number formatting</div>
@@ -350,16 +362,42 @@ export const PlaygroundView = () => {
       </>
     );
 
-    const renderContract = () => {
+  const renderMiscTab = (
+    <>
+    <div className="tabset-heading">Miscelaneous features</div>
+    <div className="text-left mb-3">
+      <Space>
+        <Button
+          type="primary"
+          shape="round"
+          size="middle"
+          onClick={showMessage}>
+          Show custom message
+        </Button>
+        <Button
+          type="primary"
+          shape="round"
+          size="middle"
+          onClick={closeMessage}>
+          Destroy message
+        </Button>
+      </Space>
+    </div>
+    </>
+  );
+
+  const renderTab = () => {
       switch (currentTab) {
         case "first-tab":
           return renderDemoNumberFormatting;
         case "second-tab":
           return renderDemoTxWorkflow;
+        case "misc-tab":
+          return renderMiscTab;
         default:
           return null;
       }
-    }
+  }
 
   return (
     <>
@@ -374,8 +412,11 @@ export const PlaygroundView = () => {
                 <div className={`tab-button ${currentTab === "second-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("second-tab")}>
                   Demo 2
                 </div>
+                <div className={`tab-button ${currentTab === "misc-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("misc-tab")}>
+                  Misc
+                </div>
               </div>
-              {renderContract()}
+              {renderTab()}
             </div>
           </div>
         </section>
