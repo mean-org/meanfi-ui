@@ -58,6 +58,7 @@ interface AppStateConfig {
   paymentRateAmount: string;
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
+  isVerifiedRecipient: boolean;
   transactionStatus: TransactionStatusInfo;
   previousWalletConnectState: boolean;
   loadingStreams: boolean;
@@ -100,6 +101,7 @@ interface AppStateConfig {
   setPaymentRateAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
+  setIsVerifiedRecipient: (state: boolean) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
@@ -139,6 +141,7 @@ const contextDefaultValues: AppStateConfig = {
   paymentRateAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
+  isVerifiedRecipient: false,
   transactionStatus: {
     lastOperation: TransactionStatus.Iddle,
     currentOperation: TransactionStatus.Iddle
@@ -184,6 +187,7 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentRateAmount: () => {},
   setPaymentRateFrequency: () => {},
   setTimeSheetRequirement: () => {},
+  setIsVerifiedRecipient: () => {},
   setTransactionStatus: () => {},
   setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
@@ -255,6 +259,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
@@ -365,6 +370,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentStartDate(today);
     setPaymentRateAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
+    setIsVerifiedRecipient(false);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -951,6 +957,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         paymentRateAmount,
         paymentRateFrequency,
         timeSheetRequirement,
+        isVerifiedRecipient,
         transactionStatus,
         previousWalletConnectState,
         loadingStreams,
@@ -991,6 +998,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setPaymentRateAmount,
         setPaymentRateFrequency,
         setTimeSheetRequirement,
+        setIsVerifiedRecipient,
         setTransactionStatus,
         setPreviousWalletConnectState,
         setLoadingStreams,

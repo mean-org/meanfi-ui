@@ -1669,23 +1669,19 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/money-streaming@1.5.5":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.5.5.tgz#ca2b4761870f23c035598392353abf965c03d872"
-  integrity sha512-v+PhvXewF1J0pL8WYBe9u7oE9ECwAaw7w88mL/VwQqFplSjayZnSBoXafiMJQip3Ip0PzW3ISBWr4UahY2oEJQ==
+"@mean-dao/money-streaming@1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.6.1.tgz#7d24732b0a2e4c0705fbccd9fa07d67f4d66a879"
+  integrity sha512-Sr9J2mqswR1585dBZ3rFJZ1CiKk//PE3MmLA7doIe6yyV73MWTPryPkUDJfGIBRso0ApIt2I41UWSoN67r/AQA==
   dependencies:
-    "@project-serum/anchor" "^0.15.0"
-    "@solana/spl-token" "^0.1.7"
-    "@solana/spl-token-registry" "^0.2.235"
-    "@solana/web3.js" "^1.25.0"
+    "@project-serum/anchor" "^0.18.2"
+    "@solana/spl-token" "^0.1.8"
+    "@solana/web3.js" "^1.30.2"
     bn.js "^5.2.0"
     borsh "^0.6.0"
     buffer "^6.0.3"
-    buffer-layout "^1.2.1"
+    buffer-layout "^1.2.2"
     dotenv "10.0.0"
-    eventemitter3 "^4.0.7"
-    moment "^2.29.1"
-    prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
 "@mercurial-finance/stable-swap-n-pool@git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git":
@@ -1808,10 +1804,10 @@
     snake-case "^3.0.4"
     toml "^3.0.0"
 
-"@project-serum/anchor@^0.15.0":
-  version "0.15.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.15.0.tgz#76d35a68f88afaf934ae5af9f774884600354ed6"
-  integrity sha512-IEpyX5wDgHa+2hbMMNHNHPDjCcnx1kDzMYZwxaIFB1KmoEXvY8po/d1uCgCArHXZCzTL461QO/XybDxFUMOfOg==
+"@project-serum/anchor@^0.17.0":
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.17.0.tgz#99a2cc59cae2939c1db1197950b7b606319ea7a8"
+  integrity sha512-vctZHZD5rUP1WXUUaJFdKl+1u0dE+O2+jejmYcb0InAZiwXdGAW8mX47U902voT94PdCr0aNHuyOQ8I75nfinw==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
     "@solana/web3.js" "^1.17.0"
@@ -1828,10 +1824,10 @@
     snake-case "^3.0.4"
     toml "^3.0.0"
 
-"@project-serum/anchor@^0.17.0":
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.17.0.tgz#99a2cc59cae2939c1db1197950b7b606319ea7a8"
-  integrity sha512-vctZHZD5rUP1WXUUaJFdKl+1u0dE+O2+jejmYcb0InAZiwXdGAW8mX47U902voT94PdCr0aNHuyOQ8I75nfinw==
+"@project-serum/anchor@^0.18.2":
+  version "0.18.2"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.18.2.tgz#0f13b5c2046446b7c24cf28763eec90febb28485"
+  integrity sha512-uyjiN/3Ipp+4hrZRm/hG18HzGLZyvP790LXrCsGO3IWxSl28YRhiGEpKnZycfMW94R7nxdUoE3wY67V+ZHSQBQ==
   dependencies:
     "@project-serum/borsh" "^0.2.2"
     "@solana/web3.js" "^1.17.0"
@@ -1985,7 +1981,7 @@
   dependencies:
     cross-fetch "3.0.6"
 
-"@solana/spl-token-registry@^0.2", "@solana/spl-token-registry@^0.2.214", "@solana/spl-token-registry@^0.2.235":
+"@solana/spl-token-registry@^0.2", "@solana/spl-token-registry@^0.2.214":
   version "0.2.297"
   resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.297.tgz#3abac81346ec5098672645aada032692c4345f35"
   integrity sha512-uhPgDTl4ixuf+CRuRJopaD//dfA+HcD12Pekl7G2vMWxRXpAocA+dRford+L8CafWUPki64zF4OsC+FOZQXCVQ==
@@ -2016,7 +2012,7 @@
     dotenv "8.2.0"
     mkdirp "1.0.4"
 
-"@solana/spl-token@^0.1.5", "@solana/spl-token@^0.1.6", "@solana/spl-token@^0.1.7", "@solana/spl-token@^0.1.8":
+"@solana/spl-token@^0.1.5", "@solana/spl-token@^0.1.6", "@solana/spl-token@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.8.tgz#f06e746341ef8d04165e21fc7f555492a2a0faa6"
   integrity sha512-LZmYCKcPQDtJgecvWOgT/cnoIQPWjdH+QVyzPcFvyDUiT0DiRjZaam4aqNUyvchLFhzgunv3d9xOoyE34ofdoQ==
@@ -2058,10 +2054,30 @@
     tweetnacl "^1.0.0"
     ws "^7.0.0"
 
-"@solana/web3.js@^1.10.0", "@solana/web3.js@^1.15.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.24.0", "@solana/web3.js@^1.24.1", "@solana/web3.js@^1.25.0", "@solana/web3.js@^1.30":
+"@solana/web3.js@^1.10.0", "@solana/web3.js@^1.15.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.24.0", "@solana/web3.js@^1.24.1", "@solana/web3.js@^1.30":
   version "1.30.2"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.30.2.tgz#e85da75e0825dc64f53eb64a1ff0115b27bec135"
   integrity sha512-hznCj+rkfvM5taRP3Z+l5lumB7IQnDrB4l55Wpsg4kDU9Zds8pE5YOH5Z9bbF/pUzZJKQjyBjnY/6kScBm3Ugg==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@ethersproject/sha2" "^5.5.0"
+    "@solana/buffer-layout" "^3.0.0"
+    bn.js "^5.0.0"
+    borsh "^0.4.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    cross-fetch "^3.1.4"
+    jayson "^3.4.4"
+    js-sha3 "^0.8.0"
+    rpc-websockets "^7.4.2"
+    secp256k1 "^4.0.2"
+    superstruct "^0.14.2"
+    tweetnacl "^1.0.0"
+
+"@solana/web3.js@^1.30.2":
+  version "1.31.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
+  integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@ethersproject/sha2" "^5.5.0"
@@ -11232,13 +11248,6 @@ promise@^8.1.0:
   integrity sha512-W04AqnILOL/sPRXziNicCjSNRruLAuIHEOVBazepu0545DDNGYHz7ar9ZgZ1fMU8/MA4mVxp5rkBWRi6OXIy3Q==
   dependencies:
     asap "~2.0.6"
-
-prompt-sync@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/prompt-sync/-/prompt-sync-4.2.0.tgz#0198f73c5b70e3b03e4b9033a50540a7c9a1d7f4"
-  integrity sha512-BuEzzc5zptP5LsgV5MZETjDaKSWfchl5U9Luiu8SKp7iZWD5tZalOxvNcZRwv+d2phNFr8xlbxmFNcRKfJOzJw==
-  dependencies:
-    strip-ansi "^5.0.0"
 
 prompts@2.4.0:
   version "2.4.0"

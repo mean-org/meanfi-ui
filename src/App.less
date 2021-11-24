@@ -6181,6 +6181,28 @@ code {
   }
 }
 
+.ant-checkbox-wrapper {
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  &:not(:disabled):hover {
+    .ant-checkbox .ant-checkbox-inner {
+      border: 1px solid var(--color-secondary-alpha-50) !important;
+    }
+  }
+  .ant-checkbox {
+    top: unset;
+    color: inherit;
+    &:not(.ant-checkbox-checked) {
+      .ant-checkbox-inner {
+        background-color: var(--color-component-background);
+        border-radius: var(--custom-control-border-radius);
+        border: 1px solid var(--color-secondary-alpha-20) !important;
+      }
+    }
+  }
+}
+
 .emoji {
   font-weight: 400;
   font-family: apple color emoji,segoe ui emoji,noto color emoji,android emoji,emojisymbols,emojione mozilla,twemoji mozilla,segoe ui symbol;

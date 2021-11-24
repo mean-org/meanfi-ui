@@ -513,8 +513,10 @@
 			"valid-continue": "Continue",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Start funding",
-			"valid-start-withdrawal": "Start withdrawal"
-		}
+			"valid-start-withdrawal": "Start withdrawal",
+			"verified-recipient-unchecked": "Recipient verification unchecked"
+		},
+		"verified-recipient-label": "I'm sure the recipient address doesn't belong to an exchange."
 	},
 	"transfers": {
 		"screen-title": "Transfers",

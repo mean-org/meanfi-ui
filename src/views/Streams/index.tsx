@@ -194,19 +194,9 @@ export const Streams = () => {
       }
     }
 
-    // const getFreshStream = async () => {
-    //   if (!streamDetail || loadingStreams) { return; }
-    //   if (streamDetail.escrowUnvestedAmount === 0 || isStreamScheduled(streamDetail.startUtc as string)) { return; }
-    //   const freshStream = await ms.refreshStream(streamDetail);
-    //   if (freshStream) {
-    //     setStreamDetail(freshStream);
-    //   }
-    // }
-
     const timeout = setTimeout(() => {
       refreshStreams();
-      // getFreshStream();
-    }, 1000);
+    }, 10000);
 
     return () => {
       clearTimeout(timeout);

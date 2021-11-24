@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
+import { Button, Modal, DatePicker, Spin, Row, Col, Checkbox } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -61,6 +61,7 @@ export const OneTimePayment = () => {
     paymentStartDate,
     fromCoinAmount,
     transactionStatus,
+    isVerifiedRecipient,
     streamProgramAddress,
     previousWalletConnectState,
     setSelectedToken,
@@ -73,7 +74,7 @@ export const OneTimePayment = () => {
     setFromCoinAmount,
     setTransactionStatus,
     setSelectedStream,
-    refreshStreamList,
+    setIsVerifiedRecipient,
     refreshTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
@@ -365,6 +366,8 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
   }
 
@@ -661,6 +664,10 @@ export const OneTimePayment = () => {
 
   };
 
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -884,6 +891,11 @@ export const OneTimePayment = () => {
           </div>
         )}
 
+        {/* Confirm recipient address is correct Checkbox */}
+        <div className="mb-2">
+          <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+        </div>
+
         {/* Action button */}
         <Button
           className="main-cta"
@@ -892,7 +904,7 @@ export const OneTimePayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
+          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>

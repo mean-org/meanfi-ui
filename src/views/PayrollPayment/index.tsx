@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Checkbox } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -76,6 +76,7 @@ export const PayrollPayment = () => {
     paymentRateAmount,
     paymentRateFrequency,
     transactionStatus,
+    isVerifiedRecipient,
     streamProgramAddress,
     timeSheetRequirement,
     previousWalletConnectState,
@@ -90,8 +91,7 @@ export const PayrollPayment = () => {
     setPaymentRateAmount,
     setPaymentRateFrequency,
     setTransactionStatus,
-    setSelectedStream,
-    refreshStreamList,
+    setIsVerifiedRecipient,
     refreshTokenBalance,
     setTimeSheetRequirement,
     setPreviousWalletConnectState
@@ -423,6 +423,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-valid-date')
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
   }
 
@@ -812,6 +814,10 @@ export const PayrollPayment = () => {
 
   };
 
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1118,7 +1124,7 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !isVerifiedRecipient}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1266,6 +1272,11 @@ export const PayrollPayment = () => {
                 : "0.00"}
             </div>
           </div>
+        </div>
+
+        {/* Confirm recipient address is correct Checkbox */}
+        <div className="mb-2">
+          <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
         </div>
 
         {/* Action button */}

@@ -510,8 +510,10 @@
 			"valid-continue": "Continuer",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Commencer le financement",
-			"valid-start-withdrawal": "Commencer le retrait"
-		}
+			"valid-start-withdrawal": "Commencer le retrait",
+			"verified-recipient-unchecked": "Vérification du destinataire décochée"
+		},
+		"verified-recipient-label": "Je suis sûr que l'adresse du destinataire n'appartient pas à un échange"
 	},
 	"transfers": {
 		"screen-title": "Transfers",
