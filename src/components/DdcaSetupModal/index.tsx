@@ -388,7 +388,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
@@ -627,7 +627,7 @@ export const DdcaSetupModal = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
