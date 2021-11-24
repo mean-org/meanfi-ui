@@ -1,19 +1,20 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Row, Timeline } from "antd";
+import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
-import { IDO_END_DATE, IDO_RESTRICTED_COUNTRIES, IDO_START_DATE, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL } from "../../constants";
+import { IDO_CAP_VALUATION, IDO_END_DATE, IDO_MIN_CONTRIBUTION, IDO_RESTRICTED_COUNTRIES, IDO_START_DATE, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut, percentual } from '../../utils/ui';
 import "./style.less";
 import { IdoDeposit } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import useScript from '../../hooks/useScript';
+import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import YoutubeEmbed from '../../components/YoutubeEmbed';
 
 type IdoTabOption = "deposit" | "withdraw";
 declare const geoip2: any;
@@ -29,15 +30,33 @@ export const IdoView = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const {
-    tokenBalance,
-    selectedToken,
+    theme,
+    tokenList,
     previousWalletConnectState,
+    setTheme,
+    setSelectedToken,
     setSelectedTokenBalance,
     refreshTokenBalance,
   } = useContext(AppStateContext);
+  const [currentTheme] = useState(theme);
+  const [xPosPercent, setXPosPercent] = useState(0);
+  const [currentDateDisplay, setCurrentDateDisplay] = useState('');
+
+  // Force dark theme
+  useEffect(() => {
+
+    if (theme !== 'dark') {
+      setTheme('dark');
+    }
+
+    return () => setTheme(currentTheme || 'dark');
+  }, [
+    theme,
+    setTheme,
+    currentTheme
+  ]);
 
   // Date related
-  const today = new Date();
   const idoStartUtc = useMemo(() => new Date(Date.UTC(
     IDO_START_DATE.year,
     IDO_START_DATE.month,
@@ -54,6 +73,42 @@ export const IdoView = () => {
     IDO_END_DATE.minute,
     IDO_END_DATE.second
   )), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = new Date();
+
+  /*
+  Abajo de los formularios
+
+  Barrita horizontal
+  - maximum raise
+    label at the end
+
+  if fulfilled -> warn: The guaranteed allocation is fully booked, but you can still deposit to save a spot on the waitlist.
+  */
+
+  useEffect(() => {
+
+    const timeout = setTimeout(() => {
+      const totalTime = idoEndUtc.getTime() - idoStartUtc.getTime();
+      const elapsed = today.getTime() - idoStartUtc.getTime();
+      const percent = percentual(elapsed, totalTime);
+      setCurrentDateDisplay(dateFormat(today, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
+      if (today >= idoEndUtc) {
+        setXPosPercent(100);
+      } else {
+        setXPosPercent(percent);
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    today,
+    idoEndUtc,
+    idoStartUtc,
+  ]);
 
   // Keep track of account changes and updates token balance
   useEffect(() => {
@@ -102,9 +157,10 @@ export const IdoView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        setTimeout(() => {
-          refreshTokenBalance();
-        }, 10);
+        const usdc = tokenList.filter(t => t.symbol === 'USDC');
+        if (usdc && usdc.length) {
+          setSelectedToken(usdc[0]);
+        }
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
@@ -114,9 +170,11 @@ export const IdoView = () => {
   }, [
     connected,
     publicKey,
+    tokenList,
     previousWalletConnectState,
     setSelectedTokenBalance,
-    refreshTokenBalance
+    refreshTokenBalance,
+    setSelectedToken,
   ]);
 
   const onAcknowledgeRegionLimitations = () => {
@@ -128,16 +186,14 @@ export const IdoView = () => {
     setCurrentTab(option);
   }
 
-  const getRandombgImg = () => {
-    var random= Math.floor(Math.random() * 6) + 0;
-    var bigSize = ["http://placehold.it/300&text=banner1",
-                   "http://placehold.it/300&text=banner2",
-                   "http://placehold.it/300&text=banner3",
-                   "http://placehold.it/300&text=banner4",
-                   "http://placehold.it/300&text=banner5",
-                   "http://placehold.it/300&text=banner6"];
-    return bigSize[random];
-  }
+  const partnerImages = useMemo(() => {
+    return ["http://placehold.it/300&text=banner1",
+            "http://placehold.it/300&text=banner2",
+            "http://placehold.it/300&text=banner3",
+            "http://placehold.it/300&text=banner4",
+            "http://placehold.it/300&text=banner5",
+            "http://placehold.it/300&text=banner6"];
+  }, []);
 
   const isUserBlocked = () => {
     return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
@@ -145,7 +201,7 @@ export const IdoView = () => {
 
   const renderRegionAcknowledgement = (
     <>
-      <div className="ant-image" style={{width: '320px', height: 'auto', maxHeight: '280px'}}>
+      <div className="ant-image ido-launch-image">
         <img className="ant-image-img" alt="IDO Launch" src="/assets/launch.png" />
       </div>
       <div className="text-center px-5 mt-3">
@@ -166,7 +222,15 @@ export const IdoView = () => {
 
   const renderForm = () => {
     if (currentTab === "deposit") {
-      return <IdoDeposit disabled={isUserBlocked()} />;
+      return <IdoDeposit
+        disabled={isUserBlocked()}
+        contributedAmount={90381439.9773}
+        totalMeanForSale={4000000}
+        tokenPrice={22.5953}
+        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
+        min={IDO_MIN_CONTRIBUTION}
+        max={21000}
+      />;
     } else {
       return <IdoWithdraw disabled={isUserBlocked()} />;
     }
@@ -182,12 +246,11 @@ export const IdoView = () => {
             <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
             </>
           ) : today > idoStartUtc && today < idoEndUtc ? (
-            <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoEndUtc} daysInHours={true} /></p>
+            <p className="font-size-90 font-bold text-center">Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
           ) : null}
         </div>
-        <p>{selectedToken && getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address)}</p>
         {/* Form */}
-        <div className="deposits-and-withdrawals">
+        <div className="shadowed-box max-width">
           <div className="button-tabset-container">
             <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
               Deposit
@@ -202,39 +265,77 @@ export const IdoView = () => {
     </>
   );
 
+  const renderYouAreHere = () => {
+    return (
+      <>
+      <div className="ido-stats-marker-wrapper">
+        <div className="ido-stats-marker-inner-container">
+          <span className="ido-stats-marker-start">{idoStartUtc.toUTCString()}</span>
+          <span className="ido-stats-marker-end">{idoEndUtc.toUTCString()}</span>
+          <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
+          <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
+            <div className="text-center">
+              <div>{currentDateDisplay}</div>
+            </div>
+            <Divider />
+            <div className="flex-fixed-right">
+              <div className="left">Cosita</div>
+              <div className="right">$1,540.00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </>
+    );
+  }
+
   return (
     <div className="solid-bg">
 
       <section className="content contrast-section no-padding">
         <div className="container">
-          <Row gutter={[0, 24]}>
-            <Col xs={24} md={12}>
-              <div className="padded-content">
-                <h1 className="heading ido-heading">Welcome to the<br/>Mean <span className="fg-primary-highlight">IDO</span></h1>
-                <div className="boxed-area">
-                  <h2 className="subheading ido-subheading">How it works</h2>
-                  <p>The IDO consists of two consecutive 24 hour phases:</p>
-                  <ul className="vertical-list dash-bullet">
-                    <li><em className="text-underline">Sale period:</em> USDC may be deposited or withdrawn from the pool. MEAN price will fluctuate based on the size of the pool.</li>
-                    <li><em className="text-underline">Grace period:</em> USDC may only be withdrawn from the pool. MEAN price will only go down in this phase.</li>
-                  </ul>
-                  <div>Afterwards, depositors can redeem an amount of MEAN tokens proportional to their share of the pool.</div>
-                </div>
-                <div className="text-center px-5 mt-3">
-                  <h2 className="subheading ido-subheading">Timeline</h2>
-                </div>
-                <div className="position-relative">
-                  <Timeline mode="left">
-                    <Timeline.Item label="2015-09-01">Create a services</Timeline.Item>
-                    <Timeline.Item label="2015-09-01 09:12:11">Solve initial network problems</Timeline.Item>
-                    <Timeline.Item>Technical testing</Timeline.Item>
-                    <Timeline.Item label="2015-09-01 09:12:11">Network problems being solved</Timeline.Item>
-                  </Timeline>
-                </div>
+          <div className="heading-section">
+            <h1 className="heading ido-heading text-center mb-0">Welcome to the Mean <span className="fg-primary-highlight">IDO</span></h1>
+          </div>
+        </div>
+      </section>
+
+      <section className="content contrast-section pt-5 pb-5">
+        <div className="container">
+          <Row>
+            <Col xs={24} md={16}>
+              <div className="flex-column flex-center h-100 px-4">
+                {today < idoStartUtc ? (
+                  <div className="boxed-area mb-4 mt-4">
+                    <h2 className="subheading ido-subheading text-center">How it works</h2>
+                    <YoutubeEmbed embedId="rokGy0huYEA" />
+                    <div className="text-center mt-2 mb-3">
+                      <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
+                          href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
+                        Read deatails about Mean IDO
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="ido-stats-container">
+                    <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                    {(today > idoStartUtc && today < idoEndUtc) && renderYouAreHere()}
+                    {/* <Timeline mode="left">
+                      <Timeline.Item label={idoStartUtc.toUTCString()}>Sale period starts</Timeline.Item>
+                      {today > idoStartUtc && today < idoEndUtc ? (
+                        <Timeline.Item label={renderTimeLeft} dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
+                      ) : (
+                        <Timeline.Item dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
+                      )}
+                      <Timeline.Item label={idoEndUtc.toUTCString()}>IDO ends</Timeline.Item>
+                      <Timeline.Item>Tokens redeemable</Timeline.Item>
+                    </Timeline> */}
+                  </div>
+                )}
               </div>
             </Col>
-            <Col xs={24} md={12}>
-              <div className="padded-content flex-column flex-center">
+            <Col xs={24} md={8}>
+              <div className="flex-column flex-center h-100 px-5 pb-5">
                 {!regionLimitationAcknowledged
                   ? renderRegionAcknowledgement
                   : renderTabset
@@ -249,17 +350,11 @@ export const IdoView = () => {
         <div className="container">
           <h1 className="heading ido-heading text-center">Investors</h1>
           <Row gutter={[32, 32]} justify="center">
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
-            <Col className="partner flex-center"><img className="partner-logo" src={getRandombgImg()} alt="" /></Col>
+            {partnerImages.map((image: string, index: number) => {
+              return (
+                <Col key={`${index}`} className="partner flex-center"><img className="partner-logo" src={image} alt="" /></Col>
+              );
+            })}
           </Row>
         </div>
       </section>

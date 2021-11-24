@@ -1,10 +1,9 @@
 import React from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
+import { Modal, Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { Identicon } from '../Identicon';
-import { percentage } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 
@@ -41,27 +40,13 @@ export const StreamAddFundsModal = (props: {
     }
   };
 
-  const getFeeAmount = (amount?: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (props && props.transactionFees) {
-      if (props.transactionFees.mspPercentFee) {
-        fee = percentage(props.transactionFees.mspPercentFee, inputAmount);
-      } else if (props.transactionFees.mspFlatFee) {
-        fee = props.transactionFees.mspFlatFee;
-      }
-    }
-    return fee;
-  }
-
   // Validation
 
   const isValidInput = (): boolean => {
     return selectedToken &&
            tokenBalance &&
            topupAmount && parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance &&
-           parseFloat(topupAmount) > getFeeAmount(topupAmount)
+           parseFloat(topupAmount) <= tokenBalance
             ? true
             : false;
   }
@@ -73,18 +58,7 @@ export const StreamAddFundsModal = (props: {
       ? t('transactions.validation.no-amount')
       : parseFloat(topupAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getFeeAmount(topupAmount)
-      ? t('transactions.validation.amount-low')
       : t('transactions.validation.valid-approve');
-  }
-
-  const infoRow = (caption: string, value: string) => {
-    return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
-    );
   }
 
   return (
@@ -160,24 +134,6 @@ export const StreamAddFundsModal = (props: {
           </div>
         </div>
       </div>
-
-      {/* Info */}
-      {selectedToken && (
-        <div className="p-2 mb-2">
-          {infoRow(
-            `1 ${selectedToken.symbol}:`,
-            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-          )}
-          {isValidInput() && infoRow(
-            t('transactions.transaction-info.transaction-fee') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(topupAmount), selectedToken?.address)}`
-          )}
-          {isValidInput() && infoRow(
-            t('transactions.transaction-info.beneficiary-receives') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(topupAmount) - getFeeAmount(topupAmount), selectedToken?.address)}`
-          )}
-        </div>
-      )}
 
       <Button
         className="main-cta"

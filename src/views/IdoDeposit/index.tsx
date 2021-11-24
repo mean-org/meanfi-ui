@@ -1,8 +1,8 @@
 import React from 'react';
 import { useContext, useState } from 'react';
-import { Button, Row, Col } from 'antd';
+import { Button } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber, truncateFloat } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, truncateFloat } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, percentage } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -10,6 +10,12 @@ import { useWallet } from '../../contexts/wallet';
 
 export const IdoDeposit = (props: {
   disabled: boolean;
+  contributedAmount: number;
+  totalMeanForSale: number;
+  tokenPrice: number;
+  maxFullyDilutedMarketCapAllowed: number;
+  min: number;
+  max: number;
 }) => {
   const {
     selectedToken,
@@ -75,17 +81,25 @@ export const IdoDeposit = (props: {
       newValue = getDisplayAmount(totalAmount);
     } else {
       const partialAmount = percentage(percentualAmount, totalAmount);
-      newValue = getDisplayAmount(partialAmount);
+      if (partialAmount <= props.max) {
+        newValue = getDisplayAmount(partialAmount);
+      } else {
+        newValue = getDisplayAmount(props.max);
+      }
     }
     setDepositAmount(newValue);
   }
 
   const infoRow = (caption: string, value: string) => {
     return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
+      <div className="flex-fixed-right line-height-180">
+        <div className="left inner-label">
+          <span>{caption}</span>
+        </div>
+        <div className="right value-display">
+          <span>{value}</span>
+        </div>
+      </div>
     );
   }
 
@@ -98,6 +112,13 @@ export const IdoDeposit = (props: {
         </div>
         {selectedToken && (
           <div className="right token-group">
+            <div
+              className={`token-max simplelink ${tokenBalance < props.min && 'disabled'}`}
+              onClick={() => setDepositAmount(
+                getTokenAmountAndSymbolByTokenAddress(props.min, selectedToken.address, true)
+              )}>
+              MIN
+            </div>
             <div
               className="token-max simplelink"
               onClick={() => setPercentualValue(25, tokenBalance)}>
@@ -116,14 +137,18 @@ export const IdoDeposit = (props: {
             <div
               className="token-max simplelink"
               onClick={() => setDepositAmount(
-                getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                getTokenAmountAndSymbolByTokenAddress(
+                  tokenBalance <= props.max ? tokenBalance : props.max,
+                  selectedToken.address,
+                  true
+                )
               )}>
               100%
             </div>
           </div>
         )}
       </div>
-      <div className="well">
+      <div className="well mb-1">
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -170,16 +195,49 @@ export const IdoDeposit = (props: {
           <div className="right inner-label">&nbsp;</div>
         </div>
       </div>
+      <div className="flex-fixed-right mb-2">
+        <div className="left form-label">
+          <span>Min: {props.min} - Max: {formatAmount(props.max, 2, true)}</span>
+        </div>
+        <div className="right inner-label">&nbsp;</div>
+      </div>
 
       {/* Info */}
-      {/* {selectedToken && (
-        <div className="p-2 mb-2">
+      {selectedToken && (
+        <div className="px-1 mb-2">
           {infoRow(
-            `1 ${selectedToken.symbol}:`,
-            effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
+            'USDC Contributed',
+            getTokenAmountAndSymbolByTokenAddress(
+              props.contributedAmount,
+              selectedToken.address,
+              true
+            )
+          )}
+          {infoRow(
+            'Total MEAN for sale',
+            getTokenAmountAndSymbolByTokenAddress(
+              props.totalMeanForSale,
+              '',
+              true
+            )
+          )}
+          {infoRow(
+            'Implied token price',
+            getTokenAmountAndSymbolByTokenAddress(
+              props.tokenPrice,
+              selectedToken.address
+            )
+          )}
+          {infoRow(
+            'Implied token price',
+            formatAmount(
+              props.maxFullyDilutedMarketCapAllowed,
+              2,
+              true
+            )
           )}
         </div>
-      )} */}
+      )}
 
       <Button
         className="main-cta"
