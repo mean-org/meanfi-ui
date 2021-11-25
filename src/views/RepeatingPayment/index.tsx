@@ -521,7 +521,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -739,7 +739,7 @@ export const RepeatingPayment = () => {
 
     // const confirmTx = async (): Promise<boolean> => {
     //   return await connection
-    //     .confirmTransaction(signature, "finalized")
+    //     .confirmTransaction(signature, "confirmed")
     //     .then(result => {
     //       consoleOut('confirmTransaction result:', result);
     //       if (result && result.value && !result.value.err) {
@@ -791,7 +791,7 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
             setIsBusy(false);
             handleGoToStreamsClick();
             // const confirmed = await confirmTx();

@@ -624,7 +624,6 @@ export const Streams = () => {
           refreshStreamList(false);
           break;
       }
-      consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed, status:`, fetchTxInfoStatus, 'blue');
     }
   }, [
     ms,
@@ -636,7 +635,6 @@ export const Streams = () => {
     customStreamDocked,
     setStreamList,
     refreshStreamList,
-    setSelectedStream,
     openStreamById,
   ]);
 
@@ -700,7 +698,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -890,7 +888,7 @@ export const Streams = () => {
 
     // const confirmTx = async (): Promise<boolean> => {
     //   return await connection
-    //     .confirmTransaction(signature, "finalized")
+    //     .confirmTransaction(signature, "confirmed")
     //     .then(result => {
     //       consoleOut('confirmTransaction result:', result);
     //       if (result && result.value && !result.value.err) {
@@ -942,7 +940,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.AddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.AddFunds);
             setIsBusy(false);
             onAddFundsTransactionFinished();
             // const confirmed = await confirmTx();
@@ -992,7 +990,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1181,7 +1179,7 @@ export const Streams = () => {
     // const confirmTx = async (): Promise<boolean> => {
 
     //   return await connection
-    //     .confirmTransaction(signature, "finalized")
+    //     .confirmTransaction(signature, "confirmed")
     //     .then(result => {
     //       consoleOut('confirmTransaction result:', result);
     //       if (result && result.value && !result.value.err) {
@@ -1233,7 +1231,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Withdraw);
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
             // const confirmed = await confirmTx();
@@ -1283,7 +1281,7 @@ export const Streams = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet && streamDetail) {
@@ -1466,7 +1464,7 @@ export const Streams = () => {
     // const confirmTx = async (): Promise<boolean> => {
 
     //   return await connection
-    //     .confirmTransaction(signature, "finalized")
+    //     .confirmTransaction(signature, "confirmed")
     //     .then(result => {
     //       consoleOut('confirmTransaction result:', result);
     //       if (result && result.value && !result.value.err) {
@@ -1521,11 +1519,6 @@ export const Streams = () => {
             startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
-            // const confirmed = await confirmTx();
-            // consoleOut('confirmed:', confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1662,25 +1655,25 @@ export const Streams = () => {
   }
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
             ? true
             : false;
   }
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Close
             ? true
             : false;
   }
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Withdraw
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Withdraw
             ? true
             : false;
   }
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.AddFunds
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.AddFunds
             ? true
             : false;
   }

@@ -384,7 +384,7 @@ export const OneTimePayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
+    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
@@ -647,7 +647,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {

@@ -1145,25 +1145,25 @@ export const ExchangeDcasView = () => {
   }
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
             ? true
             : false;
   }
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Close
             ? true
             : false;
   }
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Withdraw
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Withdraw
             ? true
             : false;
   }
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.AddFunds
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.AddFunds
             ? true
             : false;
   }
