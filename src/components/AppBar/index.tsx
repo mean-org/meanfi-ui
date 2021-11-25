@@ -104,7 +104,7 @@ export const AppBar = (props: {
   const mainNav = (
     <Menu selectedKeys={[location.pathname]} mode="horizontal">
       <Menu.Item key="/accounts">
-        <Link to="/accounts">{t('ui-menus.main-menu.accounts')}</Link>
+        <Link to='/accounts'>{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>
       <Menu.Item key="/exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>

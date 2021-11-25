@@ -19,7 +19,6 @@ import { InfoIcon } from "../../components/InfoIcon";
 import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
-import { Redirect } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
@@ -45,7 +44,6 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { MSP_OPS } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
-import { objectToJson } from "../../utils/logger";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -56,7 +54,6 @@ export const OneTimeExchange = (props: {
 }) => {
 
   const { t } = useTranslation("common");
-  const [redirect] = useState<string | null>(null);
   const { publicKey, wallet, connected } = useWallet();
   const {
     coinPrices,
@@ -1826,7 +1823,6 @@ export const OneTimeExchange = (props: {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <Spin spinning={isBusy || refreshing}>
         <div className="swap-wrapper">
 

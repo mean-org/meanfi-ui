@@ -35,7 +35,7 @@ import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
-import { Redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
@@ -70,11 +70,10 @@ export const ExchangeDcasView = () => {
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
-
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
@@ -99,7 +98,7 @@ export const ExchangeDcasView = () => {
       if (cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
-          setRedirect('/service-unavailable');
+          navigate('/service-unavailable');
         }
         setMainnetRpc(mainnetRpc);
       } else {
@@ -107,7 +106,10 @@ export const ExchangeDcasView = () => {
       }
     })();
     return () => { }
-  }, [cachedRpc.networkId]);
+  }, [
+    cachedRpc.networkId,
+    navigate
+  ]);
 
   // Set and cache connection
   const connection = useMemo(() => new Connection(endpoint, "confirmed"), [endpoint]);
@@ -1470,7 +1472,6 @@ export const ExchangeDcasView = () => {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
         {isLocal() && (

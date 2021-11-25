@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Link, Redirect, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PreFooter } from "../../components/PreFooter";
 import { getTokenBySymbol, TokenInfo } from '../../utils/tokens';
 import { consoleOut, isProd } from '../../utils/ui';
@@ -17,6 +17,7 @@ type SwapOption = "one-time" | "recurring";
 
 export const SwapView = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
@@ -26,7 +27,6 @@ export const SwapView = () => {
   const [loadingRecurringBuys, setLoadingRecurringBuys] = useState(false);
   const [queryFromMint, setQueryFromMint] = useState<string | null>(null);
   const [queryToMint, setQueryToMint] = useState<string | null>(null);
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<SwapOption>("one-time");
 
   // Parse query params
@@ -68,7 +68,7 @@ export const SwapView = () => {
       if (cachedRpc && cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
-          setRedirect('/service-unavailable');
+          navigate('/service-unavailable');
         }
         setMainnetRpc(mainnetRpc);
       } else {
@@ -129,7 +129,6 @@ export const SwapView = () => {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
         <div className="interaction-area">
           <div className="title-and-subtitle">

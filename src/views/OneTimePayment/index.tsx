@@ -41,7 +41,7 @@ import { customLogger } from '../..';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { Redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -82,10 +82,9 @@ export const OneTimePayment = () => {
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
   } = useContext(TransactionStatusContext);
-
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
-  const [redirect, setRedirect] = useState<string | null>(null);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
@@ -233,7 +232,7 @@ export const OneTimePayment = () => {
         type: "info"
       });
       setTimeout(() => {
-        setRedirect("/accounts");
+        navigate("/accounts");
       }, 100);
     }
   };
@@ -702,8 +701,6 @@ export const OneTimePayment = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
-
       <div className="contract-wrapper">
 
         {/* Recipient */}

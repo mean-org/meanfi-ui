@@ -46,7 +46,7 @@ import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { Link, Redirect, useHistory, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -66,6 +66,7 @@ const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const connection = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const { theme } = useContext(AppStateContext);
@@ -104,10 +105,8 @@ export const AccountsView = () => {
     lastSentTxOperationType,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
-  const [redirect, setRedirect] = useState<string | null>(null);
 
   const { t } = useTranslation('common');
-  const history = useHistory();
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
@@ -237,12 +236,9 @@ export const AccountsView = () => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
     if (queryParams) {
-      history.push({
-        pathname: '/exchange',
-        search: queryParams,
-      });
+      navigate(`/exchange${queryParams}`);
     } else {
-      history.push('/exchange');
+      navigate('/exchange');
     }
   }
 
@@ -818,7 +814,7 @@ export const AccountsView = () => {
                 }
                 setSelectedStream(item);
                 setTimeout(() => {
-                  setRedirect("/accounts/streams");
+                  navigate("/accounts/streams");
                 }, 10);
               }
               setLoadingStreams(false);
@@ -840,7 +836,8 @@ export const AccountsView = () => {
     clearTransactionStatusContext,
     setLoadingStreams,
     setSelectedStream,
-    setStreamList
+    setStreamList,
+    navigate
   ]);
 
   ///////////////
@@ -1185,7 +1182,6 @@ export const AccountsView = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
       <Helmet>
         <title>Accounts - Mean Finance</title>
         <link rel="canonical" href="https://app.meanfi.com/accounts" />

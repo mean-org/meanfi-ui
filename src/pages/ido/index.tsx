@@ -3,7 +3,7 @@ import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_CAP_VALUATION, IDO_END_DATE, IDO_MIN_CONTRIBUTION, IDO_RESTRICTED_COUNTRIES, IDO_START_DATE, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, percentual } from '../../utils/ui';
 import "./style.less";
 import { IdoDeposit } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -15,11 +15,13 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
+import { useNavigate } from 'react-router';
 
 type IdoTabOption = "deposit" | "withdraw";
 declare const geoip2: any;
 
 export const IdoView = () => {
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, connected } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
@@ -32,6 +34,7 @@ export const IdoView = () => {
   const {
     theme,
     tokenList,
+    isWhitelisted,
     previousWalletConnectState,
     setTheme,
     setSelectedToken,
@@ -41,6 +44,15 @@ export const IdoView = () => {
   const [currentTheme] = useState(theme);
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
+
+  useEffect(() => {
+    if (!isWhitelisted && !isLocal()) {
+      navigate('/');
+    }
+  }, [
+    isWhitelisted,
+    navigate
+  ]);
 
   // Force dark theme
   useEffect(() => {

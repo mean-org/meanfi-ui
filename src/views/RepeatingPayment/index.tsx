@@ -50,13 +50,14 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
-import { Redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const RepeatingPayment = () => {
+  const navigate = useNavigate();
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -99,7 +100,6 @@ export const RepeatingPayment = () => {
 
   const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
-  const [redirect, setRedirect] = useState<string | null>(null);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
@@ -236,7 +236,7 @@ export const RepeatingPayment = () => {
       type: "info"
     });
     setTimeout(() => {
-      setRedirect("/accounts");
+      navigate("/accounts");
     }, 100);
   };
 
@@ -884,8 +884,6 @@ export const RepeatingPayment = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>

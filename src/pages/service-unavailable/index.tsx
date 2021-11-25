@@ -1,7 +1,7 @@
 import { Button } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CountdownTimer } from '../../components/CountdownTimer';
 import { IconDiscord, IconSolana } from '../../Icons';
 import { RELOAD_TIMER } from '../../models/connections-hq';
@@ -11,14 +11,14 @@ export const ServiceUnavailableView = () => {
   const { t } = useTranslation("common");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [reloadDisabled, setReloadDisabled] = useState(true);
-  const [redirect, setRedirect] = useState<string | null>(null);
+  const navigate = useNavigate();
  
   const enableReload = () => {
     setReloadDisabled(false);
   }
 
   const reloadApp = () => {
-    setRedirect('/');
+    navigate('/');
   }
 
   // Use the preferred theme or dark as a default
@@ -35,7 +35,6 @@ export const ServiceUnavailableView = () => {
  
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <div className="loading-screen-container flex-center">
         <div className="flex-column flex-center">
           <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />

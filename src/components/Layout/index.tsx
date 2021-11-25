@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Link, Redirect, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./../../App.less";
 import "./style.less";
 import { appConfig } from "../..";
@@ -25,7 +25,7 @@ const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
-  const [redirect, setRedirect] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const {
     theme,
@@ -206,7 +206,7 @@ export const AppLayout = React.memo((props: any) => {
           description: t('referrals.address-processed'),
           type: "info"
         });
-        setRedirect('/');
+        navigate('/');
       } else {
         consoleOut('Invalid address', '', 'red');
         notify({
@@ -214,12 +214,13 @@ export const AppLayout = React.memo((props: any) => {
           description: t('referrals.address-invalid'),
           type: "error"
         });
-        setRedirect('/');
+        navigate('/');
       }
     }
   }, [
     location,
     t,
+    navigate,
     setReferralAddress,
   ]);
 
@@ -252,7 +253,6 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
-    {redirect && <Redirect to={redirect} />}
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">

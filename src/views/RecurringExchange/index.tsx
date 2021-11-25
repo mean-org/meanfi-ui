@@ -6,7 +6,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { InfoCircleOutlined, WarningFilled } from "@ant-design/icons";
-import { consoleOut, getTxPercentFeeAmount, isProd } from "../../utils/ui";
+import { consoleOut, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -22,7 +22,7 @@ import { appConfig } from "../..";
 import { DcaInterval } from "../../models/ddca-models";
 import { DdcaSetupModal } from "../../components/DdcaSetupModal";
 import { calculateActionFees as calculateDdcaActionFees, TransactionFees as DdcaTxFees, DDCA_ACTIONS } from '@mean-dao/ddca';
-import { Redirect } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
@@ -42,7 +42,6 @@ import {
   ACCOUNT_LAYOUT,
   HlaInfo,
   Client,
-  SRM_MINT,
   ORCA,
   RAYDIUM
 
@@ -59,9 +58,8 @@ export const RecurringExchange = (props: {
   onRefreshRequested: any;
   endpoint: string;
 }) => {
-
+  const navigate = useNavigate();
   const { t } = useTranslation("common");
-  const [redirect, setRedirect] = useState<string | null>(null);
   const { publicKey, connected } = useWallet();
   const {
     coinPrices,
@@ -141,8 +139,8 @@ export const RecurringExchange = (props: {
     setFromAmount("");
     setFromSwapAmount(0);
     setDdcaSetupModalVisibility(false);
-    setRedirect('/exchange-dcas');
-  }, []);
+    navigate('/exchange-dcas');
+  }, [navigate]);
 
   const onDdcaSetupModalClosed = useCallback((shouldReload = false) => {
     setDdcaSetupModalVisibility(false);
@@ -1417,7 +1415,6 @@ export const RecurringExchange = (props: {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <Spin spinning={refreshing}>
         <div className="swap-wrapper">
 

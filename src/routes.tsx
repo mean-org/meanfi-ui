@@ -1,5 +1,4 @@
-import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
-import { ProtectedRoute, ProtectedRouteProps } from "./guards/ProtectedRoute";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
@@ -18,17 +17,12 @@ import {
   TransfersView,
   WrapView
 } from "./pages";
-import { ProcessReferals } from "./guards";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 
-export function Routes() {
-
-  const defaultProtectedRouteProps: ProtectedRouteProps = {
-    authenticationPath: '/',
-  };
+export function AppRoutes() {
 
   return (
     <>
@@ -40,32 +34,26 @@ export function Routes() {
               <TransactionStatusProvider>
                 <AppStateProvider>
                   <AppLayout>
-                    <Switch>
-                      <Route exact path="/">
-                        <Redirect to="/accounts" />
-                      </Route>
-                      <Route exact path="/accounts" children={<AccountsView />} />
-                      <Route exact path="/accounts/streams" children={<AccountsView />} />
-                      <Route exact path="/faucet" children={<FaucetView />} />
-                      <Route exact path="/transfers" children={<TransfersView />} />
-                      <Route exact path="/payroll" children={<PayrollView />} />
-                      <Route exact path="/exchange" children={<SwapView />} />
+                    <Routes>
+                      <Route path='/' element={<Navigate replace to='/accounts' />} />
+                      <Route path="/accounts" element={<AccountsView />} />
+                      <Route path="/accounts/streams" element={<AccountsView />} />
+                      <Route path="/faucet" element={<FaucetView />} />
+                      <Route path="/transfers" element={<TransfersView />} />
+                      <Route path="/payroll" element={<PayrollView />} />
+                      <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
-                        <Route exact path="/exchange-dcas" children={<ExchangeDcasView />} />
+                        <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
                       )}
-                      <Route exact path="/wrap" children={<WrapView />} />
+                      <Route path="/wrap" element={<WrapView />} />
                       {isLocal() && (
-                        <Route exact path="/playground" children={<PlaygroundView />} />
+                        <Route path="/playground" element={<PlaygroundView />} />
                       )}
-                      <Route exact path="/custody" children={<CustodyView />} />
-                      <Route exact path="/referrals">
-                        <Redirect to="/accounts" />
-                      </Route>
-                      <Route exact path="/referrals/:address" component={ProcessReferals} />
-                      <Route exact path="/service-unavailable" component={ServiceUnavailableView} />
-                      <ProtectedRoute {...defaultProtectedRouteProps} path='/ido' component={IdoView} />
-                      <Route component={NotFoundView} />
-                    </Switch>
+                      <Route path="/ido" element={<IdoView />} />
+                      <Route path="/custody" element={<CustodyView />} />
+                      <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                      <Route path='*' element={<NotFoundView />} />
+                    </Routes>
                   </AppLayout>
                 </AppStateProvider>
               </TransactionStatusProvider>

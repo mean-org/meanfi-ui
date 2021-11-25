@@ -48,7 +48,7 @@ import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/type
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ContractDefinition } from "../../models/contract-definition";
-import { Redirect } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
@@ -60,6 +60,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const PayrollPayment = () => {
+  const navigate = useNavigate();
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -103,7 +104,6 @@ export const PayrollPayment = () => {
 
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
@@ -241,7 +241,7 @@ export const PayrollPayment = () => {
       type: "info"
     });
     setTimeout(() => {
-      setRedirect("/accounts");
+      navigate("/accounts");
     }, 100);
   };
 
@@ -913,8 +913,6 @@ export const PayrollPayment = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>

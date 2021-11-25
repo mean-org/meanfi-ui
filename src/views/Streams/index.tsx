@@ -69,7 +69,7 @@ import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
 import dateFormat from "dateformat";
 import { customLogger } from '../..';
-import { Redirect, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 
@@ -77,6 +77,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const Streams = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
@@ -112,7 +113,6 @@ export const Streams = () => {
     startFetchTxSignatureInfo,
   } = useContext(TransactionStatusContext);
 
-  const [redirect, setRedirect] = useState<string | null>(null);
   const { t } = useTranslation('common');
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -156,7 +156,7 @@ export const Streams = () => {
   useEffect(() => {
     if (!lastSentTxStatus && fetchTxInfoStatus === "fetched") {
       if (!streamList || streamList.length === 0) {
-        setRedirect("/accounts");
+        navigate("/accounts");
       }
     }
   }, [
@@ -164,7 +164,8 @@ export const Streams = () => {
     loadingStreams,
     lastSentTxStatus,
     fetchTxInfoStatus,
-    loadingStreamActivity
+    loadingStreamActivity,
+    navigate
   ]);
 
   // Live data calculation
@@ -361,7 +362,7 @@ export const Streams = () => {
 
   const onActivateContractScreen = () => {
     setCustomStreamDocked(false);
-    setRedirect("/transfers");
+    navigate("/transfers");
   };
 
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
@@ -2292,7 +2293,6 @@ export const Streams = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
       <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
@@ -2306,7 +2306,7 @@ export const Streams = () => {
                       shape="circle"
                       size="middle"
                       icon={<ArrowLeftOutlined />}
-                      onClick={() => setRedirect('/accounts')}
+                      onClick={() => navigate('/accounts')}
                     />
                   </Tooltip>
                 </span>
