@@ -367,7 +367,12 @@
 		"back-to-treasuries-cta": "Back to Treasuries",
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
 		"treasury-detail": {
-			"no-treasury-selected": "Please select or lookup a treasury to view details"
+			"no-treasury-selected": "Please select or lookup a treasury to view details",
+			"treasury-name-label": "Treasury name",
+			"treasury-address-label": "Address",
+			"funds-left-in-treasury": "Funds left in the treasury",
+			"associated-token": "Associated Token",
+			"number-of-streams": "Number of streams"
 		},
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",

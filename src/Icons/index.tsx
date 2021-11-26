@@ -37,6 +37,7 @@ export { IconShareBox } from "./IconShareBox";
 export { IconShield } from "./IconShield";
 export { IconSolana } from "./IconSolana";
 export { IconSort } from "./IconSort";
+export { IconStream } from "./IconStream";
 export { IconSun } from "./IconSun";
 export { IconSwapFlip } from "./IconSwapFlip";
 export { IconTelegram } from "./IconTelegram";
