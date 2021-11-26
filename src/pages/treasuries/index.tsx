@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useMemo } from 'react';
 import {
-  LoadingOutlined,
+  LoadingOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { Connection } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -14,7 +14,7 @@ import {
   formatThousands,
   shortenAddress
 } from '../../utils/utils';
-import { Empty, Spin, Tooltip } from 'antd';
+import { Button, Empty, Spin, Tooltip } from 'antd';
 import { consoleOut, copyText, delay } from '../../utils/ui';
 import {
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
@@ -25,7 +25,9 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconExternalLink } from '../../Icons';
+import { IconExternalLink, IconRefresh } from '../../Icons';
+import { OpenTreasuryModal } from '../../components/OpenTreasuryModal';
+import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -62,6 +64,9 @@ export const TreasuriesView = () => {
   const [selectedTreasury, setSelectedTreasury] = useState<TreasuryInfo | undefined>(undefined);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
+  const [customStreamDocked, setCustomStreamDocked] = useState(false);
+  const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
+  const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
 
   // const [accountAddressInput, setAccountAddressInput] = useState<string>('');
 
@@ -74,6 +79,31 @@ export const TreasuriesView = () => {
     disableRetryOnRateLimit: true
   }), [
     connectionConfig.endpoint
+  ]);
+
+  const getTreasuryStreams = useCallback((treasuryId: string) => {
+    if (!connected || !treasuryId) {
+      return [];
+    }
+
+    if (!loadingStreamActivity) {
+      setLoadingStreamActivity(true);
+
+      delay(800)
+        .then(() => {
+          consoleOut('treasuryStreams:', [], 'blue');
+          setTreasuryStreams([]);
+          setLoadingStreamActivity(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setTreasuryStreams([]);
+          setLoadingStreamActivity(false);
+        });
+    }
+  }, [
+    connected,
+    loadingStreamActivity
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
@@ -137,6 +167,7 @@ export const TreasuriesView = () => {
             consoleOut('selectedTreasury:', item, 'blue');
             if (item) {
               setSelectedTreasury(item);
+              getTreasuryStreams(item.id);
             }
           } else {
             setSelectedTreasury(undefined);
@@ -153,8 +184,51 @@ export const TreasuriesView = () => {
     selectedTreasury,
     loadingTreasuries,
     fetchTxInfoStatus,
+    getTreasuryStreams,
     clearTransactionStatusContext,
   ]);
+
+  /*
+  const openTreasuryById = async (treasuryId: string) => {
+    let treasuryPublicKey: PublicKey;
+    try {
+      treasuryPublicKey = new PublicKey(treasuryId);
+      try {
+        const detail = await ms.getStream(treasuryPublicKey);
+        consoleOut('customStream', detail);
+        if (detail) {
+          setStreamDetail(detail);
+          setStreamList([detail]);
+          getStreamActivity(treasuryId);
+          setCustomStreamDocked(true);
+          notify({
+            description: t('notifications.success-loading-stream-message', {treasuryId: shortenAddress(treasuryId, 10)}),
+            type: "success"
+          });
+        } else {
+          notify({
+            message: t('notifications.error-title'),
+            description: t('notifications.error-loading-streamid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
+            type: "error"
+          });
+        }
+      } catch (error) {
+        console.error('customStream', error);
+        notify({
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-streamid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
+          type: "error"
+        });
+      }
+    } catch (error) {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('notifications.invalid-publickey-message'),
+        type: "error"
+      });
+    }
+  }
+  */
 
   // Load treasuries once per page access
   useEffect(() => {
@@ -180,6 +254,7 @@ export const TreasuriesView = () => {
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
+        setCustomStreamDocked(false);
         setSelectedTreasury(undefined);
       }
     }
@@ -229,11 +304,11 @@ export const TreasuriesView = () => {
     setDtailsPanelOpen
   ]);
 
-  // Streams refresh timeout
+  // Treasury list refresh timeout
   useEffect(() => {
     let timer: any;
 
-    if (publicKey && treasuriesLoaded) {
+    if (publicKey && treasuriesLoaded && !customStreamDocked) {
       timer = setInterval(() => {
         consoleOut(`Refreshing treasuries past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
         refreshTreasuries(false);
@@ -244,6 +319,7 @@ export const TreasuriesView = () => {
   }, [
     publicKey,
     treasuriesLoaded,
+    customStreamDocked,
     refreshTreasuries
   ]);
 
@@ -270,23 +346,45 @@ export const TreasuriesView = () => {
     refreshTreasuries,
   ]);
 
+  // Open treasury modal
+  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
+  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
+  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
+
+  const onAcceptOpenTreasury = (e: any) => {
+    // TODO: Implement openTreasuryById
+    // openTreasuryById(e);
+    closeOpenTreasuryModal();
+  };
+
   const onRefreshTreasuriesClick = () => {
     refreshTreasuries(false);
+    setCustomStreamDocked(false);
   };
+
+  const onCancelCustomTreasuryClick = () => {
+    setCustomStreamDocked(false);
+    refreshTreasuries(true);
+  }
 
   const onCopyTreasuryAddress = (data: any) => {
     if (copyText(data.toString())) {
       notify({
-        description: t('notifications.streamid-copied-message'),
+        description: t('notifications.treasuryid-copied-message'),
         type: "info"
       });
     } else {
       notify({
-        description: t('notifications.streamid-not-copied-message'),
+        description: t('notifications.treasuryid-not-copied-message'),
         type: "error"
       });
     }
   }
+
+  const onCreateTreasuryClick = () => {
+    setCustomStreamDocked(false);
+    // TODO: present treasury create form
+  };
 
   const isCreating = (): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
@@ -317,7 +415,7 @@ export const TreasuriesView = () => {
         };
         return (
           <div key={`${index + 50}`} onClick={onStreamClick}
-            className={`transaction-list-row`}>
+            className={`transaction-list-row ${selectedTreasury && selectedTreasury.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
             </div>
@@ -341,8 +439,8 @@ export const TreasuriesView = () => {
       ) : (
         <div className="h-100 flex-center">
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-          ? t('streams.stream-list.no-streams')
-          : t('streams.stream-list.not-connected')}</p>} />
+          ? t('treasuries.treasury-list.no-treasuries')
+          : t('treasuries.treasury-list.not-connected')}</p>} />
         </div>
       )}
       </>
@@ -361,14 +459,19 @@ export const TreasuriesView = () => {
 
             <div className="meanfi-two-panel-left">
               <div className="meanfi-panel-heading">
-                <span className="title">{t('assets.screen-title')}</span>
-                <Tooltip placement="bottom" title={t('account-area.streams-tooltip')}>
+                <span className="title">{t('treasuries.screen-title')}</span>
+                <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
                   <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
-                    <span className="transaction-legend">
-                      <span className="incoming-transactions-amout">{formatThousands(treasuryList.length)}</span>
-                      <span className="ml-1">Treasuries</span>
-                    </span>
+                    {customStreamDocked ? (
+                      <span className="transaction-legend neutral">
+                        <IconRefresh className="mean-svg-icons"/>
+                      </span>
+                    ) : (
+                      <span className="transaction-legend">
+                        <span className="incoming-transactions-amout">({formatThousands(treasuryList.length)})</span>
+                      </span>
+                    )}
                   </div>
                 </Tooltip>
               </div>
@@ -378,11 +481,51 @@ export const TreasuriesView = () => {
                     {renderTreasuryList}
                   </Spin>
                 </div>
+                <div className="bottom-ctas">
+                  {customStreamDocked ? (
+                    <div className="create-stream">
+                      <Button
+                        block
+                        type="primary"
+                        shape="round"
+                        size="small"
+                        onClick={onCancelCustomTreasuryClick}>
+                        {t('treasuries.back-to-treasuries-cta')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="create-stream">
+                      <Button
+                        block
+                        type="primary"
+                        shape="round"
+                        size="small"
+                        onClick={onCreateTreasuryClick}>
+                        {t('treasuries.create-new-treasury-cta')}
+                      </Button>
+                    </div>
+                  )}
+                  {!customStreamDocked && (
+                    <div className="open-stream">
+                      <Tooltip title={t('treasuries.lookup-treasury-cta-tooltip')}>
+                        <Button
+                          shape="round"
+                          type="text"
+                          size="small"
+                          className="ant-btn-shaded"
+                          onClick={showOpenTreasuryModal}
+                          icon={<SearchOutlined />}>
+                        </Button>
+                      </Tooltip>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
 
             <div className="meanfi-two-panel-right">
-              <div className="meanfi-panel-heading"><span className="title">{t('assets.history-panel-title')}</span></div>
+              <div className="meanfi-panel-heading"><span className="title">{t('treasuries.treasury-detail-heading')}</span></div>
 
               <div className="inner-container">
                 {connected && selectedTreasury ? (
@@ -405,14 +548,13 @@ export const TreasuriesView = () => {
                   ) : (
                     <div className="h-100 flex-center">
                       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-                        ? t('streams.stream-detail.no-stream')
-                        : t('streams.stream-list.not-connected')}</p>} />
+                        ? t('treasuries.treasury-detail.no-treasury-selected')
+                        : t('treasuries.treasury-list.not-connected')}</p>} />
                     </div>
                   )}
                   </>
                 )}
               </div>
-
 
             </div>
 
@@ -421,6 +563,12 @@ export const TreasuriesView = () => {
         </div>
 
       </div>
+
+      <OpenTreasuryModal
+        isVisible={isOpenTreasuryModalVisible}
+        handleOk={onAcceptOpenTreasury}
+        handleClose={closeOpenTreasuryModal}
+      />
 
       <PreFooter />
     </>

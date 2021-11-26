@@ -263,6 +263,8 @@
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "A conta de transferência foi copiada com sucesso para el clipboard",
+		"treasuryid-copied-message": "Treasury address successfully copied to clipboard",
+		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"streamid-not-copied-message": "Não foi possível copiar o endereço de transferência",
 		"success-account-funded-message": "Conta financiada",
 		"success-loading-stream-message": "A transferência foi carregada com o ID {{streamId}}",
@@ -356,6 +358,22 @@
 			"title-pending-to": "Pendente de execução",
 			"title-receiving-from": "Recebendo de",
 			"title-sending-to": "Enviando para"
+		}
+	},
+	"treasuries": {
+		"screen-title": "Treasuries",
+		"refresh-tooltip": "Click to refresh the list of treasuries",
+		"treasury-detail-heading": "Treasury details",
+		"create-new-treasury-cta": "Create treasury",
+		"back-to-treasuries-cta": "Back to Treasuries",
+		"lookup-treasury-cta-tooltip": "Lookup a treasury",
+		"treasury-detail": {
+			"no-treasury-selected": "Please select or lookup a treasury to view details"
+		},
+		"treasury-list": {
+			"no-treasuries": "No treasuries available",
+			"not-connected": "Please connect your wallet to see your treasuries",
+			"total-streams-label": "streams"
 		}
 	},
 	"swap": {

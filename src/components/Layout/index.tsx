@@ -164,7 +164,6 @@ export const AppLayout = React.memo((props: any) => {
         }
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         setStreamList([]);
         refreshTokenBalance();
