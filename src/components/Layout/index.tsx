@@ -61,6 +61,7 @@ export const AppLayout = React.memo((props: any) => {
 
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
+    window.localStorage.removeItem('walletProvider');
   }
 
   const getPlatform = (): string => {

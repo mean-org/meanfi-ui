@@ -213,9 +213,6 @@ export const IdoView = () => {
 
   const renderRegionAcknowledgement = (
     <>
-      <div className="ant-image ido-launch-image">
-        <img className="ant-image-img" alt="IDO Launch" src="/assets/launch.png" />
-      </div>
       <div className="text-center px-5 mt-3">
         <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
       </div>
