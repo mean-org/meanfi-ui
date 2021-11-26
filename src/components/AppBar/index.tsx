@@ -16,6 +16,7 @@ import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
 import { CustomCSSProps } from '../../utils/css-custom-props';
 import { useOnlineStatus } from '../../contexts/online-status';
+import { isLocal } from '../../utils/ui';
 
 const { SubMenu } = Menu;
 
@@ -144,10 +145,15 @@ export const AppBar = (props: {
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
       </Menu.Item> */}
-      {publicKey && ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58()) && (
+      {(isLocal() || (publicKey && ALLOWED_ADDRESSES_LIST.some(a => publicKey.toBase58() === a))) && (
+        <>
         <Menu.Item key="/ido">
           <Link to="/ido">IDO</Link>
         </Menu.Item>
+        <Menu.Item key="/treasuries">
+          <Link to="/treasuries">Treasuries</Link>
+        </Menu.Item>
+        </>
       )}
     </Menu>
   );
@@ -253,10 +259,15 @@ export const AppBar = (props: {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li> */}
-              {publicKey && ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58()) && (
+              {(isLocal() || (publicKey && ALLOWED_ADDRESSES_LIST.some(a => publicKey.toBase58() === a))) && (
+                <>
                 <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
                   <Link to="/ido">IDO</Link>
                 </li>
+                <li key="/treasuries" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
+                  <Link to="/treasuries">Treasuries</Link>
+                </li>
+                </>
               )}
             </ul>
           </div>

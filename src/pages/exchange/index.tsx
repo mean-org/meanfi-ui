@@ -76,7 +76,10 @@ export const SwapView = () => {
       }
     })();
     return () => { }
-  }, [cachedRpc]);
+  }, [
+    cachedRpc,
+    navigate,
+  ]);
 
   const connection = useMemo(() => new Connection(mainnetRpc ? mainnetRpc.httpProvider : cachedRpc.httpProvider, "confirmed"),
     [cachedRpc.httpProvider, mainnetRpc]);

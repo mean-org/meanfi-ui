@@ -15,6 +15,7 @@ import {
   PlaygroundView,
   SwapView,
   TransfersView,
+  TreasuriesView,
   WrapView
 } from "./pages";
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -40,6 +41,7 @@ export function AppRoutes() {
                       <Route path="/accounts/streams" element={<AccountsView />} />
                       <Route path="/faucet" element={<FaucetView />} />
                       <Route path="/transfers" element={<TransfersView />} />
+                      <Route path="/treasuries" element={<TreasuriesView />} />
                       <Route path="/payroll" element={<PayrollView />} />
                       <Route path="/exchange" element={<SwapView />} />
                       {(isProd() || isLocal()) && (
