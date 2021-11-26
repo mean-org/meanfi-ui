@@ -26,7 +26,6 @@
 		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Endereço da conta",
 		"account-address-placeholder": "Digite o endereço da sua conta",
-		"account-address-validation": "Formato do endereço inválido",
 		"back-to-assets-cta": "Voltar à lista de bens",
 		"create-account-help-link": "Saiba mais sobre as carteiras",
 		"create-account-help-post": "abrir uma conta",
@@ -374,6 +373,14 @@
 			"no-treasuries": "No treasuries available",
 			"not-connected": "Please connect your wallet to see your treasuries",
 			"total-streams-label": "streams"
+		},
+		"open-treasury": {
+			"modal-title": "Open treasury",
+			"treasuryid-input-label": "Treasury id to open",
+			"treasuryid-input-empty": "Enter Treasury ID",
+			"treasuryid-open-cta": "Open stream",
+			"treasuryid-placeholder": "Treasury ID created by Mean Finance",
+			"main-cta": "Open"
 		}
 	},
 	"swap": {
@@ -504,6 +511,9 @@
 			"you-receive": "Tu recebes"
 		},
 		"validation": {
+			"invalid-solana-address": "Invalid solana address",
+			"address-validation": "Formato do endereço inválido",
+			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como id do tesouro",
 			"amount-high": "O valor excede o seu saldo",
 			"amount-low": "Saldo da conta insuficiente",
 			"amount-lt-fee": "O valor deve ser maior do que a taxa de transação",

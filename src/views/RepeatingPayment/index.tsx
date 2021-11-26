@@ -921,7 +921,7 @@ export const RepeatingPayment = () => {
           {
             recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="form-field-error">
-                {t("assets.account-address-validation")}
+                {t("transactions.validation.address-validation")}
               </span>
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">

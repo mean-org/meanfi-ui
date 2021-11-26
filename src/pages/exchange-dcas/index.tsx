@@ -1413,7 +1413,7 @@ export const ExchangeDcasView = () => {
       {selectedDdca && (
         <div className="stream-share-ctas">
           <span
-            className="copy-cta overflow-ellipsis-middle"
+            className="copy-cta"
             onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}
           >
             {selectedDdca.ddcaAccountAddress}

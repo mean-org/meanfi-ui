@@ -68,12 +68,6 @@ export const TreasuriesView = () => {
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(false);
   const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
 
-  // const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-
-  // const triggerWindowResize = () => {
-  //   window.dispatchEvent(new Event('resize'));
-  // }
-
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
@@ -264,34 +258,6 @@ export const TreasuriesView = () => {
     publicKey,
   ]);
 
-  // Window resize listener
-  // Use only if this component handles address input
-  // useEffect(() => {
-  //   const resizeListener = () => {
-  //     const NUM_CHARS = 4;
-  //     const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
-  //     if (isValidAddress(accountAddressInput)) {
-  //       for (let i = 0; i < ellipsisElements.length; ++i){
-  //         const e = ellipsisElements[i] as HTMLElement;
-  //         if (e.offsetWidth < e.scrollWidth){
-  //           const text = e.textContent;
-  //           e.dataset.tail = text?.slice(text.length - NUM_CHARS);
-  //         }
-  //       }
-  //     } else {
-  //       if (ellipsisElements?.length) {
-  //         const e = ellipsisElements[0] as HTMLElement;
-  //         e.dataset.tail = '';
-  //       }
-  //     }
-  //   };
-  //   resizeListener();
-  //   window.addEventListener('resize', resizeListener);
-  //   return () => {
-  //     window.removeEventListener('resize', resizeListener);
-  //   }
-  // }, [accountAddressInput]);
-
   // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
@@ -351,15 +317,16 @@ export const TreasuriesView = () => {
   const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
   const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
 
-  const onAcceptOpenTreasury = (e: any) => {
-    // TODO: Implement openTreasuryById
-    // openTreasuryById(e);
-    closeOpenTreasuryModal();
-  };
-
   const onRefreshTreasuriesClick = () => {
     refreshTreasuries(false);
     setCustomStreamDocked(false);
+  };
+
+  const onAcceptOpenTreasury = (e: any) => {
+    closeOpenTreasuryModal();
+    consoleOut('treasury id:', e, 'blue');
+    // TODO: Implement openTreasuryById
+    // openTreasuryById(e);
   };
 
   const onCancelCustomTreasuryClick = () => {
@@ -532,7 +499,7 @@ export const TreasuriesView = () => {
                   <>
                     {renderTreasuryMeta}
                     <div className="stream-share-ctas">
-                      <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyTreasuryAddress(selectedTreasury.id)}>TREASURY ID: {selectedTreasury.id}</span>
+                      <span className="copy-cta" onClick={() => onCopyTreasuryAddress(selectedTreasury.id)}>TREASURY ID: {selectedTreasury.id}</span>
                       <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
                         href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedTreasury.id}${getSolanaExplorerClusterParam()}`}>
                         <IconExternalLink className="mean-svg-icons" />

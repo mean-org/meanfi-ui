@@ -51,6 +51,7 @@
   --color-secondary-alpha-15: rgba(0, 0, 0, 0.15);
   --color-secondary-alpha-20: rgba(0, 0, 0, 0.20);
   --color-secondary-alpha-25: rgba(0, 0, 0, 0.25);
+  --color-secondary-alpha-30: rgba(0, 0, 0, 0.30);
   --color-secondary-alpha-40: rgba(0, 0, 0, 0.40);
   --color-secondary-alpha-50: rgba(0, 0, 0, 0.50);
   --color-secondary-alpha-60: rgba(0, 0, 0, 0.60);
@@ -133,6 +134,7 @@
   --color-secondary-alpha-15: rgba(255, 255, 255, 0.15);
   --color-secondary-alpha-20: rgba(255, 255, 255, 0.20);
   --color-secondary-alpha-25: rgba(255, 255, 255, 0.25);
+  --color-secondary-alpha-30: rgba(255, 255, 255, 0.30);
   --color-secondary-alpha-40: rgba(255, 255, 255, 0.40);
   --color-secondary-alpha-50: rgba(255, 255, 255, 0.50);
   --color-secondary-alpha-60: rgba(255, 255, 255, 0.60);
@@ -2207,6 +2209,9 @@ main section {
   background-color: var(--color-wells);
   padding: 12px 15px;
   margin-bottom: 24px;
+  &.fixed-height {
+    height: 64px;
+  }
   &.disabled {
     pointer-events: none;
     opacity: 0.6;
@@ -2420,6 +2425,15 @@ main section {
   line-height: 1rem;
   color: var(--color-orange-red);
   margin: 4px 0 -4px 0;
+}
+.form-field-hint {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1rem;
+  color: var(--color-secondary-alpha-30);
+  margin: 5px 0 -5px 1px;
 }
 .flat-button {
   &.change-button {

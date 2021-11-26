@@ -1956,7 +1956,7 @@ export const Streams = () => {
     </div>
     {streamDetail && (
       <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
+        <span className="copy-cta" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
           <IconExternalLink className="mean-svg-icons" />
@@ -2232,7 +2232,7 @@ export const Streams = () => {
     </div>
     {streamDetail && (
       <div className="stream-share-ctas">
-        <span className="copy-cta overflow-ellipsis-middle" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
+        <span className="copy-cta" onClick={() => onCopyStreamAddress(streamDetail.id)}>STREAM ID: {streamDetail.id}</span>
         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
            href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${streamDetail.id}${getSolanaExplorerClusterParam()}`}>
           <IconExternalLink className="mean-svg-icons" />

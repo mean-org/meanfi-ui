@@ -1457,7 +1457,7 @@ export const AccountsView = () => {
                           <span className="field-label-left">
                             {accountAddressInput && !isValidAddress(accountAddressInput) ? (
                               <span className="fg-red">
-                                {t("assets.account-address-validation")}
+                                {t("transactions.validation.address-validation")}
                               </span>
                             ) : (
                               <span>&nbsp;</span>
