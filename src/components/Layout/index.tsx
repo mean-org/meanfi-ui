@@ -137,7 +137,6 @@ export const AppLayout = React.memo((props: any) => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
           sendConnectionMetric(walletAddress);

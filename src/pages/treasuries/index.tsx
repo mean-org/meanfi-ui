@@ -48,9 +48,11 @@ export const TreasuriesView = () => {
     setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const {
+    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
+    clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
@@ -74,38 +76,84 @@ export const TreasuriesView = () => {
     connectionConfig.endpoint
   ]);
 
-  const refreshTreasuries = useCallback(async (reset = false) => {
+  const refreshTreasuries = useCallback((reset = false) => {
     if (!publicKey || loadingTreasuries) { return; }
 
-    setLoadingTreasuries(true);
+    if (!loadingTreasuries && fetchTxInfoStatus !== "fetching") {
+      setLoadingTreasuries(true);
 
-    const tsryList: TreasuryInfo[] = [
-      {
-        id: '6pzcFzUyCXDLNtVESGsDipg9hPBHPpBMpkf3t7C3Fn5r',
-        createdUtc: 'Sun, 21 Nov 2021 21:02:03 GMT',
-        associatedToken: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
-        fundsLeft: 0,
-        name: '1-Year part-time associate',
-        numStreams: 0,
-        transactionSignature: '5AWgszDDYWcyDqjuZHRnU8uuPzNbNZ23VA6fZj4VfUHXNujrg24z6w9qtjPuL5yGh1mvqKQuKG5Tnb782Gr67brx'
-      },
-      {
-        id: '7DwEwuDLG2R388qJiS22cPCP24u7SMkpCqvkAbdASAq4',
-        createdUtc: 'Thu, 25 Nov 2021 04:50:49 GMT',
-        associatedToken: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
-        fundsLeft: 0,
-        name: '1-Year full-time associate',
-        numStreams: 0,
-        transactionSignature: '5AWgszDDYWcyDqjuZHRnU8uuPzNbNZ23VA6fZj4VfUHXNujrg24z6w9qtjPuL5yGh1mvqKQuKG5Tnb782Gr67brx'
-      },
-    ];
+      const signature = lastSentTxStatus || '';
+      setTimeout(() => {
+        clearTransactionStatusContext();
+      });
 
-    await delay(500);
-    setTreasuryList(tsryList);
-    setLoadingTreasuries(false);
+      const treasuries: TreasuryInfo[] = [
+        {
+          id: '6pzcFzUyCXDLNtVESGsDipg9hPBHPpBMpkf3t7C3Fn5r',
+          createdUtc: 'Sun, 21 Nov 2021 21:02:03 GMT',
+          associatedToken: '42f2yFqXh8EDCRCiEBQSweWqpTzKGa9DC8e7UjUfFNrP',
+          fundsLeft: 0,
+          name: '1-Year part-time associate',
+          numStreams: 0,
+          transactionSignature: '5AWgszDDYWcyDqjuZHRnU8uuPzNbNZ23VA6fZj4VfUHXNujrg24z6w9qtjPuL5yGh1mvqKQuKG5Tnb782Gr67brx'
+        },
+        {
+          id: '7DwEwuDLG2R388qJiS22cPCP24u7SMkpCqvkAbdASAq4',
+          createdUtc: 'Thu, 25 Nov 2021 04:50:49 GMT',
+          associatedToken: 'AbQBt9V212HpPVk64YWAApFJrRzdAdu66fwF9neYucpU',
+          fundsLeft: 0,
+          name: '1-Year full-time associate',
+          numStreams: 0,
+          transactionSignature: '5AWgszDDYWcyDqjuZHRnU8uuPzNbNZ23VA6fZj4VfUHXNujrg24z6w9qtjPuL5yGh1mvqKQuKG5Tnb782Gr67brx'
+        },
+      ];
+
+      delay(500)
+        .then(() => {
+          consoleOut('treasuries:', treasuries, 'blue');
+          let item: TreasuryInfo | undefined = undefined;
+  
+          if (treasuries.length) {
+            if (reset) {
+              if (signature) {
+                item = treasuries.find(d => d.transactionSignature === signature);
+              } else {
+                item = treasuries[0];
+              }
+            } else {
+              // Try to get current item by its original Tx signature then its id
+              if (signature) {
+                item = treasuries.find(d => d.transactionSignature === signature);
+              } else if (selectedTreasury) {
+                const itemFromServer = treasuries.find(i => i.id === selectedTreasury.id);
+                item = itemFromServer || treasuries[0];
+              } else {
+                item = treasuries[0];
+              }
+            }
+            if (!item) {
+              item = JSON.parse(JSON.stringify(treasuries[0]));
+            }
+            consoleOut('selectedTreasury:', item, 'blue');
+            if (item) {
+              setSelectedTreasury(item);
+            }
+          } else {
+            setSelectedTreasury(undefined);
+          }
+  
+          setTreasuryList(treasuries);
+          setLoadingTreasuries(false);
+        });
+    }
+
   }, [
     publicKey,
-    loadingTreasuries
+    lastSentTxStatus,
+    selectedTreasury,
+    loadingTreasuries,
+    fetchTxInfoStatus,
+    clearTransactionStatusContext,
   ]);
 
   // Load treasuries once per page access
@@ -131,6 +179,8 @@ export const TreasuriesView = () => {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
+        setTreasuryList([]);
+        setSelectedTreasury(undefined);
       }
     }
   }, [
