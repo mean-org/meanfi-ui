@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-export const OpenStreamModal = (props: {
+export const StreamOpenModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;

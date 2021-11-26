@@ -27,9 +27,10 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconExternalLink, IconRefresh, IconShare, IconStream } from '../../Icons';
-import { OpenTreasuryModal } from '../../components/OpenTreasuryModal';
+import { IconBank, IconExternalLink, IconRefresh, IconStream } from '../../Icons';
+import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -315,27 +316,14 @@ export const TreasuriesView = () => {
     refreshTreasuries,
   ]);
 
-  // Open treasury modal
-  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
-  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
-  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
+  ////////////////
+  //   Events   //
+  ////////////////
 
   const onRefreshTreasuriesClick = () => {
     refreshTreasuries(false);
     setCustomStreamDocked(false);
   };
-
-  const onAcceptOpenTreasury = (e: any) => {
-    closeOpenTreasuryModal();
-    consoleOut('treasury id:', e, 'blue');
-    // TODO: Implement openTreasuryById
-    // openTreasuryById(e);
-  };
-
-  const onCancelCustomTreasuryClick = () => {
-    setCustomStreamDocked(false);
-    refreshTreasuries(true);
-  }
 
   const onCopyTreasuryAddress = (data: any) => {
     if (copyText(data.toString())) {
@@ -351,9 +339,37 @@ export const TreasuriesView = () => {
     }
   }
 
+  // Open treasury modal
+  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
+  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
+  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
+
+  const onAcceptOpenTreasury = (e: any) => {
+    closeOpenTreasuryModal();
+    consoleOut('treasury id:', e, 'blue');
+    // TODO: Implement openTreasuryById
+    // openTreasuryById(e);
+  };
+
+  const onCancelCustomTreasuryClick = () => {
+    setCustomStreamDocked(false);
+    refreshTreasuries(true);
+  }
+
   const onCreateTreasuryClick = () => {
     setCustomStreamDocked(false);
-    // TODO: present treasury create form
+    showCreateTreasuryModal();
+  };
+
+  // Create treasury modal
+  const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
+  const showCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(true), []);
+  const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
+
+  const onAcceptCreateTreasury = (e: any) => {
+    closeCreateTreasuryModal();
+    consoleOut('treasury name:', e, 'blue');
+    // TODO: Implement onExecuteCreateTreasuryTx
   };
 
   const isCreating = (): boolean => {
@@ -367,6 +383,10 @@ export const TreasuriesView = () => {
   //           ? true
   //           : false;
   // }
+
+  ///////////////
+  // Rendering //
+  ///////////////
 
   const renderTreasuryMeta = () => {
     const token = tokenList.find(t => t.address === selectedTreasury?.associatedToken);
@@ -432,7 +452,7 @@ export const TreasuriesView = () => {
               </div>
   
               {/* Funds left in the treasury */}
-              <div className="mb-3">
+              <div className="mb-2">
                 <div className="info-label text-truncate">
                   {t('treasuries.treasury-detail.funds-left-in-treasury')}
                 </div>
@@ -539,6 +559,7 @@ export const TreasuriesView = () => {
                         type="primary"
                         shape="round"
                         size="small"
+                        disabled={!connected}
                         onClick={onCancelCustomTreasuryClick}>
                         {t('treasuries.back-to-treasuries-cta')}
                       </Button>
@@ -550,12 +571,16 @@ export const TreasuriesView = () => {
                         type="primary"
                         shape="round"
                         size="small"
+                        disabled={!connected}
                         onClick={onCreateTreasuryClick}>
-                        {t('treasuries.create-new-treasury-cta')}
+                        {connected
+                          ? t('treasuries.create-new-treasury-cta')
+                          : t('transactions.validation.not-connected')
+                        }
                       </Button>
                     </div>
                   )}
-                  {!customStreamDocked && (
+                  {(!customStreamDocked && connected) && (
                     <div className="open-stream">
                       <Tooltip title={t('treasuries.lookup-treasury-cta-tooltip')}>
                         <Button
@@ -615,10 +640,16 @@ export const TreasuriesView = () => {
 
       </div>
 
-      <OpenTreasuryModal
+      <TreasuryOpenModal
         isVisible={isOpenTreasuryModalVisible}
         handleOk={onAcceptOpenTreasury}
         handleClose={closeOpenTreasuryModal}
+      />
+
+      <TreasuryCreateModal
+        isVisible={isCreateTreasuryModalVisible}
+        handleOk={onAcceptCreateTreasury}
+        handleClose={closeCreateTreasuryModal}
       />
 
       <PreFooter />

@@ -8,7 +8,7 @@ import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 
-export const CloseStreamModal = (props: {
+export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
   tokenBalance: number;

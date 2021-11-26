@@ -12,7 +12,7 @@ import { percentage } from "../../utils/ui";
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
 
-export const WithdrawModal = (props: {
+export const StreamWithdrawModal = (props: {
   startUpData: StreamInfo | undefined;
   handleClose: any;
   handleOk: any;

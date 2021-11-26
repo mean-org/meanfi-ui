@@ -5,7 +5,7 @@ import { isValidAddress } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { useWallet } from '../../contexts/wallet';
 
-export const OpenTreasuryModal = (props: {
+export const TreasuryOpenModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;

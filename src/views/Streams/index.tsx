@@ -44,8 +44,8 @@ import {
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
 } from "../../utils/ui";
-import { OpenStreamModal } from '../../components/OpenStreamModal';
-import { WithdrawModal } from '../../components/WithdrawModal';
+import { StreamOpenModal } from '../../components/StreamOpenModal';
+import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
   SIMPLE_DATE_FORMAT,
   SIMPLE_DATE_TIME_FORMAT,
@@ -60,7 +60,7 @@ import { OperationType, TransactionStatus } from "../../models/enums";
 import { notify } from "../../utils/notifications";
 import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { CloseStreamModal } from "../../components/CloseStreamModal";
+import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
@@ -2409,11 +2409,11 @@ export const Streams = () => {
             )}
           </div>
         </div>
-        <OpenStreamModal
+        <StreamOpenModal
           isVisible={isOpenStreamModalVisible}
           handleOk={onAcceptOpenStream}
           handleClose={closeOpenStreamModal} />
-        <CloseStreamModal
+        <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
           transactionFees={transactionFees}
           tokenBalance={tokenBalance}
@@ -2426,7 +2426,7 @@ export const Streams = () => {
           transactionFees={transactionFees}
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal} />
-        <WithdrawModal
+        <StreamWithdrawModal
           startUpData={lastStreamDetail}
           transactionFees={transactionFees}
           isVisible={isWithdrawModalVisible}
