@@ -197,7 +197,7 @@ export const Streams = () => {
 
     const timeout = setTimeout(() => {
       refreshStreams();
-    }, 10000);
+    }, 1000);
 
     return () => {
       clearTimeout(timeout);
@@ -2350,7 +2350,6 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
-                    size="small"
                     onClick={handleCancelCustomStreamClick}>
                     {t('streams.back-to-my-streams-cta')}
                   </Button>
@@ -2361,7 +2360,6 @@ export const Streams = () => {
                     block
                     type="primary"
                     shape="round"
-                    size="small"
                     onClick={onActivateContractScreen}>
                     {t('streams.create-new-stream-cta')}
                   </Button>

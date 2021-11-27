@@ -15,7 +15,7 @@ import {
   getAmountWithSymbol,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Divider, Empty, Row, Spin, Tooltip } from 'antd';
+import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
 import { consoleOut, copyText, delay } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -249,6 +249,7 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        refreshTreasuries(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -260,6 +261,7 @@ export const TreasuriesView = () => {
     connected,
     previousWalletConnectState,
     publicKey,
+    refreshTreasuries
   ]);
 
   // Detect when entering small screen mode
@@ -388,6 +390,23 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
+  const renderCtaRow = () => {
+    return (
+      <>
+      <div className="flex-row flex-center">
+        <Space size="middle">
+          <Button type="primary" shape="round" size="small">Primary</Button>
+          <Button type="default" shape="round" size="small" disabled={true}>Default</Button>
+          <Button type="dashed" shape="round">Dashed</Button>
+          <Button type="link" shape="round">Link</Button>
+          <Button type="ghost" shape="round">Ghost</Button>
+          <Button type="text" shape="round">Text</Button>
+        </Space>
+      </div>
+      </>
+    );
+  }
+
   const renderTreasuryMeta = () => {
     const token = tokenList.find(t => t.address === selectedTreasury?.associatedToken);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -397,78 +416,76 @@ export const TreasuriesView = () => {
     return (
       <>
       {selectedTreasury && (
-        <div className="stream-details-data-wrapper vertical-scroll">
-          <Spin spinning={loadingTreasuries}>
-            <div className="stream-fields-container">
-  
-              {/* Treasury name and Number of streams */}
-              <div className="mb-3">
-                <Row>
-                  <Col span={16}>
-                    <div className="info-label">
-                      {t('treasuries.treasury-detail.treasury-name-label')}
-                    </div>
-                    <div className="transaction-detail-row">
-                      <span className="info-icon">
-                        <Identicon address={selectedTreasury.id} style={{ width: "24", display: "inline-flex" }} />
-                      </span>
-                      <span className="info-data text-truncate">
-                        {selectedTreasury.name}
-                      </span>
-                    </div>
-                  </Col>
-                  <Col span={8}>
-                    <div className="info-label text-truncate">
-                      {t('treasuries.treasury-detail.number-of-streams')}
-                    </div>
-                    <div className="transaction-detail-row">
-                      <span className="info-icon">
-                        <IconStream className="mean-svg-icons" />
-                      </span>
-                      <span className="info-data large">
-                        {formatThousands(selectedTreasury.numStreams)}
-                      </span>
-                    </div>
-                  </Col>
-                </Row>
-              </div>
-  
-              <div className="mb-3">
-                <div className="info-label">
-                  {t('treasuries.treasury-detail.associated-token')}
-                </div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    {token && token.logoURI ? (
-                      <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
-                    ) : (
-                      <Identicon address={selectedTreasury.associatedToken} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </span>
-                  <span className="info-data text-truncate">
-                    {token ? `${token.symbol} (${token.name})` : ''}
-                  </span>
-                </div>
-              </div>
-  
-              {/* Funds left in the treasury */}
-              <div className="mb-2">
-                <div className="info-label text-truncate">
-                  {t('treasuries.treasury-detail.funds-left-in-treasury')}
-                </div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <IconBank className="mean-svg-icons" />
-                  </span>
-                  <span className="info-data large">
-                    {getAmountWithSymbol(selectedTreasury.fundsLeft, selectedTreasury.associatedToken as string)}
-                  </span>
-                </div>
-              </div>
-  
+        <Spin spinning={loadingTreasuries}>
+          <div className="stream-fields-container">
+
+            {/* Treasury name and Number of streams */}
+            <div className="mb-3">
+              <Row>
+                <Col span={16}>
+                  <div className="info-label">
+                    {t('treasuries.treasury-detail.treasury-name-label')}
+                  </div>
+                  <div className="transaction-detail-row">
+                    <span className="info-icon">
+                      <Identicon address={selectedTreasury.id} style={{ width: "24", display: "inline-flex" }} />
+                    </span>
+                    <span className="info-data text-truncate">
+                      {selectedTreasury.name}
+                    </span>
+                  </div>
+                </Col>
+                <Col span={8}>
+                  <div className="info-label text-truncate">
+                    {t('treasuries.treasury-detail.number-of-streams')}
+                  </div>
+                  <div className="transaction-detail-row">
+                    <span className="info-icon">
+                      <IconStream className="mean-svg-icons" />
+                    </span>
+                    <span className="info-data large">
+                      {formatThousands(selectedTreasury.numStreams)}
+                    </span>
+                  </div>
+                </Col>
+              </Row>
             </div>
-          </Spin>
-        </div>
+
+            <div className="mb-3">
+              <div className="info-label">
+                {t('treasuries.treasury-detail.associated-token')}
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  {token && token.logoURI ? (
+                    <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
+                  ) : (
+                    <Identicon address={selectedTreasury.associatedToken} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </span>
+                <span className="info-data text-truncate">
+                  {token ? `${token.symbol} (${token.name})` : ''}
+                </span>
+              </div>
+            </div>
+
+            {/* Funds left in the treasury */}
+            <div className="mb-2">
+              <div className="info-label text-truncate">
+                {t('treasuries.treasury-detail.funds-left-in-treasury')}
+              </div>
+              <div className="transaction-detail-row">
+                <span className="info-icon">
+                  <IconBank className="mean-svg-icons" />
+                </span>
+                <span className="info-data large">
+                  {getAmountWithSymbol(selectedTreasury.fundsLeft, selectedTreasury.associatedToken as string)}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </Spin>
       )}
       </>
     );
@@ -558,7 +575,6 @@ export const TreasuriesView = () => {
                         block
                         type="primary"
                         shape="round"
-                        size="small"
                         disabled={!connected}
                         onClick={onCancelCustomTreasuryClick}>
                         {t('treasuries.back-to-treasuries-cta')}
@@ -570,7 +586,6 @@ export const TreasuriesView = () => {
                         block
                         type="primary"
                         shape="round"
-                        size="small"
                         disabled={!connected}
                         onClick={onCreateTreasuryClick}>
                         {connected
@@ -605,8 +620,11 @@ export const TreasuriesView = () => {
               <div className="inner-container">
                 {connected && selectedTreasury ? (
                   <>
-                    {renderTreasuryMeta()}
-                    <Divider className="activity-divider" plain></Divider>
+                    <div className="stream-details-data-wrapper vertical-scroll">
+                      {renderTreasuryMeta()}
+                      <Divider className="activity-divider" plain></Divider>
+                      {renderCtaRow()}
+                    </div>
                     <div className="stream-share-ctas">
                       <span className="copy-cta" onClick={() => onCopyTreasuryAddress(selectedTreasury.id)}>TREASURY ID: {selectedTreasury.id}</span>
                       <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
