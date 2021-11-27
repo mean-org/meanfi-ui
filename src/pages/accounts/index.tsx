@@ -659,7 +659,6 @@ export const AccountsView = () => {
         setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
-        startSwitch();
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setAddAccountPanelOpen(false);

@@ -161,10 +161,6 @@ export const AppLayout = React.memo((props: any) => {
           // Let the AppState know which wallet address is connected and save it
           setAccountAddress(walletAddress);
           setSelectedAsset(undefined);
-
-          if (location.pathname === '/accounts/streams') {
-            refreshStreamList(true);
-          }
         }
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
