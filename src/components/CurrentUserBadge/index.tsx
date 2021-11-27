@@ -98,7 +98,7 @@ export const CurrentUserBadge = () => {
                 shape="round"
                 size="small"
                 type="ghost"
-                className="mean-icon-button"
+                className="mean-icon-button thin-stroke extra-small"
                 onClick={switchWallet}>
                 <IconWallet className="mean-svg-icons" />
                 <span className="icon-button-text">{getUiTranslation('wallet-change')}</span>
@@ -122,7 +122,7 @@ export const CurrentUserBadge = () => {
                 shape="round"
                 size="small"
                 type="ghost"
-                className="mean-icon-button"
+                className="mean-icon-button thin-stroke extra-small"
                 onClick={onDisconnectWallet}>
                 <IconLogout className="mean-svg-icons" />
                 <span className="icon-button-text">{getUiTranslation('disconnect')}</span>

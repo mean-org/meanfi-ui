@@ -393,14 +393,18 @@ export const TreasuriesView = () => {
   const renderCtaRow = () => {
     return (
       <>
-      <div className="flex-row flex-center">
+      <div className="flex-row flex-center mb-2">
         <Space size="middle">
           <Button type="primary" shape="round" size="small">Primary</Button>
-          <Button type="default" shape="round" size="small" disabled={true}>Default</Button>
-          <Button type="dashed" shape="round">Dashed</Button>
-          <Button type="link" shape="round">Link</Button>
-          <Button type="ghost" shape="round">Ghost</Button>
-          <Button type="text" shape="round">Text</Button>
+          <Button type="default" shape="round" size="small">Default</Button>
+          <Button type="ghost"   shape="round" size="small">Ghost</Button>
+        </Space>
+      </div>
+      <div className="flex-row flex-center">
+        <Space size="middle">
+          <Button type="primary" shape="round" size="small" disabled={true}>Primary disabled</Button>
+          <Button type="default" shape="round" size="small" disabled={true}>Default disabled</Button>
+          <Button type="ghost"   shape="round" size="small" disabled={true}>Ghost disabled</Button>
         </Space>
       </div>
       </>

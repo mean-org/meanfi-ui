@@ -1081,11 +1081,11 @@ export const AccountsView = () => {
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button className="secondary-button" shape="round" size="middle" type="default"
+          <Button shape="round" type="ghost"
                   onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
           {selectedAsset?.publicAddress !== accountAddress && (
-            <Button className="secondary-button" shape="round" size="middle" type="default"
+            <Button shape="round" type="ghost"
                     onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
           )}
         </Space>
@@ -1191,14 +1191,14 @@ export const AccountsView = () => {
 
       <div className="container main-container">
 
-        {isLocal() && (
+        {/* {isLocal() && (
           <div className="debug-bar">
             <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
             <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
             <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
             <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
           </div>
-        )}
+        )} */}
         {/* {isLocal() && (
           <div className="debug-bar">
             {streamList && streamList.length && (
@@ -1391,6 +1391,7 @@ export const AccountsView = () => {
                       {lastTxSignature && (
                         <div className="stream-share-ctas">
                           <Button
+                            className="thin-stroke extra-small"
                             type="ghost"
                             shape="round"
                             size="small"

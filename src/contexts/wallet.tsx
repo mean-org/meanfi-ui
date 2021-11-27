@@ -283,7 +283,7 @@ export function WalletProvider({ children = null as any }) {
               <Button
                 block
                 size="large"
-                className={`wallet-provider ${item.hideOnDesktop && isDesktop ? 'hidden' : item.hideOnMobile && !isDesktop ? 'hidden' : ''}`}
+                className={`wallet-provider thin-stroke ${item.hideOnDesktop && isDesktop ? 'hidden' : item.hideOnMobile && !isDesktop ? 'hidden' : ''}`}
                 shape="round"
                 type="ghost"
                 onClick={onClick}

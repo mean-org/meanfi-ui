@@ -565,6 +565,14 @@ footer.ant-layout-footer {
   border-radius: var(--custom-border-radius);
   border: none;
   font-weight: 500;
+  &.main-cta {
+    padding: 10px 14px;
+    height: auto;
+    &.inactive {
+      cursor:not-allowed;
+      pointer-events: none;
+    }
+  }
   &.ant-btn-sm {
     height: 32px;
   }
@@ -583,46 +591,23 @@ footer.ant-layout-footer {
     background-color: var(--color-secondary-alpha-10);
   }
 }
-
-.ant-btn.ant-btn-primary.ant-btn-round.main-cta {
-  padding: 10px 14px;
-  height: auto;
-  &.inactive {
-    cursor:not-allowed;
-    pointer-events: none;
-  }
-}
-
-// Secondary rounded corners
-.secondary-button.ant-btn.ant-btn-round {
-  height: 40px;
-  border-radius: var(--custom-border-radius);
-  border-style: solid;
-  border-width: 1px;
-  color: var(--text-color);
-  background-color: var(--color-secondary-alpha-02);
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 12px;
-  &:disabled {
-    border-color: var(--color-secondary-alpha-20);
-    color: var(--color-secondary-alpha-50);
-    background-color: var(--color-secondary-alpha-05);
-  }
+.ant-btn.ant-btn-ghost.ant-btn-round.extra-small {
+  height: 24px;
+  border-radius: 24px;
 }
 .ant-btn.ant-btn-default.ant-btn-round {
-  background-color: transparent;
+  background-color: var(--color-component-background);
   color: var(--color-primary-highlight);
   height: var(--custom-control-height);
   border-color: var(--color-primary-highlight);
-  border-width: 2px;
   border-radius: var(--custom-border-radius);
+  border-width: 2px;
   line-height: 1;
+  &.thin-stroke {
+    border-width: 1px;
+  }
   &.ant-btn-sm {
     height: 32px;
-  }
-  &:hover {
-    background-color: var(--darken);
   }
   &:disabled,
   &:disabled:hover,
@@ -666,9 +651,21 @@ footer.ant-layout-footer {
 
 // Stroked
 .ant-btn.ant-btn-ghost {
+  background-color: var(--color-component-background);
   color: var(--color-secondary-alpha-70);
+  height: var(--custom-control-height);
+  border-radius: var(--custom-border-radius);
+  border-width: 2px;
+  line-height: 1;
+  &.thin-stroke {
+    border-width: 1px;
+  }
+  &.ant-btn-sm {
+    height: 32px;
+  }
   &:hover,
   &:focus {
+    background-color: var(--darken);
     color: var(--color-secondary-alpha-85) !important;
     border-color: var(--color-secondary-alpha-85) !important;
   }
@@ -776,7 +773,6 @@ footer.ant-layout-footer {
 .ant-btn.ant-btn-ghost.ant-btn-round.ant-btn-sm.mean-icon-button {
   padding: 2px 5px;
   display: inline-flex;
-  border-radius: var(--custom-border-radius);
   color: var(--color-secondary);
   border-color: var(--color-secondary);
   .mean-svg-icons {
