@@ -581,8 +581,8 @@ export const Streams = () => {
 
     const updateStats = () => {
       if (streamList && streamList.length) {
-        const incoming = streamList.filter(s => isInboundStream(s));
-        const outgoing = streamList.filter(s => !isInboundStream(s));
+        const incoming = streamList.filter(s => isInboundStream(s) && s.state !== STREAM_STATE.Ended);
+        const outgoing = streamList.filter(s => !isInboundStream(s) && s.state !== STREAM_STATE.Ended);
         const stats: StreamStats = {
           incoming: incoming.length,
           outgoing: outgoing.length

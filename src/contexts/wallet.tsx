@@ -176,7 +176,7 @@ export function WalletProvider({ children = null as any }) {
           return new (provider.adapter)(provider.adapterParams as any) as WalletAdapter;
         } else {
           return new Wallet(
-            providerName,
+            provider.url,
             endpoint
           ) as WalletAdapter;
         }
@@ -185,7 +185,6 @@ export function WalletProvider({ children = null as any }) {
     [
       provider,
       endpoint,
-      providerName,
     ]
   );
 
