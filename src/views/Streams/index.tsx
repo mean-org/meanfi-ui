@@ -1693,9 +1693,6 @@ export const Streams = () => {
 
   const renderInboundStream = (
     <>
-    <div className="stream-type-indicator">
-      <IconDownload className="mean-svg-icons incoming" />
-    </div>
     <div className="stream-details-data-wrapper vertical-scroll">
 
       <Spin spinning={loadingStreams}>
@@ -1849,7 +1846,11 @@ export const Streams = () => {
                 <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
-                    <IconUpload className="mean-svg-icons" />
+                    {streamDetail && streamDetail.escrowUnvestedAmount > 0 ? (
+                      <ArrowDownOutlined className="mean-svg-icons success bounce" />
+                    ) : (
+                      <ArrowDownOutlined className="mean-svg-icons success" />
+                    )}
                   </span>
                   {streamDetail ? (
                     <span className="info-data large">
@@ -1968,9 +1969,6 @@ export const Streams = () => {
 
   const renderOutboundStream = (
     <>
-    <div className="stream-type-indicator">
-      <IconUpload className="mean-svg-icons outgoing" />
-    </div>
     <div className="stream-details-data-wrapper vertical-scroll">
 
       <Spin spinning={loadingStreams}>
@@ -2128,7 +2126,11 @@ export const Streams = () => {
               </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
-                  <IconBank className="mean-svg-icons" />
+                  {streamDetail && streamDetail.escrowUnvestedAmount > 0 ? (
+                    <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
+                  ) : (
+                    <ArrowUpOutlined className="mean-svg-icons outgoing" />
+                  )}
                 </span>
                 {streamDetail ? (
                   <span className="info-data large">

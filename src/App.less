@@ -4032,6 +4032,9 @@ main section {
             height: 34px;
             display: flex;
             align-items: center;
+            .anticon.mean-svg-icons {
+              font-size: 1.4rem;
+            }
           }
           .info-data {
             flex: 1 1 auto;
@@ -4117,33 +4120,6 @@ main section {
           .mean-svg-icons {
             width: 16px;
             height: 16px;
-          }
-        }
-      }
-      .stream-type-indicator {
-        pointer-events: none;
-        position: absolute;
-        top: 3rem;
-        right: 6%;
-        z-index: 2;
-        .mean-svg-icons {
-          width: 7.5rem;
-          height: 7.5rem;
-          opacity: 0.35;
-          &.incoming {
-            color: var(--color-incoming-transaction);
-          }
-          &.outgoing {
-            color: var(--color-outgoing-transaction);
-          }
-          &.pending {
-            color: var(--color-pending-transaction);
-          }
-          &.ended {
-            color: var(--color-paused-transaction);
-          }
-          &.paused {
-            color: var(--color-paused-transaction);
           }
         }
       }
