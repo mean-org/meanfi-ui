@@ -1631,10 +1631,10 @@
     "@project-serum/anchor" "^0.17.0"
     "@solana/spl-token" "^0.1.8"
 
-"@mean-dao/hybrid-liquidity-ag@^1.1.23":
-  version "1.1.23"
-  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.23.tgz#09610e50e3c02a80d83f6f1466616160521b6536"
-  integrity sha512-aEcLAOWrYTadga0zj+8dXPQ2z6KqwfpjFdNM0hrAdRmYFEXFjgOduKwvGRLNuVCIthnR3GLOVCwvoj5DTXOqtA==
+"@mean-dao/hybrid-liquidity-ag@1.1.24":
+  version "1.1.24"
+  resolved "https://registry.yarnpkg.com/@mean-dao/hybrid-liquidity-ag/-/hybrid-liquidity-ag-1.1.24.tgz#e3471cfd32f75fe882e05f50ae274e176561d3ee"
+  integrity sha512-mCaJ9t9OJuKtJnFi18mtohyRIvEO8m/u8OmrnSfHrHWe8Dq2FnhatkLdy+OEpZYXSyHYskSqSmqPFDupVJlCXQ==
   dependencies:
     "@mercurial-finance/stable-swap-n-pool" "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git"
     "@orca-so/sdk" "^1.1.13"
@@ -1642,8 +1642,8 @@
     "@project-serum/serum" "^0.13.60"
     "@project-serum/sol-wallet-adapter" "^0.2.5"
     "@project-serum/tokens" "^0.0.7"
-    "@saberhq/stableswap-sdk" "^1.7.1"
-    "@saberhq/token-utils" "^1.7.1"
+    "@saberhq/stableswap-sdk" "^1.9.0"
+    "@saberhq/token-utils" "^1.9.0"
     "@solana/spl-token" "^0.1.8"
     "@solana/spl-token-registry" "^0.2"
     "@solana/spl-token-swap" "^0.1.2"
@@ -1919,7 +1919,7 @@
     tiny-invariant "^1.2.0"
     tslib "^2.3.1"
 
-"@saberhq/stableswap-sdk@^1.3.17", "@saberhq/stableswap-sdk@^1.7.1":
+"@saberhq/stableswap-sdk@^1.3.17", "@saberhq/stableswap-sdk@^1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@saberhq/stableswap-sdk/-/stableswap-sdk-1.9.0.tgz#5b24a811098afa4c414df53ab5c5a0ed677e7d44"
   integrity sha512-W9AgUb+GC36qD12I+buoQiXtLDk0lzz4pwMZBQTi9ngzLXkcmcuFZFtk6e3srgsLFhjHEkpbozDI2U16ThyU/A==
@@ -1944,7 +1944,7 @@
     tiny-invariant "^1.2.0"
     tslib "^2.3.1"
 
-"@saberhq/token-utils@^1.7.1", "@saberhq/token-utils@^1.9.0":
+"@saberhq/token-utils@^1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@saberhq/token-utils/-/token-utils-1.9.0.tgz#48b047c18080ffa491d2fb2eb65af339f0a7d33b"
   integrity sha512-9OYIq/C4ral0nGWsVYrWkXb49Y87WdOvRmuxMOQ4I4dOvweAQC2g2h3wJV1z9bb1ummGsw/TUdYmOvwkSD1b9w==

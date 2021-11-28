@@ -261,5 +261,25 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         extensions: {
           serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
         }
+    },
+    {
+        chainId: 101,
+        address: "xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW",
+        symbol: "SLIM",
+        name: "Solanium",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png",
+        extensions: { }
+    },
+    {
+        chainId: 101,
+        address: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+        symbol: "mSOL",
+        name: "Marinade staked SOL (mSOL)",
+        decimals: 9,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png",
+        extensions: {
+            serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
+        }
     }
 ];

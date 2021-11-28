@@ -690,15 +690,6 @@ export const OneTimePayment = () => {
       : 0;
   }
 
-  const infoRow = (caption: string, value: string) => {
-    return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
-    );
-  }
-
   return (
     <>
       <div className="contract-wrapper">
@@ -863,30 +854,6 @@ export const OneTimePayment = () => {
             </div>
           </div>
         </div>
-
-        {/* Info */}
-        {(selectedToken && isScheduledPayment()) && (
-          <div className="p-2 mb-2">
-            {infoRow(
-              `1 ${selectedToken.symbol}:`,
-              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.transaction-fee') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.recipient-receives') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-          </div>
-        )}
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
