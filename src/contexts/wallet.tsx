@@ -273,7 +273,7 @@ export function WalletProvider({ children = null as any }) {
                 setAutoConnect(true);
               }, 800);
               close();
-              if (!isInstalled && item.name !== WalletName.Solflare) {
+              if (!isInstalled) {
                 window.open(item.url, '_blank');
               }
             };

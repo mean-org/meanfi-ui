@@ -489,12 +489,6 @@ footer.ant-layout-footer {
     justify-content: center;
     align-items: center;
   }
-  .pre-footer-notice {
-    text-align: center;
-    .wrapper {
-      padding: 4px 1rem;
-    }
-  }
   .pre-footer-menu {
     width: 100%;
     align-items: flex-start;
@@ -596,7 +590,7 @@ footer.ant-layout-footer {
   border-radius: 24px;
 }
 .ant-btn.ant-btn-default.ant-btn-round {
-  background-color: var(--color-component-background);
+  background-color: inherit;
   color: var(--color-primary-highlight);
   height: var(--custom-control-height);
   border-color: var(--color-primary-highlight);
@@ -608,6 +602,13 @@ footer.ant-layout-footer {
   }
   &.ant-btn-sm {
     height: 32px;
+  }
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: var(--color-component-background);
+    color: var(--color-primary-highlight);
+    border-color: var(--color-primary-highlight);
   }
   &:disabled,
   &:disabled:hover,
@@ -651,7 +652,7 @@ footer.ant-layout-footer {
 
 // Stroked
 .ant-btn.ant-btn-ghost {
-  background-color: var(--color-component-background);
+  background-color: inherit;
   color: var(--color-secondary-alpha-70);
   height: var(--custom-control-height);
   border-radius: var(--custom-border-radius);
@@ -664,14 +665,11 @@ footer.ant-layout-footer {
     height: 32px;
   }
   &:hover,
-  &:focus {
-    background-color: var(--darken);
+  &:focus,
+  &:active {
+    background-color: var(--color-component-background);
     color: var(--color-secondary-alpha-85) !important;
     border-color: var(--color-secondary-alpha-85) !important;
-  }
-  &:active {
-    color: inherit;
-    border-color: var(--color-primary);
   }
   &[disabled],
   &[disabled]:hover,
@@ -1650,6 +1648,11 @@ em {
 main section {
   &.content {
     padding: 4rem 0;
+    .boxed-area {
+      padding: 1rem;
+      box-shadow: none;
+      border-radius: var(--custom-control-border-radius);
+    }
   }
   &:first-of-type {
     margin-top: var(--main-navigation-bar-height);
@@ -1701,11 +1704,6 @@ main section {
     @media (min-width: 960px) {
       padding: 3rem;
     }
-  }
-  .boxed-area {
-    padding: 1rem;
-    box-shadow: none;
-    border-radius: var(--custom-control-border-radius);
   }
   em {
     font-weight: bold;
@@ -3171,6 +3169,9 @@ main section {
       border-radius: var(--custom-border-radius);
       border-style: solid;
       border-width: 2px;
+      &.thin-stroke {
+        border-width: 1px;
+      }
       color: var(--text-color);
       background-color: var(--color-secondary-alpha-02);
       display: inline-flex;

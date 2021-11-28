@@ -640,7 +640,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         clearTransactionStatusContext();
       });
 
-      ms.listStreams(publicKey, publicKey)
+      ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
         .then(streams => {
           consoleOut('Streams:', streams, 'blue');
           let item: StreamInfo | undefined;

@@ -708,14 +708,14 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const stream = new PublicKey(streamDetail.id as string);
+        const treasury = new PublicKey(streamDetail.treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addAmount);
         setAddFundsAmount(amount);
 
         const data = {
           contributor: wallet.publicKey.toBase58(),               // contributor
-          stream: stream.toBase58(),                              // stream
+          stream: treasury.toBase58(),                              // stream
           contributorMint: contributorMint.toBase58(),            // contributorMint
           amount                                                  // amount
         }
@@ -756,8 +756,7 @@ export const Streams = () => {
         // Create a transaction
         return await moneyStream.addFunds(
           wallet.publicKey,
-          stream,
-          contributorMint,                                  // contributorMint
+          treasury,
           amount
         )
         .then(value => {
@@ -1590,8 +1589,8 @@ export const Streams = () => {
 
   const getDepositAmountDisplay = (item: StreamInfo): string => {
     let value = '';
-    if (item && item.rateAmount === 0 && item.totalDeposits > 0) {
-      value += getFormattedNumberToLocale(formatAmount(item.totalDeposits, 2));
+    if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
+      value += getFormattedNumberToLocale(formatAmount(item.allocationReserved, 2));
       value += ' ';
       value += getTokenSymbol(item.associatedToken as string);
     }
@@ -1768,7 +1767,7 @@ export const Streams = () => {
                   (
                     <span className="info-data">
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.allocationReserved, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
@@ -1831,8 +1830,9 @@ export const Streams = () => {
                   </span>
                   {streamDetail ? (
                     <span className="info-data">
+                    {/* TODO: How to get totalWithdrawals on new stream version */}
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.totalWithdrawals, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.allocationCommitted - streamDetail.allocationReserved, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
@@ -2042,7 +2042,7 @@ export const Streams = () => {
                   (
                     <span className="info-data">
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.allocationReserved, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
@@ -2080,7 +2080,7 @@ export const Streams = () => {
                 {streamDetail ? (
                   <span className="info-data">
                   {streamDetail
-                    ? getAmountWithSymbol(streamDetail.totalDeposits, streamDetail.associatedToken as string)
+                    ? getAmountWithSymbol(streamDetail.allocationReserved, streamDetail.associatedToken as string)
                     : '--'}
                   </span>
                   ) : (
@@ -2260,7 +2260,7 @@ export const Streams = () => {
               {getStreamIcon(item)}
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{item.memo || getTransactionTitle(item)}</div>
+              <div className="title text-truncate">{item.streamName || getTransactionTitle(item)}</div>
               <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
             </div>
             <div className="rate-cell">

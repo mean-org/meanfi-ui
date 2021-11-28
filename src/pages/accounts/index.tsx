@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -57,7 +57,7 @@ import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 
@@ -748,18 +748,18 @@ export const AccountsView = () => {
               ? freshStream.treasurerAddress.equals(userWallet)
               : freshStream.treasurerAddress === userWallet.toBase58();
 
-      let streamBalance = 0;
-
       if (streamIsOutgoing) {
-          streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
+        if (freshStream.state !== STREAM_STATE.Ended) {
           resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+        }
       } else {
-          streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
+        if (freshStream.state !== STREAM_STATE.Ended) {
           resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        }
       }
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = getPricePerToken(asset as UserTokenAccount);
-      resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
+      resume['totalNet'] = resume['totalNet'] + (freshStream.allocationReserved || 0 * rate);
     }
 
     resume['totalAmount'] = updatedStreams.length;
@@ -800,7 +800,7 @@ export const AccountsView = () => {
         if (!loadingStreams) {
           consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
           setLoadingStreams(true);
-          ms.listStreams(publicKey, publicKey)
+          ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
             .then(streams => {
               setStreamList(streams);
               if (streams.length) {

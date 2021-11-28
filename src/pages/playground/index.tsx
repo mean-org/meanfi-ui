@@ -1,5 +1,5 @@
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
+import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Radio, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
@@ -103,7 +103,7 @@ export const PlaygroundView = () => {
     const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
     const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
     const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
-  
+
     useEffect(() => {
       if (!selectedMint) {
         setSelectedMint(userTokens[0]);
@@ -368,20 +368,47 @@ export const PlaygroundView = () => {
     <div className="text-left mb-3">
       <Space>
         <Button
-          type="primary"
+          type="default"
           shape="round"
-          size="middle"
+          size="small"
+          className="thin-stroke"
           onClick={showMessage}>
           Show custom message
         </Button>
         <Button
-          type="primary"
+          type="default"
           shape="round"
-          size="middle"
+          size="small"
+          className="thin-stroke"
           onClick={closeMessage}>
           Destroy message
         </Button>
       </Space>
+    </div>
+
+    <Divider/>
+
+    <div className="row mb-2">
+      <div className="col">
+        <Button type="primary" shape="round" size="small" className="thin-stroke">Primary</Button>
+      </div>
+      <div className="col">
+        <Button type="default" shape="round" size="small" className="thin-stroke">Default</Button>
+      </div>
+      <div className="col">
+        <Button type="ghost"   shape="round" size="small" className="thin-stroke">Ghost</Button>
+      </div>
+    </div>
+    <div className="row">
+      <div className="col">
+        <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>Primary disabled</Button>
+      </div>
+      <div className="col">
+        <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>Default disabled</Button>
+      </div>
+      <div className="col">
+        <Button type="ghost"   shape="round" size="small" className="thin-stroke" disabled={true}>Ghost disabled</Button>
+      </div>
     </div>
     </>
   );
@@ -401,26 +428,24 @@ export const PlaygroundView = () => {
 
   return (
     <>
-      <div className="solid-bg">
-        <section className="content">
-          <div className="container mt-4 flex-column flex-center">
-            <div className="boxed-area">
-              <div className="button-tabset-container">
-                <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
-                  Demo 1
-                </div>
-                <div className={`tab-button ${currentTab === "second-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("second-tab")}>
-                  Demo 2
-                </div>
-                <div className={`tab-button ${currentTab === "misc-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("misc-tab")}>
-                  Misc
-                </div>
+      <section>
+        <div className="container mt-4 flex-column flex-center">
+          <div className="boxed-area">
+            <div className="button-tabset-container">
+              <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
+                Demo 1
               </div>
-              {renderTab()}
+              <div className={`tab-button ${currentTab === "second-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("second-tab")}>
+                Demo 2
+              </div>
+              <div className={`tab-button ${currentTab === "misc-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("misc-tab")}>
+                Misc
+              </div>
             </div>
+            {renderTab()}
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <Modal
         className="mean-modal"

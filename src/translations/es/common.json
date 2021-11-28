@@ -210,7 +210,6 @@
 		"wrapped-amount": "Wrapped amount"
 	},
 	"general": {
-		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
 		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
 		"cta-finish": "Terminar",
@@ -367,6 +366,7 @@
 		"back-to-treasuries-cta": "Back to Treasuries",
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
 		"treasury-detail": {
+			"created-on": "Created on",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
 			"treasury-name-label": "Treasury name",
 			"treasury-address-label": "Address",
