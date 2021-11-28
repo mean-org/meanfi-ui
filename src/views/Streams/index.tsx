@@ -452,7 +452,7 @@ export const Streams = () => {
     publicKey
   ]);
 
-  const getTransactionTitle = (item: StreamInfo): string => {
+  const getStreamDescription = (item: StreamInfo): string => {
     let title = '';
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
 
@@ -2260,7 +2260,7 @@ export const Streams = () => {
               {getStreamIcon(item)}
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{item.streamName || getTransactionTitle(item)}</div>
+              <div className="title text-truncate">{item.streamName || getStreamDescription(item)}</div>
               <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
             </div>
             <div className="rate-cell">
