@@ -628,82 +628,83 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey) {
+    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching") {
       return [];
     }
 
-    if (!loadingStreams && fetchTxInfoStatus !== "fetching") {
-      setLoadingStreams(true);
-      consoleOut('reset =', reset, 'blue');
-      const signature = lastSentTxStatus || '';
-      setTimeout(() => {
-        clearTransactionStatusContext();
-      });
+    setLoadingStreams(true);
+    consoleOut('reset =', reset, 'blue');
+    const signature = lastSentTxStatus || '';
+    setTimeout(() => {
+      clearTransactionStatusContext();
+    });
 
-      ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-        .then(streams => {
-          consoleOut('Streams:', streams, 'blue');
-          let item: StreamInfo | undefined;
-          if (streams.length) {
-            if (reset) {
-              if (signature) {
-                item = streams.find(d => d.transactionSignature === signature);
-              } else {
-                item = streams[0];
-              }
+    ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+      .then(streams => {
+        consoleOut('Streams:', streams, 'blue');
+        let item: StreamInfo | undefined;
+        if (streams.length) {
+          if (reset) {
+            if (signature) {
+              item = streams.find(d => d.transactionSignature === signature);
             } else {
-              // Try to get current item by its original Tx signature then its id
-              if (signature) {
-                item = streams.find(d => d.transactionSignature === signature);
-              } else if (selectedStream) {
-                const itemFromServer = streams.find(i => i.id === selectedStream.id);
-                item = itemFromServer || streams[0];
-              } else {
-                item = streams[0];
-              }
-            }
-            if (!item) {
-              item = JSON.parse(JSON.stringify(streams[0]));
-            }
-            consoleOut('selectedStream:', item, 'blue');
-            if (item) {
-              updateSelectedStream(item);
-              ms.refreshStream(item, true)
-                .then(freshStream => {
-                  if (freshStream) {
-                    updateStreamDetail(freshStream);
-                    const token = getTokenByMintAddress(freshStream.associatedToken as string);
-                    setSelectedToken(token);
-                    if (!loadingStreamActivity) {
-                      setLoadingStreamActivity(true);
-                      const streamPublicKey = new PublicKey(freshStream.id as string);
-                      ms.listStreamActivity(streamPublicKey)
-                        .then(value => {
-                          consoleOut('activity:', value, 'blue');
-                          setStreamActivity(value);
-                          setLoadingStreamActivity(false);
-                        })
-                        .catch(err => {
-                          console.error(err);
-                          setStreamActivity([]);
-                          setLoadingStreamActivity(false);
-                        });
-                    }
-                  }
-                })
+              item = streams[0];
             }
           } else {
-            setStreamActivity([]);
-            updateSelectedStream(undefined);
-            updateStreamDetail(undefined);
+            // Try to get current item by its original Tx signature then its id
+            if (signature) {
+              item = streams.find(d => d.transactionSignature === signature);
+            } else if (selectedStream) {
+              const itemFromServer = streams.find(i => i.id === selectedStream.id);
+              item = itemFromServer || streams[0];
+            } else {
+              item = streams[0];
+            }
           }
-          setStreamList(streams);
-          updateLoadingStreams(false);
-        }).catch(err => {
-          console.error(err);
-          updateLoadingStreams(false);
-        });
-    }
+          if (!item) {
+            item = JSON.parse(JSON.stringify(streams[0]));
+          }
+          consoleOut('selectedStream:', item, 'blue');
+          if (item && selectedStream && item.id !== selectedStream.id) {
+            updateSelectedStream(item);
+            ms.refreshStream(item, true)
+              .then(freshStream => {
+                if (freshStream) {
+                  updateStreamDetail(freshStream);
+                  const token = getTokenByMintAddress(freshStream.associatedToken as string);
+                  setSelectedToken(token);
+                  if (!loadingStreamActivity) {
+                    setLoadingStreamActivity(true);
+                    const streamPublicKey = new PublicKey(freshStream.id as string);
+                    ms.listStreamActivity(streamPublicKey)
+                      .then(value => {
+                        consoleOut('activity:', value, 'blue');
+                        setStreamActivity(value);
+                        setLoadingStreamActivity(false);
+                      })
+                      .catch(err => {
+                        console.error(err);
+                        setStreamActivity([]);
+                        setLoadingStreamActivity(false);
+                      });
+                  }
+                }
+              })
+          } else {
+            updateStreamDetail(item);
+          }
+        } else {
+          setStreamActivity([]);
+          updateSelectedStream(undefined);
+          updateStreamDetail(undefined);
+        }
+        setStreamList(streams);
+        updateLoadingStreams(false);
+      }).catch(err => {
+        console.error(err);
+        updateLoadingStreams(false);
+      });
+  
   }, [
     ms,
     publicKey,
