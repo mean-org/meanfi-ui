@@ -641,9 +641,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
     ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
       .then(streams => {
-        consoleOut('Streams:', streams, 'blue');
-        let item: StreamInfo | undefined;
+        consoleOut('Streams:', streams, 'blue');        
         if (streams.length) {
+          let item: StreamInfo | undefined;
           if (reset) {
             if (signature) {
               item = streams.find(d => d.transactionSignature === signature);
