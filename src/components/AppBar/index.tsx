@@ -10,7 +10,7 @@ import { CurrentBalance } from "../CurrentBalance";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
-import { ALLOWED_ADDRESSES_LIST, SOLANA_WALLET_GUIDE } from '../../constants';
+import { SOLANA_WALLET_GUIDE } from '../../constants';
 import { IconExternalLink } from '../../Icons';
 import { DepositOptions } from '../DepositOptions';
 import { environment } from '../../environments/environment';
@@ -30,6 +30,7 @@ export const AppBar = (props: {
   const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
+    isWhitelisted,
     detailsPanelOpen,
     addAccountPanelOpen,
     isDepositOptionsModalVisible,
@@ -145,7 +146,8 @@ export const AppBar = (props: {
           &nbsp;<IconExternalLink className="mean-svg-icons link" />
         </a>
       </Menu.Item> */}
-      {(isLocal() || (publicKey && ALLOWED_ADDRESSES_LIST.some(a => publicKey.toBase58() === a))) && (
+      {/* TODO: Remove this limitation when releasing to the public */}
+      {(isLocal() || isWhitelisted) && (
         <>
         <Menu.Item key="/ido">
           <Link to="/ido">IDO</Link>
@@ -259,7 +261,8 @@ export const AppBar = (props: {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li> */}
-              {(isLocal() || (publicKey && ALLOWED_ADDRESSES_LIST.some(a => publicKey.toBase58() === a))) && (
+              {/* TODO: Remove this limitation when releasing to the public */}
+              {(isLocal() || isWhitelisted) && (
                 <>
                 <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
                   <Link to="/ido">IDO</Link>

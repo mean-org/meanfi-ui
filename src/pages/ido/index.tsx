@@ -45,6 +45,7 @@ export const IdoView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
 
+  // TODO: Remove when releasing to the public
   useEffect(() => {
     if (!isWhitelisted && !isLocal()) {
       navigate('/');

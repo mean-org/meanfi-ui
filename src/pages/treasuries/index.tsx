@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
-  LoadingOutlined, SearchOutlined,
+  LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -20,7 +20,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds } from '../../utils/ui';
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, isLocal, isValidAddress } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
   SIMPLE_DATE_FORMAT,
@@ -41,14 +41,20 @@ import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
 import './style.less';
+import { useNavigate } from 'react-router-dom';
+import { PerformanceCounter } from '../../utils/perf-counter';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
+const treasuryStreamsPerfCounter = new PerformanceCounter();
+const treasuryDetailPerfCounter = new PerformanceCounter();
+const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected } = useWallet();
   const {
     tokenList,
+    isWhitelisted,
     detailsPanelOpen,
     streamProgramAddress,
     previousWalletConnectState,
@@ -60,6 +66,7 @@ export const TreasuriesView = () => {
     lastSentTxOperationType,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
@@ -73,6 +80,16 @@ export const TreasuriesView = () => {
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+
+  // TODO: Remove when releasing to the public
+  useEffect(() => {
+    if (!isWhitelisted && !isLocal()) {
+      navigate('/');
+    }
+  }, [
+    isWhitelisted,
+    navigate
+  ]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -98,6 +115,7 @@ export const TreasuriesView = () => {
 
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
 
+    treasuryStreamsPerfCounter.start();
     ms.listStreams({treasury: treasuryPk })
       .then((streams) => {
         consoleOut('treasuryStreams:', streams, 'blue');
@@ -108,6 +126,10 @@ export const TreasuriesView = () => {
         console.error(err);
         setTreasuryStreams([]);
         setLoadingTreasuryStreams(false);
+      })
+      .finally(() => {
+        treasuryStreamsPerfCounter.stop();
+        consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
       });
 
   }, [
@@ -116,28 +138,69 @@ export const TreasuriesView = () => {
     loadingTreasuryStreams,
   ]);
 
-  const openTreasureById = useCallback((treasuryId: string) => {
+  const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
     if (!connection || !publicKey || !ms || loadingTreasuryDetails) { return; }
+
+    if (!isValidAddress(treasuryId)) {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('notifications.invalid-publickey-message'),
+        type: "error"
+      });
+      return;
+    }
 
     setTimeout(() => {
       setLoadingTreasuryDetails(true);
     });
 
+    treasuryDetailPerfCounter.start();
     const treasueyPk = new PublicKey(treasuryId);
     ms.getTreasury(treasueyPk)
       .then(details => {
-        consoleOut('treasuryDetails:', details, 'blue');
-        setTreasuryDetails(details);
-        setSignalRefreshTreasuryStreams(true);
+        if (details) {
+          consoleOut('treasuryDetails:', details, 'blue');
+          setSelectedTreasury(details);
+          setTreasuryDetails(details);
+          setSignalRefreshTreasuryStreams(true);
+          if (dock) {
+            setTreasuryList([details]);
+            setCustomStreamDocked(true);
+            notify({
+              description: t('notifications.success-loading-treasury-message', {treasuryId: shortenAddress(treasuryId, 10)}),
+              type: "success"
+            });
+          }
+        } else {
+          setTreasuryDetails(undefined);
+          setSelectedTreasury(undefined);
+          if (dock) {
+            notify({
+              message: t('notifications.error-title'),
+              description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
+              type: "error"
+            });
+          }
+        }
         setLoadingTreasuryDetails(false);
       })
       .catch(error => {
         console.error(error);
         setTreasuryDetails(undefined);
         setLoadingTreasuryDetails(false);
+        notify({
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
+          type: "error"
+        });
+      })
+      .finally(() => {
+        treasuryDetailPerfCounter.stop();
+        consoleOut(`getTreasury took ${(treasuryDetailPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
       });
 
   }, [
+    t,
     ms,
     publicKey,
     connection,
@@ -155,6 +218,7 @@ export const TreasuriesView = () => {
         clearTransactionStatusContext();
       });
 
+      treasuryListPerfCounter.start();
       ms.listTreasuries(publicKey)
         .then((treasuries) => {
           consoleOut('treasuries:', treasuries, 'blue');
@@ -179,7 +243,7 @@ export const TreasuriesView = () => {
             consoleOut('selectedTreasury:', item, 'blue');
             if (item) {
               setSelectedTreasury(item);
-              openTreasureById(item.id as string);
+              openTreasuryById(item.id as string);
             }
           } else {
             setSelectedTreasury(undefined);
@@ -192,6 +256,10 @@ export const TreasuriesView = () => {
         .catch(error => {
           console.error(error);
           setLoadingTreasuries(false);
+        })
+        .finally(() => {
+          treasuryListPerfCounter.stop();
+          consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
         });
     }
 
@@ -203,50 +271,8 @@ export const TreasuriesView = () => {
     loadingTreasuries,
     fetchTxInfoStatus,
     clearTransactionStatusContext,
-    openTreasureById,
+    openTreasuryById,
   ]);
-
-  /*
-  const openTreasuryById = async (treasuryId: string) => {
-    let treasuryPublicKey: PublicKey;
-    try {
-      treasuryPublicKey = new PublicKey(treasuryId);
-      try {
-        const detail = await ms.getStream(treasuryPublicKey);
-        consoleOut('customStream', detail);
-        if (detail) {
-          setStreamDetail(detail);
-          setStreamList([detail]);
-          getStreamActivity(treasuryId);
-          setCustomStreamDocked(true);
-          notify({
-            description: t('notifications.success-loading-stream-message', {treasuryId: shortenAddress(treasuryId, 10)}),
-            type: "success"
-          });
-        } else {
-          notify({
-            message: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-            type: "error"
-          });
-        }
-      } catch (error) {
-        console.error('customStream', error);
-        notify({
-          message: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-          type: "error"
-        });
-      }
-    } catch (error) {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('notifications.invalid-publickey-message'),
-        type: "error"
-      });
-    }
-  }
-  */
 
   // Load treasuries once per page access
   useEffect(() => {
@@ -493,8 +519,7 @@ export const TreasuriesView = () => {
   const onAcceptOpenTreasury = (e: any) => {
     closeOpenTreasuryModal();
     consoleOut('treasury id:', e, 'blue');
-    // TODO: Implement openTreasuryById
-    // openTreasuryById(e);
+    openTreasuryById(e, true);
   };
 
   const onCancelCustomTreasuryClick = () => {
@@ -701,7 +726,7 @@ export const TreasuriesView = () => {
         const onStreamClick = () => {
           consoleOut('selected treasury:', item, 'blue');
           setSelectedTreasury(item);
-          openTreasureById(item.id as string);
+          openTreasuryById(item.id as string);
           setDtailsPanelOpen(true);
         };
         return (
@@ -764,8 +789,16 @@ export const TreasuriesView = () => {
                   <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
                     {customStreamDocked ? (
-                      <span className="transaction-legend neutral">
-                        <IconRefresh className="mean-svg-icons"/>
+                      <span className="transaction-legend">
+                        <span className="icon-button-container">
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="small"
+                            icon={<ReloadOutlined />}
+                            onClick={() => {}}
+                          />
+                        </span>
                       </span>
                     ) : (
                       <span className="transaction-legend">
