@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -321,181 +321,176 @@ export const AccountsView = () => {
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   useEffect(() => {
-    if (!connection || !customConnection || !accountAddress || !shouldLoadTokens || !userTokens || !splTokenList) {
+    if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens.length || !splTokenList.length) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      if (connection && customConnection && accountAddress && shouldLoadTokens &&
-          userTokens && userTokens.length && splTokenList && splTokenList.length) {
-        setShouldLoadTokens(false);
-        setTokensLoaded(false);
-  
-        let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
-        const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-        const pk = new PublicKey(accountAddress);
-        let nativeBalance = 0;
 
-        // Fetch SOL balance.
-        customConnection.getBalance(pk)
-          .then(solBalance => {
-            nativeBalance = solBalance || 0;
-            meanTokensCopy[0].balance = nativeBalance / LAMPORTS_PER_SOL;
-            meanTokensCopy[0].publicAddress = accountAddress;
-            // We have the native account balance, now get the token accounts' balance
-            // but first, set all balances to zero
-            for (let index = 1; index < meanTokensCopy.length; index++) {
-              meanTokensCopy[index].balance = 0;
-            }
+      setShouldLoadTokens(false);
+      setTokensLoaded(false);
 
-            fetchAccountTokens(pk, connection.endpoint)
-              .then(accTks => {
-                if (accTks) {
-                  consoleOut('fetched accountTokens:', accTks.map(i => {
-                    return {
-                      pubAddress: i.pubkey.toBase58(),
-                      mintAddress: i.parsedInfo.mint,
-                      balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                    };
-                  }), 'blue');
+      let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+      const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
+      const pk = new PublicKey(accountAddress);
 
-                  // Group the token accounts by mint.
-                  const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
-                  const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
-                  accTks.forEach((ta) => {
-                    const key = ta.parsedInfo.mint;
-                    const info = getTokenByMintAddress(key);
-                    const updatedTa = Object.assign({}, ta, {
-                      description: info ? `${info.name} (${info.symbol})` : ''
-                    });
-                    if (groupedTokenAccounts.has(key)) {
-                      const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
-                      current.push(updatedTa);
-                    } else {
-                      groupedTokenAccounts.set(key, [updatedTa]);
-                    }
+      // Fetch SOL balance.
+      customConnection.getBalance(pk)
+        .then(solBalance => {
+          meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
+          meanTokensCopy[0].publicAddress = accountAddress;
+          meanTokensCopy.map(mt => { 
+            mt.balance = 0;
+            return mt;
+          });
+
+          fetchAccountTokens(customConnection, pk)
+            .then(accTks => {
+              if (accTks) {
+                consoleOut('fetched accountTokens:', accTks.map(i => {
+                  return {
+                    pubAddress: i.pubkey.toBase58(),
+                    mintAddress: i.parsedInfo.mint,
+                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
+                  };
+                }), 'blue');
+
+                // Group the token accounts by mint.
+                const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
+                const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
+                accTks.forEach((ta) => {
+                  const key = ta.parsedInfo.mint;
+                  const info = getTokenByMintAddress(key);
+                  const updatedTa = Object.assign({}, ta, {
+                    description: info ? `${info.name} (${info.symbol})` : ''
                   });
-                  // Keep only groups with more than 1 item
-                  groupedTokenAccounts.forEach((item, key) => {
-                    if (item.length > 1) {
-                      tokenGroups.set(key, item);
-                    }
-                  });
-                  if (tokenGroups.size > 0) {
-                    consoleOut('tokenGroups:', tokenGroups, 'blue');
-                  }
-                  // Save groups for possible further merging
-                  if (tokenGroups.size) {
-                    setTokenAccountGroups(tokenGroups);
+                  if (groupedTokenAccounts.has(key)) {
+                    const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
+                    current.push(updatedTa);
                   } else {
-                    setTokenAccountGroups(undefined);
+                    groupedTokenAccounts.set(key, [updatedTa]);
                   }
-
-                  // Update balances in the mean token list
-                  accTks.forEach(item => {
-                    let tokenIndex = 0;
-                    // Locate the token in meanTokensCopy
-                    tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                    if (tokenIndex !== -1) {
-                      // If we didn't already filled info for this associated token address
-                      if (!meanTokensCopy[tokenIndex].publicAddress) {
-                        // Add it
-                        meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                        meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                        // If we did and the publicAddress is different/new then duplicate this item with the new info
-                        const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
-                        newItem.publicAddress = item.pubkey.toBase58();
-                        newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                        meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
-                      }
-                    }
-                  });
-
-                  // Update balances in the SPL token list
-                  accTks.forEach(item => {
-                    const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                    if (tokenIndex !== -1) {
-                      splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    }
-                  });
-
-                  // Create a list containing the tokens for the user accounts not in the meanTokensCopy
-                  const intersectedList = new Array<UserTokenAccount>();
-                  accTks.forEach(item => {
-                    // Loop through the user token accounts and add the token account to the list: meanTokensCopy
-                    // If it is not already on the list (diferentiate token accounts of the same mint)
-                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                    const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
-                    if (tokenFromSplTokenList && !isTokenAccountInTheList) {
-                      intersectedList.push(tokenFromSplTokenList);
-                    }
-                  });
-                  let sortedList = intersectedList.sort((a, b) => {
-                    var nameA = a.symbol.toUpperCase();
-                    var nameB = b.symbol.toUpperCase();
-                    if (nameA < nameB) {
-                      return -1;
-                    }
-                    if (nameA > nameB) {
-                      return 1;
-                    }
-                    // names must be equal
-                    return 0;
-                  });
-                  meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
-                    item.displayIndex = index;
-                    item.isAta = await updateAtaFlag(item);
-                  });
-                  sortedList.forEach(async (item: UserTokenAccount, index: number) => {
-                    item.displayIndex = meanTokensCopy.length + index;
-                    item.isAta = await updateAtaFlag(item);
-                  });
-                  // Concatenate both lists
-                  const finalList = meanTokensCopy.concat(sortedList);
-                  consoleOut('Tokens (sorted):', finalList, 'blue');
-                  // Report in the console for debugging
-                  const tokenTable: any[] = [];
-                  finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                      pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                      mintAddress: shortenAddress(item.address, 6),
-                      symbol: item.symbol,
-                      balance: item.balance
-                    })
-                  );
-                  console.table(tokenTable);
-                  // Update the state
-                  setMeanSupportedTokens(meanTokensCopy);
-                  setExtraUserTokensSorted(sortedList);
-                  setAccountTokens(finalList);
-                  setTokensLoaded(true);
-                } else {
-                  console.error('could not get account tokens');
-                  setMeanSupportedTokens(meanTokensCopy);
-                  setAccountTokens(meanTokensCopy);
-                  setExtraUserTokensSorted([]);
-                  setTokensLoaded(true);
-                  refreshCachedRpc();
+                });
+                // Keep only groups with more than 1 item
+                groupedTokenAccounts.forEach((item, key) => {
+                  if (item.length > 1) {
+                    tokenGroups.set(key, item);
+                  }
+                });
+                if (tokenGroups.size > 0) {
+                  consoleOut('tokenGroups:', tokenGroups, 'blue');
                 }
-                // Preset the first available token
-                selectAsset(meanTokensCopy[0]);
-              })
-              .catch(error => {
-                console.error(error);
+                // Save groups for possible further merging
+                if (tokenGroups.size) {
+                  setTokenAccountGroups(tokenGroups);
+                } else {
+                  setTokenAccountGroups(undefined);
+                }
+
+                // Update balances in the mean token list
+                accTks.forEach(item => {
+                  let tokenIndex = 0;
+                  // Locate the token in meanTokensCopy
+                  tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    // If we didn't already filled info for this associated token address
+                    if (!meanTokensCopy[tokenIndex].publicAddress) {
+                      // Add it
+                      meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+                      meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+                      // If we did and the publicAddress is different/new then duplicate this item with the new info
+                      const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
+                      newItem.publicAddress = item.pubkey.toBase58();
+                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
+                    }
+                  }
+                });
+
+                // Update balances in the SPL token list
+                accTks.forEach(item => {
+                  const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+                    splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                  }
+                });
+
+                // Create a list containing the tokens for the user accounts not in the meanTokensCopy
+                const intersectedList = new Array<UserTokenAccount>();
+                accTks.forEach(item => {
+                  // Loop through the user token accounts and add the token account to the list: meanTokensCopy
+                  // If it is not already on the list (diferentiate token accounts of the same mint)
+                  const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                  const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+                  if (tokenFromSplTokenList && !isTokenAccountInTheList) {
+                    intersectedList.push(tokenFromSplTokenList);
+                  }
+                });
+                let sortedList = intersectedList.sort((a, b) => {
+                  var nameA = a.symbol.toUpperCase();
+                  var nameB = b.symbol.toUpperCase();
+                  if (nameA < nameB) {
+                    return -1;
+                  }
+                  if (nameA > nameB) {
+                    return 1;
+                  }
+                  // names must be equal
+                  return 0;
+                });
+                meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                  item.displayIndex = index;
+                  item.isAta = await updateAtaFlag(item);
+                });
+                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
+                  item.displayIndex = meanTokensCopy.length + index;
+                  item.isAta = await updateAtaFlag(item);
+                });
+                // Concatenate both lists
+                const finalList = meanTokensCopy.concat(sortedList);
+                consoleOut('Tokens (sorted):', finalList, 'blue');
+                // Report in the console for debugging
+                const tokenTable: any[] = [];
+                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                    pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                    mintAddress: shortenAddress(item.address, 6),
+                    symbol: item.symbol,
+                    balance: item.balance
+                  })
+                );
+                console.table(tokenTable);
+                // Update the state
+                setMeanSupportedTokens(meanTokensCopy);
+                setExtraUserTokensSorted(sortedList);
+                setAccountTokens(finalList);
+                setTokensLoaded(true);
+              } else {
+                console.error('could not get account tokens');
                 setMeanSupportedTokens(meanTokensCopy);
                 setAccountTokens(meanTokensCopy);
                 setExtraUserTokensSorted([]);
                 setTokensLoaded(true);
-                selectAsset(meanTokensCopy[0]);
                 refreshCachedRpc();
-              });
-          })
-          .catch(error => {
-            console.error(error);
-            refreshCachedRpc();
-          });
-      }
+              }
+              // Preset the first available token
+              selectAsset(meanTokensCopy[0]);
+            })
+            .catch(error => {
+              console.error(error);
+              setMeanSupportedTokens(meanTokensCopy);
+              setAccountTokens(meanTokensCopy);
+              setExtraUserTokensSorted([]);
+              setTokensLoaded(true);
+              selectAsset(meanTokensCopy[0]);
+              refreshCachedRpc();
+            });
+        })
+        .catch(error => {
+          console.error(error);
+          refreshCachedRpc();
+        });
     });
 
     return () => {
@@ -503,14 +498,13 @@ export const AccountsView = () => {
     }
 
   }, [
-    accountAddress,
+    accountAddress, 
+    customConnection, 
+    shouldLoadTokens, 
     splTokenList,
     userTokens,
-    connection,
-    customConnection,
-    shouldLoadTokens,
     updateAtaFlag,
-    selectAsset
+    selectAsset,
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -801,7 +795,7 @@ export const AccountsView = () => {
           consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
           setLoadingStreams(true);
           ms.listStreams(publicKey, publicKey)
-            .then(streams => {
+            .then((streams: any[]) => {
               setStreamList(streams);
               if (streams.length) {
                 let item: StreamInfo | undefined;
@@ -817,7 +811,7 @@ export const AccountsView = () => {
                 }, 10);
               }
               setLoadingStreams(false);
-            }).catch(err => {
+            }).catch((err: any) => {
               console.error(err);
               setLoadingStreams(false);
             });

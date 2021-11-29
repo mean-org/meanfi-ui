@@ -298,16 +298,13 @@ export const getComputedFees = (fees: TransactionFees): number => {
 }
 
 export async function fetchAccountTokens(
-  pubkey: PublicKey,
-  cluster: string,
+  connection: Connection,
+  pubkey: PublicKey
 ) {
   let data;
   try {
-    const { value } = await new Connection(
-      cluster,
-      "processed"
-    ).getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
-    data = value.map((accountInfo) => {
+    const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
+    data = value.map((accountInfo: any) => {
       const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
       return { parsedInfo, pubkey: accountInfo.pubkey };
     });
