@@ -298,7 +298,7 @@ export function WalletProvider({ children = null as any }) {
                 }>
                 <span className="align-middle">{item.name}</span>
                 {item.name === WalletName.WalletConnect && (
-                  <span className="badge small darken align-middle">Coming soon</span>
+                  <span className="badge small darken align-middle ml-1">Coming soon</span>
                 )}
               </Button>
             );

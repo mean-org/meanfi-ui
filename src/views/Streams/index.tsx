@@ -12,7 +12,6 @@ import {
 } from "@ant-design/icons";
 import {
   IconBank,
-  IconCheckedBox,
   IconClock,
   IconDocument,
   IconDownload,
@@ -411,7 +410,6 @@ export const Streams = () => {
 
   const getStreamIcon = useCallback((item: StreamInfo) => {
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-    const isOtp = item.rateAmount === 0 ? true : false;
   
     if (item.isUpdatePending) {
       return <IconDocument className="mean-svg-icons pending" />;
@@ -422,13 +420,8 @@ export const Streams = () => {
         case STREAM_STATE.Schedule:
           return (<IconTimer className="mean-svg-icons incoming" />);
         case STREAM_STATE.Ended:
-          return (<IconCheckedBox className="mean-svg-icons ended" />);
         case STREAM_STATE.Paused:
-          if (isOtp) {
-            return (<IconCheckedBox className="mean-svg-icons ended" />);
-          } else {
-            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
-          }
+          return (<IconIncomingPaused className="mean-svg-icons incoming" />);
         default:
           return (<IconDownload className="mean-svg-icons incoming" />);
       }
@@ -437,13 +430,8 @@ export const Streams = () => {
         case STREAM_STATE.Schedule:
           return (<IconTimer className="mean-svg-icons outgoing" />);
         case STREAM_STATE.Ended:
-          return (<IconCheckedBox className="mean-svg-icons ended" />);
         case STREAM_STATE.Paused:
-          if (isOtp) {
-            return (<IconCheckedBox className="mean-svg-icons ended" />);
-          } else {
-            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
-          }
+          return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
         default:
           return (<IconUpload className="mean-svg-icons outgoing" />);
       }
@@ -452,7 +440,7 @@ export const Streams = () => {
     publicKey
   ]);
 
-  const getTransactionTitle = (item: StreamInfo): string => {
+  const getStreamDescription = (item: StreamInfo): string => {
     let title = '';
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
 
@@ -497,22 +485,18 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
+        case STREAM_STATE.Ended:
           if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-inbound');
           }
           break;
-        case STREAM_STATE.Ended:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-ended');
-          }
-          break;
-        default:
+        case STREAM_STATE.Running:
           title = t('streams.stream-list.subtitle-running-inbound');
           title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        default:
           break;
       }
     } else {
@@ -527,22 +511,18 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
+        case STREAM_STATE.Ended:
           if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
             title = t('streams.stream-list.subtitle-paused-outbound');
           }
           break;
-        case STREAM_STATE.Ended:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-ended');
-          }
-          break;
-        default:
+        case STREAM_STATE.Running:
           title = t('streams.stream-list.subtitle-running-outbound');
           title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        default:
           break;
       }
     }
@@ -2260,7 +2240,7 @@ export const Streams = () => {
               {getStreamIcon(item)}
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{item.streamName || getTransactionTitle(item)}</div>
+              <div className="title text-truncate">{item.streamName || getStreamDescription(item)}</div>
               <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
             </div>
             <div className="rate-cell">

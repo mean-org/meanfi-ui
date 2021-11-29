@@ -926,7 +926,7 @@ export const AccountsView = () => {
           <div className="title">
             {asset.symbol}
             {tokenPrice > 0 ? (
-              <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 ${getFormattedRateAmount(tokenPrice)}
               </span>
             ) : (null)}
@@ -1140,7 +1140,7 @@ export const AccountsView = () => {
               <div className="description-cell">
                 <div className="title">
                   {asset ? asset.symbol : '-'}
-                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                  <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                     {value.length} {t('assets.accounts-label')}
                   </span>
                 </div>
