@@ -2,11 +2,13 @@ import React from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { LoadingOutlined } from '@ant-design/icons';
 
 export const TreasuryCreateModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  isBusy: boolean;
 }) => {
   const { t } = useTranslation('common');
   const [treasuryName, setTreasuryName] = useState('');
@@ -19,9 +21,7 @@ export const TreasuryCreateModal = (props: {
   }
 
   const onInputValueChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
-    setTreasuryName(trimmedValue);
+    setTreasuryName(e.target.value);
   }
 
   return (
@@ -40,12 +40,12 @@ export const TreasuryCreateModal = (props: {
             <input
               id="treasury-name-field"
               className="w-100 general-text-input"
-              autoComplete="on"
+              autoComplete="off"
               autoCorrect="off"
               type="text"
               onChange={onInputValueChange}
               placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
-              spellCheck="true"
+              disabled={props.isBusy}
               value={treasuryName}
             />
           </div>
@@ -54,14 +54,19 @@ export const TreasuryCreateModal = (props: {
       </div>
 
       <Button
-        className="main-cta"
+        className={`main-cta ${props.isBusy ? 'inactive' : ''}`}
         block
         type="primary"
         shape="round"
         size="large"
         disabled={!treasuryName}
         onClick={onAcceptModal}>
-        {t('treasuries.create-treasury.main-cta')}
+        {props.isBusy && (
+          <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+        )}
+        {props.isBusy
+          ? t('treasuries.create-treasury.main-cta-busy')
+          : t('treasuries.create-treasury.main-cta')}
       </Button>
     </Modal>
   );

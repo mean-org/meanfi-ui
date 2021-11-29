@@ -394,7 +394,8 @@
 			"treasury-name-input-label": "Treasury name",
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-placeholder": "Type a name for your treasury",
-			"main-cta": "Create"
+			"main-cta": "Create",
+			"main-cta-busy": "Creating treasury"
 		},
 		"treasury-streams": {
 			"no-streams": "This treasury has no active streams",

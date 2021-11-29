@@ -4,7 +4,7 @@ import {
   ArrowUpOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { Connection, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -16,11 +16,13 @@ import {
   formatAmount,
   formatThousands,
   getAmountWithSymbol,
+  getTokenAmountAndSymbolByTokenAddress,
   getTokenSymbol,
+  getTxIxResume,
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, isLocal, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionStatusForLogs, isLocal, isValidAddress } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
   SIMPLE_DATE_FORMAT,
@@ -31,18 +33,22 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink, IconRefresh, IconStream } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
 import './style.less';
 import { useNavigate } from 'react-router-dom';
 import { PerformanceCounter } from '../../utils/perf-counter';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
+import { useNativeAccount } from '../../contexts/accounts';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { customLogger } from '../..';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -51,24 +57,29 @@ const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const {
     tokenList,
     isWhitelisted,
     detailsPanelOpen,
+    transactionStatus,
     streamProgramAddress,
     previousWalletConnectState,
+    setTransactionStatus,
+    refreshTokenBalance,
     setDtailsPanelOpen,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
+    startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
+  const { account } = useNativeAccount();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [treasuryList, setTreasuryList] = useState<TreasuryInfo[]>([]);
   const [selectedTreasury, setSelectedTreasury] = useState<TreasuryInfo | undefined>(undefined);
@@ -80,6 +91,15 @@ export const TreasuriesView = () => {
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+
+  // Transactions
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -105,6 +125,31 @@ export const TreasuriesView = () => {
     connectionConfig.endpoint,
     streamProgramAddress
   ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
+  ]);
+
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
     if (!publicKey || !ms || loadingTreasuryStreams) { return; }
@@ -534,13 +579,232 @@ export const TreasuriesView = () => {
 
   // Create treasury modal
   const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
-  const showCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(true), []);
+  const showCreateTreasuryModal = useCallback(() => {
+    getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
+      setTransactionFees(value);
+      setIsCreateTreasuryModalVisibility(true);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFees]);
   const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
 
   const onAcceptCreateTreasury = (e: any) => {
-    closeCreateTreasuryModal();
     consoleOut('treasury name:', e, 'blue');
-    // TODO: Implement onExecuteCreateTreasuryTx
+    onExecuteCreateTreasuryTx(e);
+  };
+
+  const onTreasuryCreated = () => {
+    closeCreateTreasuryModal();
+  }
+
+  const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey) {
+        consoleOut("Start transaction for create treasury", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const data = {
+          wallet: publicKey.toBase58(),                               // wallet
+          label: treasuryName,                                        // treasury
+        };
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await ms.createTreasury(
+          publicKey,                                                  // wallet
+          treasuryName,                                               // label
+        )
+        .then(value => {
+          consoleOut('createTreasury returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createTreasury error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
+            setIsBusy(false);
+            onTreasuryCreated();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
   };
 
   ///////////////
@@ -916,6 +1180,7 @@ export const TreasuriesView = () => {
         isVisible={isCreateTreasuryModalVisible}
         handleOk={onAcceptCreateTreasury}
         handleClose={closeCreateTreasuryModal}
+        isBusy={isBusy}
       />
 
       <PreFooter />
