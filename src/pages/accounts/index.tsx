@@ -82,6 +82,7 @@ export const AccountsView = () => {
     loadingStreams,
     lastTxSignature,
     detailsPanelOpen,
+    forceReloadTokens,
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
@@ -93,10 +94,11 @@ export const AccountsView = () => {
     setAccountAddress,
     refreshStreamList,
     setDtailsPanelOpen,
-    setAddAccountPanelOpen,
-    setCanShowAccountDetails,
-    showDepositOptionsModal,
+    setForceReloadTokens,
     setTransactionStatus,
+    setAddAccountPanelOpen,
+    showDepositOptionsModal,
+    setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const {
     lastSentTxStatus,
@@ -320,6 +322,8 @@ export const AccountsView = () => {
   }, [accountAddress]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
+  // Also include forceReloadTokens from state after a successful Tx signaled
+  // from places where token balances were indeed changed)
   useEffect(() => {
     if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens.length || !splTokenList.length) {
       return;
@@ -339,10 +343,6 @@ export const AccountsView = () => {
         .then(solBalance => {
           meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
           meanTokensCopy[0].publicAddress = accountAddress;
-          meanTokensCopy.map(mt => { 
-            mt.balance = 0;
-            return mt;
-          });
 
           fetchAccountTokens(customConnection, pk)
             .then(accTks => {
@@ -669,6 +669,17 @@ export const AccountsView = () => {
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     refreshStreamList
+  ]);
+
+  // Check if forceReloadTokens is on, and trigger token reload
+  useEffect(() => {
+    if (forceReloadTokens) {
+      setForceReloadTokens(false);
+      setShouldLoadTokens(true);
+    }
+  }, [
+    forceReloadTokens,
+    setForceReloadTokens
   ]);
 
   // Window resize listeners

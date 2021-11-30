@@ -79,18 +79,19 @@ export const RepeatingPayment = () => {
     streamProgramAddress,
     previousWalletConnectState,
     setSelectedToken,
-    resetContractValues,
-    setSelectedTokenBalance,
     setEffectiveRate,
-    setRecipientAddress,
     setRecipientNote,
-    setPaymentStartDate,
     setFromCoinAmount,
-    setPaymentRateAmount,
-    setPaymentRateFrequency,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
+    resetContractValues,
+    setRecipientAddress,
+    setPaymentStartDate,
     refreshTokenBalance,
+    setPaymentRateAmount,
+    setTransactionStatus,
+    setForceReloadTokens,
+    setIsVerifiedRecipient,
+    setPaymentRateFrequency,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const {
@@ -223,6 +224,7 @@ export const RepeatingPayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
+      setForceReloadTokens(true);
     }
   }
 

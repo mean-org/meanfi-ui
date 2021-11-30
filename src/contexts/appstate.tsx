@@ -43,6 +43,7 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   detailsPanelOpen: boolean;
+  forceReloadTokens: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -83,6 +84,7 @@ interface AppStateConfig {
   loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
+  setForceReloadTokens: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -126,6 +128,7 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   detailsPanelOpen: false,
+  forceReloadTokens: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -169,6 +172,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingRecurringBuys: false,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
+  setForceReloadTokens: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
@@ -245,6 +249,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
+  const [forceReloadTokens, setForceReloadTokens] = useState(contextDefaultValues.forceReloadTokens);
 
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -943,6 +948,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         theme,
         isWhitelisted,
         detailsPanelOpen,
+        forceReloadTokens,
         isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
@@ -981,6 +987,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingRecurringBuys,
         setTheme,
         setDtailsPanelOpen,
+        setForceReloadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,
         setSelectedToken,

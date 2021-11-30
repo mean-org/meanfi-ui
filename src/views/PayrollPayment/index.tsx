@@ -82,18 +82,19 @@ export const PayrollPayment = () => {
     timeSheetRequirement,
     previousWalletConnectState,
     setSelectedToken,
-    resetContractValues,
-    setSelectedTokenBalance,
     setEffectiveRate,
-    setRecipientAddress,
     setRecipientNote,
-    setPaymentStartDate,
     setFromCoinAmount,
-    setPaymentRateAmount,
-    setPaymentRateFrequency,
-    setTransactionStatus,
-    setIsVerifiedRecipient,
+    resetContractValues,
+    setRecipientAddress,
     refreshTokenBalance,
+    setPaymentStartDate,
+    setPaymentRateAmount,
+    setTransactionStatus,
+    setForceReloadTokens,
+    setIsVerifiedRecipient,
+    setSelectedTokenBalance,
+    setPaymentRateFrequency,
     setTimeSheetRequirement,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
@@ -228,6 +229,7 @@ export const PayrollPayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
+      setForceReloadTokens(true);
     }
   }
 

@@ -93,15 +93,16 @@ export const Streams = () => {
     streamProgramAddress,
     customStreamDocked,
     setStreamList,
+    openStreamById,
+    setStreamDetail,
+    setSelectedToken,
     setSelectedStream,
     refreshStreamList,
-    setSelectedToken,
-    setStreamDetail,
-    openStreamById,
     setDtailsPanelOpen,
     refreshTokenBalance,
     setTransactionStatus,
-    setCustomStreamDocked
+    setForceReloadTokens,
+    setCustomStreamDocked,
   } = useContext(AppStateContext);
   const {
     lastSentTxStatus,
@@ -655,6 +656,7 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
+    setForceReloadTokens(true);
   };
 
   const onAfterAddFundsTransactionModalClosed = () => {
@@ -947,6 +949,7 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
+    setForceReloadTokens(true);
   };
 
   const onAfterWithdrawFundsTransactionModalClosed = () => {
@@ -1157,49 +1160,6 @@ export const Streams = () => {
       }
     }
 
-    // const confirmTx = async (): Promise<boolean> => {
-
-    //   return await connection
-    //     .confirmTransaction(signature, "confirmed")
-    //     .then(result => {
-    //       consoleOut('confirmTransaction result:', result);
-    //       if (result && result.value && !result.value.err) {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-    //           currentOperation: TransactionStatus.TransactionFinished
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-    //           result: result.value
-    //         });
-    //         return true;
-    //       } else {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransaction,
-    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //           result: signature
-    //         });
-    //         customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-    //         return false;
-    //       }
-    //     })
-    //     .catch(e => {
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransaction,
-    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //       });
-    //       transactionLog.push({
-    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //         result: signature
-    //       });
-    //       customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-    //       return false;
-    //     });
-    // }
-
     if (wallet) {
       showWithdrawFundsTransactionModal();
       const create = await createTx();
@@ -1215,11 +1175,6 @@ export const Streams = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.Withdraw);
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
-            // const confirmed = await confirmTx();
-            // consoleOut('confirmed:', confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1238,6 +1193,7 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
+    setForceReloadTokens(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {

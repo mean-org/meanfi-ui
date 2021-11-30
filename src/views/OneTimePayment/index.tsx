@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Row, Col, Checkbox } from "antd";
+import { Button, Modal, DatePicker, Spin, Checkbox } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -21,7 +21,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  getTxFeeAmount,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -65,17 +64,18 @@ export const OneTimePayment = () => {
     streamProgramAddress,
     previousWalletConnectState,
     setSelectedToken,
-    resetContractValues,
-    setSelectedTokenBalance,
     setEffectiveRate,
-    setRecipientAddress,
     setRecipientNote,
-    setPaymentStartDate,
     setFromCoinAmount,
-    setTransactionStatus,
     setSelectedStream,
-    setIsVerifiedRecipient,
+    resetContractValues,
+    setRecipientAddress,
+    setPaymentStartDate,
     refreshTokenBalance,
+    setTransactionStatus,
+    setForceReloadTokens,
+    setIsVerifiedRecipient,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
   const {
@@ -218,6 +218,7 @@ export const OneTimePayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
+      setForceReloadTokens(true);
     }
   }
 
