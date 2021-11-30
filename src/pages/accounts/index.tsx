@@ -743,13 +743,9 @@ export const AccountsView = () => {
               : freshStream.treasurerAddress === userWallet.toBase58();
 
       if (streamIsOutgoing) {
-        if (freshStream.state !== STREAM_STATE.Ended) {
-          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
-        }
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
       } else {
-        if (freshStream.state !== STREAM_STATE.Ended) {
-          resume['incomingAmount'] = resume['incomingAmount'] + 1;  
-        }
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
       }
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = getPricePerToken(asset as UserTokenAccount);
