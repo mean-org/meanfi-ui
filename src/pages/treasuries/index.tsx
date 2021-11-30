@@ -1446,23 +1446,29 @@ export const TreasuriesView = () => {
               <div className="meanfi-panel-heading"><span className="title">{t('treasuries.treasury-detail-heading')}</span></div>
 
               <div className="inner-container">
-                {connected && treasuryDetails ? (
+                {connected ? (
                   <>
-                    <div className="stream-details-data-wrapper vertical-scroll">
+                    <div className={`stream-details-data-wrapper vertical-scroll ${!treasuryDetails && 'h-100 flex-center'}`}>
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails || loadingTreasuryStreams}>
-                        {renderTreasuryMeta()}
-                        <Divider className="activity-divider" plain></Divider>
-                        {renderCtaRow()}
-                        {renderTreasuryStreams()}
+                        {treasuryDetails && (
+                          <>
+                            {renderTreasuryMeta()}
+                            <Divider className="activity-divider" plain></Divider>
+                            {renderCtaRow()}
+                            {renderTreasuryStreams()}
+                          </>
+                        )}
                       </Spin>
                     </div>
-                    <div className="stream-share-ctas">
-                      <span className="copy-cta" onClick={() => onCopyTreasuryAddress(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
-                      <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${treasuryDetails.id}${getSolanaExplorerClusterParam()}`}>
-                        <IconExternalLink className="mean-svg-icons" />
-                      </a>
-                    </div>
+                    {treasuryDetails && (
+                      <div className="stream-share-ctas">
+                        <span className="copy-cta" onClick={() => onCopyTreasuryAddress(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
+                        <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${treasuryDetails.id}${getSolanaExplorerClusterParam()}`}>
+                          <IconExternalLink className="mean-svg-icons" />
+                        </a>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
