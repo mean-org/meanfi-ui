@@ -46,9 +46,12 @@ import './style.less';
 import { useNavigate } from 'react-router-dom';
 import { PerformanceCounter } from '../../utils/perf-counter';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { useNativeAccount } from '../../contexts/accounts';
+import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
+import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -60,6 +63,7 @@ export const TreasuriesView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     tokenList,
+    selectedToken,
     isWhitelisted,
     detailsPanelOpen,
     transactionStatus,
@@ -80,6 +84,7 @@ export const TreasuriesView = () => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
+  const accounts = useAccountsContext();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [treasuryList, setTreasuryList] = useState<TreasuryInfo[]>([]);
   const [selectedTreasury, setSelectedTreasury] = useState<TreasuryInfo | undefined>(undefined);
@@ -94,6 +99,7 @@ export const TreasuriesView = () => {
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -145,6 +151,58 @@ export const TreasuriesView = () => {
     nativeBalance,
     previousBalance,
     refreshTokenBalance
+  ]);
+
+  // Automatically update all token balances (in token list)
+  useEffect(() => {
+
+    if (!connection) {
+      console.error('No connection');
+      return;
+    }
+
+    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const balancesMap: any = {};
+      connection.getTokenAccountsByOwner(
+        publicKey, 
+        { programId: TOKEN_PROGRAM_ID }, 
+        connection.commitment
+      )
+      .then(response => {
+        for (let acc of response.value) {
+          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+          const address = decoded.mint.toBase58();
+          const itemIndex = tokenList.findIndex(t => t.address === address);
+          if (itemIndex !== -1) {
+            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
+          } else {
+            balancesMap[address] = 0;
+          }
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        for (let t of tokenList) {
+          balancesMap[t.address] = 0;
+        }
+      })
+      .finally(() => setUserBalances(balancesMap));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection,
+    tokenList,
+    accounts,
+    publicKey
   ]);
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
@@ -580,9 +638,9 @@ export const TreasuriesView = () => {
   // Create treasury modal
   const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
   const showCreateTreasuryModal = useCallback(() => {
+    setIsCreateTreasuryModalVisibility(true);
     getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
       setTransactionFees(value);
-      setIsCreateTreasuryModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
   }, [getTransactionFees]);
@@ -595,6 +653,10 @@ export const TreasuriesView = () => {
 
   const onTreasuryCreated = () => {
     closeCreateTreasuryModal();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
   }
 
   const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
@@ -807,6 +869,251 @@ export const TreasuriesView = () => {
     }
   };
 
+  // Add funds modal
+  const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
+  const showAddFundsModal = useCallback(() => {
+    setIsAddFundsModalVisibility(true);
+    getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFees]);
+  const closeAddFundsModal = useCallback(() => {
+    setIsAddFundsModalVisibility(false);
+  }, []);
+  const onAcceptAddFunds = (amount: any) => {
+    consoleOut('AddFunds amount:', parseFloat(amount));
+    onExecuteAddFundsTransaction(amount);
+  };
+
+  const onAddFundsTransactionFinished = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+    closeAddFundsModal();
+    refreshTokenBalance();
+  };
+
+  const onExecuteAddFundsTransaction = async (addAmount: string) => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey && treasuryDetails && selectedToken) {
+        consoleOut("Start transaction for treasury addFunds", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const treasury = new PublicKey(treasuryDetails.id);
+        const associatedToken = new PublicKey(selectedToken.address);
+        const amount = parseFloat(addAmount);
+
+        const data = {
+          contributor: publicKey,                      // contributor
+          treasury: treasury,                          // treasury
+          associatedToken: associatedToken,            // associatedToken
+          amount                                                  // amount
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Create a transaction
+        return await ms.addFunds(
+          publicKey,
+          treasury,
+          associatedToken,
+          amount
+        )
+        .then(value => {
+          consoleOut('addFunds returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('addFunds error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (publicKey && treasuryDetails && selectedToken) {
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.AddFunds);
+            setIsBusy(false);
+            onAddFundsTransactionFinished();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
   ///////////////
   // Rendering //
   ///////////////
@@ -975,7 +1282,13 @@ export const TreasuriesView = () => {
       <>
       <div className="mb-2">
         <Space size="middle">
-          <Button type="default" shape="round" size="small" className="thin-stroke">Add funds</Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            onClick={showAddFundsModal}>
+            Add funds</Button>
           <Button type="default" shape="round" size="small" className="thin-stroke">Close</Button>
         </Space>
       </div>
@@ -1010,11 +1323,17 @@ export const TreasuriesView = () => {
               )}
             </div>
             <div className="rate-cell text-center">
-              <div className="rate-amount">
-                {/* <span className="badge small error text-uppercase">missing</span> */}
-                {formatThousands(item.streamsAmount)}
-              </div>
-              <div className="interval">streams</div>
+              {item.upgradeRequired ? (
+                <span>&nbsp;</span>
+              ) : (
+                <>
+                <div className="rate-amount">
+                  {/* <span className="badge small error text-uppercase">missing</span> */}
+                  {formatThousands(item.streamsAmount)}
+                </div>
+                <div className="interval">streams</div>
+                </>
+              )}
             </div>
           </div>
         );
@@ -1180,6 +1499,14 @@ export const TreasuriesView = () => {
         isVisible={isCreateTreasuryModalVisible}
         handleOk={onAcceptCreateTreasury}
         handleClose={closeCreateTreasuryModal}
+        isBusy={isBusy}
+      />
+
+      <TreasuryAddFundsModal
+        handleOk={onAcceptAddFunds}
+        handleClose={closeAddFundsModal}
+        isVisible={isAddFundsModalVisible}
+        userBalances={userBalances}
         isBusy={isBusy}
       />
 

@@ -2176,6 +2176,7 @@ main section {
 .ant-select-dropdown {
   color: inherit;
   background-color: var(--color-component-background);
+  width: auto !important;
   .ant-select-item {
     color: inherit;
     &:not(.ant-select-item-option-selected) {
@@ -2188,31 +2189,85 @@ main section {
       font-weight: 600;
       background-color: var(--color-secondary-alpha-05);
     }
+    .ant-select-item-option-content {
+      .option-container {
+        width: 220px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .token-selector {
+          .token-symbol {
+            font-size: 20px;
+          }
+          .token-icon {
+            margin: 0 6px 0 0;
+            border-color: var(--color-secondary-alpha-20);
+            border-style: solid;
+            border-width: 2px;
+            width: 22px;
+            height: 22px;
+          }
+        }
+      }
+    }
   }
 }
 
 .ant-select {
   color: inherit;
-  .ant-select-selector {
-    color: inherit !important;
-    background-color: var(--color-wells) !important;
-    border-width: 1px !important;
-    border-color: var(--color-secondary-alpha-10) !important;
-    border-radius: var(--custom-control-border-radius) !important;
+  &:not(.ant-select-borderless) {
+    .ant-select-selector {
+      color: inherit !important;
+      background-color: var(--color-wells) !important;
+      border-width: 1px !important;
+      border-color: var(--color-secondary-alpha-10) !important;
+      border-radius: var(--custom-control-border-radius) !important;
+    }
   }
   &:focus,
   &:hover,
   &.ant-select-focused {
-    &:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-      transition: none;
-      box-shadow: none;
+    &:not(.ant-select-disabled).ant-select-single:not(.ant-select-customize-input):not(.ant-select-borderless) {
+      .ant-select-selector {
+        transition: none;
+        box-shadow: none;
+      }
     }
-    .ant-select-selector {
-      border-color: var(--color-secondary-alpha-20) !important;
+    &:not(.ant-select-borderless) {
+      .ant-select-selector {
+        border-color: var(--color-secondary-alpha-20) !important;
+      }
     }
   }
   .ant-select-arrow {
     color: var(--color-secondary-alpha-60);
+  }
+  &.token-selector-dropdown {
+    .ant-select-selector {
+      border: none;
+      padding: 0 !important;
+      .ant-select-selection-search {
+        display: none;
+      }
+      .ant-select-selection-item {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        align-items: center;
+        .option-container {
+          width: auto;
+          .token-selector {
+            .token-icon {
+              margin: 2px 6px 0 0;
+            }
+          }
+        }
+        .balance {
+          display: none;
+        }
+      }
+    }
   }
 }
 

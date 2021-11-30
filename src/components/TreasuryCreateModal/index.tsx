@@ -34,7 +34,7 @@ export const TreasuryCreateModal = (props: {
       onCancel={props.handleClose}
       width={480}>
       <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
-      <div className="well">
+      <div className={`well ${props.isBusy && 'disabled'}`}>
         <div className="flex-fixed-right">
           <div className="left">
             <input
@@ -45,7 +45,6 @@ export const TreasuryCreateModal = (props: {
               type="text"
               onChange={onInputValueChange}
               placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
-              disabled={props.isBusy}
               value={treasuryName}
             />
           </div>

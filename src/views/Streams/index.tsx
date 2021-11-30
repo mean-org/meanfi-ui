@@ -737,6 +737,7 @@ export const Streams = () => {
         return await moneyStream.addFunds(
           wallet.publicKey,
           treasury,
+          contributorMint,
           amount
         )
         .then(value => {
