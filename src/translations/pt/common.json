@@ -368,6 +368,7 @@
 		"back-to-treasuries-cta": "Back to Treasuries",
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
 		"add-funds": {
+			"modal-title": "Add funds to treasury",
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury"
 		},
@@ -378,7 +379,11 @@
 			"treasury-address-label": "Address",
 			"funds-left-in-treasury": "Funds left in the treasury",
 			"associated-token": "Associated Token",
-			"number-of-streams": "Number of streams"
+			"number-of-streams": "Number of streams",
+			"cta-add-funds": "Add funds",
+			"cta-add-funds-busy": "Adding funds",
+			"cta-close": "Close treasury",
+			"cta-close-busy": "Closing treasury"
 		},
 		"treasury-list": {
 			"no-treasuries": "No treasuries available",

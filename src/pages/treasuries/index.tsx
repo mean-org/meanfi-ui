@@ -502,11 +502,41 @@ export const TreasuriesView = () => {
     );
   }
 
-  const isCreating = (): boolean => {
+  const isCreating = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
             ? true
             : false;
-  }
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isClosing = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Close
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isAddingFunds = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.AddFunds
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching"
+            ? true
+            : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
 
   const getStreamIcon = useCallback((item: StreamInfo) => {
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
@@ -1287,9 +1317,23 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
+            disabled={isTxInProgress()}
             onClick={showAddFundsModal}>
-            Add funds</Button>
-          <Button type="default" shape="round" size="small" className="thin-stroke">Close</Button>
+            {isAddingFunds()
+              ? t('treasuries.treasury-detail.cta-add-funds-busy')
+              : t('treasuries.treasury-detail.cta-add-funds')}
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress()}
+            onClick={() => {}}>
+            {isClosing()
+              ? t('treasuries.treasury-detail.cta-close-busy')
+              : t('treasuries.treasury-detail.cta-close')}
+          </Button>
         </Space>
       </div>
       </>
