@@ -339,10 +339,6 @@ export const AccountsView = () => {
         .then(solBalance => {
           meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
           meanTokensCopy[0].publicAddress = accountAddress;
-          meanTokensCopy.map(mt => { 
-            mt.balance = 0;
-            return mt;
-          });
 
           fetchAccountTokens(customConnection, pk)
             .then(accTks => {
