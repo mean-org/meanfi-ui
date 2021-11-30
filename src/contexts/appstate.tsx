@@ -638,7 +638,6 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
     setLoadingStreams(true);
-    consoleOut('reset =', reset, 'blue');
     const signature = lastSentTxStatus || '';
     setTimeout(() => {
       clearTransactionStatusContext();
@@ -696,7 +695,10 @@ const AppStateProvider: React.FC = ({ children }) => {
                 }
               })
           } else {
-            updateStreamDetail(item);
+            if (item) {
+              updateStreamDetail(item);
+              getStreamActivity(item.id as string);
+            }
           }
         } else {
           setStreamActivity([]);
@@ -709,7 +711,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         console.error(err);
         updateLoadingStreams(false);
       });
-  
+
   }, [
     ms,
     publicKey,
@@ -718,6 +720,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingStreamActivity,
     selectedStream,
     loadingStreams,
+    getStreamActivity,
     clearTransactionStatusContext
   ]);
 
@@ -725,17 +728,11 @@ const AppStateProvider: React.FC = ({ children }) => {
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
-      if (!streamList) {
-        refreshStreamList(true);
-      }
-
-      if (streamList && !customStreamDocked) {
-        timer = setInterval(() => {
-          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-          refreshStreamList(false);
-        }, STREAMS_REFRESH_TIMEOUT);
-      }
+    if (location.pathname.startsWith('/accounts') && !customStreamDocked) {
+      timer = setInterval(() => {
+        consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshStreamList();
+      }, STREAMS_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
@@ -927,9 +924,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [connectionConfig.cluster]);
 
-  /////////////////////////////////////
-  // Added to support /accounts page //
-  /////////////////////////////////////
+  //////////////////////////////////
+  // Added to support /ddcas page //
+  //////////////////////////////////
 
   const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
   const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);

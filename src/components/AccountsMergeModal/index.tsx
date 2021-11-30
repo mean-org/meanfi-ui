@@ -383,7 +383,7 @@ export const AccountsMergeModal = (props: {
                 <div className="transaction-progress">
                   <CloseCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
                     <h4 className="font-bold">Merge token accounts failed</h4>
-                    <div className="operation">{getTransactionOperationDescription(transactionStatus, t)}</div>
+                    <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
                 </div>
                 )}
             </div>
@@ -392,7 +392,7 @@ export const AccountsMergeModal = (props: {
                 <div className="transaction-progress">
                     <Spin indicator={bigLoadingIcon} className="icon mt-0" />
                     <h4 className="font-bold">Merging token accounts...</h4>
-                    <div className="operation">{getTransactionOperationDescription(transactionStatus, t)}</div>
+                    <div className="operation">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</div>
                 </div>
                 )}
             </div>

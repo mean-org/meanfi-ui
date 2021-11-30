@@ -2383,14 +2383,14 @@ export const Streams = () => {
             {isBusy ? (
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
-                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
                 <div className="indication">{t('transactions.status.instructions')}</div>
               </>
             ) : isSuccess() ? (
               <>
                 <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <p className="operation">{t('transactions.status.tx-add-funds-operation-success')}</p>
                 <Button
                   block
@@ -2418,7 +2418,7 @@ export const Streams = () => {
                     }
                   </h4>
                 ) : (
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 )}
                 <Button
                   block
@@ -2451,14 +2451,14 @@ export const Streams = () => {
             {isBusy ? (
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
-                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
                 <div className="indication">{t('transactions.status.instructions')}</div>
               </>
             ) : isSuccess() ? (
               <>
                 <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
                 <Button
                   block
@@ -2486,7 +2486,7 @@ export const Streams = () => {
                     }
                   </h4>
                 ) : (
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 )}
                 <Button
                   block
@@ -2519,14 +2519,14 @@ export const Streams = () => {
             {isBusy ? (
               <>
                 <Spin indicator={bigLoadingIcon} className="icon" />
-                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
                 <div className="indication">{t('transactions.status.instructions')}</div>
               </>
             ) : isSuccess() ? (
               <>
                 <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
                 <Button
                   block
@@ -2554,7 +2554,7 @@ export const Streams = () => {
                     }
                   </h4>
                 ) : (
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 )}
                 <Button
                   block

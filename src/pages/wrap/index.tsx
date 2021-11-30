@@ -585,7 +585,7 @@ export const WrapView = () => {
                     <>
                       <Spin indicator={bigLoadingIcon} className="icon" />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus, t)}
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
                         {t("transactions.status.tx-wrap-operation")}{" "}
@@ -602,7 +602,7 @@ export const WrapView = () => {
                         className="icon"
                       />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus, t)}
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
                         {t("transactions.status.tx-wrap-operation-success")}.
@@ -641,9 +641,7 @@ export const WrapView = () => {
                         </h4>
                       ) : (
                         <h4 className="font-bold mb-1 text-uppercase">
-                          {getTransactionOperationDescription(
-                            transactionStatus, t
-                          )}
+                          {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                         </h4>
                       )}
                       <Button

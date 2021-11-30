@@ -291,8 +291,8 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
-export const getTransactionOperationDescription = (status: TransactionStatusInfo, trans?: any): string => {
-    switch (status.currentOperation) {
+export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
+    switch (status) {
         case TransactionStatus.TransactionStart:
             return trans ? trans('transactions.status.tx-start') : 'Collecting data';
         case TransactionStatus.InitTransaction:

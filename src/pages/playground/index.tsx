@@ -461,7 +461,7 @@ export const PlaygroundView = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">Whatever is about to happen...</p>
               <div className="indication">
@@ -472,7 +472,7 @@ export const PlaygroundView = () => {
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
                 {t("transactions.status.tx-generic-operation-success")}.
@@ -493,7 +493,7 @@ export const PlaygroundView = () => {
                 <h4 className="mb-4">Whatever special reason it failed for</h4>
               ) : (
                 <>
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                   {transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
                     <>
                       <p className="operation">

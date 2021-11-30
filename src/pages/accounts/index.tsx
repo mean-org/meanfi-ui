@@ -619,7 +619,7 @@ export const AccountsView = () => {
     }
 
     if (publicKey && !streamList) {
-      consoleOut('Loading streams with wallet connection...', '', 'blue');
+      consoleOut('Loading streams with wallet connection...', '', 'green');
       refreshStreamList();
     }
 
@@ -648,7 +648,7 @@ export const AccountsView = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
+        consoleOut('Preset account address...', publicKey.toBase58(), 'green');
         refreshStreamList();
         setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);

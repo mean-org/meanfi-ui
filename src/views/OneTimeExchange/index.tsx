@@ -2021,7 +2021,7 @@ export const OneTimeExchange = (props: {
                 <>
                   <Spin indicator={bigLoadingIcon} className="icon" />
                   <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                   <p className="operation">
                     {
@@ -2043,7 +2043,7 @@ export const OneTimeExchange = (props: {
                     className="icon"
                   />
                   <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                   <p className="operation">
                     {t("transactions.status.tx-swap-operation-success")}.
@@ -2076,7 +2076,7 @@ export const OneTimeExchange = (props: {
                   ) : (
                     <>
                       <h4 className="font-bold mb-1 text-uppercase">
-                        { getTransactionOperationDescription(transactionStatus, t) }
+                        { getTransactionOperationDescription(transactionStatus.currentOperation, t) }
                       </h4>
                       {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
                         <>
