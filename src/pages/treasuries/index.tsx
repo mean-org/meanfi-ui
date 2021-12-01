@@ -505,6 +505,16 @@ export const TreasuriesView = () => {
     );
   }
 
+  const isAnythingLoading = useCallback((): boolean => {
+    return loadingTreasuries || loadingTreasuryDetails || loadingTreasuryStreams
+            ? true
+            : false;
+  }, [
+    loadingTreasuries,
+    loadingTreasuryDetails,
+    loadingTreasuryStreams,
+  ]);
+
   const isCreating = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
             ? true
@@ -1172,7 +1182,12 @@ export const TreasuriesView = () => {
 
   // Close treasury modal
   const [isCloseTreasuryModalVisible, setIsCloseTreasuryModalVisibility] = useState(false);
+
   const showCloseTreasuryModal = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
     setIsCloseTreasuryModalVisibility(true);
     getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
       setTransactionFees(value);
@@ -1182,7 +1197,9 @@ export const TreasuriesView = () => {
   }, [
     tokenBalance,
     getTransactionFees,
+    setTransactionStatus,
   ]);
+
   const hideCloseTreasuryModal = useCallback(() => {
     if (isBusy) {
       setTransactionCancelled(true);
@@ -1215,7 +1232,7 @@ export const TreasuriesView = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && treasuryDetails) {
+      if (publicKey && treasuryDetails) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1223,8 +1240,8 @@ export const TreasuriesView = () => {
 
         const treasury = new PublicKey(treasuryDetails.id as string);
         const data = {
-          // treasury: treasury.toBase58(),                     // treasury
-          treasury: treasury
+          treasurer: publicKey.toBase58(),                      // treasurer
+          treasury: treasury.toBase58()                         // treasury
         }
         consoleOut('data:', data);
 
@@ -1262,7 +1279,8 @@ export const TreasuriesView = () => {
 
         // Create a transaction
         return await ms.closeTreasury(
-          treasury,                                  // treasury
+          publicKey,                                  // treasurer
+          treasury,                                   // treasury
         )
         .then(value => {
           consoleOut('closeTreasury returned transaction:', value);
@@ -1596,7 +1614,7 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer()}
+            disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer() || isAnythingLoading()}
             onClick={showCloseTreasuryModal}>
             {isClosing()
               ? t('treasuries.treasury-detail.cta-close-busy')

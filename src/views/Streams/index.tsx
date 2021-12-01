@@ -1268,8 +1268,8 @@ export const Streams = () => {
 
         // Create a transaction
         return await moneyStream.closeStream(
+          publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
-          publicKey as PublicKey                            // Initializer public key
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -1397,49 +1397,6 @@ export const Streams = () => {
         return false;
       }
     }
-
-    // const confirmTx = async (): Promise<boolean> => {
-
-    //   return await connection
-    //     .confirmTransaction(signature, "confirmed")
-    //     .then(result => {
-    //       consoleOut('confirmTransaction result:', result);
-    //       if (result && result.value && !result.value.err) {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-    //           currentOperation: TransactionStatus.TransactionFinished
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-    //           result: result.value
-    //         });
-    //         return true;
-    //       } else {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransaction,
-    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //           result: signature
-    //         });
-    //         customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-    //         return false;
-    //       }
-    //     })
-    //     .catch(e => {
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransaction,
-    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //       });
-    //       transactionLog.push({
-    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //         result: signature
-    //       });
-    //       customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
-    //       return false;
-    //     });
-    // }
 
     if (wallet) {
       showCloseStreamTransactionModal();

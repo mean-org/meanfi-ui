@@ -145,7 +145,6 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     setFetchingTxStatus("fetching");
 
     (async () => {
-      consoleOut('Calling getTxStatus()...', '', 'crimson');
       const result = await getTxStatus();
       if (result === finality) {
         setFetchingTxStatus("fetched");
