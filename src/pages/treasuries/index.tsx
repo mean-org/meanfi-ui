@@ -1506,8 +1506,8 @@ export const TreasuriesView = () => {
           {/* Treasury name and Number of streams */}
           <div className="mb-3">
             <Row>
-              <Col span={16}>
-                <div className="info-label">
+              <Col span={12}>
+                {/* <div className="info-label">
                   {t('treasuries.treasury-detail.treasury-name-label')}
                 </div>
                 <div className="transaction-detail-row">
@@ -1521,9 +1521,7 @@ export const TreasuriesView = () => {
                       <div className="title text-truncate">{shortenAddress(treasuryDetails.id as string, 8)}</div>
                     )}
                   </span>
-                </div>
-              </Col>
-              <Col span={8}>
+                </div> */}
                 <div className="info-label text-truncate">
                   {t('treasuries.treasury-detail.number-of-streams')}
                 </div>
@@ -1536,13 +1534,31 @@ export const TreasuriesView = () => {
                   </span>
                 </div>
               </Col>
+              <Col span={12}>
+                <div className="info-label text-truncate">
+                  {t('treasuries.treasury-detail.funds-left-in-treasury')}
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconBank className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data large">
+                    {
+                      getAmountWithSymbol(
+                        treasuryDetails.balance,
+                        treasuryDetails.associatedTokenAddress as string
+                      )
+                    }
+                  </span>
+                </div>
+              </Col>
             </Row>
           </div>
 
           <div className="mb-3">
             <Row>
               {token && (
-                <Col span={treasuryDetails.createdOnUtc ? 16 : 24}>
+                <Col span={treasuryDetails.createdOnUtc ? 12 : 24}>
                   <div className="info-label">
                     {t('treasuries.treasury-detail.associated-token')}
                   </div>
@@ -1561,7 +1577,7 @@ export const TreasuriesView = () => {
                 </Col>
               )}
               {treasuryDetails.createdOnUtc && (
-                <Col span={token ? 8 : 24}>
+                <Col span={token ? 12 : 24}>
                   <div className="info-label">
                     {t('treasuries.treasury-detail.created-on')}
                   </div>
@@ -1578,26 +1594,6 @@ export const TreasuriesView = () => {
             </Row>
           </div>
 
-          {/* Funds left in the treasury */}
-          <div className="mb-2">
-            <div className="info-label text-truncate">
-              {t('treasuries.treasury-detail.funds-left-in-treasury')}
-            </div>
-            <div className="transaction-detail-row">
-              <span className="info-icon">
-                <IconBank className="mean-svg-icons" />
-              </span>
-              <span className="info-data large">
-                {
-                  getAmountWithSymbol(
-                    treasuryDetails.balance,
-                    treasuryDetails.associatedTokenAddress as string
-                  )
-                }
-              </span>
-            </div>
-          </div>
-
         </div>
       )}
       </>
@@ -1607,7 +1603,6 @@ export const TreasuriesView = () => {
   const renderCtaRow = () => {
     return (
       <>
-      <div className="mb-2">
         <Space size="middle">
           <Button
             type="default"
@@ -1634,7 +1629,6 @@ export const TreasuriesView = () => {
               : t('treasuries.treasury-detail.cta-close')}
           </Button>
         </Space>
-      </div>
       </>
     );
   }
@@ -1793,25 +1787,14 @@ export const TreasuriesView = () => {
                   <>
                     <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
-                        {treasuryDetails ? (
+                        {treasuryDetails && (
                           <>
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {renderCtaRow()}
+                            <Divider className="activity-divider" plain></Divider>
                             {renderTreasuryStreams()}
                           </>
-                        ) : (
-                          <div className="h-100 flex-center">
-                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
-                              <p>
-                                {
-                                  treasuryList && treasuryList.length
-                                    ? <span>{t('treasuries.treasury-list.no-treasuries')}<br/>{t('treasuries.treasury-detail.no-treasury-selected')}</span>
-                                    : <span>{t('treasuries.treasury-detail.no-treasury-loaded')}</span>
-                                }
-                              </p>
-                            }/>
-                          </div>
                         )}
                       </Spin>
                     </div>
