@@ -931,41 +931,6 @@ export const RepeatingPayment = () => {
           }
         </div>
 
-        {/* <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
-        <div className="well">
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => showTokenSelector()}>
-                  <div className="token-icon">
-                    {selectedToken?.logoURI ? (
-                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                    ) : (
-                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
-              </span>
-            </div>
-            <div className="well-divider"></div>
-            <div className="right">
-              <InputNumber
-                className="general-text-input"
-                min={0}
-                step={1}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                value={parseFloat(paymentRateAmount)}
-                onChange={onRateAmountChange}
-              />
-            </div>
-          </div>
-        </div> */}
-
         {/* Receive rate */}
         <div className="form-label">{t('transactions.rate-and-frequency.amount-label')}</div>
         <div className="well">
