@@ -75,7 +75,7 @@ export const AppLayout = React.memo((props: any) => {
     const token = appConfig.getConfig().influxDbToken;
     const org = appConfig.getConfig().influxDbOrg;
     const bucket = appConfig.getConfig().influxDbBucket;
-    const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket);
+    const writeApi = new InfluxDB({url, token, timeout: 3000, writeOptions: {maxRetries: 0}}).getWriteApi(org, bucket);
     const data = {
       platform: getPlatform(),
       browser: browserName,

@@ -760,7 +760,11 @@ export const AccountsView = () => {
       }
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = getPricePerToken(asset as UserTokenAccount);
-      resume['totalNet'] = resume['totalNet'] + (freshStream.allocationReserved || 0 * rate);
+      if (streamIsOutgoing) {
+        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowUnvestedAmount || 0 * rate);
+      } else {
+        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowVestedAmount || 0 * rate);
+      }
     }
 
     resume['totalAmount'] = updatedStreams.length;

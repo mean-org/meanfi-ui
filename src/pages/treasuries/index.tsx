@@ -1467,7 +1467,9 @@ export const TreasuriesView = () => {
               consoleOut('YAF');
             }
             return (
-              <div className={`item-list-row ${true ? 'selected' : ''}`} key={`${index}`}>
+              // <div className={`item-list-row ${true ? 'selected' : ''}`} key={`${index}`}>
+              // </div>
+              <div className="item-list-row" key={`${index}`}>
                 <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
                 <div className="std-table-cell responsive-cell">
                   {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
