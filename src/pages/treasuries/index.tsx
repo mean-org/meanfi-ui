@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
+  EllipsisOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
@@ -1456,13 +1457,17 @@ export const TreasuriesView = () => {
             <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-activity')}</div>
             <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-amount')}</div>
             <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-started')}</div>
+            <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
         </div>
         <div className="item-list-body compact">
           {treasuryStreams.map((item, index) => {
             const status = getStreamStatus(item);
+            const onOptionsClick = () => {
+              consoleOut('YAF');
+            }
             return (
-              <div className="item-list-row" key={`${index}`}>
+              <div className={`item-list-row ${true ? 'selected' : ''}`} key={`${index}`}>
                 <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
                 <div className="std-table-cell responsive-cell">
                   {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
@@ -1473,6 +1478,11 @@ export const TreasuriesView = () => {
                 </div>
                 <div className="std-table-cell responsive-cell">
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
+                </div>
+                <div className="std-table-cell last-cell">
+                  <span className="icon-button-container" onClick={onOptionsClick}>
+                    <span className="icon-container"><EllipsisOutlined /></span>
+                  </span>
                 </div>
               </div>
             );
@@ -1604,8 +1614,9 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress()}
+            disabled={isTxInProgress() || loadingTreasuries}
             onClick={showAddFundsModal}>
+            {isAddingFunds() && (<LoadingOutlined />)}
             {isAddingFunds()
               ? t('treasuries.treasury-detail.cta-add-funds-busy')
               : t('treasuries.treasury-detail.cta-add-funds')}
@@ -1617,6 +1628,7 @@ export const TreasuriesView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer() || isAnythingLoading()}
             onClick={showCloseTreasuryModal}>
+            {isClosing() && (<LoadingOutlined />)}
             {isClosing()
               ? t('treasuries.treasury-detail.cta-close-busy')
               : t('treasuries.treasury-detail.cta-close')}
@@ -1779,15 +1791,27 @@ export const TreasuriesView = () => {
               <div className="inner-container">
                 {connected ? (
                   <>
-                    <div className={`stream-details-data-wrapper vertical-scroll ${!treasuryDetails && 'h-100 flex-center'}`}>
+                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
-                        {treasuryDetails && (
+                        {treasuryDetails ? (
                           <>
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
                             {renderCtaRow()}
                             {renderTreasuryStreams()}
                           </>
+                        ) : (
+                          <div className="h-100 flex-center">
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={
+                              <p>
+                                {
+                                  treasuryList && treasuryList.length
+                                    ? <span>{t('treasuries.treasury-list.no-treasuries')}<br/>{t('treasuries.treasury-detail.no-treasury-selected')}</span>
+                                    : <span>{t('treasuries.treasury-detail.no-treasury-loaded')}</span>
+                                }
+                              </p>
+                            }/>
+                          </div>
                         )}
                       </Spin>
                     </div>
@@ -1802,19 +1826,9 @@ export const TreasuriesView = () => {
                     )}
                   </>
                 ) : (
-                  <>
-                  {isCreating() ? (
-                    <div className="h-100 flex-center">
-                      <Spin indicator={bigLoadingIcon} />
-                    </div>
-                  ) : (
-                    <div className="h-100 flex-center">
-                      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
-                        ? t('treasuries.treasury-detail.no-treasury-selected')
-                        : t('treasuries.treasury-list.not-connected')}</p>} />
-                    </div>
-                  )}
-                  </>
+                  <div className="h-100 flex-center">
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-list.not-connected')}</p>} />
+                  </div>
                 )}
               </div>
 

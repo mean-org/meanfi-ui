@@ -1,7 +1,19 @@
 .treasuries {
-    .item-list-body.compact {
-        .item-list-row {
-            height: 20px;
-        }
+  .item-list-body.compact {
+    .item-list-row {
+      height: 24px;
     }
+  }
+  .stream-details-data-wrapper.vertical-scroll.h-100.flex-center {
+    .ant-spin-nested-loading {
+      width: 100%;
+      height: 100%;
+      .ant-spin-nested-loading > div > .ant-spin {
+        max-height: initial;
+      }
+      .ant-spin-container.ant-spin-blur {
+        height: 100%;
+      }
+    }
+  }
 }

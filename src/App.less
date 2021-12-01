@@ -3384,11 +3384,6 @@ main section {
     width: 14px;
     padding: 0 !important;
   }
-  &.last-cell {
-    padding: 0;
-    width: 100px;
-    text-align: right;
-  }
   &.responsive-cell {
     width: auto;
   }
@@ -3396,6 +3391,13 @@ main section {
     width: 34px;
     flex-grow: 0;
     flex-shrink: 0;
+  }
+  &.last-cell,
+  &.fixed-width-24 {
+    width: 24px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    padding: 0 !important;
   }
   &.fixed-width-40 {
     width: 40px;

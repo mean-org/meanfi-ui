@@ -6,7 +6,6 @@ import {
   IconChat,
   IconCodeBlock,
   IconLiveHelp,
-  IconLogout,
   IconMoon,
   IconSettings,
   IconShareBox,
@@ -24,12 +23,10 @@ import { Link } from 'react-router-dom';
 
 export const AppContextMenu = () => {
 
-  const { connected, disconnect, resetWalletProvider } = useWallet();
+  const { connected } = useWallet();
   const {
     theme,
     setTheme,
-    setSelectedStream,
-    setStreamList
   } = useContext(AppStateContext);
 
   const { t, i18n } = useTranslation("common");
@@ -68,12 +65,10 @@ export const AppContextMenu = () => {
   const showFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(true), []);
   const hideFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(false), []);
 
-  const onDisconnectWallet = () => {
-    setSelectedStream(undefined);
-    setStreamList(undefined);
-    disconnect();
-    resetWalletProvider();
-  }
+  // const onDisconnectWallet = () => {
+  //   disconnect();
+  //   resetWalletProvider();
+  // }
 
   const onSwitchTheme = () => {
     if (theme === 'light') {

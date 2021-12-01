@@ -375,6 +375,7 @@
 		"treasury-detail": {
 			"created-on": "Created on",
 			"no-treasury-selected": "Please select or lookup a treasury to view details",
+			"no-treasury-loaded": "Create or lookup a treasury to view details",
 			"treasury-name-label": "Treasury name",
 			"treasury-address-label": "Address",
 			"funds-left-in-treasury": "Funds left in the treasury",
