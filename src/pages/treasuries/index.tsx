@@ -353,6 +353,7 @@ export const TreasuriesView = () => {
             }
           } else {
             setSelectedTreasury(undefined);
+            setTreasuryDetails(undefined);
             setTreasuryStreams([]);
           }
 
