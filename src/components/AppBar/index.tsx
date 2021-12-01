@@ -118,6 +118,13 @@ export const AppBar = (props: {
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
+        {(isLocal() || isWhitelisted) && (
+          <>
+          <Menu.Item key="/treasuries">
+            <Link to="/treasuries">Treasuries</Link>
+          </Menu.Item>
+          </>
+        )}
         <Menu.Item key="/payroll">
           <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
         </Menu.Item>
@@ -151,9 +158,6 @@ export const AppBar = (props: {
         <>
         <Menu.Item key="/ido">
           <Link to="/ido">IDO</Link>
-        </Menu.Item>
-        <Menu.Item key="/treasuries">
-          <Link to="/treasuries">Treasuries</Link>
         </Menu.Item>
         </>
       )}
@@ -225,13 +229,19 @@ export const AppBar = (props: {
               <li key="/exchange" className={location.pathname === '/exchange' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 2} as CustomCSSProps}>
                 <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
               </li>
-              <li key="/transfers" style={{'--animation-order': 1} as CustomCSSProps}
-                  className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'}>
+              <li key="/transfers" className={location.pathname === '/transfers' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 3} as CustomCSSProps}>
                 <Link to="/transfers">{t('ui-menus.main-menu.transfers')}</Link>
               </li>
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
+              {(isLocal() || isWhitelisted) && (
+                <>
+                <li key="/treasuries" className="mobile-menu-item" style={{'--animation-order': 5} as CustomCSSProps}>
+                  <Link to="/treasuries">Treasuries</Link>
+                </li>
+                </>
+              )}
               <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                 <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
               </li>
@@ -266,9 +276,6 @@ export const AppBar = (props: {
                 <>
                 <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
                   <Link to="/ido">IDO</Link>
-                </li>
-                <li key="/treasuries" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
-                  <Link to="/treasuries">Treasuries</Link>
                 </li>
                 </>
               )}
