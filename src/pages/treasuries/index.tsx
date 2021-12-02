@@ -1031,6 +1031,7 @@ export const TreasuriesView = () => {
         return await ms.addFunds(
           publicKey,
           treasury,
+          undefined,
           associatedToken,
           amount
         )

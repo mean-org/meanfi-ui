@@ -690,6 +690,7 @@ export const Streams = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
 
+        const stream = new PublicKey(streamDetail.id as string);
         const treasury = new PublicKey(streamDetail.treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
         const amount = parseFloat(addAmount);
@@ -697,7 +698,8 @@ export const Streams = () => {
 
         const data = {
           contributor: wallet.publicKey.toBase58(),               // contributor
-          stream: treasury.toBase58(),                              // stream
+          treasury: treasury.toBase58(), 
+          stream: stream.toBase58(),                             // stream
           contributorMint: contributorMint.toBase58(),            // contributorMint
           amount                                                  // amount
         }
@@ -739,6 +741,7 @@ export const Streams = () => {
         return await moneyStream.addFunds(
           wallet.publicKey,
           treasury,
+          stream,
           contributorMint,
           amount
         )
