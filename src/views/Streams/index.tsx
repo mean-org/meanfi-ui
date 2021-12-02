@@ -1029,8 +1029,8 @@ export const Streams = () => {
 
         // Create a transaction
         return await moneyStream.withdraw(
-          stream,
           beneficiary,
+          stream,
           amount
         )
         .then(value => {
@@ -1726,7 +1726,7 @@ export const Streams = () => {
                     <span className="info-data">
                     {/* TODO: How to get totalWithdrawals on new stream version */}
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.allocationCommitted - streamDetail.allocationReserved, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.escrowVestedAmountSnap, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
