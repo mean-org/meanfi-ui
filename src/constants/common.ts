@@ -89,6 +89,13 @@ export const ALLOWED_ADDRESSES_LIST = [
     '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
 ];
 
+export const ALLOWED_DEBUG_ADDRESSES =[
+    '657iCEUXfuYRPrxYsMMiG1nQ8CaqsFRVX1GxBXHGUFXi', // ERR
+    'GFefRR6EASXvnphnJApp2PRH1wF1B5pJijKBZGFzq1x1', // YAF
+    'FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR', // YGF
+    'DA5hKdQLFQpMM95M1KwbRHnjQbvkvMEPUfaULjjrMPWw', // MT
+];
+
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 
 // REAL DATES
