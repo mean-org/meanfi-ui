@@ -201,7 +201,7 @@ export const DepositOptions = (props: {
               <Button
                 block
                 className="deposit-option"
-                type="default"
+                type="ghost"
                 shape="round"
                 size="middle"
                 disabled={!connected}
@@ -214,7 +214,7 @@ export const DepositOptions = (props: {
               <Button
                 block
                 className="deposit-option"
-                type="default"
+                type="ghost"
                 shape="round"
                 size="middle"
                 disabled={!connected}
@@ -228,7 +228,7 @@ export const DepositOptions = (props: {
                 <Button
                   block
                   className="deposit-option"
-                  type="default"
+                  type="ghost"
                   shape="round"
                   size="middle"
                   disabled={status !== 'ready'}
@@ -243,7 +243,7 @@ export const DepositOptions = (props: {
               <Button
                 block
                 className="deposit-option"
-                type="default"
+                type="ghost"
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromEthereumButtonClick}>
@@ -255,7 +255,7 @@ export const DepositOptions = (props: {
               <Button
                 block
                 className="deposit-option"
-                type="default"
+                type="ghost"
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromPolygonButtonClick}>
@@ -267,7 +267,7 @@ export const DepositOptions = (props: {
               <Button
                 block
                 className="deposit-option"
-                type="default"
+                type="ghost"
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromRenButtonClick}>

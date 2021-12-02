@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -111,6 +111,7 @@ export const AccountsView = () => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
   const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
@@ -542,6 +543,20 @@ export const AccountsView = () => {
   }, [
     accountAddress,
     selectedAsset?.publicAddress
+  ]);
+
+  // Load streams on entering /accounts
+  useEffect(() => {
+    if (isFirstLoad && publicKey && (!streamList || streamList.length === 0)) {
+      setIsFirstLoad(false);
+      consoleOut('Loading streams with wallet connection...', '', 'green');
+      refreshStreamList();
+    }
+  }, [
+    publicKey,
+    streamList,
+    isFirstLoad,
+    refreshStreamList
   ]);
 
   // Load the transactions when signaled
