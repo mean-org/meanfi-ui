@@ -37,7 +37,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconStream } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -1528,9 +1528,9 @@ export const TreasuriesView = () => {
                   {t('treasuries.treasury-detail.number-of-streams')}
                 </div>
                 <div className="transaction-detail-row">
-                  <span className="info-icon">
+                  {/* <span className="info-icon">
                     <IconStream className="mean-svg-icons" />
-                  </span>
+                  </span> */}
                   <span className="info-data flex-row align-items-center">
                     {formatThousands(treasuryDetails.streamsAmount)}
                   </span>
@@ -1799,6 +1799,15 @@ export const TreasuriesView = () => {
                           </>
                         )}
                       </Spin>
+                      {(!loadingTreasuries && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
+                        <>
+                        {(!treasuryList || treasuryList.length === 0) && !treasuryDetails && (
+                          <div className="h-100 flex-center">
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-detail.no-treasury-loaded')}</p>} />
+                          </div>
+                        )}
+                        </>
+                      )}
                     </div>
                     {treasuryDetails && (
                       <div className="stream-share-ctas">
