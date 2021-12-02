@@ -249,7 +249,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
-  const [forceReloadTokens, setForceReloadTokens] = useState(contextDefaultValues.forceReloadTokens);
+  const [forceReloadTokens, updateForceReloadTokens] = useState(contextDefaultValues.forceReloadTokens);
 
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -282,6 +282,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
+  }
+
+  const setForceReloadTokens = (state: boolean) => {
+    updateForceReloadTokens(state);
   }
 
   useEffect(() => {

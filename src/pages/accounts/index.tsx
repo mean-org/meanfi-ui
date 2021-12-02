@@ -627,6 +627,18 @@ export const AccountsView = () => {
     startSwitch
   ]);
 
+  // Check if forceReloadTokens is on, and trigger token reload
+  useEffect(() => {
+    if (forceReloadTokens) {
+      setForceReloadTokens(false);
+      consoleOut('Post shouldLoadTokens...', '', 'blue');
+      setShouldLoadTokens(true);
+    }
+  }, [
+    forceReloadTokens,
+    setForceReloadTokens
+  ]);
+
   // Auto execute (when entering /accounts) if we have an address already stored
   useEffect(() => {
     if (!accountAddress || !customConnection || tokensLoaded || accountTokens.length) {
@@ -684,17 +696,6 @@ export const AccountsView = () => {
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
     refreshStreamList
-  ]);
-
-  // Check if forceReloadTokens is on, and trigger token reload
-  useEffect(() => {
-    if (forceReloadTokens) {
-      setForceReloadTokens(false);
-      setShouldLoadTokens(true);
-    }
-  }, [
-    forceReloadTokens,
-    setForceReloadTokens
   ]);
 
   // Window resize listeners

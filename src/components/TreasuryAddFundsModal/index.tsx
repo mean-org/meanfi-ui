@@ -9,6 +9,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { consoleOut } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
+import { TokenDisplay } from '../TokenDisplay';
 
 const { Option } = Select;
 
@@ -113,16 +114,11 @@ export const TreasuryAddFundsModal = (props: {
                     return (
                       <Option key={option.address} value={option.address}>
                         <div className="option-container">
-                          <div className="token-selector">
-                            <div className="token-icon">
-                              {option?.logoURI ? (
-                                <img alt={`${option.name}`} width={20} height={20} src={option.logoURI} />
-                              ) : (
-                                <Identicon address={option?.address} style={{ width: "24", display: "inline-flex" }} />
-                              )}
-                            </div>
-                            <div className="token-symbol">{option?.symbol}</div>
-                          </div>
+                          <TokenDisplay onClick={() => {}}
+                            mintAddress={option.address}
+                            name={option.name}
+                            showCaretDown={true}
+                          />
                           <div className="balance">
                             {props.userBalances && props.userBalances[option.address] > 0 && (
                               <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>

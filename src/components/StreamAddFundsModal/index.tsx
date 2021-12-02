@@ -6,6 +6,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } fr
 import { Identicon } from '../Identicon';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { TokenDisplay } from '../TokenDisplay';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -78,16 +79,13 @@ export const StreamAddFundsModal = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              <div className="token-selector">
-                <div className="token-icon">
-                  {selectedToken?.logoURI ? (
-                    <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                  ) : (
-                    <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                  )}
-                </div>
-                <div className="token-symbol">{selectedToken?.symbol}</div>
-              </div>
+              {selectedToken && (
+                <TokenDisplay onClick={() => {}}
+                  mintAddress={selectedToken.address}
+                  name={selectedToken.name}
+                  showCaretDown={true}
+                />
+              )}
               {selectedToken && tokenBalance ? (
                 <div
                   className="token-max simplelink"

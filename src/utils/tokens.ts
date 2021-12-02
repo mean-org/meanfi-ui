@@ -51,6 +51,8 @@ export function getTokenBySymbol(symbol: string): TokenInfo | null {
  * @returns {TokenInfo | null} tokenInfo
  */
 export function getTokenByMintAddress(address: string): TokenInfo | null {
+  if (!address) { return null; }
+
   if (address === NATIVE_SOL.address) {
     return JSON.parse(JSON.stringify(NATIVE_SOL));
   }

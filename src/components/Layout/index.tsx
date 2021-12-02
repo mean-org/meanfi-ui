@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
-import { consoleOut, isValidAddress } from "../../utils/ui";
+import { consoleOut, isLocal, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
@@ -30,6 +30,7 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     detailsPanelOpen,
+    forceReloadTokens,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,
@@ -265,6 +266,11 @@ export const AppLayout = React.memo((props: any) => {
           </div>
           <AppBar menuType="mobile" topNavVisible={false} />
         </Header>
+        {/* {isLocal() && (
+          <div className="debug-bar">
+            <span className="ml-1">forceReloadTokens:</span><span className="ml-1 font-bold fg-dark-active">{forceReloadTokens ? 'true' : 'false'}</span>
+          </div>
+        )} */}
         <Content>{props.children}</Content>
         <Footer>
           <FooterBar/>

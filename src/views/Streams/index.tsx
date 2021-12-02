@@ -105,7 +105,6 @@ export const Streams = () => {
     setCustomStreamDocked,
   } = useContext(AppStateContext);
   const {
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -151,22 +150,6 @@ export const Streams = () => {
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
   }, [connection]);
-
-  // If we don't have streams to show go back to /accounts
-  useEffect(() => {
-    if (!lastSentTxStatus && fetchTxInfoStatus === "fetched") {
-      if (!streamList || streamList.length === 0) {
-        navigate("/accounts");
-      }
-    }
-  }, [
-    streamList,
-    loadingStreams,
-    lastSentTxStatus,
-    fetchTxInfoStatus,
-    loadingStreamActivity,
-    navigate
-  ]);
 
   // Live data calculation
   useEffect(() => {

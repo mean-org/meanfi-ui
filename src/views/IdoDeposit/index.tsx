@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { consoleOut, percentage } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { useWallet } from '../../contexts/wallet';
+import { TokenDisplay } from '../../components/TokenDisplay';
 
 export const IdoDeposit = (props: {
   disabled: boolean;
@@ -152,16 +153,13 @@ export const IdoDeposit = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              <div className="token-selector">
-                <div className="token-icon">
-                  {selectedToken?.logoURI ? (
-                    <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                  ) : (
-                    <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                  )}
-                </div>
-                <div className="token-symbol">{selectedToken?.symbol}</div>
-              </div>
+              {selectedToken && (
+                <TokenDisplay onClick={() => {}}
+                  mintAddress={selectedToken.address}
+                  name={selectedToken.name}
+                  showCaretDown={true}
+                />
+              )}
             </span>
           </div>
           <div className="right">

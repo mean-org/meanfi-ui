@@ -2199,6 +2199,9 @@ main section {
           .token-symbol {
             font-size: 20px;
           }
+          .dropdown-arrow {
+            display: none;
+          }
           .token-icon {
             margin: 0 6px 0 0;
             border-color: var(--color-secondary-alpha-20);
@@ -2757,7 +2760,6 @@ main section {
         flex-direction: row;
         justify-content: flex-start;
         align-items: center;
-        padding-right: 24px;
         .token-symbol {
           font-size: 24px;
           font-weight: 600;
@@ -6307,6 +6309,7 @@ code {
   font-size: 0.7rem;
   background-color: var(--color-secondary-alpha-05);
   border-top: 1px solid var(--color-secondary-alpha-40);
+  z-index: 1;
 }
 
 .panel1,

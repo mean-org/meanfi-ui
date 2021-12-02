@@ -56,6 +56,7 @@ import { StepSelector } from '../../components/StepSelector';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TokenDisplay } from '../../components/TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -968,19 +969,14 @@ export const PayrollPayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => showTokenSelector()}>
-                  <div className="token-icon">
-                    {selectedToken?.logoURI ? (
-                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                    ) : (
-                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
+                {selectedToken && (
+                  <TokenDisplay onClick={() => showTokenSelector()}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showName={false}
+                    showCaretDown={true}
+                  />
+                )}
               </span>
             </div>
             <div className="right">
@@ -1179,19 +1175,14 @@ export const PayrollPayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => showTokenSelector()}>
-                  <div className="token-icon">
-                    {selectedToken?.logoURI ? (
-                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                    ) : (
-                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
+                {selectedToken && (
+                  <TokenDisplay onClick={() => showTokenSelector()}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showName={false}
+                    showCaretDown={true}
+                  />
+                )}
                 {selectedToken && tokenBalance ? (
                   <div
                     className="token-max simplelink"

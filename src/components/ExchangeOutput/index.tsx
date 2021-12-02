@@ -5,6 +5,7 @@ import { Identicon } from "../Identicon";
 import { AppStateContext } from "../../contexts/appstate";
 import { formatAmount } from "../../utils/utils";
 import { TokenInfo } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { TokenDisplay } from "../TokenDisplay";
 
 export const ExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
@@ -141,35 +142,14 @@ export const ExchangeOutput = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on simplelink">
-              <div className="token-selector" onClick={props.onSelectToken}>
-                {props.toToken ? (
-                  <>
-                    <div className="token-icon" style={{ marginRight: "8px" }}>
-                      {props.toToken.logoURI ? (
-                        <img
-                          alt={`${props.toToken.name}`}
-                          width={20}
-                          height={20}
-                          src={props.toToken.logoURI}
-                        />
-                      ) : (
-                        <Identicon
-                          address={props.toToken.address}
-                          style={{ width: "24", display: "inline-flex" }}
-                        />
-                      )}
-                    </div>
-                    <div className="token-symbol">{props.toToken.symbol}</div>
-                  </>
-                ) : (
-                  <span className="notoken-label">
-                    {t("swap.token-select-destination")}
-                  </span>
-                )}
-                <span className="flex-center">
-                  <IconCaretDown className="mean-svg-icons" />
-                </span>
-              </div>
+              <TokenDisplay onClick={props.onSelectToken}
+                  mintAddress={props.toToken ? props.toToken.address : ''}
+                  name={props.toToken ? props.toToken.name : ''}
+                  className="simplelink"
+                  noTokenLabel={t('swap.token-select-destination')}
+                  showName={false}
+                  showCaretDown={true}
+              />
             </span>
           </div>
           <div className="right">

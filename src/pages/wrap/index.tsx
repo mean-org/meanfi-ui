@@ -26,6 +26,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
 import { useNativeAccount } from "../../contexts/accounts";
 import { customLogger } from '../..';
+import { TokenDisplay } from '../../components/TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -482,26 +483,12 @@ export const WrapView = () => {
                         </div>
                       )}
                       {selectedToken && (
-                        <div className="token-selector p-0">
-                          <div className="token-icon">
-                            {selectedToken.logoURI ? (
-                              <img
-                                alt={`${selectedToken.name}`}
-                                width={20}
-                                height={20}
-                                src={selectedToken.logoURI}
-                              />
-                            ) : (
-                              <Identicon
-                                address={selectedToken.address}
-                                style={{ width: "24", display: "inline-flex" }}
-                              />
-                            )}
-                          </div>
-                          <div className="token-symbol">
-                            SOL
-                          </div>
-                        </div>
+                        <TokenDisplay onClick={() => {}}
+                          mintAddress={selectedToken.address}
+                          name={selectedToken.name}
+                          showName={false}
+                          showCaretDown={false}
+                        />
                       )}
                     </div>
                   </div>

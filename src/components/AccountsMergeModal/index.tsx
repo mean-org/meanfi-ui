@@ -14,6 +14,7 @@ import { createTokenMergeTx } from '../../utils/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { UserTokenAccount } from '../../models/transactions';
+import { TokenDisplay } from '../TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -338,16 +339,14 @@ export const AccountsMergeModal = (props: {
                                 <div key={`${index}`} className="flex-fixed-right align-items-center merged-token-item">
                                     <div className="left flex-column">
                                         <span className="add-on">
-                                            <div className="token-selector">
-                                                <div className={token?.isAta ?  'token-icon' : 'token-icon grayed-out'}>
-                                                {token?.logoURI ? (
-                                                    <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
-                                                ) : (
-                                                    <Identicon address={token?.address} style={{ width: "24", display: "inline-flex" }} />
-                                                )}
-                                                </div>
-                                                <div className="token-symbol">{token?.symbol}</div>
-                                            </div>
+                                          {token && (
+                                            <TokenDisplay onClick={() => {}}
+                                              mintAddress={token.address}
+                                              name={token.name}
+                                              showName={true}
+                                              showCaretDown={false}
+                                            />
+                                          )}
                                         </span>
                                         <div className="public-address">{shortenAddress(item.pubkey.toBase58(), 10)}</div>
                                     </div>
