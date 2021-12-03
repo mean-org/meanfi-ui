@@ -1,0 +1,373 @@
+{
+    "version": "0.0.0",
+    "name": "mean_ido_pool",
+    "instructions": [
+      {
+        "name": "depositUsdc",
+        "accounts": [
+          {
+            "name": "userAuthority",
+            "isMut": false,
+            "isSigner": true
+          },
+          {
+            "name": "userUsdc",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "userIdo",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "idoAccount",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "usdcMint",
+            "isMut": false,
+            "isSigner": false
+          },
+          {
+            "name": "usdcPool",
+            "isMut": true,
+            "isSigner": false
+          },
+          {
+            "name": "systemProgram",
+            "isMut": false,
+            "isSigner": false
+          },
+          {
+            "name": "tokenProgram",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": [
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "userIdoBump",
+            "type": "u8"
+          }
+        ]
+      },
+      {
+        "name": "simulateStatus",
+        "accounts": [
+          {
+            "name": "idoAccount",
+            "isMut": false,
+            "isSigner": false
+          }
+        ],
+        "args": []
+      }
+    ],
+    "accounts": [
+      {
+        "name": "IdoAccount",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "idoAuthority",
+              "type": "publicKey"
+            },
+            {
+              "name": "idoName",
+              "type": {
+                "array": [
+                  "u8",
+                  10
+                ]
+              }
+            },
+            {
+              "name": "idoTimes",
+              "type": {
+                "defined": "IdoTimes"
+              }
+            },
+            {
+              "name": "idoMeanAmount",
+              "type": "u64"
+            },
+            {
+              "name": "bumps",
+              "type": {
+                "defined": "PoolBumps"
+              }
+            },
+            {
+              "name": "usdcMint",
+              "type": "publicKey"
+            },
+            {
+              "name": "meanMint",
+              "type": "publicKey"
+            },
+            {
+              "name": "usdcPool",
+              "type": "publicKey"
+            },
+            {
+              "name": "meanPool",
+              "type": "publicKey"
+            },
+            {
+              "name": "meanPriceStart",
+              "type": "u64"
+            },
+            {
+              "name": "meanPriceEnd",
+              "type": "u64"
+            },
+            {
+              "name": "usdcPerUserMin",
+              "type": "u64"
+            },
+            {
+              "name": "usdcPerUserMaxStart",
+              "type": "u64"
+            },
+            {
+              "name": "usdcPerUserMaxEnd",
+              "type": "u64"
+            },
+            {
+              "name": "usdcTotalMin",
+              "type": "u64"
+            },
+            {
+              "name": "usdcTotalMax",
+              "type": "u64"
+            },
+            {
+              "name": "usdcTotalCurrent",
+              "type": "u64"
+            },
+            {
+              "name": "meanAllocatedCurrent",
+              "type": "u64"
+            },
+            {
+              "name": "meanImpliedPrice",
+              "type": "u64"
+            }
+          ]
+        }
+      },
+      {
+        "name": "UserIdoAccount",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "idoName",
+              "type": {
+                "array": [
+                  "u8",
+                  10
+                ]
+              }
+            },
+            {
+              "name": "userAuthority",
+              "type": "publicKey"
+            },
+            {
+              "name": "bump",
+              "type": "u8"
+            },
+            {
+              "name": "usdcContributionTs",
+              "type": "i64"
+            },
+            {
+              "name": "usdcContributionAmount",
+              "type": "u64"
+            },
+            {
+              "name": "meanAllocatedAmount",
+              "type": "u64"
+            }
+          ]
+        }
+      }
+    ],
+    "types": [
+      {
+        "name": "IdoTimes",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "idoStartTs",
+              "type": "i64"
+            },
+            {
+              "name": "idoEndTs",
+              "type": "i64"
+            },
+            {
+              "name": "redeemStartTs",
+              "type": "i64"
+            }
+          ]
+        }
+      },
+      {
+        "name": "PoolBumps",
+        "type": {
+          "kind": "struct",
+          "fields": [
+            {
+              "name": "idoAccount",
+              "type": "u8"
+            },
+            {
+              "name": "meanPool",
+              "type": "u8"
+            },
+            {
+              "name": "usdcPool",
+              "type": "u8"
+            }
+          ]
+        }
+      }
+    ],
+    "events": [
+      {
+        "name": "IdoStatusEvent",
+        "fields": [
+          {
+            "name": "clusterTs",
+            "type": "u64",
+            "index": false
+          },
+          {
+            "name": "secondsFromIdoStart",
+            "type": "i64",
+            "index": false
+          },
+          {
+            "name": "isRunning",
+            "type": "bool",
+            "index": false
+          },
+          {
+            "name": "meanPriceCurrent",
+            "type": "u64",
+            "index": false
+          },
+          {
+            "name": "usdcPerUserMaxCurrent",
+            "type": "u64",
+            "index": false
+          },
+          {
+            "name": "usdcTotalCurrent",
+            "type": "u64",
+            "index": false
+          },
+          {
+            "name": "meanAllocatedCurrent",
+            "type": "u64",
+            "index": false
+          },
+          {
+            "name": "meanImpliedPrice",
+            "type": "u64",
+            "index": false
+          }
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "code": 300,
+        "name": "IdoNameTooLong",
+        "msg": "IDO name is too long"
+      },
+      {
+        "code": 301,
+        "name": "IdoFuture",
+        "msg": "IDO must start in the future"
+      },
+      {
+        "code": 302,
+        "name": "SeqTimes",
+        "msg": "IDO times are non-sequential"
+      },
+      {
+        "code": 303,
+        "name": "StartIdoTime",
+        "msg": "IDO has not started"
+      },
+      {
+        "code": 304,
+        "name": "EndDepositsTime",
+        "msg": "Deposits period has ended"
+      },
+      {
+        "code": 305,
+        "name": "EndIdoTime",
+        "msg": "IDO has ended"
+      },
+      {
+        "code": 306,
+        "name": "IdoNotOver",
+        "msg": "IDO has not finished yet"
+      },
+      {
+        "code": 307,
+        "name": "RedeemNotStarted",
+        "msg": "Redeem period has not started yet"
+      },
+      {
+        "code": 308,
+        "name": "LowMean",
+        "msg": "Insufficient MEAN"
+      },
+      {
+        "code": 309,
+        "name": "LowUsdc",
+        "msg": "Insufficient USDC"
+      },
+      {
+        "code": 310,
+        "name": "LowRedeemable",
+        "msg": "Insufficient redeemable tokens"
+      },
+      {
+        "code": 311,
+        "name": "UsdcNotEqRedeem",
+        "msg": "USDC total and redeemable total don't match"
+      },
+      {
+        "code": 312,
+        "name": "InvalidNonce",
+        "msg": "Given nonce is invalid"
+      },
+      {
+        "code": 313,
+        "name": "MinUsdcPerUser",
+        "msg": "USDC amount is less than minimum required contribution"
+      },
+      {
+        "code": 314,
+        "name": "MaxUsdcPerUser",
+        "msg": "USDC amount exceeds max allowed contribution"
+      }
+    ],
+    "metadata": {
+      "address": "4p3C44cNJnCCaeBaKNDi4DbXRgBs7zQDbPhBoqstH2Mv"
+    }
+  }
