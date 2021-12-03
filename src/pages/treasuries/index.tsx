@@ -1566,15 +1566,15 @@ export const TreasuriesView = () => {
                     {t('treasuries.treasury-detail.associated-token')}
                   </div>
                   <div className="transaction-detail-row">
-                    <span className="info-icon">
+                    <span className="info-icon token-icon">
                       {token && token.logoURI ? (
-                        <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
+                        <img alt={`${token.name}`} width={32} height={32} src={token.logoURI} onError={imageOnErrorHandler} />
                       ) : (
                         <Identicon address={treasuryDetails.associatedTokenAddress} style={{ width: "24", display: "inline-flex" }} />
                       )}
                     </span>
                     <span className="info-data text-truncate">
-                      {token ? `${token.symbol} (${token.name})` : ''}
+                      {token && token.symbol ? `${token.symbol} (${token.name})` : shortenAddress(treasuryDetails.associatedTokenAddress as string)}
                     </span>
                   </div>
                 </Col>

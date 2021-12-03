@@ -8,7 +8,6 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown } from "../../Icons";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
@@ -42,6 +41,7 @@ import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
+import { TextInput } from '../../components/TextInput';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -91,6 +91,8 @@ export const OneTimePayment = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
 
   useEffect(() => {
 
@@ -187,7 +189,10 @@ export const OneTimePayment = () => {
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-  const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    setTokenFilter('');
+  }, []);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -281,6 +286,50 @@ export const OneTimePayment = () => {
     }, 10);
   }
 
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback(() => {
+
+    if (!tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+        );
+      };
+
+      let showFromList = !tokenFilter 
+        ? tokenList
+        : tokenList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
+  }, [
+    tokenList,
+    tokenFilter,
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter();
+    
+  },[
+    updateTokenListByFilter
+  ]);
+
   // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -303,6 +352,17 @@ export const OneTimePayment = () => {
     setSelectedToken,
     setSelectedTokenBalance,
     setPreviousWalletConnectState,
+  ]);
+
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter();
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
   ]);
 
   // Window resize listener
@@ -692,6 +752,59 @@ export const OneTimePayment = () => {
       : 0;
   }
 
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
+            setSelectedToken(token);
+            consoleOut("token selected:", token.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+
+          return (
+            <div
+              key={index + 100}
+              onClick={onClick}
+              className={`token-item ${
+                selectedToken && selectedToken.address === token.address
+                  ? "selected"
+                  : "simplelink"
+              }`}>
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img
+                    alt={`${token.name}`}
+                    width={24}
+                    height={24}
+                    src={token.logoURI}
+                  />
+                ) : (
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "24", display: "inline-flex" }}
+                  />
+                )}
+              </div>
+              <div className="token-description">
+                <div className="token-symbol">{token.symbol}</div>
+                <div className="token-name">{token.name}</div>
+              </div>
+              {
+                connected && userBalances && userBalances[token.address] > 0 && (
+                  <div className="token-balance">
+                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })
+      )}
+    </>
+  );
+
   return (
     <>
       <div className="contract-wrapper">
@@ -875,55 +988,16 @@ export const OneTimePayment = () => {
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
-        <div className="token-list">
-          {/* Loop through the tokens */}
-          {(selectedToken && tokenList) && (
-            tokenList.map((token, index) => {
-              const onClick = function () {
-                setSelectedToken(token);
-                consoleOut("token selected:", token.symbol, 'blue');
-                setEffectiveRate(getPricePerToken(token));
-                onCloseTokenSelector();
-              };
-              return (
-                <div
-                  key={index + 100}
-                  onClick={onClick}
-                  className={`token-item ${
-                    selectedToken && selectedToken.address === token.address
-                      ? "selected"
-                      : "simplelink"
-                  }`}>
-                  <div className="token-icon">
-                    {token.logoURI ? (
-                      <img
-                        alt={`${token.name}`}
-                        width={24}
-                        height={24}
-                        src={token.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={token.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-description">
-                    <div className="token-symbol">{token.symbol}</div>
-                    <div className="token-name">{token.name}</div>
-                  </div>
-                  {
-                    connected && userBalances && userBalances[token.address] > 0 && (
-                      <div className="token-balance">
-                        {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                      </div>
-                    )
-                  }
-                </div>
-              );
-            })
-          )}
+        <div className="token-selector-wrapper">
+          <div className="token-search-wrapper">
+            <TextInput
+              value={tokenFilter}
+              placeholder={t('token-selector.search-input-placeholder')}
+              onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="token-list vertical-scroll">
+            {renderTokenList}
+          </div>
         </div>
       </Modal>
 
