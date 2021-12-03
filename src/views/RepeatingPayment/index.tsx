@@ -54,6 +54,7 @@ import { useNavigate } from 'react-router-dom';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
+import { TextInput } from '../../components/TextInput';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -108,6 +109,8 @@ export const RepeatingPayment = () => {
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
 
   useEffect(() => {
 
@@ -200,7 +203,10 @@ export const RepeatingPayment = () => {
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-  const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    setTokenFilter('');
+  }, []);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -285,14 +291,6 @@ export const RepeatingPayment = () => {
     }, 10);
   }
 
-  // const onRateAmountChange = (value: any) => {
-  //   if (value === null || value === undefined || value === "") {
-  //     setPaymentRateAmount("");
-  //   } else if (isValidNumber(value)) {
-  //     setPaymentRateAmount(value);
-  //   }
-  // }
-
   const handlePaymentRateAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
@@ -307,6 +305,50 @@ export const RepeatingPayment = () => {
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
   }
+
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback(() => {
+
+    if (!tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+        );
+      };
+
+      let showFromList = !tokenFilter 
+        ? tokenList
+        : tokenList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
+  }, [
+    tokenList,
+    tokenFilter,
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter();
+    
+  },[
+    updateTokenListByFilter
+  ]);
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
@@ -330,6 +372,17 @@ export const RepeatingPayment = () => {
     setSelectedToken,
     setSelectedTokenBalance,
     setPreviousWalletConnectState,
+  ]);
+
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter();
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
   ]);
 
   useEffect(() => {
@@ -846,25 +899,37 @@ export const RepeatingPayment = () => {
 
   const renderTokenList = (
     <>
-      {(selectedToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
             setSelectedToken(token);
-            consoleOut("token selected:", token);
+            consoleOut("token selected:", token.symbol, 'blue');
             setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
+
           return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
+            <div
+              key={index + 100}
+              onClick={onClick}
+              className={`token-item ${
                 selectedToken && selectedToken.address === token.address
                   ? "selected"
                   : "simplelink"
               }`}>
               <div className="token-icon">
                 {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
+                  <img
+                    alt={`${token.name}`}
+                    width={24}
+                    height={24}
+                    src={token.logoURI}
+                  />
                 ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
+                  <Identicon
+                    address={token.address}
+                    style={{ width: "24", display: "inline-flex" }}
+                  />
                 )}
               </div>
               <div className="token-description">
@@ -1215,8 +1280,16 @@ export const RepeatingPayment = () => {
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
-        <div className="token-list">
-          {renderTokenList}
+        <div className="token-selector-wrapper">
+          <div className="token-search-wrapper">
+            <TextInput
+              value={tokenFilter}
+              placeholder={t('token-selector.search-input-placeholder')}
+              onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="token-list vertical-scroll">
+            {renderTokenList}
+          </div>
         </div>
       </Modal>
 
