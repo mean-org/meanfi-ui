@@ -1675,7 +1675,7 @@ export const Streams = () => {
           {/* Funds left (Total Unvested) */}
           {isOtp() ? (
             null
-          ) : (
+          ) : streamDetail && streamDetail.escrowUnvestedAmount > 0 && (
             <div className="mb-3">
               <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {streamDetail
                 ? getEscrowEstimatedDepletionUtcLabel(streamDetail.escrowEstimatedDepletionUtc as Date)
@@ -1712,7 +1712,7 @@ export const Streams = () => {
                     <span className="info-data">
                     {/* TODO: How to get totalWithdrawals on new stream version */}
                     {/* {streamDetail
-                      ? getAmountWithSymbol(streamDetail.escrowVestedAmountSnap, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.allocationCommitted, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
@@ -1950,7 +1950,7 @@ export const Streams = () => {
           {/* Total deposit */}
           {isOtp() ? (
             null
-          ) : (
+          ) : streamDetail && (streamDetail.allocationReserved > 0 || streamDetail.allocationCommitted > 0) && (
             <div className="mb-3">
               <div className="info-label">{t('streams.stream-detail.label-total-deposits')}</div>
               <div className="transaction-detail-row">
@@ -1960,7 +1960,12 @@ export const Streams = () => {
                 {streamDetail ? (
                   <span className="info-data">
                   {streamDetail
-                    ? getAmountWithSymbol(streamDetail.allocationReserved, streamDetail.associatedToken as string)
+                    ? getAmountWithSymbol(
+                        streamDetail.allocationReserved > 0 
+                          ? streamDetail.allocationReserved 
+                          : streamDetail.allocationCommitted, 
+                        streamDetail.associatedToken as string
+                      )
                     : '--'}
                   </span>
                   ) : (
