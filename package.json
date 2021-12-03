@@ -59,7 +59,7 @@
     "@mean-dao/money-streaming": "1.6.41",
     "@mercurial-finance/stable-swap-n-pool": "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git",
     "@orca-so/sdk": "1.1.9",
-    "@project-serum/anchor": "^0.17.0",
+    "@project-serum/anchor": "^0.18.2",
     "@project-serum/serum": "^0.13.60",
     "@project-serum/sol-wallet-adapter": "^0.2.5",
     "@project-serum/swap": "0.1.0-alpha.32",

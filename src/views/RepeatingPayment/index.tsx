@@ -55,6 +55,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
+import { TokenListItem } from '../../components/TokenListItem';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -909,41 +910,18 @@ export const RepeatingPayment = () => {
           };
 
           return (
-            <div
-              key={index + 100}
-              onClick={onClick}
+            <TokenListItem
+              key={token.address}
+              name={token.name || 'Unknown'}
+              mintAddress={token.address}
               className={`token-item ${
                 selectedToken && selectedToken.address === token.address
                   ? "selected"
                   : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img
-                    alt={`${token.name}`}
-                    width={24}
-                    height={24}
-                    src={token.logoURI}
-                  />
-                ) : (
-                  <Identicon
-                    address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
-                  />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
+              }`}
+              onClick={onClick}
+              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+            />
           );
         })
       )}
