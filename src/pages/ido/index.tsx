@@ -20,13 +20,15 @@ import Countdown from 'react-countdown';
 import useScript from '../../hooks/useScript';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
 import { useNavigate } from 'react-router';
 import { useLocation } from 'react-router-dom';
 import { notify } from '../../utils/notifications';
+import { useConnectionConfig } from '../../contexts/connection';
+import { IdoClient, IdoStatus, IdoTracker, MeanIdoDetails } from '../../integrations/ido/ido-client';
 
 type IdoTabOption = "deposit" | "withdraw";
 declare const geoip2: any;
@@ -35,7 +37,8 @@ export const IdoView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
-  const { publicKey, connected } = useWallet();
+  const connectionConfig = useConnectionConfig();
+  const { publicKey, connected, wallet } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
@@ -57,6 +60,9 @@ export const IdoView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
+  const [idoDetails, setIdoDetails] = useState<MeanIdoDetails | null>(null);
+  const [idoTracker, setIdoTracker] = useState<IdoTracker | undefined>(undefined);
+  const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -91,6 +97,7 @@ export const IdoView = () => {
         consoleOut('Passed IDO address:', address, 'green');
         setIdoAccountAddress(address);
       } else {
+        setIdoAccountAddress('');
         consoleOut('Invalid IDO address', address, 'red');
         notify({
           message: 'Error',
@@ -105,6 +112,64 @@ export const IdoView = () => {
   }, [
     location.search,
     navigate,
+  ]);
+
+  const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+    commitment: "confirmed",
+    disableRetryOnRateLimit: true
+  }), [
+    connectionConfig.endpoint
+  ]);
+
+  // // Create and cache the IDO client
+  const idoClient = useMemo(() => {
+    if (connection && wallet && publicKey && connectionConfig.endpoint) {
+      return new IdoClient(connectionConfig.endpoint, wallet, { commitment: "confirmed" }, isLocal() ? true : false);
+    } else {
+      return undefined;
+    }
+  }, [
+    wallet,
+    connectionConfig.endpoint,
+    publicKey,
+    connection
+  ]);
+
+  useEffect(() => {
+
+    const initIdo = async () => {
+      if (!idoClient || !idoAccountAddress) {
+        return;
+      }
+
+      const idoAddressPubKey = new PublicKey(idoAccountAddress);
+      const idoDetails = await idoClient.getIdo(idoAddressPubKey);
+      if(idoDetails === null)
+        return;
+
+      setIdoDetails(idoDetails);
+
+      const idoTracker = await idoClient.getIdoTracker(idoAddressPubKey);
+      try {
+
+        await idoTracker.startTracking();
+        setIdoTracker(idoTracker);
+        const idoStatus = idoTracker.getIdoStatus();
+        // console.log("idoStatus:", idoStatus);
+        setIdoStatus(idoStatus);
+        idoTracker.addIdoUpdateListener((idoStatus) => setIdoStatus(idoStatus));
+      } catch (error: any) {
+        console.log(error);
+      }
+    }
+
+    if (idoClient && idoAccountAddress) {
+      initIdo();
+    }
+
+  }, [
+    idoClient,
+    idoAccountAddress,
   ]);
 
   // Date related
