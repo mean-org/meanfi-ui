@@ -1,9 +1,18 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
-import { IDO_CAP_VALUATION, IDO_END_DATE, IDO_MIN_CONTRIBUTION, IDO_RESTRICTED_COUNTRIES, IDO_START_DATE, MEAN_FINANCE_DISCORD_URL, MEAN_FINANCE_TWITTER_URL, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS } from "../../constants";
+import {
+  IDO_CAP_VALUATION,
+  IDO_END_DATE,
+  IDO_MIN_CONTRIBUTION,
+  IDO_RESTRICTED_COUNTRIES,
+  IDO_START_DATE,
+  MEAN_FINANCE_DISCORD_URL,
+  MEAN_FINANCE_TWITTER_URL,
+  SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS
+} from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
 import { IdoDeposit } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -16,11 +25,14 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
 import { useNavigate } from 'react-router';
+import { useLocation } from 'react-router-dom';
+import { notify } from '../../utils/notifications';
 
 type IdoTabOption = "deposit" | "withdraw";
 declare const geoip2: any;
 
 export const IdoView = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, connected } = useWallet();
@@ -44,6 +56,7 @@ export const IdoView = () => {
   const [currentTheme] = useState(theme);
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
+  const [idoAccountAddress, setIdoAccountAddress] = useState('');
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -69,6 +82,31 @@ export const IdoView = () => {
     currentTheme
   ]);
 
+  // Get IDO address from query string params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('idoAddress')) {
+      const address = params.get('idoAddress');
+      if (address && isValidAddress(address)) {
+        consoleOut('Passed IDO address:', address, 'green');
+        setIdoAccountAddress(address);
+      } else {
+        consoleOut('Invalid IDO address', address, 'red');
+        notify({
+          message: 'Error',
+          description: 'The supplied IDO address is not a valid solana address',
+          type: "error"
+        });
+        if (!isLocal()) {
+          navigate('/');
+        }
+      }
+    }
+  }, [
+    location.search,
+    navigate,
+  ]);
+
   // Date related
   const idoStartUtc = useMemo(() => new Date(Date.UTC(
     IDO_START_DATE.year,
@@ -78,6 +116,7 @@ export const IdoView = () => {
     IDO_START_DATE.minute,
     IDO_START_DATE.second
   )), []);
+
   const idoEndUtc = useMemo(() => new Date(Date.UTC(
     IDO_END_DATE.year,
     IDO_END_DATE.month,
@@ -86,6 +125,7 @@ export const IdoView = () => {
     IDO_END_DATE.minute,
     IDO_END_DATE.second
   )), []);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
 
@@ -301,6 +341,12 @@ export const IdoView = () => {
 
   return (
     <div className="solid-bg">
+
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">idoAccountAddress:</span><span className="ml-1 font-bold fg-dark-active">{idoAccountAddress || '-'}</span>
+        </div>
+      )} */}
 
       <section className="content contrast-section no-padding">
         <div className="container">

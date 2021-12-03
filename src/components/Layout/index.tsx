@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
-import { consoleOut, isLocal, isValidAddress } from "../../utils/ui";
+import { consoleOut, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
@@ -30,7 +30,6 @@ export const AppLayout = React.memo((props: any) => {
   const {
     theme,
     detailsPanelOpen,
-    forceReloadTokens,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,

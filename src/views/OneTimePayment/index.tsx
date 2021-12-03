@@ -9,7 +9,6 @@ import {
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -20,6 +19,7 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isLocal,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -42,6 +42,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useNavigate } from 'react-router-dom';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
+import { TokenListItem } from '../../components/TokenListItem';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -191,8 +192,10 @@ export const OneTimePayment = () => {
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(false);
-    setTokenFilter('');
-  }, []);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -287,7 +290,7 @@ export const OneTimePayment = () => {
   }
 
   // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(() => {
+  const updateTokenListByFilter = useCallback((searchString: string) => {
 
     if (!tokenList) {
       return;
@@ -297,13 +300,13 @@ export const OneTimePayment = () => {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(searchString.toLowerCase())
         );
       };
 
-      let showFromList = !tokenFilter 
+      let showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -317,14 +320,13 @@ export const OneTimePayment = () => {
     
   }, [
     tokenList,
-    tokenFilter,
   ]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
     const newValue = e.target.value;
     setTokenFilter(newValue);
-    updateTokenListByFilter();
+    updateTokenListByFilter(newValue);
     
   },[
     updateTokenListByFilter
@@ -356,7 +358,7 @@ export const OneTimePayment = () => {
 
   useEffect(() => {
     if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-      updateTokenListByFilter();
+      updateTokenListByFilter(tokenFilter);
     }
   }, [
     tokenList,
@@ -764,41 +766,14 @@ export const OneTimePayment = () => {
           };
 
           return (
-            <div
-              key={index + 100}
+            <TokenListItem
+              key={token.address}
+              name={token.name || 'Unknown'}
+              mintAddress={token.address}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
               onClick={onClick}
-              className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img
-                    alt={`${token.name}`}
-                    width={24}
-                    height={24}
-                    src={token.logoURI}
-                  />
-                ) : (
-                  <Identicon
-                    address={token.address}
-                    style={{ width: "24", display: "inline-flex" }}
-                  />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
+              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+            />
           );
         })
       )}
@@ -807,6 +782,12 @@ export const OneTimePayment = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">tokenFilter:</span><span className="ml-1 font-bold fg-dark-active">{tokenFilter || '-'}</span>
+        </div>
+      )} */}
+
       <div className="contract-wrapper">
 
         {/* Recipient */}
@@ -996,7 +977,29 @@ export const OneTimePayment = () => {
               onInputChange={onTokenSearchInputChange} />
           </div>
           <div className="token-list vertical-scroll">
-            {renderTokenList}
+            {filteredTokenList.length > 0 && renderTokenList}
+            {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+              <TokenListItem
+                key={tokenFilter}
+                name="Unknown"
+                mintAddress={tokenFilter}
+                className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                onClick={() => {
+                  const uknwnToken: TokenInfo = {
+                    address: tokenFilter,
+                    name: 'Unknown',
+                    chainId: 101,
+                    decimals: 6,
+                    symbol: '',
+                  };
+                  setSelectedToken(uknwnToken);
+                  consoleOut("token selected:", uknwnToken, 'blue');
+                  setEffectiveRate(0);
+                  onCloseTokenSelector();
+                }}
+                balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+              />
+            )}
           </div>
         </div>
       </Modal>
