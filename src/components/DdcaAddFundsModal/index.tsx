@@ -165,12 +165,12 @@ export const DdcaAddFundsModal = (props: {
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
-        const accountInfo = await props.connection.getAccountInfo(address.toPublicKey());
+        const accountInfo = await props.connection.getAccountInfo(new PublicKey(address));
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
           return accountInfo.lamports / LAMPORTS_PER_SOL;
         }
-        const tokenAmount = (await props.connection.getTokenAccountBalance(address.toPublicKey())).value;
+        const tokenAmount = (await props.connection.getTokenAccountBalance(new PublicKey(address))).value;
         return tokenAmount.uiAmount || 0;
       } catch (error) {
         console.error(error);
@@ -181,7 +181,7 @@ export const DdcaAddFundsModal = (props: {
     (async () => {
       if (props.ddcaDetails) {
         let balance = 0;
-        const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, props.ddcaDetails.fromMint.toPublicKey());
+        const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(props.ddcaDetails.fromMint));
         balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
         setFromTokenBalance(balance);
       }
