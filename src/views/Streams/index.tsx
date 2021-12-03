@@ -1702,7 +1702,7 @@ export const Streams = () => {
           {!isScheduledOtp() && (
             <>
               {/* Amount withdrawn */}
-              <div className="mb-3">
+              {/* <div className="mb-3">
                 <div className="info-label">{t('streams.stream-detail.label-total-withdrawals')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
@@ -1711,7 +1711,7 @@ export const Streams = () => {
                   {streamDetail ? (
                     <span className="info-data">
                     {/* TODO: How to get totalWithdrawals on new stream version */}
-                    {streamDetail
+                    {/* {streamDetail
                       ? getAmountWithSymbol(streamDetail.escrowVestedAmountSnap, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
@@ -1719,7 +1719,7 @@ export const Streams = () => {
                     <span className="info-data">&nbsp;</span>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Funds available to withdraw now (Total Vested) */}
               <div className="mb-3">
