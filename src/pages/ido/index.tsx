@@ -20,7 +20,7 @@ import Countdown from 'react-countdown';
 import useScript from '../../hooks/useScript';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
@@ -31,6 +31,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoStatus, IdoTracker, MeanIdoDetails } from '../../integrations/ido/ido-client';
 
 type IdoTabOption = "deposit" | "withdraw";
+type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
 declare const geoip2: any;
 
 export const IdoView = () => {
@@ -63,6 +64,7 @@ export const IdoView = () => {
   const [idoDetails, setIdoDetails] = useState<MeanIdoDetails | null>(null);
   const [idoTracker, setIdoTracker] = useState<IdoTracker | undefined>(undefined);
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
+  const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -95,7 +97,9 @@ export const IdoView = () => {
       const address = params.get('idoAddress');
       if (address && isValidAddress(address)) {
         consoleOut('Passed IDO address:', address, 'green');
-        setIdoAccountAddress(address);
+        setTimeout(() => {
+          setIdoAccountAddress(address);
+        });
       } else {
         setIdoAccountAddress('');
         consoleOut('Invalid IDO address', address, 'red');
@@ -108,6 +112,8 @@ export const IdoView = () => {
           navigate('/');
         }
       }
+    } else {
+      consoleOut('No IDO address provided, using config...');
     }
   }, [
     location.search,
@@ -121,55 +127,90 @@ export const IdoView = () => {
     connectionConfig.endpoint
   ]);
 
-  // // Create and cache the IDO client
+  // Create and cache the IDO client
   const idoClient = useMemo(() => {
-    if (connection && wallet && publicKey && connectionConfig.endpoint) {
-      return new IdoClient(connectionConfig.endpoint, wallet, { commitment: "confirmed" }, isLocal() ? true : false);
+    if (!connection || !connectionConfig.endpoint) {
+      consoleOut('This is odd. No connection!');
+      return;
+    }
+
+    if (wallet) {
+      return new IdoClient(
+        connectionConfig.endpoint,
+        wallet,
+        { commitment: "confirmed" },
+        isLocal() ? true : false
+      );
     } else {
-      return undefined;
+      return new IdoClient(
+        connectionConfig.endpoint,
+        {publicKey: Keypair.generate().publicKey, signAllTransactions: async (txs) => txs, signTransaction: async tx => tx},
+        undefined,
+        isLocal() ? true : false
+      );
     }
   }, [
     wallet,
+    connection,
     connectionConfig.endpoint,
-    publicKey,
-    connection
   ]);
 
   useEffect(() => {
 
+    if (!idoClient || !idoAccountAddress) {
+      return;
+    }
+
     const initIdo = async () => {
-      if (!idoClient || !idoAccountAddress) {
-        return;
-      }
 
       const idoAddressPubKey = new PublicKey(idoAccountAddress);
       const idoDetails = await idoClient.getIdo(idoAddressPubKey);
+
+      consoleOut('idoDetails:', idoDetails, 'blue');
+
       if(idoDetails === null)
+      {
+        setIdoEngineInitStatus("error");
         return;
+      }
 
-      setIdoDetails(idoDetails);
-
-      const idoTracker = await idoClient.getIdoTracker(idoAddressPubKey);
       try {
-
-        await idoTracker.startTracking();
-        setIdoTracker(idoTracker);
-        const idoStatus = idoTracker.getIdoStatus();
-        // console.log("idoStatus:", idoStatus);
+        const tracker = await idoClient.getIdoTracker(idoAddressPubKey);
+        await tracker.startTracking();
+        const idoStatus = tracker.getIdoStatus();
+        consoleOut("idoStatus:", idoStatus);
+        tracker.addIdoUpdateListener((idoStatus) => setIdoStatus(idoStatus));
+        setIdoDetails(idoDetails);
+        setIdoTracker(tracker);
         setIdoStatus(idoStatus);
-        idoTracker.addIdoUpdateListener((idoStatus) => setIdoStatus(idoStatus));
+        setIdoEngineInitStatus("started");
       } catch (error: any) {
-        console.log(error);
+        setIdoEngineInitStatus("error");
+        console.error(error);
       }
     }
 
-    if (idoClient && idoAccountAddress) {
+    if (!idoDetails && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
+      consoleOut('idoAccountAddress:', idoAccountAddress, 'blue');
+      consoleOut('client:', idoClient ? idoClient.toString() : 'none', 'blue');
+      consoleOut('Calling initIdo()...', '', 'blue');
+      setIdoEngineInitStatus("initializing");
       initIdo();
     }
 
+    // return () => {
+    //   if (idoTracker) {
+    //     setIdoEngineInitStatus("stopped");
+    //     idoTracker.StopTracking();
+    //   }
+    // };
+
   }, [
     idoClient,
+    idoDetails,
+    idoTracker,
     idoAccountAddress,
+    idoEngineInitStatus,
   ]);
 
   // Date related
@@ -407,11 +448,11 @@ export const IdoView = () => {
   return (
     <div className="solid-bg">
 
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">idoAccountAddress:</span><span className="ml-1 font-bold fg-dark-active">{idoAccountAddress || '-'}</span>
+          <span className="ml-1">idoEngineInitStatus:</span><span className="ml-1 font-bold fg-dark-active">{idoEngineInitStatus || '-'}</span>
         </div>
-      )} */}
+      )}
 
       <section className="content contrast-section no-padding">
         <div className="container">

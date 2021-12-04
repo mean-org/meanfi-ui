@@ -32,7 +32,9 @@ export const allowedConsoleDebug = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (!isLocal() || !allowedConsoleDebug()) { return; }
+    if (isProd()) {
+        return;
+    }
     if (msg) {
         if (value === 'NOT_SPECIFIED') {
             console.log(`%c${msg}`, `color: ${color}`);
