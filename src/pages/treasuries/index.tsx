@@ -2,8 +2,9 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
+  CheckOutlined,
   EllipsisOutlined,
-  LoadingOutlined, ReloadOutlined, SearchOutlined,
+  LoadingOutlined, ReloadOutlined, SearchOutlined, WarningOutlined,
 } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -22,8 +23,8 @@ import {
   getTxIxResume,
   shortenAddress
 } from '../../utils/utils';
-import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionStatusForLogs, isLocal, isValidAddress } from '../../utils/ui';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
+import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isLocal, isValidAddress } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
   SIMPLE_DATE_FORMAT,
@@ -54,6 +55,7 @@ import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TreasuryCloseModal } from '../../components/TreasuryCloseModal';
+import { StreamCloseModal } from '../../components/StreamCloseModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -99,6 +101,7 @@ export const TreasuriesView = () => {
   const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
+  const [highlightedStream, sethHighlightedStream] = useState<StreamInfo | undefined>();
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
 
   // Transactions
@@ -477,9 +480,11 @@ export const TreasuriesView = () => {
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       switch (lastSentTxOperationType) {
-        case OperationType.Close:
         case OperationType.Create:
           refreshTreasuries(true);
+          break;
+        case OperationType.Close:
+          refreshTreasuries(highlightedStream ? false : true);
           break;
         default:
           refreshTreasuries(false);
@@ -488,6 +493,7 @@ export const TreasuriesView = () => {
     }
   }, [
     publicKey,
+    highlightedStream,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -604,16 +610,16 @@ export const TreasuriesView = () => {
     if (item.isUpdatePending) {
       return 'Update pending';
     }
-  
+
     switch (item.state) {
       case STREAM_STATE.Schedule:
-        return 'Scheduled';
+        return t('treasuries.treasury-streams.status-scheduled');
       case STREAM_STATE.Paused:
-        return 'Paused'
+        return t('treasuries.treasury-streams.status-stopped');
       default:
-        return '';
+        return t('treasuries.treasury-streams.status-running');
     }
-  }, []);
+  }, [t]);
 
   const getRateAmountDisplay = (item: StreamInfo): string => {
     let value = '';
@@ -659,9 +665,52 @@ export const TreasuriesView = () => {
     );
   }
 
+  const getStreamClosureMessage = () => {
+    let message = '';
+
+    if (publicKey && highlightedStream) {
+
+      const me = publicKey.toBase58();
+      const treasurer = highlightedStream.treasurerAddress as string;
+      const beneficiary = highlightedStream.beneficiaryAddress as string;
+
+      if (treasurer === me) {  // If I am the treasurer
+        message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
+      } else if (beneficiary === me)  {  // If I am the beneficiary
+        message = t('close-stream.context-beneficiary', { beneficiary: shortenAddress(beneficiary) });
+      }
+
+    }
+
+    return (
+      <div>{message}</div>
+    );
+  }
+
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
+  }
+
   ////////////////
   //   Events   //
   ////////////////
+
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
 
   const onRefreshTreasuriesClick = () => {
     refreshTreasuries(false);
@@ -1433,9 +1482,296 @@ export const TreasuriesView = () => {
 
   };
 
+  // Close stream modal
+  const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
+  const showCloseStreamModal = useCallback(() => {
+    getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+      setTransactionFees(value);
+      setIsCloseStreamModalVisibility(true);
+      consoleOut('tokenBalance:', tokenBalance, 'orange');
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [
+    tokenBalance,
+    getTransactionFees,
+  ]);
+  const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
+  const onAcceptCloseStream = () => {
+    hideCloseStreamModal();
+    onExecuteCloseStreamTransaction();
+  };
+
+  // Close stream Transaction execution modal
+  const [isCloseStreamTransactionModalVisible, setCloseStreamTransactionModalVisibility] = useState(false);
+  const showCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(true), []);
+  const hideCloseStreamTransactionModal = useCallback(() => setCloseStreamTransactionModalVisibility(false), []);
+
+  const onCloseStreamTransactionFinished = () => {
+    resetTransactionStatus();
+    hideCloseStreamTransactionModal();
+    refreshTokenBalance();
+    setForceReloadTokens(true);
+  };
+
+  const onAfterCloseStreamTransactionModalClosed = () => {
+    if (isBusy) {
+      setTransactionCancelled(true);
+    }
+    if (isSuccess()) {
+      hideCloseStreamTransactionModal();
+    }
+  }
+
+  const onExecuteCloseStreamTransaction = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && highlightedStream) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+        const streamPublicKey = new PublicKey(highlightedStream.id as string);
+
+        const data = {
+          stream: streamPublicKey.toBase58(),                     // stream
+          initializer: wallet.publicKey.toBase58(),               // initializer
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Create a transaction
+        return await ms.closeStream(
+          publicKey as PublicKey,                           // Initializer public key
+          streamPublicKey,                                  // Stream ID
+        )
+        .then(value => {
+          consoleOut('closeStream returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('closeStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      showCloseStreamTransactionModal();
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            setIsBusy(false);
+            onCloseStreamTransactionFinished();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
   ///////////////
   // Rendering //
   ///////////////
+
+  const renderStreamOptions = (item: StreamInfo) => {
+    const menu = (
+      <Menu>
+        {item.state === STREAM_STATE.Paused ? (
+          <Menu.Item key="1" onClick={() => {}}>
+            <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+          </Menu.Item>
+        ) : item.state === STREAM_STATE.Running ? (
+          <Menu.Item key="1" onClick={() => {}}>
+            <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
+          </Menu.Item>
+        ) : null}
+        <Menu.Item key="3" onClick={showCloseStreamModal}>
+          <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+        </Menu.Item>
+        <Menu.Item key="4" onClick={() => {}}>
+          <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
+              target="_blank" rel="noopener noreferrer">
+            <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
+          </a>
+        </Menu.Item>
+      </Menu>
+    );
+
+    return (
+      <Dropdown overlay={menu} trigger={["click"]} onVisibleChange={(visibleChange) => {
+        if (visibleChange) {
+          sethHighlightedStream(item);
+        } else {
+          sethHighlightedStream(undefined);
+        }
+      }}>
+        <span className="icon-container"><EllipsisOutlined /></span>
+      </Dropdown>
+    );
+  }
 
   const renderTreasuryStreams = () => {
     if (!treasuryDetails) {
@@ -1456,35 +1792,30 @@ export const TreasuriesView = () => {
           <div className="header-row">
             <div className="std-table-cell first-cell">&nbsp;</div>
             <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-activity')}</div>
-            <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-amount')}</div>
-            <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-started')}</div>
+            <div className="std-table-cell fixed-width-150">{t('treasuries.treasury-streams.column-amount')}</div>
+            <div className="std-table-cell fixed-width-120">{t('treasuries.treasury-streams.column-started')}</div>
             <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
         </div>
         <div className="item-list-body compact">
           {treasuryStreams.map((item, index) => {
             const status = getStreamStatus(item);
-            const onOptionsClick = () => {
-              consoleOut('YAF');
-            }
             return (
-              // <div className={`item-list-row ${true ? 'selected' : ''}`} key={`${index}`}>
-              // </div>
-              <div className="item-list-row" key={`${index}`}>
+              <div className={`item-list-row ${highlightedStream && highlightedStream.id === item.id ? 'selected' : ''}`} key={item.id as string}>
                 <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
                 <div className="std-table-cell responsive-cell">
                   {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
                   <span className="align-middle">{item.streamName || getStreamDescription(item)}</span>
                 </div>
-                <div className="std-table-cell responsive-cell">
+                <div className="std-table-cell fixed-width-150">
                   <span className="align-middle">{getStreamRateAmount(item)}</span>
                 </div>
-                <div className="std-table-cell responsive-cell">
+                <div className="std-table-cell fixed-width-120">
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
                 </div>
                 <div className="std-table-cell last-cell">
-                  <span className="icon-button-container" onClick={onOptionsClick}>
-                    <span className="icon-container"><EllipsisOutlined /></span>
+                  <span className="icon-button-container">
+                    {renderStreamOptions(item)}
                   </span>
                 </div>
               </div>
@@ -1568,7 +1899,7 @@ export const TreasuriesView = () => {
                   <div className="transaction-detail-row">
                     <span className="info-icon token-icon">
                       {token && token.logoURI ? (
-                        <img alt={`${token.name}`} width={32} height={32} src={token.logoURI} onError={imageOnErrorHandler} />
+                        <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
                       ) : (
                         <Identicon address={treasuryDetails.associatedTokenAddress} style={{ width: "24", display: "inline-flex" }} />
                       )}
@@ -1626,11 +1957,19 @@ export const TreasuriesView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer() || isAnythingLoading()}
             onClick={showCloseTreasuryModal}>
-            {isClosing() && (<LoadingOutlined />)}
-            {isClosing()
+            {(isClosing() && !highlightedStream) && (<LoadingOutlined />)}
+            {isClosing() && !highlightedStream
               ? t('treasuries.treasury-detail.cta-close-busy')
               : t('treasuries.treasury-detail.cta-close')}
           </Button>
+          <div className="d-flex-flex-center">
+            {(isClosing() && highlightedStream) && (
+              <>
+                <LoadingOutlined />
+                <span className="ml-1">{t('streams.stream-detail.cta-disabled-closing')}</span>
+              </>
+            )}
+          </div>
         </Space>
       </>
     );
@@ -1868,6 +2207,85 @@ export const TreasuriesView = () => {
         transactionStatus={transactionStatus.currentOperation}
         isBusy={isBusy}
       />
+
+      <StreamCloseModal
+        isVisible={isCloseStreamModalVisible}
+        transactionFees={transactionFees}
+        tokenBalance={tokenBalance}
+        streamDetail={highlightedStream}
+        handleOk={onAcceptCloseStream}
+        handleClose={hideCloseStreamModal}
+        content={getStreamClosureMessage()}
+      />
+
+      {/* Close stream transaction execution modal */}
+      <Modal
+        className="mean-modal no-full-screen"
+        maskClosable={false}
+        afterClose={onAfterCloseStreamTransactionModalClosed}
+        visible={isCloseStreamTransactionModalVisible}
+        title={getTransactionModalTitle(transactionStatus, isBusy, t)}
+        onCancel={hideCloseStreamTransactionModal}
+        width={330}
+        footer={null}>
+        <div className="transaction-progress">
+          {isBusy ? (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
+              <div className="indication">{t('transactions.status.instructions')}</div>
+            </>
+          ) : isSuccess() ? (
+            <>
+              <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={onCloseStreamTransactionFinished}>
+                {t('general.cta-finish')}
+              </Button>
+            </>
+          ) : isError() ? (
+            <>
+              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      nativeBalance,
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              )}
+              <Button
+                block
+                type="primary"
+                shape="round"
+                size="middle"
+                onClick={hideCloseStreamTransactionModal}>
+                {t('general.cta-close')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Spin indicator={bigLoadingIcon} className="icon" />
+              <h4 className="font-bold mb-4 text-uppercase">{t('transactions.status.tx-wait')}...</h4>
+            </>
+          )}
+        </div>
+      </Modal>
 
       <PreFooter />
     </>

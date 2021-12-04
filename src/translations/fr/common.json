@@ -413,7 +413,14 @@
 			"column-activity": "Activity",
 			"column-description": "Description",
 			"column-amount": "Rate/Amount",
-			"column-started": "Started"
+			"column-started": "Started",
+			"option-explorer-link": "View on Solana Explorer",
+			"option-pause-stream": "Pause",
+			"option-resume-stream": "Resume",
+			"option-close-stream": "Close",
+			"status-running": "Running",
+			"status-stopped": "Stopped",
+			"status-scheduled": "Scheduled"
 		}
 	},
 	"swap": {

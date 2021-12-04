@@ -121,7 +121,6 @@ export const AccountsView = () => {
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
-  // const [popoverVisible, setPopoverVisible] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
@@ -281,14 +280,6 @@ export const AccountsView = () => {
     }
     return false;
   }
-
-  // const handlePopoverVisibleChange = (visibleChange: boolean) => {
-  //   setPopoverVisible(visibleChange);
-  // };
-
-  // const onTokenAccountGroupClick = (e: any) => {
-  //   consoleOut('onTokenAccountGroupClick event:', e, 'blue');
-  // }
 
   // Token Merger Modal
   // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
@@ -1120,85 +1111,6 @@ export const AccountsView = () => {
       ? true
       : false;
   }
-
-  // const isInboundStream = useCallback((item: StreamInfo): boolean => {
-  //   return item.beneficiaryAddress === publicKey?.toBase58();
-  // }, [publicKey]);
-
-  /*
-  const popoverTitleContent = (
-    <div className="flexible-left">
-      <div className="left">
-        {t('assets.merge-accounts-link')}
-      </div>
-      <div className="right">
-        <Button
-          type="default"
-          shape="circle"
-          icon={<CloseOutlined />}
-          onClick={() => handlePopoverVisibleChange(false)}
-        />
-      </div>
-    </div>
-  );
-
-  const popoverBodyContent = () => {
-    const output: JSX.Element[] = [];
-    <>
-      {(tokenAccountGroups && tokenAccountGroups.size) && (
-        <>
-        {tokenAccountGroups.forEach((value, keyName) => {
-          const asset = getTokenByMintAddress(keyName);
-          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            event.currentTarget.src = FALLBACK_COIN_IMAGE;
-            event.currentTarget.className = "error";
-          };
-          output.push(
-            <div className="transaction-list-row" key={keyName} onClick={onTokenAccountGroupClick}>
-              <div className="icon-cell">
-                <div className="token-icon">
-                  {asset?.logoURI ? (
-                    <img alt={`${asset.name}`} width={30} height={30} src={asset?.logoURI} onError={imageOnErrorHandler} />
-                  ) : (
-                    <Identicon address={keyName} style={{ width: "30", display: "inline-flex" }} />
-                  )}
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">
-                  {asset ? asset.symbol : '-'}
-                  <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    {value.length} {t('assets.accounts-label')}
-                  </span>
-                </div>
-                <div className="subtitle text-truncate">{asset ? asset.name : '-'}</div>
-              </div>
-              <div className="rate-cell">
-                <span className="flat-button fg-orange-red" onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  consoleOut('Merge onClick event:', e, 'blue');
-                  setSelectedTokenMergeGroup(value);
-                  showTokenMergerModal();
-                  // setPopoverVisible(false);
-                }}>
-                  <MergeCellsOutlined />
-                  <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
-                </span>
-              </div>
-            </div>
-          );
-        })}
-        </>
-      )}
-    </>
-    return (
-      <div className="token-merger">
-        {output}
-      </div>
-    );
-  }
-  */
 
   return (
     <>

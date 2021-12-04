@@ -403,7 +403,6 @@ export const Streams = () => {
       switch (item.state) {
         case STREAM_STATE.Schedule:
           return (<IconTimer className="mean-svg-icons incoming" />);
-        case STREAM_STATE.Ended:
         case STREAM_STATE.Paused:
           return (<IconIncomingPaused className="mean-svg-icons incoming" />);
         default:
@@ -413,7 +412,6 @@ export const Streams = () => {
       switch (item.state) {
         case STREAM_STATE.Schedule:
           return (<IconTimer className="mean-svg-icons outgoing" />);
-        case STREAM_STATE.Ended:
         case STREAM_STATE.Paused:
           return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
         default:
@@ -469,7 +467,6 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-        case STREAM_STATE.Ended:
           if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
@@ -495,7 +492,6 @@ export const Streams = () => {
           title += ` ${getShortDate(item.startUtc as string)}`;
           break;
         case STREAM_STATE.Paused:
-        case STREAM_STATE.Ended:
           if (isOtp) {
             title = t('streams.stream-list.subtitle-paused-otp');
           } else {
