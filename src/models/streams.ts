@@ -21,3 +21,10 @@ export const initialSummary: StreamsSummary = {
     outgoingAmount: 0,
     totalAmount: 0
 };
+
+export interface TreasuryStreamsBreakdown {
+    total: number;
+    scheduled: number;
+    running: number;
+    stopped: number;
+}

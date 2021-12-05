@@ -56,6 +56,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TreasuryCloseModal } from '../../components/TreasuryCloseModal';
 import { StreamCloseModal } from '../../components/StreamCloseModal';
+import { TreasuryStreamsBreakdown } from '../../models/streams';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -99,6 +100,7 @@ export const TreasuriesView = () => {
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
   const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
+  const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
   const [highlightedStream, sethHighlightedStream] = useState<StreamInfo | undefined>();
@@ -350,7 +352,6 @@ export const TreasuriesView = () => {
             if (!item) {
               item = JSON.parse(JSON.stringify(treasuries[0]));
             }
-            consoleOut('selectedTreasury:', item, 'blue');
             if (item) {
               setSelectedTreasury(item);
               openTreasuryById(item.id as string);
@@ -441,6 +442,32 @@ export const TreasuriesView = () => {
     loadingTreasuryStreams,
     signalRefreshTreasuryStreams,
     getTreasuryStreams,
+  ]);
+
+  // Maintain stream stats
+  useEffect(() => {
+
+    const updateStats = () => {
+      if (treasuryStreams && treasuryStreams.length) {
+        const scheduled = treasuryStreams.filter(s => s.state === STREAM_STATE.Schedule);
+        const running = treasuryStreams.filter(s => s.state === STREAM_STATE.Running);
+        const stopped = treasuryStreams.filter(s => s.state === STREAM_STATE.Paused);
+        const stats: TreasuryStreamsBreakdown = {
+          total: treasuryStreams.length,
+          scheduled: scheduled.length,
+          running: running.length,
+          stopped: stopped.length
+        }
+        setStreamStats(stats);
+      } else {
+        setStreamStats(undefined);
+      }
+    }
+
+    updateStats();
+  }, [
+    publicKey,
+    treasuryStreams,
   ]);
 
   // Detect when entering small screen mode
@@ -1841,30 +1868,19 @@ export const TreasuriesView = () => {
           <div className="mb-3">
             <Row>
               <Col span={12}>
-                {/* <div className="info-label">
-                  {t('treasuries.treasury-detail.treasury-name-label')}
-                </div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <Identicon address={treasuryDetails.id} style={{ width: "24", display: "inline-flex" }} />
-                  </span>
-                  <span className="info-data text-truncate">
-                    {treasuryDetails.label ? (
-                      <div className="title text-truncate">{treasuryDetails.label}</div>
-                    ) : (
-                      <div className="title text-truncate">{shortenAddress(treasuryDetails.id as string, 8)}</div>
-                    )}
-                  </span>
-                </div> */}
                 <div className="info-label text-truncate">
                   {t('treasuries.treasury-detail.number-of-streams')}
                 </div>
                 <div className="transaction-detail-row">
-                  {/* <span className="info-icon">
-                    <IconStream className="mean-svg-icons" />
-                  </span> */}
-                  <span className="info-data flex-row align-items-center">
-                    {formatThousands(treasuryDetails.streamsAmount)}
+                  <span className="info-data flex-row wrap align-items-center">
+                    <span className="mr-1">{formatThousands(treasuryDetails.streamsAmount)}</span>
+                    {(streamStats && streamStats.total > 0) && (
+                      <>
+                        <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
+                        <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
+                        <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
+                      </>
+                    )}
                   </span>
                 </div>
               </Col>
@@ -1876,7 +1892,7 @@ export const TreasuriesView = () => {
                   <span className="info-icon">
                     <IconBank className="mean-svg-icons" />
                   </span>
-                  <span className="info-data large">
+                  <span className="info-data">
                     {
                       getAmountWithSymbol(
                         treasuryDetails.balance,

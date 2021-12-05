@@ -4088,13 +4088,12 @@ main section {
           color: var(--color-secondary);
           .info-icon {
             flex: 0 0 auto;
-            width: 34px;
-            height: 34px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
+            margin-right: 4px;
             &.token-icon {
-              width: 24px;
-              height: 24px;
               margin-right: 8px;
             }
             .anticon.mean-svg-icons {
@@ -4251,6 +4250,9 @@ main section {
 .flex-row {
   display: flex;
   flex-direction: row;
+  &.wrap {
+    flex-wrap: wrap;
+  }
 }
 .flex-column {
   display: flex;
@@ -4612,28 +4614,28 @@ main section {
 
 // Font weight
 .font-extrathin {
-  font-weight: 100;
+  font-weight: 100 !important;
 }
 .font-thin {
-  font-weight: 200;
+  font-weight: 200 !important;
 }
 .font-light {
-  font-weight: 300;
+  font-weight: 300 !important;
 }
 .font-regular {
-  font-weight: 400;
+  font-weight: 400 !important;
 }
 .font-medium {
-  font-weight: 500;
+  font-weight: 500 !important;
 }
 .font-bold {
-  font-weight: 600;
+  font-weight: 600 !important;
 }
 .font-bolder {
-  font-weight: 700;
+  font-weight: 700 !important;
 }
 .font-extrabold {
-  font-weight: 900;
+  font-weight: 900 !important;
 }
 
 // Font sizes
@@ -5138,6 +5140,13 @@ code {
     line-height: 10px;
     height: auto;
     font-weight: 400;
+  }
+  &.medium {
+    font-size: 11px;
+    padding: 4px 5px;
+    border-radius: 8px;
+    line-height: 11px;
+    height: auto;
   }
 }
 
