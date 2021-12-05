@@ -1,20 +1,34 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, AutoComplete } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { consoleOut } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown } from '../../Icons';
+import { IconCaretDown, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import { SelectOption } from '../../models/common-types';
 import { AllocationType } from '../../models/enums';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { useWallet } from '../../contexts/wallet';
 
 const { Option } = Select;
+
+interface StreamSummary {
+  allocationReserved: number;
+  associatedToken: string;
+  beneficiaryAddress: string;
+  id: string;
+  rateAmount: number;
+  rateIntervalInSeconds: number;
+  state: STREAM_STATE;
+  streamName: String;
+  streamSubtitle: String;
+};
 
 export const TreasuryAddFundsModal = (props: {
   handleClose: any;
@@ -23,6 +37,7 @@ export const TreasuryAddFundsModal = (props: {
   userBalances: any;
   isBusy: boolean;
   streamStats: TreasuryStreamsBreakdown | undefined;
+  treasuryStreams: StreamInfo[];
   associatedToken: string;
 }) => {
   const {
@@ -35,9 +50,10 @@ export const TreasuryAddFundsModal = (props: {
     setSelectedToken,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
-
+  const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.All);
+  const [streamSummaries, setStreamSummaries] = useState<StreamSummary[]>([]);
 
   const allocationOptions = useMemo(() => {
     const options: SelectOption[] = [];
@@ -59,6 +75,173 @@ export const TreasuryAddFundsModal = (props: {
     return options;
   }, [t]);
 
+  /////////////////
+  //   Getters   //
+  /////////////////
+
+  const getPricePerToken = (token: TokenInfo): number => {
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }
+
+  const getTransactionStartButtonLabel = (): string => {
+    return !selectedToken || !tokenBalance
+      ? t('transactions.validation.no-balance')
+      : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
+      ? t('transactions.validation.no-amount')
+      : parseFloat(topupAmount) > tokenBalance
+      ? t('transactions.validation.amount-high')
+      : t('treasuries.add-funds.main-cta');
+  }
+
+  const getStreamIcon = useCallback((item: StreamSummary) => {
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    
+    if (isInbound) {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons incoming" />);
+        case STREAM_STATE.Paused:
+          return (<IconIncomingPaused className="mean-svg-icons incoming" />);
+        default:
+          return (<IconDownload className="mean-svg-icons incoming" />);
+      }
+    } else {
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          return (<IconTimer className="mean-svg-icons outgoing" />);
+        case STREAM_STATE.Paused:
+          return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
+        default:
+          return (<IconUpload className="mean-svg-icons outgoing" />);
+      }
+    }
+  }, [
+    publicKey
+  ]);
+
+  const getStreamDescription = useCallback((item: StreamInfo): string => {
+    let title = '';
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+
+    if (isInbound) {
+      if (item.isUpdatePending) {
+        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
+        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      } else {
+        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+      }
+    } else {
+      if (item.isUpdatePending) {
+        title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Schedule) {
+        title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      } else if (item.state === STREAM_STATE.Paused) {
+        title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      } else {
+        title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      }
+    }
+    return title;
+  }, [
+    t,
+    publicKey
+  ]);
+
+  const getTransactionSubTitle = useCallback((item: StreamInfo) => {
+    let title = '';
+    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isOtp = item.rateAmount === 0 ? true : false;
+
+    if (isInbound) {
+      if (item.isUpdatePending) {
+        title = t('streams.stream-list.subtitle-pending-inbound');
+        return title;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          title = t('streams.stream-list.subtitle-scheduled-inbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-paused-inbound');
+          }
+          break;
+        case STREAM_STATE.Running:
+          title = t('streams.stream-list.subtitle-running-inbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        default:
+          break;
+      }
+    } else {
+      if (item.isUpdatePending) {
+        title = t('streams.stream-list.subtitle-pending-outbound');
+        return title;
+      }
+
+      switch (item.state) {
+        case STREAM_STATE.Schedule:
+          title = t('streams.stream-list.subtitle-scheduled-outbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        case STREAM_STATE.Paused:
+          if (isOtp) {
+            title = t('streams.stream-list.subtitle-paused-otp');
+          } else {
+            title = t('streams.stream-list.subtitle-paused-outbound');
+          }
+          break;
+        case STREAM_STATE.Running:
+          title = t('streams.stream-list.subtitle-running-outbound');
+          title += ` ${getShortDate(item.startUtc as string)}`;
+          break;
+        default:
+          break;
+      }
+    }
+    return title;
+
+  }, [
+    t,
+    publicKey
+  ]);
+
+  const getRateAmountDisplay = (item: StreamSummary): string => {
+    let value = '';
+    if (item && item.rateAmount && item.associatedToken) {
+      value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
+  const getTransferAmountDisplay = (item: StreamSummary): string => {
+    let value = '';
+    if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
+      value += getFormattedNumberToLocale(formatAmount(item.allocationReserved, 2));
+      value += ' ';
+      value += getTokenSymbol(item.associatedToken as string);
+    }
+    return value;
+  }
+
+  /////////////////////
+  // Data management //
+  /////////////////////
+
   // When modal goes visible, use the treasury associated token or use the default from the appState
   useEffect(() => {
     if (props.isVisible && props.associatedToken) {
@@ -75,14 +258,35 @@ export const TreasuryAddFundsModal = (props: {
     setSelectedToken
   ]);
 
-  const getPricePerToken = (token: TokenInfo): number => {
-    const tokenSymbol = token.symbol.toUpperCase();
-    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+  // When modal goes visible, Build a list of StreamSummary from treasuryStreams
+  useEffect(() => {
+    if (props.isVisible && props.streamStats && props.streamStats.total > 0 && props.treasuryStreams && props.treasuryStreams.length > 0) {
+      const summaries = props.treasuryStreams.map(item => {
+        return {
+          allocationReserved: item.allocationReserved,
+          associatedToken: item.associatedToken,
+          beneficiaryAddress: item.beneficiaryAddress,
+          id: item.id,
+          rateAmount: item.rateAmount,
+          rateIntervalInSeconds: item.rateIntervalInSeconds,
+          state: item.state,
+          streamName: item.streamName || getStreamDescription(item),
+          streamSubtitle: getTransactionSubTitle(item),
+        } as StreamSummary;
+      });
+      setStreamSummaries(summaries);
+    }
+  }, [
+    props.isVisible,
+    props.streamStats,
+    props.treasuryStreams,
+    getStreamDescription,
+    getTransactionSubTitle
+  ]);
 
-    return coinPrices && coinPrices[symbol]
-      ? coinPrices[symbol]
-      : 0;
-  }
+  ////////////////
+  //   Events   //
+  ////////////////
 
   const onAcceptTopup = () => {
     props.handleOk(topupAmount);
@@ -107,7 +311,18 @@ export const TreasuryAddFundsModal = (props: {
     setAllocationOption(val.value);
   }
 
-  // Validation
+  const onTokenChange = (e: any) => {
+    consoleOut("token selected:", e, 'blue');
+    const token = getTokenByMintAddress(e);
+    if (token) {
+      setSelectedToken(token as TokenInfo);
+      setEffectiveRate(getPricePerToken(token as TokenInfo));
+    }
+  }
+
+  //////////////////
+  //  Validation  //
+  //////////////////
 
   const isValidInput = (): boolean => {
     return selectedToken &&
@@ -118,23 +333,39 @@ export const TreasuryAddFundsModal = (props: {
             : false;
   }
 
-  const getTransactionStartButtonLabel = (): string => {
-    return !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(topupAmount) > tokenBalance
-      ? t('transactions.validation.amount-high')
-      : t('treasuries.add-funds.main-cta');
-  }
+  ///////////////
+  // Rendering //
+  ///////////////
 
-  const onTokenChange = (e: any) => {
-    consoleOut("token selected:", e, 'blue');
-    const token = getTokenByMintAddress(e);
-    if (token) {
-      setSelectedToken(token as TokenInfo);
-      setEffectiveRate(getPricePerToken(token as TokenInfo));
-    }
+  const renderStreamSelectItem = (item: StreamSummary) => ({
+    key: item.streamName as string,
+    value: item.id as string,
+    label: (
+      <div className={`transaction-list-row`}>
+        <div className="icon-cell">
+          {getStreamIcon(item)}
+        </div>
+        <div className="description-cell">
+          <div className="title text-truncate">{item.streamName}</div>
+          <div className="subtitle text-truncate">{item.streamSubtitle}</div>
+        </div>
+        <div className="rate-cell">
+          <div className="rate-amount">
+            {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
+          </div>
+          {item && item.rateAmount > 0 && (
+            <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
+          )}
+        </div>
+      </div>
+    ),
+  });
+
+  const renderStreamSelectOptions = () => {
+    const options = streamSummaries.map((stream: StreamSummary, index: number) => {
+      return renderStreamSelectItem(stream);
+    });
+    return options;
   }
 
   const allocationOptionsMenu = (
@@ -256,6 +487,29 @@ export const TreasuryAddFundsModal = (props: {
           </Dropdown>
         </div>
       </div>
+
+      {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
+        <div className="mb-3">
+          <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
+          <div className="well">
+            <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+              <div className="left mr-0">
+                <AutoComplete
+                  bordered={false}
+                  style={{ width: '100%' }}
+                  dropdownClassName="stream-select-dropdown"
+                  options={renderStreamSelectOptions()}
+                  placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                  filterOption={(inputValue, option) => {
+                    const originalItem = streamSummaries.find(i => i.streamName === option!.key);
+                    return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Button
         className={`main-cta ${props.isBusy ? 'inactive' : ''}`}

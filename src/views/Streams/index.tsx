@@ -39,6 +39,8 @@ import {
   copyText,
   getFormattedNumberToLocale,
   getIntervalFromSeconds,
+  getReadableDate,
+  getShortDate,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
@@ -46,10 +48,6 @@ import {
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
-  SIMPLE_DATE_FORMAT,
-  SIMPLE_DATE_TIME_FORMAT,
-  VERBOSE_DATE_FORMAT,
-  VERBOSE_DATE_TIME_FORMAT,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
 } from "../../constants";
@@ -66,7 +64,6 @@ import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/ut
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { defaultStreamStats, StreamStats } from "../../models/streams";
-import dateFormat from "dateformat";
 import { customLogger } from '../..';
 import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
@@ -357,24 +354,6 @@ export const Streams = () => {
            (streamDetail.treasurerAddress === wallet.publicKey.toBase58() ||
             streamDetail.beneficiaryAddress === wallet.publicKey.toBase58())
            ? true : false;
-  }
-
-  const getShortDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
-    );
-  }
-
-  const getReadableDate = (date: string, includeTime = false): string => {
-    if (!date) { return ''; }
-    const localDate = new Date(date);
-    return dateFormat(
-      localDate,
-      includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
-    );
   }
 
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {

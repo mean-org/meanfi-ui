@@ -380,7 +380,9 @@
 			"allocation-label": "How do you want to allocate these funds?",
 			"allocation-option-evenly": "Allocate evenly across all Money Stream",
 			"allocation-option-specific": "Allocate to a specific Money Stream",
-			"allocation-option-none": "Do not allocate (leave in Reserves)"
+			"allocation-option-none": "Do not allocate (leave in Reserves)",
+			"allocation-select-stream-label": "Select stream to fund",
+			"search-streams-placeholder": "Search stream by name or address"
 		},
 		"treasury-detail": {
 			"created-on": "Created on",

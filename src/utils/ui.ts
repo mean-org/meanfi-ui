@@ -6,7 +6,8 @@ import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
-import { ALLOWED_DEBUG_ADDRESSES } from "../constants";
+import { ALLOWED_DEBUG_ADDRESSES, SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import dateFormat from "dateformat";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -457,6 +458,24 @@ export const getFormattedNumberToLocale = (value: any, minDigits = 0) => {
     const converted = parseFloat(value.toString());
     const formatted = new Intl.NumberFormat(undefined, { minimumSignificantDigits: 1, minimumFractionDigits: minDigits }).format(converted);
     return formatted || '';
+}
+
+export const getShortDate = (date: string, includeTime = false): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(
+        localDate,
+        includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+    );
+}
+
+export const getReadableDate = (date: string, includeTime = false): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(
+        localDate,
+        includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+    );
 }
 
 export const getOrdinalDay = (date: Date): string => {
