@@ -2471,6 +2471,7 @@ export const TreasuriesView = () => {
         handleClose={closeAddFundsModal}
         isVisible={isAddFundsModalVisible}
         userBalances={userBalances}
+        streamStats={streamStats}
         isBusy={isBusy}
       />
 

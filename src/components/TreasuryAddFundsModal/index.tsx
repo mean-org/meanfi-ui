@@ -12,6 +12,7 @@ import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown } from '../../Icons';
 import { SelectOption } from '../../models/common-types';
 import { AllocationType } from '../../models/enums';
+import { TreasuryStreamsBreakdown } from '../../models/streams';
 
 const { Option } = Select;
 
@@ -21,6 +22,7 @@ export const TreasuryAddFundsModal = (props: {
   isVisible: boolean;
   userBalances: any;
   isBusy: boolean;
+  streamStats: TreasuryStreamsBreakdown | undefined;
 }) => {
   const {
     tokenList,
@@ -122,7 +124,7 @@ export const TreasuryAddFundsModal = (props: {
     <Menu activeKey={allocationOption.toString()}>
       {allocationOptions.map((item) => {
         return (
-          <Menu.Item
+          <Menu.Item disabled={item.key === AllocationType.Specific && (!props.streamStats || props.streamStats.total === 0)}
             key={`${item.key}`}
             onClick={() => handleAllocationOptionChange(item)}>
             {item.label}
