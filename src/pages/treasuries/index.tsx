@@ -1814,7 +1814,7 @@ export const TreasuriesView = () => {
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
                 </div>
                 <div className="std-table-cell last-cell">
-                  <span className="icon-button-container">
+                  <span className={`icon-button-container ${isClosing() && highlightedStream ? 'click-disabled' : ''}`}>
                     {renderStreamOptions(item)}
                   </span>
                 </div>
