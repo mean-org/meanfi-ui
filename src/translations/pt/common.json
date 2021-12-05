@@ -372,9 +372,15 @@
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
 		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
 		"add-funds": {
-			"modal-title": "Add funds to treasury",
+			"balance": "Balance",
+			"label": "Add funds",
+			"modal-title": "Add funds to the Treasury",
 			"main-cta": "Fund treasury",
-			"main-cta-busy": "Funding treasury"
+			"main-cta-busy": "Funding treasury",
+			"allocation-label": "How do you want to allocate these funds?",
+			"allocation-option-evenly": "Allocate evenly across all Money Stream",
+			"allocation-option-specific": "Allocate to a specific Money Stream",
+			"allocation-option-none": "Do not allocate (leave in Reserves)"
 		},
 		"treasury-detail": {
 			"created-on": "Created on",

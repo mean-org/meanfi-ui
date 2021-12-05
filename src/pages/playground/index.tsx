@@ -1,10 +1,11 @@
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Radio, Select, Space, Spin } from "antd";
+import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
+import { SelectOption } from "../../models/common-types";
 import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
 import {
@@ -39,12 +40,6 @@ interface TxStatusConfig {
   timeDelay: number;
   initialStatus: TransactionStatus;
   finalStatus: TransactionStatus;
-}
-
-interface SelectOption {
-  key: number;
-  value: number;
-  label: string;
 }
 
 const TX_TEST_RUN_VALUES: TxStatusConfig[] = [

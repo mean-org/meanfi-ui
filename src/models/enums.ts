@@ -63,3 +63,9 @@ export enum TreasuryType {
     Open = 0,
     Locked = 1
 }
+
+export enum AllocationType {
+    All = 0,
+    Specific = 1,
+    None = 2
+}

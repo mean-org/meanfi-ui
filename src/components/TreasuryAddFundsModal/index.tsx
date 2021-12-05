@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
-import { Identicon } from '../Identicon';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { consoleOut } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
+import { IconCaretDown } from '../../Icons';
+import { SelectOption } from '../../models/common-types';
+import { AllocationType } from '../../models/enums';
 
 const { Option } = Select;
 
@@ -32,6 +34,27 @@ export const TreasuryAddFundsModal = (props: {
   const { t } = useTranslation('common');
 
   const [topupAmount, setTopupAmount] = useState<string>('');
+  const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.All);
+
+  const allocationOptions = useMemo(() => {
+    const options: SelectOption[] = [];
+    options.push({
+      key: AllocationType.All,
+      label: t('treasuries.add-funds.allocation-option-evenly'),
+      value: AllocationType.All
+    });
+    options.push({
+      key: AllocationType.Specific,
+      label: t('treasuries.add-funds.allocation-option-specific'),
+      value: AllocationType.Specific
+    });
+    options.push({
+      key: AllocationType.None,
+      label: t('treasuries.add-funds.allocation-option-none'),
+      value: AllocationType.None
+    });
+    return options;
+  }, [t]);
 
   const getPricePerToken = (token: TokenInfo): number => {
     const tokenSymbol = token.symbol.toUpperCase();
@@ -60,6 +83,10 @@ export const TreasuryAddFundsModal = (props: {
       setValue(newValue);
     }
   };
+
+  const handleAllocationOptionChange = (val: SelectOption) => {
+    setAllocationOption(val.value);
+  }
 
   // Validation
 
@@ -91,10 +118,24 @@ export const TreasuryAddFundsModal = (props: {
     }
   }
 
+  const allocationOptionsMenu = (
+    <Menu activeKey={allocationOption.toString()}>
+      {allocationOptions.map((item) => {
+        return (
+          <Menu.Item
+            key={`${item.key}`}
+            onClick={() => handleAllocationOptionChange(item)}>
+            {item.label}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{t('add-funds.modal-title')}</div>}
+      title={<div className="modal-title">{t('treasuries.add-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptTopup}
@@ -103,77 +144,96 @@ export const TreasuryAddFundsModal = (props: {
       width={480}>
 
       {/* Top up amount */}
-      <div className="form-label">{t('add-funds.label')}</div>
-      <div className={`well ${props.isBusy && 'disabled'}`}>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on">
-              {(selectedToken && tokenList) && (
-                <Select className="token-selector-dropdown" value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
-                  {tokenList.map((option) => {
-                    return (
-                      <Option key={option.address} value={option.address}>
-                        <div className="option-container">
-                          <TokenDisplay onClick={() => {}}
-                            mintAddress={option.address}
-                            name={option.name}
-                            showCaretDown={true}
-                          />
-                          <div className="balance">
-                            {props.userBalances && props.userBalances[option.address] > 0 && (
-                              <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                            )}
+      <div className="mb-3">
+        <div className="form-label">{t('treasuries.add-funds.label')}</div>
+        <div className={`well ${props.isBusy && 'disabled'}`}>
+          <div className="flex-fixed-left">
+            <div className="left">
+              <span className="add-on">
+                {(selectedToken && tokenList) && (
+                  <Select className="token-selector-dropdown" value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                    {tokenList.map((option) => {
+                      return (
+                        <Option key={option.address} value={option.address}>
+                          <div className="option-container">
+                            <TokenDisplay onClick={() => {}}
+                              mintAddress={option.address}
+                              name={option.name}
+                              showCaretDown={true}
+                            />
+                            <div className="balance">
+                              {props.userBalances && props.userBalances[option.address] > 0 && (
+                                <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </Option>
-                    );
-                  })}
-                </Select>
-              )}
-              {selectedToken && tokenBalance ? (
-                <div
-                  className="token-max simplelink"
-                  onClick={() => setValue(
-                    getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                  )}>
-                  MAX
-                </div>
-              ) : null}
-            </span>
+                        </Option>
+                      );
+                    })}
+                  </Select>
+                )}
+                {selectedToken && tokenBalance ? (
+                  <div
+                    className="token-max simplelink"
+                    onClick={() => setValue(
+                      getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                    )}>
+                    MAX
+                  </div>
+                ) : null}
+              </span>
+            </div>
+            <div className="right">
+              <input
+                id="topup-amount-field"
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handleAmountChange}
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                placeholder="0.0"
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={topupAmount}
+              />
+            </div>
           </div>
-          <div className="right">
-            <input
-              id="topup-amount-field"
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={topupAmount}
-            />
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('treasuries.add-funds.balance')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">
+              ~${topupAmount && effectiveRate
+                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
+                : "0.00"}
+            </div>
           </div>
         </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>{t('add-funds.label-right')}:</span>
-            <span>
-              {`${tokenBalance && selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                  : "0"
-              }`}
+      </div>
+
+      {/* Funds Allocation options */}
+      <div className="mb-3">
+        <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
+        <div className="well">
+          <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
+            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+              <div className="left">
+                <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
+              </div>
+              <div className="right">
+                <IconCaretDown className="mean-svg-icons" />
+              </div>
             </span>
-          </div>
-          <div className="right inner-label">
-            ~${topupAmount && effectiveRate
-              ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-              : "0.00"}
-          </div>
+          </Dropdown>
         </div>
       </div>
 
