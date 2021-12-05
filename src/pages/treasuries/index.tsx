@@ -1877,9 +1877,15 @@ export const TreasuriesView = () => {
                       <>
                         {streamStats && streamStats.total > 0 && (
                           <>
-                          <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
-                          <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
-                          <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
+                          {streamStats.scheduled > 0 && (
+                            <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
+                          )}
+                          {streamStats.running > 0 && (
+                            <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
+                          )}
+                          {streamStats.stopped > 0 && (
+                            <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
+                          )}
                           </>
                         )}
                       </>
@@ -1981,14 +1987,13 @@ export const TreasuriesView = () => {
               ? t('treasuries.treasury-detail.cta-close-busy')
               : t('treasuries.treasury-detail.cta-close')}
           </Button>
-          <div className="d-flex-flex-center">
-            {(isClosing() && highlightedStream) && (
-              <>
-                <LoadingOutlined />
-                <span className="ml-1">{t('streams.stream-detail.cta-disabled-closing')}</span>
-              </>
-            )}
-          </div>
+          {/* <Button></Button> */}
+          {(isClosing() && highlightedStream) && (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('streams.stream-detail.cta-disabled-closing')}</span>
+            </div>
+          )}
         </Space>
       </>
     );
