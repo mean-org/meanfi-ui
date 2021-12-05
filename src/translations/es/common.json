@@ -410,9 +410,9 @@
 		"treasury-streams": {
 			"no-streams": "This treasury has no active streams",
 			"loading-streams": "Loading streams",
-			"column-activity": "Activity",
+			"column-activity": "Money streams",
 			"column-description": "Description",
-			"column-amount": "Rate/Amount",
+			"column-amount": "Frequency",
 			"column-started": "Started",
 			"option-explorer-link": "View on Solana Explorer",
 			"option-pause-stream": "Pause",
