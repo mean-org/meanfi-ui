@@ -35,7 +35,7 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus, TreasuryType } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink } from '../../Icons';
@@ -57,6 +57,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TreasuryCloseModal } from '../../components/TreasuryCloseModal';
 import { StreamCloseModal } from '../../components/StreamCloseModal';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
+import { StreamPauseModal } from '../../components/StreamPauseModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -71,6 +72,7 @@ export const TreasuriesView = () => {
     tokenBalance,
     selectedToken,
     isWhitelisted,
+    treasuryOption,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
@@ -713,6 +715,26 @@ export const TreasuriesView = () => {
     );
   }
 
+  const getStreamPauseMessage = () => {
+    let message = '';
+
+    if (publicKey && highlightedStream) {
+
+      const treasury = highlightedStream.treasuryAddress as string;
+      const beneficiary = highlightedStream.beneficiaryAddress as string;
+
+      message = t('streams.pause-stream-confirmation', {
+        treasury: shortenAddress(treasury),
+        beneficiary: shortenAddress(beneficiary)
+      });
+
+    }
+
+    return (
+      <div>{message}</div>
+    );
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -864,6 +886,7 @@ export const TreasuriesView = () => {
         return await ms.createTreasury(
           publicKey,                                                  // wallet
           treasuryName,                                               // label
+          // treasuryOption ? treasuryOption.type : TreasuryType.Open    // type
         )
         .then(value => {
           consoleOut('createTreasury returned transaction:', value);
@@ -1758,6 +1781,238 @@ export const TreasuriesView = () => {
 
   };
 
+  // Pause stream modal
+  const [isPauseStreamModalVisible, setIsPauseStreamModalVisibility] = useState(false);
+  const showPauseStreamModal = useCallback(() => {
+    getTransactionFees(MSP_ACTIONS.pauseStream).then(value => {
+      setTransactionFees(value);
+      setIsPauseStreamModalVisibility(true);
+      consoleOut('transactionFees:', value, 'orange');
+    });
+  }, [getTransactionFees]);
+  const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
+  const onAcceptPauseStream = () => {
+    hidePauseStreamModal();
+    onExecutePauseStreamTransaction();
+  };
+
+  const onPauseStreamTransactionFinished = () => {
+    resetTransactionStatus();
+    hideCloseStreamTransactionModal();
+    refreshTokenBalance();
+    setForceReloadTokens(true);
+  };
+
+  const onExecutePauseStreamTransaction = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (wallet && highlightedStream) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+        const streamPublicKey = new PublicKey(highlightedStream.id as string);
+
+        const data = {
+          stream: streamPublicKey.toBase58(),                     // stream
+          initializer: wallet.publicKey.toBase58(),               // initializer
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Create a transaction
+        return await ms.pauseStream(
+          publicKey as PublicKey,                           // Initializer public key
+          streamPublicKey,                                  // Stream ID
+        )
+        .then(value => {
+          consoleOut('pauseStream returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('pauseStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      showCloseStreamTransactionModal();
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Pause);
+            setIsBusy(false);
+            onCloseStreamTransactionFinished();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  };
+
   ///////////////
   // Rendering //
   ///////////////
@@ -1770,7 +2025,7 @@ export const TreasuriesView = () => {
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
           </Menu.Item>
         ) : item.state === STREAM_STATE.Running ? (
-          <Menu.Item key="1" onClick={() => {}}>
+          <Menu.Item key="1" onClick={showPauseStreamModal}>
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
           </Menu.Item>
         ) : null}
@@ -1987,7 +2242,7 @@ export const TreasuriesView = () => {
               ? t('treasuries.treasury-detail.cta-close-busy')
               : t('treasuries.treasury-detail.cta-close')}
           </Button>
-          {/* <Button></Button> */}
+          {/* <Button>Create stream</Button> */}
           {(isClosing() && highlightedStream) && (
             <div className="flex-row flex-center">
               <LoadingOutlined />
@@ -2242,12 +2497,22 @@ export const TreasuriesView = () => {
         content={getStreamClosureMessage()}
       />
 
+      <StreamPauseModal
+        isVisible={isPauseStreamModalVisible}
+        transactionFees={transactionFees}
+        tokenBalance={tokenBalance}
+        streamDetail={highlightedStream}
+        handleOk={onAcceptPauseStream}
+        handleClose={hidePauseStreamModal}
+        content={getStreamPauseMessage()}
+      />
+
       {/* Close stream transaction execution modal */}
       <Modal
         className="mean-modal no-full-screen"
         maskClosable={false}
-        afterClose={onAfterCloseStreamTransactionModalClosed}
         visible={isCloseStreamTransactionModalVisible}
+        afterClose={onAfterCloseStreamTransactionModalClosed}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseStreamTransactionModal}
         width={330}
@@ -2270,7 +2535,9 @@ export const TreasuriesView = () => {
                 type="primary"
                 shape="round"
                 size="middle"
-                onClick={onCloseStreamTransactionFinished}>
+                onClick={() => lastSentTxOperationType === OperationType.Pause
+                  ? onPauseStreamTransactionFinished()
+                  : onCloseStreamTransactionFinished()}>
                 {t('general.cta-finish')}
               </Button>
             </>

@@ -33,6 +33,8 @@ import { ChainId } from "@saberhq/token-utils";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
+import { TreasuryTypeOption } from "../models/treasury-definition";
+import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -53,6 +55,7 @@ interface AppStateConfig {
   coinPrices: any | null;
   contract: ContractDefinition | undefined;
   ddcaOption: DdcaFrequencyOption | undefined;
+  treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
   recipientNote: string;
   paymentStartDate: string | undefined;
@@ -97,6 +100,7 @@ interface AppStateConfig {
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
   setDdcaOption: (name: string) => void;
+  setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
@@ -138,6 +142,7 @@ const contextDefaultValues: AppStateConfig = {
   coinPrices: null,
   contract: undefined,
   ddcaOption: undefined,
+  treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
   recipientNote: '',
   paymentStartDate: undefined,
@@ -177,6 +182,7 @@ const contextDefaultValues: AppStateConfig = {
   hideDepositOptionsModal: () => {},
   setContract: () => {},
   setDdcaOption: () => {},
+  setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
@@ -255,6 +261,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
   const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
 
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
@@ -338,6 +345,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateDdcaOption(items[0]);
       setDdcaOptionName(name);
     }
+  }
+
+  const setTreasuryOption = (option: TreasuryTypeOption | undefined) => {
+    updateTreasuryOption(option);
   }
 
   const setRecipientAddress = (address: string) => {
@@ -959,6 +970,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         coinPrices,
         contract,
         ddcaOption,
+        treasuryOption,
         recipientAddress,
         recipientNote,
         paymentStartDate,
@@ -1001,6 +1013,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshStreamList,
         setContract,
         setDdcaOption,
+        setTreasuryOption,
         setRecipientAddress,
         setRecipientNote,
         setPaymentStartDate,

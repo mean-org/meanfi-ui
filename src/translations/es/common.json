@@ -297,6 +297,9 @@
 		"screen-title": "Transferencias",
 		"stream-stats-incoming": "Incoming",
 		"stream-stats-outgoing": "Outgoing",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"pause-stream-cta": "Pause",
+		"pause-stream-modal-title": "Pause stream",
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -406,7 +409,13 @@
 			"treasury-name-input-empty": "Enter Treasury name",
 			"treasury-name-placeholder": "Type a name for your treasury",
 			"main-cta": "Create",
-			"main-cta-busy": "Creating treasury"
+			"main-cta-busy": "Creating treasury",
+			"treasury-type-options": {
+				"treasury-type-open-name": "Open Money Streaming Treasury",
+				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-locked-name": "Locked Money Streaming Treasury",
+				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date."
+			}
 		},
 		"treasury-streams": {
 			"no-streams": "This treasury has no active streams",

@@ -58,3 +58,8 @@ export enum OperationType {
     Pause = 5,
     Resume = 6
 }
+
+export enum TreasuryType {
+    Open = 0,
+    Locked = 1
+}
