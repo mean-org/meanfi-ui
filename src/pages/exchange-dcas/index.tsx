@@ -1576,7 +1576,9 @@ export const ExchangeDcasView = () => {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
               <h5 className="operation">{t('transactions.status.tx-close-vault-operation')}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
@@ -1647,7 +1649,9 @@ export const ExchangeDcasView = () => {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
               <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getTokenAmountAndSymbolByTokenAddress(withdrawFundsAmount, ddcaDetails?.toMint as string)}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>

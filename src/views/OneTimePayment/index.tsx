@@ -1028,7 +1028,9 @@ export const OneTimePayment = () => {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.tx-send-operation')} {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>

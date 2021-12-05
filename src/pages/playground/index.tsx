@@ -459,9 +459,9 @@ export const PlaygroundView = () => {
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">Whatever is about to happen...</p>
-              <div className="indication">
-                {t("transactions.status.instructions")}
-              </div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>

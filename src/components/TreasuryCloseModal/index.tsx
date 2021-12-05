@@ -44,15 +44,6 @@ export const TreasuryCloseModal = (props: {
     props.transactionFees
   ]);
 
-  // Output tokenBalance to the console
-  useEffect(() => {
-    if (props.tokenBalance) {
-      consoleOut('tokenBalance:', props.tokenBalance, 'orange');
-    }
-  }, [
-    props.tokenBalance
-  ]);
-
   const isError = (): boolean => {
     return  props.transactionStatus === TransactionStatus.TransactionStartFailure ||
             props.transactionStatus === TransactionStatus.InitTransactionFailure ||

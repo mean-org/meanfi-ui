@@ -225,13 +225,9 @@ export const Streams = () => {
     getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
       setTransactionFees(value);
       setIsCloseStreamModalVisibility(true);
-      consoleOut('tokenBalance:', tokenBalance, 'orange');
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [
-    tokenBalance,
-    getTransactionFees,
-  ]);
+  }, [getTransactionFees]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = () => {
     hideCloseStreamModal();
@@ -2308,7 +2304,9 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-add-funds-operation')} {getAmountWithSymbol(addFundsAmount, streamDetail?.associatedToken as string)}</h5>
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                  <div className="indication">{t('transactions.status.instructions')}</div>
+                )}
               </>
             ) : isSuccess() ? (
               <>
@@ -2376,7 +2374,9 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getAmountWithSymbol(withdrawFundsAmount, streamDetail?.associatedToken as string)}</h5>
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                  <div className="indication">{t('transactions.status.instructions')}</div>
+                )}
               </>
             ) : isSuccess() ? (
               <>
@@ -2444,7 +2444,9 @@ export const Streams = () => {
                 <Spin indicator={bigLoadingIcon} className="icon" />
                 <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
                 <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5>
-                <div className="indication">{t('transactions.status.instructions')}</div>
+                {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                  <div className="indication">{t('transactions.status.instructions')}</div>
+                )}
               </>
             ) : isSuccess() ? (
               <>

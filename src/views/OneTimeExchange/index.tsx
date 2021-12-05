@@ -2032,9 +2032,9 @@ export const OneTimeExchange = (props: {
                       })
                     }
                   </p>
-                  <div className="indication">
-                    {t("transactions.status.instructions")}
-                  </div>
+                  {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                    <div className="indication">{t('transactions.status.instructions')}</div>
+                  )}
                 </>
               ) : isSuccess() ? (
                 <>

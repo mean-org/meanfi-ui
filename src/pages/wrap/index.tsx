@@ -578,9 +578,9 @@ export const WrapView = () => {
                         {t("transactions.status.tx-wrap-operation")}{" "}
                         {wrapAmount} SOL ...
                       </p>
-                      <div className="indication">
-                        {t("transactions.status.instructions")}
-                      </div>
+                      {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                        <div className="indication">{t('transactions.status.instructions')}</div>
+                      )}
                     </>
                   ) : isSuccess() ? (
                     <>
