@@ -367,6 +367,7 @@
 		"create-new-treasury-cta": "Create treasury",
 		"back-to-treasuries-cta": "Back to Treasuries",
 		"lookup-treasury-cta-tooltip": "Lookup a treasury",
+		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
 		"add-funds": {
 			"modal-title": "Add funds to treasury",
 			"main-cta": "Fund treasury",

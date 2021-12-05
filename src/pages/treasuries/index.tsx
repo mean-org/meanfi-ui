@@ -679,7 +679,6 @@ export const TreasuriesView = () => {
   }
 
   const getTreasuryClosureMessage = () => {
-    let message = 'Close Treasury message';
 
     // if (publicKey && treasuryDetails) {
     //   const me = publicKey.toBase58();
@@ -688,7 +687,7 @@ export const TreasuriesView = () => {
     // }
 
     return (
-      <div>{message}</div>
+      <div>{t('treasuries.close-treasury-confirmation')}</div>
     );
   }
 
@@ -1874,11 +1873,15 @@ export const TreasuriesView = () => {
                 <div className="transaction-detail-row">
                   <span className="info-data flex-row wrap align-items-center">
                     <span className="mr-1">{formatThousands(treasuryDetails.streamsAmount)}</span>
-                    {(streamStats && streamStats.total > 0) && (
+                    {treasuryDetails.streamsAmount > 0 && (
                       <>
-                        <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
-                        <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
-                        <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
+                        {streamStats && streamStats.total > 0 && (
+                          <>
+                          <div className="badge mr-1 medium font-bold info">{formatThousands(streamStats.scheduled)} {t('treasuries.treasury-streams.status-scheduled')}</div>
+                          <div className="badge mr-1 medium font-bold success">{formatThousands(streamStats.running)} {t('treasuries.treasury-streams.status-running')}</div>
+                          <div className="badge medium font-bold error">{formatThousands(streamStats.stopped)} {t('treasuries.treasury-streams.status-stopped')}</div>
+                          </>
+                        )}
                       </>
                     )}
                   </span>

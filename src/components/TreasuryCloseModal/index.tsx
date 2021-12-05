@@ -94,7 +94,7 @@ export const TreasuryCloseModal = (props: {
           </>
         ) : (
           <>
-            <h4 className="operation">{props.content}</h4>
+            <h4>{props.content}</h4>
           </>
         )}
         <div className="mt-3">
