@@ -2472,6 +2472,7 @@ export const TreasuriesView = () => {
         isVisible={isAddFundsModalVisible}
         userBalances={userBalances}
         streamStats={streamStats}
+        associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
         isBusy={isBusy}
       />
 

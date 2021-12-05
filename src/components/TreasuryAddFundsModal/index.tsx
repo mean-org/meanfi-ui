@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
@@ -23,6 +23,7 @@ export const TreasuryAddFundsModal = (props: {
   userBalances: any;
   isBusy: boolean;
   streamStats: TreasuryStreamsBreakdown | undefined;
+  associatedToken: string;
 }) => {
   const {
     tokenList,
@@ -57,6 +58,22 @@ export const TreasuryAddFundsModal = (props: {
     });
     return options;
   }, [t]);
+
+  // When modal goes visible, use the treasury associated token or use the default from the appState
+  useEffect(() => {
+    if (props.isVisible && props.associatedToken) {
+      const token = tokenList.find(t => t.address === props.associatedToken);
+      if (token && token.address !== selectedToken?.address) {
+        setSelectedToken(token);
+      }
+    }
+  }, [
+    tokenList,
+    selectedToken,
+    props.isVisible,
+    props.associatedToken,
+    setSelectedToken
+  ]);
 
   const getPricePerToken = (token: TokenInfo): number => {
     const tokenSymbol = token.symbol.toUpperCase();
@@ -153,7 +170,8 @@ export const TreasuryAddFundsModal = (props: {
             <div className="left">
               <span className="add-on">
                 {(selectedToken && tokenList) && (
-                  <Select className="token-selector-dropdown" value={selectedToken.address} onChange={onTokenChange} bordered={false} showArrow={false}>
+                  <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
+                          onChange={onTokenChange} bordered={false} showArrow={false}>
                     {tokenList.map((option) => {
                       return (
                         <Option key={option.address} value={option.address}>
@@ -161,7 +179,7 @@ export const TreasuryAddFundsModal = (props: {
                             <TokenDisplay onClick={() => {}}
                               mintAddress={option.address}
                               name={option.name}
-                              showCaretDown={true}
+                              showCaretDown={props.associatedToken ? false : true}
                             />
                             <div className="balance">
                               {props.userBalances && props.userBalances[option.address] > 0 && (
