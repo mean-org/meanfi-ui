@@ -2107,7 +2107,8 @@ export const TreasuriesView = () => {
           treasury,
           undefined,
           associatedToken,
-          amount
+          amount,
+          AllocationType.All
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
