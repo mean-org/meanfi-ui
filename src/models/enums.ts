@@ -51,12 +51,24 @@ export enum TransactionStatus {
 
 export enum OperationType {
     Transfer = 0,
-    Create = 1,
-    AddFunds = 2,
-    Withdraw = 3,
-    Close = 4,
-    Pause = 5,
-    Resume = 6
+    // Stream options
+    StreamCreate = 1,
+    StreamAddFunds = 2,
+    StreamWithdraw = 3,
+    StreamClose = 4,
+    StreamPause = 5,
+    StreamResume = 6,
+    // Treasury options
+    TreasuryCreate = 10,
+    TreasuryStreamCreate = 11,
+    TreasuryAddFunds = 12,
+    TreasuryWithdraw = 13,
+    TreasuryClose = 14,
+    // DDCA Options
+    DdcaCreate = 20,
+    DdcaAddFunds = 21,
+    DdcaWithdraw = 22,
+    DdcaClose = 23
 }
 
 export enum TreasuryType {

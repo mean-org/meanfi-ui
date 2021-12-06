@@ -718,7 +718,7 @@ export const DdcaSetupModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Create);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaCreate);
             onFinishedSwapTx();
           } else { onFinishedSwapTx(); }
         } else { onFinishedSwapTx(); }

@@ -298,6 +298,8 @@
 		"stream-stats-incoming": "Incoming",
 		"stream-stats-outgoing": "Outgoing",
 		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"resume-stream-confirmation": "Resume money streaming from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"resume-stream-cta": "Resume",
 		"pause-stream-cta": "Pause",
 		"pause-stream-modal-title": "Pause stream",
 		"stream-activity": {

@@ -488,7 +488,7 @@ export const TreasuryStreamCreateModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryStreamCreate);
             setIsBusy(false);
             // TODO: cerrar esta talla
             // handleGoToStreamsClick();

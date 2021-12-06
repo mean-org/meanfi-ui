@@ -541,15 +541,15 @@ export const Streams = () => {
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       switch (lastSentTxOperationType) {
-        case OperationType.Close:
-        case OperationType.Create:
+        case OperationType.StreamClose:
+        case OperationType.StreamCreate:
           if (streamList && streamList.length > 1) {
             const filteredStreams = streamList.filter(s => s.id !== streamDetail.id);
             setStreamList(filteredStreams);
           }
           refreshStreamList(true);
           break;
-        case OperationType.AddFunds:
+        case OperationType.StreamAddFunds:
           if (customStreamDocked) {
             openStreamById(streamDetail?.id as string);
           } else {
@@ -827,48 +827,6 @@ export const Streams = () => {
       }
     }
 
-    // const confirmTx = async (): Promise<boolean> => {
-    //   return await connection
-    //     .confirmTransaction(signature, "confirmed")
-    //     .then(result => {
-    //       consoleOut('confirmTransaction result:', result);
-    //       if (result && result.value && !result.value.err) {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-    //           currentOperation: TransactionStatus.TransactionFinished
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-    //           result: result.value
-    //         });
-    //         return true;
-    //       } else {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransaction,
-    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //           result: signature
-    //         });
-    //         customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-    //         return false;
-    //       }
-    //     })
-    //     .catch(e => {
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransaction,
-    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //       });
-    //       transactionLog.push({
-    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //         result: signature
-    //       });
-    //       customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-    //       return false;
-    //     });
-    // }
-
     if (wallet && streamDetail) {
       showAddFundsTransactionModal();
       const create = await createTx();
@@ -881,14 +839,9 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.AddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamAddFunds);
             setIsBusy(false);
             onAddFundsTransactionFinished();
-            // const confirmed = await confirmTx();
-            // consoleOut('confirmed:', confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1130,7 +1083,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Withdraw);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamWithdraw);
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
           } else { setIsBusy(false); }
@@ -1368,7 +1321,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamClose);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
           } else { setIsBusy(false); }
@@ -1507,25 +1460,25 @@ export const Streams = () => {
   }
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamCreate
             ? true
             : false;
   }
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Close
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamClose
             ? true
             : false;
   }
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Withdraw
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamWithdraw
             ? true
             : false;
   }
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.AddFunds
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamAddFunds
             ? true
             : false;
   }

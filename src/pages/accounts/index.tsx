@@ -808,7 +808,7 @@ export const AccountsView = () => {
   // Handle what to do when new stream is created
   useEffect(() => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (OperationType.Create) {
+      if (lastSentTxOperationType === OperationType.StreamCreate || lastSentTxOperationType === OperationType.Transfer) {
         if (!loadingStreams) {
           consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
           setLoadingStreams(true);

@@ -435,7 +435,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaClose);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -698,7 +698,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaWithdraw);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -931,7 +931,7 @@ export const ExchangeDcasView = () => {
     if (!ddcaClient || !ddcaDetails) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (lastSentTxOperationType === OperationType.Close) {
+      if (lastSentTxOperationType === OperationType.DdcaClose) {
         clearTransactionStatusContext();
         reloadRecurringBuys();
       } else {
@@ -1147,25 +1147,25 @@ export const ExchangeDcasView = () => {
   }
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Create
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaCreate
             ? true
             : false;
   }
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Close
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaClose
             ? true
             : false;
   }
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.Withdraw
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaWithdraw
             ? true
             : false;
   }
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.AddFunds
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaAddFunds
             ? true
             : false;
   }

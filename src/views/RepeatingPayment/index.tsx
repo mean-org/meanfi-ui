@@ -795,48 +795,6 @@ export const RepeatingPayment = () => {
       }
     }
 
-    // const confirmTx = async (): Promise<boolean> => {
-    //   return await connection
-    //     .confirmTransaction(signature, "confirmed")
-    //     .then(result => {
-    //       consoleOut('confirmTransaction result:', result);
-    //       if (result && result.value && !result.value.err) {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-    //           currentOperation: TransactionStatus.TransactionFinished
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-    //           result: result.value
-    //         });
-    //         return true;
-    //       } else {
-    //         setTransactionStatus({
-    //           lastOperation: TransactionStatus.ConfirmTransaction,
-    //           currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //         });
-    //         transactionLog.push({
-    //           action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //           result: signature
-    //         });
-    //         customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-    //         return false;
-    //       }
-    //     })
-    //     .catch(e => {
-    //       setTransactionStatus({
-    //         lastOperation: TransactionStatus.ConfirmTransaction,
-    //         currentOperation: TransactionStatus.ConfirmTransactionFailure
-    //       });
-    //       transactionLog.push({
-    //         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-    //         result: signature
-    //       });
-    //       customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
-    //       return false;
-    //     });
-    // }
-
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
@@ -849,14 +807,9 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
-            // const confirmed = await confirmTx();
-            // consoleOut('confirmed:', confirmed);
-            // if (confirmed) {
-            //   setIsBusy(false);
-            // } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }

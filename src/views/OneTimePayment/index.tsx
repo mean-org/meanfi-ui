@@ -710,7 +710,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
+              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {
