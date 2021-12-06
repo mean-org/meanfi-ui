@@ -63,14 +63,6 @@ export const StreamCloseModal = (props: {
     getFeeAmount
   ]);
 
-  useEffect(() => {
-    if (props.tokenBalance) {
-      consoleOut('tokenBalance:', props.tokenBalance, 'orange');
-    }
-  }, [
-    props.tokenBalance
-  ]);
-
   const infoRow = (caption: string, value: string) => {
     return (
       <Row>

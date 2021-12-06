@@ -1288,7 +1288,9 @@ export const RepeatingPayment = () => {
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
               <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
