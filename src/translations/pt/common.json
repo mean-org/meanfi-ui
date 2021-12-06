@@ -429,6 +429,7 @@
 		},
 		"treasury-streams": {
 			"no-streams": "This treasury has no active streams",
+			"add-stream-modal-title": "Add stream to the treasury",
 			"loading-streams": "Loading streams",
 			"column-activity": "Money streams",
 			"column-description": "Description",
@@ -440,7 +441,10 @@
 			"option-close-stream": "Close",
 			"status-running": "Running",
 			"status-stopped": "Stopped",
-			"status-scheduled": "Scheduled"
+			"status-scheduled": "Scheduled",
+			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
+			"allocate-funds-label": "Allocate funds",
+			"available-unallocated-balance-label": "Available Unallocated Balance"
 		}
 	},
 	"swap": {

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete, DatePicker, Checkbox } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, AutoComplete, DatePicker, Checkbox, Divider } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, getTxIxResume, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +44,6 @@ export const TreasuryStreamCreateModal = (props: {
   const {
     tokenList,
     coinPrices,
-    tokenBalance,
     selectedToken,
     effectiveRate,
     treasuryOption,
@@ -116,7 +115,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
+      : !selectedToken || !props.treasuryDetails || props.treasuryDetails.balance === 0
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -130,11 +129,11 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
+      : !selectedToken || !props.treasuryDetails || props.treasuryDetails.balance === 0
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > tokenBalance
+      : parseFloat(fromCoinAmount) > props.treasuryDetails.balance
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -149,7 +148,7 @@ export const TreasuryStreamCreateModal = (props: {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
-      : rateAmount > tokenBalance
+      : props.treasuryDetails && props.treasuryDetails.balance < rateAmount
       ? t('transactions.validation.payment-rate-high')
       : '';
   }
@@ -490,8 +489,7 @@ export const TreasuryStreamCreateModal = (props: {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryStreamCreate);
             setIsBusy(false);
-            // TODO: cerrar esta talla
-            // handleGoToStreamsClick();
+            props.handleOk();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -510,9 +508,9 @@ export const TreasuryStreamCreateModal = (props: {
   const isSendAmountValid = (): boolean => {
     return connected &&
            selectedToken &&
-           tokenBalance &&
+           props.treasuryDetails && props.treasuryDetails.balance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance
+           parseFloat(fromCoinAmount) <= props.treasuryDetails.balance
             ? true
             : false;
   }
@@ -555,17 +553,16 @@ export const TreasuryStreamCreateModal = (props: {
   return (
     <Modal
       className="mean-modal"
-      title={<div className="modal-title">{t('treasuries.add-funds.modal-title')}</div>}
+      title={<div className="modal-title">{t('treasuries.treasury-streams.add-stream-modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}>
-      <div>
+      <div className="scrollable-content">
         <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
-
           <div className="form-label">{t('transactions.recipient.label')}</div>
           <div className="well">
             <div className="flex-fixed-right">
@@ -657,10 +654,10 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
             <div className="flex-fixed-right">
               <div className="left inner-label">
-                <span>{t('transactions.send-amount.label-right')}:</span>
+                <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
-                  {`${tokenBalance && selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                  {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
+                      ? getTokenAmountAndSymbolByTokenAddress(props.treasuryDetails.balance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
@@ -716,7 +713,7 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           <div className="form-label">{t('transactions.memo2.label')}</div>
-          <div className="well">
+          <div className="well m-0">
             <div className="flex-fixed-right">
               <div className="left">
                 <input
@@ -733,18 +730,6 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
             </div>
           </div>
-
-          <Button
-            className="main-cta"
-            block
-            type="primary"
-            shape="round"
-            size="large"
-            onClick={onContinueButtonClick}
-            disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
-            {getStepOneContinueButtonLabel()}
-          </Button>
-
         </div>
 
         <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
@@ -797,12 +782,11 @@ export const TreasuryStreamCreateModal = (props: {
             </>
           )}
 
-          {/* <div className="mb-3 text-center">
-            <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
-            <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
-          </div> */}
+          <div className="mb-3 text-center">
+            <div>{t('treasuries.treasury-streams.minimum-allocation-advice')}</div>
+          </div>
 
-          <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
+          <div className="form-label">{t('treasuries.treasury-streams.allocate-funds-label')}</div>
           <div className="well">
             <div className="flex-fixed-left">
               <div className="left">
@@ -851,10 +835,10 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
             <div className="flex-fixed-right">
               <div className="left inner-label">
-                <span>{t('transactions.send-amount.label-right')}:</span>
+                <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
-                  {`${tokenBalance && selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                  {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
+                      ? getTokenAmountAndSymbolByTokenAddress(props.treasuryDetails.balance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
@@ -867,27 +851,43 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           </div>
 
-          <div className="mb-2">
+          <div className="text-left">
             <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
           </div>
 
-          <Button
-            className={`main-cta ${isBusy ? 'inactive' : ''}`}
+        </div>
+      </div>
+
+      <Divider plain/>
+
+      <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
+        <Button
+            className="main-cta"
             block
             type="primary"
             shape="round"
             size="large"
-            onClick={onTransactionStart}
-            disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
-            {isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            )}
-            {isBusy
-              ? t('treasuries.add-funds.main-cta-busy')
-              : getTransactionStartButtonLabel()}
+            onClick={onContinueButtonClick}
+            disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+            {getStepOneContinueButtonLabel()}
           </Button>
-        </div>
-
+      </div>
+      <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
+        <Button
+          className={`main-cta ${isBusy ? 'inactive' : ''}`}
+          block
+          type="primary"
+          shape="round"
+          size="large"
+          onClick={onTransactionStart}
+          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          {isBusy && (
+            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+          )}
+          {isBusy
+            ? t('treasuries.add-funds.main-cta-busy')
+            : getTransactionStartButtonLabel()}
+        </Button>
       </div>
 
       {/* <div className="mb-3">

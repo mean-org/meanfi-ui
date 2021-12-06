@@ -1658,10 +1658,10 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/money-streaming@1.6.44":
-  version "1.6.44"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.6.44.tgz#37a80ef41480644bbde7203a1ce18d292e4e8445"
-  integrity sha512-f6q4cCLtDkSiAvCUw2HhbpjqITSTZ3MIp9GSshVOhfDBnZXoWMPwrQY9yZau82aBlZfjgWDCt46kgJkxMVkRQA==
+"@mean-dao/money-streaming@1.6.45":
+  version "1.6.45"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.6.45.tgz#19273a0c39dc8dcae2fc966034878a9114d10c92"
+  integrity sha512-fkDQPt2fs3r3CgO1uYbY9tgoQ6PvrxC3nXMas0W1v9+jePV6WUDgkld25CJUKUki7Sco4OEAowupnQptKe4jxA==
   dependencies:
     "@project-serum/anchor" "^0.18.2"
     "@solana/spl-token" "^0.1.8"
