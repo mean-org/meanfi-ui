@@ -378,7 +378,7 @@
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
 			"allocation-label": "How do you want to allocate these funds?",
-			"allocation-option-evenly": "Allocate evenly across all Money Stream",
+			"allocation-option-evenly": "Allocate evenly across all Money Streams",
 			"allocation-option-specific": "Allocate to a specific Money Stream",
 			"allocation-option-none": "Do not allocate (leave in Reserves)",
 			"allocation-select-stream-label": "Select stream to fund",
