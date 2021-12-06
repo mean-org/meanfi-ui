@@ -2012,7 +2012,7 @@ export const TreasuriesView = () => {
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(true);
-    getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+    getTransactionFees(MSP_ACTIONS.createStream).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
@@ -2767,16 +2767,18 @@ export const TreasuriesView = () => {
         content={getStreamPauseMessage()}
       />
 
-      {/* <TreasuryStreamCreateModal
-        handleOk={onAcceptCreateStream}
-        handleClose={closeCreateStreamModal}
-        isVisible={isCreateStreamModalVisible}
-        userBalances={userBalances}
-        streamStats={streamStats}
-        treasuryStreams={treasuryStreams}
+      <TreasuryStreamCreateModal
         associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
-        isBusy={isBusy}
-      /> */}
+        connection={connection}
+        handleClose={closeCreateStreamModal}
+        handleOk={onAcceptCreateStream}
+        isVisible={isCreateStreamModalVisible}
+        moneyStreamingClient={ms}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        treasuryDetails={treasuryDetails}
+        userBalances={userBalances}
+      />
 
       {/* Close stream transaction execution modal */}
       <Modal

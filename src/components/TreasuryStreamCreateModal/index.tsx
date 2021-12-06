@@ -1,32 +1,46 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, AutoComplete, DatePicker, Checkbox } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, getTxIxResume, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, isValidAddress } from '../../utils/ui';
+import { consoleOut, disabledDate, getFormattedNumberToLocale, getIntervalFromSeconds, getPaymentRateOptionLabel, getRateIntervalInSeconds, getShortDate, getTransactionStatusForLogs, isToday, isValidAddress, PaymentRateTypeOption } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { IconCaretDown, IconDownload, IconEdit, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import { SelectOption } from '../../models/common-types';
-import { AllocationType, PaymentRateType } from '../../models/enums';
+import { AllocationType, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
+import { DATEPICKER_FORMAT } from '../../constants';
+import { Identicon } from '../Identicon';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { customLogger } from '../..';
 
 const { Option } = Select;
 
 export const TreasuryStreamCreateModal = (props: {
+  associatedToken: string;
+  connection: Connection;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  moneyStreamingClient: MoneyStreaming;
+  nativeBalance: number;
+  transactionFees: TransactionFees;
+  treasuryDetails: TreasuryInfo | undefined;
   userBalances: any;
-  isBusy: boolean;
-  associatedToken: string;
 }) => {
+  const { t } = useTranslation('common');
+  const { wallet, publicKey, connected } = useWallet();
   const {
     tokenList,
     coinPrices,
@@ -58,10 +72,13 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateFrequency,
     setSelectedTokenBalance,
   } = useContext(AppStateContext);
-  const { t } = useTranslation('common');
-  const { publicKey, connected } = useWallet();
-  const [topupAmount, setTopupAmount] = useState<string>('');
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
   const [currentStep, setCurrentStep] = useState(0);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
 
   /////////////////
   //   Getters   //
@@ -76,14 +93,65 @@ export const TreasuryStreamCreateModal = (props: {
       : 0;
   }
 
-  const getTransactionStartButtonLabel = (): string => {
-    return !selectedToken || !tokenBalance
+  const getOptionsFromEnum = (value: any): PaymentRateTypeOption[] => {
+    let index = 0;
+    const options: PaymentRateTypeOption[] = [];
+    for (const enumMember in value) {
+        const mappedValue = parseInt(enumMember, 10);
+        if (!isNaN(mappedValue)) {
+            const item = new PaymentRateTypeOption(
+                index,
+                mappedValue,
+                getPaymentRateOptionLabel(mappedValue, t)
+            );
+            options.push(item);
+        }
+        index++;
+    }
+    return options;
+  }
+
+  const getStepOneContinueButtonLabel = (): string => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : !recipientAddress || isAddressOwnAccount()
+      ? t('transactions.validation.select-recipient')
+      : !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
-      : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !arePaymentSettingsValid()
+      ? getPaymentSettingsButtonLabel()
+      : t('transactions.validation.valid-continue');
+  }
+
+  const getTransactionStartButtonLabel = (): string => {
+    return !connected
+      ? t('transactions.validation.not-connected')
+      : !recipientAddress || isAddressOwnAccount()
+      ? t('transactions.validation.select-recipient')
+      : !selectedToken || !tokenBalance
+      ? t('transactions.validation.no-balance')
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(topupAmount) > tokenBalance
+      : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : t('treasuries.add-funds.main-cta');
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !arePaymentSettingsValid()
+      ? getPaymentSettingsButtonLabel()
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : t('transactions.validation.valid-approve');
+  }
+
+  const getPaymentSettingsButtonLabel = (): string => {
+    const rateAmount = parseFloat(paymentRateAmount || '0');
+    return !rateAmount
+      ? t('transactions.validation.no-payment-rate')
+      : rateAmount > tokenBalance
+      ? t('transactions.validation.payment-rate-high')
+      : '';
   }
 
   /////////////////////
@@ -114,12 +182,12 @@ export const TreasuryStreamCreateModal = (props: {
     window.dispatchEvent(new Event('resize'));
   }
 
-  const setValue = (value: string) => {
-    setTopupAmount(value);
-  }
-
   const onStepperChange = (value: number) => {
     setCurrentStep(value);
+  }
+
+  const onContinueButtonClick = () => {
+    setCurrentStep(1);  // Go to step 2
   }
 
   const handleRecipientNoteChange = (e: any) => {
@@ -160,17 +228,6 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentRateFrequency(val);
   }
 
-  const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setValue("");
-    } else if (newValue === '.') {
-      setValue(".");
-    } else if (isValidNumber(newValue)) {
-      setValue(newValue);
-    }
-  };
-
   const onTokenChange = (e: any) => {
     consoleOut("token selected:", e, 'blue');
     const token = getTokenByMintAddress(e);
@@ -180,18 +237,270 @@ export const TreasuryStreamCreateModal = (props: {
     }
   }
 
+  const handleFromCoinAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setFromCoinAmount("");
+    } else if (newValue === '.') {
+      setFromCoinAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setFromCoinAmount(newValue);
+    }
+  };
+
+  const handleDateChange = (date: string) => {
+    setPaymentStartDate(date);
+  }
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onTransactionStart = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey && props.treasuryDetails) {
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const beneficiary = new PublicKey(recipientAddress as string);
+        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
+        const treasury = new PublicKey(props.treasuryDetails.id as string);
+        const fundingAmount = parseFloat(fromCoinAmount as string);
+        const rateAmount = parseFloat(paymentRateAmount as string);
+        const now = new Date();
+        const parsedDate = Date.parse(paymentStartDate as string);
+        const fromParsedDate = new Date(parsedDate);
+        fromParsedDate.setHours(now.getHours());
+        fromParsedDate.setMinutes(now.getMinutes());
+        fromParsedDate.setSeconds(now.getSeconds());
+        fromParsedDate.setMilliseconds(now.getMilliseconds());
+
+        // Create a transaction
+        const data = {
+          wallet: publicKey.toBase58(),                               // wallet
+          treasury: props.treasuryDetails.id,                         // treasury
+          beneficiary: beneficiary.toBase58(),                        // beneficiary
+          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+          rateAmount: rateAmount,                                     // rateAmount
+          rateIntervalInSeconds:
+            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
+          startUtc: fromParsedDate,                                   // startUtc
+          streamName: recipientNote
+            ? recipientNote.trim()
+            : undefined,                                              // streamName
+          fundingAmount: fundingAmount                                // fundingAmount
+        };
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+        if (props.nativeBalance < props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await props.moneyStreamingClient.createStream(
+          publicKey,                                                  // wallet
+          treasury,                                                   // treasury
+          beneficiary,                                                // beneficiary
+          beneficiaryMint,                                            // beneficiaryMint
+          rateAmount,                                                 // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
+          fromParsedDate,                                             // startUtc
+          recipientNote 
+            ? recipientNote.trim()
+            : undefined,                                              // streamName
+            fundingAmount                                             // fundingAmount
+        )
+        .then(value => {
+          consoleOut('createStream returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      const encodedTx = signedTransaction.serialize().toString('base64');
+      if (wallet) {
+        return await props.connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.Create);
+            setIsBusy(false);
+            // TODO: cerrar esta talla
+            // handleGoToStreamsClick();
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+  };
+
   //////////////////
   //  Validation  //
   //////////////////
-
-  const isValidInput = (): boolean => {
-    return selectedToken &&
-           tokenBalance &&
-           topupAmount && parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance
-            ? true
-            : false;
-  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && publicKey && recipientAddress === publicKey.toBase58()
@@ -229,6 +538,20 @@ export const TreasuryStreamCreateModal = (props: {
   // Rendering //
   ///////////////
 
+  const paymentRateOptionsMenu = (
+    <Menu>
+      {getOptionsFromEnum(PaymentRateType).map((item) => {
+        return (
+          <Menu.Item
+            key={item.key}
+            onClick={() => handlePaymentRateOptionChange(item.value)}>
+            {item.text}
+          </Menu.Item>
+        );
+      })}
+    </Menu>
+  );
+
   return (
     <Modal
       className="mean-modal"
@@ -237,9 +560,8 @@ export const TreasuryStreamCreateModal = (props: {
       visible={props.isVisible}
       onOk={props.handleOk}
       onCancel={props.handleClose}
-      afterClose={() => setValue('')}
       width={480}>
-      {/* <div>
+      <div>
         <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
         <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
@@ -475,35 +797,39 @@ export const TreasuryStreamCreateModal = (props: {
             </>
           )}
 
-          <div className="mb-3 text-center">
+          {/* <div className="mb-3 text-center">
             <div>{t('transactions.transaction-info.add-funds-repeating-payment-advice')}.</div>
             <div>{t('transactions.transaction-info.min-recommended-amount')}: <span className="fg-red">{getRecommendedFundingAmount()}</span></div>
-          </div>
+          </div> */}
 
           <div className="form-label">{t('transactions.send-amount.label-amount')}</div>
           <div className="well">
             <div className="flex-fixed-left">
               <div className="left">
-                <span className="add-on simplelink">
-                {selectedToken && (
-                  <TokenDisplay onClick={() => showTokenSelector()}
-                      mintAddress={selectedToken.address}
-                      name={selectedToken.name}
-                      showName={false}
-                      showCaretDown={true}
-                    />
+                <span className="add-on">
+                  {(selectedToken && tokenList) && (
+                    <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
+                            onChange={onTokenChange} bordered={false} showArrow={false}>
+                      {tokenList.map((option) => {
+                        return (
+                          <Option key={option.address} value={option.address}>
+                            <div className="option-container">
+                              <TokenDisplay onClick={() => {}}
+                                mintAddress={option.address}
+                                name={option.name}
+                                showCaretDown={props.associatedToken ? false : true}
+                              />
+                              <div className="balance">
+                                {props.userBalances && props.userBalances[option.address] > 0 && (
+                                  <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </Option>
+                        );
+                      })}
+                    </Select>
                   )}
-                  {selectedToken && tokenBalance ? (
-                    <div
-                      className="token-max simplelink"
-                      onClick={() =>
-                        setFromCoinAmount(
-                          tokenBalance.toFixed(selectedToken.decimals)
-                        )
-                      }>
-                      MAX
-                    </div>
-                  ) : null}
                 </span>
               </div>
               <div className="right">
@@ -546,22 +872,27 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           <Button
-            className="main-cta"
+            className={`main-cta ${isBusy ? 'inactive' : ''}`}
             block
             type="primary"
             shape="round"
             size="large"
             onClick={onTransactionStart}
             disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
-            {getTransactionStartButtonLabel()}
+            {isBusy && (
+              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+            )}
+            {isBusy
+              ? t('treasuries.add-funds.main-cta-busy')
+              : getTransactionStartButtonLabel()}
           </Button>
         </div>
 
-      </div> */}
+      </div>
 
       {/* <div className="mb-3">
         <div className="form-label">{t('treasuries.add-funds.label')}</div>
-        <div className={`well ${props.isBusy && 'disabled'}`}>
+        <div className={`well ${isBusy && 'disabled'}`}>
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on">
@@ -674,22 +1005,6 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
         </div>
       )} */}
-
-      <Button
-        className={`main-cta ${props.isBusy ? 'inactive' : ''}`}
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        disabled={!isValidInput()}
-        onClick={() => {}}>
-        {props.isBusy && (
-          <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-        )}
-        {props.isBusy
-          ? t('treasuries.add-funds.main-cta-busy')
-          : getTransactionStartButtonLabel()}
-      </Button>
     </Modal>
   );
 };
