@@ -1,4 +1,4 @@
-import { TreasuryType } from "./enums";
+import { TreasuryType } from "@mean-dao/money-streaming/lib/types";
 
 export interface TreasuryTypeOption {
     name: string;
