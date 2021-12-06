@@ -56,6 +56,7 @@ import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
+import BN from 'bn.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -618,7 +619,7 @@ export const RepeatingPayment = () => {
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
-          fundingAmount: amount                                       // fundingAmount
+          allocation: amount                                          // allocation
         };
         consoleOut('data:', data);
 

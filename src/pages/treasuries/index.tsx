@@ -35,12 +35,12 @@ import {
 } from '../../constants';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
-import { OperationType, TransactionStatus, TreasuryType } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink, IconSort } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { AllocationType, MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
@@ -887,7 +887,7 @@ export const TreasuriesView = () => {
         return await ms.createTreasury(
           publicKey,                                                  // wallet
           treasuryName,                                               // label
-          // treasuryOption ? treasuryOption.type : TreasuryType.Open    // type
+          treasuryOption ? treasuryOption.type : TreasuryType.Open    // type
         )
         .then(value => {
           consoleOut('createTreasury returned transaction:', value);
@@ -1132,7 +1132,8 @@ export const TreasuriesView = () => {
           treasury,
           undefined,
           associatedToken,
-          amount
+          amount,
+          AllocationType.All
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -2106,7 +2107,8 @@ export const TreasuriesView = () => {
           treasury,
           undefined,
           associatedToken,
-          amount
+          amount,
+          AllocationType.All
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);

@@ -59,7 +59,7 @@ import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
-import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
@@ -697,7 +697,8 @@ export const Streams = () => {
           treasury,
           stream,
           contributorMint,
-          amount
+          amount,
+          AllocationType.All
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -1706,7 +1707,10 @@ export const Streams = () => {
                   {streamDetail ? (
                     <span className="info-data large">
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(
+                          streamDetail.escrowVestedAmount, 
+                          streamDetail.associatedToken as string
+                        )
                       : '--'}
                     </span>
                   ) : (
@@ -1921,7 +1925,7 @@ export const Streams = () => {
           {/* Total deposit */}
           {isOtp() ? (
             null
-          ) : streamDetail && (streamDetail.allocationReserved > 0 || streamDetail.allocationCommitted > 0) && (
+          ) : streamDetail && streamDetail.allocation && (
             <div className="mb-3">
               <div className="info-label">{t('streams.stream-detail.label-total-deposits')}</div>
               <div className="transaction-detail-row">
@@ -1932,9 +1936,7 @@ export const Streams = () => {
                   <span className="info-data">
                   {streamDetail
                     ? getAmountWithSymbol(
-                        streamDetail.allocationReserved > 0 
-                          ? streamDetail.allocationReserved 
-                          : streamDetail.allocationCommitted, 
+                        streamDetail.allocation, 
                         streamDetail.associatedToken as string
                       )
                     : '--'}
