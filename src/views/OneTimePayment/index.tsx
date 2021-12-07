@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -879,7 +879,7 @@ export const OneTimePayment = () => {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
                     : "0"
                 }`}
               </span>

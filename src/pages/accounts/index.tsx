@@ -57,7 +57,7 @@ import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 

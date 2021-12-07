@@ -1651,7 +1651,7 @@ export const Streams = () => {
                 <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
-                    {streamDetail && streamDetail.escrowUnvestedAmount > 0 ? (
+                    {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
                       <ArrowDownOutlined className="mean-svg-icons success bounce" />
                     ) : (
                       <ArrowDownOutlined className="mean-svg-icons success" />
@@ -1937,7 +1937,7 @@ export const Streams = () => {
               </div>
               <div className="transaction-detail-row">
                 <span className="info-icon">
-                  {streamDetail && streamDetail.escrowUnvestedAmount > 0 ? (
+                  {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
                     <ArrowUpOutlined className="mean-svg-icons outgoing bounce" />
                   ) : (
                     <ArrowUpOutlined className="mean-svg-icons outgoing" />

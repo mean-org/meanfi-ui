@@ -1,20 +1,21 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, AutoComplete, Divider, Input } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { LoadingOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, isValidAddress } from '../../utils/ui';
+import { TreasuryStreamsBreakdown } from '../../models/streams';
+import { StreamInfo, STREAM_STATE, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import { SelectOption } from '../../models/common-types';
 import { AllocationType } from '../../models/enums';
-import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
 import { useWallet } from '../../contexts/wallet';
+import { notify } from '../../utils/notifications';
 
 const { Option } = Select;
 
@@ -46,6 +47,7 @@ export const TreasuryAddFundsModal = (props: {
     tokenBalance,
     selectedToken,
     effectiveRate,
+    treasuryOption,
     setEffectiveRate,
     setSelectedToken,
   } = useContext(AppStateContext);
@@ -54,6 +56,7 @@ export const TreasuryAddFundsModal = (props: {
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.All);
   const [streamSummaries, setStreamSummaries] = useState<StreamSummary[]>([]);
+  const [customTokenInput, setCustomTokenInput] = useState("");
 
   const allocationOptions = useMemo(() => {
     const options: SelectOption[] = [];
@@ -284,9 +287,39 @@ export const TreasuryAddFundsModal = (props: {
     getTransactionSubTitle
   ]);
 
+  // Window resize listener
+  useEffect(() => {
+    const resizeListener = () => {
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          const text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
+
   ////////////////
   //   Events   //
   ////////////////
+
+  const triggerWindowResize = () => {
+    window.dispatchEvent(new Event('resize'));
+  }
 
   const onAcceptTopup = () => {
     props.handleOk(topupAmount);
@@ -317,6 +350,52 @@ export const TreasuryAddFundsModal = (props: {
     if (token) {
       setSelectedToken(token as TokenInfo);
       setEffectiveRate(getPricePerToken(token as TokenInfo));
+      toggleOverflowEllipsisMiddle(false);
+    }
+  }
+
+  const onCustomTokenChange = (e: any) => {
+    setCustomTokenInput(e.target.value);
+  }
+
+  const toggleOverflowEllipsisMiddle = (state: boolean) => {
+    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
+    if (ellipsisElements && ellipsisElements.length) {
+      const element = ellipsisElements[0];
+      if (state) {
+        if (!element.classList.contains('overflow-ellipsis-middle')) {
+          element.classList.add('overflow-ellipsis-middle');
+        }
+      } else {
+        if (element.classList.contains('overflow-ellipsis-middle')) {
+          element.classList.remove('overflow-ellipsis-middle');
+        }
+      }
+      setTimeout(() => {
+        triggerWindowResize();
+      }, 10);
+    }
+  }
+
+  const setCustomToken = () => {
+    if (customTokenInput && isValidAddress(customTokenInput)) {
+      const unkToken: TokenInfo = {
+        address: customTokenInput,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(customTokenInput),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("token selected:", unkToken, 'blue');
+      setEffectiveRate(0);
+      toggleOverflowEllipsisMiddle(true);
+    } else {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('transactions.validation.invalid-solana-address'),
+        type: "error"
+      });
     }
   }
 
@@ -372,7 +451,11 @@ export const TreasuryAddFundsModal = (props: {
     <Menu activeKey={allocationOption.toString()}>
       {allocationOptions.map((item) => {
         return (
-          <Menu.Item disabled={item.key === AllocationType.Specific && (!props.streamStats || props.streamStats.total === 0)}
+          <Menu.Item disabled={
+            item.key === AllocationType.Specific && (
+              (!props.streamStats || props.streamStats.total === 0) ||
+              (treasuryOption && treasuryOption.type === TreasuryType.Lock)
+            )}
             key={`${item.key}`}
             onClick={() => handleAllocationOptionChange(item)}>
             {item.label}
@@ -402,7 +485,19 @@ export const TreasuryAddFundsModal = (props: {
               <span className="add-on">
                 {(selectedToken && tokenList) && (
                   <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                          onChange={onTokenChange} bordered={false} showArrow={false}>
+                      onChange={onTokenChange} bordered={false} showArrow={false}
+                      dropdownRender={menu => (
+                      <div>
+                        {menu}
+                        <Divider style={{ margin: '4px 0' }} />
+                        <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                          <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
+                          <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
+                            <span className="flat-button icon-button ml-1" onClick={setCustomToken}><IconCheckedBox className="normal"/></span>
+                          </div>
+                        </div>
+                      </div>
+                    )}>
                     {tokenList.map((option) => {
                       return (
                         <Option key={option.address} value={option.address}>

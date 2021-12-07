@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { Button, InputNumber, Popover, Switch, Tooltip } from "antd";
+import { Button, InputNumber, Popover, Switch } from "antd";
 import { useTranslation } from "react-i18next";
-import { CloseOutlined, InfoCircleOutlined, SettingOutlined } from "@ant-design/icons";
+import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
 import { MAX_SLIPPAGE_VALUE, MIN_SLIPPAGE_VALUE } from "../../constants";
 import "./style.less";
-import { InfoIcon } from "../InfoIcon";
 
 export const SwapSettings = (props: {
   currentValue: number;

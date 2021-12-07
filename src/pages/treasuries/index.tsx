@@ -60,6 +60,7 @@ import { TreasuryStreamsBreakdown } from '../../models/streams';
 import { StreamPauseModal } from '../../components/StreamPauseModal';
 import { TreasuryStreamCreateModal } from '../../components/TreasuryStreamCreateModal';
 import { StreamResumeModal } from '../../components/StreamResumeModal';
+import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -79,7 +80,9 @@ export const TreasuriesView = () => {
     transactionStatus,
     streamProgramAddress,
     previousWalletConnectState,
+    setTreasuryOption,
     setDtailsPanelOpen,
+    resetContractValues,
     refreshTokenBalance,
     setForceReloadTokens,
     setTransactionStatus,
@@ -279,6 +282,10 @@ export const TreasuriesView = () => {
           setSelectedTreasury(details);
           setTreasuryDetails(details);
           setSignalRefreshTreasuryStreams(true);
+          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.type);
+          if (tOption) {
+            setTreasuryOption(tOption);
+          }
           if (dock) {
             setTreasuryList([details]);
             setCustomStreamDocked(true);
@@ -321,6 +328,7 @@ export const TreasuriesView = () => {
     publicKey,
     connection,
     loadingTreasuryDetails,
+    setTreasuryOption
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
@@ -2286,6 +2294,8 @@ export const TreasuriesView = () => {
       currentOperation: TransactionStatus.Iddle
     });
     closeCreateStreamModal();
+    resetContractValues();
+    setForceReloadTokens(true);
     refreshTokenBalance();
   };
 

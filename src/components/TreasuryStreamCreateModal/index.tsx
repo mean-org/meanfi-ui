@@ -1,19 +1,27 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete, DatePicker, Checkbox, Divider } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, getTxIxResume, isValidNumber, shortenAddress } from '../../utils/utils';
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
-import { consoleOut, disabledDate, getFormattedNumberToLocale, getIntervalFromSeconds, getPaymentRateOptionLabel, getRateIntervalInSeconds, getShortDate, getTransactionStatusForLogs, isToday, isValidAddress, PaymentRateTypeOption } from '../../utils/ui';
+import {
+  consoleOut,
+  disabledDate,
+  getIntervalFromSeconds,
+  getPaymentRateOptionLabel,
+  getRateIntervalInSeconds,
+  getTransactionStatusForLogs,
+  isToday,
+  isValidAddress,
+  PaymentRateTypeOption
+} from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { LoadingOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { IconCaretDown, IconDownload, IconEdit, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
-import { SelectOption } from '../../models/common-types';
-import { AllocationType, OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
+import { IconCaretDown, IconEdit } from '../../Icons';
+import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
+import { TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
@@ -55,21 +63,18 @@ export const TreasuryStreamCreateModal = (props: {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
-    streamProgramAddress,
+    isAllocationReserved,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
     setFromCoinAmount,
-    resetContractValues,
     setRecipientAddress,
     setPaymentStartDate,
-    refreshTokenBalance,
     setPaymentRateAmount,
     setTransactionStatus,
-    setForceReloadTokens,
     setIsVerifiedRecipient,
+    setIsAllocationReserved,
     setPaymentRateFrequency,
-    setSelectedTokenBalance,
   } = useContext(AppStateContext);
   const {
     clearTransactionStatusContext,
@@ -253,6 +258,10 @@ export const TreasuryStreamCreateModal = (props: {
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onAllocationReservedChanged = (e: any) => {
+    setIsAllocationReserved(e.target.value);
   }
 
   const onTransactionStart = async () => {
@@ -586,11 +595,11 @@ export const TreasuryStreamCreateModal = (props: {
                   </span>
                 </span>
               </div>
-              <div className="right">
+              {/* <div className="right">
                 <div className="add-on simplelink" onClick={() => {}}>
                   <QrcodeOutlined />
                 </div>
-              </div>
+              </div> */}
             </div>
             {
               recipientAddress && !isValidAddress(recipientAddress) ? (
@@ -657,12 +666,16 @@ export const TreasuryStreamCreateModal = (props: {
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
                   {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(props.treasuryDetails.balance, selectedToken.address, true)
+                      ? getAmountWithSymbol(props.treasuryDetails.balance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
               </div>
-              <div className="right inner-label">&nbsp;</div>
+              <div className="right inner-label">
+                ~${paymentRateAmount && effectiveRate
+                  ? formatAmount(parseFloat(paymentRateAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </div>
             </div>
           </div>
 
@@ -838,7 +851,7 @@ export const TreasuryStreamCreateModal = (props: {
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
                   {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
-                      ? getTokenAmountAndSymbolByTokenAddress(props.treasuryDetails.balance, selectedToken.address, true)
+                      ? getAmountWithSymbol(props.treasuryDetails.balance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
@@ -851,7 +864,21 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           </div>
 
-          <div className="text-left">
+          {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
+            <div className="mb-4 flex-fixed-right">
+              <div className="form-label left">
+                {t('treasuries.treasury-streams.allocation-reserved-label')}
+              </div>
+              <div className="right">
+                <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
+                  <Radio value={true}>Yes</Radio>
+                  <Radio value={false}>No</Radio>
+                </Radio.Group>
+              </div>
+            </div>
+          )}
+
+          <div className="text-center">
             <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
           </div>
 
@@ -885,126 +912,11 @@ export const TreasuryStreamCreateModal = (props: {
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('treasuries.add-funds.main-cta-busy')
+            ? t('treasuries.treasury-streams.main-cta-busy')
             : getTransactionStartButtonLabel()}
         </Button>
       </div>
 
-      {/* <div className="mb-3">
-        <div className="form-label">{t('treasuries.add-funds.label')}</div>
-        <div className={`well ${isBusy && 'disabled'}`}>
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on">
-                {(selectedToken && tokenList) && (
-                  <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                          onChange={onTokenChange} bordered={false} showArrow={false}>
-                    {tokenList.map((option) => {
-                      return (
-                        <Option key={option.address} value={option.address}>
-                          <div className="option-container">
-                            <TokenDisplay onClick={() => {}}
-                              mintAddress={option.address}
-                              name={option.name}
-                              showCaretDown={props.associatedToken ? false : true}
-                            />
-                            <div className="balance">
-                              {props.userBalances && props.userBalances[option.address] > 0 && (
-                                <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                              )}
-                            </div>
-                          </div>
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                )}
-                {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() => setValue(
-                      getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                    )}>
-                    MAX
-                  </div>
-                ) : null}
-              </span>
-            </div>
-            <div className="right">
-              <input
-                id="topup-amount-field"
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={topupAmount}
-              />
-            </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('treasuries.add-funds.balance')}:</span>
-              <span>
-                {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
-              </span>
-            </div>
-            <div className="right inner-label">
-              ~${topupAmount && effectiveRate
-                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                : "0.00"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
-        <div className="well">
-          <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
-              </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
-              </div>
-            </span>
-          </Dropdown>
-        </div>
-      </div>
-
-      {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
-        <div className="mb-3">
-          <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
-          <div className="well">
-            <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left mr-0">
-                <AutoComplete
-                  bordered={false}
-                  style={{ width: '100%' }}
-                  dropdownClassName="stream-select-dropdown"
-                  options={renderStreamSelectOptions()}
-                  placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                  filterOption={(inputValue, option) => {
-                    const originalItem = streamSummaries.find(i => i.streamName === option!.key);
-                    return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
     </Modal>
   );
 };
