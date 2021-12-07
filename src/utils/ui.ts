@@ -6,7 +6,7 @@ import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
-import { ALLOWED_DEBUG_ADDRESSES, SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
 import dateFormat from "dateformat";
 
 export const isDev = (): boolean => {
@@ -19,17 +19,6 @@ export const isProd = (): boolean => {
 
 export const isLocal = (): boolean => {
     return window.location.hostname === 'localhost' ? true : false;
-}
-
-export const allowedConsoleDebug = (): boolean => {
-    const providerName = window.localStorage.getItem('providerName');
-    const lastUsedAccount = window.localStorage.getItem('lastUsedAccount');
-
-    if (!providerName || !lastUsedAccount) {
-      return false;
-    }
-    const account = JSON.parse(lastUsedAccount) as string;
-    return ALLOWED_DEBUG_ADDRESSES.some(a => a === account);
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
