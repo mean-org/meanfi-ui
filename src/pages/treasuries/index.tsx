@@ -1118,6 +1118,8 @@ export const TreasuriesView = () => {
         const amount = parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
 
+        console.log('params.streamId', params.streamId);
+
         const data = {
           contributor: publicKey.toBase58(),                       // contributor
           treasury: treasury.toBase58(),                           // treasury
