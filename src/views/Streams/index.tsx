@@ -2280,7 +2280,6 @@ export const Streams = () => {
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
           transactionFees={transactionFees}
-          tokenBalance={tokenBalance}
           streamDetail={streamDetail}
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { isLocal, percentage } from '../../utils/ui';
+import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -11,7 +11,6 @@ import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types
 export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
-  tokenBalance: number;
   content: JSX.Element;
   isVisible: boolean;
   streamDetail: StreamInfo | undefined;
@@ -109,9 +108,6 @@ export const StreamCloseModal = (props: {
                 : '0'
               }`
             )}
-            {isLocal() && (
-              <p className="localdev-label">Token balance: {getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.streamDetail.associatedToken as string)}</p>
-            )}
           </div>
         )}
 
@@ -142,9 +138,8 @@ export const StreamCloseModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              disabled={props.tokenBalance < (feeAmount || 0)}
               onClick={() => props.handleOk(closeTreasuryOption)}>
-              {props.tokenBalance >= (feeAmount || 0) ? t('close-stream.primary-cta') : t('transactions.validation.amount-low')}
+              {t('close-stream.primary-cta')}
           </Button>
         </div>
       </div>
