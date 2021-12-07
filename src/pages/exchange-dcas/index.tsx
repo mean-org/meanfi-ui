@@ -203,7 +203,6 @@ export const ExchangeDcasView = () => {
   const hideCloseDdcaTransactionModal = useCallback(() => setCloseDdcaTransactionModalVisibility(false), []);
 
   const onCloseDdcaTransactionFinished = () => {
-    resetTransactionStatus();
     hideCloseDdcaTransactionModal();
   };
 
@@ -214,6 +213,7 @@ export const ExchangeDcasView = () => {
     if (isSuccess()) {
       hideCloseDdcaTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   // Execute close
@@ -478,7 +478,6 @@ export const ExchangeDcasView = () => {
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
 
   const onWithdrawTransactionFinished = () => {
-    resetTransactionStatus();
     hideWithdrawTransactionModal();
   };
 
@@ -489,6 +488,7 @@ export const ExchangeDcasView = () => {
     if (isSuccess()) {
       hideWithdrawTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   // Execute withdraw

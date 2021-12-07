@@ -1,7 +1,6 @@
 import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Modal, Button, Row, Col } from 'antd';
-import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';

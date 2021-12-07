@@ -207,6 +207,13 @@ export const PayrollPayment = () => {
     }
   }, [connection, payrollFees]);
 
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -240,6 +247,7 @@ export const PayrollPayment = () => {
       resetContractValues();
       setForceReloadTokens(true);
     }
+    resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {

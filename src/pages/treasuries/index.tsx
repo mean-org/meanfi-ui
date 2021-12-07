@@ -786,12 +786,12 @@ export const TreasuriesView = () => {
   //   Events   //
   ////////////////
 
-  const resetTransactionStatus = () => {
+  const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
+  }, [setTransactionStatus]);
 
   const onRefreshTreasuriesClick = () => {
     refreshTreasuries(false);
@@ -1605,6 +1605,7 @@ export const TreasuriesView = () => {
     if (isSuccess()) {
       hideCloseStreamTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {

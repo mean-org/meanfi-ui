@@ -362,6 +362,7 @@ export const WrapView = () => {
       setWrapAmount("");
       hideTransactionModal();
     }
+    resetTransactionStatus();
   };
 
   const setValue = (value: string) => {
@@ -389,6 +390,13 @@ export const WrapView = () => {
       ? true
       : false;
   };
+
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
 
   const isSuccess = (): boolean => {
     return (

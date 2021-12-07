@@ -105,6 +105,13 @@ export const PlaygroundView = () => {
       }
     }, [selectedMint, userTokens]);
 
+    const resetTransactionStatus = () => {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+      });
+    }
+
     const isSuccess = (): boolean => {
       return transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? true : false;
     };
@@ -126,6 +133,7 @@ export const PlaygroundView = () => {
       if (isSuccess()) {
         hideTransactionModal();
       }
+      resetTransactionStatus();
     };
 
     const onTransactionStart = async () => {

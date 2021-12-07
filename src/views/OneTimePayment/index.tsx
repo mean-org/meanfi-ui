@@ -187,6 +187,13 @@ export const OneTimePayment = () => {
     return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
   }
 
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -229,6 +236,7 @@ export const OneTimePayment = () => {
       resetContractValues();
       setForceReloadTokens(true);
     }
+    resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Modal, Button } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionOperationDescription } from '../../utils/ui';
+import { getTransactionOperationDescription } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../models/enums';

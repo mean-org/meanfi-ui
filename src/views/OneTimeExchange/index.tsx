@@ -1191,6 +1191,13 @@ export const OneTimeExchange = (props: {
     wallet
   ]);
 
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   const isSuccess = useCallback(() => {
 
     return (
@@ -1240,6 +1247,7 @@ export const OneTimeExchange = (props: {
       updateRenderCount();
       hideSwapTransactionModal();
     }
+    resetTransactionStatus();
     
   }, [
     isBusy, 

@@ -57,7 +57,6 @@ import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
-import BN from 'bn.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -203,6 +202,13 @@ export const RepeatingPayment = () => {
     }
   }, [connection, repeatingPaymentFees]);
 
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
@@ -236,6 +242,7 @@ export const RepeatingPayment = () => {
       resetContractValues();
       setForceReloadTokens(true);
     }
+    resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {

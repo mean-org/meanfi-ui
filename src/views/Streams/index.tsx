@@ -221,15 +221,26 @@ export const Streams = () => {
     }
   }, []);
 
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }, [setTransactionStatus]);
+
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
+    resetTransactionStatus();
     getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
       setTransactionFees(value);
       setIsCloseStreamModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+  }, [
+    getTransactionFees,
+    resetTransactionStatus
+  ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = () => {
     hideCloseStreamModal();
@@ -619,13 +630,6 @@ export const Streams = () => {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const resetTransactionStatus = () => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-  }
-
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -663,6 +667,7 @@ export const Streams = () => {
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   const onExecuteAddFundsTransaction = async (addAmount: string) => {
@@ -913,6 +918,7 @@ export const Streams = () => {
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   const onExecuteWithdrawFundsTransaction = async (withdrawAmount: string) => {
@@ -1157,6 +1163,7 @@ export const Streams = () => {
       hideCloseStreamTransactionModal();
       hideAddFundsTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   const onExecuteCloseStreamTransaction = async () => {
