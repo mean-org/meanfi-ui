@@ -83,11 +83,17 @@ export const TreasuryStreamCreateModal = (props: {
   const [currentStep, setCurrentStep] = useState(0);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [unallocatedBalance, setUnallocatedBalance] = useState(0);
 
-  // Unallocated = treasuryBalance - allocation
-
-  // useEffect(() => {
-  // });
+  useEffect(() => {
+    if (props.isVisible && props.treasuryDetails) {
+      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocation;
+      setUnallocatedBalance(unallocated);
+    }
+  }, [
+    props.isVisible,
+    props.treasuryDetails
+  ]);
 
   /////////////////
   //   Getters   //
@@ -743,8 +749,8 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left inner-label">
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
-                  {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
-                      ? getAmountWithSymbol(props.treasuryDetails.balance, selectedToken.address, true)
+                  {`${unallocatedBalance && selectedToken
+                      ? getAmountWithSymbol(unallocatedBalance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
@@ -928,8 +934,8 @@ export const TreasuryStreamCreateModal = (props: {
               <div className="left inner-label">
                 <span>{t('treasuries.treasury-streams.available-unallocated-balance-label')}:</span>
                 <span>
-                  {`${props.treasuryDetails && props.treasuryDetails.balance && selectedToken
-                      ? getAmountWithSymbol(props.treasuryDetails.balance, selectedToken.address, true)
+                  {`${unallocatedBalance && selectedToken
+                      ? getAmountWithSymbol(unallocatedBalance, selectedToken.address, true)
                       : "0"
                   }`}
                 </span>
