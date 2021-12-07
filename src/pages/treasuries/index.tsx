@@ -399,6 +399,10 @@ export const TreasuriesView = () => {
     openTreasuryById,
   ]);
 
+  const numTreasuryStreams = useCallback(() => {
+    return treasuryStreams ? treasuryStreams.length : 0;
+  }, [treasuryStreams]);
+
   // Load treasuries once per page access
   useEffect(() => {
     if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries) {
@@ -1577,9 +1581,9 @@ export const TreasuriesView = () => {
     });
   }, [getTransactionFees]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
-  const onAcceptCloseStream = () => {
+  const onAcceptCloseStream = (closeTreasury: boolean) => {
     hideCloseStreamModal();
-    onExecuteCloseStreamTransaction();
+    onExecuteCloseStreamTransaction(closeTreasury);
   };
 
   // Close stream Transaction execution modal
@@ -1603,7 +1607,7 @@ export const TreasuriesView = () => {
     }
   }
 
-  const onExecuteCloseStreamTransaction = async () => {
+  const onExecuteCloseStreamTransaction = async (closeTreasury: boolean) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1624,6 +1628,7 @@ export const TreasuriesView = () => {
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
           initializer: wallet.publicKey.toBase58(),               // initializer
+          closeTreasury                                           // closeTreasury
         }
         consoleOut('data:', data);
 
@@ -1663,7 +1668,7 @@ export const TreasuriesView = () => {
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID,
-          false
+          closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
@@ -3019,15 +3024,18 @@ export const TreasuriesView = () => {
         isBusy={isBusy}
       />
 
-      <StreamCloseModal
-        isVisible={isCloseStreamModalVisible}
-        transactionFees={transactionFees}
-        tokenBalance={tokenBalance}
-        streamDetail={highlightedStream}
-        handleOk={onAcceptCloseStream}
-        handleClose={hideCloseStreamModal}
-        content={getStreamClosureMessage()}
-      />
+      {isCloseStreamModalVisible && (
+        <StreamCloseModal
+          isVisible={isCloseStreamModalVisible}
+          transactionFees={transactionFees}
+          tokenBalance={tokenBalance}
+          streamDetail={highlightedStream}
+          handleOk={onAcceptCloseStream}
+          handleClose={hideCloseStreamModal}
+          content={getStreamClosureMessage()}
+          canCloseTreasury={numTreasuryStreams() === 1 ? true : false}
+        />
+      )}
 
       <StreamPauseModal
         isVisible={isPauseStreamModalVisible}

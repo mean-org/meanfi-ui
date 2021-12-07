@@ -943,8 +943,8 @@ export const TreasuryStreamCreateModal = (props: {
               </div>
               <div className="right">
                 <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
-                  <Radio value={true}>Yes</Radio>
-                  <Radio value={false}>No</Radio>
+                  <Radio value={true}>{t('general.yes')}</Radio>
+                  <Radio value={false}>{t('general.no')}</Radio>
                 </Radio.Group>
               </div>
             </div>

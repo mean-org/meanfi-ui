@@ -446,7 +446,8 @@
 			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
 			"allocate-funds-label": "Allocate funds",
 			"available-unallocated-balance-label": "Available Unallocated Balance",
-			"allocation-reserved-label": "This allocation is fully RESERVED"
+			"allocation-reserved-label": "This allocation is fully RESERVED",
+			"close-stream-also-closes-treasury-label": "Also close the treasury"
 		}
 	},
 	"swap": {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Button, Row, Col } from 'antd';
+import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
-import { consoleOut, isLocal, percentage } from '../../utils/ui';
+import { isLocal, percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -16,10 +16,12 @@ export const StreamCloseModal = (props: {
   isVisible: boolean;
   streamDetail: StreamInfo | undefined;
   transactionFees: TransactionFees;
+  canCloseTreasury?: boolean;
 }) => {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
+  const [closeTreasuryOption, setCloseTreasuryOption] = useState(true);
 
   const getFeeAmount = useCallback((fees: TransactionFees): number => {
     let fee = 0;
@@ -62,6 +64,10 @@ export const StreamCloseModal = (props: {
     props.transactionFees,
     getFeeAmount
   ]);
+
+  const onAllocationReservedChanged = (e: any) => {
+    setCloseTreasuryOption(e.target.value);
+  }
 
   const infoRow = (caption: string, value: string) => {
     return (
@@ -109,6 +115,20 @@ export const StreamCloseModal = (props: {
           </div>
         )}
 
+        {props.canCloseTreasury && (
+          <div className="mb-4 flex-fixed-right">
+            <div className="form-label left">
+              {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
+            </div>
+            <div className="right">
+              <Radio.Group onChange={onAllocationReservedChanged} value={closeTreasuryOption}>
+                <Radio value={true}>{t('general.yes')}</Radio>
+                <Radio value={false}>{t('general.no')}</Radio>
+              </Radio.Group>
+            </div>
+          </div>
+        )}
+
         <div className="mt-3">
           <Button
               className="mr-3"
@@ -123,7 +143,7 @@ export const StreamCloseModal = (props: {
               shape="round"
               size="large"
               disabled={props.tokenBalance < (feeAmount || 0)}
-              onClick={props.handleOk}>
+              onClick={() => props.handleOk(closeTreasuryOption)}>
               {props.tokenBalance >= (feeAmount || 0) ? t('close-stream.primary-cta') : t('transactions.validation.amount-low')}
           </Button>
         </div>
