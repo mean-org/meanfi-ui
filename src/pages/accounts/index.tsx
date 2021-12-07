@@ -443,26 +443,27 @@ export const AccountsView = () => {
                 });
 
                 // Add custom tokens to the sorted list (those not in meanTokensCopy and not in sortedList)
-                const cumulativeIndex = meanTokensCopy.length + sortedList.length;
-                accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
-                  const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                  const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                  if (!isInMeanTokenList && !isInSplTokenList) {
-                    const unkToken: UserTokenAccount = {
-                      address: item.parsedInfo.mint,
-                      publicAddress: item.pubkey.toBase58(),
-                      name: 'Unknown Token',
-                      chainId: getDefaultRpc().networkId,
-                      decimals: item.parsedInfo.tokenAmount.decimals,
-                      symbol: shortenAddress(item.parsedInfo.mint),
-                      balance: item.parsedInfo.tokenAmount.uiAmount || 0,
-                      isMeanSupportedToken: false,
-                      isAta: true
-                    };
-                    unkToken.displayIndex = cumulativeIndex + index + 1;
-                    sortedList.push(unkToken);
-                  }
-                });
+                // TODO: Enable this only if we come up with a way to hide our associated tokens
+                // const cumulativeIndex = meanTokensCopy.length + sortedList.length;
+                // accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
+                //   const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                //   const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                //   if (!isInMeanTokenList && !isInSplTokenList) {
+                //     const unkToken: UserTokenAccount = {
+                //       address: item.parsedInfo.mint,
+                //       publicAddress: item.pubkey.toBase58(),
+                //       name: 'Unknown Token',
+                //       chainId: getDefaultRpc().networkId,
+                //       decimals: item.parsedInfo.tokenAmount.decimals,
+                //       symbol: shortenAddress(item.parsedInfo.mint),
+                //       balance: item.parsedInfo.tokenAmount.uiAmount || 0,
+                //       isMeanSupportedToken: false,
+                //       isAta: true
+                //     };
+                //     unkToken.displayIndex = cumulativeIndex + index + 1;
+                //     sortedList.push(unkToken);
+                //   }
+                // });
 
                 // Concatenate both lists
                 const finalList = meanTokensCopy.concat(sortedList);
