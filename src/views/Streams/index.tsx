@@ -698,7 +698,7 @@ export const Streams = () => {
           stream,
           contributorMint,
           amount,
-          AllocationType.Specific
+          AllocationType.All
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -1181,6 +1181,7 @@ export const Streams = () => {
         return await moneyStream.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
+          true                                              // closeTreasury
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);

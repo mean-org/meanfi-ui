@@ -1662,7 +1662,8 @@ export const TreasuriesView = () => {
         // Create a transaction
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
-          streamPublicKey,                                  // Stream ID
+          streamPublicKey,                                  // Stream ID,
+          false
         )
         .then(value => {
           consoleOut('closeStream returned transaction:', value);
