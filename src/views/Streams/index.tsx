@@ -657,7 +657,7 @@ export const Streams = () => {
           contributorMint: contributorMint.toBase58(),            // contributorMint
           amount                                                  // amount
         }
-        consoleOut('data:', data);
+        consoleOut('add funds data:', data);
 
         // Log input data
         transactionLog.push({
@@ -698,7 +698,7 @@ export const Streams = () => {
           stream,
           contributorMint,
           amount,
-          AllocationType.All
+          AllocationType.Specific
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
