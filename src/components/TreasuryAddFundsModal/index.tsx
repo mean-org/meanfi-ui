@@ -241,6 +241,53 @@ export const TreasuryAddFundsModal = (props: {
     return value;
   }
 
+  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
+    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
+    if (ellipsisElements && ellipsisElements.length) {
+      const element = ellipsisElements[0];
+      if (state) {
+        if (!element.classList.contains('overflow-ellipsis-middle')) {
+          element.classList.add('overflow-ellipsis-middle');
+        }
+      } else {
+        if (element.classList.contains('overflow-ellipsis-middle')) {
+          element.classList.remove('overflow-ellipsis-middle');
+        }
+      }
+      setTimeout(() => {
+        triggerWindowResize();
+      }, 10);
+    }
+  }, []);
+
+  const setCustomToken = useCallback((address: string) => {
+
+    if (address && isValidAddress(address)) {
+      const unkToken: TokenInfo = {
+        address: address,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(address),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("token selected:", unkToken, 'blue');
+      setEffectiveRate(0);
+      toggleOverflowEllipsisMiddle(true);
+    } else {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('transactions.validation.invalid-solana-address'),
+        type: "error"
+      });
+    }
+  }, [
+    toggleOverflowEllipsisMiddle,
+    setEffectiveRate,
+    setSelectedToken,
+    t,
+  ]);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -249,8 +296,12 @@ export const TreasuryAddFundsModal = (props: {
   useEffect(() => {
     if (props.isVisible && props.associatedToken) {
       const token = tokenList.find(t => t.address === props.associatedToken);
-      if (token && token.address !== selectedToken?.address) {
-        setSelectedToken(token);
+      if (token) {
+        if (!selectedToken || selectedToken.address !== token.address) {
+          setSelectedToken(token);
+        }
+      } else if (!token && (!selectedToken || selectedToken.address !== props.associatedToken)) {
+        setCustomToken(props.associatedToken);
       }
     }
   }, [
@@ -258,7 +309,9 @@ export const TreasuryAddFundsModal = (props: {
     selectedToken,
     props.isVisible,
     props.associatedToken,
-    setSelectedToken
+    setCustomToken,
+    setSelectedToken,
+    toggleOverflowEllipsisMiddle
   ]);
 
   // When modal goes visible, Build a list of StreamSummary from treasuryStreams
@@ -358,47 +411,6 @@ export const TreasuryAddFundsModal = (props: {
     setCustomTokenInput(e.target.value);
   }
 
-  const toggleOverflowEllipsisMiddle = (state: boolean) => {
-    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
-    if (ellipsisElements && ellipsisElements.length) {
-      const element = ellipsisElements[0];
-      if (state) {
-        if (!element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.add('overflow-ellipsis-middle');
-        }
-      } else {
-        if (element.classList.contains('overflow-ellipsis-middle')) {
-          element.classList.remove('overflow-ellipsis-middle');
-        }
-      }
-      setTimeout(() => {
-        triggerWindowResize();
-      }, 10);
-    }
-  }
-
-  const setCustomToken = () => {
-    if (customTokenInput && isValidAddress(customTokenInput)) {
-      const unkToken: TokenInfo = {
-        address: customTokenInput,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(customTokenInput),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
-      toggleOverflowEllipsisMiddle(true);
-    } else {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
-    }
-  }
-
   //////////////////
   //  Validation  //
   //////////////////
@@ -493,7 +505,7 @@ export const TreasuryAddFundsModal = (props: {
                         <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
                           <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
                           <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                            <span className="flat-button icon-button ml-1" onClick={setCustomToken}><IconCheckedBox className="normal"/></span>
+                            <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
                           </div>
                         </div>
                       </div>

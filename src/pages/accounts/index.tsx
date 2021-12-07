@@ -262,6 +262,7 @@ export const AccountsView = () => {
   },[accountAddress]);
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !token.symbol) { return 0; }
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
 

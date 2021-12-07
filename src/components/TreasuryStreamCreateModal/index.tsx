@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
@@ -158,6 +158,47 @@ export const TreasuryStreamCreateModal = (props: {
       : '';
   }
 
+  const toggleOverflowEllipsisMiddle = useCallback((state: boolean) => {
+    const ellipsisElements = document.querySelectorAll(".ant-select.token-selector-dropdown .ant-select-selector .ant-select-selection-item");
+    if (ellipsisElements && ellipsisElements.length) {
+      console.log('ellipsisElements:', ellipsisElements);
+
+      ellipsisElements.forEach(element => {
+        if (state) {
+          if (!element.classList.contains('overflow-ellipsis-middle')) {
+            element.classList.add('overflow-ellipsis-middle');
+          }
+        } else {
+          if (element.classList.contains('overflow-ellipsis-middle')) {
+            element.classList.remove('overflow-ellipsis-middle');
+          }
+        }
+      });
+
+      setTimeout(() => {
+        triggerWindowResize();
+      }, 10);
+    }
+  }, []);
+
+  const setCustomToken = useCallback((address: string) => {
+    const unkToken: TokenInfo = {
+      address: address,
+      name: 'Unknown',
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+    setSelectedToken(unkToken);
+    consoleOut("token selected:", unkToken, 'blue');
+    setEffectiveRate(0);
+    toggleOverflowEllipsisMiddle(true);
+  }, [
+    setEffectiveRate,
+    setSelectedToken,
+    toggleOverflowEllipsisMiddle
+  ]);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -166,8 +207,12 @@ export const TreasuryStreamCreateModal = (props: {
   useEffect(() => {
     if (props.isVisible && props.associatedToken) {
       const token = tokenList.find(t => t.address === props.associatedToken);
-      if (token && token.address !== selectedToken?.address) {
-        setSelectedToken(token);
+      if (token) {
+        if (!selectedToken || selectedToken.address !== token.address) {
+          setSelectedToken(token);
+        }
+      } else if (!token && (!selectedToken || selectedToken.address !== props.associatedToken)) {
+        setCustomToken(props.associatedToken);
       }
     }
   }, [
@@ -175,8 +220,35 @@ export const TreasuryStreamCreateModal = (props: {
     selectedToken,
     props.isVisible,
     props.associatedToken,
+    setCustomToken,
     setSelectedToken
   ]);
+
+  // Window resize listener
+  useEffect(() => {
+    const resizeListener = () => {
+      const NUM_CHARS = 4;
+      const ellipsisElements = document.querySelectorAll(".overflow-ellipsis-middle");
+      for (let i = 0; i < ellipsisElements.length; ++i){
+        const e = ellipsisElements[i] as HTMLElement;
+        if (e.offsetWidth < e.scrollWidth){
+          const text = e.textContent;
+          e.dataset.tail = text?.slice(text.length - NUM_CHARS);
+        }
+      }
+    };
+    // Call it a first time
+    resizeListener();
+
+    // set resize listener
+    window.addEventListener('resize', resizeListener);
+
+    // clean up function
+    return () => {
+      // remove resize listener
+      window.removeEventListener('resize', resizeListener);
+    }
+  }, []);
 
   ////////////////
   //   Events   //

@@ -400,7 +400,7 @@ export const TreasuriesView = () => {
 
   // Load treasuries once per page access
   useEffect(() => {
-    if (!publicKey || !connection || treasuriesLoaded) {
+    if (!publicKey || !connection || treasuriesLoaded || loadingTreasuries) {
       return;
     }
 
@@ -409,8 +409,9 @@ export const TreasuriesView = () => {
     refreshTreasuries(true);
   }, [
     publicKey,
-    treasuriesLoaded,
     connection,
+    treasuriesLoaded,
+    loadingTreasuries,
     refreshTreasuries
   ]);
 
@@ -2997,17 +2998,6 @@ export const TreasuriesView = () => {
         isBusy={isBusy}
       />
 
-      <TreasuryAddFundsModal
-        handleOk={onAcceptAddFunds}
-        handleClose={closeAddFundsModal}
-        isVisible={isAddFundsModalVisible}
-        userBalances={userBalances}
-        streamStats={streamStats}
-        treasuryStreams={treasuryStreams}
-        associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
-        isBusy={isBusy}
-      />
-
       <TreasuryCloseModal
         isVisible={isCloseTreasuryModalVisible}
         transactionFees={transactionFees}
@@ -3051,18 +3041,33 @@ export const TreasuriesView = () => {
         content={getStreamResumeMessage()}
       />
 
-      <TreasuryStreamCreateModal
-        associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
-        connection={connection}
-        handleClose={closeCreateStreamModal}
-        handleOk={onAcceptCreateStream}
-        isVisible={isCreateStreamModalVisible}
-        moneyStreamingClient={ms}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        treasuryDetails={treasuryDetails}
-        userBalances={userBalances}
-      />
+      {isAddFundsModalVisible && (
+        <TreasuryAddFundsModal
+          handleOk={onAcceptAddFunds}
+          handleClose={closeAddFundsModal}
+          isVisible={isAddFundsModalVisible}
+          userBalances={userBalances}
+          streamStats={streamStats}
+          treasuryStreams={treasuryStreams}
+          associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
+          isBusy={isBusy}
+        />
+      )}
+
+      {isCreateStreamModalVisible && (
+        <TreasuryStreamCreateModal
+          associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
+          connection={connection}
+          handleClose={closeCreateStreamModal}
+          handleOk={onAcceptCreateStream}
+          isVisible={isCreateStreamModalVisible}
+          moneyStreamingClient={ms}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          treasuryDetails={treasuryDetails}
+          userBalances={userBalances}
+        />
+      )}
 
       {/* Transaction execution modal */}
       <Modal

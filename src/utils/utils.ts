@@ -231,7 +231,7 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
     }
   }
 
-  const formatToLocale = (value: any, minDigits = 0) => {
+  const formatToLocale = (value: any, minDigits = 6) => {
     const converted = parseFloat(value.toString());
     const formatted = new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: minDigits, maximumFractionDigits: minDigits }).format(converted);
     return formatted || '';
@@ -245,8 +245,8 @@ export const getAmountWithSymbol = (amount: number, address?: string, onlyValue 
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = formatToLocale(formatAmount(inputAmount, 4));
-    return onlyValue ? formatted : `${formatted} ${shortenAddress(address, 4)}`;
+    const formatted = formatToLocale(inputAmount);
+    return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
   }
   return `${formatToLocale(inputAmount)}`;
 }
