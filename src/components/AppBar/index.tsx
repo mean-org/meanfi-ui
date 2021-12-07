@@ -34,10 +34,12 @@ export const AppBar = (props: {
     detailsPanelOpen,
     addAccountPanelOpen,
     isDepositOptionsModalVisible,
+    refreshStreamList,
     setDtailsPanelOpen,
+    setForceReloadTokens,
+    setAddAccountPanelOpen,
     showDepositOptionsModal,
     hideDepositOptionsModal,
-    setAddAccountPanelOpen,
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -61,6 +63,11 @@ export const AppBar = (props: {
       mobileMenuTrigger?.click();
       closeAllPanels();
     }
+  }
+
+  const refreshMoneyStreams = () => {
+    refreshStreamList(true);
+    setForceReloadTokens(true);
   }
 
   // const getChartsLink = (): string => {
@@ -104,7 +111,7 @@ export const AppBar = (props: {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={[location.pathname]} mode="horizontal">
+    <Menu selectedKeys={[location.pathname]} mode="horizontal" onClick={refreshMoneyStreams}>
       <Menu.Item key="/accounts">
         <Link to='/accounts'>{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>

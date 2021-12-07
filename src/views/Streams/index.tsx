@@ -2168,7 +2168,11 @@ export const Streams = () => {
                       shape="circle"
                       size="middle"
                       icon={<ArrowLeftOutlined />}
-                      onClick={() => navigate('/accounts')}
+                      onClick={() => {
+                        refreshStreamList(true);
+                        setForceReloadTokens(true);
+                        navigate('/accounts');
+                      }}
                     />
                   </Tooltip>
                 </span>
