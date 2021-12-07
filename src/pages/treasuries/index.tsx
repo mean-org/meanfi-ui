@@ -565,7 +565,7 @@ export const TreasuriesView = () => {
     loadingTreasuryStreams,
   ]);
 
-  const isCreating = useCallback((): boolean => {
+  const isCreatingTreasury = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryCreate
             ? true
             : false;
@@ -574,7 +574,7 @@ export const TreasuriesView = () => {
     lastSentTxOperationType,
   ]);
 
-  const isClosing = useCallback((): boolean => {
+  const isClosingTreasury = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryClose
             ? true
             : false;
@@ -585,6 +585,42 @@ export const TreasuriesView = () => {
 
   const isAddingFunds = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryAddFunds
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isCreatingStream = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryStreamCreate
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isClosingStream = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamClose
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isPausingStream = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamPause
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
+  const isResumingStream = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.StreamResume
             ? true
             : false;
   }, [
@@ -2617,7 +2653,7 @@ export const TreasuriesView = () => {
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
                 </div>
                 <div className="std-table-cell last-cell">
-                  <span className={`icon-button-container ${isClosing() && highlightedStream ? 'click-disabled' : ''}`}>
+                  <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
                     {renderStreamOptions(item)}
                   </span>
                 </div>
@@ -2764,12 +2800,12 @@ export const TreasuriesView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer() || isAnythingLoading()}
             onClick={showCloseTreasuryModal}>
-            {(isClosing() && !highlightedStream) && (<LoadingOutlined />)}
-            {isClosing() && !highlightedStream
+            {(isClosingTreasury() && !highlightedStream) && (<LoadingOutlined />)}
+            {isClosingTreasury() && !highlightedStream
               ? t('treasuries.treasury-detail.cta-close-busy')
               : t('treasuries.treasury-detail.cta-close')}
           </Button>
-          {/* Add translation */}
+          {/* Create stream */}
           <Button
             type="default"
             shape="round"
@@ -2777,14 +2813,27 @@ export const TreasuriesView = () => {
             className="thin-stroke"
             disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance === 0)}
             onClick={showCreateStreamModal}>
-            Create stream
+            {isCreatingStream() && (<LoadingOutlined />)}
+            {isCreatingStream()
+              ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+              : t('treasuries.treasury-streams.create-stream-main-cta')}
           </Button>
-          {(isClosing() && highlightedStream) && (
+          {isClosingStream() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">{t('streams.stream-detail.cta-disabled-closing')}</span>
             </div>
-          )}
+          ) : isPausingStream() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('treasuries.treasury-streams.busy-pausing')}</span>
+            </div>
+          ) : isResumingStream() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('treasuries.treasury-streams.busy-resuming')}</span>
+            </div>
+          ) : null}
         </Space>
       </>
     );
@@ -2834,7 +2883,7 @@ export const TreasuriesView = () => {
       })
     ) : (
       <>
-      {isCreating() ? (
+      {isCreatingTreasury() ? (
         <div className="h-100 flex-center">
           <Spin indicator={bigLoadingIcon} />
         </div>

@@ -984,7 +984,7 @@ export const TreasuryStreamCreateModal = (props: {
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {isBusy
-            ? t('treasuries.treasury-streams.main-cta-busy')
+            ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
             : getTransactionStartButtonLabel()}
         </Button>
       </div>
