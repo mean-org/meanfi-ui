@@ -5,14 +5,14 @@ import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
 import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, isValidAddress } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE, TreasuryType } from '@mean-dao/money-streaming/lib/types';
-import { SelectOption } from '../../models/common-types';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
 import { AllocationType } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
@@ -54,29 +54,37 @@ export const TreasuryAddFundsModal = (props: {
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
-  const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.All);
+  const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [streamSummaries, setStreamSummaries] = useState<StreamSummary[]>([]);
   const [customTokenInput, setCustomTokenInput] = useState("");
+  const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
+
+  const numTreasuryStreams = useCallback(() => {
+    return props.treasuryStreams ? props.treasuryStreams.length : 0;
+  }, [props.treasuryStreams]);
 
   const allocationOptions = useMemo(() => {
     const options: SelectOption[] = [];
     options.push({
       key: AllocationType.All,
       label: t('treasuries.add-funds.allocation-option-evenly'),
-      value: AllocationType.All
+      value: AllocationType.All,
+      visible: numTreasuryStreams() > 1
     });
     options.push({
       key: AllocationType.Specific,
       label: t('treasuries.add-funds.allocation-option-specific'),
-      value: AllocationType.Specific
+      value: AllocationType.Specific,
+      visible: numTreasuryStreams() >= 1
     });
     options.push({
       key: AllocationType.None,
       label: t('treasuries.add-funds.allocation-option-none'),
-      value: AllocationType.None
+      value: AllocationType.None,
+      visible: true
     });
     return options;
-  }, [t]);
+  }, [t, numTreasuryStreams]);
 
   /////////////////
   //   Getters   //
@@ -98,6 +106,8 @@ export const TreasuryAddFundsModal = (props: {
       ? t('transactions.validation.no-amount')
       : parseFloat(topupAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
+      : allocationOption === AllocationType.Specific && !selectedStreamForAllocation
+      ? t('transactions.validation.select-stream')
       : t('treasuries.add-funds.main-cta');
   }
 
@@ -331,6 +341,11 @@ export const TreasuryAddFundsModal = (props: {
         } as StreamSummary;
       });
       setStreamSummaries(summaries);
+      if (summaries.length === 1) {
+        setAllocationOption(AllocationType.Specific);
+      } else {
+        setAllocationOption(AllocationType.All);
+      }
     }
   }, [
     props.isVisible,
@@ -375,7 +390,17 @@ export const TreasuryAddFundsModal = (props: {
   }
 
   const onAcceptTopup = () => {
-    props.handleOk(topupAmount);
+    props.handleOk({
+      amount: topupAmount,
+      allocationType: allocationOption,
+      streamId: allocationOption === AllocationType.Specific
+                ? selectedStreamForAllocation : ''
+    } as TreasuryTopupParams);
+  }
+
+  const onStreamSelected = (e: any) => {
+    consoleOut('selectedStreamForAllocation:', e, 'blue');
+    setSelectedStreamForAllocation(e);
   }
 
   const setValue = (value: string) => {
@@ -424,6 +449,15 @@ export const TreasuryAddFundsModal = (props: {
             : false;
   }
 
+  const isTopupFormValid = () => {
+    return publicKey &&
+           isValidInput() &&
+           ((allocationOption !== AllocationType.Specific) ||
+            (allocationOption === AllocationType.Specific && selectedStreamForAllocation))
+          ? true
+          : false;
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -463,11 +497,8 @@ export const TreasuryAddFundsModal = (props: {
     <Menu activeKey={allocationOption.toString()}>
       {allocationOptions.map((item) => {
         return (
-          <Menu.Item disabled={
-            item.key === AllocationType.Specific && (
-              (!props.streamStats || props.streamStats.total === 0) ||
-              (treasuryOption && treasuryOption.type === TreasuryType.Lock)
-            )}
+          <Menu.Item
+            className={item.visible ? 'active' : 'hidden'}
             key={`${item.key}`}
             onClick={() => handleAllocationOptionChange(item)}>
             {item.label}
@@ -579,21 +610,23 @@ export const TreasuryAddFundsModal = (props: {
       </div>
 
       {/* Funds Allocation options */}
-      <div className="mb-3">
-        <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
-        <div className="well">
-          <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
-            <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left">
-                <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
-              </div>
-              <div className="right">
-                <IconCaretDown className="mean-svg-icons" />
-              </div>
-            </span>
-          </Dropdown>
+      {numTreasuryStreams() > 0 && (
+        <div className="mb-3">
+          <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
+          <div className="well">
+            <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
+              <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                <div className="left">
+                  <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
+                </div>
+                <div className="right">
+                  <IconCaretDown className="mean-svg-icons" />
+                </div>
+              </span>
+            </Dropdown>
+          </div>
         </div>
-      </div>
+      )}
 
       {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
         <div className="mb-3">
@@ -611,6 +644,7 @@ export const TreasuryAddFundsModal = (props: {
                     const originalItem = streamSummaries.find(i => i.streamName === option!.key);
                     return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
                   }}
+                  onSelect={onStreamSelected}
                 />
               </div>
             </div>
@@ -624,7 +658,7 @@ export const TreasuryAddFundsModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isValidInput()}
+        disabled={!isTopupFormValid()}
         onClick={onAcceptTopup}>
         {props.isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>

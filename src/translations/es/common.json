@@ -597,6 +597,7 @@
 			"no-payment-rate": "Agregar tasa de pago",
 			"no-recipient": "Sin destinatario",
 			"select-recipient": "Seleccionar destinatario",
+			"select-stream": "Select a stream",
 			"no-valid-date": "Establecer una fecha válida",
 			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",

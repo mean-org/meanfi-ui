@@ -61,6 +61,7 @@ import { StreamPauseModal } from '../../components/StreamPauseModal';
 import { TreasuryStreamCreateModal } from '../../components/TreasuryStreamCreateModal';
 import { StreamResumeModal } from '../../components/StreamResumeModal';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
+import { TreasuryTopupParams } from '../../models/common-types';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -1077,9 +1078,10 @@ export const TreasuriesView = () => {
   const closeAddFundsModal = useCallback(() => {
     setIsAddFundsModalVisibility(false);
   }, []);
-  const onAcceptAddFunds = (amount: any) => {
-    consoleOut('AddFunds amount:', parseFloat(amount));
-    onExecuteAddFundsTransaction(amount);
+
+  const onAcceptAddFunds = (params: TreasuryTopupParams) => {
+    consoleOut('AddFunds params:', params, 'blue');
+    onExecuteAddFundsTransaction(params);
   };
 
   const onAddFundsTransactionFinished = () => {
@@ -1091,7 +1093,7 @@ export const TreasuriesView = () => {
     refreshTokenBalance();
   };
 
-  const onExecuteAddFundsTransaction = async (addAmount: string) => {
+  const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1113,13 +1115,16 @@ export const TreasuriesView = () => {
 
         const treasury = new PublicKey(treasuryDetails.id);
         const associatedToken = new PublicKey(selectedToken.address);
-        const amount = parseFloat(addAmount);
+        const amount = parseFloat(params.amount);
+        const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
 
         const data = {
-          contributor: publicKey,                      // contributor
-          treasury: treasury,                          // treasury
-          associatedToken: associatedToken,            // associatedToken
-          amount                                                  // amount
+          contributor: publicKey.toBase58(),                       // contributor
+          treasury: treasury.toBase58(),                           // treasury
+          stream: stream?.toBase58(),                               // stream
+          associatedToken: associatedToken.toBase58(),             // associatedToken
+          amount,                                                 // amount
+          allocationType: params.allocationType                   // allocationType
         }
         consoleOut('data:', data);
 
@@ -1159,10 +1164,10 @@ export const TreasuriesView = () => {
         return await ms.addFunds(
           publicKey,
           treasury,
-          undefined,
+          stream,
           associatedToken,
           amount,
-          AllocationType.All
+          params.allocationType
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);

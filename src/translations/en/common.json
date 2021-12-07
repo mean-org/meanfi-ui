@@ -600,6 +600,7 @@
 			"no-payment-rate": "Add payment rate",
 			"no-recipient": "No recipient",
 			"select-recipient": "Select recipient",
+			"select-stream": "Select a stream",
 			"no-valid-date": "Set a valid date",
 			"not-connected": "Connect your wallet",
 			"payment-rate-high": "Payment rate exceeds your balance",

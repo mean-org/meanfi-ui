@@ -597,6 +597,7 @@
 			"no-payment-rate": "Ajouter un taux de paiement",
 			"no-recipient": "Aucun destinataire",
 			"select-recipient": "Sélectionnez le destinataire",
+			"select-stream": "Select a stream",
 			"no-valid-date": "Définir une date valide",
 			"not-connected": "Connectez votre portefeuille",
 			"payment-rate-high": "Le taux de paiement dépasse votre solde",
