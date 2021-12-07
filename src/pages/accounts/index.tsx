@@ -50,7 +50,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { refreshCachedRpc } from '../../models/connections-hq';
+import { getDefaultRpc, refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
@@ -413,7 +413,7 @@ export const AccountsView = () => {
                 // Create a list containing the tokens for the user accounts not in the meanTokensCopy
                 const intersectedList = new Array<UserTokenAccount>();
                 accTks.forEach(item => {
-                  // Loop through the user token accounts and add the token account to the list: meanTokensCopy
+                  // Loop through the user token accounts and add the token account to the list: intersectedList
                   // If it is not already on the list (diferentiate token accounts of the same mint)
                   const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
                   const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
@@ -441,6 +441,29 @@ export const AccountsView = () => {
                   item.displayIndex = meanTokensCopy.length + index;
                   item.isAta = await updateAtaFlag(item);
                 });
+
+                // Add custom tokens to the sorted list (those not in meanTokensCopy and not in sortedList)
+                // const cumulativeIndex = meanTokensCopy.length + sortedList.length;
+                // accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
+                //   const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                //   const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                //   if (!isInMeanTokenList && !isInSplTokenList) {
+                //     const unkToken: UserTokenAccount = {
+                //       address: item.parsedInfo.mint,
+                //       publicAddress: item.pubkey.toBase58(),
+                //       name: 'Unknown Token',
+                //       chainId: getDefaultRpc().networkId,
+                //       decimals: item.parsedInfo.tokenAmount.decimals,
+                //       symbol: shortenAddress(item.parsedInfo.mint),
+                //       balance: item.parsedInfo.tokenAmount.uiAmount || 0,
+                //       isMeanSupportedToken: false
+                //     };
+                //     unkToken.displayIndex = cumulativeIndex + index + 1;
+                //     unkToken.isAta = await updateAtaFlag(unkToken);
+                //     sortedList.push(unkToken);
+                //   }
+                // });
+
                 // Concatenate both lists
                 const finalList = meanTokensCopy.concat(sortedList);
                 consoleOut('Tokens (sorted):', finalList, 'blue');
