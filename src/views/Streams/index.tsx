@@ -44,6 +44,7 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
@@ -93,6 +94,7 @@ export const Streams = () => {
     openStreamById,
     setStreamDetail,
     setSelectedToken,
+    setEffectiveRate,
     setSelectedStream,
     refreshStreamList,
     setDtailsPanelOpen,
@@ -248,11 +250,47 @@ export const Streams = () => {
     refreshStreamList(true);
   }
 
+  const setCustomToken = useCallback((address: string) => {
+
+    if (address && isValidAddress(address)) {
+      const unkToken: TokenInfo = {
+        address: address,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(address),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("token selected:", unkToken, 'blue');
+      setEffectiveRate(0);
+    } else {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('transactions.validation.invalid-solana-address'),
+        type: "error"
+      });
+    }
+  }, [
+    setEffectiveRate,
+    setSelectedToken,
+    t,
+  ]);
+
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     consoleOut("selected token:", token?.symbol);
+
+    if (token) {
+      if (!selectedToken || selectedToken.address !== token.address) {
+        setOldSelectedToken(selectedToken);
+        setSelectedToken(token);
+      }
+    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+      setCustomToken(streamDetail?.associatedToken as string);
+    }
+
     if (token) {
       setOldSelectedToken(selectedToken);
       setSelectedToken(token);
@@ -265,15 +303,18 @@ export const Streams = () => {
   }, [
     selectedToken,
     streamDetail,
+    setCustomToken,
     setSelectedToken,
     getTransactionFees
   ]);
+
   const closeAddFundsModal = useCallback(() => {
     if (oldSelectedToken) {
       setSelectedToken(oldSelectedToken);
     }
     setIsAddFundsModalVisibility(false);
   }, [oldSelectedToken, setSelectedToken]);
+
   const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
   const onAcceptAddFunds = (amount: any) => {
     closeAddFundsModal();

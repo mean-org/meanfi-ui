@@ -82,7 +82,7 @@ export const StreamAddFundsModal = (props: {
                 <TokenDisplay onClick={() => {}}
                   mintAddress={selectedToken.address}
                   name={selectedToken.name}
-                  showCaretDown={true}
+                  showCaretDown={false}
                 />
               )}
               {selectedToken && tokenBalance ? (
