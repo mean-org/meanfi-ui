@@ -661,6 +661,7 @@ export const DdcaSetupModal = (props: {
 
     const sendTx = async (): Promise<boolean> => {
       const encodedTx = signedTransaction.serialize().toString('base64');
+      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await props.connection
           .sendEncodedTransaction(encodedTx)

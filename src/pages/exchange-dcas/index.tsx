@@ -379,6 +379,7 @@ export const ExchangeDcasView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       const encodedTx = signedTransaction.serialize().toString('base64');
+      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -642,6 +643,7 @@ export const ExchangeDcasView = () => {
 
     const sendTx = async (): Promise<boolean> => {
       const encodedTx = signedTransaction.serialize().toString('base64');
+      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)

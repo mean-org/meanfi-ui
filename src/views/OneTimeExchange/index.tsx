@@ -1380,7 +1380,7 @@ export const OneTimeExchange = (props: {
   const sendTx = useCallback(async (currentTx: Transaction) => {
 
     const encodedTx = currentTx.serialize().toString('base64');
-    consoleOut('tx encoded => ', encodedTx);
+    consoleOut('encodedTx:', encodedTx, 'orange');
 
     try {
 
