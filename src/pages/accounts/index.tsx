@@ -443,26 +443,26 @@ export const AccountsView = () => {
                 });
 
                 // Add custom tokens to the sorted list (those not in meanTokensCopy and not in sortedList)
-                // const cumulativeIndex = meanTokensCopy.length + sortedList.length;
-                // accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
-                //   const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                //   const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                //   if (!isInMeanTokenList && !isInSplTokenList) {
-                //     const unkToken: UserTokenAccount = {
-                //       address: item.parsedInfo.mint,
-                //       publicAddress: item.pubkey.toBase58(),
-                //       name: 'Unknown Token',
-                //       chainId: getDefaultRpc().networkId,
-                //       decimals: item.parsedInfo.tokenAmount.decimals,
-                //       symbol: shortenAddress(item.parsedInfo.mint),
-                //       balance: item.parsedInfo.tokenAmount.uiAmount || 0,
-                //       isMeanSupportedToken: false
-                //     };
-                //     unkToken.displayIndex = cumulativeIndex + index + 1;
-                //     unkToken.isAta = await updateAtaFlag(unkToken);
-                //     sortedList.push(unkToken);
-                //   }
-                // });
+                const cumulativeIndex = meanTokensCopy.length + sortedList.length;
+                accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
+                  const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                  const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                  if (!isInMeanTokenList && !isInSplTokenList) {
+                    const unkToken: UserTokenAccount = {
+                      address: item.parsedInfo.mint,
+                      publicAddress: item.pubkey.toBase58(),
+                      name: 'Unknown Token',
+                      chainId: getDefaultRpc().networkId,
+                      decimals: item.parsedInfo.tokenAmount.decimals,
+                      symbol: shortenAddress(item.parsedInfo.mint),
+                      balance: item.parsedInfo.tokenAmount.uiAmount || 0,
+                      isMeanSupportedToken: false,
+                      isAta: true
+                    };
+                    unkToken.displayIndex = cumulativeIndex + index + 1;
+                    sortedList.push(unkToken);
+                  }
+                });
 
                 // Concatenate both lists
                 const finalList = meanTokensCopy.concat(sortedList);
@@ -973,7 +973,7 @@ export const AccountsView = () => {
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">{isNonAta ? t('account-area.non-ata-label') : asset.name}</div>
+          <div className="subtitle text-truncate">{isNonAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
