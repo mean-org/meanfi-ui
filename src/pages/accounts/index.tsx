@@ -1057,7 +1057,7 @@ export const AccountsView = () => {
       } else {
         // Render the transactions collection
         return transactions?.map((trans: MappedTransaction) => {
-          if (trans.parsedTransaction.meta?.err === null) {
+          if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
                       key={trans.signature}
                       transaction={trans}
