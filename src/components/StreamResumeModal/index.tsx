@@ -112,7 +112,6 @@ export const StreamResumeModal = (props: {
               type="primary"
               shape="round"
               size="large"
-              disabled={props.tokenBalance < (feeAmount || 0)}
               onClick={props.handleOk}>
               {t('streams.resume-stream-cta')}
           </Button>
