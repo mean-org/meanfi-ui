@@ -5,7 +5,7 @@ import {
   CheckOutlined,
   EllipsisOutlined,
   InfoCircleOutlined,
-  LoadingOutlined, ReloadOutlined, SearchOutlined, WarningOutlined,
+  LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -26,7 +26,16 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
-import { consoleOut, copyText, getFormattedNumberToLocale, getIntervalFromSeconds, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, isLocal, isValidAddress } from '../../utils/ui';
+import {
+  copyText,
+  consoleOut,
+  isValidAddress,
+  getIntervalFromSeconds,
+  getTransactionModalTitle,
+  getFormattedNumberToLocale,
+  getTransactionStatusForLogs,
+  getTransactionOperationDescription,
+} from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
   SIMPLE_DATE_FORMAT,
@@ -46,8 +55,6 @@ import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo, T
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
-import './style.less';
-import { useNavigate } from 'react-router-dom';
 import { PerformanceCounter } from '../../utils/perf-counter';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
@@ -65,6 +72,7 @@ import { StreamResumeModal } from '../../components/StreamResumeModal';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
+import './style.less';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -79,7 +87,6 @@ export const TreasuriesView = () => {
     tokenList,
     tokenBalance,
     selectedToken,
-    isWhitelisted,
     treasuryOption,
     detailsPanelOpen,
     transactionStatus,
@@ -101,7 +108,6 @@ export const TreasuriesView = () => {
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
-  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
@@ -360,12 +366,15 @@ export const TreasuriesView = () => {
       });
 
   }, [
-    t,
     ms,
     publicKey,
     connection,
+    selectedToken,
     loadingTreasuryDetails,
-    setTreasuryOption
+    setTreasuryOption,
+    setSelectedToken,
+    setCustomToken,
+    t,
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
@@ -757,7 +766,7 @@ export const TreasuriesView = () => {
   const getStreamRateAmount = (item: StreamInfo) => {
     let strOut = '';
     if (item && item.rateAmount > 0) {
-      strOut = `${getRateAmountDisplay(item)} ${getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}`;
+      strOut = `${getRateAmountDisplay(item)} ${getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}`;
     } else {
       strOut = getDepositAmountDisplay(item);
     }
@@ -2568,7 +2577,8 @@ export const TreasuriesView = () => {
           <div className="header-row">
             <div className="std-table-cell first-cell">&nbsp;</div>
             <div className="std-table-cell responsive-cell">{t('treasuries.treasury-streams.column-activity')}</div>
-            <div className="std-table-cell fixed-width-150">{t('treasuries.treasury-streams.column-amount')}</div>
+            <div className="std-table-cell fixed-width-90">{t('treasuries.treasury-streams.column-destination')}</div>
+            <div className="std-table-cell fixed-width-130">{t('treasuries.treasury-streams.column-rate')}</div>
             <div className="std-table-cell fixed-width-120">{t('treasuries.treasury-streams.column-started')}</div>
             <div className="std-table-cell last-cell">&nbsp;</div>
           </div>
@@ -2583,7 +2593,10 @@ export const TreasuriesView = () => {
                   {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
                   <span className="align-middle">{item.streamName || getStreamDescription(item)}</span>
                 </div>
-                <div className="std-table-cell fixed-width-150">
+                <div className="std-table-cell fixed-width-90">
+                  <span className="align-middle">{shortenAddress(item.beneficiaryAddress as string)}</span>
+                </div>
+                <div className="std-table-cell fixed-width-130">
                   <span className="align-middle">{getStreamRateAmount(item)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-120">

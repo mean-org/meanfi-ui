@@ -3470,6 +3470,12 @@ main section {
   text-overflow: ellipsis;
   vertical-align: middle;
   white-space: nowrap;
+  @media (min-width: 768px) and (max-width: 959.98px) {
+    &:not(.first-cell):not(.last-cell):not(.responsive-cell) {
+      width: auto;
+      flex: auto;
+    }
+  }
   &.first-cell {
     width: 14px;
     padding: 0 !important;
@@ -3521,6 +3527,11 @@ main section {
   }
   &.fixed-width-100 {
     width: 100px;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+  &.fixed-width-110 {
+    width: 110px;
     flex-grow: 0;
     flex-shrink: 0;
   }
