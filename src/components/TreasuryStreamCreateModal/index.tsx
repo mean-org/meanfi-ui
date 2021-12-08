@@ -164,8 +164,6 @@ export const TreasuryStreamCreateModal = (props: {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
-      : unallocatedBalance < rateAmount
-      ? t('transactions.validation.payment-rate-high')
       : '';
   }
 
@@ -642,8 +640,14 @@ export const TreasuryStreamCreateModal = (props: {
            selectedToken &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
            parseFloat(fromCoinAmount) <= unallocatedBalance
-            ? true
-            : false;
+    ? true
+    : false;
+  }
+
+  const isRateAmountValid = (): boolean => {
+    return paymentRateAmount && parseFloat(paymentRateAmount) > 0
+     ? true
+     : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -651,16 +655,11 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const arePaymentSettingsValid = (): boolean => {
-    let result = true;
     if (!paymentStartDate) {
       return false;
     }
-    const rateAmount = parseFloat(paymentRateAmount || '0');
-    if (!rateAmount) {
-      result = false;
-    }
 
-    return result;
+    return isRateAmountValid();
   }
 
   ///////////////
@@ -949,6 +948,19 @@ export const TreasuryStreamCreateModal = (props: {
                       })}
                     </Select>
                   )}
+                  {selectedToken && unallocatedBalance ? (
+                    <div
+                      className="token-max simplelink"
+                      onClick={() => setFromCoinAmount(
+                        getTokenAmountAndSymbolByTokenAddress(
+                          unallocatedBalance,
+                          selectedToken.address,
+                          true
+                        )
+                      )}>
+                      MAX
+                    </div>
+                  ) : null}
                 </span>
               </div>
               <div className="right">
