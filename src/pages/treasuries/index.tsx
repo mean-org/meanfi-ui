@@ -275,30 +275,14 @@ export const TreasuriesView = () => {
       setSelectedToken(unkToken);
       consoleOut("token selected:", unkToken, 'blue');
       setEffectiveRate(0);
-    } else {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('transactions.validation.invalid-solana-address'),
-        type: "error"
-      });
     }
   }, [
     setEffectiveRate,
     setSelectedToken,
-    t,
   ]);
 
   const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
     if (!connection || !publicKey || !ms || loadingTreasuryDetails) { return; }
-
-    if (!isValidAddress(treasuryId)) {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('notifications.invalid-publickey-message'),
-        type: "error"
-      });
-      return;
-    }
 
     setTimeout(() => {
       setLoadingTreasuryDetails(true);

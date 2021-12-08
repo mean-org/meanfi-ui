@@ -542,8 +542,10 @@ export const AccountsView = () => {
       const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
       // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
-        const meta = tx.parsedTransaction.meta;
-        if (meta && meta.err !== null) { return false; }
+        const meta = tx.parsedTransaction && tx.parsedTransaction.meta
+          ? tx.parsedTransaction.meta
+          : null;
+        if (!meta || meta.err !== null) { return false; }
         const accounts = tx.parsedTransaction.transaction.message.accountKeys;
         const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
         if (isScanningWallet && accIdx === -1) { return false; }
@@ -1038,8 +1040,10 @@ export const AccountsView = () => {
         }
         // Render only txs that have SOL changes
         const filtered = transactions.filter(tx => {
-          const meta = tx.parsedTransaction.meta;
-          if (meta && meta.err !== null) { return false; }
+          const meta = tx.parsedTransaction && tx.parsedTransaction.meta
+            ? tx.parsedTransaction.meta
+            : null;
+          if (!meta || meta.err !== null) { return false; }
           const accounts = tx.parsedTransaction.transaction.message.accountKeys;
           const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
           if (isScanningWallet && accIdx === -1) { return false; }

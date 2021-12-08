@@ -31,8 +31,10 @@ export const TransactionItemView = (props: {
   useEffect(() => {
 
     if (props.transaction) {
-
-      const meta = props.transaction.parsedTransaction.meta;
+      const meta = props.transaction.parsedTransaction && props.transaction.parsedTransaction.meta
+        ? props.transaction.parsedTransaction.meta
+        : null;
+  
       if (!meta) {
         setIsTxRenderable(false);
         return;
@@ -100,12 +102,6 @@ export const TransactionItemView = (props: {
   }
 
   const getTxDescription = (shorten = true): string => {
-    // if (balanceChange < 0) { // Expense
-    //   //
-    // }
-
-
-
     const accounts = props.transaction.parsedTransaction.transaction.message.accountKeys;
     const faucetAddress = '9B5XszUGdMaxCZ7uSQhPzdks5ZQSmWxrmzCSvtJ6Ns6g';
     // Sender is always account 0 = Fee payer
