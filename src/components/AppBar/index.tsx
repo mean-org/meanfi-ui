@@ -26,7 +26,7 @@ export const AppBar = (props: {
 }) => {
   const location = useLocation();
   const connectionConfig = useConnectionConfig();
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const {isOnline, responseTime} = useOnlineStatus();
   const { t } = useTranslation("common");
   const {
@@ -125,15 +125,8 @@ export const AppBar = (props: {
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        {(isLocal() || isWhitelisted) && (
-          <>
-          <Menu.Item key="/treasuries">
-            <Link to="/treasuries">Treasuries</Link>
-          </Menu.Item>
-          </>
-        )}
-        <Menu.Item key="/payroll">
-          <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
+        <Menu.Item key="/treasuries">
+          <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
         </Menu.Item>
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
@@ -242,15 +235,8 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
-              {(isLocal() || isWhitelisted) && (
-                <>
-                <li key="/treasuries" className="mobile-menu-item" style={{'--animation-order': 5} as CustomCSSProps}>
-                  <Link to="/treasuries">Treasuries</Link>
-                </li>
-                </>
-              )}
-              <li key="/payroll" className={location.pathname === '/payroll' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                <Link to="/payroll">{t('ui-menus.main-menu.services.payroll')}</Link>
+              <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
               </li>
               <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
                 <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>

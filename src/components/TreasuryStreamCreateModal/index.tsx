@@ -210,6 +210,13 @@ export const TreasuryStreamCreateModal = (props: {
     toggleOverflowEllipsisMiddle
   ]);
 
+  const getDefaultStreamName = () => {
+    if (recipientAddress && isValidAddress(recipientAddress)) {
+      return t('streams.stream-name-missing', { beneficiary: shortenAddress(recipientAddress) })
+    }
+    return '';
+  }
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -351,6 +358,7 @@ export const TreasuryStreamCreateModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -367,7 +375,7 @@ export const TreasuryStreamCreateModal = (props: {
         });
 
         const beneficiary = new PublicKey(recipientAddress as string);
-        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
+        const associatedToken = new PublicKey(selectedToken?.address as string);
         const treasury = new PublicKey(props.treasuryDetails.id as string);
         const fundingAmount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
@@ -379,20 +387,37 @@ export const TreasuryStreamCreateModal = (props: {
         fromParsedDate.setSeconds(now.getSeconds());
         fromParsedDate.setMilliseconds(now.getMilliseconds());
 
+        /**
+         * createStream params as of Tue 7 Dec 2021
+         * 
+         * treasurer: PublicKey,
+         * treasury: PublicKey | undefined
+         * beneficiary: PublicKey
+         * associatedToken: PublicKey
+         * rateAmount?: number | undefined
+         * rateIntervalInSeconds?: number | undefined
+         * startUtc?: Date | undefined
+         * streamName?: string | undefined
+         * allocation?: number | undefined
+         * allocationReserved?: number | undefined
+         * rateCliffInSeconds?: number | undefined
+         * cliffVestAmount?: number | undefined
+         * cliffVestPercent?: number | undefined
+         * autoPauseInSeconds?: number | undefined
+         */
+
         // Create a transaction
         const data = {
-          wallet: publicKey.toBase58(),                               // wallet
-          treasury: props.treasuryDetails.id,                         // treasury
-          beneficiary: beneficiary.toBase58(),                        // beneficiary
-          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
-          rateAmount: rateAmount,                                     // rateAmount
-          rateIntervalInSeconds:
-            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                   // startUtc
-          streamName: recipientNote
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          fundingAmount: fundingAmount                                // fundingAmount
+          treasurer: publicKey.toBase58(),                                            // treasurer
+          treasury: treasury.toBase58(),                                              // treasury
+          beneficiary: beneficiary.toBase58(),                                        // beneficiary
+          associatedToken: associatedToken.toBase58(),                                // associatedToken
+          rateAmount: rateAmount,                                                     // rateAmount
+          rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
+          startUtc: fromParsedDate,                                                   // startUtc
+          streamName: recipientNote ? recipientNote.trim() : getDefaultStreamName(),  // streamName
+          allocation: fundingAmount,                                                  // fundingAmount
+          allocationReserved: isAllocationReserved ? fundingAmount : 0,               // allocationReserved
         };
         consoleOut('data:', data);
 
@@ -429,17 +454,16 @@ export const TreasuryStreamCreateModal = (props: {
         }
 
         return await props.moneyStreamingClient.createStream(
-          publicKey,                                                  // wallet
-          treasury,                                                   // treasury
-          beneficiary,                                                // beneficiary
-          beneficiaryMint,                                            // beneficiaryMint
-          rateAmount,                                                 // rateAmount
-          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate,                                             // startUtc
-          recipientNote 
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-            fundingAmount                                             // fundingAmount
+          publicKey,                                                        // treasurer
+          treasury,                                                         // treasury
+          beneficiary,                                                      // beneficiary
+          associatedToken,                                                  // associatedToken
+          rateAmount,                                                       // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
+          fromParsedDate,                                                   // startUtc
+          recipientNote ? recipientNote.trim() : getDefaultStreamName(),    // streamName
+          fundingAmount,                                                    // fundingAmount
+          isAllocationReserved ? fundingAmount : 0                          // allocationReserved
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -484,6 +508,23 @@ export const TreasuryStreamCreateModal = (props: {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -523,8 +564,6 @@ export const TreasuryStreamCreateModal = (props: {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await props.connection
           .sendEncodedTransaction(encodedTx)

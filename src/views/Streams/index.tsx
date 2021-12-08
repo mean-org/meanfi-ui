@@ -674,6 +674,7 @@ export const Streams = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -789,6 +790,23 @@ export const Streams = () => {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -828,8 +846,6 @@ export const Streams = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -926,6 +942,7 @@ export const Streams = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -1035,6 +1052,23 @@ export const Streams = () => {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -1074,8 +1108,6 @@ export const Streams = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -1172,6 +1204,7 @@ export const Streams = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -1276,6 +1309,23 @@ export const Streams = () => {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -1287,7 +1337,7 @@ export const Streams = () => {
           return true;
         })
         .catch(error => {
-          console.error('Signing transaction failed!');
+          console.error(error);
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransaction,
             currentOperation: TransactionStatus.SignTransactionFailure
@@ -1315,8 +1365,6 @@ export const Streams = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -1770,7 +1818,6 @@ export const Streams = () => {
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
         <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
@@ -1781,7 +1828,7 @@ export const Streams = () => {
                 <div className="item-list-header compact">
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
                     <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
@@ -2050,7 +2097,6 @@ export const Streams = () => {
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
         <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
@@ -2061,7 +2107,7 @@ export const Streams = () => {
                 <div className="item-list-header compact">
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
                     <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>

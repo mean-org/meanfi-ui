@@ -302,6 +302,7 @@
 		"resume-stream-cta": "Resume",
 		"pause-stream-cta": "Pause",
 		"pause-stream-modal-title": "Pause stream",
+		"stream-name-missing": "Money stream to ({{beneficiary}})",
 		"stream-activity": {
 			"action-deposit": "Deposit",
 			"action-withdraw": "Withdraw",
@@ -654,7 +655,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"payroll": "Payroll",
+				"treasuries": "Treasuries & Payroll",
 				"submenu-title": "Services",
 				"wallet-guide": "Wallet Guide",
 				"wrap": "Wrap"
