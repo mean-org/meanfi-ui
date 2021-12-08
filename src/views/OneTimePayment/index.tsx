@@ -1082,7 +1082,7 @@ export const OneTimePayment = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block

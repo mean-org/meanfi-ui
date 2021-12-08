@@ -4136,7 +4136,6 @@ main section {
         }
       }
       .stream-details-data-wrapper {
-        padding-right: 0.6rem;
         max-height: calc(100% - 0.6rem);
       }
       .stream-fields-container {
@@ -4313,6 +4312,14 @@ main section {
 .ant-empty.ant-empty-normal {
   color: var(--color-secondary-alpha-50);
 }
+.secondary-button {
+  &.icon-button-container button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+    color: var(--color-secondary);
+    &:hover {
+      color: var(--color-secondary-alpha-85);
+    }
+  }
+}
 
 .buy-token-options {
   text-align: center;
@@ -4328,6 +4335,13 @@ main section {
     width: auto;
     border-radius: 6px;
   }
+}
+
+.float-top-right {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 1;
 }
 
 // Utilities

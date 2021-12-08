@@ -42,6 +42,7 @@ export { IconSun } from "./IconSun";
 export { IconSwapFlip } from "./IconSwapFlip";
 export { IconTelegram } from "./IconTelegram";
 export { IconTimer } from "./IconTimer";
+export { IconTrash } from "./IconTrash";
 export { IconTwitter } from "./IconTwitter";
 export { IconUniversity } from "./IconUniversity";
 export { IconUpload } from "./IconUpload";

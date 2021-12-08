@@ -4,6 +4,7 @@ import {
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
+  InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined, WarningOutlined,
 } from '@ant-design/icons';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
@@ -38,7 +39,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconSort } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -114,6 +115,8 @@ export const TreasuriesView = () => {
   const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
   const [highlightedStream, sethHighlightedStream] = useState<StreamInfo | undefined>();
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -823,6 +826,11 @@ export const TreasuriesView = () => {
   //   Events   //
   ////////////////
 
+  const refreshPage = () => {
+    hideCloseStreamTransactionModal();
+    window.location.reload();
+  }
+
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
@@ -903,6 +911,8 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryCreate);
+    setRetryOperationPayload(treasuryName);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -1118,6 +1128,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
             setIsBusy(false);
             onTreasuryCreated();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1160,6 +1171,8 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryAddFunds);
+    setRetryOperationPayload(params);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -1387,6 +1400,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
             setIsBusy(false);
             onAddFundsTransactionFinished();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1442,6 +1456,7 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryClose);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -1652,6 +1667,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryClose);
             setIsBusy(false);
             onCloseTreasuryTransactionFinished();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1705,6 +1721,8 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.StreamClose);
+    setRetryOperationPayload(closeTreasury);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -1918,6 +1936,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamClose);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1956,6 +1975,7 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.StreamPause);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -2169,6 +2189,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2207,6 +2228,7 @@ export const TreasuriesView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.StreamResume);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -2418,6 +2440,7 @@ export const TreasuriesView = () => {
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
+            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2675,19 +2698,6 @@ export const TreasuriesView = () => {
               ? t('treasuries.treasury-detail.cta-add-funds-busy')
               : t('treasuries.treasury-detail.cta-add-funds')}
           </Button>
-          {/* Close treasury */}
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || (treasuryStreams && treasuryStreams.length > 0) || !isTreasurer() || isAnythingLoading()}
-            onClick={showCloseTreasuryModal}>
-            {(isClosingTreasury() && !highlightedStream) && (<LoadingOutlined />)}
-            {isClosingTreasury() && !highlightedStream
-              ? t('treasuries.treasury-detail.cta-close-busy')
-              : t('treasuries.treasury-detail.cta-close')}
-          </Button>
           {/* Create stream */}
           <Button
             type="default"
@@ -2701,7 +2711,12 @@ export const TreasuriesView = () => {
               ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
               : t('treasuries.treasury-streams.create-stream-main-cta')}
           </Button>
-          {isClosingStream() ? (
+          {isClosingTreasury() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('treasuries.treasury-detail.cta-close-busy')}</span>
+            </div>
+          ) : isClosingStream() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">{t('streams.stream-detail.cta-disabled-closing')}</span>
@@ -2879,6 +2894,27 @@ export const TreasuriesView = () => {
               <div className="inner-container">
                 {connected ? (
                   <>
+                    {treasuryDetails && (
+                      <div className="float-top-right">
+                        <span className="icon-button-container secondary-button">
+                          <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconTrash className="mean-svg-icons" />}
+                              onClick={showCloseTreasuryModal}
+                              disabled={
+                                isTxInProgress() ||
+                                (treasuryStreams && treasuryStreams.length > 0) ||
+                                !isTreasurer() ||
+                                isAnythingLoading()
+                              }
+                            />
+                          </Tooltip>
+                        </span>
+                      </div>
+                    )}
                     <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
                       <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
                         {treasuryDetails && (
@@ -3020,15 +3056,14 @@ export const TreasuriesView = () => {
         afterClose={onAfterCloseStreamTransactionModalClosed}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseStreamTransactionModal}
-        width={330}
+        // closable={false}
+        width={360}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
-              {/* TODO: Conditional output based on OperationType */}
-              {/* <h5 className="operation">{t('transactions.status.tx-close-operation')}</h5> */}
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}
@@ -3036,7 +3071,7 @@ export const TreasuriesView = () => {
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
               <Button
                 block
@@ -3055,7 +3090,7 @@ export const TreasuriesView = () => {
             </>
           ) : isError() ? (
             <>
-              <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
@@ -3070,16 +3105,47 @@ export const TreasuriesView = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+                <h4 className="font-bold mb-3">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
-              <Button
-                block
-                type="primary"
-                shape="round"
-                size="middle"
-                onClick={hideCloseStreamTransactionModal}>
-                {t('general.cta-close')}
-              </Button>
+              {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
+                <div className="row two-col-ctas mt-3">
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="text"
+                      shape="round"
+                      size="middle"
+                      onClick={() => ongoingOperation === OperationType.StreamPause
+                        ? onExecutePauseStreamTransaction()
+                        : ongoingOperation === OperationType.StreamResume
+                          ? onExecuteResumeStreamTransaction()
+                          : ongoingOperation === OperationType.StreamClose
+                            ? onExecuteCloseStreamTransaction(retryOperationPayload)
+                            : hideCloseStreamTransactionModal()}>
+                      {t('general.retry')}
+                    </Button>
+                  </div>
+                  <div className="col-6">
+                    <Button
+                      block
+                      type="primary"
+                      shape="round"
+                      size="middle"
+                      onClick={() => refreshPage()}>
+                      {t('general.refresh')}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  block
+                  type="primary"
+                  shape="round"
+                  size="middle"
+                  onClick={hideCloseStreamTransactionModal}>
+                  {t('general.cta-close')}
+                </Button>
+              )}
             </>
           ) : (
             <>

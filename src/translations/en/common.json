@@ -236,7 +236,9 @@
 		"start": "Start",
 		"starting": "Starting",
 		"finished": "Finished",
-		"stepper-label": "Step {{step}} of {{steps}}"
+		"stepper-label": "Step {{step}} of {{steps}}",
+		"refresh": "Refresh",
+		"retry": "Retry"
 	},
 	"language-selector": {
 		"modal-title": "Language selector",
@@ -545,7 +547,7 @@
 			"tx-init-failure": "Could not initialize transaction",
 			"tx-rejected": "Transaction rejected",
 			"tx-send": "Sending transaction",
-			"tx-send-failure": "Failure submitting transaction",
+			"tx-send-failure": "Your transaction was not submitted. Please refresh the page and try again.",
 			"tx-send-failure-smallamount": "Failure submitting transaction. Swap amount too small",
 			"tx-send-operation": "Sending",
 			"tx-send-operation-success": "was sent successfully",

@@ -1264,7 +1264,7 @@ export const RepeatingPayment = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
@@ -1273,7 +1273,7 @@ export const RepeatingPayment = () => {
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.stream-started-pre')} {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} {t('transactions.status.stream-started-post')}.</p>
               <Button
                 block
@@ -1301,7 +1301,7 @@ export const RepeatingPayment = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block

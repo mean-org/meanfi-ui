@@ -236,7 +236,9 @@
 		"start": "Start",
 		"starting": "Starting",
 		"finished": "Finished",
-		"stepper-label": "Step {{step}} of {{steps}}"
+		"stepper-label": "Step {{step}} of {{steps}}",
+		"refresh": "Refresh",
+		"retry": "Retry"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
@@ -545,7 +547,7 @@
 			"tx-init-failure": "No se pudo iniciar la transacción",
 			"tx-rejected": "Transacción rechazada",
 			"tx-send": "Enviando transacción",
-			"tx-send-failure": "Error al enviar la transacción",
+			"tx-send-failure": "Su transacción no fue enviada. Actualice la página y vuelva a intentarlo.",
 			"tx-send-failure-smallamount": "Error al enviar la transacción. Cantidad demasiado pequeña",
 			"tx-send-operation": "Enviando",
 			"tx-send-operation-success": "fue enviado exitosamente",

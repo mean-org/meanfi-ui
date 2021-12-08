@@ -236,7 +236,9 @@
 		"start": "Start",
 		"starting": "Starting",
 		"finished": "Finished",
-		"stepper-label": "Step {{step}} of {{steps}}"
+		"stepper-label": "Step {{step}} of {{steps}}",
+		"refresh": "Refresh",
+		"retry": "Retry"
 	},
 	"language-selector": {
 		"modal-title": "Sélecteur de langue",
@@ -545,7 +547,7 @@
 			"tx-init-failure": "Impossible d'initialiser la transaction",
 			"tx-rejected": "Transaction rejetée",
 			"tx-send": "Envoi de l'opération",
-			"tx-send-failure": "Échec de la soumission de la transaction",
+			"tx-send-failure": "Votre transaction n'a pas été soumise. Veuillez actualiser la page et réessayer.",
 			"tx-send-failure-smallamount": "Échec de la soumission de la transaction. Quantité trop petite",
 			"tx-send-operation": "Envoi",
 			"tx-send-operation-success": "a été envoyé avec succès",
