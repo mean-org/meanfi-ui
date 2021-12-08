@@ -132,16 +132,6 @@ export const TreasuriesView = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
     disableRetryOnRateLimit: true
