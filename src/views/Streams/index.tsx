@@ -1818,7 +1818,6 @@ export const Streams = () => {
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
         <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
@@ -1829,7 +1828,7 @@ export const Streams = () => {
                 <div className="item-list-header compact">
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
                     <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
@@ -2098,7 +2097,6 @@ export const Streams = () => {
       </Spin>
 
       <Divider className="activity-divider" plain></Divider>
-      <div className="activity-title">{t('streams.stream-activity.heading')}</div>
       {!streamActivity || streamActivity.length === 0 ? (
         <p>{t('streams.stream-activity.no-activity')}.</p>
       ) : (
@@ -2109,7 +2107,7 @@ export const Streams = () => {
                 <div className="item-list-header compact">
                   <div className="header-row">
                     <div className="std-table-cell first-cell">&nbsp;</div>
-                    <div className="std-table-cell fixed-width-80">&nbsp;</div>
+                    <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
                     <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
                     <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
