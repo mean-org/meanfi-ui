@@ -131,7 +131,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || !props.treasuryDetails || props.treasuryDetails.balance === 0
+      : !selectedToken || unallocatedBalance === 0
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -145,11 +145,11 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
-      : !selectedToken || !props.treasuryDetails || props.treasuryDetails.balance === 0
+      : !selectedToken || unallocatedBalance === 0
       ? t('transactions.validation.no-balance')
       : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > props.treasuryDetails.balance
+      : parseFloat(fromCoinAmount) > unallocatedBalance
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -164,7 +164,7 @@ export const TreasuryStreamCreateModal = (props: {
     const rateAmount = parseFloat(paymentRateAmount || '0');
     return !rateAmount
       ? t('transactions.validation.no-payment-rate')
-      : props.treasuryDetails && props.treasuryDetails.balance < rateAmount
+      : unallocatedBalance < rateAmount
       ? t('transactions.validation.payment-rate-high')
       : '';
   }
@@ -640,9 +640,8 @@ export const TreasuryStreamCreateModal = (props: {
   const isSendAmountValid = (): boolean => {
     return connected &&
            selectedToken &&
-           props.treasuryDetails && props.treasuryDetails.balance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= props.treasuryDetails.balance
+           parseFloat(fromCoinAmount) <= unallocatedBalance
             ? true
             : false;
   }

@@ -580,6 +580,7 @@ export const AccountsView = () => {
 
     if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
+      setLoadingTransactions(true);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset as UserTokenAccount);
@@ -590,8 +591,6 @@ export const AccountsView = () => {
         setStatus(FetchStatus.Fetched);
         return;
       }
-
-      setLoadingTransactions(true);
 
       let options = {
         limit: TRANSACTIONS_PER_PAGE
