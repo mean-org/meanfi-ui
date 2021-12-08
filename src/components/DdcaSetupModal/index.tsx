@@ -288,6 +288,7 @@ export const DdcaSetupModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     setLockedSliderValue(recurrencePeriod);
@@ -382,6 +383,23 @@ export const DdcaSetupModal = (props: {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -421,17 +439,11 @@ export const DdcaSetupModal = (props: {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      let encodedTx: Buffer;
-      try {
-        encodedTx = signedTransaction.serialize();
-      } catch (error) {
-        throw new Error("Transaction serialization error");
-      }
       if (wallet) {
         return await props.connection
-          .sendRawTransaction(encodedTx)
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
-            consoleOut('sendSignedTransaction returned a signature:', sig);
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
               lastOperation: TransactionStatus.SendTransactionSuccess,
               currentOperation: TransactionStatus.ConfirmTransaction
@@ -542,6 +554,7 @@ export const DdcaSetupModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     setSwapExecuted(false);
@@ -621,6 +634,23 @@ export const DdcaSetupModal = (props: {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
@@ -660,8 +690,6 @@ export const DdcaSetupModal = (props: {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await props.connection
           .sendEncodedTransaction(encodedTx)

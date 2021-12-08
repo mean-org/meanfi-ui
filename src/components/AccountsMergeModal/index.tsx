@@ -61,6 +61,7 @@ export const AccountsMergeModal = (props: {
         let transaction: Transaction;
         let signedTransaction: Transaction;
         let signature: any;
+        let encodedTx: string;
         const transactionLog: any[] = [];
 
         setTransactionCancelled(false);
@@ -167,6 +168,23 @@ export const AccountsMergeModal = (props: {
             .then((signed: Transaction) => {
               consoleOut('signTransaction returned a signed transaction:', signed);
               signedTransaction = signed;
+              // Try signature verification by serializing the transaction
+              try {
+                encodedTx = signedTransaction.serialize().toString('base64');
+                consoleOut('encodedTx:', encodedTx, 'orange');
+              } catch (error) {
+                console.error(error);
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SignTransaction,
+                  currentOperation: TransactionStatus.SignTransactionFailure
+                });
+                transactionLog.push({
+                  action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                  result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                });
+                customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
+                return false;
+              }
               setTransactionStatus({
                 lastOperation: TransactionStatus.SignTransactionSuccess,
                 currentOperation: TransactionStatus.SendTransaction
@@ -206,8 +224,6 @@ export const AccountsMergeModal = (props: {
         }
 
         const sendTx = async (): Promise<boolean> => {
-          const encodedTx = signedTransaction.serialize().toString('base64');
-          consoleOut('encodedTx:', encodedTx, 'orange');
           if (wallet) {
             return await props.connection
               .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })

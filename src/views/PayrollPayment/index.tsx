@@ -585,6 +585,7 @@ export const PayrollPayment = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -726,6 +727,23 @@ export const PayrollPayment = () => {
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
+            return false;
+          }
           signedTransaction = signed;
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -766,8 +784,6 @@ export const PayrollPayment = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
-      consoleOut('encodedTx:', encodedTx, 'orange');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
