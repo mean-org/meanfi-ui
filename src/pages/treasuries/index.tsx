@@ -72,6 +72,7 @@ export const TreasuriesView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
+    theme,
     tokenList,
     tokenBalance,
     selectedToken,
@@ -2739,7 +2740,12 @@ export const TreasuriesView = () => {
             </div>
             <div className="description-cell">
               {item.label ? (
-                <div className="title text-truncate">{item.label}</div>
+                <div className="title text-truncate">
+                  {item.label}
+                  <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+                    {item.type === TreasuryType.Open ? 'Open' : 'Locked'}
+                  </span>
+                </div>
               ) : (
                 <div className="title text-truncate">{shortenAddress(item.id as string, 8)}</div>
               )}
@@ -2785,16 +2791,6 @@ export const TreasuriesView = () => {
   return (
     <>
       <div className="container main-container">
-
-        {isLocal() && (
-          <div className="debug-bar">
-            <span className="ml-1">Treasury type:</span><span className="ml-1 font-bold fg-dark-active">
-              {treasuryOption
-                ? `${treasuryOption.type} = ${treasuryOption.type === TreasuryType.Open ? 'Open' : 'Locked'}`
-                : '-'}
-            </span>
-          </div>
-        )}
 
         <div className="interaction-area">
 

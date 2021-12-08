@@ -652,7 +652,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"payroll": "Folha de pagamentos",
+				"treasuries": "Tesourarias & Folha de pagamentos",
 				"submenu-title": "Serviços",
 				"wallet-guide": "Guia da carteira",
 				"wrap": "Wrap"

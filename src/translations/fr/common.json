@@ -652,7 +652,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"payroll": "Paie",
+				"treasuries": "Trésors & Paie",
 				"submenu-title": "Services",
 				"wallet-guide": "Guide du Portefeuille",
 				"wrap": "Wrap"

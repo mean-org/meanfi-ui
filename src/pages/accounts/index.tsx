@@ -31,7 +31,7 @@ import {
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isLocal, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -50,7 +50,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
-import { getDefaultRpc, refreshCachedRpc } from '../../models/connections-hq';
+import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';

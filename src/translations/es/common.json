@@ -652,7 +652,7 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"payroll": "Nómina de sueldos",
+				"treasuries": "Tesorería & Nómina de sueldos",
 				"submenu-title": "Servicios",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
