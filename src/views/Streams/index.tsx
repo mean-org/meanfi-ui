@@ -287,37 +287,35 @@ export const Streams = () => {
     t,
   ]);
 
+  useEffect(() => {
+    if (streamDetail) {
+      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
+      consoleOut("stream token:", token?.symbol);
+      if (token) {
+        if (!selectedToken || selectedToken.address !== token.address) {
+          setOldSelectedToken(selectedToken);
+          setSelectedToken(token);
+        }
+      } else if (!token && (!selectedToken || selectedToken.address !== streamDetail.associatedToken)) {
+        setCustomToken(streamDetail.associatedToken as string);
+      }
+    }
+  }, [
+    streamDetail,
+    selectedToken,
+    setCustomToken,
+    setSelectedToken,
+  ]);
+
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
-    consoleOut("selected token:", token?.symbol);
-
-    if (token) {
-      if (!selectedToken || selectedToken.address !== token.address) {
-        setOldSelectedToken(selectedToken);
-        setSelectedToken(token);
-      }
-    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
-      setCustomToken(streamDetail?.associatedToken as string);
-    }
-
-    if (token) {
-      setOldSelectedToken(selectedToken);
-      setSelectedToken(token);
-    }
     getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
       setTransactionFees(value);
       setIsAddFundsModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [
-    selectedToken,
-    streamDetail,
-    setCustomToken,
-    setSelectedToken,
-    getTransactionFees
-  ]);
+  }, [getTransactionFees]);
 
   const closeAddFundsModal = useCallback(() => {
     if (oldSelectedToken) {

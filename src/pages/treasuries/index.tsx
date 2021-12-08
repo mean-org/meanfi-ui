@@ -20,6 +20,7 @@ import {
   formatThousands,
   getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
+  getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
   shortenAddress
@@ -63,6 +64,7 @@ import { TreasuryStreamCreateModal } from '../../components/TreasuryStreamCreate
 import { StreamResumeModal } from '../../components/StreamResumeModal';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -83,6 +85,8 @@ export const TreasuriesView = () => {
     transactionStatus,
     streamProgramAddress,
     previousWalletConnectState,
+    setSelectedToken,
+    setEffectiveRate,
     setTreasuryOption,
     setDtailsPanelOpen,
     resetContractValues,
@@ -262,6 +266,32 @@ export const TreasuriesView = () => {
     loadingTreasuryStreams,
   ]);
 
+  const setCustomToken = useCallback((address: string) => {
+
+    if (address && isValidAddress(address)) {
+      const unkToken: TokenInfo = {
+        address: address,
+        name: 'Unknown',
+        chainId: 101,
+        decimals: 6,
+        symbol: shortenAddress(address),
+      };
+      setSelectedToken(unkToken);
+      consoleOut("token selected:", unkToken, 'blue');
+      setEffectiveRate(0);
+    } else {
+      notify({
+        message: t('notifications.error-title'),
+        description: t('transactions.validation.invalid-solana-address'),
+        type: "error"
+      });
+    }
+  }, [
+    setEffectiveRate,
+    setSelectedToken,
+    t,
+  ]);
+
   const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
     if (!connection || !publicKey || !ms || loadingTreasuryDetails) { return; }
 
@@ -287,6 +317,18 @@ export const TreasuriesView = () => {
           setSelectedTreasury(details);
           setTreasuryDetails(details);
           setSignalRefreshTreasuryStreams(true);
+
+          // Preset active token to the treasury associated token
+          const token = getTokenByMintAddress(details.associatedTokenAddress as string);
+          consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
+          if (token) {
+            if (!selectedToken || selectedToken.address !== token.address) {
+              setSelectedToken(token);
+            }
+          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedTokenAddress)) {
+            setCustomToken(details.associatedTokenAddress as string);
+          }
+
           const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.type);
           if (tOption) {
             setTreasuryOption(tOption);
@@ -2703,7 +2745,7 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance === 0)}
+            disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance - treasuryDetails.allocation <= 0)}
             onClick={showCreateStreamModal}>
             {isCreatingStream() && (<LoadingOutlined />)}
             {isCreatingStream()

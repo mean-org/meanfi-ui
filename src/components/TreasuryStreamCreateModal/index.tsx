@@ -17,7 +17,7 @@ import {
   PaymentRateTypeOption
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { LoadingOutlined, QrcodeOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
