@@ -81,7 +81,6 @@ export const Streams = () => {
   const {
     streamList,
     streamDetail,
-    tokenBalance,
     selectedToken,
     loadingStreams,
     loadingStreamActivity,

@@ -1,11 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
-import {
-  getTokenAmountAndSymbolByTokenAddress,
-  isValidNumber,
-  truncateFloat
-} from "../../utils/utils";
+import { isValidNumber, truncateFloat } from "../../utils/utils";
 import { percentage } from "../../utils/ui";
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";

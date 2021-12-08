@@ -272,10 +272,18 @@ export const getTokenAmountAndSymbolByTokenAddress = (
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
+    // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
+    const unkToken: TokenInfo = {
+      address: address,
+      name: 'Unknown',
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, unkToken.decimals));
     return onlyValue
       ? maxTrailingZeroes(formatted, 2)
-      : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
+      : `${maxTrailingZeroes(formatted, 2)} [${shortenAddress(address, 4)}]`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
