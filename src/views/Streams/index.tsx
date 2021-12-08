@@ -287,35 +287,31 @@ export const Streams = () => {
     t,
   ]);
 
-  useEffect(() => {
-    if (streamDetail) {
-      const token = getTokenByMintAddress(streamDetail.associatedToken as string);
-      consoleOut("stream token:", token?.symbol);
-      if (token) {
-        if (!selectedToken || selectedToken.address !== token.address) {
-          setOldSelectedToken(selectedToken);
-          setSelectedToken(token);
-        }
-      } else if (!token && (!selectedToken || selectedToken.address !== streamDetail.associatedToken)) {
-        setCustomToken(streamDetail.associatedToken as string);
-      }
-    }
-  }, [
-    streamDetail,
-    selectedToken,
-    setCustomToken,
-    setSelectedToken,
-  ]);
-
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
+    consoleOut("stream token:", token?.symbol);
+    if (token) {
+      if (!selectedToken || selectedToken.address !== token.address) {
+        setOldSelectedToken(selectedToken);
+        setSelectedToken(token);
+      }
+    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+      setCustomToken(streamDetail?.associatedToken as string);
+    }
     getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
       setTransactionFees(value);
       setIsAddFundsModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+  }, [
+    selectedToken,
+    streamDetail?.associatedToken,
+    getTransactionFees,
+    setSelectedToken,
+    setCustomToken,
+  ]);
 
   const closeAddFundsModal = useCallback(() => {
     if (oldSelectedToken) {
@@ -332,8 +328,22 @@ export const Streams = () => {
   };
 
   // Withdraw funds modal
+  const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
+  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
   const showWithdrawModal = useCallback(async () => {
+    setIsWithdrawModalVisibility(true);
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
+    consoleOut("stream token:", token?.symbol);
+    if (token) {
+      if (!selectedToken || selectedToken.address !== token.address) {
+        setOldSelectedToken(selectedToken);
+        setSelectedToken(token);
+      }
+    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+      setCustomToken(streamDetail?.associatedToken as string);
+    }
+
     let streamPublicKey: PublicKey;
     const streamId = streamDetail?.id;
     try {
@@ -345,7 +355,6 @@ export const Streams = () => {
           setLastStreamDetail(detail);
           getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
             setTransactionFees(value);
-            setIsWithdrawModalVisibility(true);
             consoleOut('transactionFees:', value, 'orange');
           });
         } else {
@@ -373,12 +382,17 @@ export const Streams = () => {
   }, [
     connection,
     streamDetail,
-    t,
+    selectedToken,
     getTransactionFees,
+    setSelectedToken,
+    setCustomToken,
+    t,
   ]);
-  const closeWithdrawModal = useCallback(() => setIsWithdrawModalVisibility(false), []);
-  const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
-  const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
+  const closeWithdrawModal = useCallback(() => {
+    setWithdrawFundsAmount(0);
+    setLastStreamDetail(undefined);
+    setIsWithdrawModalVisibility(false);
+  }, []);
 
   const onAcceptWithdraw = (amount: any) => {
     closeWithdrawModal();
