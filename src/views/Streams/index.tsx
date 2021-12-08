@@ -331,18 +331,9 @@ export const Streams = () => {
   const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
+
   const showWithdrawModal = useCallback(async () => {
     setIsWithdrawModalVisibility(true);
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
-    consoleOut("stream token:", token?.symbol);
-    if (token) {
-      if (!selectedToken || selectedToken.address !== token.address) {
-        setOldSelectedToken(selectedToken);
-        setSelectedToken(token);
-      }
-    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
-      setCustomToken(streamDetail?.associatedToken as string);
-    }
 
     let streamPublicKey: PublicKey;
     const streamId = streamDetail?.id;
@@ -353,6 +344,16 @@ export const Streams = () => {
         if (detail) {
           consoleOut('detail', detail);
           setLastStreamDetail(detail);
+          const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
+          if (token) {
+            consoleOut("stream token:", token);
+            if (!selectedToken || selectedToken.address !== token.address) {
+              setOldSelectedToken(selectedToken);
+              setSelectedToken(token);
+            }
+          } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+            setCustomToken(streamDetail?.associatedToken as string);
+          }
           getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
             setTransactionFees(value);
             consoleOut('transactionFees:', value, 'orange');
@@ -388,6 +389,7 @@ export const Streams = () => {
     setCustomToken,
     t,
   ]);
+
   const closeWithdrawModal = useCallback(() => {
     setWithdrawFundsAmount(0);
     setLastStreamDetail(undefined);
@@ -2352,6 +2354,7 @@ export const Streams = () => {
           handleClose={closeAddFundsModal} />
         <StreamWithdrawModal
           startUpData={lastStreamDetail}
+          selectedToken={selectedToken}
           transactionFees={transactionFees}
           isVisible={isWithdrawModalVisible}
           handleOk={onAcceptWithdraw}

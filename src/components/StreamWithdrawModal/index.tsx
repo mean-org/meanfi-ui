@@ -3,20 +3,20 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import {
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenDecimals,
-  getTokenSymbol,
   isValidNumber,
   truncateFloat
 } from "../../utils/utils";
 import { percentage } from "../../utils/ui";
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const StreamWithdrawModal = (props: {
   startUpData: StreamInfo | undefined;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  selectedToken: TokenInfo | undefined;
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
@@ -106,10 +106,11 @@ export const StreamWithdrawModal = (props: {
   }
 
   const getDisplayAmount = (amount: any, addSymbol = false): string => {
-    if (props && props.startUpData) {
-      const bareAmount = truncateFloat(amount, getTokenDecimals(props.startUpData.associatedToken as string));
+    if (props && props.startUpData && props.selectedToken) {
+      const token = props.selectedToken;
+      const bareAmount = truncateFloat(amount, token.decimals);
       if (addSymbol) {
-        return bareAmount + ' ' + getTokenSymbol(props.startUpData.associatedToken as string);
+        return token.name === 'Unknown' ? `${bareAmount} [${props.selectedToken.symbol}]` : `${bareAmount} ${props.selectedToken.symbol}`;
       }
       return bareAmount;
     }
@@ -211,15 +212,15 @@ export const StreamWithdrawModal = (props: {
       </div>
 
       {/* Info */}
-      {props.startUpData && props.startUpData.associatedToken && (
+      {props.selectedToken && (
         <div className="p-2 mb-2">
           {isValidInput() && infoRow(
             t('transactions.transaction-info.transaction-fee') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.startUpData.associatedToken as string)}`
+            `~${getDisplayAmount((feeAmount as number), true)}`
           )}
           {isValidInput() && infoRow(
             t('transactions.transaction-info.you-receive') + ':',
-            `~${getTokenAmountAndSymbolByTokenAddress(parseFloat(withdrawAmountInput) - (feeAmount as number), props.startUpData.associatedToken as string)}`
+            `~${getDisplayAmount(parseFloat(withdrawAmountInput) - (feeAmount as number), true)}`
           )}
         </div>
       )}
