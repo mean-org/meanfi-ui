@@ -881,6 +881,20 @@ export const TreasuriesView = () => {
     }
   }
 
+  const onCopyStreamAddress = (data: any) => {
+    if (copyText(data.toString())) {
+      notify({
+        description: t('notifications.streamid-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.streamid-not-copied-message'),
+        type: "error"
+      });
+    }
+  }
+
   // Open treasury modal
   const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
   const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
@@ -2519,6 +2533,9 @@ export const TreasuriesView = () => {
         ) : null}
         <Menu.Item key="3" onClick={showCloseStreamModal}>
           <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+        </Menu.Item>
+        <Menu.Item key="3" onClick={() => onCopyStreamAddress(item.id)}>
+          <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
         <Menu.Item key="4" onClick={() => {}}>
           <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
