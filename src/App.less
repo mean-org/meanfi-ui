@@ -1732,30 +1732,6 @@ main section {
   }
 }
 
-.vertical-list {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  &.dash-bullet {
-    padding-left: 20px;
-  }
-  li {
-    &.separator {
-      margin-bottom: 0.4rem;
-    }
-    &.item-padded {
-      padding: 0.4rem;
-    }
-  }
-  &.dash-bullet {
-    > li::before {
-      content: '\2014';
-      position: absolute;
-      margin-left: -20px;
-    }
-  }
-}
-
 .hero {
   position: relative;
   width: 100%;
@@ -1854,6 +1830,30 @@ main section {
 }
 .highlight-text {
   font-size: 1rem;
+}
+
+.vertical-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  &.dash-bullet {
+    padding-left: 20px;
+  }
+  li {
+    &.separator {
+      margin-bottom: 0.4rem;
+    }
+    &.item-padded {
+      padding: 0.4rem;
+    }
+  }
+  &.dash-bullet {
+    > li::before {
+      content: '\2014';
+      position: absolute;
+      margin-left: -20px;
+    }
+  }
 }
 
 .interaction-area {
@@ -4456,6 +4456,9 @@ main section {
   }
   &:focus {
     outline: none;
+  }
+  &.underline {
+    text-decoration: underline;
   }
   &.underline-on-hover:hover {
     text-decoration: underline !important;

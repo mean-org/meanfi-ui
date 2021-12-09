@@ -261,7 +261,7 @@ export const AppLayout = React.memo((props: any) => {
                 <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
               </div>
             </Link>
-            <AppBar menuType="desktop" topNavVisible={location.pathname !== '/ido' ? true : false} />
+            <AppBar menuType="desktop" topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-dev') ? false : true} />
           </div>
           <AppBar menuType="mobile" topNavVisible={false} />
         </Header>

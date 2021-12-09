@@ -16,6 +16,7 @@ export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM TT';
 export const SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS = 'mm/dd/yyyy HH:MM:ss';
+export const UTC_FULL_DATE_TIME_FORMAT = "UTC:dddd, mmm dS 'at' h:MM:ss TT Z";
 export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
 export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM TT';
 export const GOOGLE_ANALYTICS_PROD_TAG_ID = 'G-5Q840FEC0G';
@@ -93,12 +94,12 @@ export const ALLOWED_ADDRESSES_LIST = [
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 
 // REAL DATES
-// export const IDO_START_DATE = { year: 2021, month: 11, day: 15, hour: 14, minute: 0, second: 0 };
-// export const IDO_END_DATE = { year: 2021, month: 11, day: 17, hour: 14, minute: 0, second: 0 };
+export const IDO_START_DATE = { year: 2021, month: 11, day: 15, hour: 15, minute: 0, second: 0 };
+export const IDO_END_DATE = { year: 2021, month: 11, day: 17, hour: 15, minute: 0, second: 0 };
 
 // RUNNING IDO
-export const IDO_START_DATE = { year: 2021, month: 10, day: 24, hour: 13, minute: 0, second: 0 };
-export const IDO_END_DATE = { year: 2021, month: 10, day: 26, hour: 13, minute: 0, second: 0 };
+// export const IDO_START_DATE = { year: 2021, month: 10, day: 24, hour: 13, minute: 0, second: 0 };
+// export const IDO_END_DATE = { year: 2021, month: 10, day: 26, hour: 13, minute: 0, second: 0 };
 
 export const IDO_MIN_CONTRIBUTION = 100;        // 100 USDC
 export const IDO_CAP_VALUATION = 210000000;     // $210m

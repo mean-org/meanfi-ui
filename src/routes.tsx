@@ -9,6 +9,7 @@ import {
   CustodyView,
   ExchangeDcasView,
   FaucetView,
+  IdoDevView,
   IdoView,
   NotFoundView,
   PayrollView,
@@ -52,6 +53,7 @@ export function AppRoutes() {
                         <Route path="/playground" element={<PlaygroundView />} />
                       )}
                       <Route path="/ido" element={<IdoView />} />
+                      <Route path="/ido-dev" element={<IdoDevView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />

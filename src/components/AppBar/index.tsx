@@ -154,10 +154,13 @@ export const AppBar = (props: {
         </a>
       </Menu.Item> */}
       {/* TODO: Remove this limitation when releasing to the public */}
+      <Menu.Item key="/ido">
+        <Link to="/ido">IDO</Link>
+      </Menu.Item>
       {(isLocal() || isWhitelisted) && (
         <>
-        <Menu.Item key="/ido">
-          <Link to="/ido">IDO</Link>
+        <Menu.Item key="/ido-dev">
+          <Link to="/ido-dev">IDO (Dev)</Link>
         </Menu.Item>
         </>
       )}
@@ -264,11 +267,14 @@ export const AppBar = (props: {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li> */}
+              <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
+                <Link to="/ido">IDO</Link>
+              </li>
               {/* TODO: Remove this limitation when releasing to the public */}
               {(isLocal() || isWhitelisted) && (
                 <>
-                <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
-                  <Link to="/ido">IDO</Link>
+                <li key="/ido-dev" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
+                  <Link to="/ido-dev">IDO (Dev)</Link>
                 </li>
                 </>
               )}
