@@ -693,12 +693,20 @@ export const AccountsView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Preset account address...', publicKey.toBase58(), 'green');
+        setTimeout(() => {
+          setLastStreamsSummary(initialSummary);
+          setStreamsSummary(initialSummary);
+        });
         refreshStreamList();
         setShouldLoadTokens(true);
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
+        setTimeout(() => {
+          setLastStreamsSummary(initialSummary);
+          setStreamsSummary(initialSummary);
+        });
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
       }
@@ -884,28 +892,49 @@ export const AccountsView = () => {
   const renderMoneyStreamsSummary = (
     <>
       {/* Render Money Streams item if they exist and wallet is connected */}
-      {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
+      {publicKey && (
         <>
         <Link to="/accounts/streams">
           <div key="streams" className="transaction-list-row money-streams-summary">
             <div className="icon-cell">
-              <div className={loadingStreams ? 'token-icon animate-border' : 'token-icon'}>
-                <div className="streams-count simplelink" onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  refreshStreamList();
-                  }}>
-                  <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
+              {loadingStreams ? (
+                <div className="token-icon animate-border-loading">
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}>
+                    <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className={streamsSummary.totalNet !== lastStreamsSummary.totalNet ? 'token-icon animate-border' : 'token-icon'}>
+                  <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    refreshStreamList();
+                    }}>
+                    <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="description-cell">
               <div className="title">{t('account-area.money-streams')}</div>
-              <div className="subtitle text-truncate">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+              {streamsSummary.totalAmount === 0 ? (
+                <div className="subtitle">{t('account-area.no-money-streams')}</div>
+              ) : (
+                <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+              )}
             </div>
             <div className="rate-cell">
-              <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
-              <div className="interval">net-change</div>
+              {streamsSummary.totalAmount === 0 ? (
+                <span className="rate-amount">--</span>
+              ) : (
+                <>
+                  <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+                  <div className="interval">net-change</div>
+                </>
+              )}
             </div>
             <div className="operation-vector">
               {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (

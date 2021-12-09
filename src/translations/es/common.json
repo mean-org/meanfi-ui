@@ -9,6 +9,7 @@
 		"non-ata-label": "Non Associated Token Account",
 		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
 		"money-streams": "Flujos de dinero",
+		"no-money-streams": "Sin Flujos de Dinero",
 		"streams-tooltip": "Haga clic para actualizar los activos",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"

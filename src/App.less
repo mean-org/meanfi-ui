@@ -6506,6 +6506,28 @@ code {
   }
 }
 
+.animate-border-loading {
+  position: relative;
+  background: transparent;
+  &:after {
+    filter: blur(6px);
+  }
+  &:before,
+  &:after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: -2px;
+    background: linear-gradient(45deg, #ff0017, #000000);
+    background-size: 300%;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    z-index: -1;
+    animation: animatedgradient 2s linear infinite;
+    border-radius: 50%;
+  }
+}
+
 // Animations
 @keyframes rotate {
   100% {
