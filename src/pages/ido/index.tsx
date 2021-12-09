@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
-import { IDO_START_DATE, MEANFI_SUPPORT_URL, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
+import { IDO_START_DATE, MEANFI_DOCS_URL, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
 import "./style.less";
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';
 import { Link } from 'react-router-dom';
-import { IconLiveHelp } from '../../Icons';
 
 export const IdoView = () => {
   const {
@@ -70,7 +69,7 @@ export const IdoView = () => {
         </div>
 
         <div className="w-100 text-center mb-4">
-          <p>Read more <a className="simplelink underline" href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
+          <p>Read more <a className="simplelink underline" href={MEANFI_DOCS_URL} target="_blank" rel="noopener noreferrer">
           <span>here</span>
           </a>
           </p>

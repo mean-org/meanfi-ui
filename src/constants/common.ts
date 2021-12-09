@@ -33,6 +33,7 @@ export const MEAN_DAO_GITHUB_ORG_URL = 'https://github.com/mean-dao';
 export const MEAN_DAO_GITBOOKS_URL = 'https://meandao.gitbook.io/meanfi';
 export const MEAN_DAO_MEDIUM_BLOG_URL = 'https://meandao.medium.com/';
 export const WRAPPED_SOL_MINT_ADDRESS = 'So11111111111111111111111111111111111111112';
+export const MEANFI_DOCS_URL = 'https://docs.meanfi.com/';
 export const MEANFI_SUPPORT_URL = 'https://help.meanfi.com/';
 export const MEANFI_METRICS_URL = 'https://metrics.meanfi.com/d/XE-qyJnnk/meanfi-metrics?orgId=1';
 export const FALLBACK_COIN_IMAGE = '/assets/coin-error.svg';
