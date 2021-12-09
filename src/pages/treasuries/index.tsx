@@ -2527,17 +2527,17 @@ export const TreasuriesView = () => {
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
           </Menu.Item>
         ) : item.state === STREAM_STATE.Running ? (
-          <Menu.Item key="1" onClick={showPauseStreamModal}>
+          <Menu.Item key="2" onClick={showPauseStreamModal}>
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
           </Menu.Item>
         ) : null}
         <Menu.Item key="3" onClick={showCloseStreamModal}>
           <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
         </Menu.Item>
-        <Menu.Item key="3" onClick={() => onCopyStreamAddress(item.id)}>
+        <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
-        <Menu.Item key="4" onClick={() => {}}>
+        <Menu.Item key="5" onClick={() => {}}>
           <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
               target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
