@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 import {
   IconBank,
+  IconBox,
   IconClock,
   IconDocument,
   IconDownload,
@@ -1596,6 +1597,12 @@ export const Streams = () => {
             : false;
   }
 
+  const hasAllocation = (): boolean => {
+    return streamDetail && (streamDetail.allocationReserved || streamDetail.allocation)
+      ? true
+      : false;
+  }
+
   ///////////////////
   //   Rendering   //
   ///////////////////
@@ -1736,54 +1743,60 @@ export const Streams = () => {
             </div>
           )}
 
-          {/* Show only if the stream is not a scheduled Otp */}
-          {!isScheduledOtp() && (
-            <>
-              {/* Amount withdrawn */}
-              {/* <div className="mb-3">
-                <div className="info-label">{t('streams.stream-detail.label-total-withdrawals')}</div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <IconDownload className="mean-svg-icons" />
-                  </span>
-                  {streamDetail ? (
-                    <span className="info-data">
-                    {/* TODO: How to get totalWithdrawals on new stream version */}
-                    {/* {streamDetail
-                      ? getAmountWithSymbol(streamDetail.allocationCommitted, streamDetail.associatedToken as string)
-                      : '--'}
-                    </span>
-                  ) : (
-                    <span className="info-data">&nbsp;</span>
-                  )}
+          {/* Allocation info */}
+          {streamDetail && !isScheduledOtp() && hasAllocation() && (
+            <Row className="mb-3">
+              <Col span={24}>
+                <div className="info-label">
+                  {streamDetail.allocationReserved
+                    ? t('streams.stream-detail.label-reserved-allocation')
+                    : t('streams.stream-detail.label-your-allocation')
+                  }
                 </div>
-              </div> */}
-
-              {/* Funds available to withdraw now (Total Vested) */}
-              <div className="mb-3">
-                <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
-                    {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
-                      <ArrowDownOutlined className="mean-svg-icons success bounce" />
-                    ) : (
-                      <ArrowDownOutlined className="mean-svg-icons success" />
+                    <IconBox className="mean-svg-icons" />
+                  </span>
+                  <span className="info-data">
+                    {getAmountWithSymbol(
+                      streamDetail.allocationReserved || streamDetail.allocation,
+                      streamDetail.associatedToken as string
                     )}
                   </span>
-                  {streamDetail ? (
-                    <span className="info-data large">
-                    {streamDetail
-                      ? getAmountWithSymbol(
-                          streamDetail.escrowVestedAmount, 
-                          streamDetail.associatedToken as string
-                        )
-                      : '--'}
-                    </span>
-                  ) : (
-                    <span className="info-data large">&nbsp;</span>
-                  )}
                 </div>
-              </div>
+              </Col>
+            </Row>
+          )}
+
+          {!isScheduledOtp() && (
+            <>
+              {/* Funds available to withdraw now (Total Vested) */}
+              <Row className="mb-3">
+                <Col span={24}>
+                  <div className="info-label">{t('streams.stream-detail.label-funds-available-to-withdraw')}</div>
+                  <div className="transaction-detail-row">
+                    <span className="info-icon">
+                      {streamDetail && streamDetail.state === STREAM_STATE.Running ? (
+                        <ArrowDownOutlined className="mean-svg-icons success bounce" />
+                      ) : (
+                        <ArrowDownOutlined className="mean-svg-icons success" />
+                      )}
+                    </span>
+                    {streamDetail ? (
+                      <span className="info-data large">
+                      {streamDetail
+                        ? getAmountWithSymbol(
+                            streamDetail.escrowVestedAmount, 
+                            streamDetail.associatedToken as string
+                          )
+                        : '--'}
+                      </span>
+                    ) : (
+                      <span className="info-data large">&nbsp;</span>
+                    )}
+                  </div>
+                </Col>
+              </Row>
             </>
           )}
 
@@ -1884,7 +1897,7 @@ export const Streams = () => {
         </a>
       </div>
     )}
-  </>
+    </>
   );
 
   const renderOutboundStream = (
@@ -1987,30 +2000,33 @@ export const Streams = () => {
             </div>
           </div>
 
-          {/* Total deposit */}
+          {/* Allocation info */}
           {isOtp() ? (
             null
-          ) : streamDetail && streamDetail.allocation && (
-            <div className="mb-3">
-              <div className="info-label">{t('streams.stream-detail.label-total-deposits')}</div>
-              <div className="transaction-detail-row">
-                <span className="info-icon">
-                  <IconDownload className="mean-svg-icons" />
-                </span>
-                {streamDetail ? (
-                  <span className="info-data">
-                  {streamDetail
-                    ? getAmountWithSymbol(
-                        streamDetail.allocation, 
-                        streamDetail.associatedToken as string
-                      )
-                    : '--'}
+          ) : hasAllocation() && streamDetail && (
+            <>
+            <Row className="mb-3">
+              <Col span={24}>
+                <div className="info-label">
+                  {streamDetail.allocationReserved
+                    ? t('streams.stream-detail.label-reserved-allocation')
+                    : t('streams.stream-detail.label-their-allocation')
+                  }
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconBox className="mean-svg-icons" />
                   </span>
-                  ) : (
-                    <span className="info-data">&nbsp;</span>
-                  )}
-              </div>
-            </div>
+                  <span className="info-data">
+                    {getAmountWithSymbol(
+                      streamDetail.allocationReserved || streamDetail.allocation,
+                      streamDetail.associatedToken as string
+                    )}
+                  </span>
+                </div>
+              </Col>
+            </Row>
+            </>
           )}
 
           {/* Funds sent (Total Vested) */}
