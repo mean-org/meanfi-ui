@@ -1,4 +1,5 @@
 import { Connection, PublicKey, ConfirmedTransaction, TransactionSignature } from "@solana/web3.js";
+import { TransactionStatus } from "../models/enums";
 import { Confirmations, Timestamp } from "../models/transactions";
 
 export class TransactionWithSignature {
@@ -68,4 +69,18 @@ export async function fetchTransactionStatus(
     } catch (error) {
         throw (error);
     }
+}
+
+export const isSuccess = (operation: TransactionStatus | undefined): boolean => {
+    return operation === TransactionStatus.TransactionFinished;
+}
+
+export const isError = (operation: TransactionStatus | undefined): boolean => {
+    return operation === TransactionStatus.TransactionStartFailure ||
+        operation === TransactionStatus.InitTransactionFailure ||
+        operation === TransactionStatus.SignTransactionFailure ||
+        operation === TransactionStatus.SendTransactionFailure ||
+        operation === TransactionStatus.ConfirmTransactionFailure
+        ? true
+        : false;
 }

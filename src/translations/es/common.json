@@ -226,6 +226,7 @@
 		"not-implemented": "Sin implementar",
 		"now": "now",
 		"reload-cta": "Try again now",
+		"cta-try-again": "Try again",
 		"reload-cta-disabled": "You can try again in",
 		"seconds": "seconds",
 		"today": "hoy",
@@ -427,6 +428,7 @@
 			"treasury-name-placeholder": "Type a name for your treasury",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating treasury",
+			"success-message": "Your new treasury was created successfully.",
 			"treasury-type-options": {
 				"treasury-type-open-name": "Open Money Streaming Treasury",
 				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",

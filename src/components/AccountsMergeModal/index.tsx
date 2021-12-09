@@ -8,8 +8,6 @@ import { consoleOut, getTransactionOperationDescription, getTransactionStatusFor
 import { CheckOutlined, CloseCircleOutlined, LoadingOutlined, WarningOutlined } from '@ant-design/icons';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, shortenAddress } from '../../utils/utils';
-import { getTokenByMintAddress } from '../../utils/tokens';
-import { Identicon } from '../Identicon';
 import { createTokenMergeTx } from '../../utils/accounts';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
@@ -336,12 +334,12 @@ export const AccountsMergeModal = (props: {
         <Modal
             className="mean-modal simple-modal"
             title={<div className="modal-title">{t('assets.merge-accounts-link')}</div>}
-            // footer={isLocal() ? debugInfo() : null}
             footer={null}
             visible={props.isVisible}
             onCancel={props.handleClose}
             afterClose={onAfterClose}
             width={330}>
+
             <div className={!isBusy ? "panel1 show" : "panel1 hide"}>
                 {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
                 <div className="transaction-progress">
@@ -403,6 +401,7 @@ export const AccountsMergeModal = (props: {
                 </div>
                 )}
             </div>
+
             <div className={isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
                 {isBusy && transactionStatus !== TransactionStatus.Iddle && (
                 <div className="transaction-progress">
@@ -412,6 +411,7 @@ export const AccountsMergeModal = (props: {
                 </div>
                 )}
             </div>
+
             <Button
                 className={`main-cta mt-3 ${isBusy ? 'inactive' : ''}`}
                 block

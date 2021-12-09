@@ -35,6 +35,7 @@ import {
   getFormattedNumberToLocale,
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
+  delay,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -919,12 +920,16 @@ export const TreasuriesView = () => {
   // Create treasury modal
   const [isCreateTreasuryModalVisible, setIsCreateTreasuryModalVisibility] = useState(false);
   const showCreateTreasuryModal = useCallback(() => {
+    resetTransactionStatus();
     setIsCreateTreasuryModalVisibility(true);
     getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+  }, [
+    getTransactionFees,
+    resetTransactionStatus
+  ]);
   const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
 
   const onAcceptCreateTreasury = (e: any) => {
@@ -1165,6 +1170,11 @@ export const TreasuriesView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
             setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
             onTreasuryCreated();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -3015,6 +3025,8 @@ export const TreasuriesView = () => {
 
       <TreasuryCreateModal
         isVisible={isCreateTreasuryModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
         handleOk={onAcceptCreateTreasury}
         handleClose={closeCreateTreasuryModal}
         isBusy={isBusy}
