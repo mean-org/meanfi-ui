@@ -57,7 +57,7 @@ export const IdoView = () => {
       <div className="content-area">
         <div className="text-center mb-4">
           <Link to="/">
-              <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+            <img className="ido-app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
           </Link>
         </div>
 
@@ -73,6 +73,11 @@ export const IdoView = () => {
           <p>Read more <a className="simplelink underline" href={MEANFI_SUPPORT_URL} target="_blank" rel="noopener noreferrer">
           <span>here</span>
           </a>
+          </p>
+          <p>
+            <Link to="/" className="simplelink underline">
+              <span>Go to App</span>
+            </Link>
           </p>
         </div>
       </div>
