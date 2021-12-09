@@ -17,7 +17,7 @@ import {
   PaymentRateTypeOption
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
@@ -1000,8 +1000,17 @@ export const TreasuryStreamCreateModal = (props: {
 
           {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
             <div className="mb-4 flex-fixed-right">
-              <div className="form-label left">
+              <div className="left form-label flex-row align-items-center">
                 {t('treasuries.treasury-streams.allocation-reserved-label')}
+                <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
+                    target="_blank" rel="noopener noreferrer">
+                  <Button
+                    className="info-icon-button"
+                    type="default"
+                    shape="circle">
+                    <InfoCircleOutlined />
+                  </Button>
+                </a>
               </div>
               <div className="right">
                 <Radio.Group onChange={onAllocationReservedChanged} value={isAllocationReserved}>
