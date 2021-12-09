@@ -5,7 +5,7 @@ import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled } from "@ant-design/icons";
 import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
@@ -535,6 +535,18 @@ export const OneTimeExchange = (props: {
             setExchangeInfo(undefined);
             error(new Error("Client not found"));
             return;
+          }
+
+          const btcMintInfo: any = Object
+            .values(mintList)
+            .filter((m: any) => m.symbol === 'BTC')[0];
+
+          const btcSwap = 
+            fromMint === btcMintInfo.address || 
+            toMint === btcMintInfo.address;
+
+          if (btcSwap) {
+            clients = clients.filter(c => !c.protocol.equals(SERUM));
           }
   
           // clients = clients.filter(c => c.protocol.equals(ORCA));
@@ -1191,12 +1203,12 @@ export const OneTimeExchange = (props: {
     wallet
   ]);
 
-  const resetTransactionStatus = () => {
+  const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-  }
+  },[setTransactionStatus])
 
   const isSuccess = useCallback(() => {
 
