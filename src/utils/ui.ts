@@ -22,14 +22,13 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (isProd()) {
-        return;
-    }
-    if (msg) {
-        if (value === 'NOT_SPECIFIED') {
-            console.log(`%c${msg}`, `color: ${color}`);
-        } else {
-            console.log(`%c${msg}`, `color: ${color}`, value);
+    if (isLocal() || isDev()) {
+        if (msg) {
+            if (value === 'NOT_SPECIFIED') {
+                console.log(`%c${msg}`, `color: ${color}`);
+            } else {
+                console.log(`%c${msg}`, `color: ${color}`, value);
+            }
         }
     }
 }

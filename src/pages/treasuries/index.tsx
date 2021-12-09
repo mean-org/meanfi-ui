@@ -3101,14 +3101,15 @@ export const TreasuriesView = () => {
         afterClose={onAfterCloseStreamTransactionModalClosed}
         title={getTransactionModalTitle(transactionStatus, isBusy, t)}
         onCancel={hideCloseStreamTransactionModal}
-        // closable={false}
         width={360}
         footer={null}>
         <div className="transaction-progress">
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+              <h4 className="font-bold mb-1">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
               {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                 <div className="indication">{t('transactions.status.instructions')}</div>
               )}
@@ -3116,8 +3117,10 @@ export const TreasuriesView = () => {
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
-              <p className="operation">{t('transactions.status.tx-close-operation-success')}</p>
+              <h4 className="font-bold mb-1 text-uppercase">
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+              </h4>
+              <p className="operation">{t('transactions.status.tx-generic-operation-success')}</p>
               <Button
                 block
                 type="primary"
@@ -3150,7 +3153,9 @@ export const TreasuriesView = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-3">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
               )}
               {transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
                 <div className="row two-col-ctas mt-3">

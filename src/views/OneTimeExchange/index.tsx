@@ -1248,11 +1248,12 @@ export const OneTimeExchange = (props: {
       hideSwapTransactionModal();
     }
     resetTransactionStatus();
-    
+
   }, [
-    isBusy, 
-    isSuccess, 
-    updateRenderCount, 
+    isBusy,
+    isSuccess,
+    updateRenderCount,
+    resetTransactionStatus,
     hideSwapTransactionModal
   ]);
 
@@ -1617,6 +1618,11 @@ export const OneTimeExchange = (props: {
     return coinPrices && coinPrices[symbol]
       ? coinPrices[symbol]
       : 0;
+  }
+
+  const refreshPage = () => {
+    hideSwapTransactionModal();
+    window.location.reload();
   }
 
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
@@ -2015,42 +2021,39 @@ export const OneTimeExchange = (props: {
 
           {/* SWAP Transaction execution modal */}
           <Modal
-            className="mean-modal"
+            className="mean-modal no-full-screen"
             maskClosable={false}
             visible={isSwapTransactionModalVisible}
             title={getTransactionModalTitle(transactionStatus, isBusy, t)}
             onCancel={hideSwapTransactionModal}
             afterClose={onAfterTransactionModalClosed}
-            width={330}
-            footer={null}
-          >
+            width={360}
+            footer={null}>
             <div className="transaction-progress">
               {isBusy ? (
                 <>
                   <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">
+                  <h4 className="font-bold mb-1">
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
-                  <p className="operation">
-                    {
-                      fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut &&
-                      t("transactions.status.tx-swap-operation", {
-                        fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
-                        toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
-                      })
-                    }
-                  </p>
+                  {(fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut) && (
+                    <p className="operation">
+                      {
+                        t("transactions.status.tx-swap-operation", {
+                          fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
+                          toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
+                        })
+                      }
+                    </p>
+                  )}
                   {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
                     <div className="indication">{t('transactions.status.instructions')}</div>
                   )}
                 </>
               ) : isSuccess() ? (
                 <>
-                  <CheckOutlined
-                    style={{ fontSize: 48 }}
-                    className="icon"
-                  />
-                  <h4 className="font-bold mb-1 text-uppercase">
+                  <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+                  <h4 className="font-bold mb-1">
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                   <p className="operation">
@@ -2067,7 +2070,7 @@ export const OneTimeExchange = (props: {
                 </>
               ) : isError() ? (
                 <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
                   {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <h4 className="mb-4">
                       {t("transactions.status.tx-start-failure", {
@@ -2083,10 +2086,10 @@ export const OneTimeExchange = (props: {
                     </h4>
                   ) : (
                     <>
-                      <h4 className="font-bold mb-1 text-uppercase">
-                        { getTransactionOperationDescription(transactionStatus.currentOperation, t) }
+                      <h4 className="font-bold mb-3">
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
-                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
+                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ? (
                         <>
                           <p className="operation">
                             {t("transactions.status.tx-confirm-failure-check")}
@@ -2100,17 +2103,41 @@ export const OneTimeExchange = (props: {
                             </a>
                           </p>
                         </>
+                      ) : transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
+                        <div className="row two-col-ctas mt-3">
+                          <div className="col-6">
+                            <Button
+                              block
+                              type="text"
+                              shape="round"
+                              size="middle"
+                              onClick={onTransactionStart}>
+                              {t('general.retry')}
+                            </Button>
+                          </div>
+                          <div className="col-6">
+                            <Button
+                              block
+                              type="primary"
+                              shape="round"
+                              size="middle"
+                              onClick={() => refreshPage()}>
+                              {t('general.refresh')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          block
+                          type="primary"
+                          shape="round"
+                          size="middle"
+                          onClick={hideSwapTransactionModal}>
+                          {t('general.cta-close')}
+                        </Button>
                       )}
                     </>
                   )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
-                  </Button>
                 </>
               ) : (
                 <>
@@ -2122,6 +2149,7 @@ export const OneTimeExchange = (props: {
               )}
             </div>
           </Modal>
+
         </div>
       </Spin>
     </>
