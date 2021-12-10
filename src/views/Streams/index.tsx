@@ -408,7 +408,7 @@ export const Streams = () => {
   };
 
   const isInboundStream = useCallback((item: StreamInfo): boolean => {
-    return item.beneficiaryAddress === publicKey?.toBase58();
+    return item && item.beneficiaryAddress === publicKey?.toBase58();
   }, [publicKey]);
 
   const isAuthority = (): boolean => {

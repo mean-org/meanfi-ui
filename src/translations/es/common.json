@@ -326,7 +326,7 @@
 			"cta-disabled-creating": "Create stream in progress...",
 			"heading": "Detalles de la transferencia",
 			"label-amount": "Saldo",
-			"label-your-allocation": "Your allocation",
+			"label-your-allocation": "Your remaining allocation",
 			"label-their-allocation": "Their allocation",
 			"label-reserved-allocation": "Reserved Allocation",
 			"label-funds-available-to-withdraw": "Fondos disponibles para retirar inmediatamente",

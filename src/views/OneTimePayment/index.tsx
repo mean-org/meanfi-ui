@@ -20,7 +20,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -338,7 +337,7 @@ export const OneTimePayment = () => {
     const newValue = e.target.value;
     setTokenFilter(newValue);
     updateTokenListByFilter(newValue);
-    
+
   },[
     updateTokenListByFilter
   ]);
@@ -367,6 +366,7 @@ export const OneTimePayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Reset results when the filter is cleared
   useEffect(() => {
     if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
       updateTokenListByFilter(tokenFilter);
@@ -988,15 +988,15 @@ export const OneTimePayment = () => {
         {isWhitelisted && (
           <>
             <div className="form-label">Schedule transfer for: (For dev team only)</div>
-            <div className="well">
-              <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
-                <Option value={0}>No fixed scheduling</Option>
-                <Option value={5}>5 minutes from now</Option>
-                <Option value={10}>10 minutes from now</Option>
-                <Option value={15}>15 minutes from now</Option>
-                <Option value={20}>20 minutes from now</Option>
-                <Option value={30}>30 minutes from now</Option>
-              </Select>
+              <div className="well">
+                <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
+                  <Option value={0}>No fixed scheduling</Option>
+                  <Option value={5}>5 minutes from now</Option>
+                  <Option value={10}>10 minutes from now</Option>
+                  <Option value={15}>15 minutes from now</Option>
+                  <Option value={20}>20 minutes from now</Option>
+                  <Option value={30}>30 minutes from now</Option>
+                </Select>
               <div className="form-field-hint">Selecting a value will override your date selection</div>
             </div>
           </>
@@ -1021,47 +1021,50 @@ export const OneTimePayment = () => {
       </div>
 
       {/* Token selection modal */}
-      <Modal
-        className="mean-modal unpadded-content"
-        visible={isTokenSelectorModalVisible}
-        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-        onCancel={onCloseTokenSelector}
-        width={450}
-        footer={null}>
-        <div className="token-selector-wrapper">
-          <div className="token-search-wrapper">
-            <TextInput
-              value={tokenFilter}
-              placeholder={t('token-selector.search-input-placeholder')}
-              onInputChange={onTokenSearchInputChange} />
+      {isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+              <TextInput
+                id='token-search-otp'
+                value={tokenFilter}
+                placeholder={t('token-selector.search-input-placeholder')}
+                onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="token-list vertical-scroll">
+              {filteredTokenList.length > 0 && renderTokenList}
+              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                <TokenListItem
+                  key={tokenFilter}
+                  name="Unknown"
+                  mintAddress={tokenFilter}
+                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                  onClick={() => {
+                    const uknwnToken: TokenInfo = {
+                      address: tokenFilter,
+                      name: 'Unknown',
+                      chainId: 101,
+                      decimals: 6,
+                      symbol: '',
+                    };
+                    setSelectedToken(uknwnToken);
+                    consoleOut("token selected:", uknwnToken, 'blue');
+                    setEffectiveRate(0);
+                    onCloseTokenSelector();
+                  }}
+                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                />
+              )}
+            </div>
           </div>
-          <div className="token-list vertical-scroll">
-            {filteredTokenList.length > 0 && renderTokenList}
-            {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
-              <TokenListItem
-                key={tokenFilter}
-                name="Unknown"
-                mintAddress={tokenFilter}
-                className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
-                onClick={() => {
-                  const uknwnToken: TokenInfo = {
-                    address: tokenFilter,
-                    name: 'Unknown',
-                    chainId: 101,
-                    decimals: 6,
-                    symbol: '',
-                  };
-                  setSelectedToken(uknwnToken);
-                  consoleOut("token selected:", uknwnToken, 'blue');
-                  setEffectiveRate(0);
-                  onCloseTokenSelector();
-                }}
-                balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
-              />
-            )}
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
 
       {/* QR scan modal */}
       {isQrScannerModalVisible && (

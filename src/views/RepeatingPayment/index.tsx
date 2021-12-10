@@ -61,7 +61,6 @@ import { TokenListItem } from '../../components/TokenListItem';
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const RepeatingPayment = () => {
-  const navigate = useNavigate();
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -102,7 +101,7 @@ export const RepeatingPayment = () => {
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
   } = useContext(TransactionStatusContext);
-
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
@@ -110,9 +109,9 @@ export const RepeatingPayment = () => {
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
 
@@ -214,8 +213,10 @@ export const RepeatingPayment = () => {
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
   const onCloseTokenSelector = useCallback(() => {
     setTokenSelectorModalVisibility(false);
-    setTokenFilter('');
-  }, []);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -315,7 +316,7 @@ export const RepeatingPayment = () => {
   }
 
   // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(() => {
+  const updateTokenListByFilter = useCallback((searchString: string) => {
 
     if (!tokenList) {
       return;
@@ -325,13 +326,13 @@ export const RepeatingPayment = () => {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(searchString.toLowerCase())
         );
       };
 
-      let showFromList = !tokenFilter 
+      let showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -344,16 +345,15 @@ export const RepeatingPayment = () => {
     }
     
   }, [
-    tokenList,
-    tokenFilter,
+    tokenList
   ]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
     const newValue = e.target.value;
     setTokenFilter(newValue);
-    updateTokenListByFilter();
-    
+    updateTokenListByFilter(newValue);
+
   },[
     updateTokenListByFilter
   ]);
@@ -382,9 +382,10 @@ export const RepeatingPayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Reset results when the filter is cleared
   useEffect(() => {
     if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-      updateTokenListByFilter();
+      updateTokenListByFilter(tokenFilter);
     }
   }, [
     tokenList,
@@ -393,6 +394,7 @@ export const RepeatingPayment = () => {
     updateTokenListByFilter
   ]);
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -891,11 +893,7 @@ export const RepeatingPayment = () => {
               key={token.address}
               name={token.name || 'Unknown'}
               mintAddress={token.address}
-              className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
               onClick={onClick}
               balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
             />
@@ -1228,25 +1226,50 @@ export const RepeatingPayment = () => {
       )}
 
       {/* Token selection modal */}
-      <Modal
-        className="mean-modal unpadded-content"
-        visible={isTokenSelectorModalVisible}
-        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-        onCancel={onCloseTokenSelector}
-        width={450}
-        footer={null}>
-        <div className="token-selector-wrapper">
-          <div className="token-search-wrapper">
-            <TextInput
-              value={tokenFilter}
-              placeholder={t('token-selector.search-input-placeholder')}
-              onInputChange={onTokenSearchInputChange} />
+      {isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+              <TextInput
+                id='token-search-rp'
+                value={tokenFilter}
+                placeholder={t('token-selector.search-input-placeholder')}
+                onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="token-list vertical-scroll">
+              {filteredTokenList.length > 0 && renderTokenList}
+              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                <TokenListItem
+                  key={tokenFilter}
+                  name="Unknown"
+                  mintAddress={tokenFilter}
+                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                  onClick={() => {
+                    const uknwnToken: TokenInfo = {
+                      address: tokenFilter,
+                      name: 'Unknown',
+                      chainId: 101,
+                      decimals: 6,
+                      symbol: '',
+                    };
+                    setSelectedToken(uknwnToken);
+                    consoleOut("token selected:", uknwnToken, 'blue');
+                    setEffectiveRate(0);
+                    onCloseTokenSelector();
+                  }}
+                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                />
+              )}
+            </div>
           </div>
-          <div className="token-list vertical-scroll">
-            {renderTokenList}
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
 
       {/* Transaction execution modal */}
       <Modal

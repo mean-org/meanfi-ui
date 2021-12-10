@@ -76,6 +76,7 @@ export const AccountsView = () => {
     userTokens,
     splTokenList,
     streamList,
+    streamDetail,
     transactions,
     selectedAsset,
     accountAddress,
@@ -87,6 +88,7 @@ export const AccountsView = () => {
     canShowAccountDetails,
     previousWalletConnectState,
     setStreamList,
+    setStreamDetail,
     setTransactions,
     setSelectedAsset,
     setSelectedStream,
@@ -707,20 +709,25 @@ export const AccountsView = () => {
           setLastStreamsSummary(initialSummary);
           setStreamsSummary(initialSummary);
         });
+        if (streamDetail) {
+          setStreamDetail(undefined);
+        }
         setAddAccountPanelOpen(false);
         setCanShowAccountDetails(true);
       }
     }
 
   }, [
+    publicKey,
     connected,
     streamList,
+    streamDetail,
     previousWalletConnectState,
-    publicKey,
-    startSwitch,
-    setAddAccountPanelOpen,
     setCanShowAccountDetails,
-    refreshStreamList
+    setAddAccountPanelOpen,
+    refreshStreamList,
+    setStreamDetail,
+    startSwitch,
   ]);
 
   // Window resize listeners

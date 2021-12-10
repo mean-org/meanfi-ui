@@ -10,33 +10,31 @@ export const TextInput = (props: {
 }) => {
 
     return (
-        <div className="transaction-field">
-            {props.label && (
-                <div className="transaction-field-row">
-                    <span className="field-label-left">{props.label}</span>
-                    <span className="field-label-right">&nbsp;</span>
+        <>
+        {props.label && (
+            <div className="form-label">{props.label}</div>
+        )}
+        <div className="well">
+            <div className="flex-fixed-right">
+                <div className="left">
+                    <input
+                        id={props.id || 'token-search-input'}
+                        className="w-100 general-text-input"
+                        autoComplete="on"
+                        autoCorrect="off"
+                        type="text"
+                        onChange={props.onInputChange}
+                        placeholder={props.placeholder}
+                        spellCheck="false"
+                        value={props.value}
+                    />
                 </div>
-            )}
-            <div className="transaction-field-row main-row">
-                <input
-                    id={props.id || 'token-search-input'}
-                    className="general-text-input"
-                    inputMode="text"
-                    autoComplete="on"
-                    autoCorrect="off"
-                    type="text"
-                    onChange={props.onInputChange}
-                    placeholder={props.placeholder}
-                    spellCheck="false"
-                    value={props.value} />
             </div>
             {props.hint && (
-                <div className="transaction-field-row">
-                    <span className="field-label-left">{props.hint}</span>
-                    <span className="field-label-right">&nbsp;</span>
-                </div>
+                <div className="form-field-hint">{props.hint}</div>
             )}
         </div>
+        </>
     );
 
 };

@@ -900,11 +900,7 @@ export const PayrollPayment = () => {
               key={token.address}
               name={token.name || 'Unknown'}
               mintAddress={token.address}
-              className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
               onClick={onClick}
               balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
             />
@@ -1294,7 +1290,29 @@ export const PayrollPayment = () => {
               onInputChange={onTokenSearchInputChange} />
           </div>
           <div className="token-list vertical-scroll">
-            {renderTokenList}
+            {filteredTokenList.length > 0 && renderTokenList}
+            {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+              <TokenListItem
+                key={tokenFilter}
+                name="Unknown"
+                mintAddress={tokenFilter}
+                className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                onClick={() => {
+                  const uknwnToken: TokenInfo = {
+                    address: tokenFilter,
+                    name: 'Unknown',
+                    chainId: 101,
+                    decimals: 6,
+                    symbol: '',
+                  };
+                  setSelectedToken(uknwnToken);
+                  consoleOut("token selected:", uknwnToken, 'blue');
+                  setEffectiveRate(0);
+                  onCloseTokenSelector();
+                }}
+                balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+              />
+            )}
           </div>
         </div>
       </Modal>
