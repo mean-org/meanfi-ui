@@ -254,9 +254,7 @@ export const RepeatingPayment = () => {
       description: t('notifications.create-money-stream-completed-wait-for-confirm'),
       type: "info"
     });
-    setTimeout(() => {
-      navigate("/accounts");
-    }, 100);
+    navigate("/accounts/streams");
   };
 
   const handleFromCoinAmountChange = (e: any) => {

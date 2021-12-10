@@ -858,9 +858,6 @@ export const AccountsView = () => {
                   item = streams[0];
                 }
                 setSelectedStream(item);
-                setTimeout(() => {
-                  navigate("/accounts/streams");
-                }, 10);
               }
               setLoadingStreams(false);
             }).catch((err: any) => {
