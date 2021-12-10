@@ -8,7 +8,7 @@ export const TRANSACTION_STATUS_RETRY = 3 * 1000;            // Retry fetch tran
 export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for trying fetch
 
 export const MIN_SLIPPAGE_VALUE = 0.1;
-export const DEFAULT_SLIPPAGE_PERCENT = 0.25;
+export const DEFAULT_SLIPPAGE_PERCENT = 1;
 export const MAX_SLIPPAGE_VALUE = 20;
 
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
