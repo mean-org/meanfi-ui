@@ -233,11 +233,11 @@ export const OneTimePayment = () => {
   }
 
   const onAfterTransactionModalClosed = () => {
-    setFixedScheduleValue(0);
     if (isBusy) {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
+      setFixedScheduleValue(0);
       resetContractValues();
       setForceReloadTokens(true);
     }
@@ -483,10 +483,17 @@ export const OneTimePayment = () => {
         fromParsedDate.setMinutes(now.getMinutes());
         fromParsedDate.setSeconds(now.getSeconds());
         fromParsedDate.setMilliseconds(now.getMilliseconds());
+
+        // If current user is in the whitelist and we have an amount of minutes to add
+        // to the current date selection, calculate it!
         if (isWhitelisted && fixedScheduleValue > 0) {
           fromParsedDate = addMinutes(fromParsedDate, fixedScheduleValue);
         }
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+
+        consoleOut('fromParsedDate.toString()', fromParsedDate.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', fromParsedDate.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
 
         // Create a transaction
         const data = {

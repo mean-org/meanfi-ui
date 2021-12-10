@@ -2082,40 +2082,67 @@ export const Streams = () => {
 
           {/* Top up (add funds) button */}
           <div className="mt-3 mb-3 withdraw-container">
-            <Button
-              block
-              className="withdraw-cta"
-              type="text"
-              shape="round"
-              size="small"
-              disabled={
-                isOtp() ||
-                fetchTxInfoStatus === "fetching"
-              }
-              onClick={showAddFundsModal}>
-              {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-              {isClosing()
-                ? t("streams.stream-detail.cta-disabled-closing")
-                : isCreating()
-                  ? t("streams.stream-detail.cta-disabled-creating")
-                  : isAddingFunds()
-                    ? t("streams.stream-detail.cta-disabled-funding")
-                    : isWithdrawing()
-                      ? t("streams.stream-detail.cta-disabled-withdrawing")
-                      : t("streams.stream-detail.add-funds-cta")
-              }
-            </Button>
-            {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
-              <Dropdown overlay={menu} trigger={["click"]}>
+            {isOtp() ? (
+              <>
                 <Button
-                  shape="round"
+                  block
+                  className="withdraw-cta"
                   type="text"
+                  shape="round"
                   size="small"
-                  className="ant-btn-shaded"
-                  onClick={(e) => e.preventDefault()}
-                  icon={<EllipsisOutlined />}>
+                  disabled={fetchTxInfoStatus === "fetching"}
+                  onClick={showCloseStreamModal}>
+                  {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                  {isClosing()
+                    ? t("streams.stream-detail.cta-disabled-closing")
+                    : isCreating()
+                      ? t("streams.stream-detail.cta-disabled-creating")
+                      : isAddingFunds()
+                        ? t("streams.stream-detail.cta-disabled-funding")
+                        : isWithdrawing()
+                          ? t("streams.stream-detail.cta-disabled-withdrawing")
+                          : t("streams.stream-detail.close-money-stream-menu-item")
+                  }
                 </Button>
-              </Dropdown>
+              </>
+            ) : (
+              <>
+                <Button
+                  block
+                  className="withdraw-cta"
+                  type="text"
+                  shape="round"
+                  size="small"
+                  disabled={
+                    isOtp() ||
+                    fetchTxInfoStatus === "fetching"
+                  }
+                  onClick={showAddFundsModal}>
+                  {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                  {isClosing()
+                    ? t("streams.stream-detail.cta-disabled-closing")
+                    : isCreating()
+                      ? t("streams.stream-detail.cta-disabled-creating")
+                      : isAddingFunds()
+                        ? t("streams.stream-detail.cta-disabled-funding")
+                        : isWithdrawing()
+                          ? t("streams.stream-detail.cta-disabled-withdrawing")
+                          : t("streams.stream-detail.add-funds-cta")
+                  }
+                </Button>
+                {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                  <Dropdown overlay={menu} trigger={["click"]}>
+                    <Button
+                      shape="round"
+                      type="text"
+                      size="small"
+                      className="ant-btn-shaded"
+                      onClick={(e) => e.preventDefault()}
+                      icon={<EllipsisOutlined />}>
+                    </Button>
+                  </Dropdown>
+                )}
+              </>
             )}
           </div>
         </div>
