@@ -332,6 +332,13 @@ export const OneTimePayment = () => {
     tokenList,
   ]);
 
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
   const onTokenSearchInputChange = useCallback((e: any) => {
 
     const newValue = e.target.value;
@@ -1032,8 +1039,10 @@ export const OneTimePayment = () => {
           <div className="token-selector-wrapper">
             <div className="token-search-wrapper">
               <TextInput
-                id='token-search-otp'
+                id="token-search-otp"
                 value={tokenFilter}
+                allowClear={true}
+                onInputClear={onInputCleared}
                 placeholder={t('token-selector.search-input-placeholder')}
                 onInputChange={onTokenSearchInputChange} />
             </div>

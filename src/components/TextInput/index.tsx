@@ -1,3 +1,4 @@
+import { CloseCircleOutlined } from '@ant-design/icons';
 import React from 'react';
 
 export const TextInput = (props: {
@@ -7,6 +8,8 @@ export const TextInput = (props: {
     value: string;
     placeholder: string;
     onInputChange: any;
+    allowClear?: boolean;
+    onInputClear?: any;
 }) => {
 
     return (
@@ -29,6 +32,13 @@ export const TextInput = (props: {
                         value={props.value}
                     />
                 </div>
+                {props.allowClear && props.value && (
+                    <div className="rigth">
+                        <div className="add-on h-100 simplelink" onClick={props.onInputClear}>
+                            <CloseCircleOutlined />
+                        </div>
+                    </div>
+                )}
             </div>
             {props.hint && (
                 <div className="form-field-hint">{props.hint}</div>
