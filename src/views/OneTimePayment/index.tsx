@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Checkbox } from "antd";
+import { Button, Modal, DatePicker, Spin, Checkbox, Select } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -13,6 +13,7 @@ import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
 import {
+  addMinutes,
   consoleOut,
   disabledDate,
   getAmountWithTokenSymbol,
@@ -44,6 +45,7 @@ import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
 
+const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
@@ -57,6 +59,7 @@ export const OneTimePayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
+    isWhitelisted,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -94,6 +97,7 @@ export const OneTimePayment = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
 
   useEffect(() => {
 
@@ -229,6 +233,7 @@ export const OneTimePayment = () => {
   }
 
   const onAfterTransactionModalClosed = () => {
+    setFixedScheduleValue(0);
     if (isBusy) {
       setTransactionCancelled(true);
     }
@@ -473,11 +478,14 @@ export const OneTimePayment = () => {
         const amount = parseFloat(fromCoinAmount as string);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        const fromParsedDate = new Date(parsedDate);
+        let fromParsedDate = new Date(parsedDate);
         fromParsedDate.setHours(now.getHours());
         fromParsedDate.setMinutes(now.getMinutes());
         fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());        
+        fromParsedDate.setMilliseconds(now.getMilliseconds());
+        if (isWhitelisted && fixedScheduleValue > 0) {
+          fromParsedDate = addMinutes(fromParsedDate, fixedScheduleValue);
+        }
         consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
 
         // Create a transaction
@@ -754,6 +762,10 @@ export const OneTimePayment = () => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const onFixedScheduleValueChange = (value: any) => {
+    setFixedScheduleValue(value);
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -965,6 +977,23 @@ export const OneTimePayment = () => {
             </div>
           </div>
         </div>
+
+        {isWhitelisted && (
+          <>
+            <div className="form-label">Schedule transfer for: (For dev team only)</div>
+            <div className="well">
+              <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
+                <Option value={0}>No fixed scheduling</Option>
+                <Option value={5}>5 minutes from now</Option>
+                <Option value={10}>10 minutes from now</Option>
+                <Option value={15}>15 minutes from now</Option>
+                <Option value={20}>20 minutes from now</Option>
+                <Option value={30}>30 minutes from now</Option>
+              </Select>
+              <div className="form-field-hint">Selecting a value will override your date selection</div>
+            </div>
+          </>
+        )}
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
