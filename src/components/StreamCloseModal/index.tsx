@@ -45,13 +45,18 @@ export const StreamCloseModal = (props: {
     props.streamDetail
   ]);
 
-  const isUserTreasurer = (): boolean => {
-    if (publicKey && props.streamDetail) {
-      const me = publicKey.toBase58();
-      const treasurer = props.streamDetail.treasurerAddress as string;
-      return treasurer === me ? true : false;
+  const amItreasurer = () => {
+    if (props.streamDetail) {
+      const treasurerAddress = props.streamDetail.treasurerAddress as string;
+      return publicKey && publicKey.toBase58() === treasurerAddress ? true : false;
     }
-    return false;
+  }
+
+  const amIbeneficiary = () => {
+    if (props.streamDetail) {
+      const beneficiaryAddress = props.streamDetail.beneficiaryAddress as string;
+      return publicKey && publicKey.toBase58() === beneficiaryAddress ? true : false;
+    }
   }
 
   useEffect(() => {
@@ -97,11 +102,11 @@ export const StreamCloseModal = (props: {
               t('close-stream.return-vested-amount') + ':',
               getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowVestedAmount, props.streamDetail.associatedToken as string)
             )}
-            {isUserTreasurer() && infoRow(
+            {amItreasurer() && infoRow(
               t('close-stream.return-unvested-amount') + ':',
               getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowUnvestedAmount, props.streamDetail.associatedToken as string)
             )}
-            {infoRow(
+            {amIbeneficiary() && props.streamDetail.escrowVestedAmount > 0 && infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
               `${feeAmount
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.streamDetail.associatedToken as string)
