@@ -2867,31 +2867,30 @@ export const TreasuriesView = () => {
           <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
             <div className="meanfi-two-panel-left">
+
               <div className="meanfi-panel-heading">
                 <span className="title">{t('treasuries.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
-                  <div className={`transaction-stats ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
+                  <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
-                    {customStreamDocked ? (
-                      <span className="transaction-legend">
-                        <span className="icon-button-container">
-                          <Button
-                            type="default"
-                            shape="circle"
-                            size="small"
-                            icon={<ReloadOutlined />}
-                            onClick={() => {}}
-                          />
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="transaction-legend">
-                        <span className="incoming-transactions-amout">({formatThousands(treasuryList.length)})</span>
-                      </span>
+                    {(!customStreamDocked && !loadingTreasuries) && (
+                      <span className="incoming-transactions-amout">{formatThousands(treasuryList.length)}</span>
                     )}
+                    <span className="transaction-legend">
+                      <span className="icon-button-container">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="small"
+                          icon={<ReloadOutlined />}
+                          onClick={() => {}}
+                        />
+                      </span>
+                    </span>
                   </div>
                 </Tooltip>
               </div>
+
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
                   <Spin spinning={loadingTreasuries}>
