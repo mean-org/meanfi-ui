@@ -125,9 +125,11 @@ export const AppBar = (props: {
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        <Menu.Item key="/treasuries">
-          <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-        </Menu.Item>
+        {isWhitelisted && (
+          <Menu.Item key="/treasuries">
+            <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
+          </Menu.Item>
+        )}
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
@@ -238,9 +240,11 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
-              <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-              </li>
+              {isWhitelisted && (
+                <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                  <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
+                </li>
+              )}
               <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
                 <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
               </li>
