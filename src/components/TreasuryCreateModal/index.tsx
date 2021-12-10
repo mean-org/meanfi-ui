@@ -21,7 +21,7 @@ export const TreasuryCreateModal = (props: {
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
-  transactionFees: TransactionFees
+  transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
   const {

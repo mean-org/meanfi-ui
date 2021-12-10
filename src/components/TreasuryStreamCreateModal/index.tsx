@@ -682,6 +682,7 @@ export const TreasuryStreamCreateModal = (props: {
       onOk={props.handleOk}
       onCancel={props.handleClose}
       width={480}>
+
       <div className="scrollable-content">
         <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 

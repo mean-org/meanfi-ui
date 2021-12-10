@@ -384,6 +384,7 @@
 			"modal-title": "Add funds to the Treasury",
 			"main-cta": "Fund treasury",
 			"main-cta-busy": "Funding treasury",
+			"success-message": "Your treasury was funded successfully.",
 			"allocation-label": "How do you want to allocate these funds?",
 			"allocation-option-evenly": "Allocate evenly across all Money Streams",
 			"allocation-option-specific": "Allocate to a specific Money Stream",

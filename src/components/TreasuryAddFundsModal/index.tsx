@@ -1,23 +1,26 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, AutoComplete, Divider, Input } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, AutoComplete, Divider, Input, Spin } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { LoadingOutlined } from '@ant-design/icons';
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
 import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, isValidAddress } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
-import { AllocationType } from '../../models/enums';
+import { AllocationType, TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { isError } from '../../utils/transactions';
 
 const { Option } = Select;
+const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 interface StreamSummary {
   allocationReserved: number;
@@ -37,6 +40,8 @@ export const TreasuryAddFundsModal = (props: {
   isVisible: boolean;
   userBalances: any;
   isBusy: boolean;
+  nativeBalance: number;
+  transactionFees: TransactionFees;
   streamStats: TreasuryStreamsBreakdown | undefined;
   treasuryStreams: StreamInfo[];
   associatedToken: string;
@@ -47,7 +52,8 @@ export const TreasuryAddFundsModal = (props: {
     tokenBalance,
     selectedToken,
     effectiveRate,
-    treasuryOption,
+    transactionStatus,
+    setTransactionStatus,
     setEffectiveRate,
     setSelectedToken,
   } = useContext(AppStateContext);
@@ -389,7 +395,7 @@ export const TreasuryAddFundsModal = (props: {
     window.dispatchEvent(new Event('resize'));
   }
 
-  const onAcceptTopup = () => {
+  const onAcceptModal = () => {
     props.handleOk({
       amount: topupAmount,
       allocationType: allocationOption,
@@ -398,23 +404,38 @@ export const TreasuryAddFundsModal = (props: {
     } as TreasuryTopupParams);
   }
 
+  const onCloseModal = () => {
+    props.handleClose();
+  }
+
+  const onAfterClose = () => {
+    setTimeout(() => {
+      setTopupAmount('');
+    }, 50);
+    setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+    });
+  }
+
+  const refreshPage = () => {
+    props.handleClose();
+    window.location.reload();
+  }
+
   const onStreamSelected = (e: any) => {
     consoleOut('selectedStreamForAllocation:', e, 'blue');
     setSelectedStreamForAllocation(e);
   }
 
-  const setValue = (value: string) => {
-    setTopupAmount(value);
-  }
-
   const handleAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
-      setValue("");
+      setTopupAmount("");
     } else if (newValue === '.') {
-      setValue(".");
+      setTopupAmount(".");
     } else if (isValidNumber(newValue)) {
-      setValue(newValue);
+      setTopupAmount(newValue);
     }
   };
 
@@ -510,163 +531,248 @@ export const TreasuryAddFundsModal = (props: {
 
   return (
     <Modal
-      className="mean-modal"
+      className="mean-modal simple-modal"
       title={<div className="modal-title">{t('treasuries.add-funds.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
-      onOk={onAcceptTopup}
-      onCancel={props.handleClose}
-      afterClose={() => setValue('')}
-      width={480}>
+      onOk={onAcceptModal}
+      onCancel={onCloseModal}
+      afterClose={onAfterClose}
+      width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      {/* Top up amount */}
-      <div className="mb-3">
-        <div className="form-label">{t('treasuries.add-funds.label')}</div>
-        <div className={`well ${props.isBusy && 'disabled'}`}>
-          <div className="flex-fixed-left">
-            <div className="left">
-              <span className="add-on">
-                {(selectedToken && tokenList) && (
-                  <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
-                      onChange={onTokenChange} bordered={false} showArrow={false}
-                      dropdownRender={menu => (
-                      <div>
-                        {menu}
-                        <Divider style={{ margin: '4px 0' }} />
-                        <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                          <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
-                          <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
-                            <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
-                          </div>
-                        </div>
-                      </div>
-                    )}>
-                    {tokenList.map((option) => {
-                      return (
-                        <Option key={option.address} value={option.address}>
-                          <div className="option-container">
-                            <TokenDisplay onClick={() => {}}
-                              mintAddress={option.address}
-                              name={option.name}
-                              showCaretDown={props.associatedToken ? false : true}
-                            />
-                            <div className="balance">
-                              {props.userBalances && props.userBalances[option.address] > 0 && (
-                                <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
-                              )}
+      {/* sdsssd */}
+      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+
+        {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
+          <>
+            {/* Top up amount */}
+            <div className="mb-3">
+              <div className="form-label">{t('treasuries.add-funds.label')}</div>
+              <div className={`well ${props.isBusy && 'disabled'}`}>
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on">
+                      {(selectedToken && tokenList) && (
+                        <Select className={`token-selector-dropdown ${props.associatedToken ? 'click-disabled' : ''}`} value={selectedToken.address}
+                            onChange={onTokenChange} bordered={false} showArrow={false}
+                            dropdownRender={menu => (
+                            <div>
+                              {menu}
+                              <Divider style={{ margin: '4px 0' }} />
+                              <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                                <Input style={{ flex: 'auto' }} value={customTokenInput} onChange={onCustomTokenChange} />
+                                <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
+                                  <span className="flat-button icon-button ml-1" onClick={() => setCustomToken(customTokenInput)}><IconCheckedBox className="normal"/></span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                )}
-                {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() => setValue(
-                      getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                    )}>
-                    MAX
+                          )}>
+                          {tokenList.map((option) => {
+                            return (
+                              <Option key={option.address} value={option.address}>
+                                <div className="option-container">
+                                  <TokenDisplay onClick={() => {}}
+                                    mintAddress={option.address}
+                                    name={option.name}
+                                    showCaretDown={props.associatedToken ? false : true}
+                                  />
+                                  <div className="balance">
+                                    {props.userBalances && props.userBalances[option.address] > 0 && (
+                                      <span>{getTokenAmountAndSymbolByTokenAddress(props.userBalances[option.address], option.address, true)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Option>
+                            );
+                          })}
+                        </Select>
+                      )}
+                      {selectedToken && tokenBalance ? (
+                        <div
+                          className="token-max simplelink"
+                          onClick={() => setTopupAmount(
+                            getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                          )}>
+                          MAX
+                        </div>
+                      ) : null}
+                    </span>
                   </div>
-                ) : null}
-              </span>
+                  <div className="right">
+                    <input
+                      id="topup-amount-field"
+                      className="general-text-input text-right"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      type="text"
+                      onChange={handleAmountChange}
+                      pattern="^[0-9]*[.,]?[0-9]*$"
+                      placeholder="0.0"
+                      minLength={1}
+                      maxLength={79}
+                      spellCheck="false"
+                      value={topupAmount}
+                    />
+                  </div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left inner-label">
+                    <span>{t('treasuries.add-funds.balance')}:</span>
+                    <span>
+                      {`${tokenBalance && selectedToken
+                          ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                          : "0"
+                      }`}
+                    </span>
+                  </div>
+                  <div className="right inner-label">
+                    ~${topupAmount && effectiveRate
+                      ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
+                      : "0.00"}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="right">
-              <input
-                id="topup-amount-field"
-                className="general-text-input text-right"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={topupAmount}
-              />
+
+            {/* Funds Allocation options */}
+            {numTreasuryStreams() > 0 && (
+              <div className="mb-3">
+                <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
+                <div className="well">
+                  <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
+                    <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                      <div className="left">
+                        <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
+                      </div>
+                      <div className="right">
+                        <IconCaretDown className="mean-svg-icons" />
+                      </div>
+                    </span>
+                  </Dropdown>
+                </div>
+              </div>
+            )}
+
+            {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
+              <div className="mb-3">
+                <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
+                <div className="well">
+                  <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
+                    <div className="left mr-0">
+                      <AutoComplete
+                        bordered={false}
+                        style={{ width: '100%' }}
+                        dropdownClassName="stream-select-dropdown"
+                        options={renderStreamSelectOptions()}
+                        placeholder={t('treasuries.add-funds.search-streams-placeholder')}
+                        filterOption={(inputValue, option) => {
+                          const originalItem = streamSummaries.find(i => i.streamName === option!.key);
+                          return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
+                        }}
+                        onSelect={onStreamSelected}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
+          <>
+            <div className="transaction-progress">
+              <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              <h4 className="font-bold">{t('treasuries.add-funds.success-message')}</h4>
             </div>
-          </div>
-          <div className="flex-fixed-right">
-            <div className="left inner-label">
-              <span>{t('treasuries.add-funds.balance')}:</span>
-              <span>
-                {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
-                    : "0"
-                }`}
-              </span>
+          </>
+        ) : (
+          <>
+            <div className="transaction-progress">
+              <InfoCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+              {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                <h4 className="mb-4">
+                  {t('transactions.status.tx-start-failure', {
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                      props.nativeBalance,
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
+                  }
+                </h4>
+              ) : (
+                <h4 className="font-bold mb-3">
+                  {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+                </h4>
+              )}
             </div>
-            <div className="right inner-label">
-              ~${topupAmount && effectiveRate
-                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                : "0.00"}
-            </div>
-          </div>
+          </>
+        )}
+
+      </div>
+
+      <div className={props.isBusy && transactionStatus.currentOperation !== TransactionStatus.Iddle ? "panel2 show" : "panel2 hide"}>
+        {props.isBusy && transactionStatus !== TransactionStatus.Iddle && (
+        <div className="transaction-progress">
+          <Spin indicator={bigLoadingIcon} className="icon mt-0" />
+          <h4 className="font-bold mb-1">
+            {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
+          </h4>
+          {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+            <div className="indication">{t('transactions.status.instructions')}</div>
+          )}
+        </div>
+        )}
+      </div>
+
+      <div className="row two-col-ctas mt-3 transaction-progress">
+        <div className="col-6">
+          <Button
+            block
+            type="text"
+            shape="round"
+            size="middle"
+            className={props.isBusy ? 'inactive' : ''}
+            onClick={() => isError(transactionStatus.currentOperation)
+              ? onAcceptModal()
+              : onCloseModal()}>
+            {isError(transactionStatus.currentOperation)
+              ? t('general.retry')
+              : t('general.cta-close')
+            }
+          </Button>
+        </div>
+        <div className="col-6">
+          <Button
+            className={props.isBusy ? 'inactive' : ''}
+            block
+            type="primary"
+            shape="round"
+            size="middle"
+            disabled={!isTopupFormValid()}
+            onClick={() => {
+              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                onAcceptModal();
+              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                onCloseModal();
+              } else {
+                refreshPage();
+              }
+            }}>
+            {props.isBusy
+              ? t('treasuries.add-funds.main-cta-busy')
+              : transactionStatus.currentOperation === TransactionStatus.Iddle
+                ? getTransactionStartButtonLabel()
+                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                  ? t('general.cta-finish')
+                  : t('general.refresh')
+            }
+          </Button>
         </div>
       </div>
 
-      {/* Funds Allocation options */}
-      {numTreasuryStreams() > 0 && (
-        <div className="mb-3">
-          <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
-          <div className="well">
-            <Dropdown overlay={allocationOptionsMenu} trigger={["click"]}>
-              <span className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-                <div className="left">
-                  <span className="capitalize-first-letter">{allocationOptions.find(o => o.key === allocationOption)?.label}</span>
-                </div>
-                <div className="right">
-                  <IconCaretDown className="mean-svg-icons" />
-                </div>
-              </span>
-            </Dropdown>
-          </div>
-        </div>
-      )}
-
-      {allocationOption === AllocationType.Specific && props.streamStats && props.streamStats.total > 0 && (
-        <div className="mb-3">
-          <div className="form-label">{t('treasuries.add-funds.allocation-select-stream-label')}</div>
-          <div className="well">
-            <div className="dropdown-trigger no-decoration flex-fixed-right align-items-center">
-              <div className="left mr-0">
-                <AutoComplete
-                  bordered={false}
-                  style={{ width: '100%' }}
-                  dropdownClassName="stream-select-dropdown"
-                  options={renderStreamSelectOptions()}
-                  placeholder={t('treasuries.add-funds.search-streams-placeholder')}
-                  filterOption={(inputValue, option) => {
-                    const originalItem = streamSummaries.find(i => i.streamName === option!.key);
-                    return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
-                  }}
-                  onSelect={onStreamSelected}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Button
-        className={`main-cta ${props.isBusy ? 'inactive' : ''}`}
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        disabled={!isTopupFormValid()}
-        onClick={onAcceptTopup}>
-        {props.isBusy && (
-          <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-        )}
-        {props.isBusy
-          ? t('treasuries.add-funds.main-cta-busy')
-          : getTransactionStartButtonLabel()}
-      </Button>
     </Modal>
   );
 };

@@ -939,6 +939,7 @@ export const TreasuriesView = () => {
 
   const onTreasuryCreated = () => {
     closeCreateTreasuryModal();
+    refreshTokenBalance();
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -1008,7 +1009,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        console.log('type:', treasuryOption.type.toString());
+        consoleOut('type:', treasuryOption.type.toString(), 'blue');
         return await ms.createTreasury(
           publicKey,                                                  // wallet
           treasuryName,                                               // label
@@ -1202,12 +1203,12 @@ export const TreasuriesView = () => {
   };
 
   const onAddFundsTransactionFinished = () => {
+    closeAddFundsModal();
+    refreshTokenBalance();
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    closeAddFundsModal();
-    refreshTokenBalance();
   };
 
   const onExecuteAddFundsTransaction = async (params: TreasuryTopupParams) => {
@@ -1447,6 +1448,11 @@ export const TreasuriesView = () => {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
             setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -3080,6 +3086,8 @@ export const TreasuriesView = () => {
         <TreasuryAddFundsModal
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
           isVisible={isAddFundsModalVisible}
           userBalances={userBalances}
           streamStats={streamStats}
