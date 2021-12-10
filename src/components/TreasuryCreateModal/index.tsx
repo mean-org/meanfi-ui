@@ -89,6 +89,7 @@ export const TreasuryCreateModal = (props: {
                       autoComplete="off"
                       autoCorrect="off"
                       type="text"
+                      maxLength={32}
                       onChange={onInputValueChange}
                       placeholder={t('treasuries.create-treasury.treasury-name-placeholder')}
                       value={treasuryName}

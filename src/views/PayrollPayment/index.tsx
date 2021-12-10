@@ -1085,6 +1085,7 @@ export const PayrollPayment = () => {
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
+                maxLength={32}
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo2.placeholder')}
                 spellCheck="false"

@@ -952,6 +952,7 @@ export const OneTimePayment = () => {
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
+                maxLength={32}
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo.placeholder')}
                 spellCheck="false"

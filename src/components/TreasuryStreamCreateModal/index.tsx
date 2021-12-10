@@ -208,13 +208,6 @@ export const TreasuryStreamCreateModal = (props: {
     toggleOverflowEllipsisMiddle
   ]);
 
-  const getDefaultStreamName = () => {
-    if (recipientAddress && isValidAddress(recipientAddress)) {
-      return t('streams.stream-name-missing', { beneficiary: shortenAddress(recipientAddress) })
-    }
-    return '';
-  }
-
   /////////////////////
   // Data management //
   /////////////////////
@@ -413,7 +406,7 @@ export const TreasuryStreamCreateModal = (props: {
           rateAmount: rateAmount,                                                     // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
           startUtc: fromParsedDate,                                                   // startUtc
-          streamName: recipientNote ? recipientNote.trim() : getDefaultStreamName(),  // streamName
+          streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
           allocation: fundingAmount,                                                  // fundingAmount
           allocationReserved: isAllocationReserved ? fundingAmount : 0,               // allocationReserved
         };
@@ -459,7 +452,7 @@ export const TreasuryStreamCreateModal = (props: {
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
           fromParsedDate,                                                   // startUtc
-          recipientNote ? recipientNote.trim() : getDefaultStreamName(),    // streamName
+          recipientNote ? recipientNote.trim() : undefined,                 // streamName
           fundingAmount,                                                    // fundingAmount
           isAllocationReserved ? fundingAmount : 0                          // allocationReserved
         )
@@ -856,6 +849,7 @@ export const TreasuryStreamCreateModal = (props: {
                   autoComplete="on"
                   autoCorrect="off"
                   type="text"
+                  maxLength={32}
                   onChange={handleRecipientNoteChange}
                   placeholder={t('transactions.memo2.placeholder')}
                   spellCheck="false"
