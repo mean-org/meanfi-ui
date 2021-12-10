@@ -1635,11 +1635,9 @@ export const Streams = () => {
               <div className="info-label">
                 {streamDetail && (
                   <>
-                  {streamDetail.state === STREAM_STATE.Schedule
-                    ? t('streams.stream-detail.label-receive-from')
-                    : streamDetail.state === STREAM_STATE.Running
-                      ? t('streams.stream-detail.label-receiving-from')
-                      : t('streams.stream-detail.label-received-from')
+                  {streamDetail.state === STREAM_STATE.Paused
+                    ? t('streams.stream-detail.label-received-from')
+                    : t('streams.stream-detail.label-receiving-from')
                   }
                   </>
                 )}
@@ -1920,11 +1918,9 @@ export const Streams = () => {
               <div className="info-label">
                 {streamDetail && (
                   <>
-                  {streamDetail.state === STREAM_STATE.Schedule
-                    ? t('streams.stream-detail.label-send-to')
-                    : streamDetail.state === STREAM_STATE.Running
-                      ? t('streams.stream-detail.label-sending-to')
-                      : t('streams.stream-detail.label-sent-to')
+                  {streamDetail.state === STREAM_STATE.Paused
+                    ? t('streams.stream-detail.label-sent-to')
+                    : t('streams.stream-detail.label-sending-to')
                   }
                   </>
                 )}
