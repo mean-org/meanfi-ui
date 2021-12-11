@@ -519,8 +519,8 @@ class IdoTracker {
         // before start
         if (t.lt(new BN(0))) {
 
-            if (this.verbose)
-                console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO hasn't started yet`);
+            // if (this.verbose)
+            //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO hasn't started yet`);
 
             status.isRunning = false;
             status.CurrentMeanPrice = this.latestIdo.meanPriceStart;
@@ -531,8 +531,8 @@ class IdoTracker {
         // after end
         else if (t.gt(new BN(this.latestIdo.idoDurationInSeconds))) {
             
-            if (this.verbose)
-                console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO has already ended`);
+            // if (this.verbose)
+            //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO has already ended`);
 
             status.isRunning = false;
             status.CurrentMeanPrice = this.latestIdo.meanPriceEnd;
@@ -543,8 +543,8 @@ class IdoTracker {
         // running
         else {
 
-            if (this.verbose)
-                console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO is running`);
+            // if (this.verbose)
+            //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO is running`);
 
             status.isRunning = true;
             const currentMeanPrice = meanPriceCurve(
@@ -565,7 +565,6 @@ class IdoTracker {
             status.CurrentMaxUsdcContributionTokenAmount = currentMaxUsdcPerUser.toNumber();
         }
 
-        console.log("status", status);
         return status;
     }
 }

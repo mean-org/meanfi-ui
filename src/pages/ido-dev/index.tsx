@@ -3,10 +3,8 @@ import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_CAP_VALUATION,
-  IDO_END_DATE,
   IDO_MIN_CONTRIBUTION,
   IDO_RESTRICTED_COUNTRIES,
-  IDO_START_DATE,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
   SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS
@@ -20,7 +18,7 @@ import Countdown from 'react-countdown';
 import useScript from '../../hooks/useScript';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { AppStateContext } from '../../contexts/appstate';
 import { useWallet } from '../../contexts/wallet';
 import YoutubeEmbed from '../../components/YoutubeEmbed';
@@ -28,7 +26,8 @@ import { useNavigate } from 'react-router';
 import { useLocation } from 'react-router-dom';
 import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
-import { IdoClient, IdoStatus, IdoTracker, MeanIdoDetails } from '../../integrations/ido/ido-client';
+import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
+import { appConfig } from '../..';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -39,7 +38,7 @@ export const IdoDevView = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
@@ -61,10 +60,15 @@ export const IdoDevView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
-  const [idoDetails, setIdoDetails] = useState<MeanIdoDetails | null>(null);
-  const [idoTracker, setIdoTracker] = useState<IdoTracker | undefined>(undefined);
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
+  const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
+  const [idosLoaded, setIdosLoaded] = useState(false);
+  const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
+  const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = new Date();
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
@@ -91,6 +95,7 @@ export const IdoDevView = () => {
   ]);
 
   // Get IDO address from query string params
+  // Fallback to appSettings config or error out
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.has('idoAddress')) {
@@ -114,6 +119,13 @@ export const IdoDevView = () => {
       }
     } else {
       consoleOut('No IDO address provided, using config...');
+      const idoAccountAddressFromConfig = appConfig.getConfig().idoAccountAddress;
+      consoleOut('Using IDO address:', idoAccountAddressFromConfig, 'blue');
+      if (idoAccountAddressFromConfig) {
+        setIdoAccountAddress(idoAccountAddressFromConfig);
+      } else {
+        consoleOut('No IDO address in config!', 'This is odd.', 'red');
+      }
     }
   }, [
     location.search,
@@ -130,31 +142,58 @@ export const IdoDevView = () => {
   // Create and cache the IDO client
   const idoClient = useMemo(() => {
     if (!connection || !connectionConfig.endpoint) {
-      consoleOut('This is odd. No connection!');
+      consoleOut('This is odd. No connection!', '', 'red');
+      return;
+    } else if (!idoAccountAddress) {
+      consoleOut('No IDO address resolved.\nClient cannot start!', '', 'red');
       return;
     }
 
-    if (wallet) {
-      return new IdoClient(
-        connectionConfig.endpoint,
-        wallet,
-        { commitment: "confirmed" },
-        isLocal() ? true : false
-      );
-    } else {
-      return new IdoClient(
-        connectionConfig.endpoint,
-        {publicKey: Keypair.generate().publicKey, signAllTransactions: async (txs) => txs, signTransaction: async tx => tx},
-        undefined,
-        isLocal() ? true : false
-      );
-    }
+    return new IdoClient(
+      connectionConfig.endpoint,
+      publicKey || undefined,
+      { commitment: "confirmed" },
+      isLocal() ? true : false
+    );
   }, [
-    wallet,
+    publicKey,
     connection,
+    idoAccountAddress,
     connectionConfig.endpoint,
   ]);
 
+  // Get a list of available IDOs for reference
+  useEffect(() => {
+
+    if (!idoClient || !publicKey || idosLoaded) { return; }
+
+    setIdosLoaded(true);
+
+    idoClient.listIdos(true, true)
+      .then(myIdos => {
+        consoleOut('myIdos:', myIdos, 'blue');
+        const idosTable: any[] = [];
+        myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
+          address: item.idoAddress,
+          startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
+          endUtc: new Date(item.idoEndUtc).toLocaleDateString()
+          })
+        );
+        console.table(idosTable);
+      })
+      .catch(error => {
+        console.error(error);
+      })
+
+    return () => {};
+
+  }, [
+    publicKey,
+    idoClient,
+    idosLoaded,
+  ]);
+
+  // Init IDO client and store tracked data
   useEffect(() => {
 
     if (!idoClient || !idoAccountAddress) {
@@ -164,76 +203,60 @@ export const IdoDevView = () => {
     const initIdo = async () => {
 
       const idoAddressPubKey = new PublicKey(idoAccountAddress);
-      const idoDetails = await idoClient.getIdo(idoAddressPubKey);
+      const details = await idoClient.getIdo(idoAddressPubKey);
 
-      consoleOut('idoDetails:', idoDetails, 'blue');
+      consoleOut('idoDetails:', details, 'blue');
 
-      if(idoDetails === null)
+      if(details === null)
       {
         setIdoEngineInitStatus("error");
         return;
       }
 
+      setIdoDetails(details);
+      let parsedDate = Date.parse(details.idoStartUtc);
+      let fromParsedDate = new Date(parsedDate);
+      consoleOut('idoStartUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
+      consoleOut('idoStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+      setIdoStartUtc(fromParsedDate);
+
+      parsedDate = Date.parse(details.idoEndUtc);
+      fromParsedDate = new Date(parsedDate);
+      consoleOut('idoEndUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
+      consoleOut('idoEndUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+      setIdoEndUtc(fromParsedDate);
+
       try {
-        const tracker = await idoClient.getIdoTracker(idoAddressPubKey);
-        await tracker.startTracking();
-        const idoStatus = tracker.getIdoStatus();
-        consoleOut("idoStatus:", idoStatus);
-        tracker.addIdoUpdateListener((idoStatus) => setIdoStatus(idoStatus));
-        setIdoDetails(idoDetails);
-        setIdoTracker(tracker);
-        setIdoStatus(idoStatus);
-        setIdoEngineInitStatus("started");
+        await idoClient.startTracking(
+          idoAddressPubKey,
+          (idoStatus) => {
+            setIdoStatus(idoStatus);
+            setIdoEngineInitStatus("started");
+          }
+        );
       } catch (error: any) {
-        setIdoEngineInitStatus("error");
         console.error(error);
+        setIdoEngineInitStatus("error");
       }
+
     }
 
-    if (!idoDetails && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
+    if (!idoStatus && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
       consoleOut('idoAccountAddress:', idoAccountAddress, 'blue');
-      consoleOut('client:', idoClient ? idoClient.toString() : 'none', 'blue');
+      consoleOut('client:', idoClient ? idoClient.toString() : 'none', 'brown');
       consoleOut('Calling initIdo()...', '', 'blue');
       setIdoEngineInitStatus("initializing");
       initIdo();
     }
 
-    // return () => {
-    //   if (idoTracker) {
-    //     setIdoEngineInitStatus("stopped");
-    //     idoTracker.StopTracking();
-    //   }
-    // };
+    return () => {};
 
   }, [
     idoClient,
-    idoDetails,
-    idoTracker,
+    idoStatus,
     idoAccountAddress,
     idoEngineInitStatus,
   ]);
-
-  // Date related
-  const idoStartUtc = useMemo(() => new Date(Date.UTC(
-    IDO_START_DATE.year,
-    IDO_START_DATE.month,
-    IDO_START_DATE.day,
-    IDO_START_DATE.hour,
-    IDO_START_DATE.minute,
-    IDO_START_DATE.second
-  )), []);
-
-  const idoEndUtc = useMemo(() => new Date(Date.UTC(
-    IDO_END_DATE.year,
-    IDO_END_DATE.month,
-    IDO_END_DATE.day,
-    IDO_END_DATE.hour,
-    IDO_END_DATE.minute,
-    IDO_END_DATE.second
-  )), []);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const today = new Date();
 
   /*
   Abajo de los formularios
@@ -247,15 +270,21 @@ export const IdoDevView = () => {
 
   useEffect(() => {
 
+    if (!idoDetails || !idoStartUtc || !idoEndUtc) {
+      return;
+    }
+
     const timeout = setTimeout(() => {
-      const totalTime = idoEndUtc.getTime() - idoStartUtc.getTime();
+      const totalTime = idoDetails.idoDurationInSeconds * 1000;
+      // const totalTime = idoEndUtc.getTime() - idoStartUtc.getTime();
       const elapsed = today.getTime() - idoStartUtc.getTime();
       const percent = percentual(elapsed, totalTime);
-      setCurrentDateDisplay(dateFormat(today, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
       if (today >= idoEndUtc) {
         setXPosPercent(100);
+        setCurrentDateDisplay(dateFormat(idoEndUtc, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
       } else {
         setXPosPercent(percent);
+        setCurrentDateDisplay(dateFormat(today, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
       }
     }, 1000);
 
@@ -264,6 +293,7 @@ export const IdoDevView = () => {
     }
 
   }, [
+    idoDetails,
     today,
     idoEndUtc,
     idoStartUtc,
@@ -396,15 +426,17 @@ export const IdoDevView = () => {
     <>
       <div className="ido-form-wrapper">
         {/* Countdown timer */}
-        <div className="countdown-timer">
-          {today < idoStartUtc ? (
-            <>
-            <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
-            </>
-          ) : today > idoStartUtc && today < idoEndUtc ? (
-            <p className="font-size-90 font-bold text-center">Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
-          ) : null}
-        </div>
+        {(idoStartUtc && idoEndUtc) && (
+          <div className="countdown-timer">
+            {today < idoStartUtc ? (
+              <>
+              <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
+              </>
+            ) : today > idoStartUtc && today < idoEndUtc ? (
+              <p className="font-size-90 font-bold text-center">Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
+            ) : null}
+          </div>
+        )}
         {/* Form */}
         <div className="shadowed-box max-width">
           <div className="button-tabset-container">
@@ -426,8 +458,8 @@ export const IdoDevView = () => {
       <>
       <div className="ido-stats-marker-wrapper">
         <div className="ido-stats-marker-inner-container">
-          <span className="ido-stats-marker-start">{idoStartUtc.toUTCString()}</span>
-          <span className="ido-stats-marker-end">{idoEndUtc.toUTCString()}</span>
+          <span className="ido-stats-marker-start">{idoStartUtc?.toUTCString()}</span>
+          <span className="ido-stats-marker-end">{idoEndUtc?.toUTCString()}</span>
           <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
           <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
             <div className="text-center">
@@ -467,32 +499,36 @@ export const IdoDevView = () => {
           <Row>
             <Col xs={24} md={16}>
               <div className="flex-column flex-center h-100 px-4">
-                {today < idoStartUtc ? (
-                  <div className="boxed-area mb-4 mt-4">
-                    <h2 className="subheading ido-subheading text-center">How it works</h2>
-                    <YoutubeEmbed embedId="rokGy0huYEA" />
-                    <div className="text-center mt-2 mb-3">
-                      <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
-                          href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
-                        Read deatails about Mean IDO
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="ido-stats-container">
-                    <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
-                    {(today > idoStartUtc && today < idoEndUtc) && renderYouAreHere()}
-                    {/* <Timeline mode="left">
-                      <Timeline.Item label={idoStartUtc.toUTCString()}>Sale period starts</Timeline.Item>
-                      {today > idoStartUtc && today < idoEndUtc ? (
-                        <Timeline.Item label={renderTimeLeft} dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
-                      ) : (
-                        <Timeline.Item dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
-                      )}
-                      <Timeline.Item label={idoEndUtc.toUTCString()}>IDO ends</Timeline.Item>
-                      <Timeline.Item>Tokens redeemable</Timeline.Item>
-                    </Timeline> */}
-                  </div>
+                {(idoStartUtc && idoEndUtc) && (
+                  <>
+                    {today < idoStartUtc ? (
+                      <div className="boxed-area mb-4 mt-4">
+                        <h2 className="subheading ido-subheading text-center">How it works</h2>
+                        <YoutubeEmbed embedId="rokGy0huYEA" />
+                        <div className="text-center mt-2 mb-3">
+                          <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
+                              href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
+                            Read deatails about Mean IDO
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="ido-stats-container">
+                        <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                        {(today > idoStartUtc && today < idoEndUtc) && renderYouAreHere()}
+                        {/* <Timeline mode="left">
+                          <Timeline.Item label={idoStartUtc.toUTCString()}>Sale period starts</Timeline.Item>
+                          {today > idoStartUtc && today < idoEndUtc ? (
+                            <Timeline.Item label={renderTimeLeft} dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
+                          ) : (
+                            <Timeline.Item dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
+                          )}
+                          <Timeline.Item label={idoEndUtc.toUTCString()}>IDO ends</Timeline.Item>
+                          <Timeline.Item>Tokens redeemable</Timeline.Item>
+                        </Timeline> */}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </Col>

@@ -12,6 +12,7 @@ export interface AppConfig {
     influxDbBucket: string;
     logglyCustomerKey: string;
     logglyTag: string;
+    idoAccountAddress: string;
 }
 
 export class AppConfigService {
@@ -28,7 +29,8 @@ export class AppConfigService {
             influxDbOrg: 'meanops',
             influxDbBucket: 'meanfi-prod',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
-            logglyTag: 'MeanFiWebApp'
+            logglyTag: 'MeanFiWebApp',
+            idoAccountAddress: ''
         },
         staging: {
             appUrl: 'https://app-stage.meanfi.com',
@@ -41,7 +43,8 @@ export class AppConfigService {
             influxDbOrg: 'meanops',
             influxDbBucket: 'meanfi-stage',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
-            logglyTag: 'MeanFiWebApp'
+            logglyTag: 'MeanFiWebApp',
+            idoAccountAddress: ''
         },
         // dev and local will have same config
         development: {
@@ -55,7 +58,8 @@ export class AppConfigService {
             influxDbOrg: 'meanops',
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
-            logglyTag: 'MeanFiWebApp'
+            logglyTag: 'MeanFiWebApp',
+            idoAccountAddress: ''
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -68,7 +72,8 @@ export class AppConfigService {
             influxDbOrg: 'meanops',
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
-            logglyTag: 'MeanFiWebApp'
+            logglyTag: 'MeanFiWebApp',
+            idoAccountAddress: ''
         },
     };
 
