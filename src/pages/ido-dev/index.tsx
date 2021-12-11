@@ -144,9 +144,6 @@ export const IdoDevView = () => {
     if (!connection || !connectionConfig.endpoint) {
       consoleOut('This is odd. No connection!', '', 'red');
       return;
-    } else if (!idoAccountAddress) {
-      consoleOut('No IDO address resolved.\nClient cannot start!', '', 'red');
-      return;
     }
 
     return new IdoClient(
@@ -158,7 +155,6 @@ export const IdoDevView = () => {
   }, [
     publicKey,
     connection,
-    idoAccountAddress,
     connectionConfig.endpoint,
   ]);
 
@@ -515,7 +511,7 @@ export const IdoDevView = () => {
                     ) : (
                       <div className="ido-stats-container">
                         <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
-                        {(today > idoStartUtc && today < idoEndUtc) && renderYouAreHere()}
+                        {(today > idoStartUtc) && renderYouAreHere()}
                         {/* <Timeline mode="left">
                           <Timeline.Item label={idoStartUtc.toUTCString()}>Sale period starts</Timeline.Item>
                           {today > idoStartUtc && today < idoEndUtc ? (
