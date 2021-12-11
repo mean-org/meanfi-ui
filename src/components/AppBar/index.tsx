@@ -125,7 +125,7 @@ export const AppBar = (props: {
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        {isWhitelisted && (
+        {(isWhitelisted || isLocal()) && (
           <Menu.Item key="/treasuries">
             <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
           </Menu.Item>
@@ -159,7 +159,7 @@ export const AppBar = (props: {
       <Menu.Item key="/ido">
         <Link to="/ido">IDO</Link>
       </Menu.Item>
-      {(isLocal() || isWhitelisted) && (
+      {(isWhitelisted || isLocal()) && (
         <>
         <Menu.Item key="/ido-dev">
           <Link to="/ido-dev">IDO (Dev)</Link>
@@ -240,7 +240,7 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
-              {isWhitelisted && (
+              {(isWhitelisted || isLocal()) && (
                 <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                   <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
                 </li>
@@ -275,7 +275,7 @@ export const AppBar = (props: {
                 <Link to="/ido">IDO</Link>
               </li>
               {/* TODO: Remove this limitation when releasing to the public */}
-              {(isLocal() || isWhitelisted) && (
+              {(isWhitelisted || isLocal()) && (
                 <>
                 <li key="/ido-dev" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
                   <Link to="/ido-dev">IDO (Dev)</Link>

@@ -161,6 +161,7 @@ export const AppLayout = React.memo((props: any) => {
           setAccountAddress(walletAddress);
           setSelectedAsset(undefined);
         }
+        refreshTokenBalance();
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
         setPreviousWalletConnectState(false);

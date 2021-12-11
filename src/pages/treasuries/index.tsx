@@ -36,6 +36,7 @@ import {
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
+  isLocal,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -74,6 +75,7 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
+import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -81,12 +83,14 @@ const treasuryDetailPerfCounter = new PerformanceCounter();
 const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
+  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
     theme,
     tokenList,
     tokenBalance,
+    isWhitelisted,
     selectedToken,
     treasuryOption,
     detailsPanelOpen,
@@ -138,6 +142,16 @@ export const TreasuriesView = () => {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
+
+  // TODO: Remove when releasing to the public
+  useEffect(() => {
+    if (!isWhitelisted && !isLocal()) {
+      navigate('/');
+    }
+  }, [
+    isWhitelisted,
+    navigate
+  ]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
