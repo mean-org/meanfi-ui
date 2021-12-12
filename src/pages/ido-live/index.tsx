@@ -70,17 +70,24 @@ export const IdoLiveView = () => {
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
+  const [isUserBlocked, setIsUserBlocked] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
 
-  const isUserBlocked = useCallback(() => {
-    return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+  useEffect(() => {
+    if (userCountryCode) {
+      consoleOut('Detected countryCode:', userCountryCode, 'blue');
+      const matched = userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+      setIsUserBlocked(matched);
+    } else {
+      consoleOut('No countryCode detected!', '', 'blue');
+    }
   }, [userCountryCode]);
 
   // TODO: Remove when releasing to the public
   useEffect(() => {
-    if (isUserBlocked()) {
+    if (isUserBlocked) {
       navigate('/ido-blocked');
     } else if (!isWhitelisted && !isLocal()) {
       navigate('/');
