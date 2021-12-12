@@ -57,7 +57,8 @@ export const IdoDeposit = (props: {
     return props.selectedToken &&
            props.tokenBalance &&
            amount > 0 && amount >= props.idoDetails.usdcPerUserMin &&
-           amount <= props.tokenBalance
+           amount <= props.tokenBalance &&
+           amount <= props.idoStatus.currentMaxUsdcContribution
             ? true
             : false;
   }
@@ -73,10 +74,12 @@ export const IdoDeposit = (props: {
           : !amount
             ? t('transactions.validation.no-amount')
             : amount < props.idoDetails.usdcPerUserMin
-              ? 'Balance too low'
+              ? `Min is ${props.idoDetails.usdcPerUserMin}`
               : amount > props.tokenBalance
-                ? t('transactions.validation.amount-high')
-                : t('transactions.validation.valid-approve');
+                ? 'Not enough balance'
+                : amount > props.idoStatus.currentMaxUsdcContribution
+                  ? `Max is ${formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}`
+                  : t('transactions.validation.valid-approve');
   }
 
   const onExecuteDepositTx = async () => {
@@ -289,33 +292,6 @@ export const IdoDeposit = (props: {
 
   };
 
-  const getDisplayAmount = (amount: any, addSymbol = false): string => {
-    if (props.selectedToken) {
-      const bareAmount = truncateFloat(amount, props.selectedToken.decimals);
-      if (addSymbol) {
-        return bareAmount + ' ' + props.selectedToken.symbol;
-      }
-      return bareAmount;
-    }
-
-    return '';
-  }
-
-  const setPercentualValue = (percentualAmount: number, totalAmount: number) => {
-    let newValue = '';
-    const cappedAmount = totalAmount <= props.idoStatus.currentMaxUsdcContribution
-      ? totalAmount
-      : props.idoStatus.currentMaxUsdcContribution;
-
-    if (percentualAmount === 100) {
-      newValue = getDisplayAmount(cappedAmount);
-    } else {
-      const partialAmount = percentage(percentualAmount, cappedAmount);
-      newValue = getDisplayAmount(partialAmount);
-    }
-    setDepositAmount(newValue);
-  }
-
   const infoRow = (caption: string, value: string) => {
     return (
       <div className="flex-fixed-right line-height-180">
@@ -348,22 +324,7 @@ export const IdoDeposit = (props: {
                   props.selectedToken ? props.selectedToken.address : '',
                   true)
               )}>
-              MIN
-            </div>
-            <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
-              onClick={() => setPercentualValue(25, props.tokenBalance)}>
-              25%
-            </div>
-            <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
-              onClick={() => setPercentualValue(50, props.tokenBalance)}>
-              50%
-            </div>
-            <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
-              onClick={() => setPercentualValue(75, props.tokenBalance)}>
-              75%
+              Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
               className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
@@ -376,12 +337,12 @@ export const IdoDeposit = (props: {
                   true
                 )
               )}>
-              100%
+              Max: {formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}
             </div>
           </div>
         )}
       </div>
-      <div className={`well mb-1 ${!connected && props.idoStatus.hasUserContributed ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected && props.idoStatus.hasUserContributed ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -427,12 +388,6 @@ export const IdoDeposit = (props: {
           </div>
           <div className="right inner-label">&nbsp;</div>
         </div>
-      </div>
-      <div className="flex-fixed-right mb-2">
-        <div className="left form-label">
-          <span>Min: {props.idoDetails.usdcPerUserMin} - Max: {formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}</span>
-        </div>
-        <div className="right inner-label">&nbsp;</div>
       </div>
 
       {/* Info */}

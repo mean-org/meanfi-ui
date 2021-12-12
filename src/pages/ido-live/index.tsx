@@ -27,7 +27,7 @@ import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC } from '../../constants/token-list';
 
 type IdoTabOption = "deposit" | "withdraw";
@@ -571,10 +571,26 @@ export const IdoLiveView = () => {
               <div>{currentDateDisplay}</div>
             </div>
             <Divider />
-            <div className="flex-fixed-right">
-              <div className="left">Cosita</div>
-              <div className="right">$1,540.00</div>
-            </div>
+            {idoStatus && (
+              <>
+                <div className="flex-fixed-right">
+                  <div className="left">Token Price</div>
+                  <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left">Max Allocation Allowed</div>
+                  <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left">Guaranteed Allocation</div>
+                  <div className="right">-</div>
+                </div>
+                <div className="flex-fixed-right">
+                  <div className="left">Total Participants</div>
+                  <div className="right">-</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
