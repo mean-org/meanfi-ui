@@ -432,17 +432,18 @@ export const IdoLiveView = () => {
   );
 
   const renderForm = () => {
+    if (!idoStatus || !idoDetails) { return null; }
     if (currentTab === "deposit") {
       return <IdoDeposit
         disabled={!isIdoActive()}
-        contributedAmount={90381439.9773}
-        totalMeanForSale={4000000}
-        tokenPrice={22.5953}
+        contributedAmount={idoStatus.TotalUsdcContributed}
+        totalMeanForSale={idoDetails.usdcTotalCurrent}
+        tokenPrice={idoStatus.CurrentImpliedMeanPrice}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
         min={IDO_MIN_CONTRIBUTION}
-        max={21000}
+        max={idoStatus.CurrentMaxUsdcContribution}
       />;
     } else {
       return <IdoWithdraw disabled={!isIdoActive()} />;
