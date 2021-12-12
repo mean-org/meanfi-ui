@@ -315,26 +315,36 @@ export class IdoClient {
             clusterTs: (statusEvent.clusterTs as BN).toNumber(),
             secondsFromIdoStart: (statusEvent.secondsFromIdoStart as BN).toNumber(),
             isRunning: statusEvent.isRunning as boolean,
-            CurrentMeanPrice: (statusEvent.meanPriceCurrent as BN).toNumber() / 10 ** DECIMALS,
-            CurrentMeanPriceTokenAmount: (statusEvent.meanPriceCurrent as BN).toNumber(),
-            CurrentMaxUsdcContribution: (statusEvent.usdcPerUserMaxCurrent as BN).toNumber() / 10 ** DECIMALS,
-            CurrentMaxUsdcContributionTokenAmount: (statusEvent.usdcPerUserMaxCurrent as BN).toNumber(),
-            TotalUsdcContributed: (statusEvent.usdcTotalCurrent as BN).toNumber() / 10 ** DECIMALS,
-            TotalUsdcContributedTokenAmount: (statusEvent.usdcTotalCurrent as BN).toNumber(),
-            TotalMeanAllocated: (statusEvent.meanAllocatedCurrent as BN).toNumber() / 10 ** DECIMALS,
-            TotalMeanAllocatedTokenAmount: (statusEvent.meanAllocatedCurrent as BN).toNumber(),
-            CurrentImpliedMeanPrice: (statusEvent.meanImpliedPrice as BN).toNumber() / 10 ** DECIMALS,
-            CurrentImpliedMeanPriceTokenAmount: (statusEvent.meanImpliedPrice as BN).toNumber(),
+            currentMeanPrice: (statusEvent.meanPriceCurrent as BN).toNumber() / 10 ** DECIMALS,
+            currentMeanPriceTokenAmount: (statusEvent.meanPriceCurrent as BN).toNumber(),
+            currentMaxUsdcContribution: (statusEvent.usdcPerUserMaxCurrent as BN).toNumber() / 10 ** DECIMALS,
+            currentMaxUsdcContributionTokenAmount: (statusEvent.usdcPerUserMaxCurrent as BN).toNumber(),
+            totalUsdcContributed: (statusEvent.usdcTotalCurrent as BN).toNumber() / 10 ** DECIMALS,
+            totalUsdcContributedTokenAmount: (statusEvent.usdcTotalCurrent as BN).toNumber(),
+            totalMeanAllocated: (statusEvent.meanAllocatedCurrent as BN).toNumber() / 10 ** DECIMALS,
+            totalMeanAllocatedTokenAmount: (statusEvent.meanAllocatedCurrent as BN).toNumber(),
+            currentImpliedMeanPrice: (statusEvent.meanImpliedPrice as BN).toNumber() / 10 ** DECIMALS,
+            currentImpliedMeanPriceTokenAmount: (statusEvent.meanImpliedPrice as BN).toNumber(),
+            
+            totalUsdcWithdrew: (statusEvent.usdcTotalWithdrew as BN).toNumber() / 10 ** DECIMALS,
+            totalUsdcWithdrewTokenAmount: (statusEvent.usdcTotalWithdrew as BN).toNumber(),
+            maxTotalUsdcPlusWithdrew: (statusEvent.usdcTotalMaxPlusWithdrew as BN).toNumber() / 10 ** DECIMALS,
+            maxTotalUsdcPlusWithdrewTokenAmount: (statusEvent.usdcTotalMaxPlusWithdrew as BN).toNumber(),
+            
+            totalMeanDeallocated: (statusEvent.meanTotalDeallocated as BN).toNumber() / 10 ** DECIMALS,
+            totalMeanDeallocatedTokenAmount: (statusEvent.meanTotalDeallocated as BN).toNumber(),
+            maxTotalMeanPlusDeallocated: (statusEvent.meanTotalMaxPlusDeallocated as BN).toNumber() / 10 ** DECIMALS,
+            maxTotalMeanPlusDeallocatedTokenAmount: (statusEvent.meanTotalMaxPlusDeallocated as BN).toNumber(),
 
             // user (if set)
             hasUserContributed: false,
-            UserUsdcContributionTs: 0,
-            UserUsdcContributedAmount: 0,
-            UserUsdcContributedTokenAmount: 0,
-            UserMeanAllocatedAmount: 0,
-            UserMeanAllocatedTokenAmount: 0,
-            UserMeanImpliedAmount: 0,
-            UserMeanImpliedTokenAmount: 0, // TODO
+            userUsdcContributionTs: 0,
+            userUsdcContributedAmount: 0,
+            userUsdcContributedTokenAmount: 0,
+            userMeanAllocatedAmount: 0,
+            userMeanAllocatedTokenAmount: 0,
+            userMeanImpliedAmount: 0,
+            userMeanImpliedTokenAmount: 0,
         };
 
         if (this.userPubKey) {
@@ -353,13 +363,42 @@ export class IdoClient {
             // which is a valid case if the currently connected wallet 
             // hasen't participated yet in the ido
             if (userIdoAccount) {
+                const userUsdcContributionBn = userIdoAccount.usdcContributionAmount;
+
                 currentIdoStatus.hasUserContributed = true;
-                currentIdoStatus.UserUsdcContributionTs = userIdoAccount.usdcContributionTs.toNumber();
-                currentIdoStatus.UserUsdcContributedAmount = toUiAmount(userIdoAccount.usdcContributionAmount);
-                currentIdoStatus.UserUsdcContributedTokenAmount = userIdoAccount.usdcContributionAmount.toString();
-                currentIdoStatus.UserMeanAllocatedAmount = toUiAmount(userIdoAccount.meanAllocatedAmount);
-                currentIdoStatus.UserMeanAllocatedTokenAmount = userIdoAccount.meanAllocatedAmount.toString();
+                currentIdoStatus.userUsdcContributionTs = userIdoAccount.usdcContributionTs.toNumber();
+                currentIdoStatus.userUsdcContributedAmount = toUiAmount(userUsdcContributionBn);
+                currentIdoStatus.userUsdcContributedTokenAmount = userUsdcContributionBn.toNumber();
+                currentIdoStatus.userMeanAllocatedAmount = toUiAmount(userIdoAccount.meanAllocatedAmount);
+                currentIdoStatus.userMeanAllocatedTokenAmount = userIdoAccount.meanAllocatedAmount.toNumber();
+                
                 // TODO: calculate user implied mean amount
+                // Enforece max total usdc cap
+                const usdcTotalAtDepositTimeBn = userIdoAccount.usdcTotalBeforeDeposit as BN;
+                const usdcTotalMaxPlusWithdrewBn = statusEvent.usdcTotalMaxPlusWithdrew as BN;
+                const zeroBn = new BN(0);
+                const usdcTotalLeftBn = usdcTotalMaxPlusWithdrewBn.gt(usdcTotalAtDepositTimeBn)
+                    ? usdcTotalMaxPlusWithdrewBn.sub(usdcTotalAtDepositTimeBn)
+                    : zeroBn;
+                const userUsdcDepositedEffectiveBn = usdcTotalLeftBn.gt(zeroBn) ? BN.min(usdcTotalLeftBn, userUsdcContributionBn) : zeroBn;
+
+                const meanImpliedPrice = statusEvent.meanImpliedPrice as BN;
+                let userMeanAllocatedEffectiveBn = meanImpliedPrice.lte(zeroBn) 
+                    ? zeroBn 
+                    : new BN(10).pow(new BN(DECIMALS))
+                        .mul(userUsdcDepositedEffectiveBn)
+                        .div(meanImpliedPrice);
+
+                // Enforece max total mean allocation cap
+                const meanTotalAllocatedAtDepositTimeBn = userIdoAccount.meanAllocatedBeforeDeposit as BN;
+                const meanTotalMaxPlusDeallocatedBn = statusEvent.meanTotalMaxPlusDeallocated as BN;
+                const meanTotalLeftBn = meanTotalMaxPlusDeallocatedBn.gt(meanTotalAllocatedAtDepositTimeBn)
+                    ? meanTotalMaxPlusDeallocatedBn.sub(meanTotalAllocatedAtDepositTimeBn)
+                    : zeroBn;
+                userMeanAllocatedEffectiveBn = meanTotalLeftBn.gt(zeroBn) ? BN.min(meanTotalLeftBn, userMeanAllocatedEffectiveBn) : zeroBn;
+
+                currentIdoStatus.userMeanAllocatedAmount = toUiAmount(userMeanAllocatedEffectiveBn);
+                currentIdoStatus.userMeanAllocatedTokenAmount = userMeanAllocatedEffectiveBn.toNumber();
             }
         }
 
@@ -451,7 +490,7 @@ export class IdoClient {
 
             if(this.verbose)
                 console.log("subscribe user ido:", userIdoPubKey.toBase58());
-            const userIdoEventEmitter = this.readonlyProgram.account.idoAccount.subscribe(userIdoPubKey);
+            const userIdoEventEmitter = this.readonlyProgram.account.userIdoAccount.subscribe(userIdoPubKey);
             idoTracker.userIdoEventEmitter = userIdoEventEmitter;
             userIdoEventEmitter.on('change', (userdoAccount) => {
                 idoTracker.latestUserIdo = mapUserIdoDetails(userIdoPubKey, userdoAccount); //*
@@ -555,37 +594,47 @@ class IdoTracker {
             clusterTs: estimatedClusterTimeTs,
             secondsFromIdoStart: t.toNumber(),
             isRunning: false,
-            CurrentMeanPrice: 0,
-            CurrentMeanPriceTokenAmount: 0,
-            CurrentMaxUsdcContribution: 0,
-            CurrentMaxUsdcContributionTokenAmount: 0,
-            TotalUsdcContributed: this.latestIdo.usdcTotalCurrent,
-            TotalUsdcContributedTokenAmount: this.latestIdo.usdcTotalCurrentTokenAmount,
-            TotalMeanAllocated: this.latestIdo.meanAllocatedCurrent,
-            TotalMeanAllocatedTokenAmount: this.latestIdo.meanAllocatedCurrentTokenAmount,
-            CurrentImpliedMeanPrice: this.latestIdo.meanImpliedPrice,
-            CurrentImpliedMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
+            currentMeanPrice: 0,
+            currentMeanPriceTokenAmount: 0,
+            currentMaxUsdcContribution: 0,
+            currentMaxUsdcContributionTokenAmount: 0,
+            totalUsdcContributed: this.latestIdo.usdcTotalCurrent,
+            totalUsdcContributedTokenAmount: this.latestIdo.usdcTotalCurrentTokenAmount,
+            totalMeanAllocated: this.latestIdo.meanAllocatedCurrent,
+            totalMeanAllocatedTokenAmount: this.latestIdo.meanAllocatedCurrentTokenAmount,
+            currentImpliedMeanPrice: this.latestIdo.meanImpliedPrice,
+            currentImpliedMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
+            
+            totalUsdcWithdrew: this.latestIdo.usdcTotalWithdrew,
+            totalUsdcWithdrewTokenAmount: this.latestIdo.usdcTotalWithdrewTokenAmount,
+            maxTotalUsdcPlusWithdrew: this.latestIdo.usdcTotalMaxPlusWithdrew,
+            maxTotalUsdcPlusWithdrewTokenAmount: this.latestIdo.usdcTotalMaxPlusWithdrewTokenAmount,
+
+            totalMeanDeallocated: this.latestIdo.meanTotalDeallocated,
+            totalMeanDeallocatedTokenAmount: this.latestIdo.meanTotalDeallocatedTokenAmount,
+            maxTotalMeanPlusDeallocated: this.latestIdo.meanTotalMaxPlusDeallocated,
+            maxTotalMeanPlusDeallocatedTokenAmount: this.latestIdo.meanTotalMaxPlusDeallocatedTokenAmount,
 
             // user (if set)
             hasUserContributed: false,
-            UserUsdcContributionTs: 0,
-            UserUsdcContributedAmount: 0,
-            UserUsdcContributedTokenAmount: 0,
-            UserMeanAllocatedAmount: 0,
-            UserMeanAllocatedTokenAmount: 0,
-            UserMeanImpliedAmount: 0,
-            UserMeanImpliedTokenAmount: 0,
+            userUsdcContributionTs: 0,
+            userUsdcContributedAmount: 0,
+            userUsdcContributedTokenAmount: 0,
+            userMeanAllocatedAmount: 0,
+            userMeanAllocatedTokenAmount: 0,
+            userMeanImpliedAmount: 0,
+            userMeanImpliedTokenAmount: 0,
         }
 
         if(this.latestUserIdo) {
             status.hasUserContributed = true;
-            status.UserUsdcContributionTs = this.latestUserIdo.usdcContributionTs;
-            status.UserUsdcContributedAmount = this.latestUserIdo.usdcContributedAmount;
-            status.UserUsdcContributedTokenAmount = this.latestUserIdo.usdcContributedTokenAmount;
-            status.UserMeanAllocatedAmount = this.latestUserIdo.meanAllocatedAmount;
-            status.UserMeanAllocatedTokenAmount = this.latestUserIdo.meanAllocatedTokenAmount;
-            status.UserMeanImpliedAmount = 0; // TODO
-            status.UserMeanImpliedTokenAmount = 0; // TODO
+            status.userUsdcContributionTs = this.latestUserIdo.usdcContributionTs;
+            status.userUsdcContributedAmount = this.latestUserIdo.usdcContributedAmount;
+            status.userUsdcContributedTokenAmount = this.latestUserIdo.usdcContributedTokenAmount;
+            status.userMeanAllocatedAmount = this.latestUserIdo.meanAllocatedAmount;
+            status.userMeanAllocatedTokenAmount = this.latestUserIdo.meanAllocatedTokenAmount;
+            status.userMeanImpliedAmount = 0; // TODO
+            status.userMeanImpliedTokenAmount = 0; // TODO
         }
 
         // before start
@@ -595,10 +644,10 @@ class IdoTracker {
             //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO hasn't started yet`);
 
             status.isRunning = false;
-            status.CurrentMeanPrice = this.latestIdo.meanPriceStart;
-            status.CurrentMeanPriceTokenAmount = this.latestIdo.meanPriceStartTokenAmount;
-            status.CurrentMaxUsdcContribution = this.latestIdo.usdcPerUserMaxStart;
-            status.CurrentMaxUsdcContributionTokenAmount = this.latestIdo.usdcPerUserMaxStartTokenAmount;
+            status.currentMeanPrice = this.latestIdo.meanPriceStart;
+            status.currentMeanPriceTokenAmount = this.latestIdo.meanPriceStartTokenAmount;
+            status.currentMaxUsdcContribution = this.latestIdo.usdcPerUserMaxStart;
+            status.currentMaxUsdcContributionTokenAmount = this.latestIdo.usdcPerUserMaxStartTokenAmount;
         }
         // after end
         else if (t.gt(new BN(this.latestIdo.idoDurationInSeconds))) {
@@ -607,10 +656,10 @@ class IdoTracker {
             //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO has already ended`);
 
             status.isRunning = false;
-            status.CurrentMeanPrice = this.latestIdo.meanPriceEnd;
-            status.CurrentMeanPriceTokenAmount = this.latestIdo.meanPriceEndTokenAmount;
-            status.CurrentMaxUsdcContribution = this.latestIdo.usdcPerUserMaxEnd;
-            status.CurrentMaxUsdcContributionTokenAmount = this.latestIdo.usdcPerUserMaxEndTokenAmount;
+            status.currentMeanPrice = this.latestIdo.meanPriceEnd;
+            status.currentMeanPriceTokenAmount = this.latestIdo.meanPriceEndTokenAmount;
+            status.currentMaxUsdcContribution = this.latestIdo.usdcPerUserMaxEnd;
+            status.currentMaxUsdcContributionTokenAmount = this.latestIdo.usdcPerUserMaxEndTokenAmount;
         }
         // running
         else {
@@ -631,10 +680,10 @@ class IdoTracker {
                 new BN(this.latestIdo.idoDurationInSeconds),
                 t,
             );
-            status.CurrentMeanPrice = currentMeanPrice.toNumber() / 10 ** DECIMALS;
-            status.CurrentMeanPriceTokenAmount = currentMeanPrice.toNumber();
-            status.CurrentMaxUsdcContribution = currentMaxUsdcPerUser.toNumber() / 10 ** DECIMALS;
-            status.CurrentMaxUsdcContributionTokenAmount = currentMaxUsdcPerUser.toNumber();
+            status.currentMeanPrice = currentMeanPrice.toNumber() / 10 ** DECIMALS;
+            status.currentMeanPriceTokenAmount = currentMeanPrice.toNumber();
+            status.currentMaxUsdcContribution = currentMaxUsdcPerUser.toNumber() / 10 ** DECIMALS;
+            status.currentMaxUsdcContributionTokenAmount = currentMaxUsdcPerUser.toNumber();
         }
 
         return status;
@@ -780,8 +829,12 @@ export function mapIdoDetails(idoAddress: string, idoAccount: any): IdoDetails {
 
         usdcTotalMin: idoAccount.usdcTotalMin.toNumber() / 10**DECIMALS, // USDC_DECIMALS
         usdcTotalMinTokenAmount: idoAccount.usdcTotalMin.toNumber(),
+
         usdcTotalMax: idoAccount.usdcTotalMax.toNumber() / 10**DECIMALS, // USDC_DECIMALS
         usdcTotalMaxTokenAmount: idoAccount.usdcTotalMax.toNumber(),
+
+        meanTotalMax: idoAccount.meanTotalMax.toNumber() / 10**DECIMALS, // USDC_DECIMALS
+        meanTotalMaxTokenAmount: idoAccount.meanTotalMax.toNumber(),
 
         usdcTotalCurrent: idoAccount.usdcTotalCurrent.toNumber() / 10**DECIMALS, // USDC_DECIMALS
         usdcTotalCurrentTokenAmount: idoAccount.usdcTotalCurrent.toNumber(),
@@ -789,15 +842,30 @@ export function mapIdoDetails(idoAddress: string, idoAccount: any): IdoDetails {
         meanAllocatedCurrentTokenAmount: idoAccount.meanAllocatedCurrent.toNumber(),
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
+        
+        usdcTotalWithdrew: idoAccount.usdcTotalWithdrew.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
+        usdcTotalWithdrewTokenAmount: idoAccount.usdcTotalWithdrew.toNumber(),
+        usdcTotalMaxPlusWithdrew: idoAccount.usdcTotalMax.add(idoAccount.usdcTotalWithdrew).toNumber() / 10**DECIMALS, // USDC_DECIMALS
+        usdcTotalMaxPlusWithdrewTokenAmount: idoAccount.usdcTotalMax.add(idoAccount.usdcTotalWithdrew).toNumber(),
+        
+        meanTotalDeallocated: idoAccount.meanTotalDeallocated.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
+        meanTotalDeallocatedTokenAmount: idoAccount.meanTotalDeallocated.toNumber(),
+        meanTotalMaxPlusDeallocated: idoAccount.meanTotalMax.add(idoAccount.meanTotalDeallocated).toNumber() / 10**DECIMALS, // USDC_DECIMALS
+        meanTotalMaxPlusDeallocatedTokenAmount: idoAccount.meanTotalMax.add(idoAccount.meanTotalDeallocated).toNumber(),
 
         idoDurationInSeconds: idoAccount.idoTimes.idoEndTs.toNumber() - idoAccount.idoTimes.idoStartTs.toNumber()
     };
 }
 
 function mapUserIdoDetails(userIdoPubKey: PublicKey, userIdoAccount: any): UserIdoDetails {
+    
     return {
         address: userIdoPubKey,
         usdcContributionTs: userIdoAccount.usdcContributionTs.toNumber(),
+        usdcTotalBeforeDeposit: toUiAmount(userIdoAccount.usdcTotalBeforeDeposit),
+        usdcTotalBeforeDepositTokenAmount: userIdoAccount.usdcTotalBeforeDeposit.toNumber(),
+        meanAllocatedBeforeDeposit: toUiAmount(userIdoAccount.meanAllocatedBeforeDeposit),
+        meanAllocatedBeforeDepositTokenAmount: userIdoAccount.meanAllocatedBeforeDeposit.toNumber(),
         usdcContributedAmount: toUiAmount(userIdoAccount.usdcContributionAmount),
         usdcContributedTokenAmount: userIdoAccount.usdcContributionAmount.toNumber(),
         meanAllocatedAmount: toUiAmount(userIdoAccount.meanAllocatedAmount),
@@ -861,6 +929,8 @@ export type IdoDetails = {
     usdcTotalMinTokenAmount: number;
     usdcTotalMax: number;
     usdcTotalMaxTokenAmount: number;
+    meanTotalMax: number;
+    meanTotalMaxTokenAmount: number;
 
     usdcTotalCurrent: number;
     usdcTotalCurrentTokenAmount: number;
@@ -869,12 +939,26 @@ export type IdoDetails = {
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
 
+    usdcTotalWithdrew: number;
+    usdcTotalWithdrewTokenAmount: number;
+    usdcTotalMaxPlusWithdrew: number;
+    usdcTotalMaxPlusWithdrewTokenAmount: number;    
+
+    meanTotalDeallocated: number;
+    meanTotalDeallocatedTokenAmount: number;
+    meanTotalMaxPlusDeallocated: number;
+    meanTotalMaxPlusDeallocatedTokenAmount: number;    
+
     idoDurationInSeconds: number;
 }
 
 export type UserIdoDetails = {
     address: PublicKey;
     usdcContributionTs: number;
+    usdcTotalBeforeDeposit: number;
+    usdcTotalBeforeDepositTokenAmount: number;
+    meanAllocatedBeforeDeposit: number;
+    meanAllocatedBeforeDepositTokenAmount: number;
     usdcContributedAmount: number;
     usdcContributedTokenAmount: number;
     meanAllocatedAmount: number;
@@ -886,27 +970,35 @@ export type IdoStatus = {
     clusterTs: number,
     secondsFromIdoStart: number,
     isRunning: boolean,
-    CurrentMeanPrice: number,
-    CurrentMeanPriceTokenAmount: number,
-    CurrentMaxUsdcContribution: number,
-    CurrentMaxUsdcContributionTokenAmount: number,
+    currentMeanPrice: number,
+    currentMeanPriceTokenAmount: number,
+    currentMaxUsdcContribution: number,
+    currentMaxUsdcContributionTokenAmount: number,
 
-    TotalUsdcContributed: number,
-    TotalUsdcContributedTokenAmount: number,
-    TotalMeanAllocated: number,
-    TotalMeanAllocatedTokenAmount: number,
-    CurrentImpliedMeanPrice: number,
-    CurrentImpliedMeanPriceTokenAmount: number,
+    totalUsdcContributed: number,
+    totalUsdcContributedTokenAmount: number,
+    totalMeanAllocated: number,
+    totalMeanAllocatedTokenAmount: number,
+    currentImpliedMeanPrice: number,
+    currentImpliedMeanPriceTokenAmount: number,
+    totalUsdcWithdrew: number,
+    totalUsdcWithdrewTokenAmount: number,
+    maxTotalUsdcPlusWithdrew: number,
+    maxTotalUsdcPlusWithdrewTokenAmount: number,
+    totalMeanDeallocated: number,
+    totalMeanDeallocatedTokenAmount: number,
+    maxTotalMeanPlusDeallocated: number,
+    maxTotalMeanPlusDeallocatedTokenAmount: number,
 
     // user (if set)
     hasUserContributed: boolean,
-    UserUsdcContributionTs: number,
-    UserUsdcContributedAmount: number,
-    UserUsdcContributedTokenAmount: number,
-    UserMeanAllocatedAmount: number,
-    UserMeanAllocatedTokenAmount: number,
-    UserMeanImpliedAmount: number,
-    UserMeanImpliedTokenAmount: number,
+    userUsdcContributionTs: number,
+    userUsdcContributedAmount: number,
+    userUsdcContributedTokenAmount: number,
+    userMeanAllocatedAmount: number,
+    userMeanAllocatedTokenAmount: number,
+    userMeanImpliedAmount: number,
+    userMeanImpliedTokenAmount: number,
 }
 
 //#endregion
