@@ -5,10 +5,11 @@ import {
     TransactionInstruction} from '@solana/web3.js';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import * as anchor from "@project-serum/anchor";
-import { BN, parseIdlErrors, ProgramError } from "@project-serum/anchor";
+import { BN, parseIdlErrors, Program, ProgramError } from "@project-serum/anchor";
 import { Wallet } from "@project-serum/anchor/src/provider";
 import ido_idl from './mean_ido_pool.json';
 import EventEmitter from 'eventemitter3';
+// import { MeanIdoPool } from "./mean_ido_pool_types";
 
 // CONSTANTS
 const SYSTEM_PROGRAM_ID = anchor.web3.SystemProgram.programId;
@@ -165,6 +166,77 @@ export class IdoClient {
         depositUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, depositUsdcTx];
+    }
+
+    public async createWithdrawUsdcTx(
+        meanIdoAddress: PublicKey,
+        amount: number,
+    ): Promise<[PublicKey, Transaction]> {
+
+        const currentUserPubKey = this.userPubKey;
+        if(!currentUserPubKey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(currentUserPubKey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        // TODO: params check
+        if (amount <= 0)
+            throw Error("Invalid amount");
+        // TODO: more validation
+
+        const idoAccount = await program.account.idoAccount.fetch(meanIdoAddress);
+        if(idoAccount === null)
+           throw new Error("IDO account not found");
+
+        const userUsdcAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.usdcMint,
+            currentUserPubKey,
+          );
+        if (userUsdcAddress === null) {
+            throw Error("user USDC ATA not found");
+        }
+
+        const [userIdo, userIdoBump] = await this.findUserIdoProgramAddress(currentUserPubKey, meanIdoAddress);
+
+        const usdcAmountBn = new anchor.BN(amount).mul(new BN(10).pow(DECIMALS_BN));
+        // const userUsdcTokenResponse = await program.provider.connection.getTokenAccountBalance(userUsdcAddress);
+        // const userUsdcTokenAmount = new BN(userUsdcTokenResponse.value.amount ?? 0);
+        // if (userUsdcTokenAmount.lt(usdcAmountBn)) {
+        //     throw Error("Insufficient USDC balance");
+        // }
+
+        if (this.verbose) {
+            console.log(` userIdoAuthority:    ${currentUserPubKey}`);
+            console.log(` userUsdc:            ${userUsdcAddress}`);
+            console.log(` idoAddress:          ${meanIdoAddress}`);
+            console.log(` userIdo:             ${userIdo}`);
+            console.log(` userUsdcAmount:      ${usdcAmountBn.toNumber()}`);
+            console.log();
+        }
+
+        const withdrawUsdcTx = program.transaction.withdrawUsdc(
+            usdcAmountBn,
+            {
+                accounts: {
+                    userAuthority: currentUserPubKey,
+                    userUsdc: userUsdcAddress,
+                    userIdo: userIdo,
+                    idoAccount: meanIdoAddress,
+                    usdcMint: idoAccount.usdcMint,
+                    usdcPool: idoAccount.usdcPool,
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                },
+            }
+        );
+
+        withdrawUsdcTx.feePayer = currentUserPubKey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        withdrawUsdcTx.recentBlockhash = hash.blockhash;
+
+        return [userIdo, withdrawUsdcTx];
     }
 
     public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
@@ -351,7 +423,7 @@ export class IdoClient {
 
         const currentIdoStatus = await this.getIdoStatus(new PublicKey(idoPubkey));
         const clusterTimeOffsetInSeconds = currentIdoStatus.clusterTs - Math.floor(Date.now() / 1000);
-        console.log("clusterTimeOffsetInSeconds", clusterTimeOffsetInSeconds)
+        // console.log("clusterTimeOffsetInSeconds", clusterTimeOffsetInSeconds)
         
         if(this.verbose)
             console.log("subscribe ido:", idoPubkey.toBase58());
@@ -683,6 +755,8 @@ export function mapIdoDetails(idoAddress: string, idoAccount: any): IdoDetails {
         idoEndUtc: tsToUTCString(idoAccount.idoTimes.idoEndTs.toNumber()),
         redeemStartTs: idoAccount.idoTimes.redeemStartTs.toNumber(),
         redeemStartUtc: tsToUTCString(idoAccount.idoTimes.redeemStartTs.toNumber()),
+        redeemEndTs: idoAccount.idoTimes.redeemEndTs.toNumber(),
+        redeemEndUtc: tsToUTCString(idoAccount.idoTimes.redeemEndTs.toNumber()),
 
         idoMeanAmount: idoAccount.idoMeanAmount.toNumber(),
 
@@ -747,6 +821,7 @@ type IdoTimes = {
     idoStartTs: BN;
     idoEndTs: BN;
     redeemStartTs: BN;
+    redeemEndTs: BN;
 };
 
 export type IdoDetails = {
@@ -760,6 +835,8 @@ export type IdoDetails = {
     idoEndUtc: string;
     redeemStartTs: number;
     redeemStartUtc: string;
+    redeemEndTs: number;
+    redeemEndUtc: string;
 
     idoMeanAmount: number;
 
