@@ -73,6 +73,17 @@ export const IdoDeposit = (props: {
     return '';
   }
 
+  const getPercentualValueWithMaxCap = (percentualAmount: number, totalAmount: number) => {
+    let retValue = 0;
+    const cappedAmount = totalAmount <= props.max ? totalAmount : props.max;
+    if (percentualAmount === 100) {
+      retValue = cappedAmount;
+    } else {
+      retValue = percentage(percentualAmount, cappedAmount);
+    }
+    return retValue;
+  }
+
   const setPercentualValue = (percentualAmount: number, totalAmount: number) => {
     let newValue = '';
     if (percentualAmount === 100) {

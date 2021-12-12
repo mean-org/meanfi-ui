@@ -28,6 +28,7 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { CUSTOM_USDC } from '../../constants/token-list';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -48,7 +49,6 @@ export const IdoLiveView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const {
     theme,
-    tokenList,
     tokenBalance,
     selectedToken,
     isWhitelisted,
@@ -103,7 +103,7 @@ export const IdoLiveView = () => {
     }
   }, [userCountryCode]);
 
-  // TODO: Remove when releasing to the public
+  // TODO: Remove whitelist filter when releasing to the public
   useEffect(() => {
     if (isUserBlocked) {
       navigate('/ido-blocked');
@@ -362,10 +362,7 @@ export const IdoLiveView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        const usdc = tokenList.filter(t => t.symbol === 'USDC');
-        if (usdc && usdc.length) {
-          setSelectedToken(usdc[0]);
-        }
+        setSelectedToken(CUSTOM_USDC);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
@@ -375,7 +372,6 @@ export const IdoLiveView = () => {
   }, [
     connected,
     publicKey,
-    tokenList,
     previousWalletConnectState,
     setSelectedTokenBalance,
     refreshTokenBalance,

@@ -1,5 +1,21 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
+export const CUSTOM_USDC = {
+    chainId: 103,
+    address: 'HSGE9EozPkewznZQ9cLBC3m15B88SEPuqi6Mv7TBgDre',
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+    tags: [
+        'stablecoin',
+    ],
+    extensions: {
+        website: 'https://www.centre.io/',
+        coingeckoId: 'usd-coin',
+    },
+}
+
 export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL'];
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
