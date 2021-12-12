@@ -340,6 +340,9 @@ h1, h2, h3, h4, h5, h6 {
 .bg-black {
   background-color: var(--color-black);
 }
+.fg-orange-red {
+  color: var(--color-orange-red) !important;
+}
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
 }
@@ -6544,6 +6547,14 @@ code {
   }
 }
 
+.pulsate {
+  animation: pulsate 3s ease-out;
+  animation-iteration-count: infinite; 
+  -webkit-animation: pulsate 1.5s ease-out;
+  -webkit-animation-iteration-count: infinite; 
+  opacity: 0.5;
+}
+
 // Animations
 @keyframes rotate {
   100% {
@@ -6616,5 +6627,29 @@ code {
   }
   to {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes pulsate {
+  0% { 
+      opacity: 0.5;
+  }
+  50% { 
+      opacity: 1.0;
+  }
+  100% { 
+      opacity: 0.5;
+  }
+}
+
+@-webkit-keyframes pulsate {
+  0% { 
+      opacity: 0.5;
+  }
+  50% { 
+      opacity: 1.0;
+  }
+  100% { 
+      opacity: 0.5;
   }
 }

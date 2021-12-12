@@ -1,9 +1,8 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_CAP_VALUATION,
-  IDO_MIN_CONTRIBUTION,
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
@@ -74,6 +73,25 @@ export const IdoLiveView = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
+
+  // Gets user countryCode
+  useEffect(() => {
+    const onSuccess = function(geoipResponse: any) {
+      setUserCountryCode(geoipResponse.country.iso_code);
+      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
+    };
+  
+    const onError = function(error: any) {
+      console.error(error);
+    };
+  
+    if (status === 'ready' && library) {
+      geoip2.city(onSuccess, onError);
+    }
+  }, [
+    status,
+    library
+  ]);
 
   useEffect(() => {
     if (userCountryCode) {
@@ -337,25 +355,6 @@ export const IdoLiveView = () => {
     refreshTokenBalance
   ]);
 
-  // Gets user countryCode
-  useEffect(() => {
-    const onSuccess = function(geoipResponse: any) {
-      setUserCountryCode(geoipResponse.country.iso_code);
-      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
-    };
-  
-    const onError = function(error: any) {
-      console.error(error);
-    };
-  
-    if (status === 'ready' && library) {
-      geoip2.city(onSuccess, onError);
-    }
-  }, [
-    status,
-    library
-  ]);
-
   // Hook on the wallet connect/disconnect
   useEffect(() => {
 
@@ -449,7 +448,7 @@ export const IdoLiveView = () => {
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
-        min={IDO_MIN_CONTRIBUTION}
+        min={idoDetails.usdcPerUserMin}
         max={idoStatus.CurrentMaxUsdcContribution}
       />;
     } else {
@@ -517,14 +516,20 @@ export const IdoLiveView = () => {
 
       {/* Bind redeemable MEAN tokens */}
       <div className="flex-row justify-content-start align-items-start">
-        <div className="flex-auto inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
-        <div className="flex-fill value-display line-height-150 text-left pl-2">100 MEAN tokens (10%)</div>
+        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
+        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
+          <span className="fg-orange-red pulsate mr-1">100</span>
+          <span>MEAN tokens (10%)</span>
+        </div>
       </div>
 
       {/* Bind streamable MEAN tokens */}
       <div className="flex-row justify-content-start align-items-start">
-        <div className="flex-auto inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
-        <div className="flex-fill value-display line-height-150 text-left pl-2">900 MEAN tokens (90%) over 12 months</div>
+        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
+        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
+          <span className="fg-orange-red pulsate mr-1">900</span>
+          <span>MEAN tokens (90%) over 12 months</span>
+        </div>
       </div>
     </>
   );
