@@ -200,7 +200,7 @@ export class IdoClient {
 
         const [userIdo, userIdoBump] = await this.findUserIdoProgramAddress(currentUserPubKey, meanIdoAddress);
 
-        const usdcAmountBn = new anchor.BN(amount).mul(new BN(10).pow(DECIMALS_BN));
+        const usdcAmountBn = new anchor.BN(amount * 10**DECIMALS);
         // const userUsdcTokenResponse = await program.provider.connection.getTokenAccountBalance(userUsdcAddress);
         // const userUsdcTokenAmount = new BN(userUsdcTokenResponse.value.amount ?? 0);
         // if (userUsdcTokenAmount.lt(usdcAmountBn)) {
@@ -749,43 +749,43 @@ async function createAtaCreateInstruction(
   return [ataAddress, ataCreateInstruction];
 }
 
-export function meanPriceCurve(ps: BN, pe: BN, T: BN, t: BN): BN {
+export function meanPriceCurve(ps: BN, pe: BN, t_total: BN, t: BN): BN {
     const meanPrice =
         ps
             .mul(pe)
-            .mul(T)
+            .mul(t_total)
             .div(
                 t
                 .mul(ps.sub(pe))
                 .add(
-                    T
+                    t_total
                     .mul(pe)
                 )
             );
     return meanPrice;
 }
 
-export function usdcMaxCurve(us: BN, ue: BN, T: BN, t: BN): BN {
+export function usdcMaxCurve(us: BN, ue: BN, t_total: BN, t: BN): BN {
     const uDelta = us.sub(ue);
     const kFactor = uDelta.mul(new BN(10)).div(new BN(100)); // 10% of uDelta
     const yAdd = uDelta.add(new BN(2).mul(ue)).div(new BN(2));
 
     let tSub: BN;
-    if (t.gte(T.div(new BN(2)))) {
-        tSub = (new BN(2)).mul(t).sub(T);
+    if (t.gte(t_total.div(new BN(2)))) {
+        tSub = (new BN(2)).mul(t).sub(t_total);
     } else {
-        tSub = T.sub(new BN(2).mul(t));
+        tSub = t_total.sub(new BN(2).mul(t));
     }
 
     const numerator = uDelta
         .add(new BN(2).mul(kFactor))
         .mul(tSub).mul(uDelta);
-    const denominator = (new BN(4)).mul(T).mul(kFactor)
+    const denominator = (new BN(4)).mul(t_total).mul(kFactor)
         .add(
             (new BN(2)).mul(uDelta).mul(tSub)
         );
 
-    if (t.gte(T.div(new BN(2)))) {
+    if (t.gte(t_total.div(new BN(2)))) {
         return yAdd.sub(numerator.div(denominator));
     } else {
         return yAdd.add(numerator.div(denominator));
