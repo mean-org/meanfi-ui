@@ -12,3 +12,4 @@ export { SwapView } from './exchange';
 export { TransfersView } from './transfers';
 export { TreasuriesView } from './treasuries';
 export { WrapView } from './wrap';
+export { MultisigView } from './multisig';

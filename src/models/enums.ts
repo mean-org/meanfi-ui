@@ -68,7 +68,13 @@ export enum OperationType {
     DdcaCreate = 20,
     DdcaAddFunds = 21,
     DdcaWithdraw = 22,
-    DdcaClose = 23
+    DdcaClose = 23,
+    // Multisig options
+    CreateMultisig = 30,
+    MintToken = 31,
+    TransferTokens = 32,
+    UpgradeProgram = 33,
+    CreateVault = 34
 }
 
 export enum AllocationType {
