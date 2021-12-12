@@ -438,14 +438,14 @@ export const IdoLiveView = () => {
     if (currentTab === "deposit") {
       return <IdoDeposit
         disabled={!isIdoActive()}
-        contributedAmount={idoStatus.TotalUsdcContributed}
+        contributedAmount={idoStatus.totalUsdcContributed}
         totalMeanForSale={idoDetails.usdcTotalCurrent}
-        tokenPrice={idoStatus.CurrentImpliedMeanPrice}
+        tokenPrice={idoStatus.currentImpliedMeanPrice}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
         min={idoDetails.usdcPerUserMin}
-        max={idoStatus.CurrentMaxUsdcContribution}
+        max={idoStatus.currentMaxUsdcContribution}
       />;
     } else {
       return <IdoWithdraw disabled={!isIdoActive()} />;
@@ -476,7 +476,7 @@ export const IdoLiveView = () => {
           {infoRow(
             'USDC Contributed',
             getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.TotalUsdcContributed,
+              idoStatus.totalUsdcContributed,
               selectedToken.address,
               true
             )
@@ -484,7 +484,7 @@ export const IdoLiveView = () => {
           {infoRow(
             'Total MEAN sold',
             getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.TotalMeanAllocated,
+              idoStatus.totalMeanAllocated,
               '',
               true
             )
@@ -492,7 +492,7 @@ export const IdoLiveView = () => {
           {infoRow(
             'Implied token price',
             getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.CurrentMeanPrice,
+              idoStatus.currentMeanPrice,
               selectedToken.address
             )
           )}
