@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
@@ -28,12 +28,13 @@ import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
+import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
 declare const geoip2: any;
 
-export const IdoDevView = () => {
+export const IdoLiveView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
@@ -49,6 +50,8 @@ export const IdoDevView = () => {
   const {
     theme,
     tokenList,
+    tokenBalance,
+    selectedToken,
     isWhitelisted,
     previousWalletConnectState,
     setTheme,
@@ -64,19 +67,27 @@ export const IdoDevView = () => {
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
   const [idosLoaded, setIdosLoaded] = useState(false);
-  const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
+  const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
+  const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
 
+  const isUserBlocked = useCallback(() => {
+    return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+  }, [userCountryCode]);
+
   // TODO: Remove when releasing to the public
   useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
+    if (isUserBlocked()) {
+      navigate('/ido-blocked');
+    } else if (!isWhitelisted && !isLocal()) {
       navigate('/');
     }
   }, [
     isWhitelisted,
+    isUserBlocked,
     navigate
   ]);
 
@@ -212,15 +223,18 @@ export const IdoDevView = () => {
       setIdoDetails(details);
       let parsedDate = Date.parse(details.idoStartUtc);
       let fromParsedDate = new Date(parsedDate);
-      consoleOut('idoStartUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
       consoleOut('idoStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
       setIdoStartUtc(fromParsedDate);
 
       parsedDate = Date.parse(details.idoEndUtc);
       fromParsedDate = new Date(parsedDate);
-      consoleOut('idoEndUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
       consoleOut('idoEndUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
       setIdoEndUtc(fromParsedDate);
+
+      parsedDate = Date.parse(details.redeemStartUtc);
+      fromParsedDate = new Date(parsedDate);
+      consoleOut('redeemStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+      setRedeemStartUtc(fromParsedDate);
 
       try {
         await idoClient.startTracking(
@@ -362,6 +376,12 @@ export const IdoDevView = () => {
     setSelectedToken,
   ]);
 
+  const isIdoActive = () => {
+    return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
+      ? true
+      : false;
+  }
+
   const onAcknowledgeRegionLimitations = () => {
     consoleOut('Clicked on Acknowledge');
     setRegionLimitationAcknowledged(true);
@@ -380,8 +400,17 @@ export const IdoDevView = () => {
             "http://placehold.it/300&text=banner6"];
   }, []);
 
-  const isUserBlocked = () => {
-    return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <div className="flex-fixed-right line-height-180">
+        <div className="left inner-label">
+          <span>{caption}</span>
+        </div>
+        <div className="right value-display">
+          <span>{value}</span>
+        </div>
+      </div>
+    );
   }
 
   const renderRegionAcknowledgement = (
@@ -405,46 +434,118 @@ export const IdoDevView = () => {
   const renderForm = () => {
     if (currentTab === "deposit") {
       return <IdoDeposit
-        disabled={isUserBlocked()}
+        disabled={!isIdoActive()}
         contributedAmount={90381439.9773}
         totalMeanForSale={4000000}
         tokenPrice={22.5953}
+        selectedToken={selectedToken}
+        tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
         min={IDO_MIN_CONTRIBUTION}
         max={21000}
       />;
     } else {
-      return <IdoWithdraw disabled={isUserBlocked()} />;
+      return <IdoWithdraw disabled={!isIdoActive()} />;
     }
   }
 
-  const renderTabset = (
+  const renderDepositAndWithdrawTabset = (
+    <>
+      <div className="button-tabset-container">
+        <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
+          Deposit
+        </div>
+        <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onTabChange("withdraw")}>
+          Withdraw
+        </div>
+      </div>
+      {renderForm()}
+    </>
+  );
+
+  const renderClaimsTabset = (
+    <>
+      <div className="button-tabset-container">
+        <div className="tab-button active">Redeem</div>
+      </div>
+      {(idoStatus && selectedToken) && (
+        <div className="px-1 mb-2">
+          {infoRow(
+            'USDC Contributed',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.TotalUsdcContributed,
+              selectedToken.address,
+              true
+            )
+          )}
+          {infoRow(
+            'Total MEAN sold',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.TotalMeanAllocated,
+              '',
+              true
+            )
+          )}
+          {infoRow(
+            'Implied token price',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.CurrentMeanPrice,
+              selectedToken.address
+            )
+          )}
+        </div>
+      )}
+
+      <Button
+        className="main-cta mb-2"
+        block
+        type="primary"
+        shape="round"
+        size="large"
+        disabled={!redeemStartUtc || today < redeemStartUtc}
+        onClick={() => {}}>
+        Redeem &amp; Start Vesting
+      </Button>
+
+      {/* Bind redeemable MEAN tokens */}
+      <div className="flex-row justify-content-start align-items-start">
+        <div className="flex-auto inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
+        <div className="flex-fill value-display line-height-150 text-left pl-2">100 MEAN tokens (10%)</div>
+      </div>
+
+      {/* Bind streamable MEAN tokens */}
+      <div className="flex-row justify-content-start align-items-start">
+        <div className="flex-auto inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
+        <div className="flex-fill value-display line-height-150 text-left pl-2">900 MEAN tokens (90%) over 12 months</div>
+      </div>
+    </>
+  );
+
+  const renderIdoForms = (
     <>
       <div className="ido-form-wrapper">
         {/* Countdown timer */}
-        {(idoStartUtc && idoEndUtc) && (
-          <div className="countdown-timer">
-            {today < idoStartUtc ? (
-              <>
-              <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
-              </>
-            ) : today > idoStartUtc && today < idoEndUtc ? (
-              <p className="font-size-90 font-bold text-center">Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
-            ) : null}
-          </div>
+        {(idoStartUtc && idoEndUtc && redeemStartUtc) && (
+          <>
+            <div className="countdown-timer">
+              <div className={`text-center ${today < idoEndUtc ? 'panel1 show' : 'panel1 hide'}`}>
+                <p className={`font-size-90 font-bold ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
+                <p className={`font-size-90 font-bold ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
+              </div>
+              <div className={`text-center ${today > idoEndUtc && today < redeemStartUtc ? 'panel2 show' : 'panel2 hide'}`}>
+                <p className={`font-size-90 font-bold`}>Claims period starts in <Countdown date={redeemStartUtc} daysInHours={true} /></p>
+              </div>
+            </div>
+            {/* Form */}
+            <div className="shadowed-box max-width">
+              {
+                today <= idoEndUtc
+                  ? renderDepositAndWithdrawTabset
+                  : renderClaimsTabset
+              }
+            </div>
+          </>
         )}
-        {/* Form */}
-        <div className="shadowed-box max-width">
-          <div className="button-tabset-container">
-            <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
-              Deposit
-            </div>
-            <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onTabChange("withdraw")}>
-              Withdraw
-            </div>
-          </div>
-          {renderForm()}
-        </div>
       </div>
     </>
   );
@@ -482,6 +583,7 @@ export const IdoDevView = () => {
         </div>
       )}
 
+      {/* Page title */}
       <section className="content contrast-section no-padding">
         <div className="container">
           <div className="heading-section">
@@ -493,6 +595,7 @@ export const IdoDevView = () => {
       <section className="content contrast-section pt-5 pb-5">
         <div className="container">
           <Row>
+
             <Col xs={24} md={16}>
               <div className="flex-column flex-center h-100 px-4">
                 {(idoStartUtc && idoEndUtc) && (
@@ -528,11 +631,12 @@ export const IdoDevView = () => {
                 )}
               </div>
             </Col>
+
             <Col xs={24} md={8}>
               <div className="flex-column flex-center h-100 px-5 pb-5">
                 {!regionLimitationAcknowledged
                   ? renderRegionAcknowledgement
-                  : renderTabset
+                  : renderIdoForms
                 }
               </div>
             </Col>

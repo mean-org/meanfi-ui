@@ -1,27 +1,24 @@
 import React from 'react';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { Button } from 'antd';
-import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, isValidNumber, truncateFloat } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { consoleOut, percentage } from '../../utils/ui';
-import { Identicon } from '../../components/Identicon';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
+import { TokenInfo } from '@solana/spl-token-registry';
 
 export const IdoDeposit = (props: {
   disabled: boolean;
   contributedAmount: number;
   totalMeanForSale: number;
   tokenPrice: number;
+  tokenBalance: number;
+  selectedToken: TokenInfo | undefined;
   maxFullyDilutedMarketCapAllowed: number;
   min: number;
   max: number;
 }) => {
-  const {
-    selectedToken,
-    tokenBalance
-  } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { connected } = useWallet();
   const [depositAmount, setDepositAmount] = useState<string>('');
@@ -40,10 +37,10 @@ export const IdoDeposit = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
-    return selectedToken &&
-           tokenBalance &&
+    return props.selectedToken &&
+           props.tokenBalance &&
            depositAmount && parseFloat(depositAmount) > 0 &&
-           parseFloat(depositAmount) <= tokenBalance
+           parseFloat(depositAmount) <= props.tokenBalance
             ? true
             : false;
   }
@@ -51,11 +48,11 @@ export const IdoDeposit = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : !selectedToken || !tokenBalance
+      : !props.selectedToken || !props.tokenBalance
       ? t('transactions.validation.no-balance')
       : !depositAmount || !isValidNumber(depositAmount) || !parseFloat(depositAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(depositAmount) > tokenBalance
+      : parseFloat(depositAmount) > props.tokenBalance
       ? t('transactions.validation.amount-high')
       : t('transactions.validation.valid-approve');
   }
@@ -65,10 +62,10 @@ export const IdoDeposit = (props: {
   }
 
   const getDisplayAmount = (amount: any, addSymbol = false): string => {
-    if (selectedToken) {
-      const bareAmount = truncateFloat(amount, selectedToken.decimals);
+    if (props.selectedToken) {
+      const bareAmount = truncateFloat(amount, props.selectedToken.decimals);
       if (addSymbol) {
-        return bareAmount + ' ' + selectedToken.symbol;
+        return bareAmount + ' ' + props.selectedToken.symbol;
       }
       return bareAmount;
     }
@@ -111,36 +108,39 @@ export const IdoDeposit = (props: {
         <div className="left">
           <div className="form-label">Amount</div>
         </div>
-        {selectedToken && (
+        {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max simplelink ${tokenBalance < props.min && 'disabled'}`}
+              className={`token-max simplelink ${props.tokenBalance < props.min && 'disabled'}`}
               onClick={() => setDepositAmount(
-                getTokenAmountAndSymbolByTokenAddress(props.min, selectedToken.address, true)
+                getTokenAmountAndSymbolByTokenAddress(
+                  props.min,
+                  props.selectedToken ? props.selectedToken.address : '',
+                  true)
               )}>
               MIN
             </div>
             <div
               className="token-max simplelink"
-              onClick={() => setPercentualValue(25, tokenBalance)}>
+              onClick={() => setPercentualValue(25, props.tokenBalance)}>
               25%
             </div>
             <div
               className="token-max simplelink"
-              onClick={() => setPercentualValue(50, tokenBalance)}>
+              onClick={() => setPercentualValue(50, props.tokenBalance)}>
               50%
             </div>
             <div
               className="token-max simplelink"
-              onClick={() => setPercentualValue(75, tokenBalance)}>
+              onClick={() => setPercentualValue(75, props.tokenBalance)}>
               75%
             </div>
             <div
               className="token-max simplelink"
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
-                  tokenBalance <= props.max ? tokenBalance : props.max,
-                  selectedToken.address,
+                  props.tokenBalance <= props.max ? props.tokenBalance : props.max,
+                  props.selectedToken ? props.selectedToken.address : '',
                   true
                 )
               )}>
@@ -153,10 +153,10 @@ export const IdoDeposit = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
-              {selectedToken && (
+              {props.selectedToken && (
                 <TokenDisplay onClick={() => {}}
-                  mintAddress={selectedToken.address}
-                  name={selectedToken.name}
+                  mintAddress={props.selectedToken.address}
+                  name={props.selectedToken.name}
                   showCaretDown={true}
                 />
               )}
@@ -184,8 +184,8 @@ export const IdoDeposit = (props: {
           <div className="left inner-label">
             <span>{t('add-funds.label-right')}:</span>
             <span>
-              {`${tokenBalance && selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+              {`${props.tokenBalance && props.selectedToken
+                  ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.selectedToken?.address, true)
                   : "0"
               }`}
             </span>
@@ -201,13 +201,13 @@ export const IdoDeposit = (props: {
       </div>
 
       {/* Info */}
-      {selectedToken && (
+      {props.selectedToken && (
         <div className="px-1 mb-2">
           {infoRow(
             'USDC Contributed',
             getTokenAmountAndSymbolByTokenAddress(
               props.contributedAmount,
-              selectedToken.address,
+              props.selectedToken.address,
               true
             )
           )}
@@ -223,11 +223,11 @@ export const IdoDeposit = (props: {
             'Implied token price',
             getTokenAmountAndSymbolByTokenAddress(
               props.tokenPrice,
-              selectedToken.address
+              props.selectedToken.address
             )
           )}
           {infoRow(
-            'Implied token price',
+            'Max Fully Diluted Market Cap Allowed',
             formatAmount(
               props.maxFullyDilutedMarketCapAllowed,
               2,

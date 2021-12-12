@@ -161,8 +161,8 @@ export const AppBar = (props: {
       </Menu.Item>
       {(isWhitelisted || isLocal()) && (
         <>
-        <Menu.Item key="/ido-dev">
-          <Link to="/ido-dev">IDO (Dev)</Link>
+        <Menu.Item key="/ido-live">
+          <Link to="/ido-live">IDO (Dev)</Link>
         </Menu.Item>
         </>
       )}
@@ -277,8 +277,8 @@ export const AppBar = (props: {
               {/* TODO: Remove this limitation when releasing to the public */}
               {(isWhitelisted || isLocal()) && (
                 <>
-                <li key="/ido-dev" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
-                  <Link to="/ido-dev">IDO (Dev)</Link>
+                <li key="/ido-live" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
+                  <Link to="/ido-live">IDO (Dev)</Link>
                 </li>
                 </>
               )}
