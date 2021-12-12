@@ -37,24 +37,28 @@ export const IdoDeposit = (props: {
   // Validation
 
   const isValidInput = (): boolean => {
+    const amount = depositAmount ? parseFloat(depositAmount) : 0;
     return props.selectedToken &&
            props.tokenBalance &&
-           depositAmount && parseFloat(depositAmount) > 0 &&
-           parseFloat(depositAmount) <= props.tokenBalance
+           amount > 0 && amount >= props.min &&
+           amount <= props.tokenBalance
             ? true
             : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
+    const amount = depositAmount ? parseFloat(depositAmount) : 0;
     return !connected
       ? t('transactions.validation.not-connected')
       : !props.selectedToken || !props.tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !depositAmount || !isValidNumber(depositAmount) || !parseFloat(depositAmount)
-      ? t('transactions.validation.no-amount')
-      : parseFloat(depositAmount) > props.tokenBalance
-      ? t('transactions.validation.amount-high')
-      : t('transactions.validation.valid-approve');
+        ? t('transactions.validation.no-balance')
+        : !amount
+          ? t('transactions.validation.no-amount')
+          : amount < props.min
+            ? 'Balance too low'
+            : amount > props.tokenBalance
+              ? t('transactions.validation.amount-high')
+              : t('transactions.validation.valid-approve');
   }
 
   const onExecuteDepositTx = () => {
@@ -86,15 +90,12 @@ export const IdoDeposit = (props: {
 
   const setPercentualValue = (percentualAmount: number, totalAmount: number) => {
     let newValue = '';
+    const cappedAmount = totalAmount <= props.max ? totalAmount : props.max;
     if (percentualAmount === 100) {
-      newValue = getDisplayAmount(totalAmount);
+      newValue = getDisplayAmount(cappedAmount);
     } else {
-      const partialAmount = percentage(percentualAmount, totalAmount);
-      if (partialAmount <= props.max) {
-        newValue = getDisplayAmount(partialAmount);
-      } else {
-        newValue = getDisplayAmount(props.max);
-      }
+      const partialAmount = percentage(percentualAmount, cappedAmount);
+      newValue = getDisplayAmount(partialAmount);
     }
     setDepositAmount(newValue);
   }
@@ -122,35 +123,35 @@ export const IdoDeposit = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max simplelink ${props.tokenBalance < props.min && 'disabled'}`}
+              className={`token-max ${connected ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
-                  props.min,
+                  props.tokenBalance > props.min ? props.min : props.tokenBalance,
                   props.selectedToken ? props.selectedToken.address : '',
                   true)
               )}>
               MIN
             </div>
             <div
-              className="token-max simplelink"
+              className={`token-max ${connected ? 'simplelink' : 'disabled'}`}
               onClick={() => setPercentualValue(25, props.tokenBalance)}>
               25%
             </div>
             <div
-              className="token-max simplelink"
+              className={`token-max ${connected ? 'simplelink' : 'disabled'}`}
               onClick={() => setPercentualValue(50, props.tokenBalance)}>
               50%
             </div>
             <div
-              className="token-max simplelink"
+              className={`token-max ${connected ? 'simplelink' : 'disabled'}`}
               onClick={() => setPercentualValue(75, props.tokenBalance)}>
               75%
             </div>
             <div
-              className="token-max simplelink"
+              className={`token-max ${connected ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
-                  props.tokenBalance <= props.max ? props.tokenBalance : props.max,
+                  props.tokenBalance > props.max ? props.max : props.tokenBalance,
                   props.selectedToken ? props.selectedToken.address : '',
                   true
                 )
@@ -166,9 +167,12 @@ export const IdoDeposit = (props: {
             <span className="add-on">
               {props.selectedToken && (
                 <TokenDisplay onClick={() => {}}
-                  mintAddress={props.selectedToken.address}
                   name={props.selectedToken.name}
-                  showCaretDown={true}
+                  showName={false}
+                  symbol={props.selectedToken.symbol}
+                  mintAddress={props.selectedToken.address}
+                  icon={<img alt={`${props.selectedToken.name}`} width={20} height={20} src={props.selectedToken.logoURI} />}
+                  showCaretDown={false}
                 />
               )}
             </span>
