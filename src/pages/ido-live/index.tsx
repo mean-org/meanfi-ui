@@ -437,15 +437,14 @@ export const IdoLiveView = () => {
     if (!idoStatus || !idoDetails) { return null; }
     if (currentTab === "deposit") {
       return <IdoDeposit
+        connection={connection}
+        idoClient={idoClient}
+        idoDetails={idoDetails}
+        idoStatus={idoStatus}
         disabled={!isIdoActive()}
-        contributedAmount={idoStatus.totalUsdcContributed}
-        totalMeanForSale={idoDetails.usdcTotalCurrent}
-        tokenPrice={idoStatus.currentImpliedMeanPrice}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
-        min={idoDetails.usdcPerUserMin}
-        max={idoStatus.currentMaxUsdcContribution}
       />;
     } else {
       return <IdoWithdraw disabled={!isIdoActive()} />;
@@ -586,11 +585,11 @@ export const IdoLiveView = () => {
   return (
     <div className="solid-bg">
 
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           <span className="ml-1">idoEngineInitStatus:</span><span className="ml-1 font-bold fg-dark-active">{idoEngineInitStatus || '-'}</span>
         </div>
-      )}
+      )} */}
 
       {/* Page title */}
       <section className="content contrast-section no-padding">
