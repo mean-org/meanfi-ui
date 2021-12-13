@@ -791,19 +791,15 @@ export const MultisigView = () => {
               });
           }
 
-          console.log('multisigInfoArray', multisigInfoArray);
           setMultisigAccounts(multisigInfoArray);
-
-          if (multisigInfoArray.length > 0 && selectedMultisig === undefined) {
-            console.log('multisigInfoArray[0]', multisigInfoArray[0]);
-            setSelectedMultisig(multisigInfoArray[0]);
-          }
-
+          setSelectedMultisig(multisigInfoArray[0]);
           setLoadingMultisigAccounts(false);
-
         }
       )
-      .catch(err => console.error(err));
+      .catch(err => {
+        console.error(err);
+        setLoadingMultisigAccounts(false);
+      });
 
     });
 
@@ -876,11 +872,12 @@ export const MultisigView = () => {
   // Update selected multisig txs
   useEffect(() => {
 
-    if (!connection || !connected || !selectedMultisig) { 
+    if (!connection || !connected || !selectedMultisig || !loadingMultisigTxs) { 
       return;
     }
 
     const timeout = setTimeout(() => {
+      setLoadingMultisigTxs(true);
       let transactions: MultisigTransactionInfo[] = [];
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
@@ -911,6 +908,11 @@ export const MultisigView = () => {
           }
           console.log('transactions', transactions);
           setMultisigPendingTxs(transactions);
+          setLoadingMultisigTxs(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoadingMultisigTxs(false);
         });   
     });
 
@@ -922,8 +924,11 @@ export const MultisigView = () => {
     connection, 
     connected, 
     selectedMultisig, 
-    multisigClient.account.transaction
-  ])
+    multisigClient.account.transaction, 
+    loadingMultisigTxs
+  ]);
+
+  
 
   // END MULTISIG
 
