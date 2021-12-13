@@ -94,6 +94,8 @@ import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import { BN, Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal';
+import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
+import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -607,6 +609,27 @@ export const MultisigView = () => {
     }
 
   },[t])
+
+  // Transfer token modal
+  const [isTransferTokenModalVisible, setIsTransferTokenModalVisibility] = useState(false);
+  const showTransferTokenModal = useCallback(() => {
+    setIsTransferTokenModalVisibility(true);
+    // TODO: Hardcoded fees, we can work on this later
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+  const closeTransferTokenModal = useCallback(() => setIsTransferTokenModalVisibility(false), []);
+  const onAcceptTransferToken = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteTransferTokensTx(params);
+  };
+
+  const onExecuteTransferTokensTx = useCallback(async (data: any) => {
+  }, []);
 
   // Mint token modal
   const showMintTokenModal = useCallback(() => {
@@ -1526,7 +1549,6 @@ export const MultisigView = () => {
   ]);
 
   const onAcceptMintToken = (params: any) => {
-    // TODO: Execute Tx
     consoleOut('params', params, 'blue');
     onExecuteMintTokensTx(params);
   };
@@ -1543,15 +1565,6 @@ export const MultisigView = () => {
     lastSentTxOperationType,
   ]);
 
-  // Shows transfer tokens modal
-  const onShowTransferTokensModal = useCallback(() => {
-
-    return {
-
-    }
-
-  },[]);
-
   const isSendingTokens = useCallback((): boolean => {
 
     return ( 
@@ -1564,14 +1577,26 @@ export const MultisigView = () => {
     lastSentTxOperationType,
   ]);
 
-  // Shows upgrade program modal
-  const onShowUpgradeProgramModal = useCallback(() => {
+  // Upgrade program modal
+  const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisibility] = useState(false);
+  const showUpgradeProgramModal = useCallback(() => {
+    setIsUpgradeProgramModalVisibility(true);
+    // TODO: Hardcoded fees, we can work on this later
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+  const closeUpgradeProgramModal = useCallback(() => setIsUpgradeProgramModalVisibility(false), []);
+  const onAcceptUpgradeProgram = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteUpgradeProgramsTx(params);
+  };
 
-    return {
-
-    }
-
-  },[]);
+  const onExecuteUpgradeProgramsTx = useCallback(async (data: any) => {
+  }, []);
 
   const isUpgradingProgram = useCallback((): boolean => {
 
@@ -4195,7 +4220,7 @@ export const MultisigView = () => {
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={onShowTransferTokensModal}>
+            onClick={showTransferTokenModal}>
             {isSendingTokens() && (<LoadingOutlined />)}
             {isSendingTokens()
               ? t('multisig.multisig-account-detail.cta-transfer-busy')
@@ -4207,7 +4232,7 @@ export const MultisigView = () => {
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={onShowUpgradeProgramModal}>
+            onClick={showUpgradeProgramModal}>
             {isUpgradingProgram() && (<LoadingOutlined />)}
             {isUpgradingProgram()
               ? t('multisig.multisig-account-detail.cta-upgrade-program-busy')
@@ -4482,6 +4507,24 @@ export const MultisigView = () => {
         transactionFees={transactionFees}
         handleOk={onAcceptMintToken}
         handleClose={() => setIsMintTokenModalVisibility(false)}
+        isBusy={isBusy}
+      />
+
+      <MultisigTransferTokensModal
+        isVisible={isTransferTokenModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        handleOk={onAcceptTransferToken}
+        handleClose={closeTransferTokenModal}
+        isBusy={isBusy}
+      />
+
+      <MultisigUpgradeProgramModal
+        isVisible={isUpgradeProgramModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        handleOk={onAcceptUpgradeProgram}
+        handleClose={closeUpgradeProgramModal}
         isBusy={isBusy}
       />
 

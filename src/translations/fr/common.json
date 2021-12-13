@@ -499,15 +499,16 @@
 			"loading-transactions": "Loading transactions"
 		},
 		"create-multisig": {
-			"modal-title": "Create multisig account",
-			"multisig-label-input-label": "Multisig label",
-			"multisig-label-input-empty": "Enter a multisig label",
-			"multisig-label-placeholder": "Type a label for your multisig account",
+			"modal-title": "Create multisig",
+			"multisig-label-input-label": "Multisig name",
+			"multisig-label-input-empty": "Enter a multisig name",
+			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
-			"multisig-participants": "Participants",
+			"multisig-participants": "Valid signers",
 			"multisig-no-participants": "No participans added yet",
+			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"success-message": "Your new multisig account was created successfully."
@@ -523,6 +524,28 @@
 			"mint-amount-label": "Amount",
 			"mint-amount-placeholder": "Enter the amount of tokens to mint",
 			"success-message": "Your tokens were minted successfully."
+		},
+		"transfer-tokens": {
+			"modal-title": "Transfer tokens",
+			"main-cta": "Transfer tokens",
+			"main-cta-busy": "Transferring tokens",
+			"source-address-label": "Transfer from",
+			"source-address-placeholder": "Enter the address of the source account",
+			"transfer-to-label": "Transfer to",
+			"transfer-to-placeholder": "Enter the address of the destination account",
+			"transfer-amount-label": "Amount",
+			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
+			"success-message": "Tokens transferred successfully."
+		},
+		"upgrade-program": {
+			"modal-title": "Upgrade program",
+			"main-cta": "Upgrade",
+			"main-cta-busy": "Upgrading program",
+			"program-address-label": "Program ID",
+			"program-address-placeholder": "Enter the address of the program",
+			"buffer-account-label": "New program buffer",
+			"buffer-account-placeholder": "Enter the address of the buffer account",
+			"success-message": "Program upgraded successfully."
 		}
 	},
 	"swap": {
@@ -655,6 +678,7 @@
 		"validation": {
 			"invalid-solana-address": "Invalid solana address",
 			"address-validation": "Format d'adresse non valide",
+			"valid-address-required": "A valid solana address is required",
 			"cannot-use-own-account-as-treasury": "Impossible d'utiliser votre compte comme identifiant de trésorerie",
 			"amount-high": "Le montant dépasse votre solde",
 			"amount-low": "Pas assez de solde",
