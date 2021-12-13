@@ -44,7 +44,7 @@ const idl: Idl = {
       "accounts": [
         {
           "name": "multisig",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -183,7 +183,7 @@ const idl: Idl = {
       "accounts": [
         {
           "name": "multisig",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
