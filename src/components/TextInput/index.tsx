@@ -6,6 +6,7 @@ export const TextInput = (props: {
     label?: string;
     hint?: string;
     value: string;
+    extraClass?: string;
     placeholder: string;
     onInputChange: any;
     allowClear?: boolean;
@@ -17,7 +18,7 @@ export const TextInput = (props: {
         {props.label && (
             <div className="form-label">{props.label}</div>
         )}
-        <div className="well">
+        <div className={`well ${props.extraClass || ''}`}>
             <div className="flex-fixed-right">
                 <div className="left">
                     <input
