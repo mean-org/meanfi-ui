@@ -501,15 +501,16 @@
 			"loading-transactions": "Loading transactions"
 		},
 		"create-multisig": {
-			"modal-title": "Create multisig account",
-			"multisig-label-input-label": "Multisig label",
-			"multisig-label-input-empty": "Enter a multisig label",
-			"multisig-label-placeholder": "Type a label for your multisig account",
+			"modal-title": "Create multisig",
+			"multisig-label-input-label": "Multisig name",
+			"multisig-label-input-empty": "Enter a multisig name",
+			"multisig-label-placeholder": "Type a name for your multisig account",
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
-			"multisig-participants": "Participants",
+			"multisig-participants": "Valid signers",
 			"multisig-no-participants": "No participans added yet",
+			"multisig-duplicate-participants": "Found duplicate participants, please review.",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"success-message": "Your new multisig account was created successfully."
@@ -660,6 +661,7 @@
 		"validation": {
 			"invalid-solana-address": "Invalid solana address",
 			"address-validation": "Not a valid address format",
+			"valid-address-required": "A valid solana address is required",
 			"cannot-use-own-account-as-treasury": "Cannot use your account as treasury id",
 			"amount-high": "Amount exceeds your {{symbol}} balance",
 			"amount-low": "Not enough balance",

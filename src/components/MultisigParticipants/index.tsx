@@ -1,6 +1,7 @@
 import { PlusOutlined } from "@ant-design/icons";
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { isValidAddress } from "../../utils/ui";
 import { TextInput } from "../TextInput";
 
 export const MultisigParticipants = (props: {
@@ -27,6 +28,10 @@ export const MultisigParticipants = (props: {
         props.onParticipantsChanged(items);
     }, [props]);
 
+    const checkIfDuplicateExists = (arr: string[]): boolean => {
+        return new Set(arr).size !== arr.length ? true : false;
+    }
+
     return (
         <>
         {props.participants && props.participants.length > 0 ? (
@@ -39,7 +44,9 @@ export const MultisigParticipants = (props: {
                             id={`participant-${index + 1}`}
                             value={participant}
                             allowClear={true}
+                            alwaysShowClear={true}
                             key={`${index}`}
+                            error={isValidAddress(participant) ? '' : t("transactions.validation.valid-address-required")}
                             onInputClear={() => onRemoveSingleItem(index)}
                             onInputChange={(e: any) => {
                                 const value = e.target.value;
@@ -48,6 +55,9 @@ export const MultisigParticipants = (props: {
                         />
                     );
                 })}
+                {checkIfDuplicateExists(props.participants) && (
+                    <span className="form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
+                )}
             </div>
         ) : (
             <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>

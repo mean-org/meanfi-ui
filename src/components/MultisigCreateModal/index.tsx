@@ -7,7 +7,7 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
 import { TreasuryTypeOption } from '../../models/treasury-definition';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription } from '../../utils/ui';
+import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
@@ -68,6 +68,10 @@ export const MultisigCreateModal = (props: {
 
   const onLabelInputValueChange = (e: any) => {
     setMultisigLabel(e.target.value);
+  }
+
+  const isOwnersListValid = () => {
+    return multisigOwners.every(o => o.length > 0 && isValidAddress(o));
   }
 
   const onThresholdInputValueChange = (e: any) => {
@@ -225,7 +229,7 @@ export const MultisigCreateModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!multisigThreshold || multisigOwners.length < multisigThreshold}
+            disabled={!multisigThreshold || !multisigLabel || multisigOwners.length < multisigThreshold || !isOwnersListValid()}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
