@@ -73,6 +73,7 @@ export const IdoLiveView = () => {
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
   const [isUserBlocked, setIsUserBlocked] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
+  const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -310,7 +311,10 @@ export const IdoLiveView = () => {
   useEffect(() => {
     let timer: any;
 
-    if (idoEngineInitStatus === "started" && !idoStatus) {
+    if (idoEngineInitStatus === "started" && (!idoStatus || forceRefreshIdoStatus)) {
+      if (forceRefreshIdoStatus) {
+        setForceRefreshIdoStatus(false);
+      }
       refreshIdoData();
     }
 
@@ -325,6 +329,7 @@ export const IdoLiveView = () => {
   }, [
     idoStatus,
     idoEngineInitStatus,
+    forceRefreshIdoStatus,
     refreshIdoData
   ]);
 
@@ -468,10 +473,12 @@ export const IdoLiveView = () => {
         consoleOut('Nothing to do yet...', '', 'blue');
         setSelectedToken(CUSTOM_USDC);
         setIdoEngineInitStatus("uninitialized");
+        setForceRefreshIdoStatus(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
         setIdoEngineInitStatus("uninitialized");
+        setForceRefreshIdoStatus(true);
       }
     }
 
