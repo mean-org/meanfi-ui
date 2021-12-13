@@ -29,7 +29,7 @@ export const MultisigParticipants = (props: {
 
     return (
         <>
-        {props.participants && props.participants.length > 0 && (
+        {props.participants && props.participants.length > 0 ? (
             <div className="mb-3">
                 {props.participants.map((participant: string, index: number) => {
                     return (
@@ -49,6 +49,8 @@ export const MultisigParticipants = (props: {
                     );
                 })}
             </div>
+        ) : (
+            <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
         )}
         <div className="text-right mt-3">
             <span className="flat-button change-button" onClick={() => addParticipant()}>

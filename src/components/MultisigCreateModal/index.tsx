@@ -11,7 +11,8 @@ import { getTransactionOperationDescription } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { MultisigParticipants } from '../MultisigParticipants';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -77,7 +78,12 @@ export const MultisigCreateModal = (props: {
   }
 
   const onThresholdInputValueChange = (e: any) => {
-    setMultisigThreshold(parseInt(e.target.value));
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
+      setMultisigThreshold(0);
+    } else if (isValidNumber(newValue)) {
+      setMultisigThreshold(+newValue);
+    }
   }
 
   return (
@@ -129,19 +135,24 @@ export const MultisigCreateModal = (props: {
                       className="w-100 general-text-input"
                       autoComplete="off"
                       autoCorrect="off"
-                      type="number"
+                      type="text"
+                      pattern="^[0-9]*$"
                       onChange={onThresholdInputValueChange}
                       placeholder={t('multisig.create-multisig.multisig-threshold-placeholder')}
                       value={multisigThreshold}
                     />
                   </div>
                 </div>
-                <div className="form-field-hint">I.e. "My company payroll", "Seed round vesting", etc.</div>
               </div>
             </div>
 
-            {/* Treasury type selector */}
-            
+            {/* Multisig Owners selector */}
+            <div className="form-label">{t('multisig.create-multisig.multisig-participants')}</div>
+            <MultisigParticipants
+              participants={multisigOwners}
+              onParticipantsChanged={(e: string[]) => setMultisigOwners(e)}
+            />
+
           </>
         ) : transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? (
           <>
@@ -221,7 +232,7 @@ export const MultisigCreateModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!multisigThreshold || !multisigOwners.length || maxParticipantLength < multisigOwners.length}
+            disabled={!multisigThreshold || multisigOwners.length < multisigThreshold || multisigOwners.length > maxParticipantLength}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
@@ -231,9 +242,6 @@ export const MultisigCreateModal = (props: {
                 refreshPage();
               }
             }}>
-            {/* {props.isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            )} */}
             {props.isBusy
               ? t('multisig.create-multisig.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle

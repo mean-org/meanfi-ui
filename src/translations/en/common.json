@@ -508,6 +508,8 @@
 			"multisig-threshold-input-label": "Minimum required signatures",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"multisig-participants": "Participants",
+			"multisig-no-participants": "No participans added yet",
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"success-message": "Your new multisig account was created successfully."
