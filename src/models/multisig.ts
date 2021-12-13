@@ -29,7 +29,7 @@ export type MultisigTransactionInfo = {
   operation: OperationType;
   multisig: PublicKey;
   programId: PublicKey;
-  signers: number;
+  signers: boolean[];
   createdOn: Date;
   executedOn: Date | undefined,
   status: MultisigTransactionStatus
