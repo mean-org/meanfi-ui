@@ -204,7 +204,23 @@
             "type": "u64"
           },
           {
+            "name": "usdcTotalDeposited",
+            "type": "u64"
+          },
+          {
+            "name": "usdcTotalWithdrew",
+            "type": "u64"
+          },
+          {
             "name": "usdcTotalCurrent",
+            "type": "u64"
+          },
+          {
+            "name": "meanTotalAllocated",
+            "type": "u64"
+          },
+          {
+            "name": "meanTotalDeallocated",
             "type": "u64"
           },
           {
@@ -213,14 +229,6 @@
           },
           {
             "name": "meanImpliedPrice",
-            "type": "u64"
-          },
-          {
-            "name": "usdcTotalWithdrew",
-            "type": "u64"
-          },
-          {
-            "name": "meanTotalDeallocated",
             "type": "u64"
           }
         ]
@@ -253,11 +261,19 @@
             "type": "i64"
           },
           {
-            "name": "usdcTotalBeforeDeposit",
+            "name": "usdcTotalDepositedSnapshot",
             "type": "u64"
           },
           {
-            "name": "meanAllocatedBeforeDeposit",
+            "name": "usdcTotalWithdrewSnapshot",
+            "type": "u64"
+          },
+          {
+            "name": "meanTotalAllocatedSnapshot",
+            "type": "u64"
+          },
+          {
+            "name": "meanTotalDeallocatedSnapshot",
             "type": "u64"
           },
           {
@@ -338,6 +354,16 @@
           "index": false
         },
         {
+          "name": "usdcTotalMax",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "meanTotalMax",
+          "type": "u64",
+          "index": false
+        },
+        {
           "name": "meanPriceCurrent",
           "type": "u64",
           "index": false
@@ -348,7 +374,27 @@
           "index": false
         },
         {
+          "name": "usdcTotalDeposited",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "usdcTotalWithdrew",
+          "type": "u64",
+          "index": false
+        },
+        {
           "name": "usdcTotalCurrent",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "meanTotalAllocated",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "meanTotalDeallocated",
           "type": "u64",
           "index": false
         },
@@ -359,26 +405,6 @@
         },
         {
           "name": "meanImpliedPrice",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "usdcTotalWithdrew",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "usdcTotalMaxPlusWithdrew",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "meanTotalDeallocated",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "meanTotalMaxPlusDeallocated",
           "type": "u64",
           "index": false
         }
