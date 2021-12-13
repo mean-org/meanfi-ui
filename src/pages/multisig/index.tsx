@@ -103,12 +103,12 @@ export const MultisigView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
-    theme,
+    // theme,
     tokenList,
     tokenBalance,
     isWhitelisted,
     selectedToken,
-    treasuryOption,
+    // treasuryOption,
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
@@ -168,7 +168,7 @@ export const MultisigView = () => {
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransactionInfo[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
-  const [loadingMultisigPendingTxs, setLoadingMultisigPendingTxs] = useState(false);
+  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigAccountInfo | undefined>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransactionInfo | undefined>();
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
@@ -709,7 +709,7 @@ export const MultisigView = () => {
       return "Approve";
     } else if (mtx.status === MultisigTransactionStatus.Approved) {
       return "Execute";
-    } else if(mtx.signers === 0) {
+    } else if(mtx.signers.filter((s: boolean) => s === true).length === 0) {
       return "Approve";
     } else {
       return "Executed"
@@ -723,7 +723,7 @@ export const MultisigView = () => {
       return "info";
     } else if (mtx.status === MultisigTransactionStatus.Approved) {
       return "error";
-    } else if(mtx.signers === 0) {
+    } else if(mtx.signers.filter((s: boolean) => s === true).length === 0) {
       return "warning"
     } else {
       return "darken"
@@ -820,6 +820,59 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
+  // Subscribe to multisig account changes
+  useEffect(() => {
+
+    if (!connection || !connected || !selectedMultisig) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      multisigClient.account.multisig
+        .subscribe(selectedMultisig.id)
+        .on("change", (account) => {
+
+          let address: any;
+          let labelBuffer = Buffer
+            .alloc(account.label.length, account.label)
+            .filter(function (elem, index) { return elem !== 0; }
+          );
+
+          PublicKey
+            .findProgramAddress([selectedMultisig.id.toBuffer()], MEAN_MULTISIG)
+            .then(k => { 
+
+              address = k[0];
+              let multisigInfo = {
+                id: account.publicKey,
+                label: new TextDecoder().decode(labelBuffer),
+                address,
+                nounce: account.nounce,
+                ownerSeqNumber: account.ownerSetSeqno,
+                threshold: account.threshold.toNumber(),
+                pendingTxsAmount: new BN(account.pendingTxs).toNumber(),
+                createdOnUtc: new Date(new BN(account.createdOn).toNumber() * 1000),
+                owners: account.owners  
+              } as MultisigAccountInfo;
+
+              setSelectedMultisig(multisigInfo);
+
+            });
+          }
+        );
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connected, 
+    connection, 
+    multisigClient, 
+    selectedMultisig
+  ]);
+
   // Update selected multisig txs
   useEffect(() => {
 
@@ -828,13 +881,37 @@ export const MultisigView = () => {
     }
 
     const timeout = setTimeout(() => {
-      let txs: MultisigTransactionInfo[] = [];
-      for (let item of Object.values(TestMultisigTransactions)) {
-        if (item.multisig.equals(selectedMultisig.id)) {
-          txs.push(item);
-        }
-      }
-      setMultisigPendingTxs(txs);      
+      let transactions: MultisigTransactionInfo[] = [];
+      multisigClient.account.transaction
+        .all(selectedMultisig.id.toBuffer())
+        .then((txs) => {
+          console.log('txs', txs);
+          for (let tx of txs) {
+            let txInfo = {
+              id: tx.publicKey,
+              multisig: tx.account.multisig,
+              programId: tx.account.programId,
+              signers: tx.account.signers,
+              createdOn: new Date(new BN(tx.account.createdOn).toNumber()),
+              executedOn: tx.account.executedOn 
+                ? new Date(new BN(tx.account.executedOn).toNumber()) 
+                : undefined,
+
+              status: tx.account.signers.filter((s: boolean) => s === true).length === selectedMultisig.threshold 
+                ? MultisigTransactionStatus.Approved
+                : MultisigTransactionStatus.Pending,
+
+              operation: Object
+                .values(OperationType)
+                .filter(t => t === new BN(tx.account.operationType).toNumber())[0]
+
+            } as MultisigTransactionInfo;
+
+            transactions.push(txInfo);
+          }
+          console.log('transactions', transactions);
+          setMultisigPendingTxs(transactions);
+        });   
     });
 
     return () => {
@@ -842,9 +919,10 @@ export const MultisigView = () => {
     }
 
   }, [
-    connection,
+    connection, 
     connected, 
-    selectedMultisig
+    selectedMultisig, 
+    multisigClient.account.transaction
   ])
 
   // END MULTISIG
@@ -2999,11 +3077,11 @@ export const MultisigView = () => {
 
     if (!selectedMultisig) {
       return null;
-    } else if (selectedMultisig && loadingMultisigPendingTxs) {
+    } else if (selectedMultisig && loadingMultisigTxs) {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.loading-transactions')}</div>
       );
-    } else if (selectedMultisig && !loadingMultisigPendingTxs && multisigPendingTxs.length === 0) {
+    } else if (selectedMultisig && !loadingMultisigTxs && multisigPendingTxs.length === 0) {
       return (
         <div className="mb-2">{t('multisig.multisig-transactions.no-transactions')}</div>
       );
@@ -3054,7 +3132,11 @@ export const MultisigView = () => {
                       className={`badge small ${getTransactionStatusClass(item)}`} 
                       style={{
                         padding: '3px 5px',
-                        cursor: item.signers === selectedMultisig.threshold && item.status === MultisigTransactionStatus.Executed ? 'not-allowed' : 'pointer'
+                        cursor: 
+                          item.signers.filter(s => s === true).length === selectedMultisig.threshold && 
+                          item.status === MultisigTransactionStatus.Executed 
+                            ? 'not-allowed' 
+                            : 'pointer'
                       }}>
                       {
                         ` ${getTransactionStatusAction(item)} `
@@ -3381,7 +3463,7 @@ export const MultisigView = () => {
                           </>
                         )}
                       </Spin>
-                      {(!loadingMultisigAccounts && !loadingMultisigAccountDetails && !loadingMultisigPendingTxs) && (
+                      {(!loadingMultisigAccounts && !loadingMultisigAccountDetails && !loadingMultisigTxs) && (
                         <>
                         {(!multisigAccounts || multisigAccounts.length === 0) && !selectedMultisig && (
                           <div className="h-100 flex-center">
