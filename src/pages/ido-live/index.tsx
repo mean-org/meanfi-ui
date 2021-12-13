@@ -29,6 +29,7 @@ import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-cli
 import { appConfig } from '../..';
 import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC } from '../../constants/token-list';
+import { PartnerImage } from '../../models/common-types';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -404,19 +405,9 @@ export const IdoLiveView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
         setSelectedToken(CUSTOM_USDC);
-        // if (idoClient) {
-        //   consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
-        //   idoClient.stopTracking();
-        //   setIdoStatus(undefined);
-        // }
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
-        // if (idoClient) {
-        //   consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
-        //   idoClient.stopTracking();
-        //   setIdoStatus(undefined);
-        // }
       }
     }
 
@@ -445,17 +436,17 @@ export const IdoLiveView = () => {
     setCurrentTab(option);
   }
 
-  const partnerImages = useMemo(() => {
+  const partnerImages = useMemo((): PartnerImage[] => {
     return [
-      "/assets/investors/three-arrows.png",
-      "/assets/investors/defiance.png",
-      "/assets/investors/softbank.png",
-      "/assets/investors/svc.png",
-      "/assets/investors/sesterce.png",
-      "/assets/investors/bigbrainholdings.png",
-      "/assets/investors/gerstenbrot.png",
-      "/assets/investors/solar-eco-fund.png",
-      "/assets/investors/bts-capital.png",
+      {fileName: "three-arrows.png", size: "small"},
+      {fileName: "defiance.png", size: "small"},
+      {fileName: "softbank.png", size: "small"},
+      {fileName: "svc.png", size: "small"},
+      {fileName: "sesterce.png", size: "small"},
+      {fileName: "bigbrainholdings.png", size: "small"},
+      {fileName: "gerstenbrot.png", size: "small"},
+      {fileName: "solar-eco-fund.png", size: "small"},
+      {fileName: "bts-capital.png", size: "small"},
     ];
   }, []);
 
@@ -666,6 +657,12 @@ export const IdoLiveView = () => {
             <>
             <span className="mr-1">USDC Deposited:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
             <span className="mr-1">USDC Contributed:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcContributed || '-'}</span>
+            {publicKey && (
+              <>
+              <span className="mr-1">hasUserContributed:</span>
+              <span className="mr-1 font-bold fg-dark-active">{idoStatus.hasUserContributed ? 'true' : 'false'}</span>
+              </>
+            )}
             </>
           )}
         </div>
@@ -746,10 +743,15 @@ export const IdoLiveView = () => {
       <section className="content">
         <div className="container">
           <h1 className="heading ido-heading text-center">Investors</h1>
-          <Row gutter={[32, 32]} justify="center">
-            {partnerImages.map((image: string, index: number) => {
+          <Row gutter={[32, 32]} justify="center" align="middle">
+            {partnerImages.map((image: PartnerImage, index: number) => {
               return (
-                <Col key={`${index}`} className="partner flex-center"><img className="partner-logo" src={image} alt="" /></Col>
+                <Col key={`${index}`} className="partner flex-center">
+                  <img
+                    className={`partner-logo ${image.size}`}
+                    src={`/assets/investors/${image.fileName}`}
+                    alt={image.fileName} />
+                </Col>
               );
             })}
           </Row>
