@@ -536,6 +536,16 @@
 			"transfer-amount-label": "Amount",
 			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
 			"success-message": "Tokens transferred successfully."
+		},
+		"upgrade-program": {
+			"modal-title": "Upgrade program",
+			"main-cta": "Upgrade",
+			"main-cta-busy": "Upgrading program",
+			"program-address-label": "Program ID",
+			"program-address-placeholder": "Enter the address of the program",
+			"buffer-account-label": "New program buffer",
+			"buffer-account-placeholder": "Enter the address of the buffer account",
+			"success-message": "Program upgraded successfully."
 		}
 	},
 	"swap": {
