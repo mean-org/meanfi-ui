@@ -4193,10 +4193,10 @@ export const MultisigView = () => {
                     {t('multisig.multisig-account-detail.authority')}
                   </span>
                 </div>
-                <div className="transaction-detail-row">
+                <div className="transaction-detail-row stream-share-ctas">
                   <div onClick={() => copyMultisigAddress(selectedMultisig.address)} 
                        className="copy-cta info-data flex-row wrap align-items-center"
-                       style={{cursor: 'pointer'}}>
+                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
                     {shortenAddress(selectedMultisig.address.toBase58(), 8)}
                   </div>
                 </div>
