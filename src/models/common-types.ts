@@ -12,3 +12,9 @@ export interface TreasuryTopupParams {
     allocationType: AllocationType;
     streamId?: string;
 }
+
+export interface PartnerImage {
+    fileName: string;
+    altText?: string;
+    size: string;
+}

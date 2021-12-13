@@ -3,7 +3,6 @@ import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_CAP_VALUATION,
-  IDO_MIN_CONTRIBUTION,
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
@@ -28,17 +27,20 @@ import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
+import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { CUSTOM_USDC } from '../../constants/token-list';
+import { PartnerImage } from '../../models/common-types';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
 declare const geoip2: any;
 
-export const IdoDevView = () => {
+export const IdoLiveView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
@@ -48,7 +50,8 @@ export const IdoDevView = () => {
   const [nativeBalance, setNativeBalance] = useState(0);
   const {
     theme,
-    tokenList,
+    tokenBalance,
+    selectedToken,
     isWhitelisted,
     previousWalletConnectState,
     setTheme,
@@ -63,20 +66,55 @@ export const IdoDevView = () => {
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
-  const [idosLoaded, setIdosLoaded] = useState(false);
-  const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
+  // const [idosLoaded, setIdosLoaded] = useState(false);
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
+  const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
+  const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
+  const [isUserBlocked, setIsUserBlocked] = useState(false);
+  const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
 
-  // TODO: Remove when releasing to the public
+  // Gets user countryCode
   useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
+    const onSuccess = function(geoipResponse: any) {
+      setUserCountryCode(geoipResponse.country.iso_code);
+      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
+    };
+  
+    const onError = function(error: any) {
+      console.error(error);
+    };
+  
+    if (status === 'ready' && library) {
+      geoip2.city(onSuccess, onError);
+    }
+  }, [
+    status,
+    library
+  ]);
+
+  useEffect(() => {
+    if (userCountryCode) {
+      consoleOut('Detected countryCode:', userCountryCode, 'blue');
+      const matched = userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+      setIsUserBlocked(matched);
+    } else {
+      consoleOut('No countryCode detected!', '', 'blue');
+    }
+  }, [userCountryCode]);
+
+  // TODO: Remove whitelist filter when releasing to the public
+  useEffect(() => {
+    if (isUserBlocked) {
+      navigate('/ido-blocked');
+    } else if (!isWhitelisted && !isLocal()) {
       navigate('/');
     }
   }, [
     isWhitelisted,
+    isUserBlocked,
     navigate
   ]);
 
@@ -139,19 +177,57 @@ export const IdoDevView = () => {
     connectionConfig.endpoint
   ]);
 
-  // Create and cache the IDO client
-  const idoClient = useMemo(() => {
+  // Hook on the wallet connect/disconnect event
+  useEffect(() => {
+    if (wallet) {
+      wallet.on("connect", () => {
+        if (wallet.publicKey) {
+          consoleOut('New wallet connected:', wallet.publicKey.toBase58(), 'blue');
+          if (idoClient) {
+            consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+            idoClient.stopTracking();
+            setTimeout(() => {
+              setIdoEngineInitStatus("uninitialized");
+            }, 100);
+          }
+        }
+      });
+
+      wallet.on("disconnect", () => {
+        if (idoClient) {
+          consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+          idoClient.stopTracking();
+        }
+      });
+    }
+
+    return () => {
+      if (idoClient) {
+        consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+        idoClient.stopTracking();
+      }
+    };
+  }, [
+    wallet,
+    idoClient
+  ]);
+
+  // Create the IDO client
+  useEffect(() => {
     if (!connection || !connectionConfig.endpoint) {
       consoleOut('This is odd. No connection!', '', 'red');
       return;
     }
 
-    return new IdoClient(
+    const client = new IdoClient(
       connectionConfig.endpoint,
       publicKey || undefined,
       { commitment: "confirmed" },
       isLocal() ? true : false
     );
+    consoleOut('client:', client ? client.toString() : 'none', 'brown');
+    setIdoClient(client);
+
   }, [
     publicKey,
     connection,
@@ -159,35 +235,35 @@ export const IdoDevView = () => {
   ]);
 
   // Get a list of available IDOs for reference
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (!idoClient || !publicKey || idosLoaded) { return; }
+  //   if (!idoClient || !publicKey || idosLoaded) { return; }
 
-    setIdosLoaded(true);
+  //   setIdosLoaded(true);
 
-    idoClient.listIdos(true, true)
-      .then(myIdos => {
-        consoleOut('myIdos:', myIdos, 'blue');
-        const idosTable: any[] = [];
-        myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
-          address: item.idoAddress,
-          startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
-          endUtc: new Date(item.idoEndUtc).toLocaleDateString()
-          })
-        );
-        console.table(idosTable);
-      })
-      .catch(error => {
-        console.error(error);
-      })
+  //   idoClient.listIdos(true, true)
+  //     .then(myIdos => {
+  //       consoleOut('myIdos:', myIdos, 'blue');
+  //       const idosTable: any[] = [];
+  //       myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
+  //         address: item.idoAddress,
+  //         startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
+  //         endUtc: new Date(item.idoEndUtc).toLocaleDateString()
+  //         })
+  //       );
+  //       console.table(idosTable);
+  //     })
+  //     .catch(error => {
+  //       console.error(error);
+  //     })
 
-    return () => {};
+  //   return () => {};
 
-  }, [
-    publicKey,
-    idoClient,
-    idosLoaded,
-  ]);
+  // }, [
+  //   publicKey,
+  //   idoClient,
+  //   idosLoaded,
+  // ]);
 
   // Init IDO client and store tracked data
   useEffect(() => {
@@ -212,15 +288,18 @@ export const IdoDevView = () => {
       setIdoDetails(details);
       let parsedDate = Date.parse(details.idoStartUtc);
       let fromParsedDate = new Date(parsedDate);
-      consoleOut('idoStartUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
       consoleOut('idoStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
       setIdoStartUtc(fromParsedDate);
 
       parsedDate = Date.parse(details.idoEndUtc);
       fromParsedDate = new Date(parsedDate);
-      consoleOut('idoEndUtc.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
       consoleOut('idoEndUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
       setIdoEndUtc(fromParsedDate);
+
+      parsedDate = Date.parse(details.redeemStartUtc);
+      fromParsedDate = new Date(parsedDate);
+      consoleOut('redeemStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+      setRedeemStartUtc(fromParsedDate);
 
       try {
         await idoClient.startTracking(
@@ -239,7 +318,6 @@ export const IdoDevView = () => {
 
     if (!idoStatus && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
       consoleOut('idoAccountAddress:', idoAccountAddress, 'blue');
-      consoleOut('client:', idoClient ? idoClient.toString() : 'none', 'brown');
       consoleOut('Calling initIdo()...', '', 'blue');
       setIdoEngineInitStatus("initializing");
       initIdo();
@@ -316,25 +394,6 @@ export const IdoDevView = () => {
     refreshTokenBalance
   ]);
 
-  // Gets user countryCode
-  useEffect(() => {
-    const onSuccess = function(geoipResponse: any) {
-      setUserCountryCode(geoipResponse.country.iso_code);
-      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
-    };
-  
-    const onError = function(error: any) {
-      console.error(error);
-    };
-  
-    if (status === 'ready' && library) {
-      geoip2.city(onSuccess, onError);
-    }
-  }, [
-    status,
-    library
-  ]);
-
   // Hook on the wallet connect/disconnect
   useEffect(() => {
 
@@ -342,10 +401,7 @@ export const IdoDevView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        const usdc = tokenList.filter(t => t.symbol === 'USDC');
-        if (usdc && usdc.length) {
-          setSelectedToken(usdc[0]);
-        }
+        setSelectedToken(CUSTOM_USDC);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
@@ -355,12 +411,18 @@ export const IdoDevView = () => {
   }, [
     connected,
     publicKey,
-    tokenList,
+    idoClient,
     previousWalletConnectState,
     setSelectedTokenBalance,
     refreshTokenBalance,
     setSelectedToken,
   ]);
+
+  const isIdoActive = () => {
+    return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
+      ? true
+      : false;
+  }
 
   const onAcknowledgeRegionLimitations = () => {
     consoleOut('Clicked on Acknowledge');
@@ -371,17 +433,31 @@ export const IdoDevView = () => {
     setCurrentTab(option);
   }
 
-  const partnerImages = useMemo(() => {
-    return ["http://placehold.it/300&text=banner1",
-            "http://placehold.it/300&text=banner2",
-            "http://placehold.it/300&text=banner3",
-            "http://placehold.it/300&text=banner4",
-            "http://placehold.it/300&text=banner5",
-            "http://placehold.it/300&text=banner6"];
+  const partnerImages = useMemo((): PartnerImage[] => {
+    return [
+      {fileName: "three-arrows.png", size: "small"},
+      {fileName: "defiance.png", size: "small"},
+      {fileName: "softbank.png", size: "small"},
+      {fileName: "svc.png", size: "small"},
+      {fileName: "sesterce.png", size: "small"},
+      {fileName: "bigbrainholdings.png", size: "small"},
+      {fileName: "gerstenbrot.png", size: "small"},
+      {fileName: "solar-eco-fund.png", size: "small"},
+      {fileName: "bts-capital.png", size: "small"},
+    ];
   }, []);
 
-  const isUserBlocked = () => {
-    return userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
+  const infoRow = (caption: string, value: string) => {
+    return (
+      <div className="flex-fixed-right line-height-180">
+        <div className="left inner-label">
+          <span>{caption}</span>
+        </div>
+        <div className="right value-display">
+          <span>{value}</span>
+        </div>
+      </div>
+    );
   }
 
   const renderRegionAcknowledgement = (
@@ -403,48 +479,134 @@ export const IdoDevView = () => {
   );
 
   const renderForm = () => {
+    if (!idoStatus || !idoDetails) { return null; }
     if (currentTab === "deposit") {
       return <IdoDeposit
-        disabled={isUserBlocked()}
-        contributedAmount={90381439.9773}
-        totalMeanForSale={4000000}
-        tokenPrice={22.5953}
+        connection={connection}
+        idoClient={idoClient}
+        idoDetails={idoDetails}
+        idoStatus={idoStatus}
+        disabled={!isIdoActive()}
+        selectedToken={selectedToken}
+        tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
-        min={IDO_MIN_CONTRIBUTION}
-        max={21000}
       />;
     } else {
-      return <IdoWithdraw disabled={isUserBlocked()} />;
+      return <IdoWithdraw
+        connection={connection}
+        idoClient={idoClient}
+        idoDetails={idoDetails}
+        idoStatus={idoStatus}
+        disabled={!isIdoActive()}
+        selectedToken={selectedToken}
+        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
+      />;
     }
   }
 
-  const renderTabset = (
+  const renderDepositAndWithdrawTabset = (
+    <>
+      <div className="button-tabset-container">
+        <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
+          Deposit
+        </div>
+        <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onTabChange("withdraw")}>
+          Withdraw
+        </div>
+      </div>
+      {renderForm()}
+    </>
+  );
+
+  const renderClaimsTabset = (
+    <>
+      <div className="button-tabset-container">
+        <div className="tab-button active">Redeem</div>
+      </div>
+      {(idoStatus && selectedToken) && (
+        <div className="px-1 mb-2">
+          {infoRow(
+            'USDC Contributed',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.totalUsdcContributed,
+              selectedToken.address,
+              true
+            )
+          )}
+          {infoRow(
+            'Total MEAN sold',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.totalMeanAllocated,
+              '',
+              true
+            )
+          )}
+          {infoRow(
+            'Implied token price',
+            getTokenAmountAndSymbolByTokenAddress(
+              idoStatus.currentMeanPrice,
+              selectedToken.address
+            )
+          )}
+        </div>
+      )}
+
+      <Button
+        className="main-cta mb-2"
+        block
+        type="primary"
+        shape="round"
+        size="large"
+        disabled={!redeemStartUtc || today < redeemStartUtc}
+        onClick={() => {}}>
+        Redeem &amp; Start Vesting
+      </Button>
+
+      {/* Bind redeemable MEAN tokens */}
+      <div className="flex-row justify-content-start align-items-start">
+        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
+        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
+          <span className="fg-orange-red pulsate mr-1">100</span>
+          <span>MEAN tokens (10%)</span>
+        </div>
+      </div>
+
+      {/* Bind streamable MEAN tokens */}
+      <div className="flex-row justify-content-start align-items-start">
+        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
+        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
+          <span className="fg-orange-red pulsate mr-1">900</span>
+          <span>MEAN tokens (90%) over 12 months</span>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderIdoForms = (
     <>
       <div className="ido-form-wrapper">
         {/* Countdown timer */}
-        {(idoStartUtc && idoEndUtc) && (
-          <div className="countdown-timer">
-            {today < idoStartUtc ? (
-              <>
-              <p className="font-size-90 font-bold text-center">Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
-              </>
-            ) : today > idoStartUtc && today < idoEndUtc ? (
-              <p className="font-size-90 font-bold text-center">Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
-            ) : null}
-          </div>
+        {(idoStartUtc && idoEndUtc && redeemStartUtc) && (
+          <>
+            <div className="countdown-timer">
+              <div className={`text-center ${today < idoEndUtc ? 'panel1 show' : 'panel1 hide'}`}>
+                <p className={`font-size-90 font-bold ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
+                <p className={`font-size-90 font-bold ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
+              </div>
+              <div className={`text-center ${today > idoEndUtc && today < redeemStartUtc ? 'panel2 show' : 'panel2 hide'}`}>
+                <p className={`font-size-90 font-bold`}>Claims period starts in <Countdown date={redeemStartUtc} daysInHours={true} /></p>
+              </div>
+            </div>
+            {/* Form */}
+            <div className="shadowed-box max-width">
+              {
+                today <= idoEndUtc
+                  ? renderDepositAndWithdrawTabset
+                  : renderClaimsTabset
+              }
+            </div>
+          </>
         )}
-        {/* Form */}
-        <div className="shadowed-box max-width">
-          <div className="button-tabset-container">
-            <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onTabChange("deposit")}>
-              Deposit
-            </div>
-            <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onTabChange("withdraw")}>
-              Withdraw
-            </div>
-          </div>
-          {renderForm()}
-        </div>
       </div>
     </>
   );
@@ -452,23 +614,41 @@ export const IdoDevView = () => {
   const renderYouAreHere = () => {
     return (
       <>
-      <div className="ido-stats-marker-wrapper">
-        <div className="ido-stats-marker-inner-container">
-          <span className="ido-stats-marker-start">{idoStartUtc?.toUTCString()}</span>
-          <span className="ido-stats-marker-end">{idoEndUtc?.toUTCString()}</span>
-          <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
-          <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
-            <div className="text-center">
-              <div>{currentDateDisplay}</div>
-            </div>
-            <Divider />
-            <div className="flex-fixed-right">
-              <div className="left">Cosita</div>
-              <div className="right">$1,540.00</div>
+      {idoStartUtc && idoEndUtc && idoStatus && (
+        <div className="ido-stats-marker-wrapper">
+          <div className="ido-stats-marker-inner-container">
+            <span className="ido-stats-marker-start">{idoStartUtc.toUTCString()}</span>
+            <span className="ido-stats-marker-end">{idoEndUtc.toUTCString()}</span>
+            <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
+            <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
+              <div className="text-center">
+                <div>{currentDateDisplay}</div>
+              </div>
+              <Divider />
+              {idoStatus && (
+                <>
+                  <div className="flex-fixed-right">
+                    <div className="left">Token Price</div>
+                    <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Max Allocation Allowed</div>
+                    <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Guaranteed Allocation</div>
+                    <div className="right">-</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Total Participants</div>
+                    <div className="right">-</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
       </>
     );
   }
@@ -478,10 +658,22 @@ export const IdoDevView = () => {
 
       {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">idoEngineInitStatus:</span><span className="ml-1 font-bold fg-dark-active">{idoEngineInitStatus || '-'}</span>
+          {idoStatus && (
+            <>
+            <span className="mr-1">USDC Deposited:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
+            <span className="mr-1">USDC Contributed:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcContributed || '-'}</span>
+            {publicKey && (
+              <>
+              <span className="mr-1">hasUserContributed:</span>
+              <span className="mr-1 font-bold fg-dark-active">{idoStatus.hasUserContributed ? 'true' : 'false'}</span>
+              </>
+            )}
+            </>
+          )}
         </div>
       )}
 
+      {/* Page title */}
       <section className="content contrast-section no-padding">
         <div className="container">
           <div className="heading-section">
@@ -493,9 +685,10 @@ export const IdoDevView = () => {
       <section className="content contrast-section pt-5 pb-5">
         <div className="container">
           <Row>
+
             <Col xs={24} md={16}>
               <div className="flex-column flex-center h-100 px-4">
-                {(idoStartUtc && idoEndUtc) && (
+                {(idoStartUtc && idoEndUtc) ? (
                   <>
                     {today < idoStartUtc ? (
                       <div className="boxed-area mb-4 mt-4">
@@ -525,14 +718,26 @@ export const IdoDevView = () => {
                       </div>
                     )}
                   </>
+                ) : (
+                  <div className="boxed-area mb-4 mt-4">
+                    <h2 className="subheading ido-subheading text-center">How it works</h2>
+                    <YoutubeEmbed embedId="rokGy0huYEA" />
+                    <div className="text-center mt-2 mb-3">
+                      <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
+                          href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
+                        Read deatails about Mean IDO
+                      </a>
+                    </div>
+                  </div>
                 )}
               </div>
             </Col>
+
             <Col xs={24} md={8}>
               <div className="flex-column flex-center h-100 px-5 pb-5">
                 {!regionLimitationAcknowledged
                   ? renderRegionAcknowledgement
-                  : renderTabset
+                  : renderIdoForms
                 }
               </div>
             </Col>
@@ -543,10 +748,15 @@ export const IdoDevView = () => {
       <section className="content">
         <div className="container">
           <h1 className="heading ido-heading text-center">Investors</h1>
-          <Row gutter={[32, 32]} justify="center">
-            {partnerImages.map((image: string, index: number) => {
+          <Row gutter={[32, 32]} justify="center" align="middle">
+            {partnerImages.map((image: PartnerImage, index: number) => {
               return (
-                <Col key={`${index}`} className="partner flex-center"><img className="partner-logo" src={image} alt="" /></Col>
+                <Col key={`${index}`} className="partner flex-center">
+                  <img
+                    className={`partner-logo ${image.size}`}
+                    src={`/assets/investors/${image.fileName}`}
+                    alt={image.fileName} />
+                </Col>
               );
             })}
           </Row>

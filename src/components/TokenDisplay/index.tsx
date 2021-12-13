@@ -10,6 +10,7 @@ export const TokenDisplay = (props: {
   className?: string;
   mintAddress: string;
   showName?: boolean;
+  symbol?: string;
   showCaretDown?: boolean;
   noTokenLabel?: string;
   onClick: any;
@@ -33,13 +34,15 @@ export const TokenDisplay = (props: {
                 </>
               )}
             </div>
-            {token && token.symbol ? (
+            {props.symbol ? (
+              <div className="token-symbol">{props.symbol}</div>
+            ) : token && token.symbol ? (
               <div className="token-symbol">{token.symbol}</div>
             ) : (
               <div className="token-symbol">{shortenAddress(mintAddress)}</div>
             )}
             {showName && (
-              <div className="token name">{name ? `(${name})` : token ? `(${token.name})` : ''}</div>
+              <div className="token-name">{name ? `(${name})` : token ? `(${token.name})` : ''}</div>
             )}
             {showCaretDown && (
               <span className="flex-center dropdown-arrow">

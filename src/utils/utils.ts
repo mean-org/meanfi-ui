@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { INPUT_AMOUNT_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { CUSTOM_USDC, MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
@@ -260,6 +260,8 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
+    } else if (address === CUSTOM_USDC.address) {
+      token = CUSTOM_USDC as TokenInfo;
     } else {
       token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
     }

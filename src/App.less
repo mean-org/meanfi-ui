@@ -340,6 +340,9 @@ h1, h2, h3, h4, h5, h6 {
 .bg-black {
   background-color: var(--color-black);
 }
+.fg-orange-red {
+  color: var(--color-orange-red) !important;
+}
 .bg-orange-red {
   background-color: var(--color-orange-red) !important;
 }
@@ -512,13 +515,27 @@ footer.ant-layout-footer {
   max-height: 34px;
 }
 .partner {
-  flex: 0 1 180px;
   padding: 0 1rem;
-  max-width: 180px;
+  max-width: 240px;
+  display: block;
+  width: 100%;
+  height: 100%;
   .partner-logo {
-    width: 100%;
-    height: auto;
-    max-width: 200px;
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    &.normal {
+      max-height: 100%;
+    }
+    &.large {
+      max-height: 64px;
+    }
+    &.medium {
+      max-height: 50px;
+    }
+    &.small {
+      max-height: 42px;
+    }
   }
 }
 
@@ -1969,6 +1986,18 @@ main section {
   margin: 1rem 0;
 }
 
+.card {
+  position: relative;
+  width: 100%;
+  background: var(--color-panel-background);
+  border-radius: var(--custom-border-radius);
+  padding: 2rem;
+  box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
+  &.no-shadow {
+    box-shadow: none !important;
+  }
+}
+
 .stepper-wrapper {
   margin-bottom: 1rem;
   @media (max-width: 575.98px) {
@@ -2691,6 +2720,12 @@ main section {
       font-size: 20px !important;
       letter-spacing: -0.5px;
     }
+  }
+  .token-name {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 24px;
+    margin-left: 4px;
   }
   .field-caret-down {
     position: relative;
@@ -4403,6 +4438,18 @@ main section {
 }
 .flex-row-reverse {
   flex-direction: row-reverse;
+}
+.justify-content-start {
+  justify-content: flex-start;
+}
+.align-items-start {
+  align-items: flex-start;
+}
+.flex-auto {
+  flex: 0 0 auto;
+}
+.flex-fill {
+  flex: 1 1 auto;
 }
 .symbol-at {
   font-size: 22px;
@@ -6540,6 +6587,14 @@ code {
   }
 }
 
+.pulsate {
+  animation: pulsate 3s ease-out;
+  animation-iteration-count: infinite; 
+  -webkit-animation: pulsate 1.5s ease-out;
+  -webkit-animation-iteration-count: infinite; 
+  opacity: 0.5;
+}
+
 // Animations
 @keyframes rotate {
   100% {
@@ -6612,5 +6667,29 @@ code {
   }
   to {
     transform: translateY(-4px);
+  }
+}
+
+@keyframes pulsate {
+  0% { 
+      opacity: 0.5;
+  }
+  50% { 
+      opacity: 1.0;
+  }
+  100% { 
+      opacity: 0.5;
+  }
+}
+
+@-webkit-keyframes pulsate {
+  0% { 
+      opacity: 0.5;
+  }
+  50% { 
+      opacity: 1.0;
+  }
+  100% { 
+      opacity: 0.5;
   }
 }

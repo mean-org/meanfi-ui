@@ -74,7 +74,11 @@ export enum OperationType {
     MintTokens = 31,
     TransferTokens = 32,
     UpgradeProgram = 33,
-    CreateVault = 34
+    CreateVault = 34,
+    // IDO
+    IdoDeposit = 100,
+    IdoWithdraw = 101,
+    IdoClaim = 102,
 }
 
 export enum AllocationType {
