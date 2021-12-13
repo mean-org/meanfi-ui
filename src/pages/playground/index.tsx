@@ -2,6 +2,7 @@ import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/ico
 import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { MultisigParticipants } from "../../components/MultisigParticipants";
 import { PreFooter } from "../../components/PreFooter";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
@@ -98,6 +99,7 @@ export const PlaygroundView = () => {
     const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
     const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
     const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
+    const [participants, setParticipants] = useState<string[]>([]);
 
     useEffect(() => {
       if (!selectedMint) {
@@ -412,6 +414,13 @@ export const PlaygroundView = () => {
       <div className="col">
         <Button type="ghost"   shape="round" size="small" className="thin-stroke" disabled={true}>Ghost disabled</Button>
       </div>
+    </div>
+
+    <div className="mt-3">
+      <MultisigParticipants
+        participants={participants}
+        onParticipantsChanged={(e: string[]) => setParticipants(e)}
+      />
     </div>
     </>
   );

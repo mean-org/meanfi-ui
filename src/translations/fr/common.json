@@ -461,6 +461,56 @@
 			"close-stream-also-closes-treasury-label": "Also close the treasury"
 		}
 	},
+	"multisig": {
+		"screen-title": "Multisig accounts",
+		"refresh-tooltip": "Click to refresh the list of multisig accounts",
+		"multisig-detail-heading": "Multisig account details",
+		"create-new-multisig-account-cta": "Create multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
+		"pending-transactions": "pending transactions",
+		"add-participant-cta": "Add participant",
+		"multisig-accounts": {
+			"no-accounts": "No multisig accounts available",
+			"not-connected": "Please connect your wallet to see your multisig accounts",
+			"pending-transactions": "{{txs}} pending transactions"
+		},
+		"multisig-account-detail": {
+			"created-on": "Created on",
+			"no-multisig-selected": "Please select or lookup a multisig account to view details",
+			"no-multisig-loaded": "Create or lookup a multisig account to view details",
+			"multisig-label-label": "Multisig name",
+			"multisig-address-label": "Address",
+			"multisig-owners": "Owners",
+			"cta-mint": "Mint tokens",
+			"cta-transfer": "Transfer tokens",
+			"cta-upgrade-program": "Upgrade program",
+			"cta-create-vault": "Create vault",
+			"copy-id-title": "MULTISIG ID",
+			"address": "Authority",
+			"required-signatures": "Required signatures"
+		},
+		"multisig-transactions": {
+			"column-operation": "Operation",
+			"column-program-id": "Program",
+			"column-pending-signatures": "Signatures",
+			"column-created-on": "Created on",
+			"no-transactions": "This multisig account has no transactions",
+			"loading-transactions": "Loading transactions"
+		},
+		"create-multisig": {
+			"modal-title": "Create multisig account",
+			"multisig-label-input-label": "Multisig label",
+			"multisig-label-input-empty": "Enter a multisig label",
+			"multisig-label-placeholder": "Type a label for your multisig account",
+			"multisig-threshold-input-label": "Minimum required signatures",
+			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
+			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"main-cta": "Create",
+			"main-cta-busy": "Creating multisig",
+			"success-message": "Your new multisig account was created successfully."
+		}
+	},
 	"swap": {
 		"clients-label-savings": "You save",
 		"screen-title": "Exchange",

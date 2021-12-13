@@ -471,6 +471,7 @@
 		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
 		"pending-transactions": "pending transactions",
+		"add-participant-cta": "Add participant",
 		"multisig-accounts": {
 			"no-accounts": "No multisig accounts available",
 			"not-connected": "Please connect your wallet to see your multisig accounts",
