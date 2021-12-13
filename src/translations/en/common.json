@@ -513,6 +513,18 @@
 			"main-cta": "Create",
 			"main-cta-busy": "Creating multisig",
 			"success-message": "Your new multisig account was created successfully."
+		},
+		"mint-tokens": {
+			"modal-title": "Mint tokens",
+			"main-cta": "Mint tokens",
+			"main-cta-busy": "Minting tokens",
+			"token-address-label": "Token address",
+			"token-address-placeholder": "Enter the address of the token",
+			"mint-to-label": "Mint to",
+			"mint-to-placeholder": "Enter the address of the destination account",
+			"mint-amount-label": "Amount",
+			"mint-amount-placeholder": "Enter the amount of tokens to mint",
+			"success-message": "Your tokens were minted successfully."
 		}
 	},
 	"swap": {
