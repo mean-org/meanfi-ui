@@ -526,6 +526,18 @@
 			"mint-amount-label": "Amount",
 			"mint-amount-placeholder": "Enter the amount of tokens to mint",
 			"success-message": "Your tokens were minted successfully."
+		},
+		"transfer-tokens": {
+			"modal-title": "Transfer tokens",
+			"main-cta": "Transfer tokens",
+			"main-cta-busy": "Transferring tokens",
+			"source-address-label": "Transfer from",
+			"source-address-placeholder": "Enter the address of the source account",
+			"transfer-to-label": "Transfer to",
+			"transfer-to-placeholder": "Enter the address of the destination account",
+			"transfer-amount-label": "Amount",
+			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
+			"success-message": "Tokens transferred successfully."
 		}
 	},
 	"swap": {
