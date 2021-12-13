@@ -70,6 +70,7 @@ export const IdoLiveView = () => {
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
   const [isUserBlocked, setIsUserBlocked] = useState(false);
+  const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -175,20 +176,21 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
-  // Create and cache the IDO client
-  const idoClient = useMemo(() => {
+  // Create the IDO client
+  useEffect(() => {
     if (!connection || !connectionConfig.endpoint) {
       consoleOut('This is odd. No connection!', '', 'red');
       return;
     }
 
-    return new IdoClient(
+    const client = new IdoClient(
       connectionConfig.endpoint,
       publicKey || undefined,
       { commitment: "confirmed" },
-      true
-      // isLocal() ? true : false
+      isLocal() ? true : false
     );
+    consoleOut('client:', client ? client.toString() : 'none', 'brown');
+    setIdoClient(client);
   }, [
     publicKey,
     connection,
@@ -196,35 +198,35 @@ export const IdoLiveView = () => {
   ]);
 
   // Get a list of available IDOs for reference
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (!idoClient || !publicKey || idosLoaded) { return; }
+  //   if (!idoClient || !publicKey || idosLoaded) { return; }
 
-    setIdosLoaded(true);
+  //   setIdosLoaded(true);
 
-    idoClient.listIdos(true, true)
-      .then(myIdos => {
-        consoleOut('myIdos:', myIdos, 'blue');
-        const idosTable: any[] = [];
-        myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
-          address: item.idoAddress,
-          startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
-          endUtc: new Date(item.idoEndUtc).toLocaleDateString()
-          })
-        );
-        console.table(idosTable);
-      })
-      .catch(error => {
-        console.error(error);
-      })
+  //   idoClient.listIdos(true, true)
+  //     .then(myIdos => {
+  //       consoleOut('myIdos:', myIdos, 'blue');
+  //       const idosTable: any[] = [];
+  //       myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
+  //         address: item.idoAddress,
+  //         startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
+  //         endUtc: new Date(item.idoEndUtc).toLocaleDateString()
+  //         })
+  //       );
+  //       console.table(idosTable);
+  //     })
+  //     .catch(error => {
+  //       console.error(error);
+  //     })
 
-    return () => {};
+  //   return () => {};
 
-  }, [
-    publicKey,
-    idoClient,
-    idosLoaded,
-  ]);
+  // }, [
+  //   publicKey,
+  //   idoClient,
+  //   idosLoaded,
+  // ]);
 
   // Init IDO client and store tracked data
   useEffect(() => {
@@ -279,7 +281,6 @@ export const IdoLiveView = () => {
 
     if (!idoStatus && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
       consoleOut('idoAccountAddress:', idoAccountAddress, 'blue');
-      consoleOut('client:', idoClient ? idoClient.toString() : 'none', 'brown');
       consoleOut('Calling initIdo()...', '', 'blue');
       setIdoEngineInitStatus("initializing");
       initIdo();
@@ -366,14 +367,12 @@ export const IdoLiveView = () => {
         setSelectedToken(CUSTOM_USDC);
         if (idoClient) {
           idoClient.stopTracking();
-          consoleOut('idoClient.stopTracking() -> client:', idoClient ? idoClient.toString() : 'none', 'brown');
         }
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
         if (idoClient) {
           idoClient.stopTracking();
-          consoleOut('idoClient.stopTracking() -> client:', idoClient ? idoClient.toString() : 'none', 'brown');
         }
       }
     }
