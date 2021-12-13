@@ -1,8 +1,9 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_CAP_VALUATION,
+  IDO_FETCH_FREQUENCY,
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
@@ -40,7 +41,7 @@ export const IdoLiveView = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
@@ -177,46 +178,56 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
-  // Hook on the wallet connect/disconnect event
+  // TODO: Add custom USDC token and MEAN tolken to the list
   useEffect(() => {
-    if (wallet) {
-      wallet.on("connect", () => {
-        if (wallet.publicKey) {
-          consoleOut('New wallet connected:', wallet.publicKey.toBase58(), 'blue');
-          if (idoClient) {
-            consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
-            idoClient.stopTracking();
-            setTimeout(() => {
-              setIdoEngineInitStatus("uninitialized");
-            }, 100);
-          }
-        }
-      });
-
-      wallet.on("disconnect", () => {
-        if (idoClient) {
-          consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
-          idoClient.stopTracking();
-        }
-      });
+    if (selectedToken && selectedToken.address !== CUSTOM_USDC.address) {
+      setSelectedToken(CUSTOM_USDC);
     }
-
-    return () => {
-      if (idoClient) {
-        consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
-        idoClient.stopTracking();
-      }
-    };
-  }, [
-    wallet,
-    idoClient
+  },[
+    selectedToken,
+    setSelectedToken
   ]);
 
   // Create the IDO client
   useEffect(() => {
-    if (!connection || !connectionConfig.endpoint) {
-      consoleOut('This is odd. No connection!', '', 'red');
+    if (!connection || !connectionConfig.endpoint || !idoAccountAddress || idoEngineInitStatus !== "uninitialized") {
       return;
+    }
+
+    setIdoEngineInitStatus("initializing");
+
+    const startIdo = async (client: IdoClient) => {
+
+      consoleOut('client:', client.toString(), 'brown');
+  
+      const idoAddressPubKey = new PublicKey(idoAccountAddress);
+      const details = await client.getIdo(idoAddressPubKey);
+  
+      consoleOut('idoDetails:', details, 'blue');
+  
+      if(details === null)
+      {
+        setIdoEngineInitStatus("error");
+        return;
+      }
+  
+      setIdoDetails(details);
+      let parsedDate = Date.parse(details.idoStartUtc);
+      let fromParsedDate = new Date(parsedDate);
+      consoleOut('idoStartUtc:', fromParsedDate.toUTCString(), 'crimson');
+      setIdoStartUtc(fromParsedDate);
+  
+      parsedDate = Date.parse(details.idoEndUtc);
+      fromParsedDate = new Date(parsedDate);
+      consoleOut('idoEndUtc:', fromParsedDate.toUTCString(), 'crimson');
+      setIdoEndUtc(fromParsedDate);
+  
+      parsedDate = Date.parse(details.redeemStartUtc);
+      fromParsedDate = new Date(parsedDate);
+      consoleOut('redeemStartUtc:', fromParsedDate.toUTCString(), 'crimson');
+      setRedeemStartUtc(fromParsedDate);
+  
+      setIdoEngineInitStatus("started");
     }
 
     const client = new IdoClient(
@@ -227,44 +238,97 @@ export const IdoLiveView = () => {
     );
     consoleOut('client:', client ? client.toString() : 'none', 'brown');
     setIdoClient(client);
+    startIdo(client);
 
   }, [
     publicKey,
     connection,
+    idoAccountAddress,
     connectionConfig.endpoint,
+    idoEngineInitStatus
   ]);
 
+  /*
   // Get a list of available IDOs for reference
-  // useEffect(() => {
+  useEffect(() => {
 
-  //   if (!idoClient || !publicKey || idosLoaded) { return; }
+    if (!idoClient || !publicKey || idosLoaded) { return; }
 
-  //   setIdosLoaded(true);
+    setIdosLoaded(true);
 
-  //   idoClient.listIdos(true, true)
-  //     .then(myIdos => {
-  //       consoleOut('myIdos:', myIdos, 'blue');
-  //       const idosTable: any[] = [];
-  //       myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
-  //         address: item.idoAddress,
-  //         startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
-  //         endUtc: new Date(item.idoEndUtc).toLocaleDateString()
-  //         })
-  //       );
-  //       console.table(idosTable);
-  //     })
-  //     .catch(error => {
-  //       console.error(error);
-  //     })
+    idoClient.listIdos(true, true)
+      .then(myIdos => {
+        consoleOut('myIdos:', myIdos, 'blue');
+        const idosTable: any[] = [];
+        myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
+          address: item.idoAddress,
+          startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
+          endUtc: new Date(item.idoEndUtc).toLocaleDateString()
+          })
+        );
+        console.table(idosTable);
+      })
+      .catch(error => {
+        console.error(error);
+      })
 
-  //   return () => {};
+    return () => {};
 
-  // }, [
-  //   publicKey,
-  //   idoClient,
-  //   idosLoaded,
-  // ]);
+  }, [
+    publicKey,
+    idoClient,
+    idosLoaded,
+  ]);
+  */
 
+  // Fetches the IDO status
+  const refreshIdoData = useCallback(async () => {
+    if (!idoClient || !idoAccountAddress || idoEngineInitStatus !== "started") {
+      return;
+    }
+
+    const getIdoState = async () => {
+      const idoPk = new PublicKey(idoAccountAddress);
+      try {
+        const idoState = await idoClient.getIdoStatus(idoPk);
+        consoleOut('idoStatus:', idoState, 'blue');
+        setIdoStatus(idoState);
+      } catch (error: any) {
+        console.error(error);
+        setIdoEngineInitStatus("error");
+      }
+    }
+
+    getIdoState();
+  }, [
+    idoClient,
+    idoAccountAddress,
+    idoEngineInitStatus,
+  ]);
+
+  // IDO fetch status timeout
+  useEffect(() => {
+    let timer: any;
+
+    if (idoEngineInitStatus === "started" && !idoStatus) {
+      refreshIdoData();
+    }
+
+    if (idoEngineInitStatus === "started") {
+      timer = setInterval(() => {
+        consoleOut(`Fetching IDO status past ${IDO_FETCH_FREQUENCY / 1000} seconds`);
+        refreshIdoData();
+      }, IDO_FETCH_FREQUENCY);
+    }
+
+    return () => clearInterval(timer);
+  }, [
+    idoStatus,
+    idoEngineInitStatus,
+    refreshIdoData
+  ]);
+
+  /*
   // Init IDO client and store tracked data
   useEffect(() => {
 
@@ -331,6 +395,7 @@ export const IdoLiveView = () => {
     idoAccountAddress,
     idoEngineInitStatus,
   ]);
+  */
 
   /*
   Abajo de los formularios
@@ -342,6 +407,7 @@ export const IdoLiveView = () => {
   if fulfilled -> warn: The guaranteed allocation is fully booked, but you can still deposit to save a spot on the waitlist.
   */
 
+  // Calculate "You are here" chart data tooltip position
   useEffect(() => {
 
     if (!idoDetails || !idoStartUtc || !idoEndUtc) {
@@ -350,7 +416,6 @@ export const IdoLiveView = () => {
 
     const timeout = setTimeout(() => {
       const totalTime = idoDetails.idoDurationInSeconds * 1000;
-      // const totalTime = idoEndUtc.getTime() - idoStartUtc.getTime();
       const elapsed = today.getTime() - idoStartUtc.getTime();
       const percent = percentual(elapsed, totalTime);
       if (today >= idoEndUtc) {
@@ -402,9 +467,11 @@ export const IdoLiveView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
         setSelectedToken(CUSTOM_USDC);
+        setIdoEngineInitStatus("uninitialized");
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
+        setIdoEngineInitStatus("uninitialized");
       }
     }
 
