@@ -39,7 +39,7 @@ export const IdoLiveView = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
@@ -65,7 +65,7 @@ export const IdoLiveView = () => {
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
-  const [idosLoaded, setIdosLoaded] = useState(false);
+  // const [idosLoaded, setIdosLoaded] = useState(false);
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
@@ -176,6 +176,44 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
+  // Hokk on the wallet connect/disconnect event
+  useEffect(() => {
+    if (wallet) {
+      wallet.on("connect", () => {
+        if (wallet.publicKey) {
+          consoleOut('New wallet connected:', wallet.publicKey.toBase58(), 'blue');
+          if (idoClient) {
+            consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+            idoClient.stopTracking();
+            setTimeout(() => {
+              setIdoStatus(undefined);
+              setIdoEngineInitStatus("uninitialized");
+            }, 100);
+          }
+        }
+      });
+
+      wallet.on("disconnect", () => {
+        if (idoClient) {
+          consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+          idoClient.stopTracking();
+          setIdoStatus(undefined);
+        }
+      });
+    }
+
+    return () => {
+      if (idoClient) {
+        consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+        idoClient.stopTracking();
+        setIdoStatus(undefined);
+      }
+    };
+  }, [
+    wallet,
+    idoClient
+  ]);
+
   // Create the IDO client
   useEffect(() => {
     if (!connection || !connectionConfig.endpoint) {
@@ -191,6 +229,7 @@ export const IdoLiveView = () => {
     );
     consoleOut('client:', client ? client.toString() : 'none', 'brown');
     setIdoClient(client);
+
   }, [
     publicKey,
     connection,
@@ -365,15 +404,19 @@ export const IdoLiveView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
         setSelectedToken(CUSTOM_USDC);
-        if (idoClient) {
-          idoClient.stopTracking();
-        }
+        // if (idoClient) {
+        //   consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+        //   idoClient.stopTracking();
+        //   setIdoStatus(undefined);
+        // }
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
-        if (idoClient) {
-          idoClient.stopTracking();
-        }
+        // if (idoClient) {
+        //   consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
+        //   idoClient.stopTracking();
+        //   setIdoStatus(undefined);
+        // }
       }
     }
 
@@ -617,11 +660,16 @@ export const IdoLiveView = () => {
   return (
     <div className="solid-bg">
 
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
-          <span className="ml-1">idoEngineInitStatus:</span><span className="ml-1 font-bold fg-dark-active">{idoEngineInitStatus || '-'}</span>
+          {idoStatus && (
+            <>
+            <span className="mr-1">USDC Deposited:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
+            <span className="mr-1">USDC Contributed:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcContributed || '-'}</span>
+            </>
+          )}
         </div>
-      )} */}
+      )}
 
       {/* Page title */}
       <section className="content contrast-section no-padding">
@@ -638,7 +686,7 @@ export const IdoLiveView = () => {
 
             <Col xs={24} md={16}>
               <div className="flex-column flex-center h-100 px-4">
-                {(idoStartUtc && idoEndUtc) && (
+                {(idoStartUtc && idoEndUtc) ? (
                   <>
                     {today < idoStartUtc ? (
                       <div className="boxed-area mb-4 mt-4">
@@ -668,6 +716,17 @@ export const IdoLiveView = () => {
                       </div>
                     )}
                   </>
+                ) : (
+                  <div className="boxed-area mb-4 mt-4">
+                    <h2 className="subheading ido-subheading text-center">How it works</h2>
+                    <YoutubeEmbed embedId="rokGy0huYEA" />
+                    <div className="text-center mt-2 mb-3">
+                      <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
+                          href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
+                        Read deatails about Mean IDO
+                      </a>
+                    </div>
+                  </div>
                 )}
               </div>
             </Col>
