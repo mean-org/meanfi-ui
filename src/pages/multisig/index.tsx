@@ -93,6 +93,7 @@ import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 // MULTISIG
 import { BN, Program, Provider } from "@project-serum/anchor";
 import MultisigIdl from "../../models/mean-multisig-idl";
+import { MultisigMintTokenModal } from '../../components/MultisigMintTokenModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -606,14 +607,24 @@ export const MultisigView = () => {
 
   },[t])
 
-  // Shows mint token modal
-  const onShowMintTokenModal = useCallback(() => {
+  // Mint token modal
+  const [isMintTokenModalVisible, setIsMintTokenModalVisibility] = useState(false);
+  const showMintTokenModal = useCallback(() => {
+    setIsMintTokenModalVisibility(true);
+    // TODO: Hardcoded fees, we can work on this later
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+  const closeMintTokenModal = useCallback(() => setIsMintTokenModalVisibility(false), []);
 
-    return {
-
-    }
-
-  },[]);
+  const onAcceptMintToken = (params: any) => {
+    // TODO: Execute Tx
+    consoleOut('params', params, 'blue');
+  };
 
   const isMintingToken = useCallback((): boolean => {
 
@@ -3309,7 +3320,7 @@ export const MultisigView = () => {
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={onShowMintTokenModal}>
+            onClick={showMintTokenModal}>
             {isMintingToken() && (<LoadingOutlined />)}
             {isMintingToken()
               ? t('multisig.multisig-account-detail.cta-mint-busy')
@@ -3600,6 +3611,15 @@ export const MultisigView = () => {
         transactionFees={transactionFees}
         handleOk={onAcceptCreateMultisig}
         handleClose={() => setIsCreateMultisigModalVisible(false)}
+        isBusy={isBusy}
+      />
+
+      <MultisigMintTokenModal
+        isVisible={isMintTokenModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        handleOk={onAcceptMintToken}
+        handleClose={closeMintTokenModal}
         isBusy={isBusy}
       />
 

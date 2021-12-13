@@ -35,6 +35,11 @@ export type MultisigTransactionInfo = {
   status: MultisigTransactionStatus
 }
 
+export type MintTokensInfo = {
+  tokeAddress: string;
+  mintTo: string;
+  amount: number;
+}
 
 export const TestMultisigAccounts: MultisigAccountInfo[] = [];
 export const TestMultisigTransactions: Array<any> = new Array<any>();
