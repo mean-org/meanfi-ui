@@ -68,7 +68,11 @@ export enum OperationType {
     DdcaCreate = 20,
     DdcaAddFunds = 21,
     DdcaWithdraw = 22,
-    DdcaClose = 23
+    DdcaClose = 23,
+    // IDO
+    IdoDeposit = 100,
+    IdoWithdraw = 101,
+    IdoClaim = 102,
 }
 
 export enum AllocationType {

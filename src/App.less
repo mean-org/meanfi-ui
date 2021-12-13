@@ -524,16 +524,16 @@ footer.ant-layout-footer {
     height: 100%;
     width: auto;
     max-width: 100%;
-    .normal {
+    &.normal {
       max-height: 100%;
     }
-    .large {
+    &.large {
       max-height: 64px;
     }
-    .medium {
+    &.medium {
       max-height: 50px;
     }
-    .small {
+    &.small {
       max-height: 42px;
     }
   }
@@ -1984,6 +1984,18 @@ main section {
   color: var(--color-secondary-alpha-85);
   font-weight: 700;
   margin: 1rem 0;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  background: var(--color-panel-background);
+  border-radius: var(--custom-border-radius);
+  padding: 2rem;
+  box-shadow: 0 3px 3px -1px rgba(0,0,0,0.08), 0 3px 7px 0 rgba(0,0,0,0.08), 0 1px 18px 0 rgba(0,0,0, 0.08);
+  &.no-shadow {
+    box-shadow: none !important;
+  }
 }
 
 .stepper-wrapper {

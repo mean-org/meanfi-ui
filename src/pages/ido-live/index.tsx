@@ -177,7 +177,7 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
-  // Hokk on the wallet connect/disconnect event
+  // Hook on the wallet connect/disconnect event
   useEffect(() => {
     if (wallet) {
       wallet.on("connect", () => {
@@ -187,7 +187,6 @@ export const IdoLiveView = () => {
             consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
             idoClient.stopTracking();
             setTimeout(() => {
-              setIdoStatus(undefined);
               setIdoEngineInitStatus("uninitialized");
             }, 100);
           }
@@ -198,7 +197,6 @@ export const IdoLiveView = () => {
         if (idoClient) {
           consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
           idoClient.stopTracking();
-          setIdoStatus(undefined);
         }
       });
     }
@@ -207,7 +205,6 @@ export const IdoLiveView = () => {
       if (idoClient) {
         consoleOut('Calling idoClient.stopTracking()...', '', 'blue');
         idoClient.stopTracking();
-        setIdoStatus(undefined);
       }
     };
   }, [
@@ -495,7 +492,15 @@ export const IdoLiveView = () => {
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
     } else {
-      return <IdoWithdraw disabled={!isIdoActive()} />;
+      return <IdoWithdraw
+        connection={connection}
+        idoClient={idoClient}
+        idoDetails={idoDetails}
+        idoStatus={idoStatus}
+        disabled={!isIdoActive()}
+        selectedToken={selectedToken}
+        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
+      />;
     }
   }
 

@@ -1,10 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, truncateFloat } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs, percentage } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -279,7 +279,7 @@ export const IdoDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -292,9 +292,9 @@ export const IdoDeposit = (props: {
 
   };
 
-  const infoRow = (caption: string, value: string) => {
+  const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
     return (
-      <div className="flex-fixed-right mb-1">
+      <div className={`flex-fixed-right ${spaceBelow ? 'mb-1' : ''}`}>
         <div className="left inner-label">
           <span>{caption}</span>
         </div>
@@ -315,7 +315,7 @@ export const IdoDeposit = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoDetails.usdcPerUserMin
@@ -327,7 +327,7 @@ export const IdoDeposit = (props: {
               Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoStatus.currentMaxUsdcContribution
@@ -342,7 +342,7 @@ export const IdoDeposit = (props: {
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected && props.idoStatus.hasUserContributed ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected || props.idoStatus.hasUserContributed || isBusy ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -392,39 +392,63 @@ export const IdoDeposit = (props: {
 
       {/* Info */}
       {props.selectedToken && (
-        <div className="px-1 mb-2">
-          {infoRow(
-            'USDC Contributed',
-            getTokenAmountAndSymbolByTokenAddress(
-              props.idoStatus.totalUsdcContributed,
-              props.selectedToken.address,
-              true
-            )
-          )}
-          {infoRow(
-            'Total MEAN for sale',
-            getTokenAmountAndSymbolByTokenAddress(
-              props.idoDetails.meanTotalMax,
-              '', // TODO: Create TokenInfo for MEAN
-              true
-            )
-          )}
-          {infoRow(
-            'Implied token price',
-            getTokenAmountAndSymbolByTokenAddress(
-              props.idoStatus.currentImpliedMeanPrice,
-              props.selectedToken.address
-            )
-          )}
-          {infoRow(
-            'Max Fully Diluted Market Cap Allowed',
-            formatAmount(
-              props.maxFullyDilutedMarketCapAllowed,
-              2,
-              true
-            )
-          )}
-        </div>
+        <>
+          <div className="px-1 mb-2">
+            {idoInfoRow(
+              'USDC Contributed',
+              getTokenAmountAndSymbolByTokenAddress(
+                props.idoStatus.totalUsdcContributed,
+                props.selectedToken.address,
+                true
+              )
+            )}
+            {idoInfoRow(
+              'Total MEAN for sale',
+              getTokenAmountAndSymbolByTokenAddress(
+                props.idoDetails.meanTotalMax,
+                '', // TODO: Create TokenInfo for MEAN
+                true
+              )
+            )}
+            {idoInfoRow(
+              'Implied token price',
+              getTokenAmountAndSymbolByTokenAddress(
+                props.idoStatus.currentImpliedMeanPrice,
+                props.selectedToken.address
+              )
+            )}
+            {idoInfoRow(
+              'Max Fully Diluted Market Cap Allowed',
+              formatAmount(
+                props.maxFullyDilutedMarketCapAllowed,
+                2,
+                true
+              )
+            )}
+          </div>
+          <div className="card ido-info-box no-shadow">
+            {idoInfoRow(
+              'Your USDC deposit',
+              getTokenAmountAndSymbolByTokenAddress(
+                props.idoStatus.userUsdcContributedAmount,
+                props.selectedToken.address,
+                true
+              ),
+              false
+            )}
+          </div>
+          <div className="card ido-info-box no-shadow">
+            {idoInfoRow(
+              'Your MEAN allocation',
+              getTokenAmountAndSymbolByTokenAddress(
+                props.idoStatus.userMeanAllocatedAmount,
+                '',
+                true
+              ),
+              false
+            )}
+          </div>
+        </>
       )}
 
       <Button
