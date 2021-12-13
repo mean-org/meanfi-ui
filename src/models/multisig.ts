@@ -26,17 +26,18 @@ export type MultisigAccountInfo = {
 
 export type MultisigTransactionInfo = {
   id: PublicKey;
-  operation: OperationType;
+  action: OperationType;
   multisig: PublicKey;
   programId: PublicKey;
   signers: boolean[];
   createdOn: Date;
   executedOn: Date | undefined,
-  status: MultisigTransactionStatus
+  status: MultisigTransactionStatus,
+  accounts: any[]
 }
 
 export type MintTokensInfo = {
-  tokeAddress: string;
+  tokenAddress: string;
   mintTo: string;
   amount: number;
 }
@@ -95,7 +96,7 @@ const initMultisigAccounts = async () => {
   TestMultisigTransactions.push(...[
       {
         id: Keypair.generate().publicKey,
-        operation: OperationType.MintToken,
+        operation: OperationType.MintTokens,
         multisig: TestMultisigAccount1.publicKey,
         programId: TOKEN_PROGRAM_ID,
         signers: 2,

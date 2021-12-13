@@ -71,7 +71,7 @@ export enum OperationType {
     DdcaClose = 23,
     // Multisig options
     CreateMultisig = 30,
-    MintToken = 31,
+    MintTokens = 31,
     TransferTokens = 32,
     UpgradeProgram = 33,
     CreateVault = 34

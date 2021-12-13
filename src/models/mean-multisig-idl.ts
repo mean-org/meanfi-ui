@@ -69,6 +69,10 @@ const idl: Idl = {
           "type": "publicKey"
         },
         {
+          "name": "action",
+          "type": "u8"
+        },
+        {
           "name": "accs",
           "type": {
             "vec": {

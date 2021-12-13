@@ -32,7 +32,7 @@ export const MultisigMintTokenModal = (props: {
 
   const onAcceptModal = () => {
     props.handleOk({
-      tokeAddress: tokenAddress,
+      tokenAddress: tokenAddress,
       amount: +mintAmount,
       mintTo: mintToAddress
     } as MintTokensInfo);
