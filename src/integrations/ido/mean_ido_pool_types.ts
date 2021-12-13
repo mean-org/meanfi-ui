@@ -204,6 +204,10 @@ export type MeanIdoPool = {
             "type": "u64"
           },
           {
+            "name": "curveRefreshIntervalInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "usdcTotalDeposited",
             "type": "u64"
           },
@@ -718,6 +722,10 @@ export const IDL: MeanIdoPool = {
           },
           {
             "name": "meanTotalMax",
+            "type": "u64"
+          },
+          {
+            "name": "curveRefreshIntervalInSeconds",
             "type": "u64"
           },
           {

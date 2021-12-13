@@ -204,6 +204,10 @@
             "type": "u64"
           },
           {
+            "name": "curveRefreshIntervalInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "usdcTotalDeposited",
             "type": "u64"
           },

@@ -676,17 +676,19 @@ class IdoTracker {
             //     console.log(`cluster ts: ~${estimatedClusterTimeTs}. IDO is running`);
 
             status.isRunning = true;
+            const refreshIntervalBn = new BN(this.latestIdo.curveRefreshIntervalInSeconds);
+            const t2 = t.div(refreshIntervalBn).mul(refreshIntervalBn);
             const currentMeanPrice = meanPriceCurve(
                 new BN(this.latestIdo.meanPriceStartTokenAmount),
                 new BN(this.latestIdo.meanPriceEndTokenAmount),
                 new BN(this.latestIdo.idoDurationInSeconds),
-                t,
+                t2,
             );
             const currentMaxUsdcPerUser = usdcMaxCurve(
                 new BN(this.latestIdo.usdcPerUserMaxStartTokenAmount),
                 new BN(this.latestIdo.usdcPerUserMaxEndTokenAmount),
                 new BN(this.latestIdo.idoDurationInSeconds),
-                t,
+                t2,
             );
             status.currentMeanPrice = currentMeanPrice.toNumber() / 10 ** DECIMALS;
             status.currentMeanPriceTokenAmount = currentMeanPrice.toNumber();
@@ -843,6 +845,8 @@ export function mapIdoDetails(idoAddress: string, idoAccount: any): IdoDetails {
 
         meanTotalMax: idoAccount.meanTotalMax.toNumber() / 10**DECIMALS, // USDC_DECIMALS
         meanTotalMaxTokenAmount: idoAccount.meanTotalMax.toNumber(),
+        
+        curveRefreshIntervalInSeconds: idoAccount.curveRefreshIntervalInSeconds.toNumber(),
 
         usdcTotalCurrent: idoAccount.usdcTotalCurrent.toNumber() / 10**DECIMALS, // USDC_DECIMALS
         usdcTotalCurrentTokenAmount: idoAccount.usdcTotalCurrent.toNumber(),
@@ -946,6 +950,8 @@ export type IdoDetails = {
     usdcTotalMaxTokenAmount: number;
     meanTotalMax: number;
     meanTotalMaxTokenAmount: number;
+
+    curveRefreshIntervalInSeconds: number;
 
     usdcTotalCurrent: number;
     usdcTotalCurrentTokenAmount: number;
