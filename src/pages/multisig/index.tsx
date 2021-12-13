@@ -170,7 +170,7 @@ export const MultisigView = () => {
   // MULTISIG
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigAccountInfo[]>([]);
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransactionInfo[]>([]);
-  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(false);
+  const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
   const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigAccountInfo | undefined>(undefined);
@@ -310,7 +310,7 @@ export const MultisigView = () => {
       // Add enough for 2 more participants, in case the user changes one's mind later.
       const fudge = 64;
       // Can only grow the participant set by 2x the initialized value.
-      const ownerSize = data.threshold * 32 + 8;
+      const ownerSize = data.owners.length * 32 + 8;
       const multisigSize = baseSize + ownerSize + fudge;
       const [, nonce] = await PublicKey.findProgramAddress(
         [multisig.publicKey.toBuffer()],
