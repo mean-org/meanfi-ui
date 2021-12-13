@@ -1741,6 +1741,7 @@ export const MultisigView = () => {
               .then(k => { 
 
                 address = k[0];
+                // console.log('address', address.toBase58());
 
                 let multisigInfo = {
                   id: info.publicKey,
@@ -1761,7 +1762,7 @@ export const MultisigView = () => {
           }
 
           setTimeout(() => {
-            setMultisigAccounts(multisigInfoArray);
+            setMultisigAccounts(multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime()));
             setSelectedMultisig(multisigInfoArray[0]);
             setLoadingMultisigAccounts(false);
           });
