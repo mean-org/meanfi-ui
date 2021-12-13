@@ -4278,7 +4278,8 @@ export const MultisigView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
+            // disabled={isTxInProgress() || loadingMultisigAccounts}
+            disabled={true}
             onClick={showUpgradeProgramModal}>
             {isUpgradingProgram() && (<LoadingOutlined />)}
             {isUpgradingProgram()
@@ -4290,7 +4291,8 @@ export const MultisigView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
+            // disabled={isTxInProgress() || loadingMultisigAccounts}
+            disabled={true}
             onClick={onShowCreateVaultModal}>
             {isCreatingVault() && (<LoadingOutlined />)}
             {isCreatingVault()
