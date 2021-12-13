@@ -3,6 +3,7 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   CheckOutlined,
+  ContainerFilled,
   EllipsisOutlined,
   InfoCircleOutlined,
   LoadingOutlined, 
@@ -743,6 +744,76 @@ export const MultisigView = () => {
 
   },[]);
 
+  const mintTokens = async (data: any) => {
+
+    if (!selectedMultisig || !publicKey) { return null; }
+
+    const [multisigAuthority] = await PublicKey.findProgramAddress(
+      [selectedMultisig.id.toBuffer()],
+      multisigClient.programId
+    );
+
+    const accounts = [
+      {
+        pubkey: TOKEN_PROGRAM_ID,
+        isWritable: false,
+        isSigner: false,
+      },
+      {
+        pubkey: new PublicKey(data.tokenAddress),
+        isWritable: true,
+        isSigner: false,
+      },
+      {
+        pubkey: new PublicKey(data.mintTo),
+        isWritable: true,
+        isSigner: false,
+      },
+      {
+        pubkey: multisigAuthority,
+        isWritable: true,
+        isSigner: false,
+      }
+    ];
+
+    const mintData = multisigClient.coder.instruction.encode("create_transaction", {
+      amount: new BN(data.amount),
+    })
+
+    const transaction = new Account();
+    const txSize = 1000; // todo
+
+    let tx = multisigClient.transaction.createTransaction(
+      TOKEN_PROGRAM_ID,
+      accounts,
+      mintData,
+      {
+        accounts: {
+          multisig: selectedMultisig.id,
+          transaction: transaction.publicKey,
+          proposer: publicKey,
+          rent: SYSVAR_RENT_PUBKEY
+        },
+        signers: [transaction],
+        instructions: [
+          await multisigClient.account.transaction.createInstruction(
+            transaction,
+            txSize
+          ),
+        ],
+      }
+    );
+
+    tx.feePayer = publicKey;
+    const { blockhash } = await connection.getRecentBlockhash("recent");
+    tx.recentBlockhash = blockhash;
+    tx.partialSign(...[transaction]);
+
+    return tx;
+  };
+
+
+
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -758,31 +829,36 @@ export const MultisigView = () => {
 
           setLoadingMultisigAccounts(true);
           let multisigInfoArray: any = [];
+          let filteredAccs = accs.filter((a: any) => {
+            console.log('owners', a.account.owners);
+            if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
+            return false;
+          });
 
-          for (let a of accs) {
+          for (let info of filteredAccs) {
 
             let address: any;
             let labelBuffer = Buffer
-              .alloc(a.account.label.length, a.account.label)
+              .alloc(info.account.label.length, info.account.label)
               .filter(function (elem, index) { return elem !== 0; }
             );
 
             PublicKey
-              .findProgramAddress([a.publicKey.toBuffer()], MEAN_MULTISIG)
+              .findProgramAddress([info.publicKey.toBuffer()], MEAN_MULTISIG)
               .then(k => { 
 
                 address = k[0];
 
                 let multisigInfo = {
-                  id: a.publicKey,
+                  id: info.publicKey,
                   label: new TextDecoder().decode(labelBuffer),
                   address,
-                  nounce: a.account.nounce,
-                  ownerSeqNumber: a.account.ownerSetSeqno,
-                  threshold: a.account.threshold.toNumber(),
-                  pendingTxsAmount: new BN(a.account.pendingTxs).toNumber(),
-                  createdOnUtc: new Date(new BN(a.account.createdOn).toNumber() * 1000),
-                  owners: a.account.owners
+                  nounce: info.account.nounce,
+                  ownerSeqNumber: info.account.ownerSetSeqno,
+                  threshold: info.account.threshold.toNumber(),
+                  pendingTxsAmount: new BN(info.account.pendingTxs).toNumber(),
+                  createdOnUtc: new Date(new BN(info.account.createdOn).toNumber() * 1000),
+                  owners: info.account.owners
       
                 } as MultisigAccountInfo;
 
@@ -3288,7 +3364,8 @@ export const MultisigView = () => {
         const onMultisigClick = (ev: any) => {
           consoleOut('selected multisig:', item, 'blue');
           setSelectedMultisig(item);
-          openTreasuryById(item.id.toBase58());
+          console.log('authority', item.address.toBase58());
+          // openTreasuryById(item.id.toBase58());
           setDtailsPanelOpen(true);
         };
         return (

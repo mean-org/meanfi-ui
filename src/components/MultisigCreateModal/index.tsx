@@ -32,14 +32,7 @@ export const MultisigCreateModal = (props: {
 
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
-  const [multisigOwners, setMultisigOwners] = useState<string[]>([
-    "FfdFf3EqcCuytTdeLvoELBh29WrAGVRjrm4595A2bRAR",
-    "F4KjjnrM2hr8MasEDAYoGSBWbn3wzz1rrdGtkRkoaMKc",
-    "96T1PeTJEP3CHxHx9etk9CqvcqYz9ApdGHx8FxQnRZhX"
-  ]);
-  const [maxParticipantLength, setMaxParticipantLength] = useState(10);
-
-  // const { treasuryOption, setTreasuryOption } = useContext(AppStateContext);
+  const [multisigOwners, setMultisigOwners] = useState<string[]>([]);
 
   const onAcceptModal = () => {
     props.handleOk({
@@ -232,7 +225,7 @@ export const MultisigCreateModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!multisigThreshold || multisigOwners.length < multisigThreshold || multisigOwners.length > maxParticipantLength}
+            disabled={!multisigThreshold || multisigOwners.length < multisigThreshold}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
