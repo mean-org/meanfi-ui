@@ -479,6 +479,7 @@
 		},
 		"multisig-account-detail": {
 			"created-on": "Created on",
+			"authority": "Authority",
 			"no-multisig-selected": "Please select or lookup a multisig account to view details",
 			"no-multisig-loaded": "Create or lookup a multisig account to view details",
 			"multisig-label-label": "Multisig name",

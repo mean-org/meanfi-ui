@@ -1277,8 +1277,6 @@ export const MultisigView = () => {
         [selectedMultisig.id.toBuffer()],
         multisigClient.programId
       );
-
-      console.log('tx accounts', data.transaction.accounts.map((a: any) => a.pubkey.toBase58()));
   
       let tx = multisigClient.transaction.executeTransaction({
         accounts: {
@@ -4186,6 +4184,20 @@ export const MultisigView = () => {
                   </span>
                   <div className="info-data flex-row wrap align-items-center">
                     {selectedMultisig.threshold}
+                  </div>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="transaction-detail-row">
+                  <span className="info-label">
+                    {t('multisig.multisig-account-detail.authority')}
+                  </span>
+                </div>
+                <div className="transaction-detail-row">
+                  <div onClick={() => copyMultisigAddress(selectedMultisig.address)} 
+                       className="copy-cta info-data flex-row wrap align-items-center"
+                       style={{cursor: 'pointer'}}>
+                    {shortenAddress(selectedMultisig.address.toBase58(), 8)}
                   </div>
                 </div>
               </Col>
