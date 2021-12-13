@@ -18,8 +18,11 @@ import {
   SwapView,
   TransfersView,
   TreasuriesView,
-  WrapView
+  WrapView,
+  MultisigView
+
 } from "./pages";
+
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
@@ -57,6 +60,8 @@ export function AppRoutes() {
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/custody" element={<CustodyView />} />
+                      <Route path="/multisig" element={<MultisigView />} />
+                      {/* <Route path="/vaults" element={<ServiceUnavailableView />} /> */}
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>

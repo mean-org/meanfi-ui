@@ -6,9 +6,12 @@ export const TextInput = (props: {
     label?: string;
     hint?: string;
     value: string;
+    extraClass?: string;
     placeholder: string;
     onInputChange: any;
     allowClear?: boolean;
+    alwaysShowClear?: boolean;
+    error?: string;
     onInputClear?: any;
 }) => {
 
@@ -17,7 +20,7 @@ export const TextInput = (props: {
         {props.label && (
             <div className="form-label">{props.label}</div>
         )}
-        <div className="well">
+        <div className={`well ${props.extraClass || ''}`}>
             <div className="flex-fixed-right">
                 <div className="left">
                     <input
@@ -32,7 +35,7 @@ export const TextInput = (props: {
                         value={props.value}
                     />
                 </div>
-                {props.allowClear && props.value && (
+                {(props.alwaysShowClear || (props.allowClear && props.value)) && (
                     <div className="rigth">
                         <div className="add-on h-100 simplelink" onClick={props.onInputClear}>
                             <CloseCircleOutlined />
@@ -42,6 +45,9 @@ export const TextInput = (props: {
             </div>
             {props.hint && (
                 <div className="form-field-hint">{props.hint}</div>
+            )}
+            {props.error && (
+                <span className="form-field-error">{props.error}</span>
             )}
         </div>
         </>

@@ -461,6 +461,93 @@
 			"close-stream-also-closes-treasury-label": "Also close the treasury"
 		}
 	},
+	"multisig": {
+		"screen-title": "Multisig accounts",
+		"refresh-tooltip": "Click to refresh the list of multisig accounts",
+		"multisig-detail-heading": "Multisig account details",
+		"create-new-multisig-account-cta": "Create multisig",
+		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
+		"pending-transactions": "pending transactions",
+		"add-participant-cta": "Add participant",
+		"multisig-accounts": {
+			"no-accounts": "No multisig accounts available",
+			"not-connected": "Please connect your wallet to see your multisig accounts",
+			"pending-transactions": "{{txs}} pending transactions"
+		},
+		"multisig-account-detail": {
+			"created-on": "Created on",
+			"no-multisig-selected": "Please select or lookup a multisig account to view details",
+			"no-multisig-loaded": "Create or lookup a multisig account to view details",
+			"multisig-label-label": "Multisig name",
+			"multisig-address-label": "Address",
+			"multisig-owners": "Owners",
+			"cta-mint": "Mint tokens",
+			"cta-transfer": "Transfer tokens",
+			"cta-upgrade-program": "Upgrade program",
+			"cta-create-vault": "Create vault",
+			"copy-id-title": "MULTISIG ID",
+			"address": "Authority",
+			"required-signatures": "Required signatures"
+		},
+		"multisig-transactions": {
+			"column-operation": "Operation",
+			"column-program-id": "Program",
+			"column-pending-signatures": "Signatures",
+			"column-created-on": "Created on",
+			"no-transactions": "This multisig account has no transactions",
+			"loading-transactions": "Loading transactions"
+		},
+		"create-multisig": {
+			"modal-title": "Create multisig",
+			"multisig-label-input-label": "Multisig name",
+			"multisig-label-input-empty": "Enter a multisig name",
+			"multisig-label-placeholder": "Type a name for your multisig account",
+			"multisig-threshold-input-label": "Minimum required signatures",
+			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
+			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"multisig-participants": "Valid signers",
+			"multisig-no-participants": "No participans added yet",
+			"multisig-duplicate-participants": "Found duplicate participants, please review.",
+			"main-cta": "Create",
+			"main-cta-busy": "Creating multisig",
+			"success-message": "Your new multisig account was created successfully."
+		},
+		"mint-tokens": {
+			"modal-title": "Mint tokens",
+			"main-cta": "Mint tokens",
+			"main-cta-busy": "Minting tokens",
+			"token-address-label": "Token address",
+			"token-address-placeholder": "Enter the address of the token",
+			"mint-to-label": "Mint to",
+			"mint-to-placeholder": "Enter the address of the destination account",
+			"mint-amount-label": "Amount",
+			"mint-amount-placeholder": "Enter the amount of tokens to mint",
+			"success-message": "Your tokens were minted successfully."
+		},
+		"transfer-tokens": {
+			"modal-title": "Transfer tokens",
+			"main-cta": "Transfer tokens",
+			"main-cta-busy": "Transferring tokens",
+			"source-address-label": "Transfer from",
+			"source-address-placeholder": "Enter the address of the source account",
+			"transfer-to-label": "Transfer to",
+			"transfer-to-placeholder": "Enter the address of the destination account",
+			"transfer-amount-label": "Amount",
+			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
+			"success-message": "Tokens transferred successfully."
+		},
+		"upgrade-program": {
+			"modal-title": "Upgrade program",
+			"main-cta": "Upgrade",
+			"main-cta-busy": "Upgrading program",
+			"program-address-label": "Program ID",
+			"program-address-placeholder": "Enter the address of the program",
+			"buffer-account-label": "New program buffer",
+			"buffer-account-placeholder": "Enter the address of the buffer account",
+			"success-message": "Program upgraded successfully."
+		}
+	},
 	"swap": {
 		"clients-label-savings": "You save",
 		"screen-title": "Exchange",
@@ -591,6 +678,7 @@
 		"validation": {
 			"invalid-solana-address": "Invalid solana address",
 			"address-validation": "Formato do endereço inválido",
+			"valid-address-required": "A valid solana address is required",
 			"cannot-use-own-account-as-treasury": "Não é possível usar sua conta como id do tesouro",
 			"amount-high": "O valor excede o seu saldo",
 			"amount-low": "Saldo da conta insuficiente",

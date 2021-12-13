@@ -69,6 +69,12 @@ export enum OperationType {
     DdcaAddFunds = 21,
     DdcaWithdraw = 22,
     DdcaClose = 23,
+    // Multisig options
+    CreateMultisig = 30,
+    MintTokens = 31,
+    TransferTokens = 32,
+    UpgradeProgram = 33,
+    CreateVault = 34,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,
