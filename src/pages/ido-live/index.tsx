@@ -186,7 +186,8 @@ export const IdoLiveView = () => {
       connectionConfig.endpoint,
       publicKey || undefined,
       { commitment: "confirmed" },
-      isLocal() ? true : false
+      true
+      // isLocal() ? true : false
     );
   }, [
     publicKey,
@@ -363,15 +364,24 @@ export const IdoLiveView = () => {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
         setSelectedToken(CUSTOM_USDC);
+        if (idoClient) {
+          idoClient.stopTracking();
+          consoleOut('idoClient.stopTracking() -> client:', idoClient ? idoClient.toString() : 'none', 'brown');
+        }
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
         setSelectedTokenBalance(0);
+        if (idoClient) {
+          idoClient.stopTracking();
+          consoleOut('idoClient.stopTracking() -> client:', idoClient ? idoClient.toString() : 'none', 'brown');
+        }
       }
     }
 
   }, [
     connected,
     publicKey,
+    idoClient,
     previousWalletConnectState,
     setSelectedTokenBalance,
     refreshTokenBalance,
@@ -394,12 +404,17 @@ export const IdoLiveView = () => {
   }
 
   const partnerImages = useMemo(() => {
-    return ["http://placehold.it/300&text=banner1",
-            "http://placehold.it/300&text=banner2",
-            "http://placehold.it/300&text=banner3",
-            "http://placehold.it/300&text=banner4",
-            "http://placehold.it/300&text=banner5",
-            "http://placehold.it/300&text=banner6"];
+    return [
+      "/assets/investors/three-arrows.png",
+      "/assets/investors/defiance.png",
+      "/assets/investors/softbank.png",
+      "/assets/investors/svc.png",
+      "/assets/investors/sesterce.png",
+      "/assets/investors/bigbrainholdings.png",
+      "/assets/investors/gerstenbrot.png",
+      "/assets/investors/solar-eco-fund.png",
+      "/assets/investors/bts-capital.png",
+    ];
   }, []);
 
   const infoRow = (caption: string, value: string) => {
@@ -561,39 +576,41 @@ export const IdoLiveView = () => {
   const renderYouAreHere = () => {
     return (
       <>
-      <div className="ido-stats-marker-wrapper">
-        <div className="ido-stats-marker-inner-container">
-          <span className="ido-stats-marker-start">{idoStartUtc?.toUTCString()}</span>
-          <span className="ido-stats-marker-end">{idoEndUtc?.toUTCString()}</span>
-          <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
-          <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
-            <div className="text-center">
-              <div>{currentDateDisplay}</div>
+      {idoStartUtc && idoEndUtc && idoStatus && (
+        <div className="ido-stats-marker-wrapper">
+          <div className="ido-stats-marker-inner-container">
+            <span className="ido-stats-marker-start">{idoStartUtc.toUTCString()}</span>
+            <span className="ido-stats-marker-end">{idoEndUtc.toUTCString()}</span>
+            <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
+            <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
+              <div className="text-center">
+                <div>{currentDateDisplay}</div>
+              </div>
+              <Divider />
+              {idoStatus && (
+                <>
+                  <div className="flex-fixed-right">
+                    <div className="left">Token Price</div>
+                    <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Max Allocation Allowed</div>
+                    <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Guaranteed Allocation</div>
+                    <div className="right">-</div>
+                  </div>
+                  <div className="flex-fixed-right">
+                    <div className="left">Total Participants</div>
+                    <div className="right">-</div>
+                  </div>
+                </>
+              )}
             </div>
-            <Divider />
-            {idoStatus && (
-              <>
-                <div className="flex-fixed-right">
-                  <div className="left">Token Price</div>
-                  <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left">Max Allocation Allowed</div>
-                  <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left">Guaranteed Allocation</div>
-                  <div className="right">-</div>
-                </div>
-                <div className="flex-fixed-right">
-                  <div className="left">Total Participants</div>
-                  <div className="right">-</div>
-                </div>
-              </>
-            )}
           </div>
         </div>
-      </div>
+      )}
       </>
     );
   }

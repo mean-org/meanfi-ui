@@ -122,7 +122,7 @@ export const IdoDeposit = (props: {
 
         // Create a transaction
         return await props.idoClient.createDepositUsdcTx(
-          publicKey,                                                // meanIdoAddress
+          meanIdoAddress,                                           // meanIdoAddress
           amount                                                    // amount
         )
         .then(value => {
@@ -294,7 +294,7 @@ export const IdoDeposit = (props: {
 
   const infoRow = (caption: string, value: string) => {
     return (
-      <div className="flex-fixed-right line-height-180">
+      <div className="flex-fixed-right mb-1">
         <div className="left inner-label">
           <span>{caption}</span>
         </div>
