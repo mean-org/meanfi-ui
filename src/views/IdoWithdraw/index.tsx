@@ -271,7 +271,8 @@ export const IdoWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoWithdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
+            setWithdrawAmount("");
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -305,7 +306,7 @@ export const IdoWithdraw = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && props.idoStatus.hasUserContributed && !isBusy ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setWithdrawAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.idoStatus.userUsdcContributedAmount,
@@ -318,7 +319,7 @@ export const IdoWithdraw = (props: {
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || isBusy ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected || isBusy || props.disabled ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">

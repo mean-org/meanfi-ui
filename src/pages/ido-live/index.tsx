@@ -7,7 +7,8 @@ import {
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
-  SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS
+  UTC_DATE_TIME_FORMAT,
+  UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
 import { consoleOut, isLocal, isValidAddress, percentual } from '../../utils/ui';
@@ -31,6 +32,8 @@ import { appConfig } from '../..';
 import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { DoubleRightOutlined } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -60,6 +63,10 @@ export const IdoLiveView = () => {
     setSelectedTokenBalance,
     refreshTokenBalance,
   } = useContext(AppStateContext);
+  const {
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+  } = useContext(TransactionStatusContext);
   const [currentTheme] = useState(theme);
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
@@ -181,7 +188,8 @@ export const IdoLiveView = () => {
 
   // TODO: Add custom USDC token and MEAN tolken to the list
   useEffect(() => {
-    if (selectedToken && selectedToken.address !== CUSTOM_USDC.address) {
+    if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+      consoleOut('Selecting custom USDC');
       setSelectedToken(CUSTOM_USDC);
     }
   },[
@@ -320,7 +328,7 @@ export const IdoLiveView = () => {
 
     if (idoEngineInitStatus === "started") {
       timer = setInterval(() => {
-        consoleOut(`Fetching IDO status past ${IDO_FETCH_FREQUENCY / 1000} seconds`);
+        consoleOut(`Fetching IDO status past ${IDO_FETCH_FREQUENCY / 60 / 1000} min`);
         refreshIdoData();
       }, IDO_FETCH_FREQUENCY);
     }
@@ -402,16 +410,6 @@ export const IdoLiveView = () => {
   ]);
   */
 
-  /*
-  Abajo de los formularios
-
-  Barrita horizontal
-  - maximum raise
-    label at the end
-
-  if fulfilled -> warn: The guaranteed allocation is fully booked, but you can still deposit to save a spot on the waitlist.
-  */
-
   // Calculate "You are here" chart data tooltip position
   useEffect(() => {
 
@@ -425,10 +423,10 @@ export const IdoLiveView = () => {
       const percent = percentual(elapsed, totalTime);
       if (today >= idoEndUtc) {
         setXPosPercent(100);
-        setCurrentDateDisplay(dateFormat(idoEndUtc, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
+        setCurrentDateDisplay(dateFormat(idoEndUtc, UTC_DATE_TIME_FORMAT));
       } else {
         setXPosPercent(percent);
-        setCurrentDateDisplay(dateFormat(today, SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS));
+        setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
     }, 1000);
 
@@ -492,6 +490,23 @@ export const IdoLiveView = () => {
     setSelectedToken,
   ]);
 
+  // Handle what to do when pending Tx confirmation reaches finality or on error
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      setTimeout(() => {
+        consoleOut('Refreshing IDO status...', '', 'blue');
+        refreshIdoData();
+      }, 800);
+    }
+  }, [
+    publicKey,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    refreshIdoData
+  ]);
+
   const isIdoActive = () => {
     return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
       ? true
@@ -509,14 +524,14 @@ export const IdoLiveView = () => {
 
   const partnerImages = useMemo((): PartnerImage[] => {
     return [
-      {fileName: "three-arrows.png", size: "small"},
+      {fileName: "three-arrows.png", size: "normal"},
       {fileName: "defiance.png", size: "small"},
-      {fileName: "softbank.png", size: "small"},
-      {fileName: "svc.png", size: "small"},
-      {fileName: "sesterce.png", size: "small"},
+      {fileName: "softbank.png", size: "tiny"},
+      {fileName: "svc.png", size: "tiny"},
+      {fileName: "solar-eco-fund.png", size: "small"},
+      {fileName: "sesterce.png", size: "tiny"},
       {fileName: "bigbrainholdings.png", size: "small"},
       {fileName: "gerstenbrot.png", size: "small"},
-      {fileName: "solar-eco-fund.png", size: "small"},
       {fileName: "bts-capital.png", size: "small"},
     ];
   }, []);
@@ -560,7 +575,7 @@ export const IdoLiveView = () => {
         idoClient={idoClient}
         idoDetails={idoDetails}
         idoStatus={idoStatus}
-        disabled={!isIdoActive()}
+        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
@@ -571,7 +586,7 @@ export const IdoLiveView = () => {
         idoClient={idoClient}
         idoDetails={idoDetails}
         idoStatus={idoStatus}
-        disabled={!isIdoActive()}
+        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
         maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
@@ -679,6 +694,9 @@ export const IdoLiveView = () => {
                   : renderClaimsTabset
               }
             </div>
+            <div className="mt-2 text-center">
+              <span className="simplelink underline-on-hover" onClick={() => refreshIdoData()}>Refresh data</span>
+            </div>
           </>
         )}
       </div>
@@ -691,27 +709,23 @@ export const IdoLiveView = () => {
       {idoStartUtc && idoEndUtc && idoStatus && (
         <div className="ido-stats-marker-wrapper">
           <div className="ido-stats-marker-inner-container">
-            <span className="ido-stats-marker-start">{idoStartUtc.toUTCString()}</span>
-            <span className="ido-stats-marker-end">{idoEndUtc.toUTCString()}</span>
+            <span className="ido-stats-marker-start">{dateFormat(idoStartUtc, UTC_DATE_TIME_FORMAT2)}</span>
+            <span className="ido-stats-marker-end">{dateFormat(idoEndUtc, UTC_DATE_TIME_FORMAT2)}</span>
             <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
             <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
               <div className="text-center">
-                <div>{currentDateDisplay}</div>
+                <div>{currentDateDisplay}<span className="ml-1"><DoubleRightOutlined className="bounce-right" /></span></div>
               </div>
               <Divider />
               {idoStatus && (
                 <>
                   <div className="flex-fixed-right">
-                    <div className="left">Token Price</div>
+                    <div className="left">Bonded Price</div>
                     <div className="right">{getFormattedRateAmount(idoStatus.currentMeanPrice)}</div>
                   </div>
                   <div className="flex-fixed-right">
-                    <div className="left">Max Allocation Allowed</div>
+                    <div className="left">Max Contrib. Allowed</div>
                     <div className="right">{getFormattedRateAmount(idoStatus.currentMaxUsdcContribution)}</div>
-                  </div>
-                  <div className="flex-fixed-right">
-                    <div className="left">Guaranteed Allocation</div>
-                    <div className="right">-</div>
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Total Participants</div>
@@ -730,7 +744,7 @@ export const IdoLiveView = () => {
   return (
     <div className="solid-bg">
 
-      {isLocal() && (
+      {/* {isLocal() && (
         <div className="debug-bar">
           {idoStatus && (
             <>
@@ -745,7 +759,7 @@ export const IdoLiveView = () => {
             </>
           )}
         </div>
-      )}
+      )} */}
 
       {/* Page title */}
       <section className="content contrast-section no-padding">

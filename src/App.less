@@ -536,6 +536,9 @@ footer.ant-layout-footer {
     &.small {
       max-height: 42px;
     }
+    &.tiny {
+      max-height: 38px;
+    }
   }
 }
 
@@ -6595,6 +6598,11 @@ code {
   opacity: 0.5;
 }
 
+.bounce-right {
+  animation: bounceright 1s ease-in-out infinite;
+  margin-left: 9px;
+}
+
 // Animations
 @keyframes rotate {
   100% {
@@ -6691,5 +6699,15 @@ code {
   }
   100% { 
       opacity: 0.5;
+  }
+}
+
+@keyframes bounceright {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, 0);
   }
 }

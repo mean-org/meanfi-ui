@@ -16,6 +16,8 @@ export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
 export const SIMPLE_DATE_FORMAT = 'mm/dd/yyyy';
 export const SIMPLE_DATE_TIME_FORMAT = 'mm/dd/yyyy HH:MM';
 export const SIMPLE_DATE_TIME_FORMAT_WITH_SECONDS = 'mm/dd/yyyy HH:MM:ss';
+export const UTC_DATE_TIME_FORMAT = "UTC:ddd, dd mmm HH:MM:ss";
+export const UTC_DATE_TIME_FORMAT2 = "UTC:ddd, dd mmm HH:MM:ss Z";
 export const UTC_FULL_DATE_TIME_FORMAT = "UTC:dddd, mmm dS 'at' HH:MM Z";
 export const VERBOSE_DATE_FORMAT = 'ddd mmm dd yyyy';
 export const VERBOSE_DATE_TIME_FORMAT = 'ddd mmm dd yyyy HH:MM';
@@ -97,10 +99,10 @@ export const ALLOWED_ADDRESSES_LIST = [
 export const IDO_START_DATE = { year: 2021, month: 11, day: 15, hour: 13, minute: 0, second: 0 };
 export const IDO_END_DATE = { year: 2021, month: 11, day: 17, hour: 13, minute: 0, second: 0 };
 
-export const IDO_FETCH_FREQUENCY = 10 * 1000;    // IDO data fetch polling interval
-export const IDO_MIN_CONTRIBUTION = 100;        // 100 USDC
-export const IDO_CAP_VALUATION = 210000000;     // $210m
-export const IDO_RAISE_FLOOR = 2100000;         // $2.1m
+export const IDO_FETCH_FREQUENCY = 3 * 60 * 1000;       // IDO data fetch polling interval
+export const IDO_MIN_CONTRIBUTION = 100;                // 100 USDC
+export const IDO_CAP_VALUATION = 210000000;             // $210m
+export const IDO_RAISE_FLOOR = 2100000;                 // $2.1m
 
 export const IDO_RESTRICTED_COUNTRIES: Country[] = [
     { isoCode: 'AF', name: 'Afghanistan' },

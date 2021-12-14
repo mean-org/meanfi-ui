@@ -279,7 +279,8 @@ export const IdoDeposit = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.IdoDeposit);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -315,7 +316,7 @@ export const IdoDeposit = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoDetails.usdcPerUserMin
@@ -327,7 +328,7 @@ export const IdoDeposit = (props: {
               Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoStatus.currentMaxUsdcContribution
@@ -342,7 +343,7 @@ export const IdoDeposit = (props: {
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || props.idoStatus.hasUserContributed || isBusy ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected || props.idoStatus.hasUserContributed || isBusy || props.disabled ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -450,6 +451,15 @@ export const IdoDeposit = (props: {
           </div>
         </>
       )}
+
+      {/** TODO: Implement this HERE!
+       * Before the deposit's CTA (Centered)
+       * When guaranteed allocation is open:
+       * ✅ guaranteed allocation
+       * 
+       * When guaranteed allocation is closed:
+       * Join the waitlist
+       */}
 
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
