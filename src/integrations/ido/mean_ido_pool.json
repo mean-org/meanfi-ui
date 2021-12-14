@@ -208,11 +208,11 @@
             "type": "u64"
           },
           {
-            "name": "usdcTotalDeposited",
+            "name": "usdcTotalDeposits",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrew",
+            "name": "usdcTotalWithdrawals",
             "type": "u64"
           },
           {
@@ -220,20 +220,36 @@
             "type": "u64"
           },
           {
-            "name": "meanTotalAllocated",
+            "name": "totalContributors",
+            "type": "u32"
+          },
+          {
+            "name": "lastContributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "gaUsdcTotalContributed",
             "type": "u64"
           },
           {
-            "name": "meanTotalDeallocated",
-            "type": "u64"
+            "name": "gaTotalContributors",
+            "type": "u32"
           },
           {
-            "name": "meanAllocatedCurrent",
+            "name": "gaMeanTotalPurchased",
             "type": "u64"
           },
           {
             "name": "meanImpliedPrice",
             "type": "u64"
+          },
+          {
+            "name": "isGaOpen",
+            "type": "bool"
+          },
+          {
+            "name": "waitlistFirstContributorNumber",
+            "type": "u32"
           }
         ]
       }
@@ -265,27 +281,31 @@
             "type": "i64"
           },
           {
-            "name": "usdcTotalDepositedSnapshot",
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "usdcTotalDepositsBeforeMe",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrewSnapshot",
+            "name": "usdcTotalWithdrawalsBeforeMe",
             "type": "u64"
           },
           {
-            "name": "meanTotalAllocatedSnapshot",
+            "name": "usdcTotalCurrentBeforeMe",
             "type": "u64"
           },
           {
-            "name": "meanTotalDeallocatedSnapshot",
+            "name": "usdcContributedAmount",
             "type": "u64"
           },
           {
-            "name": "usdcContributionAmount",
+            "name": "meanCurvePrice",
             "type": "u64"
           },
           {
-            "name": "meanAllocatedAmount",
+            "name": "meanPurchasedAmount",
             "type": "u64"
           }
         ]
@@ -378,38 +398,53 @@
           "index": false
         },
         {
+          "name": "usdcTotalDeposits",
+          "type": "u64",
+          "index": false
+        },
+        {
+          "name": "usdcTotalWithdrawals",
+          "type": "u64",
+          "index": false
+        },
+        {
           "name": "usdcTotalDeposited",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalWithdrew",
+          "name": "totalContributors",
+          "type": "u32",
+          "index": false
+        },
+        {
+          "name": "lastContributorNumber",
+          "type": "u32",
+          "index": false
+        },
+        {
+          "name": "gaUsdcTotalContributed",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalCurrent",
-          "type": "u64",
+          "name": "gaTotalContributors",
+          "type": "u32",
           "index": false
         },
         {
-          "name": "meanTotalAllocated",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "meanTotalDeallocated",
-          "type": "u64",
-          "index": false
-        },
-        {
-          "name": "meanAllocatedCurrent",
+          "name": "gaMeanTotalPurchased",
           "type": "u64",
           "index": false
         },
         {
           "name": "meanImpliedPrice",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "isGaOpen",
+          "type": "bool",
           "index": false
         }
       ]
