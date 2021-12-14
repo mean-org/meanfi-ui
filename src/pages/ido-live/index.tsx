@@ -714,7 +714,7 @@ export const IdoLiveView = () => {
             <span className="ido-stats-marker" style={{left: `${xPosPercent}%`}}></span>
             <div className="ido-stats-tooltip" style={{left: `${xPosPercent}%`}}>
               <div className="text-center">
-                <div>{currentDateDisplay}<span className="ml-1"><DoubleRightOutlined className="bounce-right" /></span></div>
+                <div>{currentDateDisplay}{(today > idoStartUtc && today < idoEndUtc) && (<span className="ml-1"><DoubleRightOutlined className="bounce-right" /></span>)}</div>
               </div>
               <Divider />
               {idoStatus && (
