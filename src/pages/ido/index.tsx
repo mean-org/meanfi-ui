@@ -93,9 +93,9 @@ export const IdoView = () => {
             message="NOTE"
             description={
               <div>
-                <div>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Inventore reiciendis ut quidem qui consectetur dolorum soluta provident tempore maiores et neque sunt dolorem ea voluptatum in ratione enim amet saepe quod.</div>
-                <a className="simplelink underline" href="https://docs.meanfi.com" target="_blank" rel="noopener noreferrer">
-                  <span>Read more here</span>
+                <span className="mr-1">Due to network and market conditions, the Mean IDO was be delayed a week, and will now take place on Dec. 22nd at 15:00 UTC. Read the details</span>
+                <a className="simplelink underline" href="https://meandao.medium.com/mean-launch-delayed-7-days-505221f2e638" target="_blank" rel="noopener noreferrer">
+                  <span>👉 HERE</span>
                 </a>
               </div>
             }
