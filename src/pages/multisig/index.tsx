@@ -2457,18 +2457,18 @@ export const MultisigView = () => {
   ]);
 
   const isTxInProgress = useCallback((): boolean => {
-    return isBusy || fetchTxInfoStatus === "fetching"
-            ? true
-            : false;
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
   }, [
     isBusy,
     fetchTxInfoStatus,
   ]);
 
   const isTreasurer = useCallback((): boolean => {
-    return publicKey && treasuryDetails && treasuryDetails.treasurerAddress === publicKey.toBase58()
-            ? true
-            : false;
+    return (
+      publicKey && 
+      treasuryDetails && 
+      treasuryDetails.treasurerAddress === publicKey.toBase58()
+    ) ? true : false;
   }, [
     publicKey,
     treasuryDetails,
@@ -4136,9 +4136,11 @@ export const MultisigView = () => {
                     </span>
                     <span 
                       onClick={() => {
-                        item.status === MultisigTransactionStatus.Pending 
-                          ? onExecuteApproveTx({ transaction: item })
-                          : onExecuteFinishTx({ transaction: item })
+                        if (item.status === MultisigTransactionStatus.Pending) {
+                          onExecuteApproveTx({ transaction: item });
+                        } if (item.status === MultisigTransactionStatus.Approved) {
+                          onExecuteFinishTx({ transaction: item })
+                        }                      
                       }}
                       aria-disabled={item.status === MultisigTransactionStatus.Executed} 
                       className={`badge small ${getTransactionStatusClass(item)}`} 
