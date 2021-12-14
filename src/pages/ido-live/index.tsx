@@ -74,7 +74,6 @@ export const IdoLiveView = () => {
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
-  // const [idosLoaded, setIdosLoaded] = useState(false);
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
@@ -257,39 +256,6 @@ export const IdoLiveView = () => {
     idoEngineInitStatus
   ]);
 
-  /*
-  // Get a list of available IDOs for reference
-  useEffect(() => {
-
-    if (!idoClient || !publicKey || idosLoaded) { return; }
-
-    setIdosLoaded(true);
-
-    idoClient.listIdos(true, true)
-      .then(myIdos => {
-        consoleOut('myIdos:', myIdos, 'blue');
-        const idosTable: any[] = [];
-        myIdos.forEach((item: IdoDetails, index: number) => idosTable.push({
-          address: item.idoAddress,
-          startUtc: new Date(item.idoStartUtc).toLocaleDateString(),
-          endUtc: new Date(item.idoEndUtc).toLocaleDateString()
-          })
-        );
-        console.table(idosTable);
-      })
-      .catch(error => {
-        console.error(error);
-      })
-
-    return () => {};
-
-  }, [
-    publicKey,
-    idoClient,
-    idosLoaded,
-  ]);
-  */
-
   // Fetches the IDO status
   const refreshIdoData = useCallback(async () => {
     if (!idoClient || !idoAccountAddress || idoEngineInitStatus !== "started") {
@@ -340,75 +306,6 @@ export const IdoLiveView = () => {
     forceRefreshIdoStatus,
     refreshIdoData
   ]);
-
-  /*
-  // Init IDO client and store tracked data
-  useEffect(() => {
-
-    if (!idoClient || !idoAccountAddress) {
-      return;
-    }
-
-    const initIdo = async () => {
-
-      const idoAddressPubKey = new PublicKey(idoAccountAddress);
-      const details = await idoClient.getIdo(idoAddressPubKey);
-
-      consoleOut('idoDetails:', details, 'blue');
-
-      if(details === null)
-      {
-        setIdoEngineInitStatus("error");
-        return;
-      }
-
-      setIdoDetails(details);
-      let parsedDate = Date.parse(details.idoStartUtc);
-      let fromParsedDate = new Date(parsedDate);
-      consoleOut('idoStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
-      setIdoStartUtc(fromParsedDate);
-
-      parsedDate = Date.parse(details.idoEndUtc);
-      fromParsedDate = new Date(parsedDate);
-      consoleOut('idoEndUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
-      setIdoEndUtc(fromParsedDate);
-
-      parsedDate = Date.parse(details.redeemStartUtc);
-      fromParsedDate = new Date(parsedDate);
-      consoleOut('redeemStartUtc.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
-      setRedeemStartUtc(fromParsedDate);
-
-      try {
-        await idoClient.startTracking(
-          idoAddressPubKey,
-          (idoStatus) => {
-            setIdoStatus(idoStatus);
-            setIdoEngineInitStatus("started");
-          }
-        );
-      } catch (error: any) {
-        console.error(error);
-        setIdoEngineInitStatus("error");
-      }
-
-    }
-
-    if (!idoStatus && (idoEngineInitStatus === "uninitialized" || idoEngineInitStatus === "error")) {
-      consoleOut('idoAccountAddress:', idoAccountAddress, 'blue');
-      consoleOut('Calling initIdo()...', '', 'blue');
-      setIdoEngineInitStatus("initializing");
-      initIdo();
-    }
-
-    return () => {};
-
-  }, [
-    idoClient,
-    idoStatus,
-    idoAccountAddress,
-    idoEngineInitStatus,
-  ]);
-  */
 
   // Calculate "You are here" chart data tooltip position
   useEffect(() => {

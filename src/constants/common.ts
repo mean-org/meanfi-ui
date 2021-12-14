@@ -96,10 +96,8 @@ export const ALLOWED_ADDRESSES_LIST = [
 
 // Date.UTC(year, month, day, hour, minute, second, millisecond)
 // REAL DATES
-export const IDO_START_DATE = { year: 2021, month: 11, day: 15, hour: 13, minute: 0, second: 0 };
-export const IDO_END_DATE = { year: 2021, month: 11, day: 17, hour: 13, minute: 0, second: 0 };
-
-export const IDO_FETCH_FREQUENCY = 3 * 60 * 1000;       // IDO data fetch polling interval
+export const IDO_START_DATE = { year: 2021, month: 11, day: 22, hour: 13, minute: 0, second: 0 };
+export const IDO_FETCH_FREQUENCY = 5 * 60 * 1000;       // IDO data fetch polling interval
 export const IDO_MIN_CONTRIBUTION = 100;                // 100 USDC
 export const IDO_CAP_VALUATION = 210000000;             // $210m
 export const IDO_RAISE_FLOOR = 2100000;                 // $2.1m
