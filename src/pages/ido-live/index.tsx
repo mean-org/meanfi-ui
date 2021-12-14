@@ -514,7 +514,7 @@ export const IdoLiveView = () => {
           {infoRow(
             'USDC Contributed',
             getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.totalUsdcContributed,
+              idoStatus.gaTotalUsdcContributed,
               selectedToken.address,
               true
             )
@@ -522,7 +522,7 @@ export const IdoLiveView = () => {
           {infoRow(
             'Total MEAN sold',
             getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.totalMeanAllocated,
+              idoStatus.gaMeanTotalPurchased,
               '',
               true
             )

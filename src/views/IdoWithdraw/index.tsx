@@ -378,7 +378,7 @@ export const IdoWithdraw = (props: {
             {idoInfoRow(
               'USDC Contributed',
               getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.totalUsdcContributed,
+                props.idoStatus.gaTotalUsdcContributed,
                 props.selectedToken.address,
                 true
               )
@@ -422,7 +422,7 @@ export const IdoWithdraw = (props: {
             {idoInfoRow(
               'Your MEAN allocation',
               getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userMeanAllocatedAmount,
+                props.idoStatus.userMeanImpliedAmount,
                 '',
                 true
               ),

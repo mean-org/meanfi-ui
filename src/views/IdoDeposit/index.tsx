@@ -398,7 +398,7 @@ export const IdoDeposit = (props: {
             {idoInfoRow(
               'USDC Contributed',
               getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.totalUsdcContributed,
+                props.idoStatus.gaTotalUsdcContributed,
                 props.selectedToken.address,
                 true
               )
@@ -442,7 +442,7 @@ export const IdoDeposit = (props: {
             {idoInfoRow(
               'Your MEAN allocation',
               getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userMeanAllocatedAmount,
+                props.idoStatus.userMeanImpliedAmount,
                 '',
                 true
               ),
@@ -460,6 +460,11 @@ export const IdoDeposit = (props: {
        * When guaranteed allocation is closed:
        * Join the waitlist
        */}
+      {props.idoStatus.isGaOpen ? (
+        <span className="mt-3 mb-3 text-center inner-label">✅ Guaranteed allocation</span>
+      ) : (
+        <span className="mt-3 mb-3 text-center inner-label">Join the waitlist</span>
+      )}
 
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}

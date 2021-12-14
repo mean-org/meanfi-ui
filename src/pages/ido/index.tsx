@@ -7,6 +7,7 @@ import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';
 import { Link, useNavigate } from 'react-router-dom';
 import { WarningFilled } from '@ant-design/icons';
+import { Alert } from 'antd';
 
 export const IdoView = () => {
   const navigate = useNavigate();
@@ -87,28 +88,24 @@ export const IdoView = () => {
           <Countdown date={idoStartUtc} daysInHours={false} onComplete={onCountdownCompleted} />
         </div>
 
-        <div className="mb-4">
-          <div className="notifications">
-            <div data-show="true" className="ant-alert ant-alert-warning" role="alert">
-              <span role="img" aria-label="exclamation-circle" className="anticon anticon-exclamation-circle ant-alert-icon">
-                <WarningFilled />
-              </span>
-              <div className="ant-alert-content">
-                <div className="ant-alert-message">
-                  <span className="mr-1">Aquí va algo.</span>
-                  <a className="simplelink underline-on-hover" href="https://something.com" target="_blank" rel="noopener noreferrer">Read more here</a>
-                </div>
-                <div className="ant-alert-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic omnis quia earum, ut incidunt ab voluptatibus nulla laboriosam error. Quae incidunt voluptatum corrupti, fuga quasi ullam non hic corporis quos.</div>
+        <div className="container-max-width-450 text-left mb-4">
+          <Alert
+            message="NOTE"
+            description={
+              <div>
+                <div>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Inventore reiciendis ut quidem qui consectetur dolorum soluta provident tempore maiores et neque sunt dolorem ea voluptatum in ratione enim amet saepe quod.</div>
+                <a className="simplelink underline" href="https://docs.meanfi.com" target="_blank" rel="noopener noreferrer">
+                  <span>Read more here</span>
+                </a>
               </div>
-            </div>
-          </div>
+            }
+            type="warning"
+            showIcon
+            className="translucent"
+          />
         </div>
 
         <div className="w-100 text-center mb-4">
-          <p>Read more <a className="simplelink underline" href={MEANFI_DOCS_URL} target="_blank" rel="noopener noreferrer">
-          <span>here</span>
-          </a>
-          </p>
           <p>
             <Link to="/" className="simplelink underline">
               <span>Go to App</span>
