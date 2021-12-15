@@ -986,7 +986,7 @@ export const RecurringExchange = (props: {
         }
 
       } else {    
-        label = t("transactions.validation.valid-approve");
+        label = t("transactions.validation.valid-ddca-review");
       }
 
       setTransactionStartButtonLabel(label);

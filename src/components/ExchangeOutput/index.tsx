@@ -113,7 +113,7 @@ export const ExchangeOutput = (props: {
               }`}
             </span>
             {props.toTokenBalance && (
-              <span className="balance-amount">
+              <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                 {`(~$${
                   props.toToken && props.toTokenBalance
                     ? formatAmount(

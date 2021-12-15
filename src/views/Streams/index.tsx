@@ -2271,7 +2271,7 @@ export const Streams = () => {
                         refreshStreamList(true);
                         setTimeout(() => {
                           navigate('/accounts');
-                        }, 100);
+                        }, 200);
                       }}
                     />
                   </Tooltip>

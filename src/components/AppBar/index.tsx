@@ -73,7 +73,7 @@ export const AppBar = (props: {
     refreshStreamList(true);
     setTimeout(() => {
       navigate('/accounts');
-    }, 100);
+    }, 200);
   }
 
   // const getChartsLink = (): string => {
