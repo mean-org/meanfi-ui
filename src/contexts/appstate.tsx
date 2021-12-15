@@ -136,7 +136,7 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   detailsPanelOpen: false,
-  shouldLoadTokens: false,
+  shouldLoadTokens: true,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,

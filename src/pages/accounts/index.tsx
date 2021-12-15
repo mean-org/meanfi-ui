@@ -322,6 +322,28 @@ export const AccountsView = () => {
     return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
   }, [accountAddress]);
 
+  // Load streams on entering /accounts
+  useEffect(() => {
+    if (!isFirstLoad) { return; }
+    setIsFirstLoad(false);
+
+    setTimeout(() => {
+      setShouldLoadTokens(true);
+    }, 1000);
+
+    if (publicKey && (!streamList || streamList.length === 0)) {
+      consoleOut('Loading streams with wallet connection...', '', 'green');
+      refreshStreamList();
+    }
+  }, [
+    publicKey,
+    streamList,
+    isFirstLoad,
+    shouldLoadTokens,
+    refreshStreamList,
+    setShouldLoadTokens
+  ]);
+
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
@@ -580,20 +602,6 @@ export const AccountsView = () => {
   }, [
     accountAddress,
     selectedAsset?.publicAddress
-  ]);
-
-  // Load streams on entering /accounts
-  useEffect(() => {
-    if (isFirstLoad && publicKey && (!streamList || streamList.length === 0)) {
-      setIsFirstLoad(false);
-      consoleOut('Loading streams with wallet connection...', '', 'green');
-      refreshStreamList();
-    }
-  }, [
-    publicKey,
-    streamList,
-    isFirstLoad,
-    refreshStreamList
   ]);
 
   // Load the transactions when signaled
