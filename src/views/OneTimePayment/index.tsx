@@ -58,6 +58,7 @@ export const OneTimePayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
+    loadingPrices,
     isWhitelisted,
     recipientAddress,
     recipientNote,
@@ -67,6 +68,7 @@ export const OneTimePayment = () => {
     isVerifiedRecipient,
     streamProgramAddress,
     previousWalletConnectState,
+    refreshPrices,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
@@ -77,7 +79,6 @@ export const OneTimePayment = () => {
     setPaymentStartDate,
     refreshTokenBalance,
     setTransactionStatus,
-    setForceReloadTokens,
     setIsVerifiedRecipient,
     setSelectedTokenBalance,
     setPreviousWalletConnectState
@@ -238,13 +239,14 @@ export const OneTimePayment = () => {
     if (isSuccess()) {
       setFixedScheduleValue(0);
       resetContractValues();
-      setForceReloadTokens(true);
+      setIsVerifiedRecipient(false);
     }
     resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
+    setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
     closeTransactionModal();
     if (isScheduledPayment()) {
@@ -934,9 +936,11 @@ export const OneTimePayment = () => {
               </span>
             </div>
             <div className="right inner-label">
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
             </div>
           </div>
         </div>

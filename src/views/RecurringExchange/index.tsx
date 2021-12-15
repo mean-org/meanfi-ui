@@ -66,8 +66,8 @@ export const RecurringExchange = (props: {
     ddcaOption,
     previousWalletConnectState,
     setPreviousWalletConnectState,
-    setDdcaOption
-
+    setDdcaOption,
+    refreshPrices,
   } = useContext(AppStateContext);
   
   const connection = useMemo(() => props.connection, [props.connection]);
@@ -986,7 +986,7 @@ export const RecurringExchange = (props: {
         }
 
       } else {    
-        label = t("transactions.validation.valid-approve");
+        label = t("transactions.validation.valid-ddca-review");
       }
 
       setTransactionStartButtonLabel(label);
@@ -1458,6 +1458,7 @@ export const RecurringExchange = (props: {
               setSubjectTokenSelection("source");
               showTokenSelector();
             }}
+            onPriceClick={() => refreshPrices()}
             inputPosition={inputPosition}
             translationId="source"
             inputLabel={

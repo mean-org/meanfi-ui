@@ -83,7 +83,7 @@ export const AccountsView = () => {
     loadingStreams,
     lastTxSignature,
     detailsPanelOpen,
-    forceReloadTokens,
+    shouldLoadTokens,
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
@@ -96,7 +96,7 @@ export const AccountsView = () => {
     setAccountAddress,
     refreshStreamList,
     setDtailsPanelOpen,
-    setForceReloadTokens,
+    setShouldLoadTokens,
     setTransactionStatus,
     setAddAccountPanelOpen,
     showDepositOptionsModal,
@@ -115,7 +115,6 @@ export const AccountsView = () => {
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
@@ -156,16 +155,20 @@ export const AccountsView = () => {
     startSwitch();
   }, [
     startSwitch,
-    setTransactions
+    setTransactions,
+    setShouldLoadTokens
   ])
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
+    clearTxList: boolean = true,
     openDetailsPanel: boolean = false
   ) => {
     setStatus(FetchStatus.Fetching);
     setSolAccountItems(0);
-    setTransactions(undefined);
+    if (clearTxList) {
+      setTransactions(undefined);
+    }
     setSelectedAsset(asset);
     if (isSmallUpScreen || openDetailsPanel) {
       setDtailsPanelOpen(true);
@@ -292,7 +295,10 @@ export const AccountsView = () => {
   const onFinishedTokenMerge = useCallback(() => {
     hideTokenMergerModal();
     setShouldLoadTokens(true);
-  }, [hideTokenMergerModal]);
+  }, [
+    setShouldLoadTokens,
+    hideTokenMergerModal
+  ]);
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -317,16 +323,18 @@ export const AccountsView = () => {
   }, [accountAddress]);
 
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
-  // Also include forceReloadTokens from state after a successful Tx signaled
-  // from places where token balances were indeed changed)
+  // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
     if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens.length || !splTokenList.length) {
       return;
     }
 
+    setTimeout(() => {
+      setShouldLoadTokens(false);
+    });
+
     const timeout = setTimeout(() => {
 
-      setShouldLoadTokens(false);
       setTokensLoaded(false);
 
       let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
@@ -494,7 +502,14 @@ export const AccountsView = () => {
                 refreshCachedRpc();
               }
               // Preset the first available token
-              selectAsset(meanTokensCopy[0]);
+              if (selectedAsset) {
+                const meanTokenItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
+                if (meanTokenItemIndex !== -1) {
+                  selectAsset(meanTokensCopy[meanTokenItemIndex], false);
+                }
+              } else {
+                selectAsset(meanTokensCopy[0]);
+              }
             })
             .catch(error => {
               console.error(error);
@@ -502,7 +517,7 @@ export const AccountsView = () => {
               setAccountTokens(meanTokensCopy);
               setExtraUserTokensSorted([]);
               setTokensLoaded(true);
-              selectAsset(meanTokensCopy[0]);
+              selectAsset(meanTokensCopy[0], true);
               refreshCachedRpc();
             });
         })
@@ -517,13 +532,15 @@ export const AccountsView = () => {
     }
 
   }, [
-    accountAddress, 
-    customConnection, 
-    shouldLoadTokens, 
+    customConnection,
+    shouldLoadTokens,
+    accountAddress,
+    selectedAsset,
     splTokenList,
     userTokens,
-    updateAtaFlag,
     selectAsset,
+    updateAtaFlag,
+    setShouldLoadTokens,
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -646,48 +663,6 @@ export const AccountsView = () => {
     startSwitch
   ]);
 
-  // Check if forceReloadTokens is on, and trigger token reload
-  useEffect(() => {
-    if (forceReloadTokens) {
-      setForceReloadTokens(false);
-      consoleOut('Post shouldLoadTokens...', '', 'blue');
-      setShouldLoadTokens(true);
-    }
-  }, [
-    forceReloadTokens,
-    setForceReloadTokens
-  ]);
-
-  // Auto execute (when entering /accounts) if we have an address already stored
-  useEffect(() => {
-    if (!accountAddress || !customConnection || tokensLoaded || accountTokens.length) {
-      return;
-    }
-
-    if (publicKey && !streamList) {
-      consoleOut('Loading streams with wallet connection...', '', 'green');
-      refreshStreamList();
-    }
-
-    const timeout = setTimeout(() => {
-      consoleOut('loading user tokens...');
-      setShouldLoadTokens(true);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    publicKey,
-    streamList,
-    tokensLoaded,
-    accountTokens,
-    accountAddress,
-    customConnection,
-    refreshStreamList
-  ]);
-
   // Hook on the wallet connect/disconnect
   useEffect(() => {
 
@@ -725,6 +700,7 @@ export const AccountsView = () => {
     previousWalletConnectState,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
+    setShouldLoadTokens,
     refreshStreamList,
     setStreamDetail,
     startSwitch,
@@ -956,7 +932,7 @@ export const AccountsView = () => {
   );
 
   const renderToken = (asset: UserTokenAccount, index: number) => {
-    const onTokenAccountClick = () => selectAsset(asset, true);
+    const onTokenAccountClick = () => selectAsset(asset, true, true);
     const tokenPrice = getPricePerToken(asset);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;

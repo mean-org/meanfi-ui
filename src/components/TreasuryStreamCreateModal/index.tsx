@@ -56,6 +56,7 @@ export const TreasuryStreamCreateModal = (props: {
     effectiveRate,
     treasuryOption,
     recipientAddress,
+    loadingPrices,
     recipientNote,
     paymentStartDate,
     fromCoinAmount,
@@ -64,6 +65,7 @@ export const TreasuryStreamCreateModal = (props: {
     transactionStatus,
     isVerifiedRecipient,
     isAllocationReserved,
+    refreshPrices,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
@@ -787,9 +789,11 @@ export const TreasuryStreamCreateModal = (props: {
                 </span>
               </div>
               <div className="right inner-label">
-                ~${paymentRateAmount && effectiveRate
-                  ? formatAmount(parseFloat(paymentRateAmount) * effectiveRate, 2)
-                  : "0.00"}
+                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                  ~${paymentRateAmount && effectiveRate
+                    ? formatAmount(parseFloat(paymentRateAmount) * effectiveRate, 2)
+                    : "0.00"}
+                </span>
               </div>
             </div>
           </div>
@@ -986,9 +990,11 @@ export const TreasuryStreamCreateModal = (props: {
                 </span>
               </div>
               <div className="right inner-label">
-                ~${fromCoinAmount && effectiveRate
-                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                  : "0.00"}
+                <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                  ~${fromCoinAmount && effectiveRate
+                    ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                    : "0.00"}
+                </span>
               </div>
             </div>
           </div>

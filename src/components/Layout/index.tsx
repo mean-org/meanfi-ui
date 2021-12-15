@@ -36,6 +36,7 @@ export const AppLayout = React.memo((props: any) => {
     setStreamList,
     setSelectedAsset,
     setAccountAddress,
+    setShouldLoadTokens,
     refreshTokenBalance,
     setDtailsPanelOpen,
     setAddAccountPanelOpen,
@@ -232,11 +233,16 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
+    if (location.pathname === '/accounts') {
+      setShouldLoadTokens(true);
+    }
+
     return () => {
       if (bodyClass) {
         document.body.classList.remove(bodyClass);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const closeAllPanels = () => {
@@ -266,11 +272,6 @@ export const AppLayout = React.memo((props: any) => {
           </div>
           <AppBar menuType="mobile" topNavVisible={false} />
         </Header>
-        {/* {isLocal() && (
-          <div className="debug-bar">
-            <span className="ml-1">forceReloadTokens:</span><span className="ml-1 font-bold fg-dark-active">{forceReloadTokens ? 'true' : 'false'}</span>
-          </div>
-        )} */}
         <Content>{props.children}</Content>
         <Footer>
           <FooterBar/>

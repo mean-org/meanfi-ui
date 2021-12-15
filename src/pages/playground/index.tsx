@@ -9,6 +9,7 @@ import { AppStateContext } from "../../contexts/appstate";
 import { SelectOption } from "../../models/common-types";
 import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
+import "./style.less";
 import {
   delay,
   consoleOut,
@@ -404,7 +405,7 @@ export const PlaygroundView = () => {
         <Button type="ghost"   shape="round" size="small" className="thin-stroke">Ghost</Button>
       </div>
     </div>
-    <div className="row">
+    <div className="row mb-2">
       <div className="col">
         <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>Primary disabled</Button>
       </div>
@@ -413,6 +414,45 @@ export const PlaygroundView = () => {
       </div>
       <div className="col">
         <Button type="ghost"   shape="round" size="small" className="thin-stroke" disabled={true}>Ghost disabled</Button>
+      </div>
+    </div>
+
+    <div className="row mb-2">
+      <div className="col">
+        <button className="animated-button-red">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Red
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-green">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Green
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-blue">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Blue
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-gold">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Gold
+        </button>
       </div>
     </div>
 

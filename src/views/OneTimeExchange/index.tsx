@@ -57,8 +57,10 @@ export const OneTimeExchange = (props: {
   const { publicKey, wallet, connected } = useWallet();
   const {
     coinPrices,
+    loadingPrices,
     transactionStatus,
     previousWalletConnectState,
+    refreshPrices,
     setTransactionStatus,
     setPreviousWalletConnectState
 
@@ -1877,6 +1879,7 @@ export const OneTimeExchange = (props: {
               setSubjectTokenSelection("source");
               showTokenSelector();
             }}
+            onPriceClick={() => refreshPrices()}
             inputPosition={inputPosition}
             translationId="source"
             inputLabel={

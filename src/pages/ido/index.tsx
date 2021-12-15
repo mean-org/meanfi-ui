@@ -1,13 +1,16 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import { IDO_START_DATE, MEANFI_DOCS_URL, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
 import "./style.less";
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { WarningFilled } from '@ant-design/icons';
+import { Alert } from 'antd';
 
 export const IdoView = () => {
+  const navigate = useNavigate();
   const {
     theme,
     setTheme,
@@ -39,6 +42,23 @@ export const IdoView = () => {
     IDO_START_DATE.second
   )), []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = new Date();
+
+  const onCountdownCompleted = useCallback(() => {
+    navigate('/ido-live');
+  }, [navigate]);
+
+  useEffect(() => {
+    if (today >= idoStartUtc) {
+      onCountdownCompleted();
+    }
+  },[
+    today,
+    idoStartUtc,
+    onCountdownCompleted
+  ]);
+
   useEffect(() => {
 
     if (!currentDateDisplay) {
@@ -65,14 +85,27 @@ export const IdoView = () => {
         </div>
 
         <div className="countdown-wrapper">
-          <Countdown date={idoStartUtc} daysInHours={false} />
+          <Countdown date={idoStartUtc} daysInHours={false} onComplete={onCountdownCompleted} />
+        </div>
+
+        <div className="container-max-width-450 text-left mb-4">
+          <Alert
+            message="NOTE"
+            description={
+              <div>
+                <span className="mr-1">Due to network and market conditions, the Mean IDO was be delayed a week, and will now take place on Dec. 22nd at 15:00 UTC. Read the details</span>
+                <a className="simplelink underline" href="https://meandao.medium.com/mean-launch-delayed-7-days-505221f2e638" target="_blank" rel="noopener noreferrer">
+                  <span>👉 HERE</span>
+                </a>
+              </div>
+            }
+            type="warning"
+            showIcon
+            className="translucent"
+          />
         </div>
 
         <div className="w-100 text-center mb-4">
-          <p>Read more <a className="simplelink underline" href={MEANFI_DOCS_URL} target="_blank" rel="noopener noreferrer">
-          <span>here</span>
-          </a>
-          </p>
           <p>
             <Link to="/" className="simplelink underline">
               <span>Go to App</span>

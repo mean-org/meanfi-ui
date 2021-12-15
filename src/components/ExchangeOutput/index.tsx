@@ -1,7 +1,5 @@
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconCaretDown } from "../../Icons";
-import { Identicon } from "../Identicon";
 import { AppStateContext } from "../../contexts/appstate";
 import { formatAmount } from "../../utils/utils";
 import { TokenInfo } from "@mean-dao/hybrid-liquidity-ag/lib/types";
@@ -21,7 +19,11 @@ export const ExchangeOutput = (props: {
 }) => {
 
   const { t } = useTranslation("common");
-  const { coinPrices } = useContext(AppStateContext);
+  const {
+    coinPrices,
+    loadingPrices,
+    refreshPrices,
+  } = useContext(AppStateContext);
   const [selectedClient, setSelectedClient] = useState<any>();
   const [savings, setSavings] = useState(0);
 
@@ -111,7 +113,7 @@ export const ExchangeOutput = (props: {
               }`}
             </span>
             {props.toTokenBalance && (
-              <span className="balance-amount">
+              <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                 {`(~$${
                   props.toToken && props.toTokenBalance
                     ? formatAmount(
@@ -125,15 +127,11 @@ export const ExchangeOutput = (props: {
             )}
           </div>
           <div className="right inner-label">
-            <span>
-              ~$
-              {props.toToken && props.toTokenBalance
-                ? formatAmount(
-                    parseFloat(props.toTokenBalance) *
-                      getPricePerToken(props.toToken as TokenInfo),
-                    2
-                  )
-                : "0.00"}
+            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+              ~${props.toToken && props.toTokenBalance
+                ? formatAmount(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo), 2)
+                : "0.00"
+              }
             </span>
           </div>
         </div>

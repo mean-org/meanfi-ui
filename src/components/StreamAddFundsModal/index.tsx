@@ -14,9 +14,11 @@ export const StreamAddFundsModal = (props: {
   transactionFees: TransactionFees;
 }) => {
   const {
+    loadingPrices,
     selectedToken,
     tokenBalance,
-    effectiveRate
+    effectiveRate,
+    refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const [topupAmount, setTopupAmount] = useState<string>('');
@@ -125,9 +127,11 @@ export const StreamAddFundsModal = (props: {
             </span>
           </div>
           <div className="right inner-label">
-            ~${topupAmount && effectiveRate
-              ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-              : "0.00"}
+            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+              ~${topupAmount && effectiveRate
+                ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
+                : "0.00"}
+            </span>
           </div>
         </div>
       </div>

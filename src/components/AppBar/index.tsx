@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { useWallet } from "../../contexts/wallet";
@@ -25,6 +25,7 @@ export const AppBar = (props: {
   topNavVisible: boolean;
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { connected } = useWallet();
   const {isOnline, responseTime} = useOnlineStatus();
@@ -36,7 +37,7 @@ export const AppBar = (props: {
     isDepositOptionsModalVisible,
     refreshStreamList,
     setDtailsPanelOpen,
-    setForceReloadTokens,
+    setShouldLoadTokens,
     setAddAccountPanelOpen,
     showDepositOptionsModal,
     hideDepositOptionsModal,
@@ -65,9 +66,14 @@ export const AppBar = (props: {
     }
   }
 
-  const refreshMoneyStreams = () => {
+  const goToAccounts = (e: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShouldLoadTokens(true);
     refreshStreamList(true);
-    setForceReloadTokens(true);
+    setTimeout(() => {
+      navigate('/accounts');
+    }, 200);
   }
 
   // const getChartsLink = (): string => {
@@ -111,9 +117,9 @@ export const AppBar = (props: {
   }, [isMenuOpen]);
 
   const mainNav = (
-    <Menu selectedKeys={[location.pathname]} mode="horizontal" onClick={refreshMoneyStreams}>
+    <Menu selectedKeys={[location.pathname]} mode="horizontal">
       <Menu.Item key="/accounts">
-        <Link to='/accounts'>{t('ui-menus.main-menu.accounts')}</Link>
+        <Link to='/accounts' onClick={goToAccounts}>{t('ui-menus.main-menu.accounts')}</Link>
       </Menu.Item>
       <Menu.Item key="/exchange">
         <Link to="/exchange">{t('ui-menus.main-menu.swap')}</Link>
