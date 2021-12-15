@@ -76,6 +76,7 @@ export const PayrollPayment = () => {
     coinPrices,
     recipientAddress,
     recipientNote,
+    loadingPrices,
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
@@ -85,6 +86,7 @@ export const PayrollPayment = () => {
     streamProgramAddress,
     timeSheetRequirement,
     previousWalletConnectState,
+    refreshPrices,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
@@ -95,7 +97,6 @@ export const PayrollPayment = () => {
     setPaymentStartDate,
     setPaymentRateAmount,
     setTransactionStatus,
-    setForceReloadTokens,
     setIsVerifiedRecipient,
     setSelectedTokenBalance,
     setPaymentRateFrequency,
@@ -245,7 +246,6 @@ export const PayrollPayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
-      setForceReloadTokens(true);
     }
     resetTransactionStatus();
   }
@@ -1241,9 +1241,11 @@ export const PayrollPayment = () => {
               </span>
             </div>
             <div className="right inner-label">
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
             </div>
           </div>
         </div>

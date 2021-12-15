@@ -98,9 +98,9 @@ export const Streams = () => {
     setSelectedStream,
     refreshStreamList,
     setDtailsPanelOpen,
+    setShouldLoadTokens,
     refreshTokenBalance,
     setTransactionStatus,
-    setForceReloadTokens,
     setCustomStreamDocked,
   } = useContext(AppStateContext);
   const {
@@ -669,7 +669,6 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onAfterAddFundsTransactionModalClosed = () => {
@@ -937,7 +936,6 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onAfterWithdrawFundsTransactionModalClosed = () => {
@@ -1199,7 +1197,6 @@ export const Streams = () => {
     hideCloseStreamTransactionModal();
     hideAddFundsTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -2270,9 +2267,11 @@ export const Streams = () => {
                       size="middle"
                       icon={<ArrowLeftOutlined />}
                       onClick={() => {
+                        setShouldLoadTokens(true);
                         refreshStreamList(true);
-                        setForceReloadTokens(true);
-                        navigate('/accounts');
+                        setTimeout(() => {
+                          navigate('/accounts');
+                        }, 100);
                       }}
                     />
                   </Tooltip>

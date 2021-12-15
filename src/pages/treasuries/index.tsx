@@ -103,7 +103,6 @@ export const TreasuriesView = () => {
     setDtailsPanelOpen,
     resetContractValues,
     refreshTokenBalance,
-    setForceReloadTokens,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
@@ -1512,7 +1511,6 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    setForceReloadTokens(true);
   };
 
   const onExecuteCloseTreasuryTransaction = async () => {
@@ -1767,7 +1765,6 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -2031,7 +2028,6 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onExecutePauseStreamTransaction = async () => {
@@ -2284,7 +2280,6 @@ export const TreasuriesView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onExecuteResumeStreamTransaction = async () => {
@@ -2537,7 +2532,6 @@ export const TreasuriesView = () => {
   const onAcceptCreateStream = () => {
     closeCreateStreamModal();
     resetContractValues();
-    setForceReloadTokens(true);
     refreshTokenBalance();
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,

@@ -123,7 +123,6 @@ export const MultisigView = () => {
     setDtailsPanelOpen,
     resetContractValues,
     refreshTokenBalance,
-    setForceReloadTokens,
     setTransactionStatus
 
   } = useContext(AppStateContext);
@@ -3004,7 +3003,6 @@ export const MultisigView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    setForceReloadTokens(true);
   };
 
   const onExecuteCloseTreasuryTransaction = async () => {
@@ -3259,7 +3257,6 @@ export const MultisigView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onAfterCloseStreamTransactionModalClosed = () => {
@@ -3523,7 +3520,6 @@ export const MultisigView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onExecutePauseStreamTransaction = async () => {
@@ -3776,7 +3772,6 @@ export const MultisigView = () => {
     resetTransactionStatus();
     hideCloseStreamTransactionModal();
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onExecuteResumeStreamTransaction = async () => {
@@ -4029,7 +4024,6 @@ export const MultisigView = () => {
   const onAcceptCreateStream = () => {
     closeCreateStreamModal();
     resetContractValues();
-    setForceReloadTokens(true);
     refreshTokenBalance();
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,

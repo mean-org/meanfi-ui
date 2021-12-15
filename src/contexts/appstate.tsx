@@ -45,7 +45,7 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   detailsPanelOpen: boolean;
-  forceReloadTokens: boolean;
+  shouldLoadTokens: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -53,6 +53,7 @@ interface AppStateConfig {
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
+  loadingPrices: boolean;
   contract: ContractDefinition | undefined;
   ddcaOption: DdcaFrequencyOption | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
@@ -88,12 +89,13 @@ interface AppStateConfig {
   loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
-  setForceReloadTokens: (state: boolean) => void;
+  setShouldLoadTokens: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
+  refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
@@ -134,7 +136,7 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   detailsPanelOpen: false,
-  forceReloadTokens: false,
+  shouldLoadTokens: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -142,6 +144,7 @@ const contextDefaultValues: AppStateConfig = {
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
+  loadingPrices: false,
   contract: undefined,
   ddcaOption: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
@@ -180,7 +183,7 @@ const contextDefaultValues: AppStateConfig = {
   loadingRecurringBuys: false,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
-  setForceReloadTokens: () => {},
+  setShouldLoadTokens: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
@@ -189,6 +192,7 @@ const contextDefaultValues: AppStateConfig = {
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
+  refreshPrices: () => {},
   setEffectiveRate: () => {},
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
@@ -259,7 +263,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
-  const [forceReloadTokens, updateForceReloadTokens] = useState(contextDefaultValues.forceReloadTokens);
+  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
 
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
@@ -296,8 +300,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateDetailsPanelOpen(state);
   }
 
-  const setForceReloadTokens = (state: boolean) => {
-    updateForceReloadTokens(state);
+  const setShouldLoadTokens = (state: boolean) => {
+    updateShouldLoadTokens(state);
   }
 
   useEffect(() => {
@@ -522,6 +526,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [coinPrices, setCoinPrices] = useState<any>(null);
+  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
@@ -539,37 +544,48 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateEffectiveRate(rate);
   }
 
+  const refreshPrices = () => {
+    setLoadingPrices(true);
+    getCoinPrices();
+  }
+
+  // Fetch coin prices
+  const getCoinPrices = useCallback(async () => {
+    try {
+      const prices = await getPrices();
+      if (prices) {
+        consoleOut("Coin prices:", prices, 'blue');
+        setCoinPrices(prices);
+        if (selectedToken) {
+          const tokenSymbol = selectedToken.symbol.toUpperCase();
+          const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+          updateEffectiveRate(
+            prices[symbol] ? prices[symbol] : 0
+          );
+        }
+      } else {
+        setCoinPrices(null);
+      }
+      setLoadingPrices(false);
+    } catch (error) {
+      setCoinPrices(null);
+      setLoadingPrices(false);
+    }
+  },[selectedToken]);
+
   // Effect to load coin prices
   useEffect(() => {
     let coinTimer: any;
 
-    const getCoinPrices = async () => {
-      try {
-        await getPrices()
-          .then((prices) => {
-            consoleOut("Coin prices:", prices, 'blue');
-            setCoinPrices(prices);
-            if (selectedToken) {
-              const tokenSymbol = selectedToken.symbol.toUpperCase();
-              const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-              updateEffectiveRate(
-                prices[symbol] ? prices[symbol] : 0
-              );
-            }
-          })
-          .catch(() => setCoinPrices(null));
-      } catch (error) {
-        setCoinPrices(null);
-      }
-    };
-
     if (shouldLoadCoinPrices && selectedToken) {
       setShouldLoadCoinPrices(false);
+      setLoadingPrices(true);
       getCoinPrices();
     }
 
     coinTimer = window.setInterval(() => {
       consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      setLoadingPrices(true);
       getCoinPrices();
     }, PRICE_REFRESH_TIMEOUT);
 
@@ -581,8 +597,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
   }, [
     coinPrices,
+    selectedToken,
     shouldLoadCoinPrices,
-    selectedToken
+    getCoinPrices
   ]);
 
   // Cache selected contract
@@ -966,7 +983,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         theme,
         isWhitelisted,
         detailsPanelOpen,
-        forceReloadTokens,
+        shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
@@ -974,6 +991,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         fromCoinAmount,
         effectiveRate,
         coinPrices,
+        loadingPrices,
         contract,
         ddcaOption,
         treasuryOption,
@@ -1007,12 +1025,13 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingRecurringBuys,
         setTheme,
         setDtailsPanelOpen,
-        setForceReloadTokens,
+        setShouldLoadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
         setFromCoinAmount,
+        refreshPrices,
         setEffectiveRate,
         setCoinPrices,
         refreshTokenBalance,

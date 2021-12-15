@@ -71,6 +71,7 @@ export const RepeatingPayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
+    loadingPrices,
     recipientAddress,
     recipientNote,
     paymentStartDate,
@@ -81,6 +82,7 @@ export const RepeatingPayment = () => {
     isVerifiedRecipient,
     streamProgramAddress,
     previousWalletConnectState,
+    refreshPrices,
     setSelectedToken,
     setEffectiveRate,
     setRecipientNote,
@@ -91,7 +93,6 @@ export const RepeatingPayment = () => {
     refreshTokenBalance,
     setPaymentRateAmount,
     setTransactionStatus,
-    setForceReloadTokens,
     setIsVerifiedRecipient,
     setPaymentRateFrequency,
     setSelectedTokenBalance,
@@ -241,7 +242,6 @@ export const RepeatingPayment = () => {
     }
     if (isSuccess()) {
       resetContractValues();
-      setForceReloadTokens(true);
     }
     resetTransactionStatus();
   }
@@ -1200,9 +1200,11 @@ export const RepeatingPayment = () => {
               </span>
             </div>
             <div className="right inner-label">
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
             </div>
           </div>
         </div>

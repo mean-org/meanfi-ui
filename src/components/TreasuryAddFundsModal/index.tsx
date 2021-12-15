@@ -52,10 +52,12 @@ export const TreasuryAddFundsModal = (props: {
     tokenBalance,
     selectedToken,
     effectiveRate,
+    loadingPrices,
     transactionStatus,
     setTransactionStatus,
-    setEffectiveRate,
     setSelectedToken,
+    setEffectiveRate,
+    refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
   const { publicKey } = useWallet();
@@ -627,9 +629,11 @@ export const TreasuryAddFundsModal = (props: {
                     </span>
                   </div>
                   <div className="right inner-label">
-                    ~${topupAmount && effectiveRate
-                      ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
-                      : "0.00"}
+                    <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                      ~${topupAmount && effectiveRate
+                        ? formatAmount(parseFloat(topupAmount) * effectiveRate, 2)
+                        : "0.00"}
+                    </span>
                   </div>
                 </div>
               </div>

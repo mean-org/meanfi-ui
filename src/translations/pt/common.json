@@ -240,7 +240,8 @@
 		"finished": "Finished",
 		"stepper-label": "Step {{step}} of {{steps}}",
 		"refresh": "Refresh",
-		"retry": "Retry"
+		"retry": "Retry",
+		"refresh-price": "Click to refresh prices"
 	},
 	"language-selector": {
 		"modal-title": "Seletor de idioma",
