@@ -320,7 +320,7 @@ export const PayrollPayment = () => {
   }
 
   // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(() => {
+  const updateTokenListByFilter = useCallback((searchString: string) => {
 
     if (!tokenList) {
       return;
@@ -330,13 +330,13 @@ export const PayrollPayment = () => {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(searchString.toLowerCase())
         );
       };
 
-      let showFromList = !tokenFilter 
+      let showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -349,16 +349,22 @@ export const PayrollPayment = () => {
     }
     
   }, [
-    tokenList,
-    tokenFilter,
+    tokenList
+  ]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
   ]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
     const newValue = e.target.value;
     setTokenFilter(newValue);
-    updateTokenListByFilter();
-    
+    updateTokenListByFilter(newValue);
+
   },[
     updateTokenListByFilter
   ]);
@@ -387,9 +393,10 @@ export const PayrollPayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Reset results when the filter is cleared
   useEffect(() => {
     if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-      updateTokenListByFilter();
+      updateTokenListByFilter(tokenFilter);
     }
   }, [
     tokenList,
@@ -398,6 +405,7 @@ export const PayrollPayment = () => {
     updateTokenListByFilter
   ]);
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -852,6 +860,11 @@ export const PayrollPayment = () => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1288,9 +1301,17 @@ export const PayrollPayment = () => {
         <div className="token-selector-wrapper">
           <div className="token-search-wrapper">
             <TextInput
+              id="token-search-pr"
               value={tokenFilter}
+              allowClear={true}
+              extraClass="mb-0"
+              onInputClear={onInputCleared}
               placeholder={t('token-selector.search-input-placeholder')}
               onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="flex-row justify-content-center align-items-center fg-secondary-60 mt-2 mb-2">
+            <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
+            <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
           </div>
           <div className="token-list vertical-scroll">
             {filteredTokenList.length > 0 && renderTokenList}

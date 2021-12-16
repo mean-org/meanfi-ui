@@ -89,7 +89,7 @@ export const OneTimeExchange = (props: {
   // AGGREGATOR
   const [currentTxSignature, setCurrentTxSignature] = useState("");
   const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
+  const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
   const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -107,6 +107,26 @@ export const OneTimeExchange = (props: {
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
   const [showLpList, setShowLpList] = useState(false);
+  const [paramsProcessed, setParamsProcessed] = useState(false);
+
+  // Set fromMint & toMint from query string if params are provided
+  useEffect(() => {
+    if (paramsProcessed || !props.queryFromMint || !props.queryToMint) { return; }
+
+    if (props.queryFromMint) {
+      setFromMint(props.queryFromMint);
+      setLastFromMint(props.queryFromMint);
+      if (props.queryToMint) {
+        setToMint(props.queryToMint as string);
+      }
+      setParamsProcessed(true);
+    }
+  },[
+    paramsProcessed,
+    props.queryToMint,
+    props.queryFromMint,
+    setLastFromMint
+  ]);
 
   const isWrap = useCallback(() => {
 

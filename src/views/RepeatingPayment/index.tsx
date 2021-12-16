@@ -852,6 +852,11 @@ export const RepeatingPayment = () => {
     setIsVerifiedRecipient(e.target.checked);
   }
 
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1250,9 +1255,14 @@ export const RepeatingPayment = () => {
                 id="token-search-rp"
                 value={tokenFilter}
                 allowClear={true}
+                extraClass="mb-0"
                 onInputClear={onInputCleared}
                 placeholder={t('token-selector.search-input-placeholder')}
                 onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="flex-row justify-content-center align-items-center fg-secondary-60 mt-2 mb-2">
+              <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
+              <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}

@@ -574,7 +574,9 @@
 	},
 	"token-selector": {
 		"modal-title": "Select a token",
-		"search-input-placeholder": "Search token by name, symbol or address"
+		"search-input-placeholder": "Search token by name, symbol or address",
+		"looking-for-sol": "Looking for SOL? You need to",
+		"wrap-sol-first": "wrap it first to wSOL"
 	},
 	"transactions": {
 		"resume": "Summary",
