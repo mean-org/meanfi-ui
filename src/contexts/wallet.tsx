@@ -265,7 +265,7 @@ export function WalletProvider({ children = null as any }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const select = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
-  const [walletListExpanded, setWalletListExpanded] = useState(false);
+  const [walletListExpanded, setWalletListExpanded] = useState(isDesktop ? false : true);
 
   return (
     <WalletContext.Provider
@@ -330,21 +330,23 @@ export function WalletProvider({ children = null as any }) {
             );
           })}
         </div>
-        <Button
-          block
-          size="large"
-          className="wallet-providers-more-options thin-stroke"
-          shape="round"
-          type="ghost"
-          onClick={() => setWalletListExpanded(state => !state)}
-          icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
-          key="more-options">
-          <span className="align-middle">{
-            walletListExpanded
-              ? t('wallet-selector.more-options-expanded')
-              : t('wallet-selector.more-options-collapsed')
-          }</span>
-        </Button>
+        {isDesktop && (
+          <Button
+            block
+            size="large"
+            className="wallet-providers-more-options thin-stroke"
+            shape="round"
+            type="ghost"
+            onClick={() => setWalletListExpanded(state => !state)}
+            icon={walletListExpanded ? <UpOutlined /> : <DownOutlined />}
+            key="more-options">
+            <span className="align-middle">{
+              walletListExpanded
+                ? t('wallet-selector.more-options-expanded')
+                : t('wallet-selector.more-options-collapsed')
+            }</span>
+          </Button>
+        )}
       </Modal>
     </WalletContext.Provider>
   );
