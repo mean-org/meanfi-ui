@@ -758,7 +758,9 @@
 		}
 	},
 	"wallet-selector": {
-		"primary-action": "Sélectionner"
+		"primary-action": "Sélectionner",
+		"more-options-collapsed": "Afficher plus d'options",
+		"more-options-expanded": "Afficher moins d'options"
 	},
 	"withdraw-funds": {
 		"label-available-amount": "Fonds disponibles pour un retrait immédiat",

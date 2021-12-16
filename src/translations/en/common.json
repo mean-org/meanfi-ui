@@ -765,7 +765,9 @@
 		}
 	},
 	"wallet-selector": {
-		"primary-action": "Select"
+		"primary-action": "Select",
+		"more-options-collapsed": "Show more options",
+		"more-options-expanded": "Show less options"
 	},
 	"withdraw-funds": {
 		"label-available-amount": "Funds available to withdraw now",

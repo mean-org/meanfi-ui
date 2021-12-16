@@ -3293,9 +3293,28 @@ main section {
 
 // Account
 .wallet-providers {
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  &:not(.expanded) {
+    height: 198px;
+    overflow: hidden;
+  }
+  &.expanded {
+    height: auto;
+  }
   .wallet-provider {
     text-align: left;
     margin-bottom: 1rem !important;
+  }
+}
+.wallet-providers-more-options {
+  margin-top: 0.4rem;
+  &.ant-btn.ant-btn-ghost {
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 12px 18px 10px;
   }
 }
 .account-settings-group {
