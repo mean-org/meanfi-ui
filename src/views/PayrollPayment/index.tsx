@@ -1304,12 +1304,12 @@ export const PayrollPayment = () => {
               id="token-search-pr"
               value={tokenFilter}
               allowClear={true}
-              extraClass="mb-0"
+              extraClass="mb-2"
               onInputClear={onInputCleared}
               placeholder={t('token-selector.search-input-placeholder')}
               onInputChange={onTokenSearchInputChange} />
           </div>
-          <div className="flex-row justify-content-center align-items-center fg-secondary-60 mt-2 mb-2">
+          <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
             <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
             <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
           </div>
