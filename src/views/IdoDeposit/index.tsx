@@ -452,18 +452,17 @@ export const IdoDeposit = (props: {
         </>
       )}
 
-      {/** TODO: Implement this HERE!
-       * Before the deposit's CTA (Centered)
-       * When guaranteed allocation is open:
-       * ✅ guaranteed allocation
-       * 
-       * When guaranteed allocation is closed:
-       * Join the waitlist
-       */}
-      {props.idoStatus.isGaOpen ? (
-        <span className="mt-3 mb-3 text-center inner-label">✅ Guaranteed allocation</span>
-      ) : (
-        <span className="mt-3 mb-3 text-center inner-label">Join the waitlist</span>
+      {props.idoStatus.isRunning && (
+        <div className="text-center mt-2 mb-2">
+          {props.idoStatus.isGaOpen ? (
+            <>
+              <span className="align-middle">✅</span>
+              <span className="label ml-1">Guaranteed allocation</span>
+            </>
+          ) : (
+            <span className="label">Join the waitlist</span>
+          )}
+        </div>
       )}
 
       <Button

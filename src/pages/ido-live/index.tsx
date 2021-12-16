@@ -80,6 +80,7 @@ export const IdoLiveView = () => {
   const [isUserBlocked, setIsUserBlocked] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
+  const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -271,6 +272,8 @@ export const IdoLiveView = () => {
       } catch (error: any) {
         console.error(error);
         setIdoEngineInitStatus("error");
+      } finally {
+        setLoadingIdoStatus(false);
       }
     }
 
@@ -289,12 +292,14 @@ export const IdoLiveView = () => {
       if (forceRefreshIdoStatus) {
         setForceRefreshIdoStatus(false);
       }
+      setLoadingIdoStatus(true);
       refreshIdoData();
     }
 
     if (idoEngineInitStatus === "started") {
       timer = setInterval(() => {
         consoleOut(`Fetching IDO status past ${IDO_FETCH_FREQUENCY / 60 / 1000} min`);
+        setLoadingIdoStatus(true);
         refreshIdoData();
       }, IDO_FETCH_FREQUENCY);
     }
@@ -394,6 +399,7 @@ export const IdoLiveView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       setTimeout(() => {
         consoleOut('Refreshing IDO status...', '', 'blue');
+        setLoadingIdoStatus(true);
         refreshIdoData();
       }, 800);
     }
@@ -592,7 +598,10 @@ export const IdoLiveView = () => {
               }
             </div>
             <div className="mt-2 text-center">
-              <span className="simplelink underline-on-hover" onClick={() => refreshIdoData()}>Refresh data</span>
+              <span className={`simplelink ${loadingIdoStatus ? 'fg-orange-red pulsate click-disabled' : 'underline-on-hover'}`} onClick={() => {
+                setLoadingIdoStatus(true);
+                refreshIdoData();
+              }}>Refresh data</span>
             </div>
           </>
         )}
@@ -641,12 +650,16 @@ export const IdoLiveView = () => {
   return (
     <div className="solid-bg">
 
-      {/* {isLocal() && (
+      {isLocal() && (
         <div className="debug-bar">
           {idoStatus && (
             <>
-            <span className="mr-1">USDC Deposited:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
-            <span className="mr-1">USDC Contributed:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcContributed || '-'}</span>
+            <span className="mr-1">loading:</span>
+            <span className="mr-1 font-bold fg-dark-active">{loadingIdoStatus ? 'true' : 'flase'}</span>
+            <span className="mr-1">USDC Deposited:</span>
+            <span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
+            <span className="mr-1">USDC Contributed:</span>
+            <span className="mr-1 font-bold fg-dark-active">{idoStatus.gaTotalUsdcContributed || '-'}</span>
             {publicKey && (
               <>
               <span className="mr-1">hasUserContributed:</span>
@@ -656,7 +669,7 @@ export const IdoLiveView = () => {
             </>
           )}
         </div>
-      )} */}
+      )}
 
       {/* Page title */}
       <section className="content contrast-section no-padding">
