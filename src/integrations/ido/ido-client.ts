@@ -332,7 +332,7 @@ export class IdoClient {
             usdcTotalContributed:  toUiAmount(statusEvent.usdcTotalContributed),
             usdcTotalContributedTokenAmount: statusEvent.usdcTotalContributed.toNumber(),
 
-            totaContributors: statusEvent.totalContributors,
+            totalContributors: statusEvent.totalContributors,
             lastContributorNumber: statusEvent.lastContributorNumber,
 
             gaTotalUsdcContributed: statusEvent.gaUsdcTotalContributed.toNumber() / 10 ** DECIMALS,
@@ -589,7 +589,7 @@ class IdoTracker {
             usdcTotalContributed: this.latestIdo.usdcTotalCurrent,
             usdcTotalContributedTokenAmount: this.latestIdo.usdcTotalCurrentTokenAmount,
 
-            totaContributors: this.latestIdo.totalContributors,
+            totalContributors: this.latestIdo.totalContributors,
             lastContributorNumber: this.latestIdo.lastContributorNumber,
 
             gaTotalUsdcContributed: this.latestIdo.gaUsdcTotalContributed,
@@ -1042,7 +1042,7 @@ export type IdoStatus = {
     usdcTotalContributed: number,
     usdcTotalContributedTokenAmount: number,
 
-    totaContributors: number,
+    totalContributors: number,
     lastContributorNumber: number,
 
     gaTotalUsdcContributed: number,

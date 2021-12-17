@@ -29,7 +29,7 @@ import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
@@ -410,6 +410,17 @@ export const IdoLiveView = () => {
     refreshIdoData
   ]);
 
+  // Refresh IDO status when starting
+  useEffect(() => {
+    if (today === idoStartUtc) {
+      refreshIdoData();
+    }
+  },[
+    today,
+    idoStartUtc,
+    refreshIdoData
+  ]);
+
   const isIdoActive = () => {
     return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
       ? true
@@ -635,7 +646,7 @@ export const IdoLiveView = () => {
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Total Participants</div>
-                    <div className="right">-</div>
+                    <div className="right">{formatThousands(idoStatus.totalContributors)}</div>
                   </div>
                 </>
               )}
@@ -657,7 +668,7 @@ export const IdoLiveView = () => {
             <span className="mr-1">loading:</span>
             <span className="mr-1 font-bold fg-dark-active">{loadingIdoStatus ? 'true' : 'flase'}</span>
             <span className="mr-1">USDC Deposited:</span>
-            <span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
+            <span className="mr-1 font-bold fg-dark-active">{idoStatus.usdcTotalContributed || '-'}</span>
             <span className="mr-1">USDC Contributed:</span>
             <span className="mr-1 font-bold fg-dark-active">{idoStatus.gaTotalUsdcContributed || '-'}</span>
             {publicKey && (
