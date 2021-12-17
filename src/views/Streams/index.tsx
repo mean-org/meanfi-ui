@@ -1560,7 +1560,7 @@ export const Streams = () => {
   }
 
   const hasAllocation = (): boolean => {
-    return streamDetail && (streamDetail.allocationReserved || streamDetail.allocation)
+    return streamDetail && (streamDetail.allocationReserved || streamDetail.allocationLeft)
       ? true
       : false;
   }
@@ -1777,7 +1777,7 @@ export const Streams = () => {
                   </span>
                   <span className="info-data">
                     {getAmountWithSymbol(
-                      streamDetail.allocationReserved || streamDetail.allocation,
+                      streamDetail.allocationReserved || streamDetail.allocationLeft,
                       streamDetail.associatedToken as string
                     )}
                   </span>
@@ -2035,7 +2035,7 @@ export const Streams = () => {
                   </span>
                   <span className="info-data">
                     {getAmountWithSymbol(
-                      streamDetail.allocationReserved || streamDetail.allocation,
+                      streamDetail.allocationReserved || streamDetail.allocationLeft,
                       streamDetail.associatedToken as string
                     )}
                   </span>

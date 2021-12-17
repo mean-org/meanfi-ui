@@ -89,7 +89,7 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
     if (props.isVisible && props.treasuryDetails) {
-      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocation;
+      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationLeft;
       setUnallocatedBalance(unallocated);
     }
   }, [
@@ -451,10 +451,10 @@ export const TreasuryStreamCreateModal = (props: {
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
+          recipientNote,                                                    // streamName
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
           fromParsedDate,                                                   // startUtc
-          recipientNote ? recipientNote.trim() : undefined,                 // streamName
           fundingAmount,                                                    // fundingAmount
           isAllocationReserved ? fundingAmount : 0                          // allocationReserved
         )

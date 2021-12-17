@@ -2773,7 +2773,7 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance - treasuryDetails.allocation <= 0)}
+            disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance - treasuryDetails.allocationLeft <= 0)}
             onClick={showCreateStreamModal}>
             {isCreatingStream() && (<LoadingOutlined />)}
             {isCreatingStream()

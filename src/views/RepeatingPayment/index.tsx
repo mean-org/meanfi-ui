@@ -676,12 +676,10 @@ export const RepeatingPayment = () => {
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
+          recipientNote,                                              // streamName
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
-          recipientNote 
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
           amount                                                      // fundingAmount
         )
         .then(value => {
