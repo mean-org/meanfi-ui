@@ -35,6 +35,7 @@ import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { TreasuryTypeOption } from "../models/treasury-definition";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
+import { initialSummary, StreamsSummary } from "../models/streams";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -45,7 +46,6 @@ interface AppStateConfig {
   theme: string | undefined;
   isWhitelisted: boolean;
   detailsPanelOpen: boolean;
-  shouldLoadTokens: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
   selectedToken: TokenInfo | undefined;
@@ -55,7 +55,6 @@ interface AppStateConfig {
   coinPrices: any | null;
   loadingPrices: boolean;
   contract: ContractDefinition | undefined;
-  ddcaOption: DdcaFrequencyOption | undefined;
   treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
   recipientNote: string;
@@ -76,6 +75,7 @@ interface AppStateConfig {
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
   // Accounts
+  shouldLoadTokens: boolean;
   splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
@@ -84,12 +84,15 @@ interface AppStateConfig {
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
   canShowAccountDetails: boolean;
+  streamsSummary: StreamsSummary;
+  lastStreamsSummary: StreamsSummary;
+  loadingStreamsSummary: boolean;
   // DDCAs
+  ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
-  setShouldLoadTokens: (state: boolean) => void;
   showDepositOptionsModal: () => void;
   hideDepositOptionsModal: () => void;
   setSelectedToken: (token: TokenInfo | undefined) => void;
@@ -102,7 +105,6 @@ interface AppStateConfig {
   resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
-  setDdcaOption: (name: string) => void;
   setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
@@ -122,12 +124,17 @@ interface AppStateConfig {
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
   // Accounts
+  setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
   setCanShowAccountDetails: (state: boolean) => void;
+  setStreamsSummary: (summary: StreamsSummary) => void;
+  setLastStreamsSummary: (summary: StreamsSummary) => void;
+  setLoadingStreamsSummary: (state: boolean) => void;
   // DDCAs
+  setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
 }
@@ -136,7 +143,6 @@ const contextDefaultValues: AppStateConfig = {
   theme: undefined,
   isWhitelisted: false,
   detailsPanelOpen: false,
-  shouldLoadTokens: true,
   isDepositOptionsModalVisible: false,
   tokenList: [],
   selectedToken: undefined,
@@ -146,7 +152,6 @@ const contextDefaultValues: AppStateConfig = {
   coinPrices: null,
   loadingPrices: false,
   contract: undefined,
-  ddcaOption: undefined,
   treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
   recipientNote: '',
@@ -170,6 +175,7 @@ const contextDefaultValues: AppStateConfig = {
   streamActivity: [],
   customStreamDocked: false,
   // Accounts
+  shouldLoadTokens: true,
   splTokenList: [],
   userTokens: [],
   selectedAsset: undefined,
@@ -178,16 +184,18 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   addAccountPanelOpen: true,
   canShowAccountDetails: false,
+  streamsSummary: initialSummary,
+  lastStreamsSummary: initialSummary,
+  loadingStreamsSummary: false,
   // DDCAs
+  ddcaOption: undefined,
   recurringBuys: [],
   loadingRecurringBuys: false,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
-  setShouldLoadTokens: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
-  setDdcaOption: () => {},
   setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
@@ -216,12 +224,17 @@ const contextDefaultValues: AppStateConfig = {
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
   // Accounts
+  setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
   setCanShowAccountDetails: () => {},
+  setStreamsSummary: () => {},
+  setLastStreamsSummary: () => {},
+  setLoadingStreamsSummary: () => {},
   // DDCAs
+  setDdcaOption: () => {},
   setRecurringBuys: () => {},
   setLoadingRecurringBuys: () => {},
 };
@@ -861,13 +874,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   /////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>([]);
-  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
-  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
-  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
-  const [lastTxSignature, setLastTxSignature] = useState<string>('');
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(false);
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
+  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
 
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
@@ -1021,6 +1037,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         addAccountPanelOpen,
         canShowAccountDetails,
+        streamsSummary,
+        lastStreamsSummary,
+        loadingStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
         setTheme,
@@ -1062,6 +1081,9 @@ const AppStateProvider: React.FC = ({ children }) => {
         setAccountAddress,
         setAddAccountPanelOpen,
         setCanShowAccountDetails,
+        setStreamsSummary,
+        setLastStreamsSummary,
+        setLoadingStreamsSummary,
         setRecurringBuys,
         setLoadingRecurringBuys
       }}>

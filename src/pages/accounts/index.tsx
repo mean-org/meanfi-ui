@@ -84,6 +84,9 @@ export const AccountsView = () => {
     lastTxSignature,
     detailsPanelOpen,
     shouldLoadTokens,
+    streamsSummary,
+    lastStreamsSummary,
+    loadingStreamsSummary,
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
@@ -98,6 +101,9 @@ export const AccountsView = () => {
     setDtailsPanelOpen,
     setShouldLoadTokens,
     setTransactionStatus,
+    setStreamsSummary,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setAddAccountPanelOpen,
     showDepositOptionsModal,
     setCanShowAccountDetails,
@@ -128,9 +134,6 @@ export const AccountsView = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(false);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -706,6 +709,8 @@ export const AccountsView = () => {
     streamList,
     streamDetail,
     previousWalletConnectState,
+    setStreamsSummary,
+    setLastStreamsSummary,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
     setShouldLoadTokens,
@@ -808,7 +813,10 @@ export const AccountsView = () => {
     ms,
     streamsSummary,
     loadingStreamsSummary,
-    getPricePerToken
+    getPricePerToken,
+    setStreamsSummary,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
   ]);
 
   // Live data calculation
