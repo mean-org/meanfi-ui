@@ -399,7 +399,7 @@ export const IdoWithdraw = (props: {
               )
             )}
             {idoInfoRow(
-              'Max Fully Diluted Market Cap Allowed',
+              'Max Contributions Allowed (Cap)',
               formatAmount(
                 props.maxFullyDilutedMarketCapAllowed,
                 2,
