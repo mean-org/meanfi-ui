@@ -329,6 +329,7 @@ export const AccountsView = () => {
   useEffect(() => {
     if (!isFirstLoad) { return; }
     setIsFirstLoad(false);
+    setTransactions([]);
 
     setTimeout(() => {
       setShouldLoadTokens(true);
@@ -343,6 +344,7 @@ export const AccountsView = () => {
     streamList,
     isFirstLoad,
     shouldLoadTokens,
+    setTransactions,
     refreshStreamList,
     setShouldLoadTokens
   ]);
@@ -530,7 +532,7 @@ export const AccountsView = () => {
               if (selectedAsset) {
                 const meanTokenItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
                 if (meanTokenItemIndex !== -1) {
-                  selectAsset(meanTokensCopy[meanTokenItemIndex], false);
+                  selectAsset(meanTokensCopy[meanTokenItemIndex], true);
                 }
               } else {
                 selectAsset(meanTokensCopy[0]);

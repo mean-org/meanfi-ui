@@ -56,6 +56,7 @@ export const StreamWithdrawModal = (props: {
 
     if (props.startUpData) {
       if (props.startUpData.state === STREAM_STATE.Running) {
+        setMaxAmount(props.startUpData.escrowVestedAmount);
         setLoadingData(true);
         try {
           getStreamDetails(props.startUpData.id as string);

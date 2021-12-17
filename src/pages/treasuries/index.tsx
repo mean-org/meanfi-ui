@@ -346,12 +346,10 @@ export const TreasuriesView = () => {
             });
           }
         }
-        setLoadingTreasuryDetails(false);
       })
       .catch(error => {
         console.error(error);
         setTreasuryDetails(undefined);
-        setLoadingTreasuryDetails(false);
         notify({
           message: t('notifications.error-title'),
           description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
@@ -359,6 +357,7 @@ export const TreasuriesView = () => {
         });
       })
       .finally(() => {
+        setLoadingTreasuryDetails(false);
         treasuryDetailPerfCounter.stop();
         consoleOut(`getTreasury took ${(treasuryDetailPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
       });
@@ -2813,6 +2812,7 @@ export const TreasuriesView = () => {
         const onStreamClick = () => {
           consoleOut('selected treasury:', item, 'blue');
           setSelectedTreasury(item);
+          setTreasuryStreams([]);
           openTreasuryById(item.id as string);
           setDtailsPanelOpen(true);
         };
@@ -2868,7 +2868,6 @@ export const TreasuriesView = () => {
       )}
       </>
     )}
-
     </>
   );
 
@@ -2989,8 +2988,12 @@ export const TreasuriesView = () => {
                           <>
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
-                            {renderCtaRow()}
-                            <Divider className="activity-divider" plain></Divider>
+                            {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && treasuryDetails.streamsAmount > 0)) && (
+                              <>
+                                {renderCtaRow()}
+                                <Divider className="activity-divider" plain></Divider>
+                              </>
+                            )}
                             {renderTreasuryStreams()}
                           </>
                         )}

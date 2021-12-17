@@ -4451,10 +4451,20 @@ main section {
   color: var(--color-secondary-alpha-50);
 }
 .secondary-button {
-  &.icon-button-container button.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
-    color: var(--color-secondary);
-    &:hover {
-      color: var(--color-secondary-alpha-85);
+  &.icon-button-container {
+    button:disabled {
+      &.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+        color: var(--color-secondary);
+        opacity: 0.6;
+      }
+    }
+    button:not(:disabled) {
+      &.ant-btn.ant-btn-default.ant-btn-circle.ant-btn-icon-only {
+        color: var(--color-secondary);
+        &:hover {
+          color: var(--color-secondary-alpha-85);
+        }
+      }
     }
   }
 }

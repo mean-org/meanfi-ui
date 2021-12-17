@@ -304,9 +304,13 @@ export const Streams = () => {
       setIsAddFundsModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
+    setTimeout(() => {
+      refreshTokenBalance();
+    }, 100);
   }, [
     selectedToken,
     streamDetail?.associatedToken,
+    refreshTokenBalance,
     getTransactionFees,
     setSelectedToken,
     setCustomToken,
@@ -332,8 +336,9 @@ export const Streams = () => {
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
+    const lastDetail = JSON.parse(JSON.stringify(streamDetail)) as StreamInfo;
+    setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
-    setLastStreamDetail(streamDetail);
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
     if (token) {
       consoleOut("stream token:", token);
