@@ -689,10 +689,11 @@ export const RepeatingPayment = () => {
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
           recipientNote,                                              // streamName
+          amount,                                                     // allocationAssigned
+          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
-          amount                                                      // fundingAmount
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);

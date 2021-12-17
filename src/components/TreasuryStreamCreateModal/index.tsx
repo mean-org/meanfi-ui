@@ -456,11 +456,11 @@ export const TreasuryStreamCreateModal = (props: {
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
           recipientNote,                                                    // streamName
+          fundingAmount,                                                    // fundingAmount
+          isAllocationReserved ? fundingAmount : 0,                         // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
-          fromParsedDate,                                                   // startUtc
-          fundingAmount,                                                    // fundingAmount
-          isAllocationReserved ? fundingAmount : 0                          // allocationReserved
+          fromParsedDate                                                    // startUtc
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
