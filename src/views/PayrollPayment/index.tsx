@@ -431,7 +431,15 @@ export const PayrollPayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -475,6 +483,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-continue');
@@ -493,6 +503,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -1114,7 +1126,11 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1274,7 +1290,13 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
 

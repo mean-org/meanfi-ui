@@ -413,7 +413,15 @@ export const OneTimePayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -449,6 +457,8 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
@@ -1032,7 +1042,12 @@ export const OneTimePayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!isValidAddress(recipientAddress) ||
+            !isMemoValid() ||
+            isAddressOwnAccount() ||
+            !paymentStartDate ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>

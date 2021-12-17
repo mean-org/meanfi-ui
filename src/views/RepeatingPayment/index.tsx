@@ -427,7 +427,15 @@ export const RepeatingPayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -466,15 +474,17 @@ export const RepeatingPayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : t('transactions.validation.valid-continue');
-  }
+        ? t('transactions.validation.select-recipient')
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !paymentStartDate
+            ? t('transactions.validation.no-valid-date')
+            : !recipientNote
+              ? 'Memo cannot be empty'
+              : !arePaymentSettingsValid()
+                ? getPaymentSettingsButtonLabel()
+                : t('transactions.validation.valid-continue');
+}
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
@@ -489,6 +499,8 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -1086,7 +1098,11 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1225,7 +1241,13 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>
