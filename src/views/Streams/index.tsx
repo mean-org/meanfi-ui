@@ -7,6 +7,7 @@ import {
   CheckOutlined,
   EllipsisOutlined,
   LoadingOutlined,
+  ReloadOutlined,
   SearchOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
@@ -14,14 +15,10 @@ import {
   IconBank,
   IconBox,
   IconClock,
-  IconDocument,
   IconDownload,
   IconExternalLink,
-  IconIncomingPaused,
-  IconOutgoingPaused,
   IconRefresh,
   IconShare,
-  IconTimer,
   IconUpload,
 } from "../../Icons";
 import { AppStateContext } from "../../contexts/appstate";
@@ -50,6 +47,7 @@ import {
 import { StreamOpenModal } from '../../components/StreamOpenModal';
 import { StreamWithdrawModal } from '../../components/StreamWithdrawModal';
 import {
+  FALLBACK_COIN_IMAGE,
   SOLANA_EXPLORER_URI_INSPECT_ADDRESS,
   SOLANA_EXPLORER_URI_INSPECT_TRANSACTION,
 } from "../../constants";
@@ -65,11 +63,11 @@ import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, 
 import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
-import { defaultStreamStats, StreamStats } from "../../models/streams";
 import { customLogger } from '../..';
 import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { Identicon } from "../../components/Identicon";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -88,6 +86,8 @@ export const Streams = () => {
     streamActivity,
     detailsPanelOpen,
     transactionStatus,
+    streamsSummary,
+    lastStreamsSummary,
     streamProgramAddress,
     customStreamDocked,
     setStreamList,
@@ -140,7 +140,6 @@ export const Streams = () => {
     refreshTokenBalance
   ]);
 
-  const [streamStats, setStreamStats] = useState<StreamStats>(defaultStreamStats);
   const [oldSelectedToken, setOldSelectedToken] = useState<TokenInfo>();
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
@@ -433,31 +432,21 @@ export const Streams = () => {
     }
   }
 
-  const getStreamIcon = useCallback((item: StreamInfo) => {
+  const getStreamTypeIcon = useCallback((item: StreamInfo) => {
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
   
-    if (item.isUpdatePending) {
-      return <IconDocument className="mean-svg-icons pending" />;
-    }
-  
     if (isInbound) {
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return (<IconTimer className="mean-svg-icons incoming" />);
-        case STREAM_STATE.Paused:
-          return (<IconIncomingPaused className="mean-svg-icons incoming" />);
-        default:
-          return (<IconDownload className="mean-svg-icons incoming" />);
-      }
+      return (
+        <span className="stream-type incoming">
+          <ArrowDownOutlined />
+        </span>
+      );
     } else {
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return (<IconTimer className="mean-svg-icons outgoing" />);
-        case STREAM_STATE.Paused:
-          return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
-        default:
-          return (<IconUpload className="mean-svg-icons outgoing" />);
-      }
+      return (
+        <span className="stream-type outgoing">
+          <ArrowUpOutlined />
+        </span>
+      );
     }
   }, [
     publicKey
@@ -494,57 +483,35 @@ export const Streams = () => {
   const getTransactionSubTitle = useCallback((item: StreamInfo) => {
     let title = '';
     const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-    const isOtp = item.rateAmount === 0 ? true : false;
+
+    let rateAmount = item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item);
+    if (item && item.rateAmount > 0) {
+      rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
+    }
 
     if (isInbound) {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-inbound');
-        return title;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-paused-inbound');
-          }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
+      if (item.state === STREAM_STATE.Schedule) {
+        title = t('streams.stream-list.subtitle-scheduled-inbound', {
+          rate: rateAmount
+        });
+        title += ` ${getShortDate(item.startUtc as string)}`;
+      } else {
+        title = t('streams.stream-list.subtitle-running-inbound', {
+          rate: rateAmount
+        });
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     } else {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-outbound');
-        return title;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-paused-outbound');
-          }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
+      if (item.state === STREAM_STATE.Schedule) {
+        title = t('streams.stream-list.subtitle-scheduled-outbound', {
+          rate: rateAmount
+        });
+        title += ` ${getShortDate(item.startUtc as string)}`;
+      } else {
+        title = t('streams.stream-list.subtitle-running-outbound', {
+          rate: rateAmount
+        });
+        title += ` ${getShortDate(item.startUtc as string)}`;
       }
     }
     return title;
@@ -553,6 +520,28 @@ export const Streams = () => {
     t,
     publicKey
   ]);
+
+  const getStreamStatus = useCallback((item: StreamInfo) => {
+    switch (item.state) {
+      case STREAM_STATE.Schedule:
+        return t('streams.status.status-scheduled');
+      case STREAM_STATE.Paused:
+        return t('streams.status.status-stopped');
+      default:
+        return t('streams.status.status-running');
+    }
+  }, [t]);
+
+  const getStreamStatusSubtitle = useCallback((item: StreamInfo) => {
+    switch (item.state) {
+      case STREAM_STATE.Schedule:
+        return t('streams.status.scheduled', {date: getShortDate(item.startUtc as string)});
+      case STREAM_STATE.Paused:
+        return t('streams.status.stopped');
+      default:
+        return t('streams.status.streaming');
+    }
+  }, [t]);
 
   const isStreamScheduled = (startUtc: string): boolean => {
     const now = new Date().toUTCString();
@@ -576,30 +565,6 @@ export const Streams = () => {
     }
     return label;
   }
-
-  // Maintain stream stats
-  useEffect(() => {
-
-    const updateStats = () => {
-      if (streamList && streamList.length) {
-        const incoming = streamList.filter(s => isInboundStream(s));
-        const outgoing = streamList.filter(s => !isInboundStream(s));
-        const stats: StreamStats = {
-          incoming: incoming.length,
-          outgoing: outgoing.length
-        }
-        setStreamStats(stats);
-      } else {
-        setStreamStats(defaultStreamStats);
-      }
-    }
-
-    updateStats();
-  }, [
-    publicKey,
-    streamList,
-    isInboundStream]
-  );
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
@@ -1604,6 +1569,64 @@ export const Streams = () => {
   //   Rendering   //
   ///////////////////
 
+  const renderMoneyStreamsSummary = (
+    <>
+      {/* Render Money Streams item if they exist and wallet is connected */}
+      {publicKey && (
+        <>
+        <div key="streams" className="transaction-list-row money-streams-summary no-pointer">
+          <div className="icon-cell">
+            {loadingStreams ? (
+              <div className="token-icon animate-border-loading">
+                <div className="streams-count simplelink" onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}>
+                  <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                </div>
+              </div>
+            ) : (
+              <div className={streamsSummary.totalNet !== lastStreamsSummary.totalNet ? 'token-icon animate-border' : 'token-icon'}>
+                <div className="streams-count simplelink" onClick={(e) => refreshStreamList()}>
+                  <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="description-cell">
+            <div className="title">{t('account-area.money-streams')}</div>
+            {streamsSummary.totalAmount === 0 ? (
+              <div className="subtitle">{t('account-area.no-money-streams')}</div>
+            ) : (
+              <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+            )}
+          </div>
+          <div className="rate-cell">
+            {streamsSummary.totalAmount === 0 ? (
+              <span className="rate-amount">--</span>
+            ) : (
+              <>
+                <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+                <div className="interval">net-change</div>
+              </>
+            )}
+          </div>
+          <div className="operation-vector">
+            {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (
+              <ArrowUpOutlined className="mean-svg-icons success bounce" />
+            ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
+              <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
+            ) : (
+              <span className="online-status neutral"></span>
+            )}
+          </div>
+        </div>
+        <div key="separator1" className="pinned-token-separator"></div>
+        </>
+      )}
+    </>
+  );
+
   const menu = (
     <Menu>
       <Menu.Item key="1" onClick={showCloseStreamModal}>
@@ -2206,28 +2229,42 @@ export const Streams = () => {
     <>
     {streamList && streamList.length ? (
       streamList.map((item, index) => {
+        const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
           consoleOut('selected stream:', item);
           setSelectedStream(item);
           setDtailsPanelOpen(true);
         };
+        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          event.currentTarget.src = FALLBACK_COIN_IMAGE;
+          event.currentTarget.className = "error";
+        };
         return (
           <div key={`${index + 50}`} onClick={onStreamClick}
             className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
-              {getStreamIcon(item)}
+              {getStreamTypeIcon(item)}
+              <div className="token-icon">
+                {item.associatedToken ? (
+                  <>
+                    {token ? (
+                      <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                    ) : (
+                      <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+                    )}
+                  </>
+                ) : (
+                  <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+                )}
+              </div>
             </div>
             <div className="description-cell">
               <div className="title text-truncate">{item.streamName || getStreamDescription(item)}</div>
               <div className="subtitle text-truncate">{getTransactionSubTitle(item)}</div>
             </div>
             <div className="rate-cell">
-              <div className="rate-amount">
-                {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
-              </div>
-              {item && item.rateAmount > 0 && (
-                <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
-              )}
+              <div className="rate-amount text-uppercase">{getStreamStatus(item)}</div>
+              <div className="interval">{getStreamStatusSubtitle(item)}</div>
             </div>
           </div>
         );
@@ -2279,7 +2316,7 @@ export const Streams = () => {
               </div>
             )}
             <span className="title">{t('streams.screen-title')}</span>
-            <Tooltip placement="bottom" title={t('account-area.streams-tooltip')}>
+            <Tooltip placement="bottom" title={t('streams.refresh-tooltip')}>
               <div className={`transaction-stats ${loadingStreams ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshStreamsClick}>
                 <Spin size="small" />
                 {customStreamDocked ? (
@@ -2288,13 +2325,16 @@ export const Streams = () => {
                   </span>
                 ) : (
                   <>
-                    <span className="transaction-legend incoming">
-                      <IconDownload className="mean-svg-icons"/>
-                      <span className="incoming-transactions-amout">{streamStats.incoming}</span>
-                    </span>
-                    <span className="transaction-legend outgoing">
-                      <IconUpload className="mean-svg-icons"/>
-                      <span className="incoming-transactions-amout">{streamStats.outgoing}</span>
+                    <span className="transaction-legend">
+                      <span className="icon-button-container">
+                        <Button
+                          type="default"
+                          shape="circle"
+                          size="small"
+                          icon={<ReloadOutlined />}
+                          onClick={() => {}}
+                        />
+                      </span>
                     </span>
                   </>
                 )}
@@ -2305,6 +2345,7 @@ export const Streams = () => {
             {/* item block */}
             <div className="item-block vertical-scroll">
               <Spin spinning={loadingStreams}>
+                {(streamsSummary && streamsSummary.totalAmount > 0) && renderMoneyStreamsSummary}
                 {renderStreamList}
               </Spin>
             </div>

@@ -937,7 +937,9 @@ export const AccountsView = () => {
                 <ArrowUpOutlined className="mean-svg-icons success bounce" />
               ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
                 <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
-              ) : null}
+              ) : (
+                <span className="online-status neutral"></span>
+              )}
             </div>
           </div>
         </Link>
