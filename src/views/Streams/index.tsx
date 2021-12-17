@@ -60,7 +60,7 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
 import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees, getStream } from '@mean-dao/money-streaming/lib/utils';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
@@ -333,60 +333,27 @@ export const Streams = () => {
 
   const showWithdrawModal = useCallback(async () => {
     setIsWithdrawModalVisibility(true);
-
-    let streamPublicKey: PublicKey;
-    const streamId = streamDetail?.id;
-    try {
-      streamPublicKey = new PublicKey(streamId as string);
-      try {
-        const detail = await getStream(connection, streamPublicKey);
-        if (detail) {
-          consoleOut('detail', detail);
-          setLastStreamDetail(detail);
-          const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
-          if (token) {
-            consoleOut("stream token:", token);
-            if (!selectedToken || selectedToken.address !== token.address) {
-              setOldSelectedToken(selectedToken);
-              setSelectedToken(token);
-            }
-          } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
-            setCustomToken(streamDetail?.associatedToken as string);
-          }
-          getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
-            setTransactionFees(value);
-            consoleOut('transactionFees:', value, 'orange');
-          });
-        } else {
-          notify({
-            message: t('notifications.error-title'),
-            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
-            type: "error"
-          });
-        }
-      } catch (error) {
-        console.error(error);
-        notify({
-          message: t('notifications.error-title'),
-          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
-          type: "error"
-        });
+    setLastStreamDetail(streamDetail);
+    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
+    if (token) {
+      consoleOut("stream token:", token);
+      if (!selectedToken || selectedToken.address !== token.address) {
+        setOldSelectedToken(selectedToken);
+        setSelectedToken(token);
       }
-    } catch (error) {
-      notify({
-        message: t('notifications.error-title'),
-        description: t('notifications.invalid-streamid-message') + '!',
-        type: "error"
-      });
+    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+      setCustomToken(streamDetail?.associatedToken as string);
     }
+    getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+      setTransactionFees(value);
+      consoleOut('transactionFees:', value, 'orange');
+    });
   }, [
-    connection,
     streamDetail,
     selectedToken,
-    getTransactionFees,
-    setSelectedToken,
     setCustomToken,
-    t,
+    setSelectedToken,
+    getTransactionFees,
   ]);
 
   const closeWithdrawModal = useCallback(() => {
