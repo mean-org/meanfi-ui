@@ -1991,7 +1991,7 @@ export const Streams = () => {
                   (
                     <span className="info-data">
                     {streamDetail
-                      ? getAmountWithSymbol(streamDetail.allocationReserved, streamDetail.associatedToken as string)
+                      ? getAmountWithSymbol(streamDetail.allocationAssigned, streamDetail.associatedToken as string)
                       : '--'}
                     </span>
                   ) : (
