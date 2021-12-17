@@ -329,6 +329,7 @@
 			"add-funds-cta": "Recharger (ajouter des fonds)",
 			"amount-funded-date": "financé sur",
 			"close-money-stream-menu-item": "Fermer le transfert d'argent",
+			"cancel-scheduled-transfer": "Cancel transfer",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-funding": "Add funds in progress...",
 			"cta-disabled-withdrawing": "Withdraw in progress...",

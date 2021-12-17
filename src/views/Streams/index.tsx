@@ -2121,7 +2121,7 @@ export const Streams = () => {
                         ? t("streams.stream-detail.cta-disabled-funding")
                         : isWithdrawing()
                           ? t("streams.stream-detail.cta-disabled-withdrawing")
-                          : t("streams.stream-detail.close-money-stream-menu-item")
+                          : t("streams.stream-detail.cancel-scheduled-transfer")
                   }
                 </Button>
               </>
