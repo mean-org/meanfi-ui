@@ -36,7 +36,6 @@ import {
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
-  isLocal,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -75,7 +74,6 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
-import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -83,14 +81,12 @@ const treasuryDetailPerfCounter = new PerformanceCounter();
 const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
-  const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
     theme,
     tokenList,
     tokenBalance,
-    isWhitelisted,
     selectedToken,
     treasuryOption,
     detailsPanelOpen,
@@ -141,16 +137,6 @@ export const TreasuriesView = () => {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
-
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -465,6 +451,7 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
+        refreshTreasuries(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -2807,6 +2794,11 @@ export const TreasuriesView = () => {
     <>
     {treasuryList && treasuryList.length ? (
       treasuryList.map((item, index) => {
+        const token = item.associatedTokenAddress ? getTokenByMintAddress(item.associatedTokenAddress as string) : undefined;
+        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          event.currentTarget.src = FALLBACK_COIN_IMAGE;
+          event.currentTarget.className = "error";
+        };
         const onStreamClick = () => {
           consoleOut('selected treasury:', item, 'blue');
           setSelectedTreasury(item);
@@ -2818,7 +2810,19 @@ export const TreasuriesView = () => {
           <div key={`${index + 50}`} onClick={onStreamClick}
             className={`transaction-list-row ${selectedTreasury && selectedTreasury.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
-              <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+              <div className="token-icon">
+                {item.associatedTokenAddress ? (
+                  <>
+                    {token ? (
+                      <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                    ) : (
+                      <Identicon address={item.associatedTokenAddress} style={{ width: "30", display: "inline-flex" }} />
+                    )}
+                  </>
+                ) : (
+                  <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+                )}
+              </div>
             </div>
             <div className="description-cell">
               {item.label ? (

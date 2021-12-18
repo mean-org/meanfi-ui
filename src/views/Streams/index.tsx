@@ -2222,7 +2222,7 @@ export const Streams = () => {
                     {token ? (
                       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                     ) : (
-                      <Identicon address={item.id} style={{ width: "30", display: "inline-flex" }} />
+                      <Identicon address={item.associatedToken} style={{ width: "30", display: "inline-flex" }} />
                     )}
                   </>
                 ) : (
