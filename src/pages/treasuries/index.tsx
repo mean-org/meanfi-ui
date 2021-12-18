@@ -258,14 +258,13 @@ export const TreasuriesView = () => {
       .then((streams) => {
         consoleOut('treasuryStreams:', streams, 'blue');
         setTreasuryStreams(streams);
-        setLoadingTreasuryStreams(false);
       })
       .catch(err => {
         console.error(err);
         setTreasuryStreams([]);
-        setLoadingTreasuryStreams(false);
       })
       .finally(() => {
+        setLoadingTreasuryStreams(false);
         treasuryStreamsPerfCounter.stop();
         consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
       });
@@ -418,13 +417,12 @@ export const TreasuriesView = () => {
           }
 
           setTreasuryList(treasuries);
-          setLoadingTreasuries(false);
         })
         .catch(error => {
           console.error(error);
-          setLoadingTreasuries(false);
         })
         .finally(() => {
+          setLoadingTreasuries(false);
           treasuryListPerfCounter.stop();
           consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
         });
