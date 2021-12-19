@@ -174,54 +174,62 @@ export const TreasuryCreateModal = (props: {
         )}
       </div>
 
-      <div className="row two-col-ctas mt-3 transaction-progress">
-        <div className="col-6">
-          <Button
-            block
-            type="text"
-            shape="round"
-            size="middle"
-            className={props.isBusy ? 'inactive' : ''}
-            onClick={() => isError(transactionStatus.currentOperation)
-              ? onAcceptModal()
-              : onCloseModal()}>
-            {isError(transactionStatus.currentOperation)
-              ? t('general.retry')
-              : t('general.cta-close')
-            }
-          </Button>
-        </div>
-        <div className="col-6">
-          <Button
-            className={props.isBusy ? 'inactive' : ''}
-            block
-            type="primary"
-            shape="round"
-            size="middle"
-            disabled={!treasuryName}
-            onClick={() => {
-              if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
-                onAcceptModal();
-              } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                onCloseModal();
-              } else {
-                refreshPage();
+      {/**
+       * NOTE: CTAs block may be required or not when Tx status is Finished!
+       * I choose to set transactionStatus.currentOperation to TransactionStatus.TransactionFinished
+       * and auto-close the modal after 1s. If we chose to NOT auto-close the modal
+       * Uncommenting the commented lines below will do it!
+       */}
+      {transactionStatus.currentOperation !== TransactionStatus.TransactionFinished && (
+        <div className="row two-col-ctas mt-3 transaction-progress">
+          <div className="col-6">
+            <Button
+              block
+              type="text"
+              shape="round"
+              size="middle"
+              className={props.isBusy ? 'inactive' : ''}
+              onClick={() => isError(transactionStatus.currentOperation)
+                ? onAcceptModal()
+                : onCloseModal()}>
+              {isError(transactionStatus.currentOperation)
+                ? t('general.retry')
+                : t('general.cta-close')
               }
-            }}>
-            {/* {props.isBusy && (
-              <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-            )} */}
-            {props.isBusy
-              ? t('treasuries.create-treasury.main-cta-busy')
-              : transactionStatus.currentOperation === TransactionStatus.Iddle
+            </Button>
+          </div>
+          <div className="col-6">
+            <Button
+              className={props.isBusy ? 'inactive' : ''}
+              block
+              type="primary"
+              shape="round"
+              size="middle"
+              disabled={!treasuryName}
+              onClick={() => {
+                if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
+                  onAcceptModal();
+                // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
+                //   onCloseModal();
+                } else {
+                  refreshPage();
+                }
+              }}>
+              {/* {props.isBusy && (
+                <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+              )} */}
+              {props.isBusy
+                ? t('treasuries.create-treasury.main-cta-busy')
+                : transactionStatus.currentOperation === TransactionStatus.Iddle
                 ? t('treasuries.create-treasury.main-cta')
-                : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                  ? t('general.cta-finish')
-                  : t('general.refresh')
-            }
-          </Button>
+                // : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
+                // ? t('general.cta-finish')
+                : t('general.refresh')
+              }
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
     </Modal>
   );

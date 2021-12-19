@@ -131,11 +131,9 @@ export const AppBar = (props: {
         <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
       </Menu.Item>
       <SubMenu key="services" title={t('ui-menus.main-menu.services.submenu-title')}>
-        {(isWhitelisted || isLocal()) && (
-          <Menu.Item key="/treasuries">
-            <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-          </Menu.Item>
-        )}
+        <Menu.Item key="/treasuries">
+          <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
+        </Menu.Item>
         {(isWhitelisted || isLocal()) && (
           <Menu.Item key="/multisig">
             <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
@@ -251,25 +249,26 @@ export const AppBar = (props: {
               <li key="deposits" className="mobile-menu-item" onClick={showDepositOptionsModal} style={{'--animation-order': 4} as CustomCSSProps}>
                 <span className="menu-item-text">{t('ui-menus.main-menu.deposits')}</span>
               </li>
-              {(isWhitelisted || isLocal()) && (
-                <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
-                  <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
-                </li>
-              )}
-              <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+              <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
+                <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
+              </li>
+              <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+              </li>
+              <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
                 <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
               </li>
               {!isProd() && (
-                <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
+                <li key="/faucet" className={location.pathname === '/faucet' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
                   <Link to="/faucet">{t('ui-menus.main-menu.services.faucet')}</Link>
                 </li>
               )}
               {!isProd() && (
-                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 8} as CustomCSSProps}>
+                <li key="/wrap" className={location.pathname === '/wrap' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 9} as CustomCSSProps}>
                   <Link to="/wrap">{t('ui-menus.main-menu.services.wrap')}</Link>
                 </li>
               )}
-              <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 7 : 9} as CustomCSSProps}>
+              <li key="wallet-guide" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
                 <a href={SOLANA_WALLET_GUIDE} target="_blank" rel="noopener noreferrer">
                   <span className="menu-item-text">{t('ui-menus.main-menu.services.wallet-guide')}</span>
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />

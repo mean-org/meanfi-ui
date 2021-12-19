@@ -427,7 +427,15 @@ export const RepeatingPayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -466,15 +474,17 @@ export const RepeatingPayment = () => {
     return !connected
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
-      ? t('transactions.validation.select-recipient')
-      : !selectedToken || !tokenBalance
-      ? t('transactions.validation.no-balance')
-      : !paymentStartDate
-      ? t('transactions.validation.no-valid-date')
-      : !arePaymentSettingsValid()
-      ? getPaymentSettingsButtonLabel()
-      : t('transactions.validation.valid-continue');
-  }
+        ? t('transactions.validation.select-recipient')
+        : !selectedToken || !tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !paymentStartDate
+            ? t('transactions.validation.no-valid-date')
+            : !recipientNote
+              ? 'Memo cannot be empty'
+              : !arePaymentSettingsValid()
+                ? getPaymentSettingsButtonLabel()
+                : t('transactions.validation.valid-continue');
+}
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
@@ -489,6 +499,8 @@ export const RepeatingPayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -676,13 +688,12 @@ export const RepeatingPayment = () => {
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
+          recipientNote,                                              // streamName
+          amount,                                                     // allocationAssigned
+          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
-          recipientNote 
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          amount                                                      // fundingAmount
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -850,6 +861,11 @@ export const RepeatingPayment = () => {
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
   }
 
   const isSuccess = (): boolean => {
@@ -1083,7 +1099,11 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1222,7 +1242,13 @@ export const RepeatingPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>
@@ -1250,9 +1276,14 @@ export const RepeatingPayment = () => {
                 id="token-search-rp"
                 value={tokenFilter}
                 allowClear={true}
+                extraClass="mb-2"
                 onInputClear={onInputCleared}
                 placeholder={t('token-selector.search-input-placeholder')}
                 onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+              <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
+              <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}

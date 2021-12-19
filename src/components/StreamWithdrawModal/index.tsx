@@ -1,11 +1,15 @@
 import React from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
-import { isValidNumber, truncateFloat } from "../../utils/utils";
-import { percentage } from "../../utils/ui";
-import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { isValidNumber, shortenAddress, truncateFloat } from "../../utils/utils";
+import { consoleOut, percentage } from "../../utils/ui";
+import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
 import { TokenInfo } from '@solana/spl-token-registry';
+import { PublicKey } from '@solana/web3.js';
+import { getStream } from '@mean-dao/money-streaming';
+import { useConnection } from '../../contexts/connection';
+import { notify } from '../../utils/notifications';
 
 export const StreamWithdrawModal = (props: {
   startUpData: StreamInfo | undefined;
@@ -16,15 +20,62 @@ export const StreamWithdrawModal = (props: {
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
+  const connection = useConnection();
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
+  const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
-    if (props.startUpData) {
-      setMaxAmount(props.startUpData.escrowVestedAmount);
+    const getStreamDetails = async (streamId: string) => {
+      let streamPublicKey: PublicKey;
+      streamPublicKey = new PublicKey(streamId as string);
+      try {
+        const detail = await getStream(connection, streamPublicKey);
+        if (detail) {
+          consoleOut('detail', detail);
+          setMaxAmount(detail.escrowVestedAmount);
+        } else {
+          notify({
+            message: t('notifications.error-title'),
+            description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+            type: "error"
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        notify({
+          message: t('notifications.error-title'),
+          description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+          type: "error"
+        });
+      } finally {
+        setLoadingData(false);
+      }
     }
-  }, [props]);
+
+    if (props.startUpData) {
+      if (props.startUpData.state === STREAM_STATE.Running) {
+        setMaxAmount(props.startUpData.escrowVestedAmount);
+        setLoadingData(true);
+        try {
+          getStreamDetails(props.startUpData.id as string);
+        } catch (error) {
+          notify({
+            message: t('notifications.error-title'),
+            description: t('notifications.invalid-streamid-message') + '!',
+            type: "error"
+          });
+        }
+      } else {
+        setMaxAmount(props.startUpData.escrowVestedAmount);
+      }
+    }
+  }, [
+    t,
+    connection,
+    props.startUpData,
+  ]);
 
   useEffect(() => {
     if (!feeAmount && props.transactionFees) {
@@ -132,42 +183,22 @@ export const StreamWithdrawModal = (props: {
       onOk={onAcceptWithdrawal}
       onCancel={onCloseModal}
       width={480}>
-      <div className="mb-3">
-        <div className="transaction-field disabled">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('withdraw-funds.label-available-amount')}</span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="field-select-left">
-              {props.startUpData && getDisplayAmount(maxAmount, true)}
-            </span>
-          </div>
+      <div className="well disabled">
+        <div className="flex-fixed-right">
+          <div className="left inner-label">{t('withdraw-funds.label-available-amount')}:</div>
+          <div className="right">&nbsp;</div>
         </div>
+        <div className="flex-fixed-right">
+          <div className="left static-data-field">{props.startUpData && getDisplayAmount(maxAmount, true)}</div>
+          <div className="right">&nbsp;</div>
+        </div>
+      </div>
 
-        <div className="transaction-field mb-1">
-          <div className="transaction-field-row">
-            <span className="field-label-left">{t('withdraw-funds.label-input-amount')}</span>
-            <span className="field-label-right">{t('withdraw-funds.label-input-right')}</span>
-          </div>
-          <div className="transaction-field-row main-row">
-            <span className="input-left">
-              <input
-                className="general-text-input"
-                inputMode="decimal"
-                autoComplete="off"
-                autoCorrect="off"
-                type="text"
-                onChange={handleWithdrawAmountChange}
-                pattern="^[0-9]*[.,]?[0-9]*$"
-                placeholder="0.0"
-                minLength={1}
-                maxLength={79}
-                spellCheck="false"
-                value={withdrawAmountInput}
-              />
-            </span>
-            <div className="addon-right">
+      <div className={`well ${loadingData ? 'disabled' : ''}`}>
+        <div className="flex-fixed-right">
+          <div className="left inner-label">{t('withdraw-funds.label-input-amount')}</div>
+          <div className="right">
+            <div className="addon">
               <div className="token-group">
                 <div
                   className="token-max simplelink"
@@ -192,19 +223,31 @@ export const StreamWithdrawModal = (props: {
               </div>
             </div>
           </div>
-          <div className="transaction-field-row">
-            <span className="field-label-left">
-              {props.startUpData && parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount)) ? (
-                <span className="fg-red">
-                  {t('transactions.validation.amount-withdraw-high')}
-                </span>
-              ) : (
-                <span>&nbsp;</span>
-              )}
-            </span>
-            <span className="field-label-right">&nbsp;</span>
-          </div>
         </div>
+        <div className="flex-fixed-right">
+          <div className="left">
+            <input
+              className="general-text-input"
+              inputMode="decimal"
+              autoComplete="off"
+              autoCorrect="off"
+              type="text"
+              onChange={handleWithdrawAmountChange}
+              pattern="^[0-9]*[.,]?[0-9]*$"
+              placeholder="0.0"
+              minLength={1}
+              maxLength={79}
+              spellCheck="false"
+              value={withdrawAmountInput}
+            />
+          </div>
+          <div className="right">&nbsp;</div>
+        </div>
+        {parseFloat(withdrawAmountInput) > parseFloat(getDisplayAmount(maxAmount)) ? (
+          <span className="form-field-error">
+            {t('transactions.validation.amount-withdraw-high')}
+          </span>
+        ) : (null)}
       </div>
 
       {/* Info */}

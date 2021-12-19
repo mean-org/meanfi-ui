@@ -413,7 +413,15 @@ export const OneTimePayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -449,6 +457,8 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !isVerifiedRecipient
       ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
@@ -782,6 +792,11 @@ export const OneTimePayment = () => {
     setFixedScheduleValue(value);
   }
 
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1027,7 +1042,12 @@ export const OneTimePayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!isValidAddress(recipientAddress) ||
+            !isMemoValid() ||
+            isAddressOwnAccount() ||
+            !paymentStartDate ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>
@@ -1047,9 +1067,14 @@ export const OneTimePayment = () => {
                 id="token-search-otp"
                 value={tokenFilter}
                 allowClear={true}
+                extraClass="mb-2"
                 onInputClear={onInputCleared}
                 placeholder={t('token-selector.search-input-placeholder')}
                 onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+              <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
+              <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}

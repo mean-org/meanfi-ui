@@ -6,6 +6,7 @@ import {
     WalletDisconnectionError,
     WalletError,
     WalletNotConnectedError,
+    WalletNotReadyError,
     WalletPublicKeyError,
     WalletSignTransactionError,
     WalletWindowClosedError,
@@ -36,13 +37,13 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
     private _params: ClientTypes.ConnectParams;
     private _client: WalletConnectClient | undefined;
 
-    constructor(config?: WalletConnectWalletAdapterConfig) {
+    constructor(config: WalletConnectWalletAdapterConfig) {
         super();
 
         this._publicKey = null;
         this._connecting = false;
-        this._options = config?.options as ClientOptions;
-        this._params = config?.params || {
+        this._options = config.options;
+        this._params = config.params || {
             permissions: {
                 blockchain: { chains: [WalletConnectChainID.Mainnet, WalletConnectChainID.Devnet] },
                 jsonrpc: { methods: [WalletConnectRPCMethod.SOL_SIGN_TRANSACTION] },
@@ -54,22 +55,20 @@ export class WalletConnectWalletAdapter extends BaseSignerWalletAdapter {
         return this._publicKey;
     }
 
-    get ready(): boolean {
-        return typeof window !== 'undefined';
-    }
-
     get connecting(): boolean {
         return this._connecting;
     }
 
-    get connected(): boolean {
-        return !!this._publicKey;
+    async ready(): Promise<boolean> {
+        return typeof window !== 'undefined';
     }
 
     async connect(): Promise<void> {
         try {
             if (this.connected || this.connecting) return;
             this._connecting = true;
+
+            if (!(await this.ready())) throw new WalletNotReadyError();
 
             let client: WalletConnectClient;
             let session: SessionTypes.Settled;

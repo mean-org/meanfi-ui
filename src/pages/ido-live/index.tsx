@@ -29,7 +29,7 @@ import { notify } from '../../utils/notifications';
 import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
-import { getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { CUSTOM_USDC } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
@@ -80,6 +80,8 @@ export const IdoLiveView = () => {
   const [isUserBlocked, setIsUserBlocked] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
+  const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
+  const [isVideoVisible, setIsVideoVisible] = useState(true);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -224,7 +226,14 @@ export const IdoLiveView = () => {
       let fromParsedDate = new Date(parsedDate);
       consoleOut('idoStartUtc:', fromParsedDate.toUTCString(), 'crimson');
       setIdoStartUtc(fromParsedDate);
-  
+
+      // Turn ON video if IDO hasn't started
+      if (today < fromParsedDate) {
+        setIsVideoVisible(true);
+      } else {
+        setIsVideoVisible(false);
+      }
+
       parsedDate = Date.parse(details.idoEndUtc);
       fromParsedDate = new Date(parsedDate);
       consoleOut('idoEndUtc:', fromParsedDate.toUTCString(), 'crimson');
@@ -249,6 +258,7 @@ export const IdoLiveView = () => {
     startIdo(client);
 
   }, [
+    today,
     publicKey,
     connection,
     idoAccountAddress,
@@ -271,6 +281,8 @@ export const IdoLiveView = () => {
       } catch (error: any) {
         console.error(error);
         setIdoEngineInitStatus("error");
+      } finally {
+        setLoadingIdoStatus(false);
       }
     }
 
@@ -289,12 +301,14 @@ export const IdoLiveView = () => {
       if (forceRefreshIdoStatus) {
         setForceRefreshIdoStatus(false);
       }
+      setLoadingIdoStatus(true);
       refreshIdoData();
     }
 
     if (idoEngineInitStatus === "started") {
       timer = setInterval(() => {
         consoleOut(`Fetching IDO status past ${IDO_FETCH_FREQUENCY / 60 / 1000} min`);
+        setLoadingIdoStatus(true);
         refreshIdoData();
       }, IDO_FETCH_FREQUENCY);
     }
@@ -394,6 +408,7 @@ export const IdoLiveView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       setTimeout(() => {
         consoleOut('Refreshing IDO status...', '', 'blue');
+        setLoadingIdoStatus(true);
         refreshIdoData();
       }, 800);
     }
@@ -401,6 +416,17 @@ export const IdoLiveView = () => {
     publicKey,
     fetchTxInfoStatus,
     lastSentTxSignature,
+    refreshIdoData
+  ]);
+
+  // Refresh IDO status when starting
+  useEffect(() => {
+    if (today === idoStartUtc) {
+      refreshIdoData();
+    }
+  },[
+    today,
+    idoStartUtc,
     refreshIdoData
   ]);
 
@@ -592,7 +618,10 @@ export const IdoLiveView = () => {
               }
             </div>
             <div className="mt-2 text-center">
-              <span className="simplelink underline-on-hover" onClick={() => refreshIdoData()}>Refresh data</span>
+              <span className={`simplelink ${loadingIdoStatus ? 'fg-orange-red pulsate click-disabled' : 'underline-on-hover'}`} onClick={() => {
+                setLoadingIdoStatus(true);
+                refreshIdoData();
+              }}>Refresh data</span>
             </div>
           </>
         )}
@@ -626,7 +655,7 @@ export const IdoLiveView = () => {
                   </div>
                   <div className="flex-fixed-right">
                     <div className="left">Total Participants</div>
-                    <div className="right">-</div>
+                    <div className="right">{formatThousands(idoStatus.totalContributors)}</div>
                   </div>
                 </>
               )}
@@ -638,6 +667,21 @@ export const IdoLiveView = () => {
     );
   }
 
+  const renderVideo = (
+    <>
+      <div className="boxed-area mb-4 mt-4">
+        <h2 className="subheading ido-subheading text-center">How it works</h2>
+        <YoutubeEmbed embedId="yBiaK0pdOHw" />
+        <div className="text-center mt-2 mb-3">
+          <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
+              href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
+            Read deatails about Mean IDO
+          </a>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="solid-bg">
 
@@ -645,8 +689,12 @@ export const IdoLiveView = () => {
         <div className="debug-bar">
           {idoStatus && (
             <>
-            <span className="mr-1">USDC Deposited:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcDeposited || '-'}</span>
-            <span className="mr-1">USDC Contributed:</span><span className="mr-1 font-bold fg-dark-active">{idoStatus.totalUsdcContributed || '-'}</span>
+            <span className="mr-1">loading:</span>
+            <span className="mr-1 font-bold fg-dark-active">{loadingIdoStatus ? 'true' : 'flase'}</span>
+            <span className="mr-1">USDC Deposited:</span>
+            <span className="mr-1 font-bold fg-dark-active">{idoStatus.usdcTotalContributed || '-'}</span>
+            <span className="mr-1">USDC Contributed:</span>
+            <span className="mr-1 font-bold fg-dark-active">{idoStatus.gaTotalUsdcContributed || '-'}</span>
             {publicKey && (
               <>
               <span className="mr-1">hasUserContributed:</span>
@@ -675,46 +723,25 @@ export const IdoLiveView = () => {
               <div className="flex-column flex-center h-100 px-4">
                 {(idoStartUtc && idoEndUtc) ? (
                   <>
-                    {today < idoStartUtc ? (
-                      <div className="boxed-area mb-4 mt-4">
-                        <h2 className="subheading ido-subheading text-center">How it works</h2>
-                        <YoutubeEmbed embedId="rokGy0huYEA" />
-                        <div className="text-center mt-2 mb-3">
-                          <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
-                              href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
-                            Read deatails about Mean IDO
-                          </a>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="ido-stats-container">
-                        <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
-                        {(today > idoStartUtc) && renderYouAreHere()}
-                        {/* <Timeline mode="left">
-                          <Timeline.Item label={idoStartUtc.toUTCString()}>Sale period starts</Timeline.Item>
-                          {today > idoStartUtc && today < idoEndUtc ? (
-                            <Timeline.Item label={renderTimeLeft} dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
-                          ) : (
-                            <Timeline.Item dot={<ClockCircleOutlined style={{ fontSize: '16px', backgroundColor: 'var(--color-darken)' }} />}>Deposit and withdrawals</Timeline.Item>
+                    {today < idoStartUtc ? renderVideo : (
+                      <>
+                        <div className="text-center">
+                          {isVideoVisible ? (
+                            <span className="simplelink underline" onClick={() => setIsVideoVisible(false)}>See the real-time state of the IDO</span>
+                            ) : (
+                            <span className="simplelink underline" onClick={() => setIsVideoVisible(true)}>Watch a video explaining how it works</span>
                           )}
-                          <Timeline.Item label={idoEndUtc.toUTCString()}>IDO ends</Timeline.Item>
-                          <Timeline.Item>Tokens redeemable</Timeline.Item>
-                        </Timeline> */}
-                      </div>
+                        </div>
+                        {isVideoVisible ? renderVideo : (
+                          <div className="ido-stats-container">
+                            <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                            {(today > idoStartUtc) && renderYouAreHere()}
+                          </div>
+                        )}
+                      </>
                     )}
                   </>
-                ) : (
-                  <div className="boxed-area mb-4 mt-4">
-                    <h2 className="subheading ido-subheading text-center">How it works</h2>
-                    <YoutubeEmbed embedId="rokGy0huYEA" />
-                    <div className="text-center mt-2 mb-3">
-                      <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
-                          href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
-                        Read deatails about Mean IDO
-                      </a>
-                    </div>
-                  </div>
-                )}
+                ) : renderVideo}
               </div>
             </Col>
 

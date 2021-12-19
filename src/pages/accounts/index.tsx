@@ -84,6 +84,9 @@ export const AccountsView = () => {
     lastTxSignature,
     detailsPanelOpen,
     shouldLoadTokens,
+    streamsSummary,
+    lastStreamsSummary,
+    loadingStreamsSummary,
     streamProgramAddress,
     canShowAccountDetails,
     previousWalletConnectState,
@@ -98,6 +101,9 @@ export const AccountsView = () => {
     setDtailsPanelOpen,
     setShouldLoadTokens,
     setTransactionStatus,
+    setStreamsSummary,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setAddAccountPanelOpen,
     showDepositOptionsModal,
     setCanShowAccountDetails,
@@ -128,9 +134,6 @@ export const AccountsView = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(false);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -322,6 +325,30 @@ export const AccountsView = () => {
     return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
   }, [accountAddress]);
 
+  // Load streams on entering /accounts
+  useEffect(() => {
+    if (!isFirstLoad) { return; }
+    setIsFirstLoad(false);
+    setTransactions([]);
+
+    setTimeout(() => {
+      setShouldLoadTokens(true);
+    }, 1000);
+
+    if (publicKey && (!streamList || streamList.length === 0)) {
+      consoleOut('Loading streams with wallet connection...', '', 'green');
+      refreshStreamList();
+    }
+  }, [
+    publicKey,
+    streamList,
+    isFirstLoad,
+    shouldLoadTokens,
+    setTransactions,
+    refreshStreamList,
+    setShouldLoadTokens
+  ]);
+
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
@@ -505,7 +532,7 @@ export const AccountsView = () => {
               if (selectedAsset) {
                 const meanTokenItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
                 if (meanTokenItemIndex !== -1) {
-                  selectAsset(meanTokensCopy[meanTokenItemIndex], false);
+                  selectAsset(meanTokensCopy[meanTokenItemIndex], true);
                 }
               } else {
                 selectAsset(meanTokensCopy[0]);
@@ -580,20 +607,6 @@ export const AccountsView = () => {
   }, [
     accountAddress,
     selectedAsset?.publicAddress
-  ]);
-
-  // Load streams on entering /accounts
-  useEffect(() => {
-    if (isFirstLoad && publicKey && (!streamList || streamList.length === 0)) {
-      setIsFirstLoad(false);
-      consoleOut('Loading streams with wallet connection...', '', 'green');
-      refreshStreamList();
-    }
-  }, [
-    publicKey,
-    streamList,
-    isFirstLoad,
-    refreshStreamList
   ]);
 
   // Load the transactions when signaled
@@ -698,6 +711,8 @@ export const AccountsView = () => {
     streamList,
     streamDetail,
     previousWalletConnectState,
+    setStreamsSummary,
+    setLastStreamsSummary,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
     setShouldLoadTokens,
@@ -800,7 +815,10 @@ export const AccountsView = () => {
     ms,
     streamsSummary,
     loadingStreamsSummary,
-    getPricePerToken
+    getPricePerToken,
+    setStreamsSummary,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
   ]);
 
   // Live data calculation
@@ -921,7 +939,9 @@ export const AccountsView = () => {
                 <ArrowUpOutlined className="mean-svg-icons success bounce" />
               ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
                 <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
-              ) : null}
+              ) : (
+                <span className="online-status neutral"></span>
+              )}
             </div>
           </div>
         </Link>

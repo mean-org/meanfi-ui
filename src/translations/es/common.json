@@ -10,7 +10,7 @@
 		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
 		"money-streams": "Flujos de dinero",
 		"no-money-streams": "Sin Flujos de Dinero",
-		"streams-tooltip": "Haga clic para actualizar los activos",
+		"refresh-tooltip": "Haga clic para actualizar los activos",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
@@ -307,6 +307,15 @@
 		"resume-stream-cta": "Resume",
 		"pause-stream-cta": "Pause",
 		"pause-stream-modal-title": "Pause stream",
+		"refresh-tooltip": "Click to refresh streams",
+		"status": {
+			"status-scheduled": "Scheduled",
+			"status-stopped": "Stopped",
+			"status-running": "Running",
+			"streaming": "Streaming",
+			"stopped": "Ran out of funds",
+			"scheduled": "Starting on {{date}}"
+		},
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -320,6 +329,7 @@
 			"add-funds-cta": "Recargar (agregar fondos)",
 			"amount-funded-date": "financiado en",
 			"close-money-stream-menu-item": "Cerrar transferencia de dinero",
+			"cancel-scheduled-transfer": "Cancel transfer",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-funding": "Add funds in progress...",
 			"cta-disabled-withdrawing": "Withdraw in progress...",
@@ -357,10 +367,10 @@
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
 			"subtitle-pending-outbound": "Este contrato está pendiente la aprobación del beneficiario",
-			"subtitle-running-inbound": "Recibiendo dinero desde",
-			"subtitle-running-outbound": "Enviando dinero desde",
-			"subtitle-scheduled-inbound": "Configurado para recibir dinero en",
-			"subtitle-scheduled-outbound": "Establecido para comenzar en",
+			"subtitle-running-inbound": "Receiving {{rate}} since",
+			"subtitle-running-outbound": "Sending {{rate}} since",
+			"subtitle-scheduled-inbound": "Receiving {{rate}} on",
+			"subtitle-scheduled-outbound": "Sending {{rate}} on",
 			"title-paused-from": "Transferencia pausada",
 			"title-paused-to": "Transferencia pausada",
 			"title-scheduled-from": "Scheduled stream from",
@@ -571,7 +581,9 @@
 	},
 	"token-selector": {
 		"modal-title": "Seleccione un token",
-		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección"
+		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección",
+		"looking-for-sol": "Looking for SOL? You need to",
+		"wrap-sol-first": "wrap it first to wSOL"
 	},
 	"transactions": {
 		"resume": "Summary",
@@ -758,7 +770,9 @@
 		}
 	},
 	"wallet-selector": {
-		"primary-action": "Seleccionar"
+		"primary-action": "Seleccionar",
+		"more-options-collapsed": "Mostrar más opciones",
+		"more-options-expanded": "Mostrar menos opciones"
 	},
 	"withdraw-funds": {
 		"label-available-amount": "Fondos disponibles para retirar inmediatamente ",

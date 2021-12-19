@@ -208,15 +208,15 @@ export type MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "usdcTotalDeposits",
+            "name": "usdcNetDeposits",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrawals",
+            "name": "usdcNetWithdrawals",
             "type": "u64"
           },
           {
-            "name": "usdcTotalCurrent",
+            "name": "usdcTotalContributed",
             "type": "u64"
           },
           {
@@ -248,8 +248,12 @@ export type MeanIdoPool = {
             "type": "bool"
           },
           {
-            "name": "waitlistFirstContributorNumber",
-            "type": "u32"
+            "name": "withdrawals",
+            "type": {
+              "vec": {
+                "defined": "WithdrawalEntry"
+              }
+            }
           }
         ]
       }
@@ -277,7 +281,7 @@ export type MeanIdoPool = {
             "type": "u8"
           },
           {
-            "name": "usdcContributionTs",
+            "name": "contributionTs",
             "type": "i64"
           },
           {
@@ -285,15 +289,15 @@ export type MeanIdoPool = {
             "type": "u32"
           },
           {
-            "name": "usdcTotalDepositsBeforeMe",
+            "name": "usdcNetDepositsSnapshot",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrawalsBeforeMe",
+            "name": "usdcNetWithdrawalsSnapshot",
             "type": "u64"
           },
           {
-            "name": "usdcTotalCurrentBeforeMe",
+            "name": "usdcTotalContributedInclMine",
             "type": "u64"
           },
           {
@@ -307,6 +311,22 @@ export type MeanIdoPool = {
           {
             "name": "meanPurchasedAmount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "idoWithdrawals",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "entries",
+            "type": {
+              "vec": {
+                "defined": "WithdrawalEntry"
+              }
+            }
           }
         ]
       }
@@ -356,6 +376,22 @@ export type MeanIdoPool = {
           }
         ]
       }
+    },
+    {
+      "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
     }
   ],
   "events": [
@@ -398,17 +434,17 @@ export type MeanIdoPool = {
           "index": false
         },
         {
-          "name": "usdcTotalDeposits",
+          "name": "usdcNetDeposits",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalWithdrawals",
+          "name": "usdcNetWithdrawals",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalDeposited",
+          "name": "usdcTotalContributed",
           "type": "u64",
           "index": false
         },
@@ -764,15 +800,15 @@ export const IDL: MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "usdcTotalDeposits",
+            "name": "usdcNetDeposits",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrawals",
+            "name": "usdcNetWithdrawals",
             "type": "u64"
           },
           {
-            "name": "usdcTotalCurrent",
+            "name": "usdcTotalContributed",
             "type": "u64"
           },
           {
@@ -804,8 +840,12 @@ export const IDL: MeanIdoPool = {
             "type": "bool"
           },
           {
-            "name": "waitlistFirstContributorNumber",
-            "type": "u32"
+            "name": "withdrawals",
+            "type": {
+              "vec": {
+                "defined": "WithdrawalEntry"
+              }
+            }
           }
         ]
       }
@@ -833,7 +873,7 @@ export const IDL: MeanIdoPool = {
             "type": "u8"
           },
           {
-            "name": "usdcContributionTs",
+            "name": "contributionTs",
             "type": "i64"
           },
           {
@@ -841,15 +881,15 @@ export const IDL: MeanIdoPool = {
             "type": "u32"
           },
           {
-            "name": "usdcTotalDepositsBeforeMe",
+            "name": "usdcNetDepositsSnapshot",
             "type": "u64"
           },
           {
-            "name": "usdcTotalWithdrawalsBeforeMe",
+            "name": "usdcNetWithdrawalsSnapshot",
             "type": "u64"
           },
           {
-            "name": "usdcTotalCurrentBeforeMe",
+            "name": "usdcTotalContributedInclMine",
             "type": "u64"
           },
           {
@@ -863,6 +903,22 @@ export const IDL: MeanIdoPool = {
           {
             "name": "meanPurchasedAmount",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "idoWithdrawals",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "entries",
+            "type": {
+              "vec": {
+                "defined": "WithdrawalEntry"
+              }
+            }
           }
         ]
       }
@@ -912,6 +968,22 @@ export const IDL: MeanIdoPool = {
           }
         ]
       }
+    },
+    {
+      "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
     }
   ],
   "events": [
@@ -954,17 +1026,17 @@ export const IDL: MeanIdoPool = {
           "index": false
         },
         {
-          "name": "usdcTotalDeposits",
+          "name": "usdcNetDeposits",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalWithdrawals",
+          "name": "usdcNetWithdrawals",
           "type": "u64",
           "index": false
         },
         {
-          "name": "usdcTotalDeposited",
+          "name": "usdcTotalContributed",
           "type": "u64",
           "index": false
         },

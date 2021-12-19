@@ -320,7 +320,7 @@ export const PayrollPayment = () => {
   }
 
   // Updates the token list everytime is filtered
-  const updateTokenListByFilter = useCallback(() => {
+  const updateTokenListByFilter = useCallback((searchString: string) => {
 
     if (!tokenList) {
       return;
@@ -330,13 +330,13 @@ export const PayrollPayment = () => {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.name.toLowerCase().startsWith(searchString.toLowerCase()) ||
+          t.address.toLowerCase().startsWith(searchString.toLowerCase())
         );
       };
 
-      let showFromList = !tokenFilter 
+      let showFromList = !searchString 
         ? tokenList
         : tokenList.filter((t: any) => filter(t));
 
@@ -349,16 +349,22 @@ export const PayrollPayment = () => {
     }
     
   }, [
-    tokenList,
-    tokenFilter,
+    tokenList
+  ]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
   ]);
 
   const onTokenSearchInputChange = useCallback((e: any) => {
 
     const newValue = e.target.value;
     setTokenFilter(newValue);
-    updateTokenListByFilter();
-    
+    updateTokenListByFilter(newValue);
+
   },[
     updateTokenListByFilter
   ]);
@@ -387,9 +393,10 @@ export const PayrollPayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Reset results when the filter is cleared
   useEffect(() => {
     if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
-      updateTokenListByFilter();
+      updateTokenListByFilter(tokenFilter);
     }
   }, [
     tokenList,
@@ -398,6 +405,7 @@ export const PayrollPayment = () => {
     updateTokenListByFilter
   ]);
 
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -423,7 +431,15 @@ export const PayrollPayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -467,6 +483,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-continue');
@@ -485,6 +503,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : !isVerifiedRecipient
@@ -675,13 +695,12 @@ export const PayrollPayment = () => {
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
+          recipientNote,                                              // streamName
+          amount,                                                     // allocationAssigned
+          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate,                                             // startUtc
-          recipientNote
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          amount                                                      // fundingAmount
+          fromParsedDate                                              // startUtc
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -850,6 +869,11 @@ export const PayrollPayment = () => {
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
   }
 
   const isSuccess = (): boolean => {
@@ -1103,7 +1127,11 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1263,7 +1291,13 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid() || !isVerifiedRecipient}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
 
@@ -1288,9 +1322,17 @@ export const PayrollPayment = () => {
         <div className="token-selector-wrapper">
           <div className="token-search-wrapper">
             <TextInput
+              id="token-search-pr"
               value={tokenFilter}
+              allowClear={true}
+              extraClass="mb-2"
+              onInputClear={onInputCleared}
               placeholder={t('token-selector.search-input-placeholder')}
               onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+            <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
+            <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
           </div>
           <div className="token-list vertical-scroll">
             {filteredTokenList.length > 0 && renderTokenList}
