@@ -123,7 +123,6 @@ export const MultisigView = () => {
     setDtailsPanelOpen,
     resetContractValues,
     refreshTokenBalance,
-    setForceReloadTokens,
     setTransactionStatus
 
   } = useContext(AppStateContext);
@@ -684,7 +683,6 @@ export const MultisigView = () => {
     resetTransactionStatus();
     setTransactionModalVisible(false);
     refreshTokenBalance();
-    setForceReloadTokens(true);
   };
 
   const onTransactionModalClosed = () => {
