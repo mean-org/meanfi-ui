@@ -2030,7 +2030,12 @@ export const Streams = () => {
                 {streamDetail ? (
                   <span className="info-data">
                   {streamDetail
-                    ? getAmountWithSymbol(streamDetail.escrowVestedAmount, streamDetail.associatedToken as string)
+                    ? getAmountWithSymbol(
+                      streamDetail.allocationAssigned - 
+                      streamDetail.allocationLeft + 
+                      streamDetail.escrowVestedAmount, 
+                      streamDetail.associatedToken as string
+                    )
                     : '--'}
                   </span>
                 ) : (
