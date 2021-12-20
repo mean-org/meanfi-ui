@@ -2929,6 +2929,12 @@ export const MultisigView = () => {
 
             } as MultisigTransactionInfo);
 
+            console.log('tx: ', txInfo);
+            console.log('tx id: ', tx.publicKey.toBase58());
+            console.log('tx accounts: ', tx.account.accounts.map((a: any) => a.pubkey.toBase58()));
+            console.log('tx multisig: ', tx.account.multisig.toBase58());
+            console.log('tx program id: ', tx.account.programId.toBase58());
+
             transactions.push(txInfo);
           }
           
@@ -3427,39 +3433,60 @@ export const MultisigView = () => {
     );
   };
 
-  const tokensOptionsMenu = (
+  const mintOptionsMenu = (
     <Menu>
-      {/* Mint token */}
+      {/* Create Mint */}
       <Menu.Item
-        key="1"
+        key="10"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Create</span>
+      </Menu.Item>
+      {/* Mint tokens */}
+      <Menu.Item
+        key="11"
         onClick={showMintTokenModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-mint')}</span>
       </Menu.Item>
-      {/* Transfer tokens */}
+      {/* Burn tokens */}
       <Menu.Item
-        key="2"
-        onClick={showTransferTokenModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
-      </Menu.Item>
-      {/* Transfer mint */}
-      <Menu.Item
-        key="3"
+        key="12"
         disabled={true}
         onClick={() => {}}>
-        <span className="menu-item-text">Transfer mint</span>
+        <span className="menu-item-text">Burn</span>
       </Menu.Item>
-      <Menu.Divider key="4" />
-      {/* Create vault */}
+      <Menu.Divider key="13" />
+      {/* Set Mint Auth */}
       <Menu.Item
-        key="5"
+        key="14"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Set Mint Auth</span>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const tokensOptionsMenu = (
+    <Menu>
+      {/* New Vault */}
+      <Menu.Item
+        key="20"
         onClick={onShowCreateVaultModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
       </Menu.Item>
-      {/* Transfer vault */}
+      {/* Transfer tokens */}
       <Menu.Item
-        key="6"
+        key="21"
+        onClick={showTransferTokenModal}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
+      </Menu.Item>
+      <Menu.Divider key="22" />
+      {/* Set Vault Auth */}
+      <Menu.Item
+        key="23"
+        disabled={true}
         onClick={() => {}}>
-        <span className="menu-item-text">Transfer vault</span>
+        <span className="menu-item-text">Set Vault Auth</span>
       </Menu.Item>
     </Menu>
   );
@@ -3468,22 +3495,58 @@ export const MultisigView = () => {
     <Menu>
       {/* Upgrade program */}
       <Menu.Item
-        key="5"
+        key="30"
         onClick={showUpgradeProgramModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-upgrade-program')}</span>
       </Menu.Item>
       {/* Upgrade IDL */}
       <Menu.Item
-        key="6"
+        key="31"
+        disabled={true}
         onClick={() => {}}>
         <span className="menu-item-text">Upgrade IDL</span>
       </Menu.Item>
-      <Menu.Divider key="7" />
       {/* Kill Switch */}
       <Menu.Item
-        key="8"
+        key="32"
+        disabled={true}
         onClick={() => {}}>
         <span className="menu-item-text">Kill Switch</span>
+      </Menu.Item>
+      <Menu.Divider key="33" />
+      {/* Set Program Auth */}
+      <Menu.Item
+        key="34"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Set Program Auth</span>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const dataOptionsMenu = (
+    <Menu>
+      {/* Create Account */}
+      <Menu.Item
+        key="40"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Create Account</span>
+      </Menu.Item>
+      {/* Update Account Data */}
+      <Menu.Item
+        key="41"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Update Account Data</span>
+      </Menu.Item>
+      <Menu.Divider key="42" />
+      {/* Set Owner */}
+      <Menu.Item
+        key="43"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Set Account Owner</span>
       </Menu.Item>
     </Menu>
   );
@@ -3492,6 +3555,18 @@ export const MultisigView = () => {
     return (
       <>
         <Space size="middle">
+
+          <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
+            <Button
+              type="default"
+              size="middle"
+              className="dropdown-like-button"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {}}>
+              <span className="mr-2">Mint</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
+          </Dropdown>
 
           <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
             <Button
@@ -3513,6 +3588,18 @@ export const MultisigView = () => {
               disabled={isTxInProgress() || loadingMultisigAccounts}
               onClick={() => {}}>
               <span className="mr-2">Programs</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
+          </Dropdown>
+
+           <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
+            <Button
+              type="default"
+              size="middle"
+              className="dropdown-like-button"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {}}>
+              <span className="mr-2">Data</span>
               <IconCaretDown className="mean-svg-icons" />
             </Button>
           </Dropdown>
