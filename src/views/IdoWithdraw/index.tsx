@@ -418,17 +418,19 @@ export const IdoWithdraw = (props: {
               false
             )}
           </div>
-          <div className="card ido-info-box no-shadow">
-            {idoInfoRow(
-              'Your MEAN allocation',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userMeanImpliedAmount,
-                '',
-                true
-              ),
-              false
-            )}
-          </div>
+          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa && (
+            <div className="card ido-info-box no-shadow">
+              {idoInfoRow(
+                'Your Est. MEAN allocation',
+                getTokenAmountAndSymbolByTokenAddress(
+                  props.idoStatus.userMeanImpliedAmount,
+                  '',
+                  true
+                ),
+                false
+              )}
+            </div>
+          )}
         </>
       )}
 

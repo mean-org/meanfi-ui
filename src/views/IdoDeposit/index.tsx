@@ -438,17 +438,19 @@ export const IdoDeposit = (props: {
               false
             )}
           </div>
-          <div className="card ido-info-box no-shadow">
-            {idoInfoRow(
-              'Your MEAN allocation',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userMeanImpliedAmount,
-                '',
-                true
-              ),
-              false
-            )}
-          </div>
+          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa && (
+            <div className="card ido-info-box no-shadow">
+              {idoInfoRow(
+                'Your Est. MEAN allocation',
+                getTokenAmountAndSymbolByTokenAddress(
+                  props.idoStatus.userMeanImpliedAmount,
+                  '',
+                  true
+                ),
+                false
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -464,6 +466,18 @@ export const IdoDeposit = (props: {
           )}
         </div>
       )}
+
+      {/**
+       * if wallet connected && userHasContributed {
+       *   if (userIsInGa) {
+       *     the key to show the block is: userIsInGa
+       *   } else {
+       *     do not show "Your Est. MEAN allocation"
+       *   }
+       * } else {
+       *   gaIsOpen
+       * }
+       */}
 
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
