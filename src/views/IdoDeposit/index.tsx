@@ -306,6 +306,21 @@ export const IdoDeposit = (props: {
     );
   }
 
+  const getGaLine = (inGa: boolean) => {
+    return (
+      <div className="text-center mt-2 mb-2">
+        {inGa ? (
+          <>
+            <span className="align-middle">✅</span>
+            <span className="label ml-1">Guaranteed allocation</span>
+          </>
+        ) : (
+          <span className="label">Join the waitlist</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Top up amount */}
@@ -454,19 +469,6 @@ export const IdoDeposit = (props: {
         </>
       )}
 
-      {props.idoStatus.isRunning && (
-        <div className="text-center mt-2 mb-2">
-          {props.idoStatus.gaIsOpen ? (
-            <>
-              <span className="align-middle">✅</span>
-              <span className="label ml-1">Guaranteed allocation</span>
-            </>
-          ) : (
-            <span className="label">Join the waitlist</span>
-          )}
-        </div>
-      )}
-
       {/**
        * if wallet connected && userHasContributed {
        *   if (userIsInGa) {
@@ -478,6 +480,17 @@ export const IdoDeposit = (props: {
        *   gaIsOpen
        * }
        */}
+
+      {props.idoStatus.isRunning && (
+        <>
+          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa
+            ? getGaLine(true)
+            : props.idoStatus.gaIsOpen
+              ? getGaLine(false)
+              : getGaLine(false)
+          }
+        </>
+      )}
 
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}

@@ -1,4 +1,14 @@
 .ido-live {
+  .ido-column {
+    height: 100%;
+    padding: 0 0.5rem;
+    @media (max-width: 991.98px) {
+      min-height: 360px;
+    }
+    @media (min-width: 992px) {
+      min-height: 640px;
+    }
+  }
   main section.content {
     .boxed-area {
       padding: 0;
@@ -92,7 +102,6 @@
     }
   }
   .ido-form-wrapper {
-    margin: 2rem 0;
     .form-label {
       font-size: 0.7rem;
       text-transform: capitalize;

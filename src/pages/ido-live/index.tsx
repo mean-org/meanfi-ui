@@ -716,8 +716,8 @@ export const IdoLiveView = () => {
         <div className="container">
           <Row>
 
-            <Col xs={24} md={16}>
-              <div className="flex-column flex-center h-100 px-4">
+            <Col xs={24} lg={16}>
+              <div className="flex-column flex-center ido-column">
                 {(idoStartUtc && idoEndUtc) ? (
                   <>
                     {today < idoStartUtc ? renderVideo : (
@@ -742,8 +742,8 @@ export const IdoLiveView = () => {
               </div>
             </Col>
 
-            <Col xs={24} md={8}>
-              <div className="flex-column flex-center h-100 px-5 pb-5">
+            <Col xs={24} lg={8}>
+              <div className="flex-column flex-center ido-column">
                 {idoDetails && !regionLimitationAcknowledged
                   ? renderRegionAcknowledgement(true)
                   : !idoDetails
