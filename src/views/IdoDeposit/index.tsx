@@ -469,18 +469,6 @@ export const IdoDeposit = (props: {
         </>
       )}
 
-      {/**
-       * if wallet connected && userHasContributed {
-       *   if (userIsInGa) {
-       *     the key to show the block is: userIsInGa
-       *   } else {
-       *     do not show "Your Est. MEAN allocation"
-       *   }
-       * } else {
-       *   gaIsOpen
-       * }
-       */}
-
       {props.idoStatus.isRunning && (
         <>
           {publicKey && props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa
