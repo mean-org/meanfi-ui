@@ -57,7 +57,6 @@ export const OneTimeExchange = (props: {
   const { publicKey, wallet, connected } = useWallet();
   const {
     coinPrices,
-    loadingPrices,
     transactionStatus,
     previousWalletConnectState,
     refreshPrices,
