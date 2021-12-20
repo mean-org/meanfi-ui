@@ -560,6 +560,15 @@
 			"buffer-account-label": "New program buffer",
 			"buffer-account-placeholder": "Enter the address of the buffer account",
 			"success-message": "Program upgraded successfully."
+		},
+		"create-vault": {
+			"main-cta": "Create",
+			"main-cta-busy": "Creating vault",
+			"no-token": "Select token",
+			"modal-title": "Create a multisig Vault",
+			"token-label": "Token",
+			"token-placeholder": "Enter the address of the token mint",
+			"success-message": "Your multisig vault was created successfully"	
 		}
 	},
 	"swap": {

@@ -1,15 +1,21 @@
-import React, { useContext, useState } from 'react';
-import { Modal, Button, Spin } from 'antd';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { Modal, Button, Spin, Divider, Select, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatus } from '../../models/enums';
-import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
+import { useConnection } from '../../contexts/connection';
+import { useWallet } from '../../contexts/wallet';
+import { TokenDisplay } from '../TokenDisplay';
+import { PublicKey } from '@solana/web3.js';
+import { MintLayout } from '@solana/spl-token';
 
+const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigTransferTokensModal = (props: {
@@ -19,19 +25,75 @@ export const MultisigTransferTokensModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  vaults: any[]
+
 }) => {
   const { t } = useTranslation('common');
+  const connection = useConnection();
+  const { publicKey } = useWallet();
   const {
     transactionStatus,
-    setTransactionStatus,
+    setTransactionStatus
+
   } = useContext(AppStateContext);
-  const [from, setFrom] = useState('');
+
+  const [fromVault, setFromVault] = useState<any>();
+  const [fromMint, setFromMint] = useState<any>();
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
 
+  useEffect(() => {
+
+    if (!connection || !publicKey || !props.vaults || !props.vaults.length) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      console.log('modal vaults', props.vaults);
+      setFromVault(props.vaults[0]);
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection, 
+    props.vaults, 
+    publicKey
+  ]);
+
+  useEffect(() => {
+
+    if (!connection || !publicKey || !fromVault) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      connection.getAccountInfo(new PublicKey(fromVault.mint))
+        .then(info => {
+          if (info) {
+            console.log('info', info);
+            const mintInfo = MintLayout.decode(info.data);
+            setFromMint(mintInfo);
+          }
+        })
+        .catch(err => console.error(err));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    connection, 
+    fromVault, 
+    publicKey
+  ])
+
   const onAcceptModal = () => {
     props.handleOk({
-      from: from,
+      from: fromVault.address.toBase58(),
       amount: +amount,
       to: to
     });
@@ -44,7 +106,7 @@ export const MultisigTransferTokensModal = (props: {
   const onAfterClose = () => {
 
     setTimeout(() => {
-      setFrom('');
+      setFromVault(undefined);
       setTo('');
       setAmount('');
     }, 50);
@@ -55,11 +117,17 @@ export const MultisigTransferTokensModal = (props: {
     });
   }
 
-  const onTokenAddressChange = (e: any) => {
-    const inputValue = e.target.value as string;
-    const trimmedValue = inputValue.trim();
-    setFrom(trimmedValue);
-  }
+  const onVaultChanged = useCallback((e: any) => {
+    
+    if (props.vaults && props.vaults.length) {
+      consoleOut("vault selected:", e, 'blue');
+      const selectedFromVault = props.vaults.filter(v => v.address.toBase58() === e)[0];
+      setFromVault(selectedFromVault);
+    }
+
+  },[
+    props.vaults
+  ]);
 
   const onMintToAddressChange = (e: any) => {
     const inputValue = e.target.value as string;
@@ -77,14 +145,14 @@ export const MultisigTransferTokensModal = (props: {
   };
 
   const isValidForm = (): boolean => {
-    return from &&
-            to &&
-            isValidAddress(from) &&
-            isValidAddress(to) &&
-            amount &&
-            +amount > 0
-      ? true
-      : false;
+    return (
+      fromVault &&
+      to &&
+      isValidAddress(fromVault.address.toBase58()) &&
+      isValidAddress(to) &&
+      amount &&
+      +amount > 0
+    ) ? true : false;
   }
 
   const refreshPage = () => {
@@ -108,23 +176,39 @@ export const MultisigTransferTokensModal = (props: {
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
             {/* Transfer from */}
-            <div className="form-label">{t('multisig.transfer-tokens.source-address-label')}</div>
-            <div className="well">
-              <input id="token-address-field"
-                className="general-text-input"
-                autoComplete="on"
-                autoCorrect="off"
-                type="text"
-                onChange={onTokenAddressChange}
-                placeholder={t('multisig.transfer-tokens.source-address-placeholder')}
-                required={true}
-                spellCheck="false"
-                value={from}/>
-              {from && !isValidAddress(from) && (
-                <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
-                </span>
-              )}
+            <div className="mb-3">
+              <div className="form-label">{t('multisig.create-vault.token-label')}</div>
+              <div className={`well ${props.isBusy && 'disabled'}`}>
+                <div className="flex-fixed-left">
+                  <div className="left">
+                    <span className="add-on">
+                      {props.vaults && props.vaults.length > 0 && fromVault && fromMint && (
+                        <Select className={`token-selector-dropdown`} value={fromVault.address.toBase58()}
+                            style={{width:400, maxWidth:'none'}}
+                            onChange={onVaultChanged} bordered={false} showArrow={false}
+                            dropdownRender={menu => (
+                            <div>{menu}</div>
+                          )}>
+                          {props.vaults.map((option: any) => {
+                            return (
+                              <Option key={option.address.toBase58()} value={option.address.toBase58()}>
+                                <div className="option-container">
+                                  {/* <TokenDisplay onClick={() => {}}
+                                    mintAddress={fromMint.address}
+                                    name={option.address.toBase58()}
+                                    showCaretDown={false}
+                                  /> */}
+                                  {option.address.toBase58()}
+                                </div>
+                              </Option>
+                            );
+                          })}
+                        </Select>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
             {/* Transfer to */}
             <div className="form-label">{t('multisig.transfer-tokens.transfer-to-label')}</div>

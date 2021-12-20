@@ -285,6 +285,10 @@ const idl: Idl = {
           {
             "name": "executedOn",
             "type": "u64"
+          },
+          {
+            "name": "action",
+            "type": "u8"
           }
         ]
       }
