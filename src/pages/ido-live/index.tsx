@@ -472,23 +472,27 @@ export const IdoLiveView = () => {
     );
   }
 
-  const renderRegionAcknowledgement = (
-    <>
-      <div className="text-center px-5 mt-3">
-        <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
-      </div>
-      <p className="text-center">By clicking acknowledge below, I certify that I am not a resident of Afghanistan, Ivory Coast, Cuba, Iraq, Iran, Liberia, North Korea, Syria, Sudan, South Sudan, Zimbabwe, Antigua, United States, American Samoa, Guam, Northern Mariana Islands, Puerto Rico, United States Minor Outlying Islands, US Virgin Islands, Ukraine, Belarus, Albania, Burma, Central African Republic, Democratic Republic of Congo, Lybia, Somalia, Yemen, United Kingdom, Thailand.</p>
-      <p className="text-center">If you have any questions, please contact us via <a className="secondary-link" href={MEAN_FINANCE_TWITTER_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.twitter')}</a>, or <a className="secondary-link" href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.discord')}</a>.</p>
-      <Button
-        className="main-cta"
-        type="primary"
-        shape="round"
-        size="large"
-        onClick={() => onAcknowledgeRegionLimitations()}>
-        Acknowledge
-      </Button>
-    </>
-  );
+  const renderRegionAcknowledgement = (showCta = true) => {
+    return (
+      <>
+        <div className="text-center px-5 mt-3">
+          <h2 className="subheading ido-subheading">The Mean IDO can only be accessed from select countries.</h2>
+        </div>
+        <p className="text-center">By clicking acknowledge below, I certify that I am not a resident of Afghanistan, Ivory Coast, Cuba, Iraq, Iran, Liberia, North Korea, Syria, Sudan, South Sudan, Zimbabwe, Antigua, United States, American Samoa, Guam, Northern Mariana Islands, Puerto Rico, United States Minor Outlying Islands, US Virgin Islands, Ukraine, Belarus, Albania, Burma, Central African Republic, Democratic Republic of Congo, Lybia, Somalia, Yemen, United Kingdom, Thailand.</p>
+        <p className="text-center">If you have any questions, please contact us via <a className="secondary-link" href={MEAN_FINANCE_TWITTER_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.twitter')}</a>, or <a className="secondary-link" href={MEAN_FINANCE_DISCORD_URL} target="_blank" rel="noopener noreferrer">{t('ui-menus.app-context-menu.discord')}</a>.</p>
+        {showCta && (
+          <Button
+            className="main-cta"
+            type="primary"
+            shape="round"
+            size="large"
+            onClick={() => onAcknowledgeRegionLimitations()}>
+            Acknowledge
+          </Button>
+        )}
+      </>
+    );
+  }
 
   const renderForm = () => {
     if (!idoStatus || !idoDetails) { return null; }
@@ -670,14 +674,7 @@ export const IdoLiveView = () => {
   const renderVideo = (
     <>
       <div className="boxed-area mb-4 mt-4">
-        <h2 className="subheading ido-subheading text-center">How it works</h2>
         <YoutubeEmbed embedId="yBiaK0pdOHw" />
-        <div className="text-center mt-2 mb-3">
-          <a className="secondary-link" target="_blank" rel="noopener noreferrer" title="How Mean IDO works"
-              href="https://docs.google.com/document/d/1uNeHnLdNDcPltk98CasslQfMV8R9CzC9uNqCbrlo8fY">
-            Read deatails about Mean IDO
-          </a>
-        </div>
       </div>
     </>
   );
@@ -747,9 +744,11 @@ export const IdoLiveView = () => {
 
             <Col xs={24} md={8}>
               <div className="flex-column flex-center h-100 px-5 pb-5">
-                {!regionLimitationAcknowledged
-                  ? renderRegionAcknowledgement
-                  : renderIdoForms
+                {idoDetails && !regionLimitationAcknowledged
+                  ? renderRegionAcknowledgement(true)
+                  : !idoDetails
+                    ? renderRegionAcknowledgement(false)
+                    : renderIdoForms
                 }
               </div>
             </Col>

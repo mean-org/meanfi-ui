@@ -306,7 +306,7 @@ export const IdoWithdraw = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setWithdrawAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.idoStatus.userUsdcContributedAmount,

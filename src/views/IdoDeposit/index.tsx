@@ -67,7 +67,7 @@ export const IdoDeposit = (props: {
     const amount = depositAmount ? parseFloat(depositAmount) : 0;
     return !connected
       ? t('transactions.validation.not-connected')
-      : props.idoStatus.hasUserContributed
+      : props.idoStatus.userHasContributed
         ? 'You already contributed'
         : !props.selectedToken || !props.tokenBalance
           ? t('transactions.validation.no-balance')
@@ -316,7 +316,7 @@ export const IdoDeposit = (props: {
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoDetails.usdcPerUserMin
@@ -328,7 +328,7 @@ export const IdoDeposit = (props: {
               Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
-              className={`token-max ${connected && !props.idoStatus.hasUserContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
                 getTokenAmountAndSymbolByTokenAddress(
                   props.tokenBalance > props.idoStatus.currentMaxUsdcContribution
@@ -343,7 +343,7 @@ export const IdoDeposit = (props: {
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || props.idoStatus.hasUserContributed || isBusy || props.disabled ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected || props.idoStatus.userHasContributed || isBusy || props.disabled ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -454,7 +454,7 @@ export const IdoDeposit = (props: {
 
       {props.idoStatus.isRunning && (
         <div className="text-center mt-2 mb-2">
-          {props.idoStatus.isGaOpen ? (
+          {props.idoStatus.gaIsOpen ? (
             <>
               <span className="align-middle">✅</span>
               <span className="label ml-1">Guaranteed allocation</span>
@@ -471,7 +471,7 @@ export const IdoDeposit = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={props.disabled || props.idoStatus.hasUserContributed || !isValidInput()}
+        disabled={props.disabled || props.idoStatus.userHasContributed || !isValidInput()}
         onClick={onExecuteDepositTx}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
