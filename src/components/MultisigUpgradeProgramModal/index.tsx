@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -9,6 +9,9 @@ import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { useConnection } from '../../contexts/connection';
+import { useWallet } from '../../contexts/wallet';
+import { PublicKey } from '@solana/web3.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -19,19 +22,55 @@ export const MultisigUpgradeProgramModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+
 }) => {
   const { t } = useTranslation('common');
+  const connection = useConnection();
+  const { publicKey } = useWallet();
   const {
     transactionStatus,
-    setTransactionStatus,
+    setTransactionStatus
+
   } = useContext(AppStateContext);
+
   const [programId, setProgramId] = useState('');
+  const [programDataAddress, setProgramDataAddress] = useState('');
   const [bufferAddress, setBufferAddress] = useState('');
+
+  useEffect(() => {
+
+    if (!connection || !publicKey || !programId || !isValidAddress(programId)) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const programAddress = new PublicKey(programId);
+      connection.getAccountInfo(programAddress)
+        .then(info => {
+          if (info) {
+            console.log('info', info);
+            const programDataAddress = new PublicKey(info.data.slice(4));
+            setProgramDataAddress(programDataAddress.toBase58());
+          }
+        })
+        .catch(err => console.error(err));
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  },[
+    connection, 
+    programId, 
+    publicKey
+  ]);
 
   const onAcceptModal = () => {
     props.handleOk({
-      programId: programId,
-      bufferAddress: bufferAddress
+      programAddress: programId,
+      programDataAddress: programDataAddress,
+      bufferAddress: bufferAddress,
     });
   }
 
@@ -43,7 +82,9 @@ export const MultisigUpgradeProgramModal = (props: {
 
     setTimeout(() => {
       setProgramId('');
+      setProgramDataAddress('');
       setBufferAddress('');
+      
     }, 50);
     
     setTransactionStatus({
@@ -65,10 +106,14 @@ export const MultisigUpgradeProgramModal = (props: {
   }
 
   const isValidForm = (): boolean => {
-    return programId &&
-            bufferAddress &&
-            isValidAddress(programId) &&
-            isValidAddress(bufferAddress)
+    return (
+      programId &&
+      bufferAddress &&
+      programDataAddress &&
+      isValidAddress(programId) &&
+      isValidAddress(bufferAddress) &&
+      isValidAddress(programDataAddress)
+    )
       ? true
       : false;
   }

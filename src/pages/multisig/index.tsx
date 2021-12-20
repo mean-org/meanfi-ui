@@ -2035,7 +2035,7 @@ export const MultisigView = () => {
 
     const upgradeProgram = async (data: any) => {
 
-      if (!selectedMultisig || !publicKey) { return null; }
+      if (!multisigClient || !selectedMultisig || !publicKey) { return null; }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -2043,24 +2043,27 @@ export const MultisigView = () => {
       );
 
       const dataBuffer = Buffer.from([3, 0, 0, 0]);
+      const spill = multisigClient.provider.wallet.publicKey;
       const ixAccounts = [
         {
-          pubkey: data.programDataAddress,
+          pubkey: new PublicKey(data.programDataAddress),
           isWritable: true,
           isSigner: false,
         },
-        { pubkey: data.programAddress, isWritable: true, isSigner: false },
-        { pubkey: data.bufferAddress, isWritable: true, isSigner: false },
-        { pubkey: publicKey, isWritable: true, isSigner: false },
+        { pubkey: new PublicKey(data.programAddress), isWritable: true, isSigner: false },
+        { pubkey: new PublicKey(data.bufferAddress), isWritable: true, isSigner: false },
+        { pubkey: spill, isWritable: true, isSigner: false },
         { pubkey: SYSVAR_RENT_PUBKEY, isWritable: false, isSigner: false },
         { pubkey: SYSVAR_CLOCK_PUBKEY, isWritable: false, isSigner: false },
         { pubkey: multisigSigner, isWritable: false, isSigner: false },
       ];
 
+      const BPF_LOADER_UPGRADEABLE_PID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
       const txSize = 1000; // TODO: tighter bound.
       const transaction = new Account();
       const tx = multisigClient.transaction.createTransaction(
-        BPF_LOADER_PROGRAM_ID,
+        BPF_LOADER_UPGRADEABLE_PID,
+        OperationType.UpgradeProgram,
         ixAccounts,
         dataBuffer,
         {
@@ -2101,9 +2104,9 @@ export const MultisigView = () => {
 
         // Create a transaction
         const payload = {
-          programAddress: data.programAddress.toBase58(),
-          programDataAddress: data.programDataAddress.toBase58(),
-          bufferAddress: data.bufferAddress.toBase58()
+          programAddress: data.programAddress,
+          programDataAddress: data.programDataAddress,
+          bufferAddress: data.bufferAddress
         };
         
         consoleOut('data:', payload);
@@ -2319,9 +2322,7 @@ export const MultisigView = () => {
   }, [
     clearTransactionStatusContext, 
     connection, 
-    multisigClient.account.transaction, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
+    multisigClient, 
     nativeBalance, 
     onProgramUpgraded, 
     publicKey, 
