@@ -319,9 +319,9 @@ export class IdoClient {
             clusterTs: statusEvent.clusterTs.toNumber(),
             secondsFromIdoStart: statusEvent.secondsFromIdoStart.toNumber(),
             isRunning: statusEvent.isRunning as boolean,
-            currentMaxUsdcContribution: statusEvent.usdcPerUserMaxCurrent.toNumber() / 10 ** DECIMALS,
+            currentMaxUsdcContribution: toUiAmount(statusEvent.usdcPerUserMaxCurrent),
             currentMaxUsdcContributionTokenAmount: statusEvent.usdcPerUserMaxCurrent.toNumber(),
-            currentMeanPrice: statusEvent.meanPriceCurrent.toNumber() / 10 ** DECIMALS,
+            currentMeanPrice: toUiAmount(statusEvent.meanPriceCurrent),
             currentMeanPriceTokenAmount: statusEvent.meanPriceCurrent.toNumber(),
             
             
@@ -335,17 +335,16 @@ export class IdoClient {
             totalContributors: statusEvent.totalContributors,
             lastContributorNumber: statusEvent.lastContributorNumber,
 
-            gaTotalUsdcContributed: statusEvent.gaUsdcTotalContributed.toNumber() / 10 ** DECIMALS,
+            gaTotalUsdcContributed: toUiAmount(statusEvent.gaUsdcTotalContributed),
             gaTotalUsdcContributedTokenAmount: statusEvent.gaUsdcTotalContributed.toNumber(),
-            gaTotalContributors: statusEvent.totalContributors,
-            currentImpliedMeanPrice: statusEvent.meanImpliedPrice.toNumber() / 10 ** DECIMALS,
-            currentImpliedMeanPriceTokenAmount: statusEvent.meanImpliedPrice.toNumber(),
-            gaMeanTotalPurchased: statusEvent.gaMeanTotalPurchased.toNumber() / 10 ** DECIMALS,
+            gaMeanTotalPurchased: toUiAmount(statusEvent.gaMeanTotalPurchased),
             gaMeanTotalPurchasedTokenAmount: statusEvent.gaMeanTotalPurchased.toNumber(),
-            isGaOpen: statusEvent.isGaOpen as boolean,
+            gaIsOpen: statusEvent.gaIsOpen as boolean,
+            currentImpliedMeanPrice: toUiAmount(statusEvent.meanImpliedPrice),
+            currentImpliedMeanPriceTokenAmount: statusEvent.meanImpliedPrice.toNumber(),
 
             // user (if set)
-            hasUserContributed: false,
+            userHasContributed: false,
             userContributorNumber: 0,
             userContributionTs: 0,
             userUsdcContributedAmount: 0,
@@ -354,6 +353,7 @@ export class IdoClient {
             userMeanPurchasedTokenAmount: 0,
             userMeanImpliedAmount: 0,
             userMeanImpliedTokenAmount: 0,
+            userIsInGa: false,
         };
 
         if (this.userPubKey) {
@@ -374,12 +374,13 @@ export class IdoClient {
             if (userIdoAccount) {
                 const userUsdcContributionBn = userIdoAccount.usdcContributedAmount;
 
-                currentIdoStatus.hasUserContributed = true;
+                currentIdoStatus.userHasContributed = true;
                 currentIdoStatus.userContributionTs = userIdoAccount.contributionTs.toNumber();
                 currentIdoStatus.userUsdcContributedAmount = toUiAmount(userUsdcContributionBn);
                 currentIdoStatus.userUsdcContributedTokenAmount = userUsdcContributionBn.toNumber();
                 currentIdoStatus.userMeanPurchasedAmount = toUiAmount(userIdoAccount.meanPurchasedAmount);
                 currentIdoStatus.userMeanPurchasedTokenAmount = userIdoAccount.meanPurchasedAmount.toNumber();
+                currentIdoStatus.userIsInGa = true; // TODO
                 
                 // TODO:
             }
@@ -594,15 +595,14 @@ class IdoTracker {
 
             gaTotalUsdcContributed: this.latestIdo.gaUsdcTotalContributed,
             gaTotalUsdcContributedTokenAmount: this.latestIdo.gaUsdcTotalContributedTokenAmount,
-            gaTotalContributors: this.latestIdo.totalContributors,
-            currentImpliedMeanPrice: this.latestIdo.meanImpliedPrice,
-            currentImpliedMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
             gaMeanTotalPurchased: this.latestIdo.gaMeanTotalPurchased,
             gaMeanTotalPurchasedTokenAmount: this.latestIdo.gaMeanTotalPurchasedTokenAmount,
-            isGaOpen: this.latestIdo.isGaOpen,
+            gaIsOpen: this.latestIdo.gaIsOpen,
+            currentImpliedMeanPrice: this.latestIdo.meanImpliedPrice,
+            currentImpliedMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
 
             // user (if set)
-            hasUserContributed: false,
+            userHasContributed: false,
             userContributorNumber: 0,
             userContributionTs: 0,
             userUsdcContributedAmount: 0,
@@ -611,11 +611,12 @@ class IdoTracker {
             userMeanPurchasedTokenAmount: 0,
             userMeanImpliedAmount: 0,
             userMeanImpliedTokenAmount: 0,
+            userIsInGa: false,
         }
 
         if(this.latestUserIdo) {
             status.userContributorNumber = this.latestUserIdo.contributorNumber;
-            status.hasUserContributed = true;
+            status.userHasContributed = true;
             status.userContributionTs = this.latestUserIdo.contributionTs;
             status.userUsdcContributedAmount = this.latestUserIdo.usdcContributedAmount;
             status.userUsdcContributedTokenAmount = this.latestUserIdo.usdcContributedTokenAmount;
@@ -623,6 +624,7 @@ class IdoTracker {
             status.userMeanPurchasedTokenAmount = this.latestUserIdo.meanPurchasedTokenAmount;
             status.userMeanImpliedAmount = 0; // TODO
             status.userMeanImpliedTokenAmount = 0; // TODO
+            status.userIsInGa = true; // TODO
         }
 
         // before start
@@ -739,56 +741,66 @@ async function createAtaCreateInstruction(
   return [ataAddress, ataCreateInstruction];
 }
 
-export function meanPriceCurve(ps: BN, pe: BN, t_total: BN, t: BN): BN {
-    const meanPrice =
-        ps
-            .mul(pe)
-            .mul(t_total)
-            .div(
-                t
-                .mul(ps.sub(pe))
-                .add(
-                    t_total
-                    .mul(pe)
-                )
-            );
-    return meanPrice;
-}
-
-// export function usdcMaxCurve(us: BN, ue: BN, T: BN, t: BN): BN {
-//     const uDelta = us.sub(ue);
-//     const kFactor = new BN(10);
-//     // console.log("t:", t.toNumber());
-//     // console.log("uDelta:", uDelta.toString());
-//     const numerator = uDelta.add(new BN(2).mul(kFactor)).mul(new BN(2).mul(t).sub(T)).mul(uDelta).mul(new BN(-1));
-//     // console.log("numerator:", numerator.toString());
-//     const denominator = (new BN(4)).mul(T).mul(kFactor)
-//                         .add(
-//                             (new BN(2)).mul(uDelta).mul((new BN(2)).mul(t).sub(T).abs())
-//                         );
-//     // console.log("denominator:", denominator.toString());
-                        
-//     const uMax =
-//         (
-//             (numerator)
-//                 .div(denominator)
+// export function meanPriceCurve(ps: BN, pe: BN, t_total: BN, t: BN): BN {
+//     const meanPrice =
+//         ps
+//             .mul(pe)
+//             .mul(t_total)
+//             .div(
+//                 t
+//                 .mul(ps.sub(pe))
 //                 .add(
-//                     uDelta.add(new BN(2).mul(ue))
-//                         .div(new BN(2))
+//                     t_total
+//                     .mul(pe)
 //                 )
-//         )
-//         ;
-//     // const uMax =
-//     // (
-//     //     (new BN(2)).mul(numerator)
-//     //     .add(
-//     //         denominator.mul(uDelta.add(new BN(2).mul(ue)))
-//     //     )
-//     //     .div(new BN(2).mul(denominator))
-//     // )
-//     // ;
-//     return uMax;
+//             );
+//     return meanPrice;
 // }
+
+// didn't work
+// export function meanPriceCurve(ps: BN, pe: BN, t_total: BN, t: BN): BN {
+//     const t_half = t_total.div(new BN(2));
+//     return t.gte(t_half)
+//         ? usdcMaxCurve(ps, pe, t_total, t.sub(t_half))
+//         : usdcMaxCurve(ps, pe, t_total, t.add(t_half));
+// }
+
+export function meanPriceCurve(ps: BN, pe: BN, t_total: BN, t: BN): BN {
+    const uDelta = ps.sub(pe);
+    const kFactor = uDelta.mul(new BN(10)).div(new BN(100)); // 10% of uDelta
+    const t_half = t_total.div(new BN(2));
+
+    let tSub: BN;
+    if (t.gte(t_half)) {
+        const t_ = t.sub(t_half); // [0 --> t_ --> t_total/2]
+        tSub = t_total.sub(new BN(2).mul(t_)); // [t_total --> tSub --> 0]
+    } else {
+        const t_ = t.add(t_half); // [t_total/2 --> t_ --> t_total [
+        tSub = (new BN(2)).mul(t_).sub(t_total); // [0 --> tSub --> t_total]
+    }
+
+    const numerator = uDelta
+        .add(new BN(2).mul(kFactor))
+        .mul(tSub).mul(uDelta);
+    const denominator = (new BN(4)).mul(t_total).mul(kFactor)
+        .add(
+            (new BN(2)).mul(uDelta).mul(tSub)
+        );
+    // console.log(JSON.stringify(
+    //     {
+    //         "uDelta": uDelta.toString(),
+    //         "kFactor": kFactor.toString(),
+    //         "tSub": tSub.toString(),
+    //         "numerator": numerator.toString(),
+    //         "denominator": denominator.toString(),
+    //     }
+    // ));
+    if (t.gte(t_half)) {
+        return pe.add(numerator.div(denominator));
+    } else {
+        return ps.sub(numerator.div(denominator));
+    }
+}
 
 export function usdcMaxCurve(us: BN, ue: BN, t_total: BN, t: BN): BN {
     const uDelta = us.sub(ue);
@@ -884,14 +896,13 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
         
         gaUsdcTotalContributed: idoAccount.gaUsdcTotalContributed.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         gaUsdcTotalContributedTokenAmount: idoAccount.gaUsdcTotalContributed.toNumber(),
-        gaTotalContributors: idoAccount.gaTotalContributors,
+        // gaTotalContributors: idoAccount.gaTotalContributors,
         gaMeanTotalPurchased: idoAccount.gaMeanTotalPurchased.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         gaMeanTotalPurchasedTokenAmount: idoAccount.gaMeanTotalPurchased.toNumber(),
+        gaIsOpen: idoAccount.gaIsOpen as boolean,
         
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
-
-        isGaOpen: idoAccount.isGaOpen as boolean,
 
         withdrawals: withdrawals,
         
@@ -914,8 +925,8 @@ function mapUserIdoDetails(userIdoPubKey: PublicKey, userIdoAccount: userIdoAcco
         usdcContributedAmount: toUiAmount(userIdoAccount.usdcContributedAmount),
         usdcContributedTokenAmount: userIdoAccount.usdcContributedAmount.toNumber(),
         
-        meanCurvePrice: toUiAmount(userIdoAccount.meanCurvePrice),
-        meanCurvePriceTokenAmount: userIdoAccount.meanCurvePrice.toNumber(),
+        meanPriceAtContributionTs: toUiAmount(userIdoAccount.meanPriceAtContributionTs),
+        meanPriceAtContributionTsTokenAmount: userIdoAccount.meanPriceAtContributionTs.toNumber(),
         meanPurchasedAmount: toUiAmount(userIdoAccount.meanPurchasedAmount),
         meanPurchasedTokenAmount: userIdoAccount.meanPurchasedAmount.toNumber(),
         // TODO: mean implied amount
@@ -994,14 +1005,13 @@ export type IdoDetails = {
 
     gaUsdcTotalContributed: number;
     gaUsdcTotalContributedTokenAmount: number;
-    gaTotalContributors: number; // display
     gaMeanTotalPurchased: number;
     gaMeanTotalPurchasedTokenAmount: number;
+    gaIsOpen: boolean;
 
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
 
-    isGaOpen: boolean;
     withdrawals: WithdrawalEntry[],
 
     idoDurationInSeconds: number;
@@ -1019,8 +1029,8 @@ export type UserIdoDetails = {
 
     usdcContributedAmount: number;
     usdcContributedTokenAmount: number;
-    meanCurvePrice: number;
-    meanCurvePriceTokenAmount: number;
+    meanPriceAtContributionTs: number;
+    meanPriceAtContributionTsTokenAmount: number;
     meanPurchasedAmount: number;
     meanPurchasedTokenAmount: number;
     // TODO: calculate user implied mean amount
@@ -1047,15 +1057,14 @@ export type IdoStatus = {
 
     gaTotalUsdcContributed: number,
     gaTotalUsdcContributedTokenAmount: number,
-    gaTotalContributors: number, // display
-    currentImpliedMeanPrice: number,
-    currentImpliedMeanPriceTokenAmount: number,
     gaMeanTotalPurchased: number,
     gaMeanTotalPurchasedTokenAmount: number,
-    isGaOpen: boolean,
+    gaIsOpen: boolean,
+    currentImpliedMeanPrice: number,
+    currentImpliedMeanPriceTokenAmount: number,
 
     // user (if set)
-    hasUserContributed: boolean,
+    userHasContributed: boolean,
     userContributionTs: number,
     userContributorNumber: number,
     userUsdcContributedAmount: number,
@@ -1064,6 +1073,7 @@ export type IdoStatus = {
     userMeanPurchasedTokenAmount: number,
     userMeanImpliedAmount: number,
     userMeanImpliedTokenAmount: number,
+    userIsInGa: boolean;
 }
 
 export type WithdrawalEntry = {

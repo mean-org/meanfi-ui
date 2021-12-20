@@ -8,7 +8,7 @@ import {
 
 } from '@ant-design/icons';
 
-import { Account, BPF_LOADER_PROGRAM_ID, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemInstruction, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Account, BPF_LOADER_PROGRAM_ID, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -25,7 +25,7 @@ import {
 
 } from '../../utils/utils';
 
-import { Button, Col, Divider, Empty, Modal, Row, Space, Spin, Tooltip } from 'antd';
+import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
 import {
   copyText,
   consoleOut,
@@ -51,7 +51,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconClock, IconDocument, IconExternalLink, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconWallet } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
@@ -3426,12 +3426,98 @@ export const MultisigView = () => {
     );
   };
 
+  const tokensOptionsMenu = (
+    <Menu>
+      {/* Mint token */}
+      <Menu.Item
+        key="1"
+        onClick={showMintTokenModal}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-mint')}</span>
+      </Menu.Item>
+      {/* Transfer tokens */}
+      <Menu.Item
+        key="2"
+        onClick={showTransferTokenModal}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
+      </Menu.Item>
+      {/* Transfer mint */}
+      <Menu.Item
+        key="3"
+        disabled={true}
+        onClick={() => {}}>
+        <span className="menu-item-text">Transfer mint</span>
+      </Menu.Item>
+      <Menu.Divider key="4" />
+      {/* Create vault */}
+      <Menu.Item
+        key="5"
+        onClick={onShowCreateVaultModal}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
+      </Menu.Item>
+      {/* Transfer vault */}
+      <Menu.Item
+        key="6"
+        onClick={() => {}}>
+        <span className="menu-item-text">Transfer vault</span>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const programsOptionsMenu = (
+    <Menu>
+      {/* Upgrade program */}
+      <Menu.Item
+        key="5"
+        onClick={showUpgradeProgramModal}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-upgrade-program')}</span>
+      </Menu.Item>
+      {/* Upgrade IDL */}
+      <Menu.Item
+        key="6"
+        onClick={() => {}}>
+        <span className="menu-item-text">Upgrade IDL</span>
+      </Menu.Item>
+      <Menu.Divider key="7" />
+      {/* Kill Switch */}
+      <Menu.Item
+        key="8"
+        onClick={() => {}}>
+        <span className="menu-item-text">Kill Switch</span>
+      </Menu.Item>
+    </Menu>
+  );
+
   const renderCtaRow = () => {
     return (
       <>
         <Space size="middle">
+
+          <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
+            <Button
+              type="default"
+              size="middle"
+              className="dropdown-like-button"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {}}>
+              <span className="mr-2">Tokens</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
+          </Dropdown>
+
+          <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
+            <Button
+              type="default"
+              size="middle"
+              className="dropdown-like-button"
+              disabled={isTxInProgress() || loadingMultisigAccounts}
+              onClick={() => {}}>
+              <span className="mr-2">Programs</span>
+              <IconCaretDown className="mean-svg-icons" />
+            </Button>
+          </Dropdown>
+
           {/* Mint token */}
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -3442,22 +3528,24 @@ export const MultisigView = () => {
             {isMintingToken()
               ? t('multisig.multisig-account-detail.cta-mint-busy')
               : t('multisig.multisig-account-detail.cta-mint')}
-          </Button>
+          </Button> */}
+
           {/* Transfer tokens */}
-          <Button
+          {/* <Button
             type="default"
             shape="round"
             size="small"
             className="thin-stroke"
             disabled={isTxInProgress() || loadingMultisigAccounts}
-            // disabled={true}
             onClick={showTransferTokenModal}>
             {isSendingTokens() && (<LoadingOutlined />)}
             {isSendingTokens()
               ? t('multisig.multisig-account-detail.cta-transfer-busy')
               : t('multisig.multisig-account-detail.cta-transfer')}
-          </Button>
-          <Button
+          </Button> */}
+
+          {/* Upgrade program */}
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -3469,8 +3557,10 @@ export const MultisigView = () => {
             {isUpgradingProgram()
               ? t('multisig.multisig-account-detail.cta-upgrade-program-busy')
               : t('multisig.multisig-account-detail.cta-upgrade-program')}
-          </Button>
-          <Button
+          </Button> */}
+
+          {/* Create vault */}
+          {/* <Button
             type="default"
             shape="round"
             size="small"
@@ -3481,7 +3571,30 @@ export const MultisigView = () => {
             {isCreatingVault()
               ? t('multisig.multisig-account-detail.cta-create-vault-busy')
               : t('multisig.multisig-account-detail.cta-create-vault')}
-          </Button>
+          </Button> */}
+
+          {/* Operation indication */}
+          {isMintingToken() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-mint-busy')}</span>
+            </div>
+          ) : isSendingTokens() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-transfer-busy')}</span>
+            </div>
+          ) : isUpgradingProgram() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-upgrade-program-busy')}</span>
+            </div>
+          ) : isCreatingVault() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-create-vault-busy')}</span>
+            </div>
+          ) : null}
         </Space>
       </>
     );

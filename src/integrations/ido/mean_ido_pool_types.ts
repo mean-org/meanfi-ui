@@ -232,20 +232,32 @@ export type MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "gaTotalContributors",
-            "type": "u32"
-          },
-          {
             "name": "gaMeanTotalPurchased",
             "type": "u64"
           },
           {
-            "name": "meanImpliedPrice",
+            "name": "gaCloseMeanPrice",
             "type": "u64"
           },
           {
-            "name": "isGaOpen",
+            "name": "gaLastCloseStartTs",
+            "type": "u64"
+          },
+          {
+            "name": "gaLastCloseEndTs",
+            "type": "u64"
+          },
+          {
+            "name": "gaTotalClosedTimeInSeconds",
+            "type": "u64"
+          },
+          {
+            "name": "gaIsOpen",
             "type": "bool"
+          },
+          {
+            "name": "meanImpliedPrice",
+            "type": "u64"
           },
           {
             "name": "withdrawals",
@@ -305,7 +317,7 @@ export type MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "meanCurvePrice",
+            "name": "meanPriceAtContributionTs",
             "type": "u64"
           },
           {
@@ -464,23 +476,18 @@ export type MeanIdoPool = {
           "index": false
         },
         {
-          "name": "gaTotalContributors",
-          "type": "u32",
-          "index": false
-        },
-        {
           "name": "gaMeanTotalPurchased",
           "type": "u64",
           "index": false
         },
         {
-          "name": "meanImpliedPrice",
-          "type": "u64",
+          "name": "gaIsOpen",
+          "type": "bool",
           "index": false
         },
         {
-          "name": "isGaOpen",
-          "type": "bool",
+          "name": "meanImpliedPrice",
+          "type": "u64",
           "index": false
         }
       ]
@@ -824,20 +831,32 @@ export const IDL: MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "gaTotalContributors",
-            "type": "u32"
-          },
-          {
             "name": "gaMeanTotalPurchased",
             "type": "u64"
           },
           {
-            "name": "meanImpliedPrice",
+            "name": "gaCloseMeanPrice",
             "type": "u64"
           },
           {
-            "name": "isGaOpen",
+            "name": "gaLastCloseStartTs",
+            "type": "u64"
+          },
+          {
+            "name": "gaLastCloseEndTs",
+            "type": "u64"
+          },
+          {
+            "name": "gaTotalClosedTimeInSeconds",
+            "type": "u64"
+          },
+          {
+            "name": "gaIsOpen",
             "type": "bool"
+          },
+          {
+            "name": "meanImpliedPrice",
+            "type": "u64"
           },
           {
             "name": "withdrawals",
@@ -897,7 +916,7 @@ export const IDL: MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "meanCurvePrice",
+            "name": "meanPriceAtContributionTs",
             "type": "u64"
           },
           {
@@ -1056,23 +1075,18 @@ export const IDL: MeanIdoPool = {
           "index": false
         },
         {
-          "name": "gaTotalContributors",
-          "type": "u32",
-          "index": false
-        },
-        {
           "name": "gaMeanTotalPurchased",
           "type": "u64",
           "index": false
         },
         {
-          "name": "meanImpliedPrice",
-          "type": "u64",
+          "name": "gaIsOpen",
+          "type": "bool",
           "index": false
         },
         {
-          "name": "isGaOpen",
-          "type": "bool",
+          "name": "meanImpliedPrice",
+          "type": "u64",
           "index": false
         }
       ]
