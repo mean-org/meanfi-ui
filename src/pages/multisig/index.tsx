@@ -747,7 +747,9 @@ export const MultisigView = () => {
 
     const transferTokens = async (data: any) => {
 
-      if (!selectedMultisig || !publicKey) { return null; }
+      if (!selectedMultisig || !publicKey) { 
+        throw Error("Invalid transaction data");
+      }
 
       const [multisigSigner] = await PublicKey.findProgramAddress(
         [selectedMultisig.id.toBuffer()],
@@ -756,21 +758,74 @@ export const MultisigView = () => {
 
       const fromAddress = new PublicKey(data.from);
       const fromAccountInfo = await connection.getAccountInfo(fromAddress);
-      if (!fromAccountInfo) { return null; }
-      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data)); 
-      const mintInfo = await connection.getAccountInfo(new PublicKey(fromAccount.mint));
-      if (!mintInfo) { return null; }
+      
+      if (!fromAccountInfo) { 
+        throw Error("Invalid from token account");
+      }
+
+      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data));
+      const fromMintAddress = new PublicKey(fromAccount.mint);
+      const mintInfo = await connection.getAccountInfo(fromMintAddress);
+
+      if (!mintInfo) { 
+        throw Error("Invalid token mint account");
+      }
+
       const mint = MintLayout.decode(Buffer.from(mintInfo.data));
-      const toAddress = new PublicKey(data.to);
+      let toAddress = new PublicKey(data.to);
+      let toAccountInfo = await connection.getAccountInfo(toAddress);
+
+      if (!toAccountInfo) { 
+        throw Error("Invalid to token account");
+      }
+
+      let ixs: TransactionInstruction[] = [];
+
+      if (toAccountInfo.owner.equals(SystemProgram.programId)) {
+
+        const toAccountATA = await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          fromMintAddress,
+          toAddress,
+          true
+        );
+
+        const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
+
+        if (!toAccountATAInfo) {
+          ixs.push(
+            Token.createAssociatedTokenAccountInstruction(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TOKEN_PROGRAM_ID,
+              fromMintAddress,
+              toAccountATA,
+              toAddress,
+              publicKey
+            )
+          );
+        }
+
+        toAddress = toAccountATA;
+      }
+
+      if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
+        const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
+        const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
+        console.log('mintAddress', mintAddress);
+        if (!mintAddress.equals(fromMintAddress)) {
+          throw Error("Invalid to token account mint");
+        }
+      }
 
       const transaction = new Account();
       const txSize = 1000;
-      const ixs: TransactionInstruction[] = [
+      ixs.push(
         await multisigClient.account.transaction.createInstruction(
           transaction,
           txSize
         )
-      ];
+      );
 
       const transferIx = Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
@@ -864,7 +919,6 @@ export const MultisigView = () => {
 
         return await transferTokens(data)
           .then(value => {
-            if (!value) { return false; }
             consoleOut('createTreasury returned transaction:', value);
             setTransactionStatus({
               lastOperation: TransactionStatus.InitTransactionSuccess,

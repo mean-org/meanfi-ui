@@ -2019,7 +2019,7 @@
   dependencies:
     eventemitter3 "^4.0.7"
 
-"@solana/web3.js@1.31.0", "@solana/web3.js@^0.86.1", "@solana/web3.js@^1.10.0", "@solana/web3.js@^1.15.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.24.0", "@solana/web3.js@^1.24.1", "@solana/web3.js@^1.30", "@solana/web3.js@^1.30.2", "@solana/web3.js@~1.30.2":
+"@solana/web3.js@1.31.0", "@solana/web3.js@^0.86.1", "@solana/web3.js@^1.10.0", "@solana/web3.js@^1.15.0", "@solana/web3.js@^1.17.0", "@solana/web3.js@^1.20.0", "@solana/web3.js@^1.21.0", "@solana/web3.js@^1.24.0", "@solana/web3.js@^1.24.1", "@solana/web3.js@^1.30", "@solana/web3.js@^1.30.0", "@solana/web3.js@^1.30.2", "@solana/web3.js@~1.30.2":
   version "1.31.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.31.0.tgz#7a313d4c1a90b77f27ddbfe845a10d6883e06452"
   integrity sha512-7nHHx1JNFnrt15e9y8m38I/EJCbaB+bFC3KZVM1+QhybCikFxGMtGA5r7PDC3GEL1R2RZA8yKoLkDKo3vzzqnw==
