@@ -91,6 +91,11 @@
           "isSigner": false
         },
         {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -169,6 +174,10 @@
           },
           {
             "name": "meanPool",
+            "type": "publicKey"
+          },
+          {
+            "name": "withdrawals",
             "type": "publicKey"
           },
           {
@@ -258,14 +267,6 @@
           {
             "name": "meanImpliedPrice",
             "type": "u64"
-          },
-          {
-            "name": "withdrawals",
-            "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
-            }
           }
         ]
       }
@@ -333,11 +334,18 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "entries",
+            "name": "last",
+            "type": "u32"
+          },
+          {
+            "name": "withdrawals",
             "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
+              "array": [
+                {
+                  "defined": "WithdrawalEntry"
+                },
+                10000
+              ]
             }
           }
         ]
@@ -391,6 +399,22 @@
     },
     {
       "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RpcWithdrawalEntry",
       "type": {
         "kind": "struct",
         "fields": [
@@ -488,6 +512,11 @@
         {
           "name": "meanImpliedPrice",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
           "index": false
         }
       ]
@@ -593,6 +622,11 @@
       "code": 319,
       "name": "UsdcNotEqRedeem",
       "msg": "USDC total and redeemable total don't match"
+    },
+    {
+      "code": 320,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
     }
   ],
   "metadata": {

@@ -91,6 +91,11 @@ export type MeanIdoPool = {
           "isSigner": false
         },
         {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -118,7 +123,7 @@ export type MeanIdoPool = {
         }
       ],
       "args": []
-    }
+    },
   ],
   "accounts": [
     {
@@ -169,6 +174,10 @@ export type MeanIdoPool = {
           },
           {
             "name": "meanPool",
+            "type": "publicKey"
+          },
+          {
+            "name": "withdrawals",
             "type": "publicKey"
           },
           {
@@ -258,14 +267,6 @@ export type MeanIdoPool = {
           {
             "name": "meanImpliedPrice",
             "type": "u64"
-          },
-          {
-            "name": "withdrawals",
-            "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
-            }
           }
         ]
       }
@@ -333,11 +334,18 @@ export type MeanIdoPool = {
         "kind": "struct",
         "fields": [
           {
-            "name": "entries",
+            "name": "last",
+            "type": "u32"
+          },
+          {
+            "name": "withdrawals",
             "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
+              "array": [
+                {
+                  "defined": "WithdrawalEntry"
+                },
+                10000
+              ]
             }
           }
         ]
@@ -391,6 +399,22 @@ export type MeanIdoPool = {
     },
     {
       "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RpcWithdrawalEntry",
       "type": {
         "kind": "struct",
         "fields": [
@@ -488,6 +512,11 @@ export type MeanIdoPool = {
         {
           "name": "meanImpliedPrice",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
           "index": false
         }
       ]
@@ -593,6 +622,11 @@ export type MeanIdoPool = {
       "code": 319,
       "name": "UsdcNotEqRedeem",
       "msg": "USDC total and redeemable total don't match"
+    },
+    {
+      "code": 320,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
     }
   ]
 };
@@ -690,6 +724,11 @@ export const IDL: MeanIdoPool = {
           "isSigner": false
         },
         {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -717,7 +756,7 @@ export const IDL: MeanIdoPool = {
         }
       ],
       "args": []
-    }
+    },
   ],
   "accounts": [
     {
@@ -768,6 +807,10 @@ export const IDL: MeanIdoPool = {
           },
           {
             "name": "meanPool",
+            "type": "publicKey"
+          },
+          {
+            "name": "withdrawals",
             "type": "publicKey"
           },
           {
@@ -857,14 +900,6 @@ export const IDL: MeanIdoPool = {
           {
             "name": "meanImpliedPrice",
             "type": "u64"
-          },
-          {
-            "name": "withdrawals",
-            "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
-            }
           }
         ]
       }
@@ -932,11 +967,18 @@ export const IDL: MeanIdoPool = {
         "kind": "struct",
         "fields": [
           {
-            "name": "entries",
+            "name": "last",
+            "type": "u32"
+          },
+          {
+            "name": "withdrawals",
             "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
+              "array": [
+                {
+                  "defined": "WithdrawalEntry"
+                },
+                10000
+              ]
             }
           }
         ]
@@ -990,6 +1032,22 @@ export const IDL: MeanIdoPool = {
     },
     {
       "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RpcWithdrawalEntry",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1087,6 +1145,11 @@ export const IDL: MeanIdoPool = {
         {
           "name": "meanImpliedPrice",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
           "index": false
         }
       ]
@@ -1192,6 +1255,11 @@ export const IDL: MeanIdoPool = {
       "code": 319,
       "name": "UsdcNotEqRedeem",
       "msg": "USDC total and redeemable total don't match"
+    },
+    {
+      "code": 320,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
     }
   ]
 };

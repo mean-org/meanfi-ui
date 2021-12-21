@@ -230,6 +230,7 @@ export class IdoClient {
                     idoAccount: meanIdoAddress,
                     usdcMint: idoAccount.usdcMint,
                     usdcPool: idoAccount.usdcPool,
+                    withdrawals: idoAccount.withdrawals as PublicKey,
                     systemProgram: SYSTEM_PROGRAM_ID,
                     tokenProgram: TOKEN_PROGRAM_ID,
                 },
@@ -241,6 +242,41 @@ export class IdoClient {
         withdrawUsdcTx.recentBlockhash = hash.blockhash;
 
         return [userIdo, withdrawUsdcTx];
+    }
+
+    public async createCreateWithdrawalsTx(
+        idoAuthorityPubkey: PublicKey,
+    ): Promise<[anchor.web3.Keypair, Transaction]> {
+
+        if(!idoAuthorityPubkey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(idoAuthorityPubkey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        const withdrawalsKeypair = anchor.web3.Keypair.generate();
+
+        if (this.verbose) {
+            console.log(` userIdoAuthority:    ${idoAuthorityPubkey}`);
+            console.log(` idoWithdrawals:      ${withdrawalsKeypair}`);
+            console.log();
+        }
+
+        const createWithdrawalsTx = program.transaction.createIdoWithdrawals(
+            {
+                accounts: {
+                    withdrawals: withdrawalsKeypair.publicKey,
+                    rent: SYSVAR_RENT_PUBKEY,
+                },
+                instructions: [await program.account.idoWithdrawals.createInstruction(withdrawalsKeypair)],
+                signers: [withdrawalsKeypair]
+            }
+        );
+
+        createWithdrawalsTx.feePayer = idoAuthorityPubkey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        createWithdrawalsTx.recentBlockhash = hash.blockhash;
+
+        return [withdrawalsKeypair, createWithdrawalsTx];
     }
 
     public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
@@ -324,7 +360,6 @@ export class IdoClient {
             currentMeanPrice: toUiAmount(statusEvent.meanPriceCurrent),
             currentMeanPriceTokenAmount: statusEvent.meanPriceCurrent.toNumber(),
             
-            
             usdcNetDeposits: toUiAmount(statusEvent.usdcNetDeposits),
             usdcNetDepositsTokenAmount: statusEvent.usdcNetDeposits.toNumber(),
             usdcNetWithdrawals:  toUiAmount(statusEvent.usdcNetWithdrawals),
@@ -372,17 +407,54 @@ export class IdoClient {
             // which is a valid case if the currently connected wallet 
             // hasen't participated yet in the ido
             if (userIdoAccount) {
-                const userUsdcContributionBn = userIdoAccount.usdcContributedAmount;
+
+                // calculate user implied mean amount
+                let userUsdcInGa = new BN(0);
+
+                const idoWithdrawals = await this.readonlyProgram.account.idoWithdrawals.fetchNullable(statusEvent.idoWithdrawalsAddress);
+                
+                if(idoWithdrawals) {
+                    
+                    // calculate net withdrew before user
+                    const lastIndex = idoWithdrawals.last;
+                    let netUsdcWithdrewBeforeUser = 0;
+                    for (let i = 0; i < lastIndex; i++) {
+                        const wtw = (idoWithdrawals.withdrawals as any[])[i];
+                        console.log("wtw:", wtw)
+                        if(wtw.contributorNumber < userIdoAccount.contributorNumber) {
+                            netUsdcWithdrewBeforeUser += (idoWithdrawals.withdrawals as any[])[i].amount;
+                        }
+                    }
+                    
+                    const usdcTotalContributedBeforeUser = userIdoAccount.usdcNetDepositsSnapshot
+                        .sub(new BN(netUsdcWithdrewBeforeUser));
+                    
+                    if(usdcTotalContributedBeforeUser.gte(statusEvent.usdcTotalMax)) {
+                        userUsdcInGa = new BN(0);
+                    }
+                    else {
+                        const diff = statusEvent.usdcTotalMax.sub(usdcTotalContributedBeforeUser);
+                        userUsdcInGa = BN.min(diff, userIdoAccount.usdcContributedAmount);
+                    }
+                }
+
+                const userImpliedMeanTokenAmount = userUsdcInGa
+                    .mul(new BN(10**DECIMALS))
+                    .div(new BN(currentIdoStatus.currentImpliedMeanPriceTokenAmount));
 
                 currentIdoStatus.userHasContributed = true;
                 currentIdoStatus.userContributionTs = userIdoAccount.contributionTs.toNumber();
-                currentIdoStatus.userUsdcContributedAmount = toUiAmount(userUsdcContributionBn);
-                currentIdoStatus.userUsdcContributedTokenAmount = userUsdcContributionBn.toNumber();
+                currentIdoStatus.userUsdcContributedAmount = toUiAmount(userIdoAccount.usdcContributedAmount);
+                currentIdoStatus.userUsdcContributedTokenAmount = userIdoAccount.usdcContributedAmount.toNumber();
                 currentIdoStatus.userMeanPurchasedAmount = toUiAmount(userIdoAccount.meanPurchasedAmount);
                 currentIdoStatus.userMeanPurchasedTokenAmount = userIdoAccount.meanPurchasedAmount.toNumber();
-                currentIdoStatus.userIsInGa = true; // TODO
-                
-                // TODO:
+                currentIdoStatus.userMeanImpliedAmount = toUiAmount(userImpliedMeanTokenAmount);
+                currentIdoStatus.userMeanImpliedTokenAmount = userImpliedMeanTokenAmount.toNumber();
+                currentIdoStatus.userIsInGa = userImpliedMeanTokenAmount.gt(new BN(0));
+
+                // console.log("userUsdcInGa:", userUsdcInGa.toString())
+                // console.log("userImpliedMean:", userImpliedMeanTokenAmount.toString())
+                // console.log("userIsInGa:", currentIdoStatus.userIsInGa)
             }
         }
 
@@ -475,6 +547,9 @@ export class IdoClient {
             if(this.verbose)
                 console.log("subscribe user ido:", userIdoPubKey.toBase58());
             const userIdoEventEmitter = this.readonlyProgram.account.userIdoAccount.subscribe(userIdoPubKey);
+            userIdoEventEmitter.on('uncaughtException', function (err) {
+                console.log('UNCAUGHT EXCEPTION - keeping process alive:', err);
+            });
             idoTracker.userIdoEventEmitter = userIdoEventEmitter;
             userIdoEventEmitter.on('change', (userdoAccount) => {
                 idoTracker.latestUserIdo = mapUserIdoDetails(userIdoPubKey, userdoAccount); //*
@@ -615,6 +690,9 @@ class IdoTracker {
         }
 
         if(this.latestUserIdo) {
+
+            // const userMeanImpliedAmount =  new BN(this.latestUserIdo.usdcContributedTokenAmount).mul() this.latestIdo.meanImpliedPrice
+
             status.userContributorNumber = this.latestUserIdo.contributorNumber;
             status.userHasContributed = true;
             status.userContributionTs = this.latestUserIdo.contributionTs;
@@ -622,7 +700,7 @@ class IdoTracker {
             status.userUsdcContributedTokenAmount = this.latestUserIdo.usdcContributedTokenAmount;
             status.userMeanPurchasedAmount = this.latestUserIdo.meanPurchasedAmount;
             status.userMeanPurchasedTokenAmount = this.latestUserIdo.meanPurchasedTokenAmount;
-            status.userMeanImpliedAmount = 0; // TODO
+            status.userMeanImpliedAmount = 0;
             status.userMeanImpliedTokenAmount = 0; // TODO
             status.userIsInGa = true; // TODO
         }
@@ -832,14 +910,14 @@ export function usdcMaxCurve(us: BN, ue: BN, t_total: BN, t: BN): BN {
 export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDetails {
     const idoAccount = idoAccountUntyped as idoAccountType;
     var idoTimes = idoAccount.idoTimes as IdoTimes;
-    const withdrawals = (idoAccount.withdrawals as any[]).map(x => 
-        { 
-            const entry: WithdrawalEntry = {
-                contributorNumber: x.contributorNumber,
-                amount: x.amount.toNumber(),
-            };
-            return entry;
-        });
+    // const withdrawals = (idoAccount.withdrawals as any[]).map(x => 
+    //     { 
+    //         const entry: WithdrawalEntry = {
+    //             contributorNumber: x.contributorNumber,
+    //             amount: x.amount.toNumber(),
+    //         };
+    //         return entry;
+    //     });
     return {
         idoAddress: idoAddress,
         idoAuthority: idoAccount.idoAuthority.toBase58(),
@@ -904,7 +982,7 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
 
-        withdrawals: withdrawals,
+        // withdrawals: withdrawals,
         
        idoDurationInSeconds: (idoAccount.idoTimes as IdoTimes).idoEndTs.toNumber() - idoTimes.idoStartTs.toNumber()
     };
@@ -1012,7 +1090,7 @@ export type IdoDetails = {
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
 
-    withdrawals: WithdrawalEntry[],
+    // withdrawals: WithdrawalEntry[],
 
     idoDurationInSeconds: number;
 }
