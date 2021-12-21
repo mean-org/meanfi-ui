@@ -1,7 +1,7 @@
 import { Idl } from "@project-serum/anchor";
 
 const idl: Idl = {
-  version: "0.1.0",
+  version: "0.9.0",
   name: "mean_multisig",
   instructions: [
     {
@@ -69,7 +69,7 @@ const idl: Idl = {
           "type": "publicKey"
         },
         {
-          "name": "action",
+          "name": "operation",
           "type": "u8"
         },
         {
@@ -265,14 +265,10 @@ const idl: Idl = {
             "type": "bytes"
           },
           {
-            "name": "signers",
+            "name": "signedBy",
             "type": {
-              "vec": "bool"
+              "vec": "publicKey"
             }
-          },
-          {
-            "name": "didExecute",
-            "type": "bool"
           },
           {
             "name": "ownerSetSeqno",
@@ -287,7 +283,7 @@ const idl: Idl = {
             "type": "u64"
           },
           {
-            "name": "action",
+            "name": "operation",
             "type": "u8"
           }
         ]

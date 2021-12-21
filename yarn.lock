@@ -1657,19 +1657,7 @@
     typescript "^4.3.2"
     yargs "^17.0.1"
 
-"@orca-so/sdk@1.1.9":
-  version "1.1.9"
-  resolved "https://registry.yarnpkg.com/@orca-so/sdk/-/sdk-1.1.9.tgz#195b04aef925a4cbf5255fb74fda0820a682ea93"
-  integrity sha512-z9ozGQ6xQAhn7yBCUk/nvhimPFOeR9FQNPIEKnnyC4Fv0kV3bGGQ3fbE7+1rzm8EC+Za2guatgKwihlyZqujrg==
-  dependencies:
-    "@orca-so/aquafarm" "^0.0.12"
-    "@orca-so/stablecurve" "^1.0.5"
-    "@solana/spl-token" "^0.1.5"
-    "@solana/spl-token-swap" "^0.1.2"
-    "@solana/web3.js" "^1.24.1"
-    decimal.js "^10.3.1"
-
-"@orca-so/sdk@^1.1.13":
+"@orca-so/sdk@1.2.8", "@orca-so/sdk@^1.1.13":
   version "1.2.8"
   resolved "https://registry.yarnpkg.com/@orca-so/sdk/-/sdk-1.2.8.tgz#25ef596d494e250ac7ef79b0b0ac3fd4ca6aa750"
   integrity sha512-mH06fGx+Jvy6OOFTvDkJQP9AKVIdvE262ABqGc76ZQtxyOi5pEj2YjyiWJd/zgx5lskAYOwNodWqTPi9fOhg7A==
