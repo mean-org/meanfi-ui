@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Divider, Row } from "antd";
+import { Button, Col, Divider, Row, Tooltip } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_FETCH_FREQUENCY,
@@ -10,7 +10,7 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isValidAddress, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
 import { IdoDeposit } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -29,10 +29,10 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { CUSTOM_USDC } from '../../constants/token-list';
+import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { DoubleRightOutlined } from '@ant-design/icons';
+import { DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -70,6 +70,7 @@ export const IdoLiveView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
+  const [idoList, setIdoList] = useState<IdoDetails[] | undefined>(undefined);
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
@@ -186,11 +187,19 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
-  // TODO: Add custom USDC token and MEAN tolken to the list
+  // TODO: Add custom USDC token and MEAN token to the list
   useEffect(() => {
-    if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
-      consoleOut('Selecting custom USDC');
-      setSelectedToken(CUSTOM_USDC);
+    if (isProd()) {
+      const usdc = MEAN_TOKEN_LIST.filter(t => t.symbol === 'USDC' && t.chainId === 101)[0];
+      if (!selectedToken || selectedToken.address !== usdc.address) {
+        consoleOut('Selecting USDC');
+        setSelectedToken(usdc);
+      }
+    } else {
+      if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+        consoleOut('Selecting custom USDC');
+        setSelectedToken(CUSTOM_USDC);
+      }
     }
   },[
     selectedToken,
@@ -263,6 +272,31 @@ export const IdoLiveView = () => {
     idoAccountAddress,
     connectionConfig.endpoint,
     idoEngineInitStatus
+  ]);
+
+  useEffect(() => {
+
+    if (!idoClient) { return; }
+
+    const getIdos = async () => {
+      try {
+        const idos = await idoClient.listIdos();
+        if (idos && idos.length > 0) {
+          setIdoList(idos);
+        } else {
+          setIdoList([]);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (!idoList) {
+      getIdos();
+    }
+  }, [
+    idoClient,
+    idoList
   ]);
 
   // Fetches the IDO status
@@ -678,6 +712,22 @@ export const IdoLiveView = () => {
 
   return (
     <div className="solid-bg">
+
+      {/* {(isLocal() || isWhitelisted) && (
+        <div className="ido-selector">
+          <span className="icon-button-container">
+            <Tooltip placement="bottom" title="Select IDO address">
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<SettingOutlined />}
+                onClick={() => {}}
+              />
+            </Tooltip>
+          </span>
+        </div>
+      )} */}
 
       {/* {isLocal() && (
         <div className="debug-bar">
