@@ -1101,34 +1101,12 @@ export const MultisigView = () => {
       const mintInfo = await connection.getAccountInfo(data.tokenAddress);
       if (!mintInfo) { return null; }
       const mint = MintLayout.decode(mintInfo.data);
-      const mintToTokenAddress = await Token.getAssociatedTokenAddress(
-        ASSOCIATED_TOKEN_PROGRAM_ID,
-        TOKEN_PROGRAM_ID,
-        data.tokenAddress,
-        data.mintTo,
-        true
-      );
-
       let ixs: TransactionInstruction[] = [];
-      const mintToTokenInfo = await connection.getAccountInfo(mintToTokenAddress);
-
-      if (!mintToTokenInfo) {
-        ixs.push(
-          Token.createAssociatedTokenAccountInstruction(
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            data.tokenAddress,
-            mintToTokenAddress,
-            data.mintTo,
-            publicKey
-          )
-        );
-      }
 
       const mintIx = Token.createMintToInstruction(
         TOKEN_PROGRAM_ID,
         data.tokenAddress,
-        mintToTokenAddress,
+        data.mintTo,
         multisigAuthority,
         [],
         new BN(data.amount * 10 ** mint.decimals).toNumber()
