@@ -432,7 +432,7 @@ export const IdoDeposit = (props: {
               )
             )}
             {idoInfoRow(
-              'Max Contributions Allowed (Cap)',
+              'Max Contribution (Cap)',
               formatAmount(
                 props.idoStatus.currentMaxUsdcContribution,
                 2,

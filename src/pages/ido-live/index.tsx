@@ -82,6 +82,7 @@ export const IdoLiveView = () => {
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(true);
+  const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -380,10 +381,42 @@ export const IdoLiveView = () => {
     }
 
   }, [
-    idoDetails,
     today,
     idoEndUtc,
+    idoDetails,
     idoStartUtc,
+  ]);
+
+  // Set cooloff flag
+  useEffect(() => {
+
+    if (!idoDetails || !idoStatus) { return; }
+
+    const timeout = setTimeout(() => {
+      if (idoDetails && idoStatus) {
+        const now = today.getTime();
+        const dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
+        const elapsed = now - dateFromTs;
+        consoleOut('elapsed:', elapsed, 'blue');
+        consoleOut('coolOffPeriodInSeconds:', idoDetails.coolOffPeriodInSeconds, 'blue');
+        if (elapsed > idoDetails.coolOffPeriodInSeconds) {
+          setIsUserInCoolOffPeriod(true);
+        } else {
+          setIsUserInCoolOffPeriod(false);
+        }
+      } else {
+        setIsUserInCoolOffPeriod(false);
+      }
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    today,
+    idoStatus,
+    idoDetails,
   ]);
 
   // Keep track of account changes and updates token balance
@@ -546,7 +579,7 @@ export const IdoLiveView = () => {
         idoClient={idoClient}
         idoDetails={idoDetails}
         idoStatus={idoStatus}
-        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
+        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod}
         selectedToken={selectedToken}
       />;
     }

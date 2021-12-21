@@ -296,7 +296,7 @@ export const IdoWithdraw = (props: {
       </div>
     );
   }
-  
+
   return (
     <>
       {/* withdraw amount */}
@@ -397,7 +397,7 @@ export const IdoWithdraw = (props: {
               )
             )}
             {idoInfoRow(
-              'Max Contributions Allowed (Cap)',
+              'Max Contribution (Cap)',
               formatAmount(
                 props.idoStatus.currentMaxUsdcContribution,
                 2,
