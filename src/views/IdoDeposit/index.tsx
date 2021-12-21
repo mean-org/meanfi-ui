@@ -314,7 +314,7 @@ export const IdoDeposit = (props: {
             <span className="label ml-1">Guaranteed allocation</span>
           </>
         ) : (
-          <span className="label">Join the waitlist</span>
+          <span className="label">Joined the waitlist</span>
         )}
       </div>
     );

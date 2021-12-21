@@ -718,6 +718,8 @@ export const IdoLiveView = () => {
             </div>
             {/* Form */}
             <div className="shadowed-box max-width">
+              <div className={`vertical-panel-gradient-overlay ${today > idoStartUtc ? 'wave' : ''}`}>
+              </div>
               {
                 today <= idoEndUtc
                   ? renderDepositAndWithdrawTabset
