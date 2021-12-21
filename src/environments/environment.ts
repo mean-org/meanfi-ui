@@ -59,7 +59,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: 'CK3sAp37fNAL97tcGuAM3jiWuyCUJCazZp588epw5apD'
+            idoAccountAddress: '6eXYcizDCm4VupHpJBEYai7NsvTd5te2DC7RPZ3o6BNi'
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -73,7 +73,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: 'CK3sAp37fNAL97tcGuAM3jiWuyCUJCazZp588epw5apD'
+            idoAccountAddress: '6eXYcizDCm4VupHpJBEYai7NsvTd5te2DC7RPZ3o6BNi'
         },
     };
 
