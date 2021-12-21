@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Divider, Row, Tooltip } from "antd";
+import { Button, Col, Divider, Dropdown, Menu, Row, Tooltip } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_FETCH_FREQUENCY,
@@ -710,22 +710,44 @@ export const IdoLiveView = () => {
     </>
   );
 
+  const idoItemsMenu = (
+    <>
+      {idoList && idoList.length > 0 ? (
+        <Menu>
+          {idoList.map((item: IdoDetails, index: number) => {
+            return (
+              <Menu.Item
+                key={`${index}`}
+                onClick={() => {
+                  consoleOut('Selected IDO address:', item.idoAddress, 'blue');
+                }}>
+                {item.idoAddress}
+              </Menu.Item>
+            );
+          })}
+        </Menu>
+      ) : null}
+    </>
+  );
+
   return (
     <div className="solid-bg">
 
-      {/* {(isLocal() || isWhitelisted) && (
+      {/* {(isLocal() || isWhitelisted) && idoList && idoList.length > 0 && (
         <div className="ido-selector">
           <span className="icon-button-container">
             <Tooltip placement="bottom" title="Select IDO address">
-              <Button
-                type="default"
-                shape="circle"
-                size="middle"
-                icon={<SettingOutlined />}
-                onClick={() => {}}
-              />
+              <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<SettingOutlined />}
+                  onClick={(e) => e.preventDefault()}
+                />
+              </Dropdown>
             </Tooltip>
-          </span>
+            </span>
         </div>
       )} */}
 
