@@ -64,6 +64,7 @@ export enum OperationType {
     TreasuryAddFunds = 12,
     TreasuryWithdraw = 13,
     TreasuryClose = 14,
+    TreasuryRefreshBalance = 15,
     // DDCA Options
     DdcaCreate = 20,
     DdcaAddFunds = 21,

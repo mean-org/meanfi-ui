@@ -718,7 +718,7 @@ export const MultisigView = () => {
 
       let ixs: TransactionInstruction[] = [];
 
-      if (toAccountInfo.owner.equals(SystemProgram.programId)) {
+      if (!toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
 
         const toAccountATA = await Token.getAssociatedTokenAddress(
           ASSOCIATED_TOKEN_PROGRAM_ID,

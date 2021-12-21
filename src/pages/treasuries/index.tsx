@@ -7,7 +7,7 @@ import {
   InfoCircleOutlined,
   LoadingOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -36,6 +36,7 @@ import {
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
+  isProd,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -50,7 +51,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconBank, IconClock, IconExternalLink, IconSort, IconTrash } from '../../Icons';
+import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
 import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
@@ -62,7 +63,7 @@ import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { TreasuryAddFundsModal } from '../../components/TreasuryAddFundsModal';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TreasuryCloseModal } from '../../components/TreasuryCloseModal';
 import { StreamCloseModal } from '../../components/StreamCloseModal';
@@ -74,6 +75,7 @@ import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
+import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -600,6 +602,15 @@ export const TreasuriesView = () => {
     lastSentTxOperationType,
   ]);
 
+  const isRefreshingTreasuryBalance = useCallback((): boolean => {
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryRefreshBalance
+            ? true
+            : false;
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
   const isClosingTreasury = useCallback((): boolean => {
     return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.TreasuryClose
             ? true
@@ -942,6 +953,302 @@ export const TreasuriesView = () => {
       currentOperation: TransactionStatus.Iddle
     });
   }
+
+  const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
+    refreshTokenBalance();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  },[
+    refreshTokenBalance, 
+    setTransactionStatus
+  ]);
+
+  const onExecuteRefreshTreasuryBalance = useCallback(async() => {
+    
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TreasuryRefreshBalance);
+    setIsBusy(true);
+
+    const refreshBalance = async (treasury: PublicKey) => {
+
+      if (!connection || !connected || !publicKey) {
+        return false;
+      }
+
+      let ixs: TransactionInstruction[] = [];
+
+      const { value } = await connection.getTokenAccountsByOwner(treasury, {
+        programId: TOKEN_PROGRAM_ID
+      });
+
+      if (!value || !value.length) {
+        return false;
+      }
+
+      const tokenAddress = value[0].pubkey;
+      const tokenAccount = AccountLayout.decode(value[0].account.data);
+      const associatedTokenMint = new PublicKey(tokenAccount.mint);
+      const mspAddress = isProd() ? Constants.MSP_PROGRAM : Constants.MSP_PROGRAM_DEV;
+      const feeTreasuryAddress: PublicKey = new PublicKey(
+        "3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw"
+      );
+
+      ixs.push(
+        await refreshTreasuryBalanceInstruction(
+          mspAddress,
+          publicKey,
+          associatedTokenMint,
+          treasury,
+          tokenAddress,
+          feeTreasuryAddress
+        )
+      );
+
+      const tx = new Transaction().add(...ixs);
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("recent");
+      tx.recentBlockhash = blockhash;
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey && treasuryDetails) {
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const treasury = new PublicKey(treasuryDetails.id as string);
+        const data = {
+          treasurer: publicKey.toBase58(),                      // treasurer
+          treasury: treasury.toBase58()                         // treasury
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Create a transaction
+        return await refreshBalance(treasury)
+        .then(value => {
+          if (!value) { return false; }
+          consoleOut('closeTreasury returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('closeTreasury error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryRefreshBalance);
+            setIsBusy(false);
+            onRefreshTreasuryBalanceTransactionFinished();
+            setOngoingOperation(undefined);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  },[
+    clearTransactionStatusContext, 
+    connected, 
+    connection, 
+    nativeBalance, 
+    onRefreshTreasuryBalanceTransactionFinished, 
+    publicKey, 
+    setTransactionStatus, 
+    startFetchTxSignatureInfo, 
+    transactionCancelled, 
+    transactionFees.blockchainFee, 
+    transactionFees.mspFlatFee, 
+    transactionStatus.currentOperation, 
+    treasuryDetails, 
+    wallet
+  ]);
 
   const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
     let transaction: Transaction;
@@ -2769,6 +3076,11 @@ export const TreasuriesView = () => {
               <LoadingOutlined />
               <span className="ml-1">{t('treasuries.treasury-detail.cta-close-busy')}</span>
             </div>
+          ) : isRefreshingTreasuryBalance() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">Refresing treasury balance</span>
+            </div>
           ) : isClosingStream() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
@@ -2965,6 +3277,22 @@ export const TreasuriesView = () => {
                   <>
                     {treasuryDetails && (
                       <div className="float-top-right">
+                        <span className="icon-button-container secondary-button">
+                          <Tooltip placement="bottom" title={"Refresh balance"}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconRefresh className="mean-svg-icons" />}
+                              onClick={() => onExecuteRefreshTreasuryBalance()}
+                              disabled={
+                                isTxInProgress() ||
+                                !isTreasurer() ||
+                                isAnythingLoading()
+                              }
+                            />
+                          </Tooltip>
+                        </span>
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
                             <Button
