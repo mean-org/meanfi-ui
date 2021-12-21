@@ -77,6 +77,8 @@ export const IdoLiveView = () => {
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
+  const [redeemStarted, setRedeemStarted] = useState(false);
+  const [redeemStartFireworks, setRedeemStartFireworks] = useState(false);
   const [isUserBlocked, setIsUserBlocked] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
@@ -358,7 +360,9 @@ export const IdoLiveView = () => {
     refreshIdoData
   ]);
 
-  // Calculate "You are here" chart data tooltip position
+  // Perform every second calculations
+  // "You are here" chart data tooltip position
+  // Set to start redeem fireworks
   useEffect(() => {
 
     if (!idoDetails || !idoStartUtc || !idoEndUtc) {
@@ -376,6 +380,13 @@ export const IdoLiveView = () => {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
+      if (!redeemStarted && redeemStartUtc && today >= redeemStartUtc) {
+        setRedeemStarted(true);
+        setRedeemStartFireworks(true);
+        setTimeout(() => {
+          setRedeemStartFireworks(false);
+        }, 10000);
+      }
     }, 1000);
 
     return () => {
@@ -387,6 +398,8 @@ export const IdoLiveView = () => {
     idoEndUtc,
     idoDetails,
     idoStartUtc,
+    redeemStarted,
+    redeemStartUtc
   ]);
 
   // Set cooloff flag
@@ -790,122 +803,146 @@ export const IdoLiveView = () => {
   );
 
   return (
-    <div className="solid-bg">
+    <>
+      <div className={`ido-overlay ${redeemStartFireworks ? 'active' : '' }`}>
+        {redeemStartFireworks && (
+          <div id="pyro">
+            <div className="before"></div>
+            <div className="after"></div>
+          </div>
+        )}
+      </div>
+      <div className={`solid-bg ${redeemStartFireworks ? 'blurry' : '' }`}>
 
-      {/* {(isLocal() || isWhitelisted) && idoList && idoList.length > 0 && (
-        <div className="ido-selector">
-          <span className="icon-button-container">
-            <Tooltip placement="bottom" title="Select IDO address">
-              <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
-                <Button
-                  type="default"
-                  shape="circle"
-                  size="middle"
-                  icon={<SettingOutlined />}
-                  onClick={(e) => e.preventDefault()}
-                />
-              </Dropdown>
-            </Tooltip>
+        {(isLocal() || isWhitelisted) && (
+          <div className="ido-selector">
+            <span className="icon-button-container">
+
+              <Button
+                type="default"
+                shape="circle"
+                size="middle"
+                icon={<SettingOutlined />}
+                onClick={() => {
+                  setRedeemStartFireworks(true);
+                  setTimeout(() => {
+                    setRedeemStartFireworks(false);
+                  }, 10000);
+                }}
+              />
+
+              {/* <Tooltip placement="bottom" title="Select IDO address">
+                <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
+                  <Button
+                    type="default"
+                    shape="circle"
+                    size="middle"
+                    icon={<SettingOutlined />}
+                    onClick={(e) => e.preventDefault()}
+                  />
+                </Dropdown>
+              </Tooltip> */}
             </span>
-        </div>
-      )} */}
+          </div>
+        )}
 
-      {/* {isLocal() && (
-        <div className="debug-bar">
-          {idoStatus && (
-            <>
-            <span className="mr-1">loading:</span>
-            <span className="mr-1 font-bold fg-dark-active">{loadingIdoStatus ? 'true' : 'flase'}</span>
-            <span className="mr-1">USDC Deposited:</span>
-            <span className="mr-1 font-bold fg-dark-active">{idoStatus.usdcTotalContributed || '-'}</span>
-            <span className="mr-1">USDC Contributed:</span>
-            <span className="mr-1 font-bold fg-dark-active">{idoStatus.gaTotalUsdcContributed || '-'}</span>
-            {publicKey && (
+        {/* {isLocal() && (
+          <div className="debug-bar">
+            {idoStatus && (
               <>
-              <span className="mr-1">hasUserContributed:</span>
-              <span className="mr-1 font-bold fg-dark-active">{idoStatus.userHasContributed ? 'true' : 'false'}</span>
-              <span className="mr-1">isUserInCoolOffPeriod:</span>
-              <span className="mr-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
+              <span className="mr-1">loading:</span>
+              <span className="mr-1 font-bold fg-dark-active">{loadingIdoStatus ? 'true' : 'flase'}</span>
+              <span className="mr-1">USDC Deposited:</span>
+              <span className="mr-1 font-bold fg-dark-active">{idoStatus.usdcTotalContributed || '-'}</span>
+              <span className="mr-1">USDC Contributed:</span>
+              <span className="mr-1 font-bold fg-dark-active">{idoStatus.gaTotalUsdcContributed || '-'}</span>
+              {publicKey && (
+                <>
+                <span className="mr-1">hasUserContributed:</span>
+                <span className="mr-1 font-bold fg-dark-active">{idoStatus.userHasContributed ? 'true' : 'false'}</span>
+                <span className="mr-1">isUserInCoolOffPeriod:</span>
+                <span className="mr-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
+                </>
+              )}
               </>
             )}
-            </>
-          )}
-        </div>
-      )} */}
-
-      {/* Page title */}
-      <section className="content contrast-section no-padding">
-        <div className="container">
-          <div className="heading-section">
-            <h1 className="heading ido-heading text-center mb-0">Welcome to the Mean <span className="fg-primary-highlight">IDO</span></h1>
           </div>
-        </div>
-      </section>
+        )} */}
 
-      <section className="content contrast-section pt-5 pb-5">
-        <div className="container">
-          <Row>
+        {/* Page title */}
+        <section className="content contrast-section no-padding">
+          <div className="container">
+            <div className="heading-section">
+              <h1 className="heading ido-heading text-center mb-0">Welcome to the Mean <span className="fg-primary-highlight">IDO</span></h1>
+            </div>
+          </div>
+        </section>
 
-            <Col xs={24} lg={16}>
-              <div className="flex-column flex-center ido-column">
-                {(idoStartUtc && idoEndUtc) ? (
-                  <>
-                    {today < idoStartUtc ? renderVideo : (
-                      <>
-                        <div className="text-center">
-                          {isVideoVisible ? (
-                            <span className="simplelink underline" onClick={() => setIsVideoVisible(false)}>See the real-time state of the IDO</span>
-                            ) : (
-                            <span className="simplelink underline" onClick={() => setIsVideoVisible(true)}>Watch a video explaining how it works</span>
-                          )}
-                        </div>
-                        {isVideoVisible ? renderVideo : (
-                          <div className="ido-stats-container">
-                            <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
-                            {(today > idoStartUtc) && renderYouAreHere()}
+        <section className="content contrast-section pt-5 pb-5">
+          <div className="container">
+            <Row>
+
+              <Col xs={24} lg={16}>
+                <div className="flex-column flex-center ido-column">
+                  {(idoStartUtc && idoEndUtc) ? (
+                    <>
+                      {today < idoStartUtc ? renderVideo : (
+                        <>
+                          <div className="text-center">
+                            {isVideoVisible ? (
+                              <span className="simplelink underline" onClick={() => setIsVideoVisible(false)}>See the real-time state of the IDO</span>
+                              ) : (
+                              <span className="simplelink underline" onClick={() => setIsVideoVisible(true)}>Watch a video explaining how it works</span>
+                            )}
                           </div>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : renderVideo}
-              </div>
-            </Col>
+                          {isVideoVisible ? renderVideo : (
+                            <div className="ido-stats-container">
+                              <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                              {(today > idoStartUtc) && renderYouAreHere()}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </>
+                  ) : renderVideo}
+                </div>
+              </Col>
 
-            <Col xs={24} lg={8}>
-              <div className="flex-column flex-center ido-column">
-                {idoDetails && !regionLimitationAcknowledged
-                  ? renderRegionAcknowledgement(true)
-                  : !idoDetails
-                    ? renderRegionAcknowledgement(false)
-                    : renderIdoForms
-                }
-              </div>
-            </Col>
-          </Row>
-        </div>
-      </section>
+              <Col xs={24} lg={8}>
+                <div className="flex-column flex-center ido-column">
+                  {idoDetails && !regionLimitationAcknowledged
+                    ? renderRegionAcknowledgement(true)
+                    : !idoDetails
+                      ? renderRegionAcknowledgement(false)
+                      : renderIdoForms
+                  }
+                </div>
+              </Col>
+            </Row>
+          </div>
+        </section>
 
-      <section className="content">
-        <div className="container">
-          <h1 className="heading ido-heading text-center">Investors</h1>
-          <Row gutter={[32, 32]} justify="center" align="middle">
-            {partnerImages.map((image: PartnerImage, index: number) => {
-              return (
-                <Col key={`${index}`} className="partner flex-center">
-                  <img
-                    className={`partner-logo ${image.size}`}
-                    src={`/assets/investors/${image.fileName}`}
-                    alt={image.fileName} />
-                </Col>
-              );
-            })}
-          </Row>
-        </div>
-      </section>
+        <section className="content">
+          <div className="container">
+            <h1 className="heading ido-heading text-center">Investors</h1>
+            <Row gutter={[32, 32]} justify="center" align="middle">
+              {partnerImages.map((image: PartnerImage, index: number) => {
+                return (
+                  <Col key={`${index}`} className="partner flex-center">
+                    <img
+                      className={`partner-logo ${image.size}`}
+                      src={`/assets/investors/${image.fileName}`}
+                      alt={image.fileName} />
+                  </Col>
+                );
+              })}
+            </Row>
+          </div>
+        </section>
 
-      <PreFooter />
-    </div>
+        <PreFooter />
+      </div>
+    </>
   );
 
 };
