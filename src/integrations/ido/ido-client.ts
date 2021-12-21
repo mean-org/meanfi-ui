@@ -347,6 +347,7 @@ export class IdoClient {
             userHasContributed: false,
             userContributorNumber: 0,
             userContributionTs: 0,
+            userContributionUpdatedTs: 0,
             userUsdcContributedAmount: 0,
             userUsdcContributedTokenAmount: 0,
             userMeanPurchasedAmount: 0,
@@ -410,6 +411,7 @@ export class IdoClient {
                 currentIdoStatus.userContributorNumber = userIdoAccount.contributorNumber;
                 currentIdoStatus.userHasContributed = true;
                 currentIdoStatus.userContributionTs = userIdoAccount.contributionTs.toNumber();
+                currentIdoStatus.userContributionUpdatedTs = userIdoAccount.contributionUpdatedTs.toNumber();
                 currentIdoStatus.userUsdcContributedAmount = toUiAmount(userIdoAccount.usdcContributedAmount);
                 currentIdoStatus.userUsdcContributedTokenAmount = userIdoAccount.usdcContributedAmount.toNumber();
                 currentIdoStatus.userMeanPurchasedAmount = toUiAmount(userIdoAccount.meanPurchasedAmount);
@@ -642,6 +644,7 @@ class IdoTracker {
             userHasContributed: false,
             userContributorNumber: 0,
             userContributionTs: 0,
+            userContributionUpdatedTs: 0,
             userUsdcContributedAmount: 0,
             userUsdcContributedTokenAmount: 0,
             userMeanPurchasedAmount: 0,
@@ -658,6 +661,7 @@ class IdoTracker {
             status.userContributorNumber = this.latestUserIdo.contributorNumber;
             status.userHasContributed = true;
             status.userContributionTs = this.latestUserIdo.contributionTs;
+            status.userContributionUpdatedTs = this.latestUserIdo.contributionUpdatedTs;
             status.userUsdcContributedAmount = this.latestUserIdo.usdcContributedAmount;
             status.userUsdcContributedTokenAmount = this.latestUserIdo.usdcContributedTokenAmount;
             status.userMeanPurchasedAmount = this.latestUserIdo.meanPurchasedAmount;
@@ -944,7 +948,7 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
 
-        // withdrawals: withdrawals,
+        coolOffPeriodInSeconds: idoAccount.coolOffPeriodInSeconds.toNumber(),
         
        idoDurationInSeconds: (idoAccount.idoTimes as IdoTimes).idoEndTs.toNumber() - idoTimes.idoStartTs.toNumber()
     };
@@ -955,6 +959,7 @@ function mapUserIdoDetails(userIdoPubKey: PublicKey, userIdoAccount: userIdoAcco
     return {
         address: userIdoPubKey,
         contributionTs: userIdoAccount.contributionTs.toNumber(),
+        contributionUpdatedTs: userIdoAccount.contributionUpdatedTs.toNumber(),
         contributorNumber: userIdoAccount.contributorNumber,
 
         usdcNetDepositsSnapshot: toUiAmount(userIdoAccount.usdcNetDepositsSnapshot),
@@ -1052,7 +1057,7 @@ export type IdoDetails = {
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
 
-    // withdrawals: WithdrawalEntry[],
+    coolOffPeriodInSeconds: number;
 
     idoDurationInSeconds: number;
 }
@@ -1060,6 +1065,7 @@ export type IdoDetails = {
 export type UserIdoDetails = {
     address: PublicKey;
     contributionTs: number;
+    contributionUpdatedTs: number;
     contributorNumber: number;
     
     usdcNetDepositsSnapshot: number;
@@ -1106,6 +1112,7 @@ export type IdoStatus = {
     // user (if set)
     userHasContributed: boolean,
     userContributionTs: number,
+    userContributionUpdatedTs: number,
     userContributorNumber: number,
     userUsdcContributedAmount: number,
     userUsdcContributedTokenAmount: number,
