@@ -233,7 +233,7 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
-    if (location.pathname === '/accounts') {
+    if (location.pathname === '/' || location.pathname === '/accounts') {
       setShouldLoadTokens(true);
     }
 

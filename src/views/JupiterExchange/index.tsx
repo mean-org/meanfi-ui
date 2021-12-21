@@ -1,13 +1,16 @@
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Jupiter, RouteInfo, TOKEN_LIST_URL } from "@jup-ag/core";
+import { TokenListProvider, TokenInfo, ENV } from "@solana/spl-token-registry";
+import { useJupiter, RouteInfo, TransactionFeeInfo } from "@jup-ag/react-hook";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import "./style.less";
-import { TokenInfo } from "@solana/spl-token-registry";
 import { consoleOut } from "../../utils/ui";
-import { getJupiterTokenList } from "../../utils/api";
+
+interface IJupiterFormProps {}
+
+type UseJupiterProps = Parameters<typeof useJupiter>[0];
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -24,6 +27,8 @@ export const JupiterExchange = (props: {
     const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
 
     const connection = useMemo(() => props.connection, [props.connection]);
+
+    /*
 
     // Set fromMint & toMint from query string if params are provided
     useEffect(() => {
@@ -44,28 +49,90 @@ export const JupiterExchange = (props: {
         setLastFromMint
     ]);
 
-    // Fetch token list from Jupiter API
-    // const loadJupiterTokenList = useCallback(async () => {
-    //     try {
-    //         const tokens: TokenInfo[] = await getJupiterTokenList(TOKEN_LIST_URL['mainnet-beta']);
-    //         if (tokens && tokens.length) {
-    //             setTokenList(tokens);
-    //             consoleOut("tokens from Jupiter API:", tokens, 'blue');
-    //         }
-    //     } catch (error) {
-    //         console.error(error);
-    //         setTokenList([]);
-    //     }
-    // },[]);
+    const [tokenMap, setTokenMap] = React.useState<Map<string, TokenInfo>>(
+        new Map()
+    );
 
-    // useEffect(() => {
-    //     if (!tokenList || tokenList.length === 0) {
-    //         loadJupiterTokenList();
-    //     }
-    // }, [
-    //     tokenList,
-    //     loadJupiterTokenList
-    // ]);
+    const [formValue, setFormValue] = React.useState<UseJupiterProps>({
+        amount: 0,
+        inputMint: undefined,
+        outputMint: undefined,
+        slippage: 0,
+    });
+
+    const [inputTokenInfo, outputTokenInfo] = React.useMemo(() => {
+        return [
+          tokenMap.get(formValue.inputMint?.toBase58() || ""),
+          tokenMap.get(formValue.outputMint?.toBase58() || ""),
+        ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formValue.inputMint?.toBase58(), formValue.outputMint?.toBase58()]);
+
+    React.useEffect(() => {
+        new TokenListProvider().resolve().then((tokens) => {
+          const tokenList = tokens.filterByChainId(ENV.MainnetBeta).getList();
+
+          setTokenMap(
+            tokenList.reduce((map, item) => {
+              map.set(item.address, item);
+              return map;
+            }, new Map())
+          );
+        });
+    }, [setTokenMap]);
+
+    const amountInDecimal = React.useMemo(() => {
+        return formValue.amount * 10 ** (inputTokenInfo?.decimals || 1);
+    }, [inputTokenInfo, formValue.amount]);
+
+    const { routeMap, allTokenMints, routes, loading, exchange, error } =
+        useJupiter({
+          ...formValue,
+          amount: amountInDecimal,
+    });
+
+    const validOutputMints = React.useMemo(
+        () => routeMap.get(formValue.inputMint?.toBase58() || "") || allTokenMints,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [routeMap, formValue.inputMint?.toBase58()]
+    );
+
+    // setup inputMint and outputMint
+    React.useEffect(() => {
+        if (!formValue.inputMint && allTokenMints.length) {
+          const input = allTokenMints[0];
+          const output = routeMap.get(input)![0];
+          setFormValue((val) => ({
+            ...val,
+            inputMint: new PublicKey(allTokenMints[0]),
+            outputMint: new PublicKey(output),
+          }));
+        }
+    }, [
+        formValue.inputMint,
+        allTokenMints,
+        routeMap
+    ]);
+
+    // ensure outputMint can be swapable to inputMint
+    React.useEffect(() => {
+        if (formValue.inputMint) {
+          const possibleOutputs = routeMap.get(formValue.inputMint.toBase58());
+    
+          if (
+            possibleOutputs &&
+            !possibleOutputs?.includes(formValue.outputMint?.toBase58() || "")
+          ) {
+            setFormValue((val) => ({
+              ...val,
+              outputMint: new PublicKey(possibleOutputs[0]),
+            }));
+          }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formValue.inputMint?.toBase58(), formValue.outputMint?.toBase58()]);
+
+    */
 
     return (
         <>

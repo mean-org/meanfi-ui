@@ -53,6 +53,7 @@
     "@craco/craco": "^6.4",
     "@influxdata/influxdb-client": "1.21.0",
     "@jup-ag/core": "^0.0.0-alpha.23",
+    "@jup-ag/react-hook": "^0.0.0-alpha.23",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
     "@mean-dao/ddca": "1.2.32",
