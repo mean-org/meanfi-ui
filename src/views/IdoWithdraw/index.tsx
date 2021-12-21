@@ -21,7 +21,6 @@ export const IdoWithdraw = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   selectedToken: TokenInfo | undefined;
-  maxFullyDilutedMarketCapAllowed: number;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
@@ -308,10 +307,9 @@ export const IdoWithdraw = (props: {
             <div
               className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setWithdrawAmount(
-                getTokenAmountAndSymbolByTokenAddress(
+                formatAmount(
                   props.idoStatus.userUsdcContributedAmount,
-                  props.selectedToken ? props.selectedToken.address : '',
-                  true
+                  props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
               Max: {formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}
@@ -401,7 +399,7 @@ export const IdoWithdraw = (props: {
             {idoInfoRow(
               'Max Contributions Allowed (Cap)',
               formatAmount(
-                props.maxFullyDilutedMarketCapAllowed,
+                props.idoStatus.currentMaxUsdcContribution,
                 2,
                 true
               )

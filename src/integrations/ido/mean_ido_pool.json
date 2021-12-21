@@ -91,6 +91,11 @@
           "isSigner": false
         },
         {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -172,6 +177,10 @@
             "type": "publicKey"
           },
           {
+            "name": "withdrawals",
+            "type": "publicKey"
+          },
+          {
             "name": "meanPriceStart",
             "type": "u64"
           },
@@ -228,6 +237,10 @@
             "type": "u32"
           },
           {
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "gaUsdcTotalContributed",
             "type": "u64"
           },
@@ -258,14 +271,6 @@
           {
             "name": "meanImpliedPrice",
             "type": "u64"
-          },
-          {
-            "name": "withdrawals",
-            "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
-            }
           }
         ]
       }
@@ -294,6 +299,10 @@
           },
           {
             "name": "contributionTs",
+            "type": "i64"
+          },
+          {
+            "name": "contributionUpdatedTs",
             "type": "i64"
           },
           {
@@ -333,11 +342,18 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "entries",
+            "name": "last",
+            "type": "u32"
+          },
+          {
+            "name": "withdrawals",
             "type": {
-              "vec": {
-                "defined": "WithdrawalEntry"
-              }
+              "array": [
+                {
+                  "defined": "WithdrawalEntry"
+                },
+                5000
+              ]
             }
           }
         ]
@@ -391,6 +407,22 @@
     },
     {
       "name": "WithdrawalEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RpcWithdrawalEntry",
       "type": {
         "kind": "struct",
         "fields": [
@@ -488,6 +520,11 @@
         {
           "name": "meanImpliedPrice",
           "type": "u64",
+          "index": false
+        },
+        {
+          "name": "idoWithdrawalsAddress",
+          "type": "publicKey",
           "index": false
         }
       ]
@@ -593,6 +630,16 @@
       "code": 319,
       "name": "UsdcNotEqRedeem",
       "msg": "USDC total and redeemable total don't match"
+    },
+    {
+      "code": 320,
+      "name": "WithdrawalsFull",
+      "msg": "Withdrawals list is full"
+    },
+    {
+      "code": 321,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
     }
   ],
   "metadata": {

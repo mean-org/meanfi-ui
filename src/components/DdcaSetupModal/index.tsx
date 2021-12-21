@@ -9,7 +9,6 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import "./style.less";
 import { SliderMarks } from 'antd/lib/slider';
-import { IconShield } from '../../Icons';
 import { InfoIcon } from '../InfoIcon';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '../../contexts/wallet';
@@ -22,6 +21,7 @@ import { CloseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { HlaInfo } from '@mean-dao/hybrid-liquidity-ag/lib/types';
 import { notify } from '../../utils/notifications';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { IconShieldSolid } from '../../Icons/IconShieldSolid';
 
 export const DdcaSetupModal = (props: {
   endpoint: string;
@@ -858,7 +858,7 @@ export const DdcaSetupModal = (props: {
       <div className="mb-2 text-center">
         <span className="yellow-pill">
           <InfoIcon trigger="click" content={importantNotesPopoverContent()} placement="top">
-            <IconShield className="mean-svg-icons"/>
+            <IconShieldSolid className="mean-svg-icons"/>
           </InfoIcon>
           <span>{t('ddca-setup-modal.notes.note-item-01')}</span>
         </span>

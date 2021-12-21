@@ -59,7 +59,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconShieldOutline, IconWallet } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -3197,9 +3197,12 @@ export const MultisigView = () => {
                     {t('multisig.multisig-account-detail.authority')}
                   </span>
                 </div>
-                <div className="transaction-detail-row stream-share-ctas">
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconShieldOutline className="mean-svg-icons" />
+                  </span>
                   <div onClick={() => copyMultisigAddress(selectedMultisig.address)} 
-                       className="copy-cta info-data flex-row wrap align-items-center"
+                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
                        style={{cursor: 'pointer', fontSize: '1.1rem'}}>
                     {shortenAddress(selectedMultisig.address.toBase58(), 8)}
                   </div>

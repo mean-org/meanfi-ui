@@ -1,8 +1,7 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Divider, Row } from "antd";
+import { Button, Col, Divider, Dropdown, Menu, Row, Tooltip } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
-  IDO_CAP_VALUATION,
   IDO_FETCH_FREQUENCY,
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
@@ -11,7 +10,7 @@ import {
   UTC_DATE_TIME_FORMAT2
 } from "../../constants";
 import { useTranslation } from 'react-i18next';
-import { consoleOut, isLocal, isValidAddress, percentual } from '../../utils/ui';
+import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
 import { IdoDeposit } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
@@ -30,10 +29,10 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig } from '../..';
 import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
-import { CUSTOM_USDC } from '../../constants/token-list';
+import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { DoubleRightOutlined } from '@ant-design/icons';
+import { DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -71,6 +70,7 @@ export const IdoLiveView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
+  const [idoList, setIdoList] = useState<IdoDetails[] | undefined>(undefined);
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
@@ -187,11 +187,19 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
-  // TODO: Add custom USDC token and MEAN tolken to the list
+  // TODO: Add custom USDC token and MEAN token to the list
   useEffect(() => {
-    if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
-      consoleOut('Selecting custom USDC');
-      setSelectedToken(CUSTOM_USDC);
+    if (isProd()) {
+      const usdc = MEAN_TOKEN_LIST.filter(t => t.symbol === 'USDC' && t.chainId === 101)[0];
+      if (!selectedToken || selectedToken.address !== usdc.address) {
+        consoleOut('Selecting USDC');
+        setSelectedToken(usdc);
+      }
+    } else {
+      if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+        consoleOut('Selecting custom USDC');
+        setSelectedToken(CUSTOM_USDC);
+      }
     }
   },[
     selectedToken,
@@ -264,6 +272,32 @@ export const IdoLiveView = () => {
     idoAccountAddress,
     connectionConfig.endpoint,
     idoEngineInitStatus
+  ]);
+
+  useEffect(() => {
+
+    if (!idoClient) { return; }
+
+    const getIdos = async () => {
+      try {
+        const idos = await idoClient.listIdos();
+        if (idos && idos.length > 0) {
+          setIdoList(idos);
+        } else {
+          setIdoList(undefined);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (!idoList) {
+      getIdos();
+    }
+  }, [
+    publicKey,
+    idoClient,
+    idoList
   ]);
 
   // Fetches the IDO status
@@ -505,7 +539,6 @@ export const IdoLiveView = () => {
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
-        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
     } else {
       return <IdoWithdraw
@@ -515,7 +548,6 @@ export const IdoLiveView = () => {
         idoStatus={idoStatus}
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
-        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
     }
   }
@@ -679,8 +711,46 @@ export const IdoLiveView = () => {
     </>
   );
 
+  const idoItemsMenu = (
+    <>
+      {idoList && idoList.length > 0 ? (
+        <Menu>
+          {idoList.map((item: IdoDetails, index: number) => {
+            return (
+              <Menu.Item
+                key={`${index}`}
+                onClick={() => {
+                  consoleOut('Selected IDO address:', item.idoAddress, 'blue');
+                }}>
+                {item.idoAddress}
+              </Menu.Item>
+            );
+          })}
+        </Menu>
+      ) : null}
+    </>
+  );
+
   return (
     <div className="solid-bg">
+
+      {/* {(isLocal() || isWhitelisted) && idoList && idoList.length > 0 && (
+        <div className="ido-selector">
+          <span className="icon-button-container">
+            <Tooltip placement="bottom" title="Select IDO address">
+              <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
+                <Button
+                  type="default"
+                  shape="circle"
+                  size="middle"
+                  icon={<SettingOutlined />}
+                  onClick={(e) => e.preventDefault()}
+                />
+              </Dropdown>
+            </Tooltip>
+            </span>
+        </div>
+      )} */}
 
       {/* {isLocal() && (
         <div className="debug-bar">
