@@ -42,9 +42,10 @@ export const MultisigTransferTokensModal = (props: {
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
 
+  // Resolves fromVault
   useEffect(() => {
 
-    if (!connection || !publicKey || !props.vaults || !props.vaults.length) {
+    if (!props.isVisible || !connection || !publicKey || !props.vaults || !props.vaults.length) {
       return;
     }
 
@@ -58,14 +59,16 @@ export const MultisigTransferTokensModal = (props: {
     }
 
   }, [
-    connection, 
-    props.vaults, 
+    connection,
+    props.isVisible,
+    props.vaults,
     publicKey
   ]);
 
+  // Resolves fromMint
   useEffect(() => {
 
-    if (!connection || !publicKey || !fromVault) {
+    if (!props.isVisible || !connection || !publicKey || !fromVault) {
       return;
     }
 
@@ -86,9 +89,10 @@ export const MultisigTransferTokensModal = (props: {
     }
 
   }, [
-    connection, 
-    fromVault, 
-    publicKey
+    connection,
+    fromVault,
+    publicKey,
+    props.isVisible
   ])
 
   const onAcceptModal = () => {

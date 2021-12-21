@@ -9,8 +9,8 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import { TokenDisplay } from '../TokenDisplay';
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from '../../utils/utils';
 import { IconCheckedBox } from '../../Icons';
-import { consoleOut, getShortDate, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
-import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { consoleOut, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
@@ -51,69 +51,6 @@ export const MultisigCreateVaultModal = (props: {
       ? t('multisig.create-vault.no-token')
       : t('multisig.create-vault.main-cta');
   }
-
-  const getTransactionSubTitle = useCallback((item: StreamInfo) => {
-    let title = '';
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-    const isOtp = item.rateAmount === 0 ? true : false;
-
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-inbound');
-        return title;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-paused-inbound');
-          }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
-      }
-    } else {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-outbound');
-        return title;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
-          } else {
-            title = t('streams.stream-list.subtitle-paused-outbound');
-          }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
-      }
-    }
-    return title;
-
-  }, [
-    t,
-    publicKey
-  ]);
 
   /////////////////////
   // Data management //
@@ -168,10 +105,6 @@ export const MultisigCreateVaultModal = (props: {
   ////////////////
   //   Events   //
   ////////////////
-
-  const triggerWindowResize = () => {
-    window.dispatchEvent(new Event('resize'));
-  }
 
   const onAcceptModal = () => {
     props.handleOk({ token });
@@ -236,40 +169,9 @@ export const MultisigCreateVaultModal = (props: {
     return publicKey && isValidInput() ? true : false;
   }
 
-  ///////////////
-  // Rendering //
-  // ///////////////
-
-  // const renderStreamSelectItem = (item: StreamSummary) => ({
-  //   key: item.streamName as string,
-  //   value: item.id as string,
-  //   label: (
-  //     <div className={`transaction-list-row`}>
-  //       <div className="icon-cell">
-  //         {getStreamIcon(item)}
-  //       </div>
-  //       <div className="description-cell">
-  //         <div className="title text-truncate">{item.streamName}</div>
-  //         <div className="subtitle text-truncate">{item.streamSubtitle}</div>
-  //       </div>
-  //       <div className="rate-cell">
-  //         <div className="rate-amount">
-  //           {item && item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item)}
-  //         </div>
-  //         {item && item.rateAmount > 0 && (
-  //           <div className="interval">{getIntervalFromSeconds(item.rateIntervalInSeconds, false, t)}</div>
-  //         )}
-  //       </div>
-  //     </div>
-  //   ),
-  // });
-
-  // const renderStreamSelectOptions = () => {
-  //   const options = streamSummaries.map((stream: StreamSummary, index: number) => {
-  //     return renderStreamSelectItem(stream);
-  //   });
-  //   return options;
-  // }
+  /////////////////
+  //  Rendering  //
+  /////////////////
 
   return (
     <Modal
