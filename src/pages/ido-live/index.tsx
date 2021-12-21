@@ -81,7 +81,8 @@ export const IdoLiveView = () => {
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
-  const [isVideoVisible, setIsVideoVisible] = useState(true);
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
+  const [idoStarted, setIdoStarted] = useState(false);
   const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -275,6 +276,7 @@ export const IdoLiveView = () => {
     idoEngineInitStatus
   ]);
 
+  // Get list of idos
   useEffect(() => {
 
     if (!idoClient) { return; }
@@ -417,6 +419,24 @@ export const IdoLiveView = () => {
     today,
     idoStatus,
     idoDetails,
+  ]);
+
+  useEffect(() => {
+    if (!idoStartUtc || today < idoStartUtc || idoStarted) {
+      return;
+    }
+
+    // Turn OFF video if IDO started
+    if (today >= idoStartUtc) {
+      setIdoStarted(true);
+      setIsVideoVisible(false);
+      consoleOut('IDO started!', '', 'purple');
+    }
+
+  }, [
+    today,
+    idoStarted,
+    idoStartUtc,
   ]);
 
   // Keep track of account changes and updates token balance
