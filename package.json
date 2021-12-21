@@ -25,18 +25,11 @@
     "postbuild": "node ci/copy-config.js",
     "format:fix": "prettier --write \"**/*.+(js|jsx|ts|tsx|json|css|md)\""
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/mean-dao/meanfi-ui"
@@ -90,6 +83,7 @@
     "i18next": "21.5.4",
     "i18next-browser-languagedetector": "6.1.2",
     "jazzicon": "1.5.0",
+    "keccak": "^3.0.2",
     "loggly-jslogger": "2.2.4",
     "moment": "2.29.1",
     "moment-timezone": "0.5.34",
