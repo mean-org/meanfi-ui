@@ -2,13 +2,23 @@ import React, { useCallback, useContext, useMemo } from 'react';
 import {
   CheckOutlined,
   InfoCircleOutlined,
-  LoadingOutlined, 
-  ReloadOutlined, 
-  SearchOutlined
-
+  LoadingOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 
-import { Account, BPF_LOADER_PROGRAM_ID, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
+import {
+  Account,
+  ConfirmOptions,
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  Transaction,
+  TransactionInstruction
+} from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { PreFooter } from '../../components/PreFooter';
 import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
@@ -19,7 +29,6 @@ import { Identicon } from '../../components/Identicon';
 import {
   formatThousands,
   getTokenAmountAndSymbolByTokenAddress,
-  getTokenByMintAddress,
   getTxIxResume,
   shortenAddress
 
@@ -29,7 +38,6 @@ import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, T
 import {
   copyText,
   consoleOut,
-  isValidAddress,
   getTransactionModalTitle,
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
@@ -52,24 +60,16 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconWallet } from '../../Icons';
-import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { MSP_ACTIONS, StreamInfo, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
-import { PerformanceCounter } from '../../utils/perf-counter';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { useAccountsContext, useNativeAccount } from '../../contexts/accounts';
+import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { ACCOUNT_LAYOUT } from '../../utils/layouts';
-import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
-import { TokenInfo } from '@solana/spl-token-registry';
-import './style.less';
 import { useNavigate } from 'react-router-dom';
 import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
+import './style.less';
 
 // MULTISIG
 import { BN, Program, Provider } from "@project-serum/anchor";
@@ -80,7 +80,6 @@ import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradePro
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-const treasuryDetailPerfCounter = new PerformanceCounter();
 
 export const MultisigView = () => {
   const navigate = useNavigate();
@@ -88,19 +87,12 @@ export const MultisigView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const {
     // theme,
-    tokenList,
     isWhitelisted,
-    selectedToken,
     // treasuryOption,
     detailsPanelOpen,
     transactionStatus,
-    streamProgramAddress,
     previousWalletConnectState,
-    setSelectedToken,
-    setEffectiveRate,
-    setTreasuryOption,
     setDtailsPanelOpen,
-    resetContractValues,
     refreshTokenBalance,
     setTransactionStatus
 
@@ -118,24 +110,11 @@ export const MultisigView = () => {
   const { t } = useTranslation('common');
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
-  const accounts = useAccountsContext();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [treasuryList, setTreasuryList] = useState<TreasuryInfo[]>([]);
-  const [selectedTreasury, setSelectedTreasury] = useState<TreasuryInfo | undefined>(undefined);
-  const [customStreamDocked, setCustomStreamDocked] = useState(false);
-  const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
-  const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
-  const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
-  const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
-  const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
-  const [highlightedStream, sethHighlightedStream] = useState<StreamInfo | undefined>();
-  const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  // const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
 
   // Transactions
   const [nativeBalance, setNativeBalance] = useState(0);
-  const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -188,14 +167,6 @@ export const MultisigView = () => {
     wallet
   ]);
 
-  // Create and cache Money Streaming Program instance
-  const ms = useMemo(() => new MoneyStreaming(
-    connectionConfig.endpoint, streamProgramAddress
-  ), [
-    connectionConfig.endpoint,
-    streamProgramAddress
-  ]);
-
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -245,15 +216,6 @@ export const MultisigView = () => {
     setTransactionStatus
   ]);
 
-  const refreshMultisigAccountsClick = useCallback(() => {
-    // refreshTreasuries(false);
-    // setCustomStreamDocked(false);
-    return {
-
-    }
-
-  },[]);
-
   const onAcceptCreateMultisig = (data: any) => {
     consoleOut('multisig:', data, 'blue');
     onExecuteCreateMultisigTx(data);
@@ -263,13 +225,10 @@ export const MultisigView = () => {
 
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
 
   },[
-    setTransactionStatus
+    resetTransactionStatus
   ])
 
   const onTokensMinted = useCallback(() => {
@@ -277,13 +236,10 @@ export const MultisigView = () => {
     setIsMintTokenModalVisible(false);
     setLoadingMultisigAccounts(true);
     setLoadingMultisigTxs(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
 
   },[
-    setTransactionStatus
+    resetTransactionStatus
   ]);
 
   const onTxApproved = useCallback(() => {
@@ -627,7 +583,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -669,27 +625,11 @@ export const MultisigView = () => {
     resetTransactionStatus
   ]);
 
-  const onCancelCustomMultisigClick = useCallback(() => {
-    
-    return {
-      
-    }
-
-  },[]);
-
-  const onShowOpenMultisigModal = useCallback(() => {
-    
-    return {
-      
-    }
-
-  },[]);
-
   const isCreatingMultisig = useCallback((): boolean => {
 
     return (
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.TreasuryCreate
+      lastSentTxOperationType === OperationType.CreateMultisig
     );
 
   }, [
@@ -717,7 +657,6 @@ export const MultisigView = () => {
   // Transfer token modal
   const showTransferTokenModal = useCallback(() => {
     setIsTransferTokenModalVisible(true);
-    // TODO: Hardcoded fees, we can work on this later
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -1119,14 +1058,13 @@ export const MultisigView = () => {
 
   // Mint token modal
   const showMintTokenModal = useCallback(() => {
-    setIsMintTokenModalVisible(true);
-    // TODO: Hardcoded fees, we can work on this later
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
       mspPercentFee: 0
     };
     setTransactionFees(fees);
+    setIsMintTokenModalVisible(true);
   }, []);
 
   const onExecuteMintTokensTx = useCallback(async (data: any) => {
@@ -2037,7 +1975,6 @@ export const MultisigView = () => {
   // Upgrade program modal
   const showUpgradeProgramModal = useCallback(() => {
     setIsUpgradeProgramModalVisible(true);
-    // TODO: Hardcoded fees, we can work on this later
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
@@ -2791,6 +2728,8 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
+  const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
+
   // TODO: Remove when releasing to the public
   useEffect(() => {
     if (!isWhitelisted && !isLocal()) {
@@ -3028,14 +2967,8 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      switch (lastSentTxOperationType) {
-        case OperationType.TreasuryCreate:
-        case OperationType.TreasuryClose:
-          setLoadingMultisigAccounts(false);
-          break;
-        default:
-          // setLoadingMultisigAccounts(false);
-          break;
+      if (lastSentTxOperationType === OperationType.CreateMultisig) {
+        setLoadingMultisigAccounts(false);
       }
     }
   }, [
@@ -3045,6 +2978,7 @@ export const MultisigView = () => {
     lastSentTxOperationType
   ]);
 
+  // Get Multisig Vaults
   useEffect(() => {
 
     if (!connection || !multisigClient || !selectedMultisig) {
@@ -3092,161 +3026,6 @@ export const MultisigView = () => {
     refreshTokenBalance
   ]);
 
-  // Automatically update all token balances (in token list)
-  useEffect(() => {
-
-    if (!connection) {
-      console.error('No connection');
-      return;
-    }
-
-    if (!publicKey || !tokenList || !accounts || !accounts.tokenAccounts) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-
-      const balancesMap: any = {};
-      connection.getTokenAccountsByOwner(
-        publicKey, 
-        { programId: TOKEN_PROGRAM_ID }, 
-        connection.commitment
-      )
-      .then(response => {
-        for (let acc of response.value) {
-          const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-          const address = decoded.mint.toBase58();
-          const itemIndex = tokenList.findIndex(t => t.address === address);
-          if (itemIndex !== -1) {
-            balancesMap[address] = decoded.amount.toNumber() / (10 ** tokenList[itemIndex].decimals);
-          } else {
-            balancesMap[address] = 0;
-          }
-        }
-      })
-      .catch(error => {
-        console.error(error);
-        for (let t of tokenList) {
-          balancesMap[t.address] = 0;
-        }
-      })
-      .finally(() => setUserBalances(balancesMap));
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    connection,
-    tokenList,
-    accounts,
-    publicKey
-  ]);
-
-  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
-    return await calculateActionFees(connection, action);
-  }, [connection]);
-
-  const setCustomToken = useCallback((address: string) => {
-
-    if (address && isValidAddress(address)) {
-      const unkToken: TokenInfo = {
-        address: address,
-        name: 'Unknown',
-        chainId: 101,
-        decimals: 6,
-        symbol: shortenAddress(address),
-      };
-      setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
-      setEffectiveRate(0);
-    }
-  }, [
-    setEffectiveRate,
-    setSelectedToken,
-  ]);
-
-  const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
-    if (!connection || !publicKey || !ms || loadingTreasuryDetails) { return; }
-
-    setTimeout(() => {
-      setLoadingTreasuryDetails(true);
-    });
-
-    treasuryDetailPerfCounter.start();
-    const treasueyPk = new PublicKey(treasuryId);
-    ms.getTreasury(treasueyPk)
-      .then(details => {
-        if (details) {
-          consoleOut('treasuryDetails:', details, 'blue');
-          setSelectedTreasury(details);
-          setTreasuryDetails(details);
-          setSignalRefreshTreasuryStreams(true);
-
-          // Preset active token to the treasury associated token
-          const token = getTokenByMintAddress(details.associatedTokenAddress as string);
-          consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
-          if (token) {
-            if (!selectedToken || selectedToken.address !== token.address) {
-              setSelectedToken(token);
-            }
-          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedTokenAddress)) {
-            setCustomToken(details.associatedTokenAddress as string);
-          }
-
-          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.type);
-          if (tOption) {
-            setTreasuryOption(tOption);
-          }
-          if (dock) {
-            setTreasuryList([details]);
-            setCustomStreamDocked(true);
-            notify({
-              description: t('notifications.success-loading-treasury-message', {treasuryId: shortenAddress(treasuryId, 10)}),
-              type: "success"
-            });
-          }
-        } else {
-          setTreasuryDetails(undefined);
-          setSelectedTreasury(undefined);
-          if (dock) {
-            notify({
-              message: t('notifications.error-title'),
-              description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-              type: "error"
-            });
-          }
-        }
-        setLoadingTreasuryDetails(false);
-      })
-      .catch(error => {
-        console.error(error);
-        setTreasuryDetails(undefined);
-        setLoadingTreasuryDetails(false);
-        notify({
-          message: t('notifications.error-title'),
-          description: t('notifications.error-loading-treasuryid-message', {treasuryId: shortenAddress(treasuryId as string, 10)}),
-          type: "error"
-        });
-      })
-      .finally(() => {
-        treasuryDetailPerfCounter.stop();
-        consoleOut(`getTreasury took ${(treasuryDetailPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
-      });
-
-  }, [
-    ms,
-    publicKey,
-    connection,
-    selectedToken,
-    loadingTreasuryDetails,
-    setTreasuryOption,
-    setSelectedToken,
-    setCustomToken,
-    t,
-  ]);
-
   /////////////////
   //   Getters   //
   /////////////////
@@ -3280,21 +3059,6 @@ export const MultisigView = () => {
             ? true
             : false;
   }
-
-  ////////////////
-  //   Events   //
-  ////////////////
-
-  // Open treasury modal
-  const [isOpenTreasuryModalVisible, setIsOpenTreasuryModalVisibility] = useState(false);
-  const showOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(true), []);
-  const closeOpenTreasuryModal = useCallback(() => setIsOpenTreasuryModalVisibility(false), []);
-
-  const onAcceptOpenTreasury = (e: any) => {
-    closeOpenTreasuryModal();
-    consoleOut('treasury id:', e, 'blue');
-    openTreasuryById(e, true);
-  };
 
   ///////////////
   // Rendering //
@@ -3332,10 +3096,7 @@ export const MultisigView = () => {
           <div className="item-list-body compact">
             {multisigPendingTxs.map(item => {
               return (
-                <div 
-                  style={{padding: '3px 0px'}} 
-                  className={`item-list-row ${highlightedMultisigTx && highlightedMultisigTx.id === item.id ? 'selected' : ''}`} key={item.id.toBase58()}>
-                  
+                <div style={{padding: '3px 0px'}} className="item-list-row" key={item.id.toBase58()}>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getOperationName(item.action)}</span>
                   </div>
@@ -3636,63 +3397,6 @@ export const MultisigView = () => {
             </Button>
           </Dropdown>
 
-          {/* Mint token */}
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={showMintTokenModal}>
-            {isMintingToken() && (<LoadingOutlined />)}
-            {isMintingToken()
-              ? t('multisig.multisig-account-detail.cta-mint-busy')
-              : t('multisig.multisig-account-detail.cta-mint')}
-          </Button> */}
-
-          {/* Transfer tokens */}
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={showTransferTokenModal}>
-            {isSendingTokens() && (<LoadingOutlined />)}
-            {isSendingTokens()
-              ? t('multisig.multisig-account-detail.cta-transfer-busy')
-              : t('multisig.multisig-account-detail.cta-transfer')}
-          </Button> */}
-
-          {/* Upgrade program */}
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            // disabled={true}
-            onClick={showUpgradeProgramModal}>
-            {isUpgradingProgram() && (<LoadingOutlined />)}
-            {isUpgradingProgram()
-              ? t('multisig.multisig-account-detail.cta-upgrade-program-busy')
-              : t('multisig.multisig-account-detail.cta-upgrade-program')}
-          </Button> */}
-
-          {/* Create vault */}
-          {/* <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={onShowCreateVaultModal}>
-            {isCreatingVault() && (<LoadingOutlined />)}
-            {isCreatingVault()
-              ? t('multisig.multisig-account-detail.cta-create-vault-busy')
-              : t('multisig.multisig-account-detail.cta-create-vault')}
-          </Button> */}
-
           {/* Operation indication */}
           {isMintingToken() ? (
             <div className="flex-row flex-center">
@@ -3805,9 +3509,7 @@ export const MultisigView = () => {
                       `transaction-stats user-address ${loadingMultisigAccounts 
                         ? 'click-disabled' 
                         : 'simplelink'}`
-                    } 
-                    onClick={refreshMultisigAccountsClick}
-                  >
+                    }>
                     <Spin size="small" />
                     {!loadingMultisigAccounts && (
                       <span className="incoming-transactions-amout">{formatThousands(multisigAccounts.length)}</span>
@@ -3836,46 +3538,19 @@ export const MultisigView = () => {
                   </Spin>
                 </div>
                 <div className="bottom-ctas">
-                  {customStreamDocked ? (
-                    <div className="create-stream">
-                      <Button
-                        block
-                        type="primary"
-                        shape="round"
-                        disabled={!connected}
-                        onClick={onCancelCustomMultisigClick}>
-                        {t('multisig.back-to-multisig-accounts-cta')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="create-stream">
-                      <Button
-                        block
-                        type="primary"
-                        shape="round"
-                        disabled={!connected}
-                        onClick={onCreateMultisigClick}>
-                        {connected
-                          ? t('multisig.create-new-multisig-account-cta')
-                          : t('transactions.validation.not-connected')
-                        }
-                      </Button>
-                    </div>
-                  )}
-                  {(!customStreamDocked && connected) && (
-                    <div className="open-stream">
-                      <Tooltip title={t('multisig.lookup-multisig-account-cta-tooltip')}>
-                        <Button
-                          shape="round"
-                          type="text"
-                          size="small"
-                          className="ant-btn-shaded"
-                          onClick={onShowOpenMultisigModal}
-                          icon={<SearchOutlined />}>
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  )}
+                  <div className="create-stream">
+                    <Button
+                      block
+                      type="primary"
+                      shape="round"
+                      disabled={!connected}
+                      onClick={onCreateMultisigClick}>
+                      {connected
+                        ? t('multisig.create-new-multisig-account-cta')
+                        : t('transactions.validation.not-connected')
+                      }
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -3951,12 +3626,6 @@ export const MultisigView = () => {
 
       </div>
 
-      <TreasuryOpenModal
-        isVisible={isOpenTreasuryModalVisible}
-        handleOk={onAcceptOpenTreasury}
-        handleClose={closeOpenTreasuryModal}
-      />
-
       <MultisigCreateModal
         isVisible={isCreateMultisigModalVisible}
         nativeBalance={nativeBalance}
@@ -3971,6 +3640,7 @@ export const MultisigView = () => {
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         handleOk={onAcceptMintToken}
+        handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsMintTokenModalVisible(false)}
         isBusy={isBusy}
       />
@@ -3980,6 +3650,7 @@ export const MultisigView = () => {
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         handleOk={onAcceptTransferToken}
+        handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsTransferTokenModalVisible(false)}
         isBusy={isBusy}
         vaults={multisigVaults}

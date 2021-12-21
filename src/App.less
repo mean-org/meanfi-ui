@@ -2274,6 +2274,13 @@ main section {
     &:hover {
       background-color: var(--color-selection);
     }
+    &.ant-dropdown-menu-item-disabled,
+    &.ant-dropdown-menu-submenu-title-disabled {
+      color: var(--color-secondary-alpha-40);
+      &:hover {
+        background-color: transparent;
+      }
+    }
   }
 }
 
