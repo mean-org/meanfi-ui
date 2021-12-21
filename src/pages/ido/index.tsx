@@ -1,12 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
-import { IDO_START_DATE, MEANFI_DOCS_URL, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
+import { IDO_START_DATE, UTC_FULL_DATE_TIME_FORMAT } from "../../constants";
 import "./style.less";
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
 import { AppStateContext } from '../../contexts/appstate';
 import { Link, useNavigate } from 'react-router-dom';
-import { WarningFilled } from '@ant-design/icons';
 import { Alert } from 'antd';
 
 export const IdoView = () => {

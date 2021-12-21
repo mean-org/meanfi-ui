@@ -296,7 +296,7 @@ export const IdoWithdraw = (props: {
       </div>
     );
   }
-  
+
   return (
     <>
       {/* withdraw amount */}
@@ -391,13 +391,15 @@ export const IdoWithdraw = (props: {
             )}
             {idoInfoRow(
               'Implied token price',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.currentImpliedMeanPrice,
-                props.selectedToken.address
-              )
+              props.idoStatus.currentImpliedMeanPrice
+                ? getTokenAmountAndSymbolByTokenAddress(
+                    props.idoStatus.currentImpliedMeanPrice,
+                    props.selectedToken.address
+                  )
+                : '-'
             )}
             {idoInfoRow(
-              'Max Contributions Allowed (Cap)',
+              'Max Contribution (Cap)',
               formatAmount(
                 props.idoStatus.currentMaxUsdcContribution,
                 2,
