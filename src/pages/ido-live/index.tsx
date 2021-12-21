@@ -2,7 +2,6 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
-  IDO_CAP_VALUATION,
   IDO_FETCH_FREQUENCY,
   IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
@@ -505,7 +504,6 @@ export const IdoLiveView = () => {
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
         tokenBalance={tokenBalance}
-        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
     } else {
       return <IdoWithdraw
@@ -515,7 +513,6 @@ export const IdoLiveView = () => {
         idoStatus={idoStatus}
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
         selectedToken={selectedToken}
-        maxFullyDilutedMarketCapAllowed={IDO_CAP_VALUATION}
       />;
     }
   }

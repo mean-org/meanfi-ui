@@ -244,41 +244,6 @@ export class IdoClient {
         return [userIdo, withdrawUsdcTx];
     }
 
-    public async createCreateWithdrawalsTx(
-        idoAuthorityPubkey: PublicKey,
-    ): Promise<[anchor.web3.Keypair, Transaction]> {
-
-        if(!idoAuthorityPubkey)
-            throw new Error("Must connect wallet first");
-        const userWallet = IdoClient.createReadonlyWallet(idoAuthorityPubkey);
-        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
-
-        const withdrawalsKeypair = anchor.web3.Keypair.generate();
-
-        if (this.verbose) {
-            console.log(` userIdoAuthority:    ${idoAuthorityPubkey}`);
-            console.log(` idoWithdrawals:      ${withdrawalsKeypair}`);
-            console.log();
-        }
-
-        const createWithdrawalsTx = program.transaction.createIdoWithdrawals(
-            {
-                accounts: {
-                    withdrawals: withdrawalsKeypair.publicKey,
-                    rent: SYSVAR_RENT_PUBKEY,
-                },
-                instructions: [await program.account.idoWithdrawals.createInstruction(withdrawalsKeypair)],
-                signers: [withdrawalsKeypair]
-            }
-        );
-
-        createWithdrawalsTx.feePayer = idoAuthorityPubkey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
-        createWithdrawalsTx.recentBlockhash = hash.blockhash;
-
-        return [withdrawalsKeypair, createWithdrawalsTx];
-    }
-
     public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
         if(!this.userPubKey)
             throw new Error("Must connect wallet first");

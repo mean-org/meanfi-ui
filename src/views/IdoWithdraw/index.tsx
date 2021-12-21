@@ -21,7 +21,6 @@ export const IdoWithdraw = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   selectedToken: TokenInfo | undefined;
-  maxFullyDilutedMarketCapAllowed: number;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
@@ -401,9 +400,8 @@ export const IdoWithdraw = (props: {
             {idoInfoRow(
               'Max Contributions Allowed (Cap)',
               formatAmount(
-                props.maxFullyDilutedMarketCapAllowed,
-                2,
-                true
+                props.idoStatus.currentMaxUsdcContribution,
+                props.selectedToken.decimals
               )
             )}
           </div>

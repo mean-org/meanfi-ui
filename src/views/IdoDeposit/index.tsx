@@ -22,7 +22,6 @@ export const IdoDeposit = (props: {
   disabled: boolean;
   tokenBalance: number;
   selectedToken: TokenInfo | undefined;
-  maxFullyDilutedMarketCapAllowed: number;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
@@ -436,9 +435,8 @@ export const IdoDeposit = (props: {
             {idoInfoRow(
               'Max Contributions Allowed (Cap)',
               formatAmount(
-                props.maxFullyDilutedMarketCapAllowed,
-                2,
-                true
+                props.idoStatus.currentMaxUsdcContribution,
+                props.selectedToken.decimals,
               )
             )}
           </div>
