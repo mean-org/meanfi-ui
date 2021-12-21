@@ -332,24 +332,23 @@ export const IdoDeposit = (props: {
             <div
               className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
-                getTokenAmountAndSymbolByTokenAddress(
+                formatAmount(
                   props.tokenBalance > props.idoDetails.usdcPerUserMin
                     ? props.idoDetails.usdcPerUserMin
                     : props.tokenBalance,
-                  props.selectedToken ? props.selectedToken.address : '',
-                  true)
+                  props.selectedToken ? props.selectedToken.decimals : 2
+                )
               )}>
               Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
               className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setDepositAmount(
-                getTokenAmountAndSymbolByTokenAddress(
+                formatAmount(
                   props.tokenBalance > props.idoStatus.currentMaxUsdcContribution
                     ? props.idoStatus.currentMaxUsdcContribution
                     : props.tokenBalance,
-                  props.selectedToken ? props.selectedToken.address : '',
-                  true
+                  props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
               Max: {formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}
@@ -436,7 +435,8 @@ export const IdoDeposit = (props: {
               'Max Contributions Allowed (Cap)',
               formatAmount(
                 props.idoStatus.currentMaxUsdcContribution,
-                props.selectedToken.decimals,
+                2,
+                true
               )
             )}
           </div>

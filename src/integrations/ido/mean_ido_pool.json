@@ -237,6 +237,10 @@
             "type": "u32"
           },
           {
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "gaUsdcTotalContributed",
             "type": "u64"
           },
@@ -298,6 +302,10 @@
             "type": "i64"
           },
           {
+            "name": "contributionUpdatedTs",
+            "type": "i64"
+          },
+          {
             "name": "contributorNumber",
             "type": "u32"
           },
@@ -344,7 +352,7 @@
                 {
                   "defined": "WithdrawalEntry"
                 },
-                10000
+                5000
               ]
             }
           }
@@ -627,6 +635,11 @@
       "code": 320,
       "name": "WithdrawalsFull",
       "msg": "Withdrawals list is full"
+    },
+    {
+      "code": 321,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
     }
   ],
   "metadata": {

@@ -237,6 +237,10 @@ export type MeanIdoPool = {
             "type": "u32"
           },
           {
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "gaUsdcTotalContributed",
             "type": "u64"
           },
@@ -298,6 +302,10 @@ export type MeanIdoPool = {
             "type": "i64"
           },
           {
+            "name": "contributionUpdatedTs",
+            "type": "i64"
+          },
+          {
             "name": "contributorNumber",
             "type": "u32"
           },
@@ -344,7 +352,7 @@ export type MeanIdoPool = {
                 {
                   "defined": "WithdrawalEntry"
                 },
-                10000
+                5000
               ]
             }
           }
@@ -627,6 +635,11 @@ export type MeanIdoPool = {
       "code": 320,
       "name": "WithdrawalsFull",
       "msg": "Withdrawals list is full"
+    },
+    {
+      "code": 321,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
     }
   ]
 };
@@ -870,6 +883,10 @@ export const IDL: MeanIdoPool = {
             "type": "u32"
           },
           {
+            "name": "coolOffPeriodInSeconds",
+            "type": "u64"
+          },
+          {
             "name": "gaUsdcTotalContributed",
             "type": "u64"
           },
@@ -931,6 +948,10 @@ export const IDL: MeanIdoPool = {
             "type": "i64"
           },
           {
+            "name": "contributionUpdatedTs",
+            "type": "i64"
+          },
+          {
             "name": "contributorNumber",
             "type": "u32"
           },
@@ -977,7 +998,7 @@ export const IDL: MeanIdoPool = {
                 {
                   "defined": "WithdrawalEntry"
                 },
-                10000
+                5000
               ]
             }
           }
@@ -1260,6 +1281,11 @@ export const IDL: MeanIdoPool = {
       "code": 320,
       "name": "WithdrawalsFull",
       "msg": "Withdrawals list is full"
+    },
+    {
+      "code": 321,
+      "name": "CoolOffPeriod",
+      "msg": "Cool-off period sill active"
     }
   ]
 };

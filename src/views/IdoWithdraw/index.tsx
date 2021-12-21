@@ -307,10 +307,9 @@ export const IdoWithdraw = (props: {
             <div
               className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setWithdrawAmount(
-                getTokenAmountAndSymbolByTokenAddress(
+                formatAmount(
                   props.idoStatus.userUsdcContributedAmount,
-                  props.selectedToken ? props.selectedToken.address : '',
-                  true
+                  props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
               Max: {formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}
@@ -401,7 +400,8 @@ export const IdoWithdraw = (props: {
               'Max Contributions Allowed (Cap)',
               formatAmount(
                 props.idoStatus.currentMaxUsdcContribution,
-                props.selectedToken.decimals
+                2,
+                true
               )
             )}
           </div>
