@@ -1,9 +1,13 @@
 import { Connection } from "@solana/web3.js";
 import { Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Jupiter, RouteInfo, TOKEN_LIST_URL } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import "./style.less";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { consoleOut } from "../../utils/ui";
+import { getJupiterTokenList } from "../../utils/api";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -17,6 +21,7 @@ export const JupiterExchange = (props: {
     const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
+    const [tokenList, setTokenList] = useState<TokenInfo[]>([]);
 
     const connection = useMemo(() => props.connection, [props.connection]);
 
@@ -38,6 +43,30 @@ export const JupiterExchange = (props: {
         props.queryFromMint,
         setLastFromMint
     ]);
+
+    // Fetch token list from Jupiter API
+    // const loadJupiterTokenList = useCallback(async () => {
+    //     try {
+    //         const tokens: TokenInfo[] = await getJupiterTokenList(TOKEN_LIST_URL['mainnet-beta']);
+    //         if (tokens && tokens.length) {
+    //             setTokenList(tokens);
+    //             consoleOut("tokens from Jupiter API:", tokens, 'blue');
+    //         }
+    //     } catch (error) {
+    //         console.error(error);
+    //         setTokenList([]);
+    //     }
+    // },[]);
+
+    // useEffect(() => {
+    //     if (!tokenList || tokenList.length === 0) {
+    //         loadJupiterTokenList();
+    //     }
+    // }, [
+    //     tokenList,
+    //     loadJupiterTokenList
+    // ]);
+
     return (
         <>
             <Spin spinning={isBusy || refreshing}>
