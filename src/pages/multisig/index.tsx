@@ -225,13 +225,10 @@ export const MultisigView = () => {
 
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
 
   },[
-    setTransactionStatus
+    resetTransactionStatus
   ])
 
   const onTokensMinted = useCallback(() => {
@@ -239,13 +236,10 @@ export const MultisigView = () => {
     setIsMintTokenModalVisible(false);
     setLoadingMultisigAccounts(true);
     setLoadingMultisigTxs(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
 
   },[
-    setTransactionStatus
+    resetTransactionStatus
   ]);
 
   const onTxApproved = useCallback(() => {
@@ -589,7 +583,7 @@ export const MultisigView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateMultisig);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -635,7 +629,7 @@ export const MultisigView = () => {
 
     return (
       fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.TreasuryCreate
+      lastSentTxOperationType === OperationType.CreateMultisig
     );
 
   }, [
@@ -1064,13 +1058,13 @@ export const MultisigView = () => {
 
   // Mint token modal
   const showMintTokenModal = useCallback(() => {
-    setIsMintTokenModalVisible(true);
     const fees = {
       blockchainFee: 0.000005,
       mspFlatFee: 0.000010,
       mspPercentFee: 0
     };
     setTransactionFees(fees);
+    setIsMintTokenModalVisible(true);
   }, []);
 
   const onExecuteMintTokensTx = useCallback(async (data: any) => {
@@ -2734,6 +2728,8 @@ export const MultisigView = () => {
     selectedMultisig
   ]);
 
+  const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
+
   // TODO: Remove when releasing to the public
   useEffect(() => {
     if (!isWhitelisted && !isLocal()) {
@@ -2971,14 +2967,8 @@ export const MultisigView = () => {
     if (!publicKey) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      switch (lastSentTxOperationType) {
-        case OperationType.TreasuryCreate:
-        case OperationType.TreasuryClose:
-          setLoadingMultisigAccounts(false);
-          break;
-        default:
-          // setLoadingMultisigAccounts(false);
-          break;
+      if (lastSentTxOperationType === OperationType.CreateMultisig) {
+        setLoadingMultisigAccounts(false);
       }
     }
   }, [
@@ -3650,6 +3640,7 @@ export const MultisigView = () => {
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         handleOk={onAcceptMintToken}
+        handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsMintTokenModalVisible(false)}
         isBusy={isBusy}
       />
@@ -3659,6 +3650,7 @@ export const MultisigView = () => {
         nativeBalance={nativeBalance}
         transactionFees={transactionFees}
         handleOk={onAcceptTransferToken}
+        handleAfterClose={onAfterEveryModalClose}
         handleClose={() => setIsTransferTokenModalVisible(false)}
         isBusy={isBusy}
         vaults={multisigVaults}

@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { Modal, Button, Spin, Divider, Select, Input } from 'antd';
+import { Modal, Button, Spin, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { AppStateContext } from '../../contexts/appstate';
@@ -8,10 +8,9 @@ import { consoleOut, getTransactionOperationDescription, isValidAddress } from '
 import { isError } from '../../utils/transactions';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
-import { getTokenAmountAndSymbolByTokenAddress, isValidNumber, shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { useConnection } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { TokenDisplay } from '../TokenDisplay';
 import { PublicKey } from '@solana/web3.js';
 import { MintLayout } from '@solana/spl-token';
 
@@ -21,6 +20,7 @@ const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 export const MultisigTransferTokensModal = (props: {
   handleClose: any;
   handleOk: any;
+  handleAfterClose: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
@@ -110,11 +110,8 @@ export const MultisigTransferTokensModal = (props: {
       setTo('');
       setAmount('');
     }, 50);
-    
-    setTransactionStatus({
-        lastOperation: TransactionStatus.Iddle,
-        currentOperation: TransactionStatus.Iddle
-    });
+
+    props.handleAfterClose();
   }
 
   const onVaultChanged = useCallback((e: any) => {
