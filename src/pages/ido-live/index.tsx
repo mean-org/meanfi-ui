@@ -284,7 +284,7 @@ export const IdoLiveView = () => {
         if (idos && idos.length > 0) {
           setIdoList(idos);
         } else {
-          setIdoList([]);
+          setIdoList(undefined);
         }
       } catch (error) {
         console.error(error);
@@ -295,6 +295,7 @@ export const IdoLiveView = () => {
       getIdos();
     }
   }, [
+    publicKey,
     idoClient,
     idoList
   ]);
