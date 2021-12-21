@@ -37,9 +37,10 @@ export const MultisigUpgradeProgramModal = (props: {
   const [programDataAddress, setProgramDataAddress] = useState('');
   const [bufferAddress, setBufferAddress] = useState('');
 
+  // Resolves programDataAddress
   useEffect(() => {
 
-    if (!connection || !publicKey || !programId || !isValidAddress(programId)) {
+    if (!props.isVisible || !connection || !publicKey || !programId || !isValidAddress(programId)) {
       return;
     }
 
@@ -61,9 +62,10 @@ export const MultisigUpgradeProgramModal = (props: {
     }
 
   },[
-    connection, 
-    programId, 
-    publicKey
+    programId,
+    publicKey,
+    connection,
+    props.isVisible
   ]);
 
   const onAcceptModal = () => {

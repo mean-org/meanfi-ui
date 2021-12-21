@@ -3645,25 +3645,29 @@ export const MultisigView = () => {
         isBusy={isBusy}
       />
 
-      <MultisigTransferTokensModal
-        isVisible={isTransferTokenModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptTransferToken}
-        handleAfterClose={onAfterEveryModalClose}
-        handleClose={() => setIsTransferTokenModalVisible(false)}
-        isBusy={isBusy}
-        vaults={multisigVaults}
-      />
+      {isTransferTokenModalVisible && (
+        <MultisigTransferTokensModal
+          isVisible={isTransferTokenModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptTransferToken}
+          handleAfterClose={onAfterEveryModalClose}
+          handleClose={() => setIsTransferTokenModalVisible(false)}
+          isBusy={isBusy}
+          vaults={multisigVaults}
+        />
+      )}
 
-      <MultisigUpgradeProgramModal
-        isVisible={isUpgradeProgramModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptUpgradeProgram}
-        handleClose={() => setIsUpgradeProgramModalVisible(false)}
-        isBusy={isBusy}
-      />
+      {isUpgradeProgramModalVisible && (
+        <MultisigUpgradeProgramModal
+          isVisible={isUpgradeProgramModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptUpgradeProgram}
+          handleClose={() => setIsUpgradeProgramModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
 
       <MultisigCreateVaultModal
         handleOk={onAcceptCreateVault}
