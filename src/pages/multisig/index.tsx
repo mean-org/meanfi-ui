@@ -811,7 +811,9 @@ export const MultisigView = () => {
 
       if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
         const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
-        if (!toAccount.mint.equals(fromMintAddress)) {
+        const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
+        console.log('mintAddress', mintAddress);
+        if (!mintAddress.equals(fromMintAddress)) {
           throw Error("Invalid to token account mint");
         }
       }
