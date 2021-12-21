@@ -27,11 +27,11 @@ export type MultisigTransactionInfo = {
   operation: OperationType;
   multisig: PublicKey;
   programId: PublicKey;
-  signedBy: PublicKey[];
+  signers: boolean[];
   createdOn: Date;
-  executedOn: Date | undefined,
-  status: MultisigTransactionStatus,
-  accounts: any[]
+  executedOn: Date | undefined;
+  status: MultisigTransactionStatus;
+  accounts: any[];
 }
 
 export type MintTokensInfo = {

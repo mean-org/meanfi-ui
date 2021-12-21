@@ -265,9 +265,9 @@ const idl: Idl = {
             "type": "bytes"
           },
           {
-            "name": "signedBy",
+            "name": "signers",
             "type": {
-              "vec": "publicKey"
+              "vec": "bool"
             }
           },
           {
@@ -330,23 +330,23 @@ const idl: Idl = {
     },
     {
       "code": 303,
+      "name": "Overflow",
+      "msg": "Operation overflow"
+    },
+    {
+      "code": 304,
       "name": "UnableToDelete",
       "msg": "Cannot delete a transaction the owner did not create."
     },
     {
-      "code": 304,
+      "code": 305,
       "name": "AlreadyExecuted",
       "msg": "The given transaction has already been executed."
     },
     {
-      "code": 305,
+      "code": 306,
       "name": "InvalidThreshold",
       "msg": "Threshold must be less than or equal to the number of owners."
-    },
-    {
-      "code": 306,
-      "name": "Overflow",
-      "msg": "Operation overflow"
     }
   ]
 }

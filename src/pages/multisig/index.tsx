@@ -2678,7 +2678,7 @@ export const MultisigView = () => {
 
   const getTransactionStatusClass = useCallback((mtx: MultisigTransactionInfo) => {
 
-    const approvals = mtx.signedBy.length;
+    const approvals = mtx.signers.filter((s: boolean) => s === true).length;
 
     if (approvals === 0) {
       return "warning";
@@ -2714,7 +2714,7 @@ export const MultisigView = () => {
       return MultisigTransactionStatus.Executed;
     } 
 
-    const approvals = account.signers.length;
+    const approvals = account.signers.filter((s: boolean) => s === true).length;
     
     if (selectedMultisig && selectedMultisig.threshold === approvals) {
       return MultisigTransactionStatus.Approved;
@@ -2876,31 +2876,26 @@ export const MultisigView = () => {
     const timeout = setTimeout(() => {
 
       let transactions: MultisigTransactionInfo[] = [];
+      
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
-        .then((txs) => {
-          
+        .then((txs) => {  
           for (let tx of txs) {
-
             let txInfo = Object.assign({}, {
               id: tx.publicKey,
               multisig: tx.account.multisig,
               programId: tx.account.programId,
-              signedBy: tx.account.signedBy,
+              signers: tx.account.signers,
               createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-              executedOn: tx.account.executedOn 
+              executedOn: tx.account.executedOn > 0
                 ? new Date(tx.account.executedOn.toNumber() * 1000) 
                 : undefined,
-
               status: getTransactionStatus(tx.account),
               operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
-
             } as MultisigTransactionInfo);
-
             transactions.push(txInfo);
-          }
-          
+          }  
           setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
           setLoadingMultisigTxs(false);
         })
@@ -3103,7 +3098,7 @@ export const MultisigView = () => {
                       item.status === MultisigTransactionStatus.Pending && (
                         <span className="align-middle" style={{ marginRight:5 }} >
                         {
-                          `${item.signedBy.length}/${selectedMultisig.threshold}`
+                          `${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`
                         }
                         </span>
                       )
