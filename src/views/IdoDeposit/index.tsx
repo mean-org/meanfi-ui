@@ -426,10 +426,12 @@ export const IdoDeposit = (props: {
             )}
             {idoInfoRow(
               'Implied token price',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.currentImpliedMeanPrice,
-                props.selectedToken.address
-              )
+              props.idoStatus.currentImpliedMeanPrice
+                ? getTokenAmountAndSymbolByTokenAddress(
+                    props.idoStatus.currentImpliedMeanPrice,
+                    props.selectedToken.address
+                  )
+                : '-'
             )}
             {idoInfoRow(
               'Max Contribution (Cap)',

@@ -32,7 +32,7 @@ import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByToken
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
+import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined, WarningFilled } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -392,31 +392,26 @@ export const IdoLiveView = () => {
   // Set cooloff flag
   useEffect(() => {
 
-    if (!idoDetails || !idoStatus) { return; }
+    let inCoolOff = false;
 
-    const timeout = setTimeout(() => {
-      if (idoDetails && idoStatus) {
-        const now = today.getTime();
-        const dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
-        const elapsed = now - dateFromTs;
-        consoleOut('elapsed:', elapsed, 'blue');
-        consoleOut('coolOffPeriodInSeconds:', idoDetails.coolOffPeriodInSeconds, 'blue');
-        if (elapsed > idoDetails.coolOffPeriodInSeconds) {
-          setIsUserInCoolOffPeriod(true);
-        } else {
-          setIsUserInCoolOffPeriod(false);
-        }
+    if (idoDetails && idoStatus &&
+        idoDetails.coolOffPeriodInSeconds &&
+        idoStatus.userContributionUpdatedTs) {
+      const now = today.getTime();
+      const dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
+      const elapsed = now - dateFromTs;
+      if (elapsed < idoDetails.coolOffPeriodInSeconds) {
+        inCoolOff = true;
       } else {
-        setIsUserInCoolOffPeriod(false);
+        inCoolOff = false;
       }
-    }, 5000);
-
-    return () => {
-      clearTimeout(timeout);
+    } else {
+      inCoolOff = false;
     }
+    setIsUserInCoolOffPeriod(inCoolOff);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    today,
     idoStatus,
     idoDetails,
   ]);
@@ -599,7 +594,7 @@ export const IdoLiveView = () => {
         idoClient={idoClient}
         idoDetails={idoDetails}
         idoStatus={idoStatus}
-        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod}
+        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod || !idoStatus.userUsdcContributedAmount}
         selectedToken={selectedToken}
       />;
     }
@@ -644,10 +639,12 @@ export const IdoLiveView = () => {
           )}
           {infoRow(
             'Implied token price',
-            getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.currentMeanPrice,
-              selectedToken.address
-            )
+            idoStatus.currentMeanPrice
+              ? getTokenAmountAndSymbolByTokenAddress(
+                  idoStatus.currentMeanPrice,
+                  selectedToken.address
+                )
+              : '-'
           )}
         </div>
       )}
@@ -691,11 +688,19 @@ export const IdoLiveView = () => {
           <>
             <div className="countdown-timer">
               <div className={`text-center ${today < idoEndUtc ? 'panel1 show' : 'panel1 hide'}`}>
-                <p className={`font-size-90 font-bold ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>Sale period starts in <Countdown date={idoStartUtc} daysInHours={true} /></p>
-                <p className={`font-size-90 font-bold ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>Sale period ends in <Countdown date={idoEndUtc} daysInHours={false} /></p>
+                <p className={`font-size-100 font-regular ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>
+                  <ClockCircleFilled className="fg-warning pulsate-fast mr-1" />
+                  <span>Sale period starts in&nbsp;</span>
+                  <Countdown date={idoStartUtc} daysInHours={true} />
+                </p>
+                <p className={`font-size-100 font-regular ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>
+                  <ClockCircleFilled className="fg-warning pulsate-fast mr-1" />
+                  <span>Sale period ends in&nbsp;</span>
+                  <Countdown date={idoEndUtc} daysInHours={false} />
+                </p>
               </div>
               <div className={`text-center ${today > idoEndUtc && today < redeemStartUtc ? 'panel2 show' : 'panel2 hide'}`}>
-                <p className={`font-size-90 font-bold`}>Claims period starts in <Countdown date={redeemStartUtc} daysInHours={true} /></p>
+                <p className={`font-size-100 font-regular`}>Claims period starts in <Countdown date={redeemStartUtc} daysInHours={true} /></p>
               </div>
             </div>
             {/* Form */}
@@ -818,7 +823,9 @@ export const IdoLiveView = () => {
             {publicKey && (
               <>
               <span className="mr-1">hasUserContributed:</span>
-              <span className="mr-1 font-bold fg-dark-active">{idoStatus.hasUserContributed ? 'true' : 'false'}</span>
+              <span className="mr-1 font-bold fg-dark-active">{idoStatus.userHasContributed ? 'true' : 'false'}</span>
+              <span className="mr-1">isUserInCoolOffPeriod:</span>
+              <span className="mr-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
               </>
             )}
             </>
