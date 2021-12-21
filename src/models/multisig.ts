@@ -1,6 +1,4 @@
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { BPF_LOADER_PROGRAM_ID, Keypair, PublicKey } from "@solana/web3.js";
-import { MEAN_MULTISIG } from "../utils/ids";
+import { PublicKey } from "@solana/web3.js";
 import { OperationType } from "./enums";
 
 export enum MultisigTransactionStatus {
@@ -26,14 +24,14 @@ export type MultisigAccountInfo = {
 
 export type MultisigTransactionInfo = {
   id: PublicKey;
-  action: OperationType;
+  operation: OperationType;
   multisig: PublicKey;
   programId: PublicKey;
   signers: boolean[];
   createdOn: Date;
-  executedOn: Date | undefined,
-  status: MultisigTransactionStatus,
-  accounts: any[]
+  executedOn: Date | undefined;
+  status: MultisigTransactionStatus;
+  accounts: any[];
 }
 
 export type MintTokensInfo = {
@@ -41,102 +39,3 @@ export type MintTokensInfo = {
   mintTo: string;
   amount: number;
 }
-
-export const TestMultisigAccounts: MultisigAccountInfo[] = [];
-export const TestMultisigTransactions: Array<any> = new Array<any>();
-
-const initMultisigAccounts = async () => {
-  const TestMultisigAccount1 = Keypair.generate();
-  const TestMultisigAccount2 = Keypair.generate();
-  const [multisigAddressOne, nounceOne] = await PublicKey.findProgramAddress(
-    [TestMultisigAccount1.publicKey.toBuffer()],
-    MEAN_MULTISIG
-  );
-
-  const [multisigAddressTwo, nounceTwo] = await PublicKey.findProgramAddress(
-    [TestMultisigAccount2.publicKey.toBuffer()],
-    MEAN_MULTISIG
-  );
-
-  TestMultisigAccounts.push(...[
-    {
-      id: TestMultisigAccount1.publicKey,
-      address: multisigAddressOne,
-      label: "Test Multisig One",
-      nounce: nounceOne,
-      owners: [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ],
-      threshold: 2,
-      createdOnUtc: new Date(),
-      ownerSeqNumber: 0,
-      pendingTxsAmount: 2,
-    },
-    {
-      id: TestMultisigAccount2.publicKey,
-      address: multisigAddressTwo,
-      label: "Test Multisig Two",
-      nounce: nounceTwo,
-      owners: [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ],
-      threshold: 3,
-      createdOnUtc: new Date(),
-      ownerSeqNumber: 0,
-      pendingTxsAmount: 7,
-    },
-  ]);    
-
-  TestMultisigTransactions.push(...[
-      {
-        id: Keypair.generate().publicKey,
-        operation: OperationType.MintTokens,
-        multisig: TestMultisigAccount1.publicKey,
-        programId: TOKEN_PROGRAM_ID,
-        signers: 2,
-        status: MultisigTransactionStatus.Approved,
-        createdOn: new Date(),
-        executedOn: undefined,
-      },
-      {
-        id: Keypair.generate().publicKey,
-        operation: OperationType.TransferTokens,
-        multisig: TestMultisigAccount1.publicKey,
-        programId: TOKEN_PROGRAM_ID,
-        signers: 1,
-        status: MultisigTransactionStatus.Pending,
-        createdOn: new Date(),
-        executedOn: undefined,
-      },
-      {
-        id: Keypair.generate().publicKey,
-        operation: OperationType.UpgradeProgram,
-        multisig: TestMultisigAccount2.publicKey,
-        programId: BPF_LOADER_PROGRAM_ID,
-        signers: 0,
-        status: MultisigTransactionStatus.Pending,
-        createdOn: new Date(),
-        executedOn: new Date(),
-      },
-      {
-        id: Keypair.generate().publicKey,
-        operation: OperationType.CreateVault,
-        multisig: TestMultisigAccount2.publicKey,
-        programId: MEAN_MULTISIG,
-        signers: 3,
-        status: MultisigTransactionStatus.Executed,
-        createdOn: new Date(),
-        executedOn: new Date(),
-      },
-    ]
-  );
-
-};
-
-initMultisigAccounts().then(() => {}).catch(e => console.error(e));

@@ -195,8 +195,6 @@ export const MultisigView = () => {
       return tokenAccount;
     });
 
-    consoleOut('vaults', results, 'blue');
-
     return results;
 
   },[]);
@@ -751,7 +749,7 @@ export const MultisigView = () => {
       if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
         const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
         const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
-        console.log('mintAddress', mintAddress);
+
         if (!mintAddress.equals(fromMintAddress)) {
           throw Error("Invalid to token account mint");
         }
@@ -759,6 +757,7 @@ export const MultisigView = () => {
 
       const transaction = new Account();
       const txSize = 1000;
+
       ixs.push(
         await multisigClient.account.transaction.createInstruction(
           transaction,
@@ -2364,7 +2363,6 @@ export const MultisigView = () => {
       );
 
       const mintAddress = new PublicKey(data.token.address);
-      console.log('token address', mintAddress.toBase58());
       const tokenAccount = Keypair.generate();
       const ixs: TransactionInstruction[] = [
         SystemProgram.createAccount({
@@ -2712,7 +2710,7 @@ export const MultisigView = () => {
 
   const getTransactionStatus = useCallback((account: any) => {
 
-    if (account.didExecute) {
+    if (account.executedOn > 0) {
       return MultisigTransactionStatus.Executed;
     } 
 
@@ -2878,37 +2876,26 @@ export const MultisigView = () => {
     const timeout = setTimeout(() => {
 
       let transactions: MultisigTransactionInfo[] = [];
+      
       multisigClient.account.transaction
         .all(selectedMultisig.id.toBuffer())
-        .then((txs) => {
-          
+        .then((txs) => {  
           for (let tx of txs) {
-
             let txInfo = Object.assign({}, {
               id: tx.publicKey,
               multisig: tx.account.multisig,
               programId: tx.account.programId,
               signers: tx.account.signers,
               createdOn: new Date(tx.account.createdOn.toNumber() * 1000),
-              executedOn: tx.account.executedOn 
+              executedOn: tx.account.executedOn > 0
                 ? new Date(tx.account.executedOn.toNumber() * 1000) 
                 : undefined,
-
               status: getTransactionStatus(tx.account),
-              action: parseInt(Object.keys(OperationType).filter(k => k === tx.account.action.toString())[0]),
+              operation: parseInt(Object.keys(OperationType).filter(k => k === tx.account.operation.toString())[0]),
               accounts: tx.account.accounts
-
             } as MultisigTransactionInfo);
-
-            console.log('tx: ', txInfo);
-            console.log('tx id: ', tx.publicKey.toBase58());
-            console.log('tx accounts: ', tx.account.accounts.map((a: any) => a.pubkey.toBase58()));
-            console.log('tx multisig: ', tx.account.multisig.toBase58());
-            console.log('tx program id: ', tx.account.programId.toBase58());
-
             transactions.push(txInfo);
-          }
-          
+          }  
           setMultisigPendingTxs(transactions.sort((a, b) => b.createdOn.getTime() - a.createdOn.getTime()));
           setLoadingMultisigTxs(false);
         })
@@ -3098,10 +3085,10 @@ export const MultisigView = () => {
               return (
                 <div style={{padding: '3px 0px'}} className="item-list-row" key={item.id.toBase58()}>
                   <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationName(item.action)}</span>
+                    <span className="align-middle">{getOperationName(item.operation)}</span>
                   </div>
                   <div className="std-table-cell responsive-cell">
-                    <span className="align-middle">{getOperationProgram(item.action)}</span>
+                    <span className="align-middle">{getOperationProgram(item.operation)}</span>
                   </div>
                   <div className="std-table-cell responsive-cell">
                     <span className="align-middle">{getShortDate(item.createdOn.toString(), true)}</span>
