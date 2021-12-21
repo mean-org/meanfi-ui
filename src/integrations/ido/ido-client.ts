@@ -407,6 +407,7 @@ export class IdoClient {
                     .mul(new BN(10**DECIMALS))
                     .div(new BN(currentIdoStatus.currentImpliedMeanPriceTokenAmount));
 
+                currentIdoStatus.userContributorNumber = userIdoAccount.contributorNumber;
                 currentIdoStatus.userHasContributed = true;
                 currentIdoStatus.userContributionTs = userIdoAccount.contributionTs.toNumber();
                 currentIdoStatus.userUsdcContributedAmount = toUiAmount(userIdoAccount.usdcContributedAmount);
@@ -416,10 +417,6 @@ export class IdoClient {
                 currentIdoStatus.userMeanImpliedAmount = toUiAmount(userImpliedMeanTokenAmount);
                 currentIdoStatus.userMeanImpliedTokenAmount = userImpliedMeanTokenAmount.toNumber();
                 currentIdoStatus.userIsInGa = userImpliedMeanTokenAmount.gt(new BN(0));
-
-                // console.log("userUsdcInGa:", userUsdcInGa.toString())
-                // console.log("userImpliedMean:", userImpliedMeanTokenAmount.toString())
-                // console.log("userIsInGa:", currentIdoStatus.userIsInGa)
             }
         }
 
