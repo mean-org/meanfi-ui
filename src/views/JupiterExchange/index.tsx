@@ -1,7 +1,7 @@
 import { Connection } from "@solana/web3.js";
 import { Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Jupiter, RouteInfo, TOKEN_LIST_URL } from "@jup-ag/core";
+// import { Jupiter, RouteInfo, TOKEN_LIST_URL } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import "./style.less";
