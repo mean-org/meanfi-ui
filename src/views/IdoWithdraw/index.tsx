@@ -52,16 +52,18 @@ export const IdoWithdraw = (props: {
 
   const isValidInput = (): boolean => {
     const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
-    return props.selectedToken &&
+    const amountLeft = props.idoStatus.userUsdcContributedAmount - amount;
+    return amount &&
            props.idoStatus.userUsdcContributedAmount &&
-           amount > 0 &&
-           amount <= props.idoStatus.userUsdcContributedAmount
-            ? true
-            : false;
+           ((amountLeft >= props.idoDetails.usdcPerUserMin && amount < props.idoStatus.userUsdcContributedAmount) ||
+             amount === props.idoStatus.userUsdcContributedAmount)
+      ? true
+      : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
     const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
+    const amountLeft = props.idoStatus.userUsdcContributedAmount - amount;
     return !connected
       ? t('transactions.validation.not-connected')
       : !props.selectedToken || !props.idoStatus.userUsdcContributedAmount
@@ -70,7 +72,9 @@ export const IdoWithdraw = (props: {
           ? t('transactions.validation.no-amount')
           : amount > props.idoStatus.userUsdcContributedAmount
             ? `Max is ${formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}`
-            : t('transactions.validation.valid-approve');
+            : amount > 0 && amountLeft < props.idoDetails.usdcPerUserMin && amount !== props.idoStatus.userUsdcContributedAmount
+              ? `Min is ${getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}`
+              : t('transactions.validation.valid-approve');
   }
 
   const onExecuteWithdrawTx = async () => {
@@ -304,6 +308,16 @@ export const IdoWithdraw = (props: {
         <div className="left"><div className="form-label">Amount</div></div>
         {props.selectedToken && (
           <div className="right token-group">
+            <div
+              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              onClick={() => setWithdrawAmount(
+                formatAmount(
+                  props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin,
+                  props.selectedToken ? props.selectedToken.decimals : 2
+                )
+              )}>
+              Min: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}
+            </div>
             <div
               className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
               onClick={() => setWithdrawAmount(
