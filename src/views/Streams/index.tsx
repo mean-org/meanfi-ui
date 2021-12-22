@@ -389,6 +389,16 @@ export const Streams = () => {
            ? true : false;
   }
 
+  const isTreasurer = (): boolean => {
+    return (
+      streamDetail && 
+      wallet && 
+      wallet.publicKey &&
+      streamDetail.treasurerAddress === wallet.publicKey.toBase58()
+
+    ) ? true : false;
+  }
+
   const getEscrowEstimatedDepletionUtcLabel = (date: Date): string => {
     const today = new Date();
     const miniDate = streamDetail && streamDetail.escrowEstimatedDepletionUtc
@@ -1817,7 +1827,7 @@ export const Streams = () => {
                       : t("streams.stream-detail.withdraw-funds-cta")
               }
             </Button>
-            {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+            {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
               <Dropdown overlay={menu} trigger={["click"]}>
                 <Button
                   shape="round"

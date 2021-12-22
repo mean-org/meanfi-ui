@@ -312,7 +312,7 @@ export const IdoWithdraw = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}
+              Max: {getTokenAmountAndSymbolByTokenAddress(props.idoStatus.userUsdcContributedAmount, '', true)}
             </div>
           </div>
         )}
@@ -400,9 +400,9 @@ export const IdoWithdraw = (props: {
             )}
             {idoInfoRow(
               'Max Contribution (Cap)',
-              formatAmount(
+              getTokenAmountAndSymbolByTokenAddress(
                 props.idoStatus.currentMaxUsdcContribution,
-                2,
+                props.selectedToken.address,
                 true
               )
             )}

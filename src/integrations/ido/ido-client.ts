@@ -383,12 +383,13 @@ export class IdoClient {
                     
                     // calculate net withdrew before user
                     const lastIndex = idoWithdrawals.last;
-                    let netUsdcWithdrewBeforeUser = 0;
+                    let netUsdcWithdrewBeforeUser = new BN(0);
                     for (let i = 0; i < lastIndex; i++) {
                         const wtw = (idoWithdrawals.withdrawals as any[])[i];
-                        console.log("wtw:", wtw)
+                        
                         if(wtw.contributorNumber < userIdoAccount.contributorNumber) {
-                            netUsdcWithdrewBeforeUser += (idoWithdrawals.withdrawals as any[])[i].amount;
+                            const withdrawalAmount = (idoWithdrawals.withdrawals as any[])[i].amount as BN;
+                            netUsdcWithdrewBeforeUser = netUsdcWithdrewBeforeUser.add(withdrawalAmount);
                         }
                     }
                     
