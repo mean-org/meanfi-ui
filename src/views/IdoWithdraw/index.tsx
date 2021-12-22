@@ -326,7 +326,7 @@ export const IdoWithdraw = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount, 2))}
+              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.userUsdcContributedAmount), 2))}
             </div>
           </div>
         )}
@@ -356,8 +356,8 @@ export const IdoWithdraw = (props: {
               autoCorrect="off"
               type="text"
               onChange={handleAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern="^[0-9]*$"
+              placeholder="0"
               minLength={1}
               maxLength={79}
               spellCheck="false"

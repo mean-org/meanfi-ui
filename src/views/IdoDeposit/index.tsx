@@ -357,7 +357,7 @@ export const IdoDeposit = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(props.idoStatus.currentMaxUsdcContribution, 2))}
+              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2))}
             </div>
           </div>
         )}
@@ -387,8 +387,8 @@ export const IdoDeposit = (props: {
               autoCorrect="off"
               type="text"
               onChange={handleAmountChange}
-              pattern="^[0-9]*[.,]?[0-9]*$"
-              placeholder="0.0"
+              pattern="^[0-9]*$"
+              placeholder="0"
               minLength={1}
               maxLength={79}
               spellCheck="false"

@@ -693,8 +693,9 @@ export const IdoLiveView = () => {
           Airdrop
         </div>
       </div>
+      {renderClaimsForms()}
 
-      {(idoStatus && selectedToken) && (
+      {/* {(idoStatus && selectedToken) && (
         <div className="px-1 mb-2">
           {infoRow(
             'USDC Contributed',
@@ -723,7 +724,6 @@ export const IdoLiveView = () => {
           )}
         </div>
       )}
-
       <Button
         className="main-cta mb-2"
         block
@@ -733,7 +733,7 @@ export const IdoLiveView = () => {
         disabled={!redeemStartUtc || today < redeemStartUtc}
         onClick={() => {}}>
         Redeem &amp; Start Vesting
-      </Button>
+      </Button> */}
 
     </>
   );
