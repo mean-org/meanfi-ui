@@ -172,6 +172,78 @@ export class IdoClient {
         return [userIdo, depositUsdcTx];
     }
 
+    public async createDepositUsdcLpTx(
+        meanIdoAddress: PublicKey,
+        amount: number,
+    ): Promise<[PublicKey, Transaction]> {
+
+        const currentUserPubKey = this.userPubKey;
+        if(!currentUserPubKey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(currentUserPubKey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        // TODO: params check
+        if (amount <= 0)
+            throw Error("Invalid amount");
+        // TODO: more validation
+
+        const idoAccount = await program.account.idoAccount.fetch(meanIdoAddress);
+        if(idoAccount === null)
+           throw new Error("IDO account not found");
+
+        const userUsdcAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.usdcMint,
+            currentUserPubKey,
+          );
+        if (userUsdcAddress === null) {
+            throw Error("user USDC ATA not found");
+        }
+
+        const [userIdo, userIdoBump] = await this.findUserIdoProgramAddress(currentUserPubKey, meanIdoAddress);
+
+        const usdcAmountBn = new anchor.BN(amount * 10**DECIMALS);
+        const userUsdcTokenResponse = await program.provider.connection.getTokenAccountBalance(userUsdcAddress);
+        const userUsdcTokenAmount = new BN(userUsdcTokenResponse.value.amount ?? 0);
+        if (userUsdcTokenAmount.lt(usdcAmountBn)) {
+            throw Error("Insufficient USDC balance");
+        }
+
+        if (this.verbose) {
+            console.log(` userIdoAuthority:    ${currentUserPubKey}`);
+            console.log(` userUsdc:            ${userUsdcAddress}`);
+            console.log(` idoAddress:          ${meanIdoAddress}`);
+            console.log(` userIdo:             ${userIdo}`);
+            console.log(` userUsdcAmount:      ${usdcAmountBn.toNumber()}`);
+            console.log();
+        }
+
+        const depositUsdcTx = program.transaction.lpd(
+            usdcAmountBn,
+            userIdoBump,
+            {
+                accounts: {
+                    userAuthority: currentUserPubKey,
+                    userUsdc: userUsdcAddress,
+                    userIdo: userIdo,
+                    idoAccount: meanIdoAddress,
+                    usdcMint: idoAccount.usdcMint,
+                    usdcPool: idoAccount.usdcPool,
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                },
+            }
+        );
+
+        depositUsdcTx.feePayer = currentUserPubKey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        depositUsdcTx.recentBlockhash = hash.blockhash;
+
+        return [userIdo, depositUsdcTx];
+    }
+
     public async createWithdrawUsdcTx(
         meanIdoAddress: PublicKey,
         amount: number,
