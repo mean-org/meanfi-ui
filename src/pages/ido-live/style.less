@@ -204,7 +204,30 @@
   -webkit-filter: blur(3px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
   filter: blur(3px) brightness(1) contrast(1) grayscale(0.3) saturate(0.3);
 }
-
+#pyro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 200%;
+  .heading.ido-heading {
+    font-size: 4vw;
+    font-weight: 900;
+    line-height: 1.4;
+    text-align: center;
+    letter-spacing: 0.01px;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.6), 0px 0px 9px rgba(0,0,0,0.6);
+  }
+  @media (max-width: 767.98px) {
+    font-size: 28px;
+    margin-bottom: 18px;
+  }
+  @media (min-width: 768px) {
+    font-size: 48px;
+    margin-bottom: 24px;
+  }
+}
 #pyro > .before,
 #pyro > .after {
   position: absolute;

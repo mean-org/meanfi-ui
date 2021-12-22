@@ -72,7 +72,7 @@ export const IdoLiveView = () => {
   const [xPosPercent, setXPosPercent] = useState(0);
   const [currentDateDisplay, setCurrentDateDisplay] = useState('');
   const [idoAccountAddress, setIdoAccountAddress] = useState('');
-  const [idoList, setIdoList] = useState<IdoDetails[] | undefined>(undefined);
+  // const [idoList, setIdoList] = useState<IdoDetails[] | undefined>(undefined);
   const [idoStatus, setIdoStatus] = useState<IdoStatus | undefined>(undefined);
   const [idoDetails, setIdoDetails] = useState<IdoDetails | undefined>(undefined);
   const [idoEngineInitStatus, setIdoEngineInitStatus] = useState<IdoInitStatus>("uninitialized");
@@ -281,6 +281,7 @@ export const IdoLiveView = () => {
   ]);
 
   // Get list of idos
+  /*
   useEffect(() => {
 
     if (!idoClient) { return; }
@@ -306,6 +307,7 @@ export const IdoLiveView = () => {
     idoClient,
     idoList
   ]);
+  */
 
   // Fetches the IDO status
   const refreshIdoData = useCallback(async () => {
@@ -562,7 +564,7 @@ export const IdoLiveView = () => {
 
   const partnerImages = useMemo((): PartnerImage[] => {
     return [
-      {fileName: "three-arrows.png", size: "normal"},
+      {fileName: "three-arrows.png", size: "small"},
       {fileName: "defiance.png", size: "small"},
       {fileName: "softbank.png", size: "tiny"},
       {fileName: "svc.png", size: "tiny"},
@@ -571,6 +573,13 @@ export const IdoLiveView = () => {
       {fileName: "bigbrainholdings.png", size: "small"},
       {fileName: "gerstenbrot.png", size: "small"},
       {fileName: "bts-capital.png", size: "small"},
+      {fileName: "a41.png", size: "small"},
+      {fileName: "gateio-labs.png", size: "small"},
+      {fileName: "MEXC.png", size: "small"},
+      {fileName: "pet-rock.png", size: "normal"},
+      {fileName: "prime-block.png", size: "small"},
+      {fileName: "r8-capital.png", size: "small"},
+      {fileName: "solanium.png", size: "small"},
     ];
   }, []);
 
@@ -827,25 +836,25 @@ export const IdoLiveView = () => {
     </>
   );
 
-  const idoItemsMenu = (
-    <>
-      {idoList && idoList.length > 0 ? (
-        <Menu>
-          {idoList.map((item: IdoDetails, index: number) => {
-            return (
-              <Menu.Item
-                key={`${index}`}
-                onClick={() => {
-                  consoleOut('Selected IDO address:', item.idoAddress, 'blue');
-                }}>
-                {item.idoAddress}
-              </Menu.Item>
-            );
-          })}
-        </Menu>
-      ) : null}
-    </>
-  );
+  // const idoItemsMenu = (
+  //   <>
+  //     {idoList && idoList.length > 0 ? (
+  //       <Menu>
+  //         {idoList.map((item: IdoDetails, index: number) => {
+  //           return (
+  //             <Menu.Item
+  //               key={`${index}`}
+  //               onClick={() => {
+  //                 consoleOut('Selected IDO address:', item.idoAddress, 'blue');
+  //               }}>
+  //               {item.idoAddress}
+  //             </Menu.Item>
+  //           );
+  //         })}
+  //       </Menu>
+  //     ) : null}
+  //   </>
+  // );
 
   return (
     <>
@@ -854,6 +863,7 @@ export const IdoLiveView = () => {
           <div id="pyro">
             <div className="before"></div>
             <div className="after"></div>
+            <h1 className="heading ido-heading text-center mb-0">The Mean <span className="fg-primary-highlight">IDO</span><br/>already finished</h1>
           </div>
         )}
       </div>
@@ -862,7 +872,6 @@ export const IdoLiveView = () => {
         {(isLocal() || isWhitelisted) && (
           <div className="ido-selector">
             <span className="icon-button-container">
-
               <Button
                 type="default"
                 shape="circle"
@@ -875,7 +884,6 @@ export const IdoLiveView = () => {
                   }, 10000);
                 }}
               />
-
               {/* <Tooltip placement="bottom" title="Select IDO address">
                 <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
                   <Button
@@ -1050,7 +1058,7 @@ export const IdoLiveView = () => {
                 return (
                   <Col key={`${index}`} className="partner flex-center">
                     <img
-                      className={`partner-logo ${image.size}`}
+                      className={`partner-logo ${image.size} grayscale`}
                       src={`/assets/investors/${image.fileName}`}
                       alt={image.fileName} />
                   </Col>
