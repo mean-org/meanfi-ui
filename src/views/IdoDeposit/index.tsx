@@ -351,7 +351,7 @@ export const IdoDeposit = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}
+              Max: {getTokenAmountAndSymbolByTokenAddress(props.idoStatus.currentMaxUsdcContribution, '', true)}
             </div>
           </div>
         )}
@@ -435,9 +435,9 @@ export const IdoDeposit = (props: {
             )}
             {idoInfoRow(
               'Max Contribution (Cap)',
-              formatAmount(
+              getTokenAmountAndSymbolByTokenAddress(
                 props.idoStatus.currentMaxUsdcContribution,
-                2,
+                props.selectedToken.address,
                 true
               )
             )}
@@ -471,12 +471,11 @@ export const IdoDeposit = (props: {
 
       {props.idoStatus.isRunning && (
         <>
-          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa
-            ? getGaLine(true)
-            : props.idoStatus.gaIsOpen
-              ? getGaLine(false)
-              : getGaLine(false)
-          }
+          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && (
+            <>
+            {props.idoStatus.userIsInGa ? getGaLine(true) : getGaLine(false)}
+            </>
+          )}
         </>
       )}
 

@@ -900,7 +900,12 @@ export const IdoLiveView = () => {
                         </div>
                         {isVideoVisible ? renderVideo : (
                           <div className="ido-stats-container">
-                            <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                            {idoStatus && (
+                              <>
+                                <img className={`ido-stats-image ${idoStatus.gaIsOpen ? 'd-inline' : 'd-none'}`} src="/assets/mean-bonding-curves-ga-open.png" alt="IDO Stats - GA open" />
+                                <img className={`ido-stats-image ${idoStatus.gaIsOpen ? 'd-none' : 'd-inline'}`} src="/assets/mean-bonding-curves-ga-closed.png" alt="IDO Stats -  GA closed" />
+                              </>
+                            )}
                             {(today > idoStartUtc) && renderYouAreHere()}
                           </div>
                         )}
@@ -948,7 +953,7 @@ export const IdoLiveView = () => {
                           </div>
                           {isVideoVisible ? renderVideo : (
                             <div className="ido-stats-container">
-                              <img className="ido-stats-image" src="/assets/mean-bonding-curves.png" alt="IDO Stats" />
+                              <img className="ido-stats-image" src="/assets/mean-bonding-curves-ga-open.png" alt="IDO Stats" />
                               {(today > idoStartUtc) && renderYouAreHere()}
                             </div>
                           )}
