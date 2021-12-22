@@ -442,14 +442,9 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
     return result;
 }
 
-export const getFormattedNumberToLocale = (value: any, digits = 2) => {
+export const getFormattedNumberToLocale = (value: any, digits = 0) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat('en-US', {
-        minimumSignificantDigits: digits,
-        minimumFractionDigits: digits,
-        maximumSignificantDigits: digits,
-        maximumFractionDigits: digits
-    }).format(converted);
+    const formatted = new Intl.NumberFormat('en-US', { minimumSignificantDigits: 1, minimumFractionDigits: digits }).format(converted);
     return formatted || '';
 }
 

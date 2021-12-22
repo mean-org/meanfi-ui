@@ -4,7 +4,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isV
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -312,7 +312,7 @@ export const IdoWithdraw = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getTokenAmountAndSymbolByTokenAddress(props.idoStatus.userUsdcContributedAmount, '', true)}
+              Max: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount, 2))}
             </div>
           </div>
         )}

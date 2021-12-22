@@ -4,7 +4,7 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isV
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
@@ -357,7 +357,7 @@ export const IdoDeposit = (props: {
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getTokenAmountAndSymbolByTokenAddress(props.idoStatus.currentMaxUsdcContribution, '', true)}
+              Max: {getFormattedNumberToLocale(formatAmount(props.idoStatus.currentMaxUsdcContribution, 2))}
             </div>
           </div>
         )}
@@ -400,10 +400,10 @@ export const IdoDeposit = (props: {
           <div className="left inner-label">
             <span>{t('add-funds.label-right')}:</span>
             <span>
-              {`${props.tokenBalance && props.selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, '', true)
-                  : "0"
-              }`}
+              {props.tokenBalance
+                ? getFormattedNumberToLocale(formatAmount(props.tokenBalance, 2))
+                : '0'
+              }
             </span>
             <a className="simplelink underline-on-hover ml-1" target="_blank" rel="noopener noreferrer" href={getExchangeUrl()}>
               👉 Get more USDC
