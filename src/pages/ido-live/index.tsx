@@ -12,7 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
-import { IdoDeposit } from '../../views';
+import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import useScript from '../../hooks/useScript';
@@ -661,11 +661,12 @@ export const IdoLiveView = () => {
     switch (currentClaimsTab) {
       case "ido-claims":
         return (
-          <IdoWithdraw
+          <IdoRedeem
             connection={connection}
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
+            redeemStarted={redeemStarted}
             disabled={fetchTxInfoStatus === "fetching" || !idoStatus.userUsdcContributedAmount}
             selectedToken={selectedToken}
           />
@@ -747,12 +748,12 @@ export const IdoLiveView = () => {
             <div className="countdown-timer">
               <div className={`text-center ${today < idoEndUtc ? 'panel1 show' : 'panel1 hide'}`}>
                 <p className={`font-size-100 font-regular ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>
-                  <ClockCircleFilled className="fg-warning pulsate-fast mr-1" />
+                  <ClockCircleFilled className="fg-warning font-size-120 pulsate-fast mr-1" />
                   <span>Sale period starts in&nbsp;</span>
                   <Countdown date={idoStartUtc} daysInHours={true} />
                 </p>
                 <p className={`font-size-100 font-regular ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>
-                  <ClockCircleFilled className="fg-warning pulsate-fast mr-1" />
+                  <ClockCircleFilled className="fg-warning font-size-120 pulsate-fast mr-1" />
                   <span>Sale period ends in&nbsp;</span>
                   <Countdown date={idoEndUtc} daysInHours={false} />
                 </p>
