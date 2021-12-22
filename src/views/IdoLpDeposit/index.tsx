@@ -53,9 +53,8 @@ export const IdoLpDeposit = (props: {
     const amount = depositAmount ? parseFloat(depositAmount) : 0;
     return props.selectedToken &&
            props.tokenBalance &&
-           amount > 0 && amount >= props.idoDetails.usdcPerUserMin &&
-           amount <= props.tokenBalance &&
-           amount <= props.idoStatus.currentMaxUsdcContribution
+           amount > 0 &&
+           amount <= props.tokenBalance
             ? true
             : false;
   }
@@ -70,13 +69,9 @@ export const IdoLpDeposit = (props: {
           ? t('transactions.validation.no-balance')
           : !amount
             ? t('transactions.validation.no-amount')
-            : amount < props.idoDetails.usdcPerUserMin
-              ? `Min is ${props.idoDetails.usdcPerUserMin}`
-              : amount > props.tokenBalance
-                ? 'Not enough balance'
-                : amount > props.idoStatus.currentMaxUsdcContribution
-                  ? `Max is ${formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}`
-                  : t('transactions.validation.valid-approve');
+            : amount > props.tokenBalance
+              ? 'Not enough balance'
+              : t('transactions.validation.valid-approve');
   }
 
   const onExecuteDepositTx = async () => {

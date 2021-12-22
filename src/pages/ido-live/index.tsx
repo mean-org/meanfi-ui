@@ -57,7 +57,6 @@ export const IdoLiveView = () => {
     theme,
     tokenBalance,
     selectedToken,
-    isWhitelisted,
     previousWalletConnectState,
     setTheme,
     setSelectedToken,
@@ -125,11 +124,8 @@ export const IdoLiveView = () => {
   useEffect(() => {
     if (isUserBlocked) {
       navigate('/ido-blocked');
-    } else if (!isWhitelisted && !isLocal()) {
-      navigate('/');
     }
   }, [
-    isWhitelisted,
     isUserBlocked,
     navigate
   ]);
@@ -831,7 +827,7 @@ export const IdoLiveView = () => {
       </div>
       <div className={`solid-bg ${redeemStartFireworks ? 'blurry' : '' }`}>
 
-        {(isLocal() || isWhitelisted) && (
+        {(isLocal()) && (
           <div className="ido-selector">
             <span className="icon-button-container">
               <Button
