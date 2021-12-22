@@ -77,6 +77,7 @@ export enum OperationType {
     UpgradeProgram = 33,
     CreateVault = 34,
     UpgradeIDL = 35,
+    SetAuthority = 36,
     // IDO
     IdoDeposit = 100,
     IdoWithdraw = 101,
