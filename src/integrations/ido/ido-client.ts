@@ -342,6 +342,10 @@ export class IdoClient {
             gaIsOpen: statusEvent.gaIsOpen as boolean,
             currentImpliedMeanPrice: toUiAmount(statusEvent.meanImpliedPrice),
             currentImpliedMeanPriceTokenAmount: statusEvent.meanImpliedPrice.toNumber(),
+            finalMeanPrice: toUiAmount(statusEvent.meanImpliedPrice),
+            finalMeanPriceTokenAmount: statusEvent.meanImpliedPrice.toNumber(),
+            finalMeanPurchasedAmount: toUiAmount(BN.min(statusEvent.gaMeanTotalPurchased, statusEvent.meanTotalMax)),
+            finalMeanPurchasedTokenAmount: BN.min(statusEvent.gaMeanTotalPurchased, statusEvent.meanTotalMax).toNumber(),
 
             // user (if set)
             userHasContributed: false,
@@ -640,6 +644,10 @@ class IdoTracker {
             gaIsOpen: this.latestIdo.gaIsOpen,
             currentImpliedMeanPrice: this.latestIdo.meanImpliedPrice,
             currentImpliedMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
+            finalMeanPrice: this.latestIdo.meanImpliedPrice,
+            finalMeanPriceTokenAmount: this.latestIdo.meanImpliedPriceTokenAmount,
+            finalMeanPurchasedAmount: Math.min(this.latestIdo.gaMeanTotalPurchased, this.latestIdo.meanTotalMax),
+            finalMeanPurchasedTokenAmount: Math.min(this.latestIdo.gaMeanTotalPurchasedTokenAmount, this.latestIdo.meanTotalMaxTokenAmount),
 
             // user (if set)
             userHasContributed: false,
@@ -1109,6 +1117,10 @@ export type IdoStatus = {
     gaIsOpen: boolean,
     currentImpliedMeanPrice: number,
     currentImpliedMeanPriceTokenAmount: number,
+    finalMeanPrice: number,
+    finalMeanPriceTokenAmount: number,
+    finalMeanPurchasedAmount: number,
+    finalMeanPurchasedTokenAmount: number,
 
     // user (if set)
     userHasContributed: boolean,

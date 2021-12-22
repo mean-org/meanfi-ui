@@ -269,6 +269,14 @@ export type MeanIdoPool = {
             "type": "bool"
           },
           {
+            "name": "gaLastContributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "gaLastContributorUsdcContributedBefore",
+            "type": "u64"
+          },
+          {
             "name": "meanImpliedPrice",
             "type": "u64"
           }
@@ -913,6 +921,14 @@ export const IDL: MeanIdoPool = {
           {
             "name": "gaIsOpen",
             "type": "bool"
+          },
+          {
+            "name": "gaLastContributorNumber",
+            "type": "u32"
+          },
+          {
+            "name": "gaLastContributorUsdcContributedBefore",
+            "type": "u64"
           },
           {
             "name": "meanImpliedPrice",
