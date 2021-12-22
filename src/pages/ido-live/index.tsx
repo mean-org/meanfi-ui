@@ -632,6 +632,7 @@ export const IdoLiveView = () => {
         idoClient={idoClient}
         idoDetails={idoDetails}
         idoStatus={idoStatus}
+        isUserInCoolOffPeriod={isUserInCoolOffPeriod}
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod || !idoStatus.userUsdcContributedAmount}
         selectedToken={selectedToken}
       />;

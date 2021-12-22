@@ -12,7 +12,9 @@ import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { customLogger } from '../..';
-import { LoadingOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { InfoIcon } from '../../components/InfoIcon';
+import { CountdownTimer } from '../../components/CountdownTimer';
 
 export const IdoWithdraw = (props: {
   connection: Connection;
@@ -20,6 +22,7 @@ export const IdoWithdraw = (props: {
   idoStatus: IdoStatus;
   idoDetails: IdoDetails;
   disabled: boolean;
+  isUserInCoolOffPeriod: boolean;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
@@ -329,7 +332,7 @@ export const IdoWithdraw = (props: {
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || isBusy || props.disabled ? 'disabled' : ''}`}>
+      <div className={`well mb-1 ${!connected || isBusy || props.disabled ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -380,6 +383,13 @@ export const IdoWithdraw = (props: {
           <div className="right inner-label">&nbsp;</div>
         </div>
       </div>
+
+      {props.isUserInCoolOffPeriod && (
+        <div className="flex-row flex-center align-items-center">
+          <InfoCircleOutlined />
+          <div className="form-label">You'll be able to withdraw after your cool-off period in <CountdownTimer val={props.idoDetails.coolOffPeriodInSeconds}/>.</div>
+        </div>
+      )}
 
       {/* Info */}
       {props.selectedToken && (
