@@ -35,6 +35,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined, WarningFilled } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
+type ClaimsTabOption = "ido-claims" | "solanium" | "airdrop";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
 declare const geoip2: any;
 
@@ -47,6 +48,7 @@ export const IdoLiveView = () => {
   const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
+  const [currentClaimsTab, setCurrentClaimsTab] = useState<ClaimsTabOption>("ido-claims");
   const [userCountryCode, setUserCountryCode] = useState();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
@@ -554,6 +556,10 @@ export const IdoLiveView = () => {
     setCurrentTab(option);
   }
 
+  const onClaimsTabChange = (option: ClaimsTabOption) => {
+    setCurrentClaimsTab(option);
+  }
+
   const partnerImages = useMemo((): PartnerImage[] => {
     return [
       {fileName: "three-arrows.png", size: "normal"},
@@ -641,11 +647,44 @@ export const IdoLiveView = () => {
     </>
   );
 
+  const renderClaimsForms = () => {
+    if (!idoStatus || !idoDetails) { return null; }
+    switch (currentClaimsTab) {
+      case "ido-claims":
+        return (
+          <IdoWithdraw
+            connection={connection}
+            idoClient={idoClient}
+            idoDetails={idoDetails}
+            idoStatus={idoStatus}
+            disabled={fetchTxInfoStatus === "fetching" || !idoStatus.userUsdcContributedAmount}
+            selectedToken={selectedToken}
+          />
+        );
+      case "solanium":
+        break;
+      case "airdrop":
+        break;
+      default:
+        return null;
+    }
+  }
+
   const renderClaimsTabset = (
     <>
+    {/* onClaimsTabChange ClaimsTabOption  */}
       <div className="button-tabset-container">
-        <div className="tab-button active">Redeem</div>
+        <div className={`tab-button ${currentClaimsTab === "ido-claims" ? 'active' : ''}`} onClick={() => onClaimsTabChange("ido-claims")}>
+          IDO Claims
+        </div>
+        <div className={`tab-button ${currentClaimsTab === "solanium" ? 'active' : ''}`} onClick={() => onClaimsTabChange("solanium")}>
+          Solanium
+        </div>
+        <div className={`tab-button ${currentClaimsTab === "airdrop" ? 'active' : ''}`} onClick={() => onClaimsTabChange("airdrop")}>
+          Airdrop
+        </div>
       </div>
+
       {(idoStatus && selectedToken) && (
         <div className="px-1 mb-2">
           {infoRow(
@@ -687,21 +726,6 @@ export const IdoLiveView = () => {
         Redeem &amp; Start Vesting
       </Button>
 
-      {/* <div className="flex-row justify-content-start align-items-start">
-        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
-        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
-          <span className="fg-orange-red pulsate mr-1">100</span>
-          <span>MEAN tokens (10%)</span>
-        </div>
-      </div>
-
-      <div className="flex-row justify-content-start align-items-start">
-        <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
-        <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
-          <span className="fg-orange-red pulsate mr-1">900</span>
-          <span>MEAN tokens (90%) over 12 months</span>
-        </div>
-      </div> */}
     </>
   );
 
@@ -734,6 +758,10 @@ export const IdoLiveView = () => {
               <div className={`vertical-panel-gradient-overlay ${today > idoStartUtc ? 'wave' : ''}`}>
               </div>
               {
+                /**
+                 * If previous to the IDO start and during the IDO, show [DEPOSIT] | [WITHDRAW] tabset
+                 * if past beyond the IDO end time, show the [IDO] | [Solanium] | [Airdrop] tabset
+                 */
                 today <= idoEndUtc
                   ? renderDepositAndWithdrawTabset
                   : renderClaimsTabset
