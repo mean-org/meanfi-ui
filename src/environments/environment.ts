@@ -30,7 +30,7 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-prod',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: ''
+            idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n'
         },
         staging: {
             appUrl: 'https://app-stage.meanfi.com',
