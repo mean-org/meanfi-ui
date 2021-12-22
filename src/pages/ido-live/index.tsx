@@ -687,8 +687,7 @@ export const IdoLiveView = () => {
         Redeem &amp; Start Vesting
       </Button>
 
-      {/* Bind redeemable MEAN tokens */}
-      <div className="flex-row justify-content-start align-items-start">
+      {/* <div className="flex-row justify-content-start align-items-start">
         <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Vesting Now:</div>
         <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
           <span className="fg-orange-red pulsate mr-1">100</span>
@@ -696,14 +695,13 @@ export const IdoLiveView = () => {
         </div>
       </div>
 
-      {/* Bind streamable MEAN tokens */}
       <div className="flex-row justify-content-start align-items-start">
         <div className="flex-auto align-items-start inner-label line-height-150" style={{minWidth: 85}}>Money Stream:</div>
         <div className="flex-fill align-items-start value-display line-height-150 text-left pl-2">
           <span className="fg-orange-red pulsate mr-1">900</span>
           <span>MEAN tokens (90%) over 12 months</span>
         </div>
-      </div>
+      </div> */}
     </>
   );
 
@@ -888,7 +886,45 @@ export const IdoLiveView = () => {
                     {today < idoStartUtc
                       ? renderVideo
                       : today > idoEndUtc ? (
-                        <p>Options for IDO finished (Left column)</p>
+                        <>
+                        {(idoStatus && selectedToken) && (
+                          <div className="left-column-summary">
+                            {infoRow(
+                              'Ended on',
+                              dateFormat(idoEndUtc, UTC_DATE_TIME_FORMAT)
+                            )}
+                            {infoRow(
+                              'USDC Contributed',
+                              getTokenAmountAndSymbolByTokenAddress(
+                                idoStatus.gaTotalUsdcContributed,
+                                selectedToken.address,
+                                true
+                              )
+                            )}
+                            {infoRow(
+                              'MEAN tokens sold',
+                              getTokenAmountAndSymbolByTokenAddress(
+                                idoStatus.gaMeanTotalPurchased,
+                                '',
+                                true
+                              )
+                            )}
+                            {infoRow(
+                              'Final token price',
+                              idoStatus.currentMeanPrice
+                                ? getTokenAmountAndSymbolByTokenAddress(
+                                    idoStatus.currentMeanPrice,
+                                    selectedToken.address
+                                  )
+                                : '-'
+                            )}
+                            {infoRow(
+                              'Number of participants',
+                              idoStatus ? formatThousands(idoStatus.totalContributors) : '0'
+                            )}
+                          </div>
+                        )}
+                        </>
                       ) : (
                       <>
                         <div className="text-center">

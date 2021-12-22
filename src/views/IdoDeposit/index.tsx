@@ -11,7 +11,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 
 export const IdoDeposit = (props: {
@@ -292,6 +292,12 @@ export const IdoDeposit = (props: {
 
   };
 
+  const getExchangeUrl = () => {
+    const appBaseUrl = appConfig.getConfig().appUrl;
+    const exchangeUrl = `${appBaseUrl}/exchange?from=SOL&to=USDC`;
+    return exchangeUrl;
+  }
+
   const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
     return (
       <div className={`flex-fixed-right ${spaceBelow ? 'mb-1' : ''}`}>
@@ -395,10 +401,13 @@ export const IdoDeposit = (props: {
             <span>{t('add-funds.label-right')}:</span>
             <span>
               {`${props.tokenBalance && props.selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, props.selectedToken?.address, true)
+                  ? getTokenAmountAndSymbolByTokenAddress(props.tokenBalance, '', true)
                   : "0"
               }`}
             </span>
+            <a className="simplelink underline-on-hover ml-1" target="_blank" rel="noopener noreferrer" href={getExchangeUrl()}>
+              👉 Get more USDC
+            </a>
           </div>
           <div className="right inner-label">&nbsp;</div>
         </div>
