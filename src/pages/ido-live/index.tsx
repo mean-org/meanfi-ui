@@ -663,7 +663,7 @@ export const IdoLiveView = () => {
             idoDetails={idoDetails}
             idoStatus={idoStatus}
             redeemStarted={redeemStarted}
-            disabled={fetchTxInfoStatus === "fetching" || !idoStatus.userUsdcContributedAmount}
+            disabled={!redeemStarted || fetchTxInfoStatus === "fetching" || !idoStatus.userUsdcContributedAmount}
             selectedToken={selectedToken}
           />
         );
