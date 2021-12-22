@@ -682,7 +682,6 @@ export const IdoLiveView = () => {
 
   const renderClaimsTabset = (
     <>
-    {/* onClaimsTabChange ClaimsTabOption  */}
       <div className="button-tabset-container">
         <div className={`tab-button ${currentClaimsTab === "ido-claims" ? 'active' : ''}`} onClick={() => onClaimsTabChange("ido-claims")}>
           IDO Claims
@@ -695,47 +694,6 @@ export const IdoLiveView = () => {
         </div>
       </div>
       {renderClaimsForms()}
-
-      {/* {(idoStatus && selectedToken) && (
-        <div className="px-1 mb-2">
-          {infoRow(
-            'USDC Contributed',
-            getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.gaTotalUsdcContributed,
-              selectedToken.address,
-              true
-            )
-          )}
-          {infoRow(
-            'Total MEAN sold',
-            getTokenAmountAndSymbolByTokenAddress(
-              idoStatus.gaMeanTotalPurchased,
-              '',
-              true
-            )
-          )}
-          {infoRow(
-            'Implied token price',
-            idoStatus.currentMeanPrice
-              ? getTokenAmountAndSymbolByTokenAddress(
-                  idoStatus.currentMeanPrice,
-                  selectedToken.address
-                )
-              : '-'
-          )}
-        </div>
-      )}
-      <Button
-        className="main-cta mb-2"
-        block
-        type="primary"
-        shape="round"
-        size="large"
-        disabled={!redeemStartUtc || today < redeemStartUtc}
-        onClick={() => {}}>
-        Redeem &amp; Start Vesting
-      </Button> */}
-
     </>
   );
 
@@ -944,16 +902,16 @@ export const IdoLiveView = () => {
                             {infoRow(
                               'MEAN tokens sold',
                               getTokenAmountAndSymbolByTokenAddress(
-                                idoStatus.gaMeanTotalPurchased,
+                                idoStatus.finalMeanPurchasedAmount,
                                 '',
                                 true
                               )
                             )}
                             {infoRow(
                               'Final token price',
-                              idoStatus.currentImpliedMeanPrice
+                              idoStatus.finalMeanPrice
                                 ? getTokenAmountAndSymbolByTokenAddress(
-                                    idoStatus.currentImpliedMeanPrice,
+                                    idoStatus.finalMeanPrice,
                                     selectedToken.address
                                   )
                                 : '-'

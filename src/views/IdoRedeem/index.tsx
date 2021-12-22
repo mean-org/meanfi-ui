@@ -403,9 +403,9 @@ export const IdoRedeem = (props: {
           <div className="px-1 mb-2">
             {idoInfoRow(
               'Final Token Price',
-              props.idoStatus.currentImpliedMeanPrice
+              props.idoStatus.finalMeanPrice
                 ? getTokenAmountAndSymbolByTokenAddress(
-                    props.idoStatus.currentImpliedMeanPrice,
+                    props.idoStatus.finalMeanPrice,
                     props.selectedToken.address
                   )
                 : '-'
