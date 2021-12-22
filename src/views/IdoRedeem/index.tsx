@@ -42,8 +42,6 @@ export const IdoRedeem = (props: {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setWithdrawAmount("");
-    } else if (newValue === '.') {
-      setWithdrawAmount(".");
     } else if (isValidNumber(newValue)) {
       setWithdrawAmount(newValue);
     }

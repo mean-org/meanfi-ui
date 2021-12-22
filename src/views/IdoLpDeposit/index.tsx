@@ -11,20 +11,21 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 
-export const IdoWithdraw = (props: {
+export const IdoLpDeposit = (props: {
   connection: Connection;
   idoClient: IdoClient | undefined
   idoStatus: IdoStatus;
   idoDetails: IdoDetails;
   disabled: boolean;
+  tokenBalance: number;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+  const [depositAmount, setDepositAmount] = useState<string>('');
   const {
     selectedToken,
     transactionStatus,
@@ -40,42 +41,45 @@ export const IdoWithdraw = (props: {
   const handleAmountChange = (e: any) => {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
-      setWithdrawAmount("");
+      setDepositAmount("");
     } else if (isValidNumber(newValue)) {
-      setWithdrawAmount(newValue);
+      setDepositAmount(newValue);
     }
   };
 
   // Validation
 
   const isValidInput = (): boolean => {
-    const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
-    const amountLeft = props.idoStatus.userUsdcContributedAmount - amount;
-    return amount &&
-           props.idoStatus.userUsdcContributedAmount &&
-           ((amountLeft >= props.idoDetails.usdcPerUserMin && amount < props.idoStatus.userUsdcContributedAmount) ||
-             amount === props.idoStatus.userUsdcContributedAmount)
-      ? true
-      : false;
+    const amount = depositAmount ? parseFloat(depositAmount) : 0;
+    return props.selectedToken &&
+           props.tokenBalance &&
+           amount > 0 && amount >= props.idoDetails.usdcPerUserMin &&
+           amount <= props.tokenBalance &&
+           amount <= props.idoStatus.currentMaxUsdcContribution
+            ? true
+            : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
-    const amountLeft = props.idoStatus.userUsdcContributedAmount - amount;
+    const amount = depositAmount ? parseFloat(depositAmount) : 0;
     return !connected
       ? t('transactions.validation.not-connected')
-      : !props.selectedToken || !props.idoStatus.userUsdcContributedAmount
-        ? 'No contribution to withdraw'
-        : !amount
-          ? t('transactions.validation.no-amount')
-          : amount > props.idoStatus.userUsdcContributedAmount
-            ? `Max is ${formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}`
-            : amount > 0 && amountLeft < props.idoDetails.usdcPerUserMin && amount !== props.idoStatus.userUsdcContributedAmount
-              ? `Min is ${getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}`
-              : t('transactions.validation.valid-approve');
+      : props.idoStatus.userHasContributed
+        ? 'You already contributed'
+        : !props.selectedToken || !props.tokenBalance
+          ? t('transactions.validation.no-balance')
+          : !amount
+            ? t('transactions.validation.no-amount')
+            : amount < props.idoDetails.usdcPerUserMin
+              ? `Min is ${props.idoDetails.usdcPerUserMin}`
+              : amount > props.tokenBalance
+                ? 'Not enough balance'
+                : amount > props.idoStatus.currentMaxUsdcContribution
+                  ? `Max is ${formatAmount(props.idoStatus.currentMaxUsdcContribution, 2, true)}`
+                  : t('transactions.validation.valid-approve');
   }
 
-  const onExecuteWithdrawTx = async () => {
+  const onExecuteDepositTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -95,7 +99,7 @@ export const IdoWithdraw = (props: {
         });
 
         const meanIdoAddress = new PublicKey(props.idoDetails.idoAddress);
-        const amount = parseFloat(withdrawAmount);
+        const amount = parseFloat(depositAmount);
         const data = {
           meanIdoAddress: meanIdoAddress.toBase58(),                  // meanIdoAddress
           amount: amount                                              // amount
@@ -114,7 +118,7 @@ export const IdoWithdraw = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.createWithdrawUsdcTx(
+        return await props.idoClient.createDepositUsdcTx(
           meanIdoAddress,                                           // meanIdoAddress
           amount                                                    // amount
         )
@@ -141,7 +145,7 @@ export const IdoWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -149,7 +153,7 @@ export const IdoWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -175,7 +179,7 @@ export const IdoWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -198,7 +202,7 @@ export const IdoWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -211,7 +215,7 @@ export const IdoWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -243,7 +247,7 @@ export const IdoWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -256,7 +260,7 @@ export const IdoWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -272,8 +276,8 @@ export const IdoWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
-            setWithdrawAmount("");
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoDeposit);
+            setDepositAmount("");
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -285,6 +289,12 @@ export const IdoWithdraw = (props: {
     }
 
   };
+
+  const getExchangeUrl = () => {
+    const appBaseUrl = appConfig.getConfig().appUrl;
+    const exchangeUrl = `${appBaseUrl}/exchange?from=SOL&to=USDC`;
+    return exchangeUrl;
+  }
 
   const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
     return (
@@ -299,37 +309,58 @@ export const IdoWithdraw = (props: {
     );
   }
 
+  const getGaLine = (inGa: boolean) => {
+    return (
+      <div className="text-center mt-2 mb-2">
+        {inGa ? (
+          <>
+            <span className="align-middle">✅</span>
+            <span className="label ml-1">Guaranteed allocation</span>
+          </>
+        ) : (
+          <span className="label">Joined the waitlist</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
-      {/* withdraw amount */}
+      {/* Top up amount */}
       <div className="flex-fixed-right mb-1">
-        <div className="left"><div className="form-label">Amount</div></div>
+        <div className="left">
+          <div className="form-label">Amount</div>
+        </div>
         {props.selectedToken && (
           <div className="right token-group">
             <div
-              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
-              onClick={() => setWithdrawAmount(
+              className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              onClick={() => setDepositAmount(
                 formatAmount(
-                  props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin,
+                  props.tokenBalance > props.idoDetails.usdcPerUserMin
+                    ? props.idoDetails.usdcPerUserMin
+                    : props.tokenBalance,
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Min: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}
+              Min: {props.idoDetails.usdcPerUserMin}
             </div>
             <div
-              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
-              onClick={() => setWithdrawAmount(
+              className={`token-max ${connected && !props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
+              onClick={() => setDepositAmount(
                 formatAmount(
-                  props.idoStatus.userUsdcContributedAmount,
+                  props.tokenBalance > props.idoStatus.currentMaxUsdcContribution
+                    ? props.idoStatus.currentMaxUsdcContribution
+                    : props.tokenBalance,
                   props.selectedToken ? props.selectedToken.decimals : 2
                 )
               )}>
-              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.userUsdcContributedAmount), 2))}
+              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.currentMaxUsdcContribution), 2))}
             </div>
           </div>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || isBusy || props.disabled ? 'disabled' : ''}`}>
+      <div className={`well mb-2 ${!connected || props.idoStatus.userHasContributed || isBusy || props.disabled ? 'disabled' : ''}`}>
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on">
@@ -347,7 +378,7 @@ export const IdoWithdraw = (props: {
           </div>
           <div className="right">
             <input
-              id="withdraw-amount-field"
+              id="topup-amount-field"
               className="general-text-input text-right"
               inputMode="decimal"
               autoComplete="off"
@@ -359,23 +390,22 @@ export const IdoWithdraw = (props: {
               minLength={1}
               maxLength={79}
               spellCheck="false"
-              value={withdrawAmount}
+              value={depositAmount}
             />
           </div>
         </div>
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>Max withdraw:</span>
+            <span>{t('add-funds.label-right')}:</span>
             <span>
-              {`${props.idoStatus.userUsdcContributedAmount && props.selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(
-                      props.idoStatus.userUsdcContributedAmount,
-                      props.selectedToken.address,
-                      true
-                    )
-                  : "0"
-              }`}
+              {props.tokenBalance
+                ? getFormattedNumberToLocale(formatAmount(props.tokenBalance, 2))
+                : '0'
+              }
             </span>
+            <a className="simplelink underline-on-hover ml-1" target="_blank" rel="noopener noreferrer" href={getExchangeUrl()}>
+              👉 Get more USDC
+            </a>
           </div>
           <div className="right inner-label">&nbsp;</div>
         </div>
@@ -446,19 +476,29 @@ export const IdoWithdraw = (props: {
         </>
       )}
 
+      {props.idoStatus.isRunning && (
+        <>
+          {publicKey && props.idoStatus && props.idoStatus.userHasContributed && (
+            <>
+            {props.idoStatus.userIsInGa ? getGaLine(true) : getGaLine(false)}
+            </>
+          )}
+        </>
+      )}
+
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
         block
         type="primary"
         shape="round"
         size="large"
-        disabled={props.disabled || !isValidInput()}
-        onClick={onExecuteWithdrawTx}>
+        disabled={props.disabled || props.idoStatus.userHasContributed || !isValidInput()}
+        onClick={onExecuteDepositTx}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}
         {isBusy
-          ? 'Withdrawing...'
+          ? 'Depositing...'
           : getTransactionStartButtonLabel()}
       </Button>
     </>

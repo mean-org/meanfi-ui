@@ -27,6 +27,7 @@ import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
+import { IdoLpView } from "./pages/ido-lp";
 
 export function AppRoutes() {
 
@@ -59,9 +60,9 @@ export function AppRoutes() {
                       <Route path="/ido" element={<IdoView />} />
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
+                      <Route path="/ido-lp" element={<IdoLpView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
-                      {/* <Route path="/vaults" element={<ServiceUnavailableView />} /> */}
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>

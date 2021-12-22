@@ -42,8 +42,6 @@ export const IdoDeposit = (props: {
     const newValue = e.target.value;
     if (newValue === null || newValue === undefined || newValue === "") {
       setDepositAmount("");
-    } else if (newValue === '.') {
-      setDepositAmount(".");
     } else if (isValidNumber(newValue)) {
       setDepositAmount(newValue);
     }

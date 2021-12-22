@@ -748,18 +748,21 @@ export const IdoLiveView = () => {
             <div className="countdown-timer">
               <div className={`text-center ${today < idoEndUtc ? 'panel1 show' : 'panel1 hide'}`}>
                 <p className={`font-size-100 font-regular ${today < idoStartUtc ? 'd-block' : 'hidden'}`}>
-                  <ClockCircleFilled className="fg-warning font-size-120 pulsate-fast mr-1" />
-                  <span>Sale period starts in&nbsp;</span>
-                  <Countdown date={idoStartUtc} daysInHours={true} />
+                  <ClockCircleFilled className="fg-warning font-size-130 align-middle pulsate-fast mr-1" />
+                  <span className="align-middle">Sale period starts in&nbsp;</span>
+                  <Countdown className="align-middle" date={idoStartUtc} daysInHours={true} />
                 </p>
                 <p className={`font-size-100 font-regular ${today > idoStartUtc && today < idoEndUtc ? 'd-block' : 'hidden'}`}>
-                  <ClockCircleFilled className="fg-warning font-size-120 pulsate-fast mr-1" />
-                  <span>Sale period ends in&nbsp;</span>
-                  <Countdown date={idoEndUtc} daysInHours={false} />
+                  <ClockCircleFilled className="fg-warning font-size-130 align-middle pulsate-fast mr-1" />
+                  <span className="align-middle">Sale period ends in&nbsp;</span>
+                  <Countdown className="align-middle" date={idoEndUtc} daysInHours={false} />
                 </p>
               </div>
               <div className={`text-center ${today > idoEndUtc && today < redeemStartUtc ? 'panel2 show' : 'panel2 hide'}`}>
-                <p className={`font-size-100 font-regular`}>Claims period starts in <Countdown date={redeemStartUtc} daysInHours={true} /></p>
+                <p className={`font-size-100 font-regular`}>
+                  <span className="align-middle">Claims period starts in&nbsp;</span>
+                  <Countdown className="align-middle" date={redeemStartUtc} daysInHours={true} />
+                </p>
               </div>
             </div>
 
@@ -948,9 +951,9 @@ export const IdoLiveView = () => {
                             )}
                             {infoRow(
                               'Final token price',
-                              idoStatus.currentMeanPrice
+                              idoStatus.currentImpliedMeanPrice
                                 ? getTokenAmountAndSymbolByTokenAddress(
-                                    idoStatus.currentMeanPrice,
+                                    idoStatus.currentImpliedMeanPrice,
                                     selectedToken.address
                                   )
                                 : '-'
