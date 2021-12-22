@@ -918,7 +918,7 @@ export const IdoLiveView = () => {
 
             {(idoStartUtc && idoEndUtc) ? (
               <Row>
-                <Col xs={24} lg={16}>
+                <Col xs={24} lg={today > idoEndUtc ? 12 : 16}>
                   <div className="flex-column flex-center ido-column">
                     {today < idoStartUtc
                       ? renderVideo
@@ -986,7 +986,7 @@ export const IdoLiveView = () => {
                     )}
                   </div>
                 </Col>
-                <Col xs={24} lg={8}>
+                <Col xs={24} lg={today > idoEndUtc ? 12 : 8}>
                   <div className="flex-column flex-center ido-column">
                     {idoDetails && !regionLimitationAcknowledged
                       ? renderRegionAcknowledgement(true)
