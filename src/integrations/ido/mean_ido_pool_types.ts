@@ -124,6 +124,61 @@ export type MeanIdoPool = {
       ],
       "args": []
     },
+    {
+      "name": "lpd",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
+    }
   ],
   "accounts": [
     {
@@ -778,6 +833,61 @@ export const IDL: MeanIdoPool = {
       ],
       "args": []
     },
+    {
+      "name": "lpd",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
+    }
   ],
   "accounts": [
     {

@@ -118,12 +118,12 @@ export const IdoLpDeposit = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.createDepositUsdcTx(
+        return await props.idoClient.createDepositUsdcLpTx(
           meanIdoAddress,                                           // meanIdoAddress
           amount                                                    // amount
         )
         .then(value => {
-          consoleOut('createDepositUsdcTx returned transaction:', value);
+          consoleOut('createDepositUsdcLpTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -136,7 +136,7 @@ export const IdoLpDeposit = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createDepositUsdcTx error:', error);
+          console.error('createDepositUsdcLpTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
