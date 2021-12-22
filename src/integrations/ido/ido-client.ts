@@ -132,7 +132,7 @@ export class IdoClient {
 
         const [userIdo, userIdoBump] = await this.findUserIdoProgramAddress(currentUserPubKey, meanIdoAddress);
 
-        const usdcAmountBn = new anchor.BN(amount).mul(new BN(10).pow(DECIMALS_BN));
+        const usdcAmountBn = new anchor.BN(amount * 10**DECIMALS);
         const userUsdcTokenResponse = await program.provider.connection.getTokenAccountBalance(userUsdcAddress);
         const userUsdcTokenAmount = new BN(userUsdcTokenResponse.value.amount ?? 0);
         if (userUsdcTokenAmount.lt(usdcAmountBn)) {
