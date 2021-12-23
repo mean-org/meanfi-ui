@@ -84,6 +84,7 @@ export const IdoLiveView = () => {
   // Cool-off management
   const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
   const [idleTimeInSeconds, setIdleTimeInSeconds] = useState(0);
+  const [coolOffPeriodCountdown, setCoolOffPeriodCountdown] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -357,10 +358,15 @@ export const IdoLiveView = () => {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
-      if (!redeemStarted && redeemStartUtc && today > redeemStartUtc && isUserInGa()) {
-        setRedeemStarted(true);
+      if (redeemStarted && redeemStartUtc && today > redeemStartUtc && isUserInGa()) {
         setRedeemStartFireworks(true);
         consoleOut('Setting fireworks ON...', '', 'blue');
+      }
+      if (!redeemStarted) {
+        setRedeemStarted(true);
+      }
+      if (isUserInCoolOffPeriod) {
+        setCoolOffPeriodCountdown(value => value - 1);
       }
     }, 1000);
 
@@ -375,23 +381,25 @@ export const IdoLiveView = () => {
     idoStartUtc,
     redeemStarted,
     redeemStartUtc,
+    isUserInCoolOffPeriod,
     isUserInGa
   ]);
 
   useEffect(() => {
+    let timeout: any;
 
-    const timeout = setTimeout(() => {
-      if (redeemStarted) {
+    if (redeemStartFireworks) {
+      timeout = setTimeout(() => {
         consoleOut('Setting fireworks OFF...', '', 'blue');
         setRedeemStartFireworks(false);
-      }
-    }, 10000);
+      }, 10000);
+    }
 
     return () => {
       clearTimeout(timeout);
     }
 
-  }, [redeemStarted]);
+  }, [redeemStartFireworks]);
 
   // Set coolOff flag
   useEffect(() => {
@@ -418,6 +426,11 @@ export const IdoLiveView = () => {
       setIdleTimeInSeconds(elapsed);
       if (elapsed < idoDetails.coolOffPeriodInSeconds) {
         inCoolOff = true;
+      }
+      if (inCoolOff) {
+        setCoolOffPeriodCountdown(idoDetails.coolOffPeriodInSeconds);
+      } else {
+        setCoolOffPeriodCountdown(0);
       }
     }
     setIsUserInCoolOffPeriod(inCoolOff);
@@ -626,6 +639,7 @@ export const IdoLiveView = () => {
         idoDetails={idoDetails}
         idoStatus={idoStatus}
         isUserInCoolOffPeriod={isUserInCoolOffPeriod}
+        coolOffPeriodCountdown={coolOffPeriodCountdown}
         disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod || !idoStatus.userUsdcContributedAmount}
         selectedToken={selectedToken}
       />;
@@ -662,9 +676,13 @@ export const IdoLiveView = () => {
           />
         );
       case "solanium":
-        break;
+        return (
+          <p>Solanium thing</p>
+        );
       case "airdrop":
-        break;
+        return (
+          <p>The airdrop thing</p>
+        );
       default:
         return null;
     }
@@ -683,7 +701,9 @@ export const IdoLiveView = () => {
           Airdrop
         </div>
       </div>
-      {renderClaimsForms()}
+      <div className="redeem-inner-area">
+        {renderClaimsForms()}
+      </div>
     </>
   );
 
@@ -716,7 +736,7 @@ export const IdoLiveView = () => {
 
             {/* Show forms based on timeline */}
             <div className="shadowed-box max-width">
-              <div className={`vertical-panel-gradient-overlay ${publicKey && isIdoActive() && regionLimitationAcknowledged ? 'wave' : ''}`}>
+              <div className={`vertical-panel-gradient-overlay ${publicKey && idoStatus && regionLimitationAcknowledged && (isIdoActive() || (redeemStarted && idoStatus.userIsInGa)) ? 'wave' : ''}`}>
               </div>
               {
                 /**
@@ -829,12 +849,7 @@ export const IdoLiveView = () => {
                 shape="circle"
                 size="small"
                 icon={<SettingOutlined style={{ fontSize: 14 }} />}
-                onClick={() => {
-                  setRedeemStartFireworks(true);
-                  setTimeout(() => {
-                    setRedeemStartFireworks(false);
-                  }, 10000);
-                }}
+                onClick={() => setRedeemStartFireworks(true)}
               />
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
               <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>

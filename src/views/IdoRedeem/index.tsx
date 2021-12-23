@@ -307,142 +307,63 @@ export const IdoRedeem = (props: {
 
   return (
     <>
-      {/* withdraw amount */}
-      <div className="flex-fixed-right mb-1">
-        <div className="left"><div className="form-label">Amount</div></div>
+      <div className="flex-fill flex-column justify-content-center">
         {props.selectedToken && (
-          <div className="right token-group">
-            <div
-              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
-              onClick={() => setWithdrawAmount(
-                formatAmount(
-                  props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin,
-                  props.selectedToken ? props.selectedToken.decimals : 2
-                )
-              )}>
-              Min: {getFormattedNumberToLocale(formatAmount(props.idoStatus.userUsdcContributedAmount - props.idoDetails.usdcPerUserMin, 2))}
-            </div>
-            <div
-              className={`token-max ${connected && props.idoStatus.userHasContributed && !isBusy && !props.disabled ? 'simplelink' : 'disabled'}`}
-              onClick={() => setWithdrawAmount(
-                formatAmount(
+          <>
+            <div className="px-1 mb-2">
+              {idoInfoRow(
+                'Your USDC Contribution',
+                getTokenAmountAndSymbolByTokenAddress(
                   props.idoStatus.userUsdcContributedAmount,
-                  props.selectedToken ? props.selectedToken.decimals : 2
-                )
-              )}>
-              Max: {getFormattedNumberToLocale(formatAmount(Math.floor(props.idoStatus.userUsdcContributedAmount), 2))}
+                  props.selectedToken.address,
+                  true
+                ),
+                false
+              )}
             </div>
-          </div>
+            <div className="px-1 mb-2">
+              {idoInfoRow(
+                'Final Token Price',
+                props.idoStatus.finalMeanPrice
+                  ? getTokenAmountAndSymbolByTokenAddress(
+                      props.idoStatus.finalMeanPrice,
+                      props.selectedToken.address
+                    )
+                  : '-'
+              )}
+            </div>
+            <div className="px-1 mb-2">
+              {idoInfoRow(
+                'Redeemable MEAN',
+                getTokenAmountAndSymbolByTokenAddress(
+                  props.idoStatus.userMeanImpliedAmount,
+                  '',
+                  true
+                ),
+                false
+              )}
+            </div>
+
+            {isUserInGa() ? (
+              <>
+              {!props.redeemStarted && (
+                <div className="px-1 mb-2 text-center">
+                  <span>Come back when redemption opens to claim your allocation</span>
+                </div>
+              )}
+              </>
+            ) : (
+              <>
+              {!props.redeemStarted && (
+                <div className="px-1 mb-2 text-center">
+                  <span>You didn't make it. Withdraw your USDC now</span>
+                </div>
+              )}
+              </>
+            )}
+          </>
         )}
       </div>
-      <div className={`well mb-2 ${!connected || isBusy || props.disabled ? 'disabled' : ''}`}>
-        <div className="flex-fixed-left">
-          <div className="left">
-            <span className="add-on">
-              {props.selectedToken && (
-                <TokenDisplay onClick={() => {}}
-                  name={props.selectedToken.name}
-                  showName={false}
-                  symbol={props.selectedToken.symbol}
-                  mintAddress={props.selectedToken.address}
-                  icon={<img alt={`${props.selectedToken.name}`} width={20} height={20} src={props.selectedToken.logoURI} />}
-                  showCaretDown={false}
-                />
-              )}
-            </span>
-          </div>
-          <div className="right">
-            <input
-              id="withdraw-amount-field"
-              className="general-text-input text-right"
-              inputMode="decimal"
-              autoComplete="off"
-              autoCorrect="off"
-              type="text"
-              onChange={handleAmountChange}
-              pattern="^[0-9]*$"
-              placeholder="0"
-              minLength={1}
-              maxLength={79}
-              spellCheck="false"
-              value={withdrawAmount}
-            />
-          </div>
-        </div>
-        <div className="flex-fixed-right">
-          <div className="left inner-label">
-            <span>Max withdraw:</span>
-            <span>
-              {`${props.idoStatus.userUsdcContributedAmount && props.selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(
-                      props.idoStatus.userUsdcContributedAmount,
-                      props.selectedToken.address,
-                      true
-                    )
-                  : "0"
-              }`}
-            </span>
-          </div>
-          <div className="right inner-label">&nbsp;</div>
-        </div>
-      </div>
-
-      {props.selectedToken && (
-        <>
-          <div className="px-1 mb-2">
-            {idoInfoRow(
-              'Your USDC Contribution',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userUsdcContributedAmount,
-                props.selectedToken.address,
-                true
-              ),
-              false
-            )}
-          </div>
-          <div className="px-1 mb-2">
-            {idoInfoRow(
-              'Final Token Price',
-              props.idoStatus.finalMeanPrice
-                ? getTokenAmountAndSymbolByTokenAddress(
-                    props.idoStatus.finalMeanPrice,
-                    props.selectedToken.address
-                  )
-                : '-'
-            )}
-          </div>
-          <div className="px-1 mb-2">
-            {idoInfoRow(
-              'Redeemable MEAN',
-              getTokenAmountAndSymbolByTokenAddress(
-                props.idoStatus.userMeanImpliedAmount,
-                '',
-                true
-              ),
-              false
-            )}
-          </div>
-
-          {isUserInGa() ? (
-            <>
-            {!props.redeemStarted && (
-              <div className="px-1 mb-2 text-center">
-                <span>Come back when redemption opens to claim your allocation</span>
-              </div>
-            )}
-            </>
-          ) : (
-            <>
-            {!props.redeemStarted && (
-              <div className="px-1 mb-2 text-center">
-                <span>You didn't make it. Withdraw your USDC now</span>
-              </div>
-            )}
-            </>
-          )}
-        </>
-      )}
-
       <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
         block
