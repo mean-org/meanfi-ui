@@ -358,14 +358,14 @@ export const IdoLiveView = () => {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
-      if (redeemStarted && redeemStartUtc && today > redeemStartUtc && isUserInGa()) {
-        setRedeemStartFireworks(true);
-        consoleOut('Setting fireworks ON...', '', 'blue');
-      }
       if (!redeemStarted) {
         setRedeemStarted(true);
+        if (isUserInGa()) {
+          setRedeemStartFireworks(true);
+          consoleOut('Setting fireworks ON...', '', 'blue');
+        }
       }
-      if (isUserInCoolOffPeriod) {
+      if (coolOffPeriodCountdown) {
         setCoolOffPeriodCountdown(value => value - 1);
       }
     }, 1000);
@@ -378,11 +378,11 @@ export const IdoLiveView = () => {
     today,
     idoEndUtc,
     idoDetails,
+    isUserInGa,
     idoStartUtc,
     redeemStarted,
     redeemStartUtc,
-    isUserInCoolOffPeriod,
-    isUserInGa
+    coolOffPeriodCountdown
   ]);
 
   useEffect(() => {
@@ -424,13 +424,11 @@ export const IdoLiveView = () => {
       const diff = Math.floor(now / 1000) - Math.floor(lastActivityTs / 1000);
       const elapsed = diff > 0 ? diff : 0;
       setIdleTimeInSeconds(elapsed);
-      if (elapsed < idoDetails.coolOffPeriodInSeconds) {
+      if (elapsed > 0 && elapsed <= idoDetails.coolOffPeriodInSeconds) {
         inCoolOff = true;
-      }
-      if (inCoolOff) {
-        setCoolOffPeriodCountdown(idoDetails.coolOffPeriodInSeconds);
-      } else {
-        setCoolOffPeriodCountdown(0);
+        if (coolOffPeriodCountdown <= 1) {
+          setCoolOffPeriodCountdown(elapsed);
+        }
       }
     }
     setIsUserInCoolOffPeriod(inCoolOff);
@@ -440,6 +438,7 @@ export const IdoLiveView = () => {
     idoStatus,
     idoDetails,
     idoStartUtc,
+    coolOffPeriodCountdown
   ]);
 
   // Set IDO started flag
@@ -640,7 +639,7 @@ export const IdoLiveView = () => {
         idoStatus={idoStatus}
         isUserInCoolOffPeriod={isUserInCoolOffPeriod}
         coolOffPeriodCountdown={coolOffPeriodCountdown}
-        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || isUserInCoolOffPeriod || !idoStatus.userUsdcContributedAmount}
+        disabled={!isIdoActive() || fetchTxInfoStatus === "fetching" || coolOffPeriodCountdown > 0 || !idoStatus.userUsdcContributedAmount}
         selectedToken={selectedToken}
       />;
     }
@@ -853,6 +852,7 @@ export const IdoLiveView = () => {
               />
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
               <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>
+              <span className="ml-1">coolOffPeriodCountdown:</span><span className="ml-1 font-bold fg-dark-active">{coolOffPeriodCountdown || '-'}</span>
               <span className="ml-1">isUserInCoolOffPeriod:</span><span className="ml-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
             </div>
             {/* <div className="ido-selector">

@@ -13,7 +13,6 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { customLogger } from '../..';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { CountdownTimer } from '../../components/CountdownTimer';
 
 export const IdoWithdraw = (props: {
   connection: Connection;
@@ -449,10 +448,10 @@ export const IdoWithdraw = (props: {
         </>
       )}
 
-      {props.isUserInCoolOffPeriod && (
+      {props.coolOffPeriodCountdown > 0 && (
         <div className="text-center line-height-120 mb-2 mt-2 px-5">
           <InfoCircleOutlined className="mr-1" />
-          <span className="font-size-80 fg-secondary-60">You'll be able to withdraw after your 10 minute cool-off period (in <CountdownTimer val={props.coolOffPeriodCountdown}/>)</span>
+          <span className="font-size-80 fg-secondary-60">You'll be able to withdraw after your 10 minute cool-off period (in {props.coolOffPeriodCountdown} seconds)</span>
         </div>
       )}
 

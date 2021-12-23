@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Button } from 'antd';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
@@ -38,50 +38,51 @@ export const IdoRedeem = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const handleAmountChange = (e: any) => {
-    const newValue = e.target.value;
-    if (newValue === null || newValue === undefined || newValue === "") {
-      setWithdrawAmount("");
-    } else if (isValidNumber(newValue)) {
-      setWithdrawAmount(newValue);
-    }
-  };
+  const nowTs = new Date().getTime() / 1000;
 
-  const isUserInGa = () => {
-    return props.idoStatus && props.idoStatus.userHasContributed && props.idoStatus.userIsInGa
+  const isUserInGa = useCallback(() => {
+    return publicKey && props.idoStatus && props.idoStatus.userIsInGa
       ? true
       : false;
-  }
+  }, [
+    props.idoStatus,
+    publicKey
+  ]);
+
+  const hasUserContributedNotInGa = useCallback(() => {
+    return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
+      ? true
+      : false;
+  }, [
+    props.idoStatus,
+    publicKey
+  ]);
 
   // Validation
 
-  const isValidInput = (): boolean => {
-    const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
-    const amountLeft = props.idoStatus.userUsdcContributedAmount - amount;
-    return amount &&
-           props.idoStatus.userUsdcContributedAmount &&
-           ((amountLeft >= props.idoDetails.usdcPerUserMin && amount < props.idoStatus.userUsdcContributedAmount) ||
-             amount === props.idoStatus.userUsdcContributedAmount)
+  const isValidOperation = (): boolean => {
+    return !props.disabled &&
+           ((nowTs > props.idoDetails.idoEndTs && nowTs < props.idoDetails.redeemStartTs && hasUserContributedNotInGa()) ||
+            (nowTs > props.idoDetails.redeemStartTs && props.idoStatus.userIsInGa))
       ? true
       : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    const amount = withdrawAmount ? parseFloat(withdrawAmount) : 0;
     return !connected
       ? t('transactions.validation.not-connected')
-      : !props.selectedToken || !props.idoStatus.userUsdcContributedAmount
-        ? 'No contribution to withdraw'
-        : !amount
-          ? t('transactions.validation.no-amount')
-          : amount > props.idoStatus.userUsdcContributedAmount
-            ? `Max is ${formatAmount(props.idoStatus.userUsdcContributedAmount, 2, true)}`
-            : isUserInGa()
-              ? 'Redeem &amp; Start Vesting'
-              : t('transactions.validation.valid-approve');
+      : isBusy
+        ? props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+          ? 'Withdrawing contribution'
+          : 'Claiming your MEAN'
+        : !props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+          ? 'No contribution to withdraw'
+          : props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+            ? 'Withdraw your contribution'
+            : 'Redeem & Start Vesting';
   }
 
-  const onExecuteWithdrawTx = async () => {
+  const onExecuteRedeemTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -352,15 +353,15 @@ export const IdoRedeem = (props: {
                 </div>
               )}
               </>
-            ) : (
+            ) : hasUserContributedNotInGa() ? (
               <>
               {!props.redeemStarted && (
                 <div className="px-1 mb-2 text-center">
-                  <span>You didn't make it. Withdraw your USDC now</span>
+                  <span>You didn't make it.<br/>Withdraw your USDC now</span>
                 </div>
               )}
               </>
-            )}
+            ) : null}
           </>
         )}
       </div>
@@ -370,14 +371,12 @@ export const IdoRedeem = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!publicKey || props.disabled || !isValidInput()}
-        onClick={onExecuteWithdrawTx}>
+        disabled={!isValidOperation()}
+        onClick={onExecuteRedeemTx}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}
-        {isBusy
-          ? 'Withdrawing...'
-          : getTransactionStartButtonLabel()}
+        {getTransactionStartButtonLabel()}
       </Button>
     </>
   );
