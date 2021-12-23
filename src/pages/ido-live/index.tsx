@@ -1,9 +1,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Button, Col, Divider, Dropdown, Menu, Row, Tooltip } from "antd";
+import { Button, Col, Divider, Row } from "antd";
 import { PreFooter } from "../../components/PreFooter";
 import {
   IDO_FETCH_FREQUENCY,
-  IDO_RESTRICTED_COUNTRIES,
   MEAN_FINANCE_DISCORD_URL,
   MEAN_FINANCE_TWITTER_URL,
   UTC_DATE_TIME_FORMAT,
@@ -15,7 +14,6 @@ import "./style.less";
 import { IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
-import useScript from '../../hooks/useScript';
 import dateFormat from "dateformat";
 import { useNativeAccount } from '../../contexts/accounts';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
@@ -32,12 +30,11 @@ import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByToken
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined, WarningFilled } from '@ant-design/icons';
+import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
 
 type IdoTabOption = "deposit" | "withdraw";
 type ClaimsTabOption = "ido-claims" | "solanium" | "airdrop";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
-declare const geoip2: any;
 
 export const IdoLiveView = () => {
   const location = useLocation();
@@ -45,11 +42,9 @@ export const IdoLiveView = () => {
   const { t } = useTranslation('common');
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected } = useWallet();
-  const { library, status } = useScript('https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js', 'geoip2');
   const [regionLimitationAcknowledged, setRegionLimitationAcknowledged] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
   const [currentClaimsTab, setCurrentClaimsTab] = useState<ClaimsTabOption>("ido-claims");
-  const [userCountryCode, setUserCountryCode] = useState();
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -79,57 +74,19 @@ export const IdoLiveView = () => {
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
   const [redeemStartFireworks, setRedeemStartFireworks] = useState(false);
-  const [isUserBlocked, setIsUserBlocked] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [idoStarted, setIdoStarted] = useState(false);
   const [redeemStarted, setRedeemStarted] = useState(false);
+
+  // Cool-off management
   const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
   const [idleTimeInSeconds, setIdleTimeInSeconds] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
-
-  // Gets user countryCode
-  useEffect(() => {
-    const onSuccess = function(geoipResponse: any) {
-      setUserCountryCode(geoipResponse.country.iso_code);
-      consoleOut('countryCode:', geoipResponse.country.iso_code, 'blue');
-    };
-  
-    const onError = function(error: any) {
-      console.error(error);
-    };
-  
-    if (status === 'ready' && library) {
-      geoip2.city(onSuccess, onError);
-    }
-  }, [
-    status,
-    library
-  ]);
-
-  useEffect(() => {
-    if (userCountryCode) {
-      consoleOut('Detected countryCode:', userCountryCode, 'blue');
-      const matched = userCountryCode ? IDO_RESTRICTED_COUNTRIES.some(c => c.isoCode === userCountryCode) : false;
-      setIsUserBlocked(matched);
-    } else {
-      consoleOut('No countryCode detected!', '', 'blue');
-    }
-  }, [userCountryCode]);
-
-  // TODO: Remove whitelist filter when releasing to the public
-  useEffect(() => {
-    if (isUserBlocked) {
-      navigate('/ido-blocked');
-    }
-  }, [
-    isUserBlocked,
-    navigate
-  ]);
 
   // Force dark theme
   useEffect(() => {
@@ -426,10 +383,13 @@ export const IdoLiveView = () => {
       let dateFromTs = 0;
       if (idoStatus.userContributionUpdatedTs) {
         dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
+      } else if (idoStatus.userHasContributed) {
+        dateFromTs = now;
       } else {
         dateFromTs = idoStartUtc.getTime();
       }
-      const elapsed = Math.floor(now / 1000) - Math.floor(dateFromTs / 1000);
+      const diff = Math.floor(now / 1000) - Math.floor(dateFromTs / 1000);
+      const elapsed = diff > 0 ? diff : 0;
       setIdleTimeInSeconds(elapsed);
       if (elapsed < idoDetails.coolOffPeriodInSeconds + 30) {
         inCoolOff = true;
@@ -491,7 +451,18 @@ export const IdoLiveView = () => {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('Nothing to do yet...', '', 'blue');
-        setSelectedToken(CUSTOM_USDC);
+        if (isProd()) {
+          const usdc = MEAN_TOKEN_LIST.filter(t => t.symbol === 'USDC' && t.chainId === 101)[0];
+          if (!selectedToken || selectedToken.address !== usdc.address) {
+            consoleOut('Selecting USDC');
+            setSelectedToken(usdc);
+          }
+        } else {
+          if (!selectedToken || selectedToken.address !== CUSTOM_USDC.address) {
+            consoleOut('Selecting custom USDC');
+            setSelectedToken(CUSTOM_USDC);
+          }
+        }
         setIdoEngineInitStatus("uninitialized");
         setForceRefreshIdoStatus(true);
       } else if (previousWalletConnectState && !connected) {
@@ -506,6 +477,7 @@ export const IdoLiveView = () => {
     connected,
     publicKey,
     idoClient,
+    selectedToken,
     previousWalletConnectState,
     setSelectedTokenBalance,
     refreshTokenBalance,

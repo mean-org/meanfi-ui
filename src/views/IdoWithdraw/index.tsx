@@ -384,13 +384,6 @@ export const IdoWithdraw = (props: {
         </div>
       </div>
 
-      {props.isUserInCoolOffPeriod && (
-        <div className="flex-row flex-center align-items-center">
-          <InfoCircleOutlined />
-          <div className="form-label">You'll be able to withdraw after your cool-off period in <CountdownTimer val={props.idoDetails.coolOffPeriodInSeconds}/>.</div>
-        </div>
-      )}
-
       {/* Info */}
       {props.selectedToken && (
         <>
@@ -454,6 +447,13 @@ export const IdoWithdraw = (props: {
             </div>
           )}
         </>
+      )}
+
+      {props.isUserInCoolOffPeriod && (
+        <div className="text-center line-height-120 mb-2 mt-2 px-5">
+          <InfoCircleOutlined className="mr-1" />
+          <span className="font-size-80 fg-secondary-60">You'll be able to withdraw after your cool-off period in <CountdownTimer val={props.idoDetails.coolOffPeriodInSeconds}/>.</span>
+        </div>
       )}
 
       <Button

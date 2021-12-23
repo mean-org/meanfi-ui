@@ -2,7 +2,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 
 export const CUSTOM_USDC = {
     chainId: 103,
-    address: 'HSGE9EozPkewznZQ9cLBC3m15B88SEPuqi6Mv7TBgDre',
+    address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
     symbol: 'USDC',
     name: 'USD Coin',
     decimals: 6,
