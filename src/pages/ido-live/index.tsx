@@ -318,6 +318,25 @@ export const IdoLiveView = () => {
     refreshIdoData
   ]);
 
+  const isIdoActive = useCallback(() => {
+    return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
+      ? true
+      : false;
+  }, [
+    today,
+    idoEndUtc,
+    idoStartUtc,
+  ]);
+
+  const isUserInGa = useCallback(() => {
+    return publicKey && idoStatus && idoStatus.userIsInGa
+      ? true
+      : false;
+  }, [
+    idoStatus,
+    publicKey
+  ]);
+
   // Perform every second calculations
   // "You are here" chart data tooltip position
   // Set to start redeem fireworks
@@ -338,7 +357,7 @@ export const IdoLiveView = () => {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
-      if (!redeemStarted && redeemStartUtc && today > redeemStartUtc) {
+      if (!redeemStarted && redeemStartUtc && today > redeemStartUtc && isUserInGa()) {
         setRedeemStarted(true);
         setRedeemStartFireworks(true);
         consoleOut('Setting fireworks ON...', '', 'blue');
@@ -355,7 +374,8 @@ export const IdoLiveView = () => {
     idoDetails,
     idoStartUtc,
     redeemStarted,
-    redeemStartUtc
+    redeemStartUtc,
+    isUserInGa
   ]);
 
   useEffect(() => {
@@ -516,16 +536,6 @@ export const IdoLiveView = () => {
     today,
     idoStartUtc,
     refreshIdoData
-  ]);
-
-  const isIdoActive = useCallback(() => {
-    return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
-      ? true
-      : false;
-  }, [
-    today,
-    idoEndUtc,
-    idoStartUtc,
   ]);
 
   const onAcknowledgeRegionLimitations = () => {
@@ -800,7 +810,7 @@ export const IdoLiveView = () => {
 
   return (
     <>
-      <div className={`ido-overlay ${redeemStartFireworks ? 'active' : '' }`}>
+      <div className={`ido-overlay ${regionLimitationAcknowledged && redeemStartFireworks ? 'active' : '' }`}>
         {redeemStartFireworks && (
           <div id="pyro">
             <div className="before"></div>
@@ -809,7 +819,7 @@ export const IdoLiveView = () => {
           </div>
         )}
       </div>
-      <div className={`solid-bg ${redeemStartFireworks ? 'blurry' : '' }`}>
+      <div className={`solid-bg ${regionLimitationAcknowledged && redeemStartFireworks ? 'blurry' : '' }`}>
 
         {isLocal() && (
           <>
@@ -957,44 +967,6 @@ export const IdoLiveView = () => {
                 </Col>
               </Row>
             )}
-
-            {/* <Row>
-              <Col xs={24} lg={16}>
-                <div className="flex-column flex-center ido-column">
-                  {(idoStartUtc && idoEndUtc) ? (
-                    <>
-                      {today < idoStartUtc ? renderVideo : (
-                        <>
-                          <div className="text-center">
-                            {isVideoVisible ? (
-                              <span className="simplelink underline" onClick={() => setIsVideoVisible(false)}>See the real-time state of the IDO</span>
-                              ) : (
-                              <span className="simplelink underline" onClick={() => setIsVideoVisible(true)}>Watch a video explaining how it works</span>
-                            )}
-                          </div>
-                          {isVideoVisible ? renderVideo : (
-                            <div className="ido-stats-container">
-                              <img className="ido-stats-image" src="/assets/mean-bonding-curves-ga-open.png" alt="IDO Stats" />
-                              {(today > idoStartUtc) && renderYouAreHere()}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </>
-                  ) : renderVideo}
-                </div>
-              </Col>
-              <Col xs={24} lg={8}>
-                <div className="flex-column flex-center ido-column">
-                  {idoDetails && !regionLimitationAcknowledged
-                    ? renderRegionAcknowledgement(true)
-                    : !idoDetails
-                      ? renderRegionAcknowledgement(false)
-                      : renderIdoForms
-                  }
-                </div>
-              </Col>
-            </Row> */}
 
           </div>
         </section>
