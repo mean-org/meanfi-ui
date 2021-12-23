@@ -87,6 +87,7 @@ export const IdoLiveView = () => {
   const [idoStarted, setIdoStarted] = useState(false);
   const [redeemStarted, setRedeemStarted] = useState(false);
   const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
+  const [idleTimeInSeconds, setIdleTimeInSeconds] = useState(0);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -420,26 +421,27 @@ export const IdoLiveView = () => {
 
     let inCoolOff = false;
 
-    if (idoDetails && idoStatus &&
-        idoDetails.coolOffPeriodInSeconds &&
-        idoStatus.userContributionUpdatedTs) {
+    if (idoDetails && idoStatus && idoStartUtc && idoDetails.coolOffPeriodInSeconds) {
       const now = today.getTime();
-      const dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
-      const elapsed = now - dateFromTs;
-      if (elapsed < idoDetails.coolOffPeriodInSeconds) {
-        inCoolOff = true;
+      let dateFromTs = 0;
+      if (idoStatus.userContributionUpdatedTs) {
+        dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
       } else {
-        inCoolOff = false;
+        dateFromTs = idoStartUtc.getTime();
       }
-    } else {
-      inCoolOff = false;
+      const elapsed = Math.floor(now / 1000) - Math.floor(dateFromTs / 1000);
+      setIdleTimeInSeconds(elapsed);
+      if (elapsed < idoDetails.coolOffPeriodInSeconds + 30) {
+        inCoolOff = true;
+      }
     }
     setIsUserInCoolOffPeriod(inCoolOff);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    today,
     idoStatus,
     idoDetails,
+    idoStartUtc,
   ]);
 
   // Set IDO started flag
@@ -828,14 +830,14 @@ export const IdoLiveView = () => {
       </div>
       <div className={`solid-bg ${redeemStartFireworks ? 'blurry' : '' }`}>
 
-        {(isLocal()) && (
-          <div className="ido-selector">
-            <span className="icon-button-container">
+        {isLocal() && (
+          <>
+            <div className="debug-bar">
               <Button
                 type="default"
                 shape="circle"
-                size="middle"
-                icon={<SettingOutlined />}
+                size="small"
+                icon={<SettingOutlined style={{ fontSize: 14 }} />}
                 onClick={() => {
                   setRedeemStartFireworks(true);
                   setTimeout(() => {
@@ -843,19 +845,26 @@ export const IdoLiveView = () => {
                   }, 10000);
                 }}
               />
-              {/* <Tooltip placement="bottom" title="Select IDO address">
-                <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
-                  <Button
-                    type="default"
-                    shape="circle"
-                    size="middle"
-                    icon={<SettingOutlined />}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                </Dropdown>
-              </Tooltip> */}
-            </span>
-          </div>
+              <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
+              <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds + 30 : '-'}</span>
+              <span className="ml-1">isUserInCoolOffPeriod:</span><span className="ml-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
+            </div>
+            {/* <div className="ido-selector">
+              <span className="icon-button-container">
+                <Tooltip placement="bottom" title="Select IDO address">
+                  <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
+                    <Button
+                      type="default"
+                      shape="circle"
+                      size="middle"
+                      icon={<SettingOutlined />}
+                      onClick={(e) => e.preventDefault()}
+                    />
+                  </Dropdown>
+                </Tooltip>
+              </span>
+            </div> */}
+          </>
         )}
 
         {/* Page title */}
