@@ -380,18 +380,23 @@ export const IdoLiveView = () => {
 
     if (idoDetails && idoStatus && idoStartUtc && idoDetails.coolOffPeriodInSeconds) {
       const now = today.getTime();
-      let dateFromTs = 0;
+      let lastActivityTs = 0;
       if (idoStatus.userContributionUpdatedTs) {
-        dateFromTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
+        // Use user's last contribution TS
+        lastActivityTs = new Date(idoStatus.userContributionUpdatedTs * 1000).getTime();
       } else if (idoStatus.userHasContributed) {
-        dateFromTs = now;
+        // If user hasn contributed but there is no last contribution TS (when they retire from IDO), use now.
+        lastActivityTs = now;
       } else {
-        dateFromTs = idoStartUtc.getTime();
+        // When IDO just started shift by coolOffPeriodInSeconds to avoid an initial cool-off
+        let startSeconds = idoStartUtc.getTime() / 1000;
+        startSeconds += idoDetails.coolOffPeriodInSeconds;
+        lastActivityTs = new Date(startSeconds * 1000).getTime();
       }
-      const diff = Math.floor(now / 1000) - Math.floor(dateFromTs / 1000);
+      const diff = Math.floor(now / 1000) - Math.floor(lastActivityTs / 1000);
       const elapsed = diff > 0 ? diff : 0;
       setIdleTimeInSeconds(elapsed);
-      if (elapsed < idoDetails.coolOffPeriodInSeconds + 30) {
+      if (elapsed < idoDetails.coolOffPeriodInSeconds) {
         inCoolOff = true;
       }
     }
@@ -513,11 +518,15 @@ export const IdoLiveView = () => {
     refreshIdoData
   ]);
 
-  const isIdoActive = () => {
+  const isIdoActive = useCallback(() => {
     return idoStartUtc && idoEndUtc && today > idoStartUtc && today < idoEndUtc
       ? true
       : false;
-  }
+  }, [
+    today,
+    idoEndUtc,
+    idoStartUtc,
+  ]);
 
   const onAcknowledgeRegionLimitations = () => {
     consoleOut('Clicked on Acknowledge');
@@ -697,7 +706,7 @@ export const IdoLiveView = () => {
 
             {/* Show forms based on timeline */}
             <div className="shadowed-box max-width">
-              <div className={`vertical-panel-gradient-overlay ${today > idoStartUtc ? 'wave' : ''}`}>
+              <div className={`vertical-panel-gradient-overlay ${publicKey && isIdoActive() && regionLimitationAcknowledged ? 'wave' : ''}`}>
               </div>
               {
                 /**
@@ -818,7 +827,7 @@ export const IdoLiveView = () => {
                 }}
               />
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
-              <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds + 30 : '-'}</span>
+              <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>
               <span className="ml-1">isUserInCoolOffPeriod:</span><span className="ml-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
             </div>
             {/* <div className="ido-selector">
