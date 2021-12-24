@@ -1,11 +1,9 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
-import {
-  IDO_FETCH_FREQUENCY, UTC_DATE_TIME_FORMAT,
-} from "../../constants";
+import { IDO_FETCH_FREQUENCY } from "../../constants";
 import { consoleOut, isLocal, isProd, isValidAddress } from '../../utils/ui';
 import "./style.less";
-import { IdoLpDeposit, IdoRedeem } from '../../views';
+import { IdoLpDeposit, IdoLpWithdraw } from '../../views';
 import Countdown from 'react-countdown';
 import { useNativeAccount } from '../../contexts/accounts';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
@@ -20,7 +18,6 @@ import { appConfig } from '../..';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
-import dateFormat from 'dateformat';
 
 type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
@@ -61,7 +58,6 @@ export const IdoLpView = () => {
   const [idoStarted, setIdoStarted] = useState(false);
   const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
   const [redeemStarted, setRedeemStarted] = useState(false);
-  const [currentDateDisplay, setCurrentDateDisplay] = useState('');
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -386,6 +382,10 @@ export const IdoLpView = () => {
       : false;
   }
 
+  const isIdoFinished = () => {
+    return idoEndUtc && today > idoEndUtc ? true : false;
+  }
+
   const onClaimsTabChange = (option: IdoTabOption) => {
     setCurrentTab(option);
   }
@@ -433,13 +433,13 @@ export const IdoLpView = () => {
                   />
                 )}
                 {currentTab === "withdraw" && (
-                  <IdoRedeem
+                  <IdoLpWithdraw
                     connection={connection}
                     idoClient={idoClient}
                     idoDetails={idoDetails}
                     idoStatus={idoStatus}
                     redeemStarted={redeemStarted}
-                    disabled={!redeemStarted || fetchTxInfoStatus === "fetching"}
+                    disabled={!isIdoFinished() || fetchTxInfoStatus === "fetching"}
                     selectedToken={selectedToken}
                   />
                 )}

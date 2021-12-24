@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
-import { IdoDeposit, IdoRedeem } from '../../views';
+import { AirdropRedeem, IdoDeposit, IdoRedeem, SolaniumRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
@@ -35,6 +35,10 @@ import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined } from '@ant-de
 type IdoTabOption = "deposit" | "withdraw";
 type ClaimsTabOption = "ido-claims" | "solanium" | "airdrop";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
+
+function addSeconds(date: Date, seconds: number) {
+  return new Date(date.getTime() + seconds*1000);
+}
 
 export const IdoLiveView = () => {
   const location = useLocation();
@@ -343,9 +347,7 @@ export const IdoLiveView = () => {
   // Set to start redeem fireworks
   useEffect(() => {
 
-    if (!idoDetails || !idoStartUtc || !idoEndUtc || !redeemStartUtc) {
-      return;
-    }
+    if (!idoDetails || !idoStartUtc || !idoEndUtc) { return; }
 
     const timeout = setTimeout(() => {
       const totalTime = idoDetails.idoDurationInSeconds * 1000;
@@ -357,13 +359,6 @@ export const IdoLiveView = () => {
       } else {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
-      }
-      if (!redeemStarted && today >= redeemStartUtc) {
-        setRedeemStarted(true);
-        if (isUserInGa()) {
-          setRedeemStartFireworks(true);
-          consoleOut('Setting fireworks ON...', '', 'blue');
-        }
       }
       if (coolOffPeriodCountdown) {
         setCoolOffPeriodCountdown(value => value - 1);
@@ -378,13 +373,52 @@ export const IdoLiveView = () => {
     today,
     idoEndUtc,
     idoDetails,
-    isUserInGa,
     idoStartUtc,
-    redeemStarted,
-    redeemStartUtc,
-    coolOffPeriodCountdown
+    coolOffPeriodCountdown,
   ]);
 
+  // Turn ON fireworks when needed
+  useEffect(() => {
+    const now = new Date();
+
+    const forceRefreshData = () => {
+      const refreshCtaElement = document.getElementById("refresh-data-cta");
+      if (refreshCtaElement) {
+        console.log('Got refreshCtaElement!');
+        refreshCtaElement.click();
+      }
+    }
+
+    const startedOneMinuteAgo = () => {
+      if (redeemStartUtc) {
+        const diff = Math.floor(now.getTime() / 1000) - Math.floor(redeemStartUtc.getTime() / 1000);
+        return diff < 60 && now >= redeemStartUtc ? true : false;
+      }
+      return false;
+    }
+
+    // TODO: Decide if we want fireworks for everyone when redeem started or only to those in GA
+    if (!redeemStarted && regionLimitationAcknowledged) {
+      setRedeemStarted(true);
+      if (startedOneMinuteAgo()) {
+        consoleOut('Setting fireworks ON...', '', 'blue');
+        setRedeemStartFireworks(true);
+        forceRefreshData();
+        // if (isUserInGa()) {
+        //   setRedeemStartFireworks(true);
+        //   consoleOut('Setting fireworks ON...', '', 'blue');
+        // }
+      }
+    }
+
+  }, [
+    redeemStarted,
+    redeemStartUtc,
+    regionLimitationAcknowledged,
+    // isUserInGa,
+  ]);
+
+  // Turn OFF fireworks
   useEffect(() => {
     let timeout: any;
 
@@ -662,7 +696,7 @@ export const IdoLiveView = () => {
   );
 
   const renderClaimsForms = () => {
-    if (!idoStatus || !idoDetails) { return null; }
+    if (!idoStatus || !idoDetails || !idoEndUtc) { return null; }
     switch (currentClaimsTab) {
       case "ido-claims":
         return (
@@ -671,18 +705,35 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
+            idoFinished={today > idoEndUtc}
             redeemStarted={redeemStarted}
-            disabled={!redeemStarted || fetchTxInfoStatus === "fetching" || !idoStatus.userUsdcContributedAmount}
+            disabled={!redeemStarted || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}
           />
         );
       case "solanium":
         return (
-          <p>Solanium thing</p>
+          <SolaniumRedeem
+            connection={connection}
+            idoClient={idoClient}
+            idoDetails={idoDetails}
+            idoStatus={idoStatus}
+            redeemStarted={redeemStarted}
+            disabled={true}                   // TODO: Replace with right condition when possible
+            selectedToken={selectedToken}
+          />
         );
       case "airdrop":
         return (
-          <p>The airdrop thing</p>
+          <AirdropRedeem
+            connection={connection}
+            idoClient={idoClient}
+            idoDetails={idoDetails}
+            idoStatus={idoStatus}
+            redeemStarted={redeemStarted}
+            disabled={true}                   // TODO: Replace with right condition when possible
+            selectedToken={selectedToken}
+          />
         );
       default:
         return null;
@@ -693,7 +744,7 @@ export const IdoLiveView = () => {
     <>
       <div className="button-tabset-container">
         <div className={`tab-button ${currentClaimsTab === "ido-claims" ? 'active' : ''}`} onClick={() => onClaimsTabChange("ido-claims")}>
-          IDO Claims
+          IDO
         </div>
         <div className={`tab-button ${currentClaimsTab === "solanium" ? 'active' : ''}`} onClick={() => onClaimsTabChange("solanium")}>
           Solanium
@@ -752,7 +803,7 @@ export const IdoLiveView = () => {
 
             {/* Data refresh CTA */}
             <div className="mt-2 text-center">
-              <span className={`simplelink ${loadingIdoStatus ? 'fg-orange-red pulsate click-disabled' : 'underline-on-hover'}`} onClick={() => {
+              <span id="refresh-data-cta" className={`simplelink ${loadingIdoStatus ? 'fg-orange-red pulsate click-disabled' : 'underline-on-hover'}`} onClick={() => {
                 setLoadingIdoStatus(true);
                 refreshIdoData();
               }}>Refresh data</span>
@@ -858,7 +909,8 @@ export const IdoLiveView = () => {
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
               <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>
               <span className="ml-1">coolOffPeriodCountdown:</span><span className="ml-1 font-bold fg-dark-active">{coolOffPeriodCountdown || '-'}</span>
-              <span className="ml-1">isUserInCoolOffPeriod:</span><span className="ml-1 font-bold fg-dark-active">{isUserInCoolOffPeriod ? 'true' : 'false'}</span>
+              <span className="ml-1">redeemStarted:</span><span className="ml-1 font-bold fg-dark-active">{redeemStarted ? 'true' : 'false'}</span>
+              <span className="ml-1">redeemStartFireworks:</span><span className="ml-1 font-bold fg-dark-active">{redeemStartFireworks ? 'true' : 'false'}</span>
             </div>
             {/* <div className="ido-selector">
               <span className="icon-button-container">

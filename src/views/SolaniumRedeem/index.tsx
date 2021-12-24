@@ -13,7 +13,7 @@ import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-cli
 import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 
-export const IdoLpWithdraw = (props: {
+export const SolaniumRedeem = (props: {
   connection: Connection;
   idoClient: IdoClient | undefined
   idoStatus: IdoStatus;
@@ -37,6 +37,8 @@ export const IdoLpWithdraw = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
+  const nowTs = new Date().getTime() / 1000;
+
   const isUserInGa = useCallback(() => {
     return publicKey && props.idoStatus && props.idoStatus.userIsInGa
       ? true
@@ -57,20 +59,14 @@ export const IdoLpWithdraw = (props: {
 
   // Validation
 
-  const getLpWithdrawStartButtonLabel = (): string => {
-    return !connected
-      ? t('transactions.validation.not-connected')
-      : isBusy
-        ? 'Working...'
-        : 'Redeem LP Tokens';
+  const isValidOperation = (): boolean => {
+    return !props.disabled ? true : false;
   }
 
-  const getMeanDaoWithdrawStartButtonLabel = (): string => {
+  const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : isBusy
-        ? 'Working...'
-        : 'Collect IDO funds (USDC + MEAN)';
+      : 'No contribution to withdraw';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -299,18 +295,12 @@ export const IdoLpWithdraw = (props: {
 
   return (
     <>
-      <div className="flex-fill flex-column justify-content-center mb-3">
+      <div className="flex-fill flex-column justify-content-center">
         {props.selectedToken && (
           <>
             <div className="px-1 mb-2">
               {idoInfoRow(
-                'Your USDC Contribution',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userUsdcContributedAmount,
-                  props.selectedToken.address,
-                  true
-                ),
-                false
+                'Your Contribution', '0'
               )}
             </div>
             <div className="px-1 mb-2">
@@ -326,49 +316,26 @@ export const IdoLpWithdraw = (props: {
             </div>
             <div className="px-1 mb-2">
               {idoInfoRow(
-                'Redeemable MEAN',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userMeanImpliedAmount,
-                  '',
-                  true
-                ),
-                false
+                'Redeemable MEAN', '0'
               )}
             </div>
 
           </>
         )}
       </div>
-
-      <div>
-        <Button
-          className={`main-cta mb-3 ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          disabled={props.disabled}
-          onClick={() => {}}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-          )}
-          {getLpWithdrawStartButtonLabel()}
-        </Button>
-
-        <Button
-          className={`main-cta ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          disabled={props.disabled}
-          onClick={() => {}}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-          )}
-          {getMeanDaoWithdrawStartButtonLabel()}
-        </Button>
-      </div>
+      <Button
+        className={`main-cta ${isBusy ? 'inactive' : ''}`}
+        block
+        type="primary"
+        shape="round"
+        size="large"
+        disabled={!isValidOperation()}
+        onClick={onExecuteRedeemTx}>
+        {isBusy && (
+          <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+        )}
+        {getTransactionStartButtonLabel()}
+      </Button>
     </>
   );
 };

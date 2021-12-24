@@ -1,12 +1,11 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
-import { TokenDisplay } from '../../components/TokenDisplay';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus } from '../../models/enums';
@@ -20,6 +19,7 @@ export const IdoRedeem = (props: {
   idoStatus: IdoStatus;
   idoDetails: IdoDetails;
   disabled: boolean;
+  idoFinished: boolean;
   redeemStarted: boolean;
   selectedToken: TokenInfo | undefined;
 }) => {
@@ -37,8 +37,6 @@ export const IdoRedeem = (props: {
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-
-  const nowTs = new Date().getTime() / 1000;
 
   const isUserInGa = useCallback(() => {
     return publicKey && props.idoStatus && props.idoStatus.userIsInGa
@@ -61,9 +59,7 @@ export const IdoRedeem = (props: {
   // Validation
 
   const isValidOperation = (): boolean => {
-    return !props.disabled &&
-           ((nowTs > props.idoDetails.idoEndTs && nowTs < props.idoDetails.redeemStartTs && hasUserContributedNotInGa()) ||
-            (nowTs > props.idoDetails.redeemStartTs && props.idoStatus.userIsInGa))
+    return hasUserContributedNotInGa() || isUserInGa()
       ? true
       : false;
   }
@@ -347,17 +343,18 @@ export const IdoRedeem = (props: {
 
             {isUserInGa() ? (
               <>
-              {!props.redeemStarted && (
+              {props.idoFinished && (
                 <div className="px-1 mb-2 text-center">
-                  <span>Come back when redemption opens to claim your allocation</span>
+                  <span>Congrats, you made it! 🎉<br/>Thank you for contributing to the MEAN IDO!
+                    {!props.redeemStarted && <span>You'll be able to redeem your tokens when the claim period begins.</span>}</span>
                 </div>
               )}
               </>
             ) : hasUserContributedNotInGa() ? (
               <>
-              {!props.redeemStarted && (
+              {props.idoFinished && (
                 <div className="px-1 mb-2 text-center">
-                  <span>You didn't make it.<br/>Withdraw your USDC now</span>
+                  <span>😥 You didn't make it.<br/>Withdraw your USDC now</span>
                 </div>
               )}
               </>
@@ -371,8 +368,8 @@ export const IdoRedeem = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isValidOperation()}
-        onClick={onExecuteRedeemTx}>
+        disabled={props.disabled || !isValidOperation()}
+        onClick={() => {}}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}

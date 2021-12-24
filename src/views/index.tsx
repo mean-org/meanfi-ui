@@ -1,3 +1,4 @@
+export { AirdropRedeem } from "./AirdropRedeem";
 export { IdoDeposit } from "./IdoDeposit";
 export { IdoLpDeposit } from "./IdoLpDeposit";
 export { IdoLpWithdraw } from "./IdoLpWithdraw";
@@ -7,4 +8,5 @@ export { OneTimePayment } from "./OneTimePayment";
 export { PayrollPayment } from "./PayrollPayment";
 export { RecurringExchange as ExchangeRepeatingSwapUi } from "./RecurringExchange";
 export { RepeatingPayment } from "./RepeatingPayment";
+export { SolaniumRedeem } from "./SolaniumRedeem";
 export { Streams } from "./Streams";

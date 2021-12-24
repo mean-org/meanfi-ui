@@ -1,10 +1,10 @@
 import React, { useCallback, useContext, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
+import { formatAmount, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
@@ -13,7 +13,7 @@ import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-cli
 import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 
-export const IdoLpWithdraw = (props: {
+export const AirdropRedeem = (props: {
   connection: Connection;
   idoClient: IdoClient | undefined
   idoStatus: IdoStatus;
@@ -37,40 +37,16 @@ export const IdoLpWithdraw = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
 
-  const isUserInGa = useCallback(() => {
-    return publicKey && props.idoStatus && props.idoStatus.userIsInGa
-      ? true
-      : false;
-  }, [
-    props.idoStatus,
-    publicKey
-  ]);
-
-  const hasUserContributedNotInGa = useCallback(() => {
-    return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
-      ? true
-      : false;
-  }, [
-    props.idoStatus,
-    publicKey
-  ]);
-
   // Validation
 
-  const getLpWithdrawStartButtonLabel = (): string => {
-    return !connected
-      ? t('transactions.validation.not-connected')
-      : isBusy
-        ? 'Working...'
-        : 'Redeem LP Tokens';
+  const isValidOperation = (): boolean => {
+    return !props.disabled ? true : false;
   }
 
-  const getMeanDaoWithdrawStartButtonLabel = (): string => {
+  const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : isBusy
-        ? 'Working...'
-        : 'Collect IDO funds (USDC + MEAN)';
+      : 'Nothing to claim';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -284,91 +260,29 @@ export const IdoLpWithdraw = (props: {
 
   };
 
-  const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
-    return (
-      <div className={`flex-fixed-right ${spaceBelow ? 'mb-1' : ''}`}>
-        <div className="left inner-label">
-          <span>{caption}</span>
-        </div>
-        <div className="right value-display">
-          <span>{value}</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="flex-fill flex-column justify-content-center mb-3">
+      <div className="flex-fill flex-column justify-content-center align-items-center">
         {props.selectedToken && (
           <>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Your USDC Contribution',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userUsdcContributedAmount,
-                  props.selectedToken.address,
-                  true
-                ),
-                false
-              )}
-            </div>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Final Token Price',
-                props.idoStatus.finalMeanPrice
-                  ? getTokenAmountAndSymbolByTokenAddress(
-                      props.idoStatus.finalMeanPrice,
-                      props.selectedToken.address
-                    )
-                  : '-'
-              )}
-            </div>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Redeemable MEAN',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userMeanImpliedAmount,
-                  '',
-                  true
-                ),
-                false
-              )}
-            </div>
-
+            <div className="airdrop-title">Your Airdrop Allocation</div>
+            <div className="airdrop-amount">0.000000 MEAN</div>
           </>
         )}
       </div>
-
-      <div>
-        <Button
-          className={`main-cta mb-3 ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          disabled={props.disabled}
-          onClick={() => {}}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-          )}
-          {getLpWithdrawStartButtonLabel()}
-        </Button>
-
-        <Button
-          className={`main-cta ${isBusy ? 'inactive' : ''}`}
-          block
-          type="primary"
-          shape="round"
-          size="large"
-          disabled={props.disabled}
-          onClick={() => {}}>
-          {isBusy && (
-            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
-          )}
-          {getMeanDaoWithdrawStartButtonLabel()}
-        </Button>
-      </div>
+      <Button
+        className={`main-cta ${isBusy ? 'inactive' : ''}`}
+        block
+        type="primary"
+        shape="round"
+        size="large"
+        disabled={!isValidOperation()}
+        onClick={onExecuteRedeemTx}>
+        {isBusy && (
+          <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+        )}
+        {getTransactionStartButtonLabel()}
+      </Button>
     </>
   );
 };
