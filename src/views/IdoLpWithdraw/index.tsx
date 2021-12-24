@@ -35,6 +35,7 @@ export const IdoLpWithdraw = (props: {
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
 
   const isUserInGa = useCallback(() => {
@@ -60,7 +61,7 @@ export const IdoLpWithdraw = (props: {
   const getLpWithdrawStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : isBusy
+      : isBusy && ongoingOperation === OperationType.IdoLpClaim
         ? 'Working...'
         : 'Redeem LP Tokens';
   }
@@ -68,9 +69,14 @@ export const IdoLpWithdraw = (props: {
   const getMeanDaoWithdrawStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : isBusy
+      : isBusy && ongoingOperation === OperationType.IdoCollectFunds
         ? 'Working...'
         : 'Collect IDO funds (USDC + MEAN)';
+  }
+
+  const resetBusyStatus = () => {
+    setIsBusy(false);
+    setOngoingOperation(undefined);
   }
 
   const onExecuteRedeemLpTx = async () => {
@@ -82,6 +88,7 @@ export const IdoLpWithdraw = (props: {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
+    setOngoingOperation(OperationType.IdoLpClaim);
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
@@ -269,16 +276,16 @@ export const IdoLpWithdraw = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoLpClaim);
             setWithdrawAmount("");
-            setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+            resetBusyStatus();
+          } else { resetBusyStatus(); }
+        } else { resetBusyStatus(); }
+      } else { resetBusyStatus(); }
     }
 
   };
@@ -346,9 +353,9 @@ export const IdoLpWithdraw = (props: {
           type="primary"
           shape="round"
           size="large"
-          disabled={props.disabled}
+          disabled={props.disabled || !publicKey || ongoingOperation === OperationType.IdoCollectFunds}
           onClick={onExecuteRedeemLpTx}>
-          {isBusy && (
+          {(isBusy && ongoingOperation === OperationType.IdoLpClaim) && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {getLpWithdrawStartButtonLabel()}
@@ -360,9 +367,9 @@ export const IdoLpWithdraw = (props: {
           type="primary"
           shape="round"
           size="large"
-          disabled={props.disabled}
+          disabled={props.disabled || !publicKey || ongoingOperation === OperationType.IdoLpClaim}
           onClick={() => {}}>
-          {isBusy && (
+          {(isBusy && ongoingOperation === OperationType.IdoCollectFunds) && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
           {getMeanDaoWithdrawStartButtonLabel()}

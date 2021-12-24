@@ -82,6 +82,8 @@ export enum OperationType {
     IdoDeposit = 100,
     IdoWithdraw = 101,
     IdoClaim = 102,
+    IdoLpClaim = 103,
+    IdoCollectFunds = 104
 }
 
 export enum AllocationType {
