@@ -38,24 +38,6 @@ export const IdoLpWithdraw = (props: {
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [isBusy, setIsBusy] = useState(false);
 
-  const isUserInGa = useCallback(() => {
-    return publicKey && props.idoStatus && props.idoStatus.userIsInGa
-      ? true
-      : false;
-  }, [
-    props.idoStatus,
-    publicKey
-  ]);
-
-  const hasUserContributedNotInGa = useCallback(() => {
-    return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
-      ? true
-      : false;
-  }, [
-    props.idoStatus,
-    publicKey
-  ]);
-
   // Validation
 
   const getLpWithdrawStartButtonLabel = (): string => {
@@ -290,6 +272,217 @@ export const IdoLpWithdraw = (props: {
 
   };
 
+  const onExecuteCollectTx = async () => {
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.IdoCollectFunds);
+    setIsBusy(true);
+
+    const createTx = async (): Promise<boolean> => {
+      if (publicKey && props.idoClient && props.idoDetails && selectedToken) {
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        const meanIdoAddress = new PublicKey(props.idoDetails.idoAddress);
+        const amount = parseFloat(withdrawAmount);
+        const data = {
+          meanIdoAddress: meanIdoAddress.toBase58(),                  // meanIdoAddress
+          amount: amount                                              // amount
+        }
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Create a transaction
+        return await props.idoClient.createWithdrawDaoTx(
+          meanIdoAddress,                                           // meanIdoAddress
+        )
+        .then(value => {
+          consoleOut('createWithdrawMeanLpTx returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createWithdrawMeanLpTx error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error('Signing transaction failed!');
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await props.connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (publicKey) {
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoCollectFunds);
+            setWithdrawAmount("");
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            resetBusyStatus();
+          } else { resetBusyStatus(); }
+        } else { resetBusyStatus(); }
+      } else { resetBusyStatus(); }
+    }
+
+  };
+
   const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
     return (
       <div className={`flex-fixed-right ${spaceBelow ? 'mb-1' : ''}`}>
@@ -368,7 +561,7 @@ export const IdoLpWithdraw = (props: {
           shape="round"
           size="large"
           disabled={props.disabled || !publicKey || ongoingOperation === OperationType.IdoLpClaim}
-          onClick={() => {}}>
+          onClick={onExecuteCollectTx}>
           {(isBusy && ongoingOperation === OperationType.IdoCollectFunds) && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
