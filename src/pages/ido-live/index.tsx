@@ -84,6 +84,7 @@ export const IdoLiveView = () => {
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [idoStarted, setIdoStarted] = useState(false);
   const [redeemStarted, setRedeemStarted] = useState(false);
+  const [idoFinished, setIdoFinished] = useState(false);
 
   // Cool-off management
   const [isUserInCoolOffPeriod, setIsUserInCoolOffPeriod] = useState(true);
@@ -342,9 +343,7 @@ export const IdoLiveView = () => {
     publicKey
   ]);
 
-  // Perform every second calculations
-  // "You are here" chart data tooltip position
-  // Set to start redeem fireworks
+  // Perform every second calculations ("You are here" chart data tooltip position)
   useEffect(() => {
 
     if (!idoDetails || !idoStartUtc || !idoEndUtc) { return; }
@@ -389,17 +388,21 @@ export const IdoLiveView = () => {
       }
     }
 
-    const startedOneMinuteAgo = () => {
-      if (redeemStartUtc) {
-        const diff = Math.floor(now.getTime() / 1000) - Math.floor(redeemStartUtc.getTime() / 1000);
-        return diff < 60 && now >= redeemStartUtc ? true : false;
+    const finishedOneMinuteAgo = () => {
+      if (idoEndUtc) {
+        const diff = Math.floor(now.getTime() / 1000) - Math.floor(idoEndUtc.getTime() / 1000);
+        return diff < 60 && now >= idoEndUtc ? true : false;
       }
       return false;
     }
 
-    if (!redeemStarted && regionLimitationAcknowledged) {
+    if (!redeemStarted) {
       setRedeemStarted(true);
-      if (startedOneMinuteAgo()) {
+    }
+
+    if (!idoFinished && regionLimitationAcknowledged) {
+      setIdoFinished(true);
+      if (finishedOneMinuteAgo()) {
         consoleOut('Setting fireworks ON...', '', 'blue');
         setRedeemStartFireworks(true);
         forceRefreshData();
@@ -407,10 +410,10 @@ export const IdoLiveView = () => {
     }
 
   }, [
+    idoEndUtc,
+    idoFinished,
     redeemStarted,
-    redeemStartUtc,
     regionLimitationAcknowledged,
-    // isUserInGa,
   ]);
 
   // Turn OFF fireworks
