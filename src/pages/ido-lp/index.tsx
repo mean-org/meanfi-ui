@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import {
-  IDO_FETCH_FREQUENCY,
+  IDO_FETCH_FREQUENCY, UTC_DATE_TIME_FORMAT,
 } from "../../constants";
 import { consoleOut, isLocal, isProd, isValidAddress } from '../../utils/ui';
 import "./style.less";
-import { IdoLpDeposit } from '../../views';
+import { IdoLpDeposit, IdoRedeem } from '../../views';
 import Countdown from 'react-countdown';
 import { useNativeAccount } from '../../contexts/accounts';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
@@ -20,7 +20,9 @@ import { appConfig } from '../..';
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled } from '@ant-design/icons';
+import dateFormat from 'dateformat';
 
+type IdoTabOption = "deposit" | "withdraw";
 type IdoInitStatus = "uninitialized" | "initializing" | "started" | "stopped" | "error";
 
 export const IdoLpView = () => {
@@ -57,6 +59,9 @@ export const IdoLpView = () => {
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
   const [idoStarted, setIdoStarted] = useState(false);
+  const [currentTab, setCurrentTab] = useState<IdoTabOption>("deposit");
+  const [redeemStarted, setRedeemStarted] = useState(false);
+  const [currentDateDisplay, setCurrentDateDisplay] = useState('');
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
@@ -273,6 +278,30 @@ export const IdoLpView = () => {
     idoStartUtc,
   ]);
 
+  // Set redeemStarted
+  useEffect(() => {
+
+    if (!idoDetails || !redeemStartUtc) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (!redeemStarted && today >= redeemStartUtc) {
+        setRedeemStarted(true);
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    today,
+    idoDetails,
+    redeemStarted,
+    redeemStartUtc,
+  ]);
+
   // Keep track of account changes and updates token balance
   useEffect(() => {
 
@@ -357,6 +386,10 @@ export const IdoLpView = () => {
       : false;
   }
 
+  const onClaimsTabChange = (option: IdoTabOption) => {
+    setCurrentTab(option);
+  }
+
   const renderIdoForms = (
     <>
       <div className="ido-form-wrapper">
@@ -378,17 +411,39 @@ export const IdoLpView = () => {
               </div>
             </div>
 
-            {/* Show forms based on timeline */}
             <div className="shadowed-box max-width">
-              <IdoLpDeposit
-                connection={connection}
-                idoClient={idoClient}
-                idoDetails={idoDetails}
-                idoStatus={idoStatus}
-                disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
-                selectedToken={selectedToken}
-                tokenBalance={tokenBalance}
-              />
+              <div className="button-tabset-container">
+                <div className={`tab-button ${currentTab === "deposit" ? 'active' : ''}`} onClick={() => onClaimsTabChange("deposit")}>
+                  Deposit
+                </div>
+                <div className={`tab-button ${currentTab === "withdraw" ? 'active' : ''}`} onClick={() => onClaimsTabChange("withdraw")}>
+                  Withdraw
+                </div>
+              </div>
+              <div className="redeem-inner-area">
+                {currentTab === "deposit" && (
+                  <IdoLpDeposit
+                    connection={connection}
+                    idoClient={idoClient}
+                    idoDetails={idoDetails}
+                    idoStatus={idoStatus}
+                    disabled={!isIdoActive() || fetchTxInfoStatus === "fetching"}
+                    selectedToken={selectedToken}
+                    tokenBalance={tokenBalance}
+                  />
+                )}
+                {currentTab === "withdraw" && (
+                  <IdoRedeem
+                    connection={connection}
+                    idoClient={idoClient}
+                    idoDetails={idoDetails}
+                    idoStatus={idoStatus}
+                    redeemStarted={redeemStarted}
+                    disabled={!redeemStarted || fetchTxInfoStatus === "fetching"}
+                    selectedToken={selectedToken}
+                  />
+                )}
+              </div>
             </div>
 
             {/* Data refresh CTA */}

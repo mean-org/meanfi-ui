@@ -343,7 +343,7 @@ export const IdoLiveView = () => {
   // Set to start redeem fireworks
   useEffect(() => {
 
-    if (!idoDetails || !idoStartUtc || !idoEndUtc) {
+    if (!idoDetails || !idoStartUtc || !idoEndUtc || !redeemStartUtc) {
       return;
     }
 
@@ -358,7 +358,7 @@ export const IdoLiveView = () => {
         setXPosPercent(percent);
         setCurrentDateDisplay(dateFormat(today, UTC_DATE_TIME_FORMAT));
       }
-      if (!redeemStarted) {
+      if (!redeemStarted && today >= redeemStartUtc) {
         setRedeemStarted(true);
         if (isUserInGa()) {
           setRedeemStartFireworks(true);
@@ -504,6 +504,8 @@ export const IdoLiveView = () => {
         setForceRefreshIdoStatus(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
+        setIsUserInCoolOffPeriod(false);
+        setCoolOffPeriodCountdown(0);
         setSelectedTokenBalance(0);
         setIdoEngineInitStatus("uninitialized");
         setForceRefreshIdoStatus(true);
@@ -848,7 +850,10 @@ export const IdoLiveView = () => {
                 shape="circle"
                 size="small"
                 icon={<SettingOutlined style={{ fontSize: 14 }} />}
-                onClick={() => setRedeemStartFireworks(true)}
+                onClick={() => {
+                  consoleOut('Setting fireworks ON...', '', 'blue');
+                  setRedeemStartFireworks(true);
+                }}
               />
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
               <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>

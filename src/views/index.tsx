@@ -1,5 +1,6 @@
 export { IdoDeposit } from "./IdoDeposit";
 export { IdoLpDeposit } from "./IdoLpDeposit";
+export { IdoLpWithdraw } from "./IdoLpWithdraw";
 export { IdoRedeem } from "./IdoRedeem";
 export { OneTimeExchange as ExchangeOneTimeSwapUi } from "./OneTimeExchange";
 export { OneTimePayment } from "./OneTimePayment";
