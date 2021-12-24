@@ -77,7 +77,7 @@ export const IdoLiveView = () => {
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
-  const [redeemStartFireworks, setRedeemStartFireworks] = useState(false);
+  const [idoFinishedFireworks, setIdoFinishedFireworks] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
@@ -378,7 +378,6 @@ export const IdoLiveView = () => {
 
   // Turn ON fireworks when needed
   useEffect(() => {
-    const now = new Date();
 
     const forceRefreshData = () => {
       const refreshCtaElement = document.getElementById("refresh-data-cta");
@@ -388,25 +387,15 @@ export const IdoLiveView = () => {
       }
     }
 
-    const finishedOneMinuteAgo = () => {
-      if (idoEndUtc) {
-        const diff = Math.floor(now.getTime() / 1000) - Math.floor(idoEndUtc.getTime() / 1000);
-        return diff < 60 && now >= idoEndUtc ? true : false;
-      }
-      return false;
-    }
-
     if (!redeemStarted) {
       setRedeemStarted(true);
     }
 
     if (!idoFinished && regionLimitationAcknowledged) {
       setIdoFinished(true);
-      if (finishedOneMinuteAgo()) {
-        consoleOut('Setting fireworks ON...', '', 'blue');
-        setRedeemStartFireworks(true);
-        forceRefreshData();
-      }
+      consoleOut('Setting fireworks ON...', '', 'blue');
+      setIdoFinishedFireworks(true);
+      forceRefreshData();
     }
 
   }, [
@@ -420,10 +409,10 @@ export const IdoLiveView = () => {
   useEffect(() => {
     let timeout: any;
 
-    if (redeemStartFireworks) {
+    if (idoFinishedFireworks) {
       timeout = setTimeout(() => {
         consoleOut('Setting fireworks OFF...', '', 'blue');
-        setRedeemStartFireworks(false);
+        setIdoFinishedFireworks(false);
       }, 7000);
     }
 
@@ -431,7 +420,7 @@ export const IdoLiveView = () => {
       clearTimeout(timeout);
     }
 
-  }, [redeemStartFireworks]);
+  }, [idoFinishedFireworks]);
 
   // Set coolOff flag
   useEffect(() => {
@@ -858,15 +847,6 @@ export const IdoLiveView = () => {
     </>
   );
 
-  const drawBackgroundStars = () => {
-    const bgStarts: JSX.Element[] = [];
-    for (let i = 0; i < 100; i++) {
-      const star = (<div className="circle-container"><div className="circle"></div></div>);
-      bgStarts.push(star);
-    }
-    return bgStarts;
-  }
-
   // const idoItemsMenu = (
   //   <>
   //     {idoList && idoList.length > 0 ? (
@@ -889,8 +869,8 @@ export const IdoLiveView = () => {
 
   return (
     <>
-      <div className={`ido-overlay ${regionLimitationAcknowledged && redeemStartFireworks ? 'active' : '' }`}>
-        {redeemStartFireworks && (
+      <div className={`ido-overlay ${regionLimitationAcknowledged && idoFinishedFireworks ? 'active' : '' }`}>
+        {idoFinishedFireworks && (
           <div id="pyro">
             <div className="before"></div>
             <div className="after"></div>
@@ -898,9 +878,7 @@ export const IdoLiveView = () => {
           </div>
         )}
       </div>
-      <div className={`solid-bg position-relative ${regionLimitationAcknowledged && redeemStartFireworks ? 'blurry' : '' }`}>
-
-        {regionLimitationAcknowledged && redeemStarted && drawBackgroundStars()}
+      <div className={`solid-bg position-relative ${regionLimitationAcknowledged && idoFinishedFireworks ? 'blurry' : '' }`}>
 
         {isLocal() && (
           <>
@@ -912,14 +890,14 @@ export const IdoLiveView = () => {
                 icon={<SettingOutlined style={{ fontSize: 14 }} />}
                 onClick={() => {
                   consoleOut('Setting fireworks ON...', '', 'blue');
-                  setRedeemStartFireworks(true);
+                  setIdoFinishedFireworks(true);
                 }}
               />
               <span className="ml-1">idleTimeInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idleTimeInSeconds || '-'}</span>
               <span className="ml-1">coolOffPeriodInSeconds:</span><span className="ml-1 font-bold fg-dark-active">{idoDetails ? idoDetails.coolOffPeriodInSeconds : '-'}</span>
               <span className="ml-1">coolOffPeriodCountdown:</span><span className="ml-1 font-bold fg-dark-active">{coolOffPeriodCountdown || '-'}</span>
               <span className="ml-1">redeemStarted:</span><span className="ml-1 font-bold fg-dark-active">{redeemStarted ? 'true' : 'false'}</span>
-              <span className="ml-1">redeemStartFireworks:</span><span className="ml-1 font-bold fg-dark-active">{redeemStartFireworks ? 'true' : 'false'}</span>
+              <span className="ml-1">idoFinishedFireworks:</span><span className="ml-1 font-bold fg-dark-active">{idoFinishedFireworks ? 'true' : 'false'}</span>
             </div>
             {/* <div className="ido-selector">
               <span className="icon-button-container">

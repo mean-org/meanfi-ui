@@ -100,191 +100,191 @@ export class IdoClient {
         );
     }
 
-    public async createInitializeIdoTx(
-        idoAuthority: PublicKey,
-        idoAuthorityMean: PublicKey,
-        idoName: string,
-        idoStart: Date,
-        idoEnd: Date,
-        redeemStart: Date,
-        redeemEnd: Date,
-        idoMeanAmount: number,
-        meanMint: PublicKey,
-        usdcMint: PublicKey,
-        meanPriceStart: number,
-        meanPriceEnd: number,
-        usdcPerUserMin: number,
-        usdcPerUserMaxStart: number,
-        usdcPerUserMaxEnd: number,
-        usdcTotalMin: number,
-        usdcTotalMax: number,
-        curveRefreshIntervalInSeconds: number,
-        coolOffPeriodInSeconds: number,
-    ): Promise<[PublicKey, Transaction]> {
+    // public async createInitializeIdoTx(
+    //     idoAuthority: PublicKey,
+    //     idoAuthorityMean: PublicKey,
+    //     idoName: string,
+    //     idoStart: Date,
+    //     idoEnd: Date,
+    //     redeemStart: Date,
+    //     redeemEnd: Date,
+    //     idoMeanAmount: number,
+    //     meanMint: PublicKey,
+    //     usdcMint: PublicKey,
+    //     meanPriceStart: number,
+    //     meanPriceEnd: number,
+    //     usdcPerUserMin: number,
+    //     usdcPerUserMaxStart: number,
+    //     usdcPerUserMaxEnd: number,
+    //     usdcTotalMin: number,
+    //     usdcTotalMax: number,
+    //     curveRefreshIntervalInSeconds: number,
+    //     coolOffPeriodInSeconds: number,
+    // ): Promise<[PublicKey, Transaction]> {
 
-        if(idoAuthority.equals(PublicKey.default))
-            throw new Error(`Invalid authority: ${idoAuthority}`);
-        const authorityWallet = IdoClient.createReadonlyWallet(idoAuthority);
-        const program = IdoClient.createProgram(this.rpcUrl, authorityWallet, this.readonlyProvider.opts);
+    //     if(idoAuthority.equals(PublicKey.default))
+    //         throw new Error(`Invalid authority: ${idoAuthority}`);
+    //     const authorityWallet = IdoClient.createReadonlyWallet(idoAuthority);
+    //     const program = IdoClient.createProgram(this.rpcUrl, authorityWallet, this.readonlyProvider.opts);
 
-        // TODO: params check
-        if (idoName.length === 0)
-            throw Error("Invalid IDO name");
-        if (idoName.length > 10)
-            throw Error("IDO name is too long. Max lenght: 10");
-        if (idoMeanAmount <= 0)
-            throw Error("Invalid MEAN amount for IDO");
+    //     // TODO: params check
+    //     if (idoName.length === 0)
+    //         throw Error("Invalid IDO name");
+    //     if (idoName.length > 10)
+    //         throw Error("IDO name is too long. Max lenght: 10");
+    //     if (idoMeanAmount <= 0)
+    //         throw Error("Invalid MEAN amount for IDO");
 
-        const idoTimes: IdoTimes = {
-            idoStartTs: new anchor.BN(idoStart.getTime() / 1000),
-            idoEndTs: new anchor.BN(idoEnd.getTime() / 1000),
-            redeemStartTs: new anchor.BN(redeemStart.getTime() / 1000),
-            redeemEndTs: new anchor.BN(redeemEnd.getTime() / 1000),
-        };
-        const nowBn = new BN(Date.now() / 1000);
-        if (idoTimes.idoStartTs.lt(nowBn))
-            throw Error("IDO must start in the future");
-        if (idoTimes.idoEndTs.lte(idoTimes.idoStartTs))
-            throw Error("Invalid IDO times: 'ido end' must be after 'ido start'");
-        if (idoTimes.redeemStartTs.lt(idoTimes.idoEndTs))
-            throw Error("Invalid IDO times: 'redeem start' must be after 'ido end'");
-        if (idoTimes.redeemEndTs.lt(idoTimes.redeemStartTs))
-            throw Error("Invalid IDO times: 'redeem end' must be after 'redeem start'");
+    //     const idoTimes: IdoTimes = {
+    //         idoStartTs: new anchor.BN(idoStart.getTime() / 1000),
+    //         idoEndTs: new anchor.BN(idoEnd.getTime() / 1000),
+    //         redeemStartTs: new anchor.BN(redeemStart.getTime() / 1000),
+    //         redeemEndTs: new anchor.BN(redeemEnd.getTime() / 1000),
+    //     };
+    //     const nowBn = new BN(Date.now() / 1000);
+    //     if (idoTimes.idoStartTs.lt(nowBn))
+    //         throw Error("IDO must start in the future");
+    //     if (idoTimes.idoEndTs.lte(idoTimes.idoStartTs))
+    //         throw Error("Invalid IDO times: 'ido end' must be after 'ido start'");
+    //     if (idoTimes.redeemStartTs.lt(idoTimes.idoEndTs))
+    //         throw Error("Invalid IDO times: 'redeem start' must be after 'ido end'");
+    //     if (idoTimes.redeemEndTs.lt(idoTimes.redeemStartTs))
+    //         throw Error("Invalid IDO times: 'redeem end' must be after 'redeem start'");
 
-        const [idoAccount, idoAccountBump] = await anchor.web3.PublicKey.findProgramAddress(
-            [
-                idoAuthority.toBuffer(),
-                Buffer.from(idoName)
-            ],
-            program.programId
-        );
+    //     const [idoAccount, idoAccountBump] = await anchor.web3.PublicKey.findProgramAddress(
+    //         [
+    //             idoAuthority.toBuffer(),
+    //             Buffer.from(idoName)
+    //         ],
+    //         program.programId
+    //     );
 
-        const [meanPool, meanPoolBump] = await anchor.web3.PublicKey.findProgramAddress(
-            [
-                idoAccount.toBuffer(),
-                Buffer.from("mean_pool")
-            ],
-            program.programId
-        );
+    //     const [meanPool, meanPoolBump] = await anchor.web3.PublicKey.findProgramAddress(
+    //         [
+    //             idoAccount.toBuffer(),
+    //             Buffer.from("mean_pool")
+    //         ],
+    //         program.programId
+    //     );
 
-        const [usdcPool, usdcPoolBump] = await anchor.web3.PublicKey.findProgramAddress(
-            [
-                idoAccount.toBuffer(),
-                Buffer.from("usdc_pool")
-            ],
-            this.readonlyProgram.programId
-        );
+    //     const [usdcPool, usdcPoolBump] = await anchor.web3.PublicKey.findProgramAddress(
+    //         [
+    //             idoAccount.toBuffer(),
+    //             Buffer.from("usdc_pool")
+    //         ],
+    //         this.readonlyProgram.programId
+    //     );
 
-        let bumps: PoolBumps = {
-            idoAccount: idoAccountBump,
-            meanPool: meanPoolBump,
-            usdcPool: usdcPoolBump
-        };
-        const meanMintSupply = await this.connection.getTokenSupply(meanMint);
-        if(!meanMintSupply)
-            throw new Error("MEAN MINT not found");
-        if(meanMintSupply.value.decimals !== DECIMALS)
-            throw Error(`Unsupported MEAN decimals: ${meanMintSupply.value.decimals}. Only value supported is: ${DECIMALS}`);
-        const meanOne = 10 ** meanMintSupply.value.decimals;
+    //     let bumps: PoolBumps = {
+    //         idoAccount: idoAccountBump,
+    //         meanPool: meanPoolBump,
+    //         usdcPool: usdcPoolBump
+    //     };
+    //     const meanMintSupply = await this.connection.getTokenSupply(meanMint);
+    //     if(!meanMintSupply)
+    //         throw new Error("MEAN MINT not found");
+    //     if(meanMintSupply.value.decimals !== DECIMALS)
+    //         throw Error(`Unsupported MEAN decimals: ${meanMintSupply.value.decimals}. Only value supported is: ${DECIMALS}`);
+    //     const meanOne = 10 ** meanMintSupply.value.decimals;
 
-        const usdcMintSupply = await this.connection.getTokenSupply(usdcMint);
-        if(!usdcMintSupply)
-            throw new Error("USDC MINT not found");
-        if(usdcMintSupply.value.decimals !== DECIMALS) // USDC_DECIMALS
-            throw Error(`Unsupported USDC decimals: ${usdcMintSupply.value.decimals}. Only value supported is: ${DECIMALS}`); // USDC_DECIMALS
-        const usdcOne = 10 ** usdcMintSupply.value.decimals;
+    //     const usdcMintSupply = await this.connection.getTokenSupply(usdcMint);
+    //     if(!usdcMintSupply)
+    //         throw new Error("USDC MINT not found");
+    //     if(usdcMintSupply.value.decimals !== DECIMALS) // USDC_DECIMALS
+    //         throw Error(`Unsupported USDC decimals: ${usdcMintSupply.value.decimals}. Only value supported is: ${DECIMALS}`); // USDC_DECIMALS
+    //     const usdcOne = 10 ** usdcMintSupply.value.decimals;
 
-        const usdcPerUserMinBn = new anchor.BN(usdcPerUserMin * usdcOne);
-        const usdcPerUserMaxStartBn = new anchor.BN(usdcPerUserMaxStart * usdcOne);
-        const usdcPerUserMaxEndBn = new anchor.BN(usdcPerUserMaxEnd * usdcOne);
-        const usdcTotalMinBn = new anchor.BN(usdcTotalMin * usdcOne);
-        const usdcTotalMaxBn = new anchor.BN(usdcTotalMax * usdcOne);
+    //     const usdcPerUserMinBn = new anchor.BN(usdcPerUserMin * usdcOne);
+    //     const usdcPerUserMaxStartBn = new anchor.BN(usdcPerUserMaxStart * usdcOne);
+    //     const usdcPerUserMaxEndBn = new anchor.BN(usdcPerUserMaxEnd * usdcOne);
+    //     const usdcTotalMinBn = new anchor.BN(usdcTotalMin * usdcOne);
+    //     const usdcTotalMaxBn = new anchor.BN(usdcTotalMax * usdcOne);
 
-        const idoMeanAmountBn = new anchor.BN(idoMeanAmount * meanOne);
-        const meanPriceStartBn = new anchor.BN(meanPriceStart * meanOne);
-        const meanPriceEndBn = new anchor.BN(meanPriceEnd * meanOne);
+    //     const idoMeanAmountBn = new anchor.BN(idoMeanAmount * meanOne);
+    //     const meanPriceStartBn = new anchor.BN(meanPriceStart * meanOne);
+    //     const meanPriceEndBn = new anchor.BN(meanPriceEnd * meanOne);
 
-        // const idoAuthorityMean = await Token.getAssociatedTokenAddress(
-        //     ASSOCIATED_TOKEN_PROGRAM_ID,
-        //     TOKEN_PROGRAM_ID,
-        //     meanMint,
-        //     this.userPubKey,
-        // );
-        if (idoAuthorityMean === null) {
-            throw Error("IDO authority Mean ATA not found");
-        }
-        const authorityMeanTokenResponse = await this.connection.getTokenAccountBalance(idoAuthorityMean);
-        const authorityMeanTokenAmount = new BN(authorityMeanTokenResponse.value.amount ?? 0);
-        if (authorityMeanTokenAmount.lt(idoMeanAmountBn)) {
-            throw Error("Insufficient MEAN balance");
-        }
+    //     // const idoAuthorityMean = await Token.getAssociatedTokenAddress(
+    //     //     ASSOCIATED_TOKEN_PROGRAM_ID,
+    //     //     TOKEN_PROGRAM_ID,
+    //     //     meanMint,
+    //     //     this.userPubKey,
+    //     // );
+    //     if (idoAuthorityMean === null) {
+    //         throw Error("IDO authority Mean ATA not found");
+    //     }
+    //     const authorityMeanTokenResponse = await this.connection.getTokenAccountBalance(idoAuthorityMean);
+    //     const authorityMeanTokenAmount = new BN(authorityMeanTokenResponse.value.amount ?? 0);
+    //     if (authorityMeanTokenAmount.lt(idoMeanAmountBn)) {
+    //         throw Error("Insufficient MEAN balance");
+    //     }
 
-        let [idoWithdrawals, createWithdrawalsTx] = await this.createCreateWithdrawalsTx(idoAuthority);
+    //     let [idoWithdrawals, createWithdrawalsTx] = await this.createCreateWithdrawalsTx(idoAuthority);
 
-        if (this.verbose) {
-            console.log(` idoAuthority:        ${program.provider.wallet.publicKey}`);
-            console.log(` idoAuthorityMean:    ${idoAuthorityMean}`);
-            console.log(` idoName:             ${idoName}`);
-            console.log(` startIdo:            ${idoTimes.idoStartTs.toNumber()}`);
-            console.log(` endIdo:              ${idoTimes.idoEndTs.toNumber()}`);
-            console.log(` startRedeem:         ${idoTimes.redeemStartTs.toNumber()}`);
-            console.log(` idoMeanAmount:       ${idoMeanAmountBn.toNumber()}`);
-            console.log(` meanPriceStart:      ${meanPriceStartBn.toNumber()}`);
-            console.log(` meanPriceEnd:        ${meanPriceEndBn.toNumber()}`);
-            console.log(` usdcPerUserMin:      ${usdcPerUserMinBn.toNumber()}`);
-            console.log(` usdcPerUserMaxStart: ${usdcPerUserMaxStartBn.toNumber()}`);
-            console.log(` usdcPerUserMaxEnd:   ${usdcPerUserMaxEndBn.toNumber()}`);
-            console.log(` usdcTotalMin:        ${usdcTotalMinBn.toNumber()}`);
-            console.log(` usdcTotalMax:        ${usdcTotalMaxBn.toNumber()}`);
-            console.log(` meanMint:            ${meanMint}`);
-            console.log(` usdcMint:            ${usdcMint}`);
-            console.log(` meanPool:            ${meanPool}`);
-            console.log(` usdcPool:            ${usdcPool}`);
-            console.log(` usdcPool:            ${usdcPool}`);
-            console.log(` idoWithdrawals:      ${idoWithdrawals.publicKey}`);
-            console.log(` curveRefresh:        ${curveRefreshIntervalInSeconds}`);
-            console.log();
-        }
+    //     if (this.verbose) {
+    //         console.log(` idoAuthority:        ${program.provider.wallet.publicKey}`);
+    //         console.log(` idoAuthorityMean:    ${idoAuthorityMean}`);
+    //         console.log(` idoName:             ${idoName}`);
+    //         console.log(` startIdo:            ${idoTimes.idoStartTs.toNumber()}`);
+    //         console.log(` endIdo:              ${idoTimes.idoEndTs.toNumber()}`);
+    //         console.log(` startRedeem:         ${idoTimes.redeemStartTs.toNumber()}`);
+    //         console.log(` idoMeanAmount:       ${idoMeanAmountBn.toNumber()}`);
+    //         console.log(` meanPriceStart:      ${meanPriceStartBn.toNumber()}`);
+    //         console.log(` meanPriceEnd:        ${meanPriceEndBn.toNumber()}`);
+    //         console.log(` usdcPerUserMin:      ${usdcPerUserMinBn.toNumber()}`);
+    //         console.log(` usdcPerUserMaxStart: ${usdcPerUserMaxStartBn.toNumber()}`);
+    //         console.log(` usdcPerUserMaxEnd:   ${usdcPerUserMaxEndBn.toNumber()}`);
+    //         console.log(` usdcTotalMin:        ${usdcTotalMinBn.toNumber()}`);
+    //         console.log(` usdcTotalMax:        ${usdcTotalMaxBn.toNumber()}`);
+    //         console.log(` meanMint:            ${meanMint}`);
+    //         console.log(` usdcMint:            ${usdcMint}`);
+    //         console.log(` meanPool:            ${meanPool}`);
+    //         console.log(` usdcPool:            ${usdcPool}`);
+    //         console.log(` usdcPool:            ${usdcPool}`);
+    //         console.log(` idoWithdrawals:      ${idoWithdrawals.publicKey}`);
+    //         console.log(` curveRefresh:        ${curveRefreshIntervalInSeconds}`);
+    //         console.log();
+    //     }
 
-        const initializeIdoTx = program.transaction.initializePool(
-            idoName,
-            idoTimes,
-            idoMeanAmountBn,
-            bumps,
-            meanPriceStartBn,
-            meanPriceEndBn,
-            usdcPerUserMinBn,
-            usdcPerUserMaxStartBn,
-            usdcPerUserMaxEndBn,
-            usdcTotalMinBn,
-            usdcTotalMaxBn,
-            new BN(curveRefreshIntervalInSeconds),
-            new BN(coolOffPeriodInSeconds),
-            {
-                accounts: {
-                    idoAuthority: idoAuthority,
-                    idoAuthorityMean,
-                    idoAccount,
-                    meanMint,
-                    usdcMint,
-                    meanPool,
-                    usdcPool,
-                    withdrawals: idoWithdrawals.publicKey,
-                    systemProgram: SYSTEM_PROGRAM_ID,
-                    tokenProgram: TOKEN_PROGRAM_ID,
-                    rent: SYSVAR_RENT_PUBKEY,
-                },
-                instructions: [createWithdrawalsTx.instructions[0]],
-            }
-        );
+    //     const initializeIdoTx = program.transaction.initializePool(
+    //         idoName,
+    //         idoTimes,
+    //         idoMeanAmountBn,
+    //         bumps,
+    //         meanPriceStartBn,
+    //         meanPriceEndBn,
+    //         usdcPerUserMinBn,
+    //         usdcPerUserMaxStartBn,
+    //         usdcPerUserMaxEndBn,
+    //         usdcTotalMinBn,
+    //         usdcTotalMaxBn,
+    //         new BN(curveRefreshIntervalInSeconds),
+    //         new BN(coolOffPeriodInSeconds),
+    //         {
+    //             accounts: {
+    //                 idoAuthority: idoAuthority,
+    //                 idoAuthorityMean,
+    //                 idoAccount,
+    //                 meanMint,
+    //                 usdcMint,
+    //                 meanPool,
+    //                 usdcPool,
+    //                 withdrawals: idoWithdrawals.publicKey,
+    //                 systemProgram: SYSTEM_PROGRAM_ID,
+    //                 tokenProgram: TOKEN_PROGRAM_ID,
+    //                 rent: SYSVAR_RENT_PUBKEY,
+    //             },
+    //             instructions: [createWithdrawalsTx.instructions[0]],
+    //         }
+    //     );
 
-        initializeIdoTx.feePayer = idoAuthority;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
-        initializeIdoTx.recentBlockhash = hash.blockhash;
-        initializeIdoTx.partialSign(idoWithdrawals);
+    //     initializeIdoTx.feePayer = idoAuthority;
+    //     let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+    //     initializeIdoTx.recentBlockhash = hash.blockhash;
+    //     initializeIdoTx.partialSign(idoWithdrawals);
 
-        return [idoAccount, initializeIdoTx];
-    }
+    //     return [idoAccount, initializeIdoTx];
+    // }
 
     public async createDepositUsdcTx(
         meanIdoAddress: PublicKey,
@@ -651,40 +651,40 @@ export class IdoClient {
         // return closePoolTx;
     }
 
-    public async createCreateWithdrawalsTx(
-        idoAuthorityPubkey: PublicKey,
-    ): Promise<[anchor.web3.Keypair, Transaction]> {
+    // public async createCreateWithdrawalsTx(
+    //     idoAuthorityPubkey: PublicKey,
+    // ): Promise<[anchor.web3.Keypair, Transaction]> {
 
-        if(!idoAuthorityPubkey)
-            throw new Error("Must connect wallet first");
-        const userWallet = IdoClient.createReadonlyWallet(idoAuthorityPubkey);
-        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+    //     if(!idoAuthorityPubkey)
+    //         throw new Error("Must connect wallet first");
+    //     const userWallet = IdoClient.createReadonlyWallet(idoAuthorityPubkey);
+    //     const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
 
-        const withdrawalsKeypair = anchor.web3.Keypair.generate();
+    //     const withdrawalsKeypair = anchor.web3.Keypair.generate();
 
-        if (this.verbose) {
-            console.log(` userIdoAuthority:    ${idoAuthorityPubkey}`);
-            console.log(` idoWithdrawals:      ${withdrawalsKeypair}`);
-            console.log();
-        }
+    //     if (this.verbose) {
+    //         console.log(` userIdoAuthority:    ${idoAuthorityPubkey}`);
+    //         console.log(` idoWithdrawals:      ${withdrawalsKeypair}`);
+    //         console.log();
+    //     }
 
-        const createWithdrawalsTx = program.transaction.createIdoWithdrawals(
-            {
-                accounts: {
-                    withdrawals: withdrawalsKeypair.publicKey,
-                    rent: SYSVAR_RENT_PUBKEY,
-                },
-                instructions: [await program.account.idoWithdrawals.createInstruction(withdrawalsKeypair)],
-                signers: [withdrawalsKeypair]
-            }
-        );
+    //     const createWithdrawalsTx = program.transaction.createIdoWithdrawals(
+    //         {
+    //             accounts: {
+    //                 withdrawals: withdrawalsKeypair.publicKey,
+    //                 rent: SYSVAR_RENT_PUBKEY,
+    //             },
+    //             instructions: [await program.account.idoWithdrawals.createInstruction(withdrawalsKeypair)],
+    //             signers: [withdrawalsKeypair]
+    //         }
+    //     );
 
-        createWithdrawalsTx.feePayer = idoAuthorityPubkey;
-        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
-        createWithdrawalsTx.recentBlockhash = hash.blockhash;
+    //     createWithdrawalsTx.feePayer = idoAuthorityPubkey;
+    //     let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+    //     createWithdrawalsTx.recentBlockhash = hash.blockhash;
 
-        return [withdrawalsKeypair, createWithdrawalsTx];
-    }
+    //     return [withdrawalsKeypair, createWithdrawalsTx];
+    // }
 
     public async createUpdateTx(
         idoAuthorityAddress: PublicKey,
