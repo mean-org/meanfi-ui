@@ -397,17 +397,12 @@ export const IdoLiveView = () => {
       return false;
     }
 
-    // TODO: Decide if we want fireworks for everyone when redeem started or only to those in GA
     if (!redeemStarted && regionLimitationAcknowledged) {
       setRedeemStarted(true);
       if (startedOneMinuteAgo()) {
         consoleOut('Setting fireworks ON...', '', 'blue');
         setRedeemStartFireworks(true);
         forceRefreshData();
-        // if (isUserInGa()) {
-        //   setRedeemStartFireworks(true);
-        //   consoleOut('Setting fireworks ON...', '', 'blue');
-        // }
       }
     }
 
@@ -426,7 +421,7 @@ export const IdoLiveView = () => {
       timeout = setTimeout(() => {
         consoleOut('Setting fireworks OFF...', '', 'blue');
         setRedeemStartFireworks(false);
-      }, 10000);
+      }, 7000);
     }
 
     return () => {
@@ -860,6 +855,15 @@ export const IdoLiveView = () => {
     </>
   );
 
+  const drawBackgroundStars = () => {
+    const bgStarts: JSX.Element[] = [];
+    for (let i = 0; i < 100; i++) {
+      const star = (<div className="circle-container"><div className="circle"></div></div>);
+      bgStarts.push(star);
+    }
+    return bgStarts;
+  }
+
   // const idoItemsMenu = (
   //   <>
   //     {idoList && idoList.length > 0 ? (
@@ -887,11 +891,13 @@ export const IdoLiveView = () => {
           <div id="pyro">
             <div className="before"></div>
             <div className="after"></div>
-            <h1 className="heading ido-heading text-center mb-0">The Mean <span className="fg-primary-highlight">IDO</span><br/>already finished</h1>
+            <h1 className="heading ido-heading text-center mb-0">Yay! 🥳🥳🥳 We made it!<br/><br/>The Mean IDO has concluded ✅<br/>The Mean Life has just begun 😎</h1>
           </div>
         )}
       </div>
-      <div className={`solid-bg ${regionLimitationAcknowledged && redeemStartFireworks ? 'blurry' : '' }`}>
+      <div className={`solid-bg position-relative ${regionLimitationAcknowledged && redeemStartFireworks ? 'blurry' : '' }`}>
+
+        {regionLimitationAcknowledged && redeemStarted && drawBackgroundStars()}
 
         {isLocal() && (
           <>

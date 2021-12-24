@@ -316,6 +316,66 @@ export class IdoClient {
         return [userIdo, withdrawUsdcTx];
     }
 
+    public async createWithdrawMeanLpTx(
+        meanIdoAddress: PublicKey
+    ): Promise<[PublicKey, Transaction]> {
+
+        const currentUserPubKey = this.userPubKey;
+        if(!currentUserPubKey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(currentUserPubKey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+        const idoAccount = await program.account.idoAccount.fetch(meanIdoAddress);
+
+        if(idoAccount === null)
+           throw new Error("IDO account not found");
+
+        const userMeanAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.meanMint,
+            currentUserPubKey,
+          );
+
+        if (userMeanAddress === null) {
+            throw Error("user USDC ATA not found");
+        }
+
+        const [userIdo] = await this.findUserIdoProgramAddress(currentUserPubKey, meanIdoAddress);
+
+        if (this.verbose) {
+            console.log(` userIdoAuthority:    ${currentUserPubKey}`);
+            console.log(` userMean:            ${userMeanAddress}`);
+            console.log(` idoAddress:          ${meanIdoAddress}`);
+            console.log(` userIdo:             ${userIdo}`);
+            console.log();
+        }
+
+        const withdrawMeanLpTx = program.transaction.lpr(
+            {
+                accounts: {
+                    userAuthority: currentUserPubKey,
+                    idoAccount: meanIdoAddress,
+                    userIdo: userIdo,
+                    userMean: userMeanAddress,
+                    meanMint: idoAccount.meanMint,
+                    meanPool: idoAccount.meanPool,
+                    withdrawals: idoAccount.withdrawals as PublicKey,
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                },
+            }
+        );
+
+        withdrawMeanLpTx.feePayer = currentUserPubKey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        withdrawMeanLpTx.recentBlockhash = hash.blockhash;
+
+        return [userIdo, withdrawMeanLpTx];
+    }
+
     public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
         if(!this.userPubKey)
             throw new Error("Must connect wallet first");

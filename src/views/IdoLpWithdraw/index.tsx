@@ -73,7 +73,7 @@ export const IdoLpWithdraw = (props: {
         : 'Collect IDO funds (USDC + MEAN)';
   }
 
-  const onExecuteRedeemTx = async () => {
+  const onExecuteRedeemLpTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -112,12 +112,11 @@ export const IdoLpWithdraw = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.createWithdrawUsdcTx(
+        return await props.idoClient.createWithdrawMeanLpTx(
           meanIdoAddress,                                           // meanIdoAddress
-          amount                                                    // amount
         )
         .then(value => {
-          consoleOut('createDepositUsdcTx returned transaction:', value);
+          consoleOut('createWithdrawMeanLpTx returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -130,7 +129,7 @@ export const IdoLpWithdraw = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createDepositUsdcTx error:', error);
+          console.error('createWithdrawMeanLpTx error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -139,7 +138,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -147,7 +146,7 @@ export const IdoLpWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -173,7 +172,7 @@ export const IdoLpWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -196,7 +195,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -209,7 +208,7 @@ export const IdoLpWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -241,7 +240,7 @@ export const IdoLpWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -254,7 +253,7 @@ export const IdoLpWithdraw = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -348,7 +347,7 @@ export const IdoLpWithdraw = (props: {
           shape="round"
           size="large"
           disabled={props.disabled}
-          onClick={() => {}}>
+          onClick={onExecuteRedeemLpTx}>
           {isBusy && (
             <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
           )}
