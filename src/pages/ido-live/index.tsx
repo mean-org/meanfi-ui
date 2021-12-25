@@ -683,7 +683,7 @@ export const IdoLiveView = () => {
   );
 
   const renderClaimsForms = () => {
-    if (!idoStatus || !idoDetails || !idoEndUtc) { return null; }
+    if (!idoStatus || !idoDetails || !idoEndUtc || !redeemStartUtc) { return null; }
     switch (currentClaimsTab) {
       case "ido-claims":
         return (
@@ -693,8 +693,8 @@ export const IdoLiveView = () => {
             idoDetails={idoDetails}
             idoStatus={idoStatus}
             idoFinished={today > idoEndUtc}
-            redeemStarted={redeemStarted}
-            disabled={!redeemStarted || fetchTxInfoStatus === "fetching"}
+            redeemStarted={today > redeemStartUtc}
+            disabled={today < idoEndUtc || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}
           />
         );
@@ -705,7 +705,7 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
-            redeemStarted={redeemStarted}
+            redeemStarted={today > redeemStartUtc}
             disabled={true}                   // TODO: Replace with right condition when possible
             selectedToken={selectedToken}
           />
@@ -717,7 +717,7 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
-            redeemStarted={redeemStarted}
+            redeemStarted={today > redeemStartUtc}
             disabled={true}                   // TODO: Replace with right condition when possible
             selectedToken={selectedToken}
           />

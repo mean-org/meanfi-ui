@@ -59,7 +59,7 @@ export const IdoRedeem = (props: {
   // Validation
 
   const isValidOperation = (): boolean => {
-    return hasUserContributedNotInGa() || isUserInGa()
+    return (props.idoFinished && hasUserContributedNotInGa()) || (props.redeemStarted && isUserInGa())
       ? true
       : false;
   }
