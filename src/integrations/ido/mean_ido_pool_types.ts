@@ -3,7 +3,180 @@ export type MeanIdoPool = {
   "name": "mean_ido_pool",
   "instructions": [
     {
-      "name": "claimUsdc",
+      "name": "initializePool",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "idoName",
+          "type": "string"
+        },
+        {
+          "name": "idoTimes",
+          "type": {
+            "defined": "IdoTimes"
+          }
+        },
+        {
+          "name": "idoMeanAmount",
+          "type": "u64"
+        },
+        {
+          "name": "bumps",
+          "type": {
+            "defined": "PoolBumps"
+          }
+        },
+        {
+          "name": "meanPriceStart",
+          "type": "u64"
+        },
+        {
+          "name": "meanPriceEnd",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMin",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMaxStart",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMaxEnd",
+          "type": "u64"
+        },
+        {
+          "name": "usdcTotalMin",
+          "type": "u64"
+        },
+        {
+          "name": "usdcTotalMax",
+          "type": "u64"
+        },
+        {
+          "name": "curveRefreshIntervalInSeconds",
+          "type": "u64"
+        },
+        {
+          "name": "coolOffPeriodInSeconds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositUsdc",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "withdrawUsdc",
       "accounts": [
         {
           "name": "userAuthority",
@@ -51,13 +224,34 @@ export type MeanIdoPool = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "simulateStatus",
       "accounts": [
         {
           "name": "idoAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createIdoWithdrawals",
+      "accounts": [
+        {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -99,97 +293,6 @@ export type MeanIdoPool = {
         },
         {
           "name": "withdrawals",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "update",
-      "accounts": [
-        {
-          "name": "idoAuthority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "idoAccount",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "lastContNumber",
-          "type": "u32"
-        },
-        {
-          "name": "lastContUsdcContributedBefore",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "withdrawDao",
-      "accounts": [
-        {
-          "name": "daoAuthority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "daoAuthorityMean",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "daoAuthorityUsdc",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "idoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "meanMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "usdcMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "meanPool",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "usdcPool",
           "isMut": true,
           "isSigner": false
         },
@@ -754,7 +857,180 @@ export const IDL: MeanIdoPool = {
   "name": "mean_ido_pool",
   "instructions": [
     {
-      "name": "claimUsdc",
+      "name": "initializePool",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "idoName",
+          "type": "string"
+        },
+        {
+          "name": "idoTimes",
+          "type": {
+            "defined": "IdoTimes"
+          }
+        },
+        {
+          "name": "idoMeanAmount",
+          "type": "u64"
+        },
+        {
+          "name": "bumps",
+          "type": {
+            "defined": "PoolBumps"
+          }
+        },
+        {
+          "name": "meanPriceStart",
+          "type": "u64"
+        },
+        {
+          "name": "meanPriceEnd",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMin",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMaxStart",
+          "type": "u64"
+        },
+        {
+          "name": "usdcPerUserMaxEnd",
+          "type": "u64"
+        },
+        {
+          "name": "usdcTotalMin",
+          "type": "u64"
+        },
+        {
+          "name": "usdcTotalMax",
+          "type": "u64"
+        },
+        {
+          "name": "curveRefreshIntervalInSeconds",
+          "type": "u64"
+        },
+        {
+          "name": "coolOffPeriodInSeconds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositUsdc",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "userIdoBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "withdrawUsdc",
       "accounts": [
         {
           "name": "userAuthority",
@@ -802,13 +1078,34 @@ export const IDL: MeanIdoPool = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "simulateStatus",
       "accounts": [
         {
           "name": "idoAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createIdoWithdrawals",
+      "accounts": [
+        {
+          "name": "withdrawals",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -850,97 +1147,6 @@ export const IDL: MeanIdoPool = {
         },
         {
           "name": "withdrawals",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "update",
-      "accounts": [
-        {
-          "name": "idoAuthority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "idoAccount",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "lastContNumber",
-          "type": "u32"
-        },
-        {
-          "name": "lastContUsdcContributedBefore",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "withdrawDao",
-      "accounts": [
-        {
-          "name": "daoAuthority",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "daoAuthorityMean",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "daoAuthorityUsdc",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "idoAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "meanMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "usdcMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "meanPool",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "usdcPool",
           "isMut": true,
           "isSigner": false
         },
