@@ -51,7 +51,7 @@
     "@ledgerhq/hw-transport-webhid": "^6.11",
     "@mean-dao/ddca": "1.2.32",
     "@mean-dao/hybrid-liquidity-ag": "1.1.26",
-    "@mean-dao/money-streaming": "1.7.5",
+    "@mean-dao/money-streaming": "1.7.7",
     "@mercurial-finance/stable-swap-n-pool": "git+https://github.com/mercurial-finance/stable-swap-n-pool-js.git",
     "@orca-so/sdk": "1.2.8",
     "@project-serum/anchor": "^0.18.2",
