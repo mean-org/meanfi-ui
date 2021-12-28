@@ -623,11 +623,7 @@ export type MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "redeemTreasury",
-            "type": "publicKey"
-          },
-          {
-            "name": "redeemTotalStreams",
+            "name": "totalRedeems",
             "type": "u32"
           }
         ]
@@ -1632,11 +1628,7 @@ export const IDL: MeanIdoPool = {
             "type": "u64"
           },
           {
-            "name": "redeemTreasury",
-            "type": "publicKey"
-          },
-          {
-            "name": "redeemTotalStreams",
+            "name": "totalRedeems",
             "type": "u32"
           }
         ]

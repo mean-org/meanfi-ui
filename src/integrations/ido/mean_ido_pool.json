@@ -623,11 +623,7 @@
             "type": "u64"
           },
           {
-            "name": "redeemTreasury",
-            "type": "publicKey"
-          },
-          {
-            "name": "redeemTotalStreams",
+            "name": "totalRedeems",
             "type": "u32"
           }
         ]

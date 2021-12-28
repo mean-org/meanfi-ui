@@ -1420,8 +1420,7 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
 
-        redeemTreasuryAddress: idoAccount.redeemTreasury.toBase58(),
-        redeemTotalStreams: idoAccount.redeemTotalStreams,
+        totalRedeems: idoAccount.totalRedeems,
         
        idoDurationInSeconds: (idoAccount.idoTimes as IdoTimes).idoEndTs.toNumber() - idoTimes.idoStartTs.toNumber()
     };
@@ -1533,9 +1532,7 @@ export type IdoDetails = {
 
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
-    
-    redeemTreasuryAddress: string;
-    redeemTotalStreams: number;
+    totalRedeems: number;
 
     idoDurationInSeconds: number;
 }
