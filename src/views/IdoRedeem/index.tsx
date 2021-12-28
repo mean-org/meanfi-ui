@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
@@ -14,6 +14,7 @@ import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
+import CountUp from 'react-countup';
 
 export const IdoRedeem = (props: {
   connection: Connection;
@@ -29,6 +30,7 @@ export const IdoRedeem = (props: {
   const { connected, wallet, publicKey } = useWallet();
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
+    userTokens,
     selectedToken,
     transactionStatus,
     setTransactionStatus,
@@ -41,8 +43,17 @@ export const IdoRedeem = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
+  const meanToken = useMemo(() => {
+    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    consoleOut('token:', token, 'blue');
+    return token[0];
+  }, [userTokens]);
+
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey) {
+      setUserAllocation(null);
+      return;
+    }
 
     const getAllocation = async () => {
       try {
@@ -73,7 +84,7 @@ export const IdoRedeem = (props: {
     props.idoStatus,
     publicKey
   ]);
-  
+
   const hasUserContributedNotInGa = useCallback(() => {
     return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
       ? true
@@ -356,16 +367,21 @@ export const IdoRedeem = (props: {
                   : '-'
               )}
             </div>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Redeemable MEAN',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userMeanImpliedAmount,
-                  '',
-                  true
-                ),
-                false
-              )}
+            <div className="flex-fixed-right mb-2">
+              <div className="left inner-label">
+                <span>Redeemable MEAN</span>
+              </div>
+              <div className="right value-display">
+                {meanToken && userAllocation && userAllocation.tokenAmount ? (
+                  <CountUp
+                    end={userAllocation.tokenAmount}
+                    decimals={meanToken.decimals}
+                    separator=','
+                    duration={2} />
+                ) : (
+                  <span>0</span>
+                )}
+              </div>
             </div>
 
             {isUserInGa() ? (
