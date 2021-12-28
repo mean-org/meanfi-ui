@@ -318,6 +318,153 @@ export type MeanIdoPool = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "update",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lastContNumber",
+          "type": "u32"
+        },
+        {
+          "name": "lastContUsdcContributedBefore",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdrawDao",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAuthorityUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeem",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -474,6 +621,14 @@ export type MeanIdoPool = {
           {
             "name": "meanImpliedPrice",
             "type": "u64"
+          },
+          {
+            "name": "redeemTreasury",
+            "type": "publicKey"
+          },
+          {
+            "name": "redeemTotalStreams",
+            "type": "u32"
           }
         ]
       }
@@ -1172,6 +1327,153 @@ export const IDL: MeanIdoPool = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "update",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lastContNumber",
+          "type": "u32"
+        },
+        {
+          "name": "lastContUsdcContributedBefore",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdrawDao",
+      "accounts": [
+        {
+          "name": "idoAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "idoAuthorityMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAuthorityUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "redeem",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "userMean",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIdo",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "idoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "meanMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "meanPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1328,6 +1630,14 @@ export const IDL: MeanIdoPool = {
           {
             "name": "meanImpliedPrice",
             "type": "u64"
+          },
+          {
+            "name": "redeemTreasury",
+            "type": "publicKey"
+          },
+          {
+            "name": "redeemTotalStreams",
+            "type": "u32"
           }
         ]
       }

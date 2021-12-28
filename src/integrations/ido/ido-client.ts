@@ -21,6 +21,9 @@ const SYSVAR_RENT_PUBKEY = anchor.web3.SYSVAR_RENT_PUBKEY;
 const DECIMALS = 6;
 const DECIMALS_BN = new BN(DECIMALS);
 const IDO_READONLY_PUBKEY = new PublicKey("3KmMEv7A8R3MMhScQceXBQe69qLmnFfxSM3q8HyzkrSx");
+const MSP_FEE_PUBKEY = new PublicKey("3TD6SWY9M1mLY2kZWJNavPLhwXvcRsWdnZLRaMzERJBw");
+const MSP_PROGRAM_PUBKEY_DEVNET = new PublicKey("9yMq7x4LstWYWi14pr8BEBsEX33L3HnugpiM2PT96x4k");
+const MSP_PROGRAM_PUBKEY_MAINNET = new PublicKey("H6wJxgkcc93yeUFnsZHgor3Q3pSWgGpEysfqKrwLtMko");
 
 /**
  * Anchor based client for the Mean IDO program
@@ -533,11 +536,172 @@ export class IdoClient {
         return [withdrawalsKeypair, createWithdrawalsTx];
     }
 
+    public async createUpdateTx(
+        idoAuthorityAddress: PublicKey,
+        idoAddress: PublicKey,
+        lastContNumber: number,
+        lastContUsdcContributedBefore: number
+    ): Promise<Transaction> {
+
+        if(!idoAuthorityAddress)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(idoAuthorityAddress);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        if (this.verbose) {
+            console.log(` rpcUrl:              ${this.rpcUrl}`);
+            console.log(` userIdoAuthority:    ${idoAuthorityAddress}`);
+            console.log(` idoAddress:          ${idoAddress}`);
+            console.log(` lastContNumber:      ${lastContNumber}`);
+            console.log(` lastContUsdcContributedBefore:    ${lastContUsdcContributedBefore.toString()}`);
+            console.log();
+        }
+
+        const updateTx = program.transaction.update(
+            lastContNumber,
+            new BN(lastContUsdcContributedBefore),
+            {
+                accounts: {
+                    idoAuthority: idoAuthorityAddress,
+                    idoAccount: idoAddress,
+                },
+            }
+        );
+
+        updateTx.feePayer = idoAuthorityAddress;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        updateTx.recentBlockhash = hash.blockhash;
+
+        return updateTx;
+    }
+
     public async createWithdrawDaoTx(
         meanIdoAddress: PublicKey,
     ): Promise<Transaction> {
 
-        throw new Error();
+        const currentUserPubKey = this.userPubKey;
+        if(!currentUserPubKey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(currentUserPubKey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        const idoAccount = await program.account.idoAccount.fetch(meanIdoAddress);
+        if(idoAccount === null)
+           throw new Error("IDO account not found");
+
+        const userUsdcAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.usdcMint,
+            currentUserPubKey,
+          );
+        if (userUsdcAddress === null) {
+            throw Error("user USDC ATA not found");
+        }
+
+        const userMeanAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.meanMint,
+            currentUserPubKey,
+          );
+        if (userUsdcAddress === null) {
+            throw Error("user USDC ATA not found");
+        }
+
+        if (this.verbose) {
+            console.log(` Authority:           ${currentUserPubKey}`);
+            console.log(` userUsdc:            ${userUsdcAddress}`);
+            console.log(` userMean:            ${userMeanAddress}`);
+            console.log(` idoAddress:          ${meanIdoAddress}`);
+            console.log();
+        }
+
+        const withdrawUsdcTx = program.transaction.withdrawDao(
+            {
+                accounts: {
+                    idoAuthority: currentUserPubKey,
+                    idoAuthorityMean: userMeanAddress,
+                    idoAuthorityUsdc: userUsdcAddress,
+                    idoAccount: meanIdoAddress,
+                    meanMint: idoAccount.meanMint,
+                    usdcMint: idoAccount.usdcMint,
+                    meanPool: idoAccount.meanPool,
+                    usdcPool: idoAccount.usdcPool,
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                },
+            }
+        );
+
+        withdrawUsdcTx.feePayer = currentUserPubKey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        withdrawUsdcTx.recentBlockhash = hash.blockhash;
+
+        return withdrawUsdcTx;
+    }
+
+    public async createReddemTx(
+        idoAddress: PublicKey,
+    ): Promise<Transaction> {
+
+        const currentUserPubKey = this.userPubKey;
+        if(!currentUserPubKey)
+            throw new Error("Must connect wallet first");
+        const userWallet = IdoClient.createReadonlyWallet(currentUserPubKey);
+        const program = IdoClient.createProgram(this.rpcUrl, userWallet, this.readonlyProvider.opts);
+
+        const idoAccount = await program.account.idoAccount.fetchNullable(idoAddress);
+        if(idoAccount === null)
+           throw new Error("IDO account not found");
+
+        const userMeanAddress = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            idoAccount.meanMint,
+            currentUserPubKey,
+          );
+        if (userMeanAddress === null) {
+            throw Error("user MEAN ATA not found");
+        }
+
+        const [userIdo, userIdoBump] = await this.findUserIdoProgramAddress(currentUserPubKey, idoAddress);
+        const userIdoAccount = await program.account.userIdoAccount.fetchNullable(userIdo);
+        if(userIdoAccount === null)
+           throw new Error("User contribution not found");
+
+        if (this.verbose) {
+            console.log(` userIdoAuthority:    ${currentUserPubKey}`);
+            console.log(` userMean:            ${userMeanAddress}`);
+            console.log(` idoAddress:          ${idoAddress}`);
+            console.log(` userIdo:             ${userIdo}`);
+            console.log();
+        }
+
+        const redeemTx = program.transaction.redeem(
+            {
+                accounts: {
+                    userAuthority: currentUserPubKey,
+                    userMean: userMeanAddress,
+                    userIdo: userIdo,
+                    idoAccount: idoAddress,
+                    meanMint: idoAccount.meanMint,
+                    meanPool: idoAccount.meanPool,
+                    systemProgram: SYSTEM_PROGRAM_ID,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                },
+            }
+        );
+
+        redeemTx.feePayer = currentUserPubKey;
+        let hash = await this.connection.getRecentBlockhash(this.connection.commitment);
+        redeemTx.recentBlockhash = hash.blockhash;
+
+        return redeemTx;
     }
 
     public async listIdos(stortByStartTs: boolean = true, desc: boolean = true): Promise<Array<IdoDetails>> {
@@ -1242,6 +1406,7 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
 
         totalContributors: idoAccount.totalContributors,
         lastContributorNumber: idoAccount.lastContributorNumber,
+        coolOffPeriodInSeconds: idoAccount.coolOffPeriodInSeconds.toNumber(),
         
         gaUsdcTotalContributed: idoAccount.gaUsdcTotalContributed.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         gaUsdcTotalContributedTokenAmount: idoAccount.gaUsdcTotalContributed.toNumber(),
@@ -1255,7 +1420,8 @@ export function mapIdoDetails(idoAddress: string, idoAccountUntyped: any): IdoDe
         meanImpliedPrice: idoAccount.meanImpliedPrice.toNumber() / 10**DECIMALS, // MEAN_DECIMALS
         meanImpliedPriceTokenAmount: idoAccount.meanImpliedPrice.toNumber(),
 
-        coolOffPeriodInSeconds: idoAccount.coolOffPeriodInSeconds.toNumber(),
+        redeemTreasuryAddress: idoAccount.redeemTreasury.toBase58(),
+        redeemTotalStreams: idoAccount.redeemTotalStreams,
         
        idoDurationInSeconds: (idoAccount.idoTimes as IdoTimes).idoEndTs.toNumber() - idoTimes.idoStartTs.toNumber()
     };
@@ -1282,6 +1448,7 @@ export function mapUserIdoDetails(userIdoPubKey: PublicKey, userIdoAccount: user
         meanPurchasedAmount: toUiAmount(userIdoAccount.meanPurchasedAmount),
         meanPurchasedTokenAmount: userIdoAccount.meanPurchasedAmount.toNumber(),
         // TODO: mean implied amount
+        userWalletAddress: "",
     }
 }
 
@@ -1354,19 +1521,21 @@ export type IdoDetails = {
 
     totalContributors: number;
     lastContributorNumber: number;
+    coolOffPeriodInSeconds: number;
 
     gaUsdcTotalContributed: number;
     gaUsdcTotalContributedTokenAmount: number;
     gaMeanTotalPurchased: number;
     gaMeanTotalPurchasedTokenAmount: number;
     gaIsOpen: boolean;
-    gaLastContributorNumber: number,
+    gaLastContributorNumber: number;
     gaLastContributorUsdcContributedBefore: number,
 
     meanImpliedPrice: number;
     meanImpliedPriceTokenAmount: number;
-
-    coolOffPeriodInSeconds: number;
+    
+    redeemTreasuryAddress: string;
+    redeemTotalStreams: number;
 
     idoDurationInSeconds: number;
 }
@@ -1389,6 +1558,8 @@ export type UserIdoDetails = {
     meanPurchasedAmount: number;
     meanPurchasedTokenAmount: number;
     // TODO: calculate user implied mean amount
+
+    userWalletAddress: string;
 }
 
 export type IdoStatus = {
