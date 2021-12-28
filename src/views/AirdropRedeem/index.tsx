@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTxIxResume } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,7 @@ export const AirdropRedeem = (props: {
   const { connected, wallet, publicKey } = useWallet();
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
+    userTokens,
     selectedToken,
     transactionStatus,
     setTransactionStatus,
@@ -39,6 +40,12 @@ export const AirdropRedeem = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
+
+  const meanToken = useMemo(() => {
+    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    consoleOut('token:', token, 'blue');
+    return token[0];
+  }, [userTokens]);
 
   useEffect(() => {
     if (!publicKey) { return; }
@@ -67,13 +74,15 @@ export const AirdropRedeem = (props: {
   // Validation
 
   const isValidOperation = (): boolean => {
-    return !props.disabled ? true : false;
+    return !props.disabled && userAllocation && userAllocation.tokenAmount > 0 ? true : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : 'Nothing to claim';
+      : !userAllocation || !userAllocation.tokenAmount
+        ? 'Nothing to claim'
+        : 'Claim your MEAN';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -293,7 +302,18 @@ export const AirdropRedeem = (props: {
         {props.selectedToken && (
           <>
             <div className="airdrop-title">Your Airdrop Allocation</div>
-            <div className="airdrop-amount">0.000000 MEAN</div>
+            {meanToken && userAllocation && userAllocation.tokenAmount ? (
+              <div className="airdrop-amount">
+                {
+                  getTokenAmountAndSymbolByTokenAddress(
+                    userAllocation.tokenAmount,
+                    meanToken.address
+                  )
+                }
+              </div>
+            ) : (
+              <div className="airdrop-amount">0.000000 MEAN</div>
+            )}
           </>
         )}
       </div>

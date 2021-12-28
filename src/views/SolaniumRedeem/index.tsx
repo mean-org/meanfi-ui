@@ -30,7 +30,7 @@ export const SolaniumRedeem = (props: {
   const { connected, wallet, publicKey } = useWallet();
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
-    tokenList,
+    userTokens,
     selectedToken,
     transactionStatus,
     setTransactionStatus,
@@ -44,9 +44,10 @@ export const SolaniumRedeem = (props: {
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
   const meanToken = useMemo(() => {
-    const token = tokenList.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+    const token = userTokens.filter(t => t.symbol === 'MEAN');
+    consoleOut('token:', token, 'blue');
     return token[0];
-  }, [tokenList]);
+  }, [userTokens]);
 
   useEffect(() => {
     if (!publicKey) { return; }
@@ -75,13 +76,15 @@ export const SolaniumRedeem = (props: {
   // Validation
 
   const isValidOperation = (): boolean => {
-    return !props.disabled ? true : false;
+    return !props.disabled && userAllocation && userAllocation.tokenAmount > 0 ? true : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : 'No contribution to withdraw';
+      : !userAllocation || !userAllocation.tokenAmount
+        ? 'Nothing to claim'
+        : 'Claim your MEAN';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -150,7 +153,7 @@ export const SolaniumRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.moneyStreamingClient.createStream(
+        return await props.moneyStreamingClient.createStream2(
           publicKey,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
@@ -163,7 +166,7 @@ export const SolaniumRedeem = (props: {
           now                                                               // startUtc
         )
         .then(value => {
-          consoleOut('createDepositUsdcTx returned transaction:', value);
+          consoleOut('createStream2 returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -176,7 +179,7 @@ export const SolaniumRedeem = (props: {
           return true;
         })
         .catch(error => {
-          console.error('createDepositUsdcTx error:', error);
+          console.error('createStream2 error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -185,7 +188,7 @@ export const SolaniumRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -193,7 +196,7 @@ export const SolaniumRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -219,18 +222,46 @@ export const SolaniumRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
             return false;
           }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
+
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
+
+          // TODO: kandela
+          // Send Tx to add treasurer signature
+          /*
+          try {
+            const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
+            signedTransaction = updatedTx;
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: 'updateCloseTx returned an updated Tx'
+            });
+            return true;
+          } catch (error) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+            });
+            customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          */
         })
         .catch(error => {
           console.error('Signing transaction failed!');
@@ -242,7 +273,7 @@ export const SolaniumRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -255,7 +286,7 @@ export const SolaniumRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -287,7 +318,7 @@ export const SolaniumRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -300,21 +331,12 @@ export const SolaniumRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     if (publicKey) {
-      // try {
-      //   const allocation = await getWhitelistAllocation(publicKey.toBase58(), 0);
-      //   consoleOut('allocation data:', allocation, 'blue');
-      // } catch (error) {
-      //   console.error(error);
-      // } finally  {
-      //   setIsBusy(false);
-      // }
-
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
@@ -325,7 +347,7 @@ export const SolaniumRedeem = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
             setWithdrawAmount("");
             setIsBusy(false);
             setTransactionStatus({
@@ -370,7 +392,13 @@ export const SolaniumRedeem = (props: {
             </div>
             <div className="px-1 mb-2">
               {idoInfoRow(
-                'Redeemable MEAN', '0'
+                'Redeemable MEAN',
+                meanToken && userAllocation && userAllocation.tokenAmount
+                  ? getTokenAmountAndSymbolByTokenAddress(
+                      userAllocation.tokenAmount,
+                      meanToken.address
+                    )
+                  : '-'
               )}
             </div>
 

@@ -1527,10 +1527,10 @@
     decimal.js "^10.3.1"
     jsbi "^4.1.0"
 
-"@mean-dao/money-streaming@1.7.7":
-  version "1.7.7"
-  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.7.7.tgz#04150710d6657ea80bcf2eebecae1d843aa2cdda"
-  integrity sha512-9MA0ZNCImlLM905w4yqB0W3JTw/qPCoh1tpt2KfRuBnuF3mz/QzLmKBZBHk5y2+CWboXi2Fn+3fr4p43pFMnpg==
+"@mean-dao/money-streaming@1.7.8":
+  version "1.7.8"
+  resolved "https://registry.yarnpkg.com/@mean-dao/money-streaming/-/money-streaming-1.7.8.tgz#13173e62bacc3a862d85574ddfb2d818762b15d0"
+  integrity sha512-3698sJ2+Zq2ZyhvLQrjT+tvmQhl9sbI7+IQkn/A+kING4HX/LokIVvvLZeExVfnceESps/EDWbHogNOJVME4cA==
   dependencies:
     "@project-serum/anchor" "^0.18.2"
     "@solana/spl-token" "^0.1.8"
@@ -4714,6 +4714,11 @@ cosmiconfig@^7, cosmiconfig@^7.0.0, cosmiconfig@^7.0.1:
     parse-json "^5.0.0"
     path-type "^4.0.0"
     yaml "^1.10.0"
+
+countup.js@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/countup.js/-/countup.js-2.0.8.tgz#eca0c31c9db3f7769cba494d9315cd52dbaaf1b9"
+  integrity sha512-pW3xwwD+hB+xmtI16xFcuLS0D5hSQqPQWkZOdgpKQyzxCquDNo2VCFPkRw12vmvdpnicXVTcjmYiakG6biwINg==
 
 craco-less@^2.0:
   version "2.0.0"
@@ -11365,6 +11370,13 @@ react-countdown@2.3.2:
   integrity sha512-Q4SADotHtgOxNWhDdvgupmKVL0pMB9DvoFcxv5AzjsxVhzOVxnttMbAywgqeOdruwEAmnPhOhNv/awAgkwru2w==
   dependencies:
     prop-types "^15.7.2"
+
+react-countup@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/react-countup/-/react-countup-6.1.0.tgz#ac9b923ecf1351a0c3281209ba55952345814cd8"
+  integrity sha512-0tN65l4ksaNa4rm8ZKshpGxbIHQ4RAh8TGaKYp06EZ7nZw+haXpW3dQTVDhTey9+10jDkJgdzyXKDmC96c1M8g==
+  dependencies:
+    countup.js "^2.0.8"
 
 react-dev-utils@^11.0.3:
   version "11.0.4"
