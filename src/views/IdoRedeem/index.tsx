@@ -146,9 +146,8 @@ export const IdoRedeem = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    /*
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.idoDetails) {
+      if (publicKey && props.idoDetails && props.idoClient) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
@@ -174,7 +173,7 @@ export const IdoRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.redeem(
+        return await props.idoClient.createReddemTx(
           idoAddress
         )
         .then(value => {
@@ -212,7 +211,6 @@ export const IdoRedeem = (props: {
         return false;
       }
     }
-    */
 
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
@@ -322,25 +320,25 @@ export const IdoRedeem = (props: {
 
     if (publicKey) {
       resetTransactionStatus();
-      // const create = await createTx();
-      // consoleOut('create:', create);
-      // if (create && !transactionCancelled) {
-      //   const sign = await signTx();
-      //   consoleOut('sign:', sign);
-      //   if (sign && !transactionCancelled) {
-      //     const sent = await sendTx();
-      //     consoleOut('sent:', sent);
-      //     if (sent && !transactionCancelled) {
-      //       consoleOut('Send Tx to confirmation queue:', signature);
-      //       startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
-      //       setIsBusy(false);
-      //       setTransactionStatus({
-      //         lastOperation: transactionStatus.currentOperation,
-      //         currentOperation: TransactionStatus.TransactionFinished
-      //       });
-      //     } else { setIsBusy(false); }
-      //   } else { setIsBusy(false); }
-      // } else { setIsBusy(false); }
+      const create = await createTx();
+      consoleOut('create:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('sign:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
     }
 
   };
