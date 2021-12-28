@@ -10,7 +10,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
@@ -42,6 +42,9 @@ export const IdoRedeem = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
+
+  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
+  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
 
   const meanToken = useMemo(() => {
     const token = userTokens.filter(t => t.symbol === 'MEAN');

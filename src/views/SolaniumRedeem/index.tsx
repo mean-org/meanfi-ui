@@ -10,7 +10,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
-import { customLogger } from '../..';
+import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
@@ -49,6 +49,9 @@ export const SolaniumRedeem = (props: {
     consoleOut('token:', token, 'blue');
     return token[0];
   }, [userTokens]);
+
+  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
+  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
 
   useEffect(() => {
     if (!publicKey) {
@@ -111,12 +114,14 @@ export const SolaniumRedeem = (props: {
         });
 
         const beneficiary = publicKey;
+        const treasurer = new PublicKey(treasurerAddress);
+        const treasury = new PublicKey(treasuryAddress);
         const associatedToken = new PublicKey(meanToken.address as string);
-        const treasury = new PublicKey('6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1');
-        const fundingAmount = userAllocation.tokenAmount;
+        const allocation = userAllocation.tokenAmount;
         const rateAmount = userAllocation.monthlyRate;
         const streamName = 'Solanium unlocked';
         const now = new Date();
+        const cliffVestPercent = userAllocation.cliffPercent * 100;
 
         /**
          * createStream params as of Tue 7 Dec 2021
@@ -137,11 +142,21 @@ export const SolaniumRedeem = (props: {
          * autoPauseInSeconds?: number | undefined
          */
 
-        const meanIdoAddress = new PublicKey(props.idoDetails.idoAddress);
-        const amount = parseFloat(withdrawAmount);
         const data = {
-          meanIdoAddress: meanIdoAddress.toBase58(),                  // meanIdoAddress
-          amount: amount                                              // amount
+          treasurer: treasurer.toBase58(),
+          treasury: treasury.toBase58(),
+          beneficiary: publicKey.toBase58(),
+          associatedToken: associatedToken.toBase58(),
+          rateAmount: rateAmount,
+          rateIntervalInSeconds: getRateIntervalInSeconds(PaymentRateType.PerMonth),
+          startUtc: now.toUTCString(),
+          streamName: streamName,
+          allocation: allocation,
+          allocationReserved: allocation,
+          rateCliffInSeconds: undefined,
+          cliffVestAmount: undefined,
+          cliffVestPercent: cliffVestPercent,
+          autoPauseInSeconds: undefined
         }
         consoleOut('data:', data);
 
@@ -158,13 +173,13 @@ export const SolaniumRedeem = (props: {
 
         // Create a transaction
         return await props.moneyStreamingClient.createStream2(
-          publicKey,                                                        // treasurer
+          treasurer,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
           streamName,                                                       // streamName
-          fundingAmount,                                                    // fundingAmount
-          fundingAmount,                                                    // allocationReserved
+          allocation,                                                       // allocationAssigned
+          allocation,                                                       // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
           now                                                               // startUtc

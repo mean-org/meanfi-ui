@@ -13,6 +13,8 @@ export interface AppConfig {
     logglyCustomerKey: string;
     logglyTag: string;
     idoAccountAddress: string;
+    idoDistributionTreasuryAddress: string;
+    idoDistributionTreasurerAddress: string;
 }
 
 export class AppConfigService {
@@ -30,7 +32,9 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-prod',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n'
+            idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
+            idoDistributionTreasuryAddress: '',
+            idoDistributionTreasurerAddress: ''
         },
         staging: {
             appUrl: 'https://app-stage.meanfi.com',
@@ -44,7 +48,9 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-stage',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: ''
+            idoAccountAddress: '',
+            idoDistributionTreasuryAddress: '',
+            idoDistributionTreasurerAddress: ''
         },
         // dev and local will have same config
         development: {
@@ -59,7 +65,9 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG'
+            idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
+            idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
+            idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G'
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -73,7 +81,9 @@ export class AppConfigService {
             influxDbBucket: 'meanfi-dev',
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
-            idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG'
+            idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
+            idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
+            idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G'
         },
     };
 
