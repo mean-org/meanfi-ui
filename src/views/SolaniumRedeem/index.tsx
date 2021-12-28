@@ -16,6 +16,7 @@ import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import CountUp from 'react-countup';
+import { updateCreateStream2Tx } from '../../utils/transactions';
 
 export const SolaniumRedeem = (props: {
   connection: Connection;
@@ -29,7 +30,6 @@ export const SolaniumRedeem = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
     userTokens,
     selectedToken,
@@ -221,41 +221,19 @@ export const SolaniumRedeem = (props: {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
+        .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
-            return false;
-          }
-
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
           });
-          return true;
-
-          // TODO: kandela
           // Send Tx to add treasurer signature
-          /*
           try {
-            const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
+            const updatedTx = await updateCreateStream2Tx(publicKey, signed, WhitelistClaimType.Solanium, appConfig.getConfig().apiUrl);
             signedTransaction = updatedTx;
             encodedTx = signedTransaction.serialize().toString('base64');
             consoleOut('encodedTx:', encodedTx, 'orange');
@@ -280,7 +258,7 @@ export const SolaniumRedeem = (props: {
             customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
             return false;
           }
-          */
+
         })
         .catch(error => {
           console.error('Signing transaction failed!');
@@ -367,7 +345,6 @@ export const SolaniumRedeem = (props: {
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
             startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
-            setWithdrawAmount("");
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,

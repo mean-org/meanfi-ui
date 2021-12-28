@@ -89,11 +89,11 @@ export const isError = (operation: TransactionStatus | undefined): boolean => {
 export const updateCreateStream2Tx = async (
     beneficiary: PublicKey, 
     createStream2Tx: Transaction,
-    claimType: number
-
+    claimType: number,
+    apiBaseUrl: string
 ) => {
 
-    const url = `https://tempo-api.meanops.com/whitelist/${beneficiary}`;
+    const url = `${apiBaseUrl}/${beneficiary}`;
     const tempoHeaders = new Headers();
     tempoHeaders.append('content-type', 'application/json;charset=UTF-8');
     tempoHeaders.append('X-Api-Version', '1.0');

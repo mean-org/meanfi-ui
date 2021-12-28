@@ -225,8 +225,8 @@ export const IdoLiveView = () => {
       setIdoEndUtc(fromParsedDate);
   
       parsedDate = Date.parse(details.redeemStartUtc);
-      fromParsedDate = new Date("Tue, 28 Dec 2021 19:00:00 GMT");
-      // fromParsedDate = new Date(parsedDate);
+      // fromParsedDate = new Date("Tue, 28 Dec 2021 19:00:00 GMT");
+      fromParsedDate = new Date(parsedDate);
       consoleOut('redeemStartUtc:', fromParsedDate.toUTCString(), 'crimson');
       setRedeemStartUtc(fromParsedDate);
   
