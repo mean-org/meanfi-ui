@@ -338,6 +338,19 @@ export const Streams = () => {
 
   const showWithdrawModal = useCallback(async () => {
     const lastDetail = JSON.parse(JSON.stringify(streamDetail)) as StreamInfo;
+
+    // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
+    // since we are allowing withdrawals only for any cliff amount
+    // TODO: Remove when withdraw feature goes back to normal
+    if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
+      setTransactionStatus({
+        lastOperation: transactionStatus.currentOperation,
+        currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+      });
+      setWithdrawFundsTransactionModalVisibility(true);
+      return;
+    }
+
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
     const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
@@ -357,9 +370,11 @@ export const Streams = () => {
   }, [
     streamDetail,
     selectedToken,
+    transactionStatus.currentOperation,
     setCustomToken,
     setSelectedToken,
     getTransactionFees,
+    setTransactionStatus
   ]);
 
   const closeWithdrawModal = useCallback(() => {
@@ -942,17 +957,6 @@ export const Streams = () => {
           action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: ''
         });
-
-        // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
-        // since we are allowing withdrawals only for any cliff amount
-        // TODO: Remove when withdraw feature goes back to normal
-        if (!streamDetail.cliffVestAmount && (!streamDetail.cliffVestPercent || streamDetail.cliffVestPercent === 100)) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-          });
-          return false;
-        }
 
         // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
