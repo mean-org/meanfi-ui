@@ -4,17 +4,19 @@ import { getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
+import { updateCreateStream2Tx } from '../../utils/transactions';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -23,11 +25,11 @@ export const AirdropRedeem = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   redeemStarted: boolean;
+  moneyStreamingClient: MoneyStreaming;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
-  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
     userTokens,
     selectedToken,
@@ -92,7 +94,6 @@ export const AirdropRedeem = (props: {
         : 'Claim your MEAN';
   }
 
-  /*
   const onExecuteRedeemTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -105,18 +106,38 @@ export const AirdropRedeem = (props: {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.idoClient && props.idoDetails && selectedToken) {
+      if (publicKey && userAllocation && selectedToken) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const meanIdoAddress = new PublicKey(props.idoDetails.idoAddress);
-        const amount = parseFloat(withdrawAmount);
+        const beneficiary = publicKey;
+        const treasurer = new PublicKey(treasurerAddress);
+        const treasury = new PublicKey(treasuryAddress);
+        const associatedToken = new PublicKey(meanToken.address as string);
+        const allocation = userAllocation.tokenAmount;
+        const rateAmount = userAllocation.monthlyRate;
+        const streamName = 'Solanium unlocked';
+        const now = new Date();
+        const cliffVestPercent = userAllocation.cliffPercent * 100;
+
         const data = {
-          meanIdoAddress: meanIdoAddress.toBase58(),                  // meanIdoAddress
-          amount: amount                                              // amount
+          treasurer: treasurer.toBase58(),
+          treasury: treasury.toBase58(),
+          beneficiary: publicKey.toBase58(),
+          associatedToken: associatedToken.toBase58(),
+          rateAmount: rateAmount,
+          rateIntervalInSeconds: getRateIntervalInSeconds(PaymentRateType.PerMonth),
+          startUtc: now.toUTCString(),
+          streamName: streamName,
+          allocation: allocation,
+          allocationReserved: allocation,
+          rateCliffInSeconds: undefined,
+          cliffVestAmount: undefined,
+          cliffVestPercent: cliffVestPercent,
+          autoPauseInSeconds: undefined
         }
         consoleOut('data:', data);
 
@@ -132,25 +153,33 @@ export const AirdropRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.createWithdrawUsdcTx(
-          meanIdoAddress,                                           // meanIdoAddress
-          amount                                                    // amount
+        return await props.moneyStreamingClient.createStream2(
+          treasurer,                                                        // treasurer
+          treasury,                                                         // treasury
+          beneficiary,                                                      // beneficiary
+          associatedToken,                                                  // associatedToken
+          streamName,                                                       // streamName
+          allocation,                                                       // allocationAssigned
+          allocation,                                                       // allocationReserved
+          rateAmount,                                                       // rateAmount
+          getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
+          now                                                               // startUtc
         )
         .then(value => {
-          consoleOut('createDepositUsdcTx returned transaction:', value);
+          consoleOut('createStream2 returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value[1])
+            result: getTxIxResume(value)
           });
-          transaction = value[1];
+          transaction = value;
           return true;
         })
         .catch(error => {
-          console.error('createDepositUsdcTx error:', error);
+          console.error('createStream2 error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -159,7 +188,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -167,44 +196,53 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
+        .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          // Try signature verification by serializing the transaction
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+
+          // Send Tx to add treasurer signature
           try {
+            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+            consoleOut('encodedTx before updating:', encodedTx, 'orange');
+            const updatedTx = await updateCreateStream2Tx(publicKey, signed, WhitelistClaimType.Airdrop, appConfig.getConfig().apiUrl);
+            signedTransaction = updatedTx;
             encodedTx = signedTransaction.serialize().toString('base64');
             consoleOut('encodedTx:', encodedTx, 'orange');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: 'updateCloseTx returned an updated Tx'
+            });
+            return true;
           } catch (error) {
-            console.error(error);
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
             });
-            customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
             return false;
           }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
-          });
-          return true;
+
         })
         .catch(error => {
           console.error('Signing transaction failed!');
@@ -216,7 +254,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -229,7 +267,7 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -261,7 +299,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -274,7 +312,7 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -290,8 +328,7 @@ export const AirdropRedeem = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
-            setWithdrawAmount("");
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -303,7 +340,6 @@ export const AirdropRedeem = (props: {
     }
 
   };
-  */
 
   return (
     <>

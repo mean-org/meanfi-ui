@@ -4,11 +4,11 @@ import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../util
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -16,6 +16,7 @@ import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
 import CountUp from 'react-countup';
 import { updateCreateStream2Tx } from '../../utils/transactions';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
 
 export const IdoRedeem = (props: {
   connection: Connection;
@@ -25,6 +26,7 @@ export const IdoRedeem = (props: {
   disabled: boolean;
   idoFinished: boolean;
   redeemStarted: boolean;
+  moneyStreamingClient: MoneyStreaming;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
@@ -120,7 +122,6 @@ export const IdoRedeem = (props: {
             : 'Redeem & Start Vesting';
   }
 
-  /*
   const onExecuteRedeemTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -215,7 +216,7 @@ export const IdoRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -223,7 +224,7 @@ export const IdoRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -266,7 +267,7 @@ export const IdoRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
             });
-            customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+            customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
             return false;
           }
 
@@ -281,7 +282,7 @@ export const IdoRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -294,7 +295,7 @@ export const IdoRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -326,7 +327,7 @@ export const IdoRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -339,7 +340,7 @@ export const IdoRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Solanium Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create IDO Redeem transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -367,7 +368,6 @@ export const IdoRedeem = (props: {
     }
 
   };
-  */
 
   const idoInfoRow = (caption: string, value: string, spaceBelow = true) => {
     return (

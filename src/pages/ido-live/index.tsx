@@ -225,8 +225,8 @@ export const IdoLiveView = () => {
       setIdoEndUtc(fromParsedDate);
 
       parsedDate = Date.parse(details.redeemStartUtc);
-      // fromParsedDate = new Date("Tue, 28 Dec 2021 19:00:00 GMT");
-      fromParsedDate = new Date(parsedDate);
+      fromParsedDate = new Date("Tue, 28 Dec 2021 19:00:00 GMT");
+      // fromParsedDate = new Date(parsedDate);
       consoleOut('redeemStartUtc:', fromParsedDate.toUTCString(), 'crimson');
       setRedeemStartUtc(fromParsedDate);
 
@@ -704,6 +704,7 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
+            moneyStreamingClient={ms}
             idoFinished={today > idoEndUtc}
             redeemStarted={today > redeemStartUtc}
             disabled={today < idoEndUtc || fetchTxInfoStatus === "fetching"}
@@ -730,6 +731,7 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
+            moneyStreamingClient={ms}
             redeemStarted={today > redeemStartUtc}
             disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}
