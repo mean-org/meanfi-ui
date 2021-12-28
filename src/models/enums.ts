@@ -47,6 +47,7 @@ export enum TransactionStatus {
     CreateRecurringBuySchedule = 19,
     CreateRecurringBuyScheduleSuccess = 20,
     CreateRecurringBuyScheduleFailure = 21,
+    FeatureTemporarilyDisabled = 50
 }
 
 export enum OperationType {

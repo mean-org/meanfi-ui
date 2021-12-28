@@ -252,7 +252,7 @@ export const ExchangeDcasView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('maxBlockchainFee:', ddcaTxFees.maxBlockchainFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -533,7 +533,7 @@ export const ExchangeDcasView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         const lamports = await connection.getBalance(wallet.publicKey);
         const balance = (lamports / LAMPORTS_PER_SOL) || 0;

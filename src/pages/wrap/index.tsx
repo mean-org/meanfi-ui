@@ -141,7 +141,7 @@ export const WrapView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         const myFees = getTxFeeAmount(wrapFees, amount);
         if (nativeBalance < wrapFees.blockchainFee + myFees) {

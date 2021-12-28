@@ -6,6 +6,7 @@ import {
   ArrowUpOutlined,
   CheckOutlined,
   EllipsisOutlined,
+  InfoCircleOutlined,
   LoadingOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -600,7 +601,8 @@ export const Streams = () => {
             transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
             transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
             transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled
             ? true
             : false;
   }
@@ -677,7 +679,7 @@ export const Streams = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -941,7 +943,18 @@ export const Streams = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
+        // since we are allowing withdrawals only for any cliff amount
+        // TODO: Remove when withdraw feature goes back to normal
+        if (!streamDetail.cliffVestAmount && !streamDetail.cliffVestPercent) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+          });
+          return false;
+        }
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -992,6 +1005,13 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+
+          // TODO: Remove when withdraw feature goes back to normal
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+          });
+
           return false;
         });
       } else {
@@ -1094,6 +1114,13 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+
+            // TODO: Remove when withdraw feature goes back to normal
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+            });
+
             return false;
           });
       } else {
@@ -1197,7 +1224,7 @@ export const Streams = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -2530,22 +2557,33 @@ export const Streams = () => {
               </>
             ) : isError() ? (
               <>
-                <WarningOutlined style={{ fontSize: 48 }} className="icon" />
-                {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
-                  <h4 className="mb-4">
-                    {t('transactions.status.tx-start-failure', {
-                      accountBalance: getTokenAmountAndSymbolByTokenAddress(
-                        nativeBalance,
-                        NATIVE_SOL_MINT.toBase58()
-                      ),
-                      feeAmount: getTokenAmountAndSymbolByTokenAddress(
-                        transactionFees.blockchainFee + transactionFees.mspFlatFee,
-                        NATIVE_SOL_MINT.toBase58()
-                      )})
-                    }
-                  </h4>
+                {transactionStatus.currentOperation === TransactionStatus.FeatureTemporarilyDisabled ? (
+                  <>
+                    {/* TODO: Remove this when everything is back to normal */}
+                    <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
+                    <h4 className="mb-4">Money Streams are getting a makeover, and we are making them more awesome! Stand by, you'll be able to withdraw shortly.</h4>
+                  </>
+                ) : transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
+                  <>
+                    <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+                    <h4 className="mb-4">
+                      {t('transactions.status.tx-start-failure', {
+                        accountBalance: getTokenAmountAndSymbolByTokenAddress(
+                          nativeBalance,
+                          NATIVE_SOL_MINT.toBase58()
+                        ),
+                        feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                          transactionFees.blockchainFee + transactionFees.mspFlatFee,
+                          NATIVE_SOL_MINT.toBase58()
+                        )})
+                      }
+                    </h4>
+                  </>
                 ) : (
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                  <>
+                    <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+                    <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
+                  </>
                 )}
                 <Button
                   block
