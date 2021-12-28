@@ -946,7 +946,7 @@ export const Streams = () => {
         // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
         // since we are allowing withdrawals only for any cliff amount
         // TODO: Remove when withdraw feature goes back to normal
-        if (!streamDetail.cliffVestAmount && !streamDetail.cliffVestPercent) {
+        if (!streamDetail.cliffVestAmount && (!streamDetail.cliffVestPercent || streamDetail.cliffVestPercent === 100)) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.FeatureTemporarilyDisabled
