@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
+import { getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
+import CountUp from 'react-countup';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -48,7 +49,10 @@ export const AirdropRedeem = (props: {
   }, [userTokens]);
 
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey) {
+      setUserAllocation(null);
+      return;
+    }
 
     const getAllocation = async () => {
       try {
@@ -304,12 +308,12 @@ export const AirdropRedeem = (props: {
             <div className="airdrop-title">Your Airdrop Allocation</div>
             {meanToken && userAllocation && userAllocation.tokenAmount ? (
               <div className="airdrop-amount">
-                {
-                  getTokenAmountAndSymbolByTokenAddress(
-                    userAllocation.tokenAmount,
-                    meanToken.address
-                  )
-                }
+                <CountUp
+                  end={userAllocation.tokenAmount}
+                  decimals={meanToken.decimals}
+                  separator=','
+                  duration={2} />
+                <span className="ml-1">{meanToken.symbol}</span>
               </div>
             ) : (
               <div className="airdrop-amount">0.000000 MEAN</div>

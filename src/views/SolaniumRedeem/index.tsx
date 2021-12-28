@@ -15,6 +15,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
+import CountUp from 'react-countup';
 
 export const SolaniumRedeem = (props: {
   connection: Connection;
@@ -50,7 +51,10 @@ export const SolaniumRedeem = (props: {
   }, [userTokens]);
 
   useEffect(() => {
-    if (!publicKey) { return; }
+    if (!publicKey) {
+      setUserAllocation(null);
+      return;
+    }
 
     const getAllocation = async () => {
       try {
@@ -376,7 +380,7 @@ export const SolaniumRedeem = (props: {
 
   return (
     <>
-      <div className="flex-fill flex-column justify-content-center">
+      <div className="flex-fill flex-column justify-content-center align-items-center">
         {props.selectedToken && (
           <>
             <div className="px-1 mb-2">
@@ -390,18 +394,19 @@ export const SolaniumRedeem = (props: {
                   : '-'
               )}
             </div>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Redeemable MEAN',
-                meanToken && userAllocation && userAllocation.tokenAmount
-                  ? getTokenAmountAndSymbolByTokenAddress(
-                      userAllocation.tokenAmount,
-                      meanToken.address
-                    )
-                  : '-'
-              )}
-            </div>
-
+            <div className="text-center font-size-120">Redeemable MEAN</div>
+            {meanToken && userAllocation && userAllocation.tokenAmount ? (
+              <div className="airdrop-amount">
+                <CountUp
+                  end={userAllocation.tokenAmount}
+                  decimals={meanToken.decimals}
+                  separator=','
+                  duration={2} />
+                <span className="ml-1">{meanToken.symbol}</span>
+              </div>
+            ) : (
+              <div className="airdrop-amount">0.000000 MEAN</div>
+            )}
           </>
         )}
       </div>
