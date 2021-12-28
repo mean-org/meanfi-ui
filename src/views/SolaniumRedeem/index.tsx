@@ -44,14 +44,14 @@ export const SolaniumRedeem = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
+  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
+  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
+
   const meanToken = useMemo(() => {
     const token = userTokens.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');
     return token[0];
   }, [userTokens]);
-
-  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
-  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
 
   useEffect(() => {
     if (!publicKey) {
@@ -231,6 +231,7 @@ export const SolaniumRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
             result: {signer: wallet.publicKey.toBase58()}
           });
+
           // Send Tx to add treasurer signature
           try {
             encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
