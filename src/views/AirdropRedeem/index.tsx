@@ -1,17 +1,19 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button } from 'antd';
-import { formatAmount, getTxIxResume } from '../../utils/utils';
+import { getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getFormattedNumberToLocale, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
+import { getWhitelistAllocation } from '../../utils/api';
+import { Allocation } from '../../models/common-types';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -36,6 +38,31 @@ export const AirdropRedeem = (props: {
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [userAllocation, setUserAllocation] = useState<Allocation | null>();
+
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    const getAllocation = async () => {
+      try {
+        const allocation = await getWhitelistAllocation(publicKey.toBase58(), WhitelistClaimType.Airdrop);
+        consoleOut('allocation data:', allocation, 'blue');
+        setUserAllocation(allocation);
+      } catch (error) {
+        console.error(error);
+      } finally  {
+        setIsBusy(false);
+      }
+    }
+
+    if (!userAllocation) {
+      getAllocation();
+    }
+
+  }, [
+    publicKey,
+    userAllocation
+  ]);
 
   // Validation
 

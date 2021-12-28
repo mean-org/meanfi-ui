@@ -92,3 +92,10 @@ export enum AllocationType {
     Specific = 1,
     None = 2
 }
+
+export enum WhitelistClaimType
+{
+    Solanium = 0,
+    Airdrop = 1,
+    IDO = 2
+}

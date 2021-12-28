@@ -31,6 +31,7 @@ import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
 
 type IdoTabOption = "deposit" | "withdraw";
 type ClaimsTabOption = "ido-claims" | "solanium" | "airdrop";
@@ -56,6 +57,7 @@ export const IdoLiveView = () => {
     theme,
     tokenBalance,
     selectedToken,
+    streamProgramAddress,
     previousWalletConnectState,
     setTheme,
     setSelectedToken,
@@ -153,6 +155,15 @@ export const IdoLiveView = () => {
     connectionConfig.endpoint
   ]);
 
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    connectionConfig.endpoint,
+    streamProgramAddress
+  ), [
+    connectionConfig.endpoint,
+    streamProgramAddress
+  ]);
+
   // TODO: Add custom USDC token and MEAN token to the list
   useEffect(() => {
     if (isProd()) {
@@ -214,7 +225,8 @@ export const IdoLiveView = () => {
       setIdoEndUtc(fromParsedDate);
   
       parsedDate = Date.parse(details.redeemStartUtc);
-      fromParsedDate = new Date(parsedDate);
+      fromParsedDate = new Date("Tue, 28 Dec 2021 19:00:00 GMT");
+      // fromParsedDate = new Date(parsedDate);
       consoleOut('redeemStartUtc:', fromParsedDate.toUTCString(), 'crimson');
       setRedeemStartUtc(fromParsedDate);
   
@@ -705,8 +717,9 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
+            moneyStreamingClient={ms}
             redeemStarted={today > redeemStartUtc}
-            disabled={true}                   // TODO: Replace with right condition when possible
+            disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}
           />
         );
@@ -718,7 +731,7 @@ export const IdoLiveView = () => {
             idoDetails={idoDetails}
             idoStatus={idoStatus}
             redeemStarted={today > redeemStartUtc}
-            disabled={true}                   // TODO: Replace with right condition when possible
+            disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}
           />
         );

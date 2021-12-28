@@ -1,17 +1,20 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
+import { getWhitelistAllocation } from '../../utils/api';
+import { Allocation } from '../../models/common-types';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
 
 export const SolaniumRedeem = (props: {
   connection: Connection;
@@ -20,12 +23,14 @@ export const SolaniumRedeem = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   redeemStarted: boolean;
+  moneyStreamingClient: MoneyStreaming;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
   const { connected, wallet, publicKey } = useWallet();
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const {
+    tokenList,
     selectedToken,
     transactionStatus,
     setTransactionStatus,
@@ -36,25 +41,35 @@ export const SolaniumRedeem = (props: {
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
-  const nowTs = new Date().getTime() / 1000;
+  const meanToken = useMemo(() => {
+    const token = tokenList.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+    return token[0];
+  }, [tokenList]);
 
-  const isUserInGa = useCallback(() => {
-    return publicKey && props.idoStatus && props.idoStatus.userIsInGa
-      ? true
-      : false;
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    const getAllocation = async () => {
+      try {
+        const allocation = await getWhitelistAllocation(publicKey.toBase58(), WhitelistClaimType.Solanium);
+        consoleOut('allocation data:', allocation, 'blue');
+        setUserAllocation(allocation);
+      } catch (error) {
+        console.error(error);
+      } finally  {
+        setIsBusy(false);
+      }
+    }
+
+    if (!userAllocation) {
+      getAllocation();
+    }
+
   }, [
-    props.idoStatus,
-    publicKey
-  ]);
-
-  const hasUserContributedNotInGa = useCallback(() => {
-    return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
-      ? true
-      : false;
-  }, [
-    props.idoStatus,
-    publicKey
+    publicKey,
+    userAllocation
   ]);
 
   // Validation
@@ -81,12 +96,39 @@ export const SolaniumRedeem = (props: {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.idoClient && props.idoDetails && selectedToken) {
+      if (publicKey && userAllocation && selectedToken) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
+
+        const beneficiary = publicKey;
+        const associatedToken = new PublicKey(meanToken.address as string);
+        const treasury = new PublicKey('6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1');
+        const fundingAmount = userAllocation.tokenAmount;
+        const rateAmount = userAllocation.monthlyRate;
+        const streamName = 'Solanium unlocked';
+        const now = new Date();
+
+        /**
+         * createStream params as of Tue 7 Dec 2021
+         * 
+         * treasurer: PublicKey,
+         * treasury: PublicKey | undefined
+         * beneficiary: PublicKey
+         * associatedToken: PublicKey
+         * rateAmount?: number | undefined
+         * rateIntervalInSeconds?: number | undefined
+         * startUtc?: Date | undefined
+         * streamName?: string | undefined
+         * allocation?: number | undefined
+         * allocationReserved?: number | undefined
+         * rateCliffInSeconds?: number | undefined
+         * cliffVestAmount?: number | undefined
+         * cliffVestPercent?: number | undefined
+         * autoPauseInSeconds?: number | undefined
+         */
 
         const meanIdoAddress = new PublicKey(props.idoDetails.idoAddress);
         const amount = parseFloat(withdrawAmount);
@@ -108,9 +150,17 @@ export const SolaniumRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.idoClient.createWithdrawUsdcTx(
-          meanIdoAddress,                                           // meanIdoAddress
-          amount                                                    // amount
+        return await props.moneyStreamingClient.createStream(
+          publicKey,                                                        // treasurer
+          treasury,                                                         // treasury
+          beneficiary,                                                      // beneficiary
+          associatedToken,                                                  // associatedToken
+          streamName,                                                       // streamName
+          fundingAmount,                                                    // fundingAmount
+          fundingAmount,                                                    // allocationReserved
+          rateAmount,                                                       // rateAmount
+          getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
+          now                                                               // startUtc
         )
         .then(value => {
           consoleOut('createDepositUsdcTx returned transaction:', value);
@@ -120,9 +170,9 @@ export const SolaniumRedeem = (props: {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-            result: getTxIxResume(value[1])
+            result: getTxIxResume(value)
           });
-          transaction = value[1];
+          transaction = value;
           return true;
         })
         .catch(error => {
@@ -256,6 +306,15 @@ export const SolaniumRedeem = (props: {
     }
 
     if (publicKey) {
+      // try {
+      //   const allocation = await getWhitelistAllocation(publicKey.toBase58(), 0);
+      //   consoleOut('allocation data:', allocation, 'blue');
+      // } catch (error) {
+      //   console.error(error);
+      // } finally  {
+      //   setIsBusy(false);
+      // }
+
       const create = await createTx();
       consoleOut('create:', create);
       if (create && !transactionCancelled) {
@@ -298,11 +357,6 @@ export const SolaniumRedeem = (props: {
       <div className="flex-fill flex-column justify-content-center">
         {props.selectedToken && (
           <>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Your Contribution', '0'
-              )}
-            </div>
             <div className="px-1 mb-2">
               {idoInfoRow(
                 'Final Token Price',

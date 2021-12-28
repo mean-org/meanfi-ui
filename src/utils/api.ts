@@ -1,6 +1,8 @@
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
+import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
+import { WhitelistClaimType } from "../models/enums";
 
 export const getPrices = async (path?: string): Promise<any> => {
   return fetch(path || "https://api.raydium.io/coin/price", {
@@ -61,5 +63,43 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
     return false;
   } catch (error) {
     throw(error);
+  }
+};
+
+// GET /whitelists/{address} - Gets whitelist allocation - Allocation
+export const getWhitelistAllocation = async (address: string, source: WhitelistClaimType): Promise<Allocation | null> => {
+  const options: RequestInit = {
+    method: "GET",
+    headers: meanFiHeaders
+  }
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?source=${source}`;
+  try {
+    const response = await fetch(url, options)
+    if (response && response.status === 200) {
+      const data = (await response.json());
+      return data.totalAllocation as Allocation;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+};
+
+// POST /whitelists/{address} - Claims the balance for the given address
+export const claimWhitelistAllocation = async (address: string, source: WhitelistClaimType): Promise<any> => {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders
+  }
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?source=${source}`;
+  try {
+    const response = await fetch(url, options)
+    if (response && response.status === 200) {
+      const data = (await response.json());
+      return data;
+    }
+    return null;
+  } catch (error) {
+    return null;
   }
 };

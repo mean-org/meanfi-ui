@@ -514,6 +514,10 @@ export function addMinutes(date: Date, minutes: number) {
     return new Date(date.getTime() + minutes*60000);
 }
 
+export function addHours(date: Date, hours: number) {
+    return new Date(date.setUTCHours(date.getUTCHours() + hours));
+}
+
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {
     let fee = 0;
     let inputAmount = amount ? parseFloat(amount) : 0;

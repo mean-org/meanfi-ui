@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Button } from 'antd';
 import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
@@ -8,10 +8,12 @@ import { consoleOut, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
+import { Allocation } from '../../models/common-types';
+import { getWhitelistAllocation } from '../../utils/api';
 
 export const IdoRedeem = (props: {
   connection: Connection;
@@ -37,6 +39,31 @@ export const IdoRedeem = (props: {
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
+  const [userAllocation, setUserAllocation] = useState<Allocation | null>();
+
+  useEffect(() => {
+    if (!publicKey) { return; }
+
+    const getAllocation = async () => {
+      try {
+        const allocation = await getWhitelistAllocation(publicKey.toBase58(), WhitelistClaimType.IDO);
+        consoleOut('allocation data:', allocation, 'blue');
+        setUserAllocation(allocation);
+      } catch (error) {
+        console.error(error);
+      } finally  {
+        setIsBusy(false);
+      }
+    }
+
+    if (!userAllocation) {
+      getAllocation();
+    }
+
+  }, [
+    publicKey,
+    userAllocation
+  ]);
 
   const isUserInGa = useCallback(() => {
     return publicKey && props.idoStatus && props.idoStatus.userIsInGa

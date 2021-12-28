@@ -18,3 +18,9 @@ export interface PartnerImage {
     altText?: string;
     size: string;
 }
+
+export class Allocation {
+    tokenAmount!: number;
+    cliffPercent!: number;
+    monthlyRate!: number;
+}
