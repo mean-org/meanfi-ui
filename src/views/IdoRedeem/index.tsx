@@ -4,19 +4,19 @@ import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume } from '../../util
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
-import { consoleOut, getRateIntervalInSeconds, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, delay, getTransactionStatusForLogs } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
 import { TokenInfo } from '@solana/spl-token-registry';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
+import { OperationType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Allocation } from '../../models/common-types';
 import { getWhitelistAllocation } from '../../utils/api';
 import CountUp from 'react-countup';
-import { updateCreateStream2Tx } from '../../utils/transactions';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
+import { isError } from '../../utils/transactions';
 
 export const IdoRedeem = (props: {
   connection: Connection;
@@ -100,6 +100,17 @@ export const IdoRedeem = (props: {
     publicKey
   ]);
 
+  const resetTransactionStatus = useCallback(() => {
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  }, [
+    setTransactionStatus
+  ]);
+
   // Validation
 
   const isValidOperation = (): boolean => {
@@ -111,15 +122,17 @@ export const IdoRedeem = (props: {
   const getTransactionStartButtonLabel = (): string => {
     return !connected
       ? t('transactions.validation.not-connected')
-      : isBusy
-        ? props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
-          ? 'Withdrawing contribution'
-          : 'Claiming your MEAN'
-        : !props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
-          ? 'No contribution to withdraw'
-          : props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
-            ? 'Withdraw your contribution'
-            : 'Redeem & Start Vesting';
+      : isError(transactionStatus.currentOperation)
+        ? 'Retry'
+        : isBusy
+          ? props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+            ? 'Withdrawing contribution'
+            : 'Claiming your MEAN'
+          : !props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+            ? 'No contribution to withdraw'
+            : props.idoStatus.userHasContributed && !props.idoStatus.userIsInGa
+              ? 'Withdraw your contribution'
+              : 'Redeem';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -133,39 +146,19 @@ export const IdoRedeem = (props: {
     setTransactionCancelled(false);
     setIsBusy(true);
 
+    /*
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && userAllocation && selectedToken) {
+      if (publicKey && props.idoDetails) {
 
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
 
-        const beneficiary = publicKey;
-        const treasurer = new PublicKey(treasurerAddress);
-        const treasury = new PublicKey(treasuryAddress);
-        const associatedToken = new PublicKey(meanToken.address as string);
-        const allocation = userAllocation.tokenAmount;
-        const rateAmount = userAllocation.monthlyRate;
-        const streamName = 'Solanium unlocked';
-        const now = new Date();
-        const cliffVestPercent = userAllocation.cliffPercent * 100;
+        const idoAddress = new PublicKey(props.idoDetails.idoAddress);
 
         const data = {
-          treasurer: treasurer.toBase58(),
-          treasury: treasury.toBase58(),
-          beneficiary: publicKey.toBase58(),
-          associatedToken: associatedToken.toBase58(),
-          rateAmount: rateAmount,
-          rateIntervalInSeconds: getRateIntervalInSeconds(PaymentRateType.PerMonth),
-          startUtc: now.toUTCString(),
-          streamName: streamName,
-          allocation: allocation,
-          allocationReserved: allocation,
-          rateCliffInSeconds: undefined,
-          cliffVestAmount: undefined,
-          cliffVestPercent: cliffVestPercent,
-          autoPauseInSeconds: undefined
+          idoAddress: idoAddress.toBase58(),
         }
         consoleOut('data:', data);
 
@@ -181,17 +174,8 @@ export const IdoRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.moneyStreamingClient.createStream2(
-          treasurer,                                                        // treasurer
-          treasury,                                                         // treasury
-          beneficiary,                                                      // beneficiary
-          associatedToken,                                                  // associatedToken
-          streamName,                                                       // streamName
-          allocation,                                                       // allocationAssigned
-          allocation,                                                       // allocationReserved
-          rateAmount,                                                       // rateAmount
-          getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
-          now                                                               // startUtc
+        return await props.idoClient.redeem(
+          idoAddress
         )
         .then(value => {
           consoleOut('createStream2 returned transaction:', value);
@@ -228,6 +212,7 @@ export const IdoRedeem = (props: {
         return false;
       }
     }
+    */
 
     const signTx = async (): Promise<boolean> => {
       if (wallet && publicKey) {
@@ -236,17 +221,8 @@ export const IdoRedeem = (props: {
         .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
-          });
-
-          // Send Tx to add treasurer signature
+          // Signature validation
           try {
-            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
-            consoleOut('encodedTx before updating:', encodedTx, 'orange');
-            const updatedTx = await updateCreateStream2Tx(publicKey, signed, WhitelistClaimType.IDO, appConfig.getConfig().apiUrl);
-            signedTransaction = updatedTx;
             encodedTx = signedTransaction.serialize().toString('base64');
             consoleOut('encodedTx:', encodedTx, 'orange');
             setTransactionStatus({
@@ -270,7 +246,6 @@ export const IdoRedeem = (props: {
             customLogger.logWarning('Create IDO Redeem transaction failed', { transcript: transactionLog });
             return false;
           }
-
         })
         .catch(error => {
           console.error('Signing transaction failed!');
@@ -346,25 +321,26 @@ export const IdoRedeem = (props: {
     }
 
     if (publicKey) {
-      const create = await createTx();
-      consoleOut('create:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('sign:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
+      resetTransactionStatus();
+      // const create = await createTx();
+      // consoleOut('create:', create);
+      // if (create && !transactionCancelled) {
+      //   const sign = await signTx();
+      //   consoleOut('sign:', sign);
+      //   if (sign && !transactionCancelled) {
+      //     const sent = await sendTx();
+      //     consoleOut('sent:', sent);
+      //     if (sent && !transactionCancelled) {
+      //       consoleOut('Send Tx to confirmation queue:', signature);
+      //       startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
+      //       setIsBusy(false);
+      //       setTransactionStatus({
+      //         lastOperation: transactionStatus.currentOperation,
+      //         currentOperation: TransactionStatus.TransactionFinished
+      //       });
+      //     } else { setIsBusy(false); }
+      //   } else { setIsBusy(false); }
+      // } else { setIsBusy(false); }
     }
 
   };
@@ -410,25 +386,14 @@ export const IdoRedeem = (props: {
                   : '-'
               )}
             </div>
-            <div className="px-1 mb-2">
-              {idoInfoRow(
-                'Redeemable MEAN',
-                getTokenAmountAndSymbolByTokenAddress(
-                  props.idoStatus.userMeanImpliedAmount,
-                  '',
-                  true
-                ),
-                false
-              )}
-            </div>
-            {/* <div className="flex-fixed-right mb-2">
+            <div className="flex-fixed-right mb-2">
               <div className="left inner-label">
                 <span>Redeemable MEAN</span>
               </div>
               <div className="right value-display">
-                {meanToken && userAllocation && userAllocation.tokenAmount ? (
+                {meanToken && props.idoStatus.userMeanImpliedAmount ? (
                   <CountUp
-                    end={userAllocation.tokenAmount}
+                    end={props.idoStatus.userMeanImpliedAmount}
                     decimals={meanToken.decimals}
                     separator=','
                     duration={2} />
@@ -436,7 +401,7 @@ export const IdoRedeem = (props: {
                   <span>0</span>
                 )}
               </div>
-            </div> */}
+            </div>
 
             {isUserInGa() ? (
               <>
@@ -466,7 +431,7 @@ export const IdoRedeem = (props: {
         shape="round"
         size="large"
         disabled={props.disabled || !isValidOperation()}
-        onClick={() => {}}>
+        onClick={onExecuteRedeemTx}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}

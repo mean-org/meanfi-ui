@@ -583,7 +583,7 @@ export async function createTokenAccountIfNotExist(
 }
 
 export async function createAmmAuthority(programId: PublicKey) {
-  const seeds = [new Uint8Array(Buffer.from('amm authority'.replace('\u00A0', ' '), 'utf-8'))];
+  const seeds = [new Uint8Array(Buffer.from('amm authority'.replace('\u00A0', ' '), 'utf-8'))];
   const [publicKey, nonce] = await PublicKey.findProgramAddress(seeds, programId);
 
   return { publicKey, nonce }

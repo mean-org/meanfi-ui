@@ -91,7 +91,7 @@ export const AirdropRedeem = (props: {
       ? t('transactions.validation.not-connected')
       : !userAllocation || !userAllocation.tokenAmount
         ? 'Nothing to claim'
-        : 'Claim your MEAN';
+        : 'Arriving soon';
   }
 
   const onExecuteRedeemTx = async () => {
@@ -348,14 +348,17 @@ export const AirdropRedeem = (props: {
           <>
             <div className="airdrop-title">Your Airdrop Allocation</div>
             {meanToken && userAllocation && userAllocation.tokenAmount ? (
-              <div className="airdrop-amount">
-                <CountUp
-                  end={userAllocation.tokenAmount}
-                  decimals={meanToken.decimals}
-                  separator=','
-                  duration={2} />
-                <span className="ml-1">{meanToken.symbol}</span>
-              </div>
+              <>
+                <div className="airdrop-amount">
+                  <CountUp
+                    end={userAllocation.tokenAmount}
+                    decimals={meanToken.decimals}
+                    separator=','
+                    duration={2} />
+                  <span className="ml-1">{meanToken.symbol}</span>
+                </div>
+                <div className="font-size-100 mb-3 text-center fg-orange-red">The airdrop is slightly delayed, please follow the official channels. New date to be announced.</div>
+              </>
             ) : (
               <div className="airdrop-amount">0.000000 MEAN</div>
             )}
@@ -368,7 +371,7 @@ export const AirdropRedeem = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!isValidOperation()}
+        disabled={true}
         onClick={() => {}}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>

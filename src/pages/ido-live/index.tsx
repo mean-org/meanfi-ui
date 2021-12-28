@@ -895,7 +895,7 @@ export const IdoLiveView = () => {
       </div>
       <div className={`solid-bg position-relative ${regionLimitationAcknowledged && idoFinishedFireworks ? 'blurry' : '' }`}>
 
-        {isLocal() && (
+        {/* {isLocal() && (
           <>
             <div className="debug-bar">
               <Button
@@ -914,23 +914,8 @@ export const IdoLiveView = () => {
               <span className="ml-1">redeemStarted:</span><span className="ml-1 font-bold fg-dark-active">{redeemStarted ? 'true' : 'false'}</span>
               <span className="ml-1">idoFinishedFireworks:</span><span className="ml-1 font-bold fg-dark-active">{idoFinishedFireworks ? 'true' : 'false'}</span>
             </div>
-            {/* <div className="ido-selector">
-              <span className="icon-button-container">
-                <Tooltip placement="bottom" title="Select IDO address">
-                  <Dropdown overlay={idoItemsMenu} trigger={["click"]}>
-                    <Button
-                      type="default"
-                      shape="circle"
-                      size="middle"
-                      icon={<SettingOutlined />}
-                      onClick={(e) => e.preventDefault()}
-                    />
-                  </Dropdown>
-                </Tooltip>
-              </span>
-            </div> */}
           </>
-        )}
+        )} */}
 
         {/* Page title */}
         <section className="content contrast-section no-padding">

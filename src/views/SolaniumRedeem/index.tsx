@@ -389,23 +389,26 @@ export const SolaniumRedeem = (props: {
                   : '-'
               )}
             </div>
-            <div className="text-center font-size-120">Redeemable MEAN</div>
+            <div className="text-center font-size-120">Your Allocation</div>
             {meanToken && userAllocation && userAllocation.tokenAmount ? (
-              <div className="airdrop-amount">
-                <CountUp
-                  end={userAllocation.tokenAmount}
-                  decimals={meanToken.decimals}
-                  separator=','
-                  duration={2} />
-                <span className="ml-1">{meanToken.symbol}</span>
-              </div>
+              <>
+                <div className="airdrop-amount">
+                  <CountUp
+                    end={userAllocation.tokenAmount}
+                    decimals={meanToken.decimals}
+                    separator=','
+                    duration={2} />
+                  <span className="ml-1">{meanToken.symbol}</span>
+                </div>
+                <div className="font-size-100 mb-3 text-center fg-orange-red">Your Solanium allocation is going to be airdropped directly to your wallet.</div>
+              </>
             ) : (
               <div className="airdrop-amount">0.000000 MEAN</div>
             )}
           </>
         )}
       </div>
-      <Button
+      {/* <Button
         className={`main-cta ${isBusy ? 'inactive' : ''}`}
         block
         type="primary"
@@ -417,7 +420,7 @@ export const SolaniumRedeem = (props: {
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}
         {getTransactionStartButtonLabel()}
-      </Button>
+      </Button> */}
     </>
   );
 };
