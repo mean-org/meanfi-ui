@@ -26,6 +26,15 @@ export const StreamWithdrawModal = (props: {
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
 
+  // TODO: Temp method to get withdraw amount up to the vested cliff amount
+  const getMaxWithdrawAmount = (item: StreamInfo) => {
+    let maxWithdrawableAmount = item.cliffVestAmount;
+    if (item.cliffVestPercent > 0 && item.cliffVestPercent < 100) {
+      maxWithdrawableAmount = (item.cliffVestPercent * item.allocationAssigned / 100);
+    }
+    return maxWithdrawableAmount;
+  }
+
   useEffect(() => {
     const getStreamDetails = async (streamId: string) => {
       let streamPublicKey: PublicKey;
@@ -34,7 +43,9 @@ export const StreamWithdrawModal = (props: {
         const detail = await getStream(connection, streamPublicKey);
         if (detail) {
           consoleOut('detail', detail);
-          setMaxAmount(detail.escrowVestedAmount);
+          const max = getMaxWithdrawAmount(detail);
+          setMaxAmount(max);
+          // setMaxAmount(detail.escrowVestedAmount);
         } else {
           notify({
             message: t('notifications.error-title'),
@@ -55,8 +66,10 @@ export const StreamWithdrawModal = (props: {
     }
 
     if (props.startUpData) {
+      const max = getMaxWithdrawAmount(props.startUpData);
       if (props.startUpData.state === STREAM_STATE.Running) {
-        setMaxAmount(props.startUpData.escrowVestedAmount);
+        setMaxAmount(max);
+        // setMaxAmount(props.startUpData.escrowVestedAmount);
         setLoadingData(true);
         try {
           getStreamDetails(props.startUpData.id as string);
@@ -68,7 +81,8 @@ export const StreamWithdrawModal = (props: {
           });
         }
       } else {
-        setMaxAmount(props.startUpData.escrowVestedAmount);
+        setMaxAmount(max);
+        // setMaxAmount(props.startUpData.escrowVestedAmount);
       }
     }
   }, [
