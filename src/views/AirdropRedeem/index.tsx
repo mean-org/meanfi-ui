@@ -92,6 +92,7 @@ export const AirdropRedeem = (props: {
         : 'Claim your MEAN';
   }
 
+  /*
   const onExecuteRedeemTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
@@ -302,6 +303,7 @@ export const AirdropRedeem = (props: {
     }
 
   };
+  */
 
   return (
     <>
@@ -331,7 +333,7 @@ export const AirdropRedeem = (props: {
         shape="round"
         size="large"
         disabled={!isValidOperation()}
-        onClick={onExecuteRedeemTx}>
+        onClick={() => {}}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}
