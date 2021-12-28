@@ -252,6 +252,17 @@ export const AccountsView = () => {
     }
   }
 
+  const isSelectedAssetNativeAccount = useCallback(() => {
+    return accountAddress && selectedAsset && accountAddress === selectedAsset.publicAddress ? true : false;
+  }, [
+    selectedAsset,
+    accountAddress,
+  ]);
+
+  const hasTransactions = useCallback(() => {
+    return transactions && transactions.length > 0 ? true : false;
+  }, [transactions]);
+
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
      * If asset.ataAddress
@@ -585,7 +596,6 @@ export const AccountsView = () => {
 
     if (txs && txs.length) {
 
-      const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
       // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
         const meta = tx.parsedTransaction && tx.parsedTransaction.meta
@@ -594,9 +604,9 @@ export const AccountsView = () => {
         if (!meta || meta.err !== null) { return false; }
         const accounts = tx.parsedTransaction.transaction.message.accountKeys;
         const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
-        if (isScanningWallet && accIdx === -1) { return false; }
+        if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
         const change = getChange(accIdx, meta);
-        return isScanningWallet && change !== 0 ? true : false;
+        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
       });
 
       consoleOut(`${filtered.length} useful Txs`);
@@ -606,7 +616,7 @@ export const AccountsView = () => {
     }
   }, [
     accountAddress,
-    selectedAsset?.publicAddress
+    isSelectedAssetNativeAccount
   ]);
 
   // Load the transactions when signaled
@@ -1050,9 +1060,8 @@ export const AccountsView = () => {
   );
 
   const renderTransactions = () => {
-    const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
     if (transactions) {
-      if (isScanningWallet) {
+      if (isSelectedAssetNativeAccount()) {
         // Get amount change for each tx
         const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
           if (meta !== null && accountIndex !== -1) {
@@ -1075,9 +1084,9 @@ export const AccountsView = () => {
           if (!meta || meta.err !== null) { return false; }
           const accounts = tx.parsedTransaction.transaction.message.accountKeys;
           const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
-          if (isScanningWallet && accIdx === -1) { return false; }
+          if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
           const change = getChange(accIdx, meta);
-          return isScanningWallet && change !== 0 ? true : false;
+          return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
         return filtered?.map((trans: MappedTransaction) => {
           return <TransactionItemView
@@ -1149,8 +1158,10 @@ export const AccountsView = () => {
         <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button shape="round" type="ghost"
-                  onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          {isSelectedAssetNativeAccount() && (
+            <Button shape="round" type="ghost"
+                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          )}
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
           {selectedAsset?.publicAddress !== accountAddress && (
             <Button shape="round" type="ghost"
@@ -1163,8 +1174,8 @@ export const AccountsView = () => {
   };
 
   const shallWeDraw = (): boolean => {
-    return ((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-            (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+    return ((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+            (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
       ? true
       : false;
   }
@@ -1348,25 +1359,24 @@ export const AccountsView = () => {
                         </div>
                       )}
                       {/* Activity list */}
-                      <div className={((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                      (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+                      <div className={((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+                                      (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
                                       ? 'transaction-list-data-wrapper vertical-scroll'
                                       : 'transaction-list-data-wrapper empty'}>
                         <div className="activity-list h-100">
                           {
-                            status === FetchStatus.Fetching && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                                                (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                            status === FetchStatus.Fetching && !((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+                                                                (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0)) ? (
                               <div className="h-100 flex-center">
                                 <Spin indicator={antIcon} />
                               </div>
-                            ) : selectedAsset?.balance === 0 && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                                                  (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                            ) : !selectedAsset?.publicAddress || (selectedAsset?.balance === 0 && !((!isSelectedAssetNativeAccount() && hasTransactions()) || (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))) ? (
                               renderTokenBuyOptions()
-                            ) : (transactions && transactions.length) ? (
+                            ) : hasTransactions() ? (
                               <div className="item-list-body compact">
                                 {renderTransactions()}
                               </div>
-                            ) : status === FetchStatus.Fetched && (!transactions || transactions.length === 0) ? (
+                            ) : status === FetchStatus.Fetched && !hasTransactions() ? (
                               <div className="h-100 flex-center">
                                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
                               </div>
