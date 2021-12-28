@@ -73,7 +73,7 @@ export const IdoRedeem = (props: {
     props.idoStatus,
     publicKey
   ]);
-
+  
   const hasUserContributedNotInGa = useCallback(() => {
     return publicKey && props.idoStatus && !props.idoStatus.userIsInGa && props.idoStatus.userUsdcContributedAmount > 0
       ? true
