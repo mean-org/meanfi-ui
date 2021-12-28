@@ -233,6 +233,8 @@ export const SolaniumRedeem = (props: {
           });
           // Send Tx to add treasurer signature
           try {
+            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+            consoleOut('encodedTx before updating:', encodedTx, 'orange');
             const updatedTx = await updateCreateStream2Tx(publicKey, signed, WhitelistClaimType.Solanium, appConfig.getConfig().apiUrl);
             signedTransaction = updatedTx;
             encodedTx = signedTransaction.serialize().toString('base64');

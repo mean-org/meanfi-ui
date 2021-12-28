@@ -67,36 +67,17 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
 };
 
 // GET /whitelists/{address} - Gets whitelist allocation - Allocation
-export const getWhitelistAllocation = async (address: string, source: WhitelistClaimType): Promise<Allocation | null> => {
+export const getWhitelistAllocation = async (address: string, claimType: WhitelistClaimType): Promise<Allocation | null> => {
   const options: RequestInit = {
     method: "GET",
     headers: meanFiHeaders
   }
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?source=${source}`;
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
   try {
     const response = await fetch(url, options)
     if (response && response.status === 200) {
       const data = (await response.json());
       return data.totalAllocation as Allocation;
-    }
-    return null;
-  } catch (error) {
-    return null;
-  }
-};
-
-// POST /whitelists/{address} - Claims the balance for the given address
-export const claimWhitelistAllocation = async (address: string, source: WhitelistClaimType): Promise<any> => {
-  const options: RequestInit = {
-    method: "POST",
-    headers: meanFiHeaders
-  }
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?source=${source}`;
-  try {
-    const response = await fetch(url, options)
-    if (response && response.status === 200) {
-      const data = (await response.json());
-      return data;
     }
     return null;
   } catch (error) {
