@@ -711,19 +711,6 @@ export const IdoLiveView = () => {
             selectedToken={selectedToken}
           />
         );
-      case "solanium":
-        return (
-          <SolaniumRedeem
-            connection={connection}
-            idoClient={idoClient}
-            idoDetails={idoDetails}
-            idoStatus={idoStatus}
-            moneyStreamingClient={ms}
-            redeemStarted={today > redeemStartUtc}
-            disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
-            selectedToken={selectedToken}
-          />
-        );
       case "airdrop":
         return (
           <AirdropRedeem
@@ -747,9 +734,6 @@ export const IdoLiveView = () => {
       <div className="button-tabset-container">
         <div className={`tab-button ${currentClaimsTab === "ido-claims" ? 'active' : ''}`} onClick={() => onClaimsTabChange("ido-claims")}>
           IDO
-        </div>
-        <div className={`tab-button ${currentClaimsTab === "solanium" ? 'active' : ''}`} onClick={() => onClaimsTabChange("solanium")}>
-          Solanium
         </div>
         <div className={`tab-button ${currentClaimsTab === "airdrop" ? 'active' : ''}`} onClick={() => onClaimsTabChange("airdrop")}>
           Airdrop

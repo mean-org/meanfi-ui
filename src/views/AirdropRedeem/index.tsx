@@ -357,11 +357,11 @@ export const AirdropRedeem = (props: {
                     duration={2} />
                   <span className="ml-1">{meanToken.symbol}</span>
                 </div>
-                <div className="font-size-100 mb-3 text-center fg-orange-red">The airdrop is slightly delayed, please follow the official channels. New date to be announced.</div>
               </>
             ) : (
               <div className="airdrop-amount">0.000000 MEAN</div>
             )}
+            <div className="font-size-100 mb-3 text-center fg-orange-red">The airdrop is slightly delayed, please follow the official channels. New date to be announced.</div>
           </>
         )}
       </div>
