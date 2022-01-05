@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { Button, Modal, Spin } from "antd";
+import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -26,6 +26,7 @@ import BN from 'bn.js';
 import "./style.less";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { InfoIcon } from "../../components/InfoIcon";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -940,6 +941,64 @@ export const JupiterExchange = (props: {
     ]);
 
     // Rendering
+    const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
+        return (
+            <Row>
+                <Col span={11} className="text-right">{caption}</Col>
+                <Col span={1} className="text-center fg-secondary-70">{separator}</Col>
+                <Col span={11} className="text-left fg-secondary-70">{value}</Col>
+            </Row>
+        );
+    };
+
+    // Info items will draw inside the popover
+    const txInfoContent = () => {
+        return fromMint && toMint && selectedRoute ? (
+            <>
+            {
+                !refreshing && inputAmount && feeInfo && infoRow(
+                    t("transactions.transaction-info.network-transaction-fee"),
+                    `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
+                )
+            }
+            {/* {
+                !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
+                infoRow(
+                t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+                `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
+                )
+            } */}
+            {
+                !refreshing && inputAmount && slippage && infoRow(
+                    t("transactions.transaction-info.slippage"),
+                    `${slippage.toFixed(2)}%`
+                )
+            }
+            {/* {
+                !refreshing && fromAmount &&
+                infoRow(
+                t("transactions.transaction-info.recipient-receives"),                
+                `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
+                )
+            } */}
+            {
+                !refreshing && inputAmount && selectedRoute && infoRow(
+                    t("transactions.transaction-info.price-impact"),                
+                    `${parseFloat((selectedRoute.priceImpactPct || 0).toFixed(4))}%`
+                )
+            }
+            {/* {
+                !refreshing && fromAmount && exchangeInfo.fromAmm &&
+                infoRow(
+                t("transactions.transaction-info.exchange-on"),
+                `${exchangeInfo.fromAmm}`,
+                ':'
+                )
+            } */}
+            </>
+        ) : null;
+    }
+
     const renderSourceTokenList = (
         <>
             {showFromMintList && Object.values(showFromMintList).length ? (
@@ -1190,36 +1249,46 @@ export const JupiterExchange = (props: {
 
                     )}
 
-                    {/* Title bar with settings */}
-                    {/* <div className="info-line-and-settings flexible-left">
-                        <div className="left"><span>&nbsp;</span></div>
-                        <div className="right info-line">
-                        {
-                            fromMint && toMint && exchangeInfo && exchangeInfo.outPrice ? (
-                            <>
-                                {!refreshing && (
-                                    <>
-                                    <div className="left">
-                                        {
-                                        (`1 ${mintList[fromMint].symbol} ≈ ${parseFloat(exchangeInfo.outPrice.toFixed(mintList[toMint].decimals))} ${mintList[toMint].symbol}`)
-                                        }
-                                    </div>
-                                    <div className="right pl-1">
-                                        {
-                                        fromAmount ? (
-                                            <InfoIcon content={txInfoContent()} placement="leftBottom">
-                                            <InfoCircleOutlined />
-                                            </InfoIcon>
-                                        ) : null
-                                        }
-                                    </div>
-                                    </>
-                                )}
-                            </>
-                            ) : (<span>-</span>)
-                        }
+                    {/* Powered by Jupiter */}
+                    {(!isWrap() && !isUnwrap()) && (
+                        <div className="flexible-left">
+                            <div className="left">&nbsp;</div>
+                            <div className="right font-size-75 fg-secondary-50">Powered by Jupiter <img src="/assets/jupiter-logo.svg" className="jupiter-logo" alt="Jupiter Aggregator" /></div>
                         </div>
-                    </div> */}
+                    )}
+
+                    {/* Title bar with settings */}
+                    {(!isWrap() && !isUnwrap()) && (
+                        <div className="info-line-and-settings flexible-left">
+                            <div className="left"><span>&nbsp;</span></div>
+                            <div className="right info-line">
+                            {
+                                inputToken && outputToken && selectedRoute && selectedRoute.outAmount ? (
+                                <>
+                                    {!refreshing && (
+                                        <>
+                                        <div className="left">
+                                            {
+                                            (`1 ${inputToken.symbol} ≈ ${(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)} ${outputToken.symbol}`)
+                                            }
+                                        </div>
+                                        <div className="right pl-1">
+                                            {
+                                                fromAmount ? (
+                                                    <InfoIcon content={txInfoContent()} placement="leftBottom">
+                                                        <InfoCircleOutlined />
+                                                    </InfoIcon>
+                                                ) : null
+                                            }
+                                        </div>
+                                        </>
+                                    )}
+                                </>
+                                ) : (<span>-</span>)
+                            }
+                            </div>
+                        </div>
+                    )}
 
                     {/* Action button */}
                     <Button
