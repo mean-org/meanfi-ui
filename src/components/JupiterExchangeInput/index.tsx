@@ -14,6 +14,7 @@ export const JupiterExchangeInput = (props: {
   onInputChange?: any;
   onMaxAmount: any | undefined;
   onPriceClick: any;
+  onBalanceClick?: any;
   translationId: string;
   readonly?: boolean;
   inputPosition: "left" | "right";
@@ -47,7 +48,7 @@ export const JupiterExchangeInput = (props: {
                     {connected && (
                         <>
                             <span>{t('transactions.send-amount.label-right')}:</span>
-                            <span className="balance-amount">
+                            <span className="balance-amount simplelink" onClick={props.onBalanceClick}>
                                 {`${props.token && props.tokenBalance
                                     ? props.tokenBalance
                                     : "0"

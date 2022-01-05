@@ -16,6 +16,7 @@ export const JupiterExchangeOutput = (props: {
   mintList?: any;
   onSelectToken: any;
   onSelectedRoute: any;
+  onBalanceClick?: any;
   routes: RouteInfo[];
   showRoutes: boolean;
   className?: string;
@@ -95,7 +96,7 @@ export const JupiterExchangeOutput = (props: {
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t("transactions.send-amount.label-right")}:</span>
-            <span>
+            <span className="simplelink" onClick={props.onBalanceClick}>
               {`${
                 props.toToken && props.toTokenBalance
                   ? props.toTokenBalance

@@ -1,18 +1,18 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, isLocal } from "../../utils/ui";
+import { consoleOut, delay, getTransactionStatusForLogs, isLocal } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
 import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { formatAmount, isValidNumber } from "../../utils/utils";
+import { formatAmount, getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -20,13 +20,16 @@ import { useTranslation } from "react-i18next";
 import { TextInput } from "../../components/TextInput";
 import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { InfoCircleOutlined } from "@ant-design/icons";
-import { appConfig } from "../..";
+import { InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.less";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
+import { TransactionStatusContext } from "../../contexts/transaction-status";
+import { TransactionStatus } from "../../models/enums";
+import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -35,19 +38,26 @@ export const JupiterExchange = (props: {
 }) => {
 
     const { t } = useTranslation("common");
-    const { publicKey } = useWallet();
+    const { publicKey, wallet } = useWallet();
     const { account } = useNativeAccount();
     const [userBalances, setUserBalances] = useState<any>();
     const {
         coinPrices,
+        transactionStatus,
         refreshPrices,
+        setTransactionStatus,
     } = useContext(AppStateContext);
+    const {
+        startFetchTxSignatureInfo,
+        clearTransactionStatusContext,
+    } = useContext(TransactionStatusContext);
+    const [transactionCancelled, setTransactionCancelled] = useState(false);
+    const [isBusy, setIsBusy] = useState(false);
     const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
     const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
     const [toMint, setToMint] = useState<string | undefined>(undefined);
     const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const [isBusy, setIsBusy] = useState(false);
     const [jupiter, setJupiter] = useState<Jupiter | undefined>(undefined);
     const [slippage, setSlippage] = useLocalStorage('slippage', DEFAULT_SLIPPAGE_PERCENT);
     const [fromAmount, setFromAmount] = useState("");
@@ -108,8 +118,11 @@ export const JupiterExchange = (props: {
     ]);
 
     const fromNative = useCallback(() => {
-        return fromMint !== undefined && fromMint === NATIVE_SOL_MINT.toBase58() ? true : false;
-    },[fromMint])
+        return fromMint !== undefined && fromMint === sol.address ? true : false;
+    },[
+        sol,
+        fromMint
+    ])
 
     const isWrap = useCallback(() => {
 
@@ -399,7 +412,7 @@ export const JupiterExchange = (props: {
     // Calculates the max allowed amount to swap
     const getMaxAllowedSwapAmount = useCallback(() => {
 
-        if (!fromMint || !toMint || !userBalances || !feeInfo) {
+        if (!fromMint || !toMint || !userBalances) {
             return 0;
         }
 
@@ -417,7 +430,6 @@ export const JupiterExchange = (props: {
     }, [
         sol,
         toMint,
-        feeInfo,
         fromMint,
         userBalances
     ]);
@@ -456,7 +468,7 @@ export const JupiterExchange = (props: {
             if (token) {
                 setInputToken(token);
             }
-            if (fromNative()) {
+            if (fromMint === sol.address) {
                 const toToken = tokenList.find((t) => t.address === WRAPPED_SOL_MINT_ADDRESS);
                 if (toToken) {
                     setToMint(WRAPPED_SOL_MINT_ADDRESS);
@@ -466,9 +478,9 @@ export const JupiterExchange = (props: {
             }
         }
     }, [
+        sol,
         fromMint,
-        tokenList,
-        fromNative
+        tokenList
     ]);
 
     // Establish the outputToken (changing the toMint is enough to trigger this)
@@ -906,6 +918,482 @@ export const JupiterExchange = (props: {
         isWrap,
     ]);
 
+    const onStartWrapTx = async () => {
+        let transaction: Transaction;
+        let signedTransaction: Transaction;
+        let signature: any;
+        let encodedTx: string;
+        const transactionLog: any[] = [];
+    
+        clearTransactionStatusContext();
+        setTransactionCancelled(false);
+        setIsBusy(true);
+
+        const createTx = async (): Promise<boolean> => {
+            if (wallet) {
+                setTransactionStatus({
+                    lastOperation: TransactionStatus.TransactionStart,
+                    currentOperation: TransactionStatus.InitTransaction,
+                });
+
+                // Log input data
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+                    inputs: `wrapAmount: ${inputAmount}`
+                });
+
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+                    result: ''
+                });
+
+                return await wrapSol(
+                    connection,                 // connection
+                    publicKey as PublicKey,     // from
+                    inputAmount                 // amount
+                )
+                .then((value) => {
+                    consoleOut("wrapSol returned transaction:", value);
+                    // Stage 1 completed - The transaction is created and returned
+                    setTransactionStatus({
+                        lastOperation: TransactionStatus.InitTransactionSuccess,
+                        currentOperation: TransactionStatus.SignTransaction,
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                        result: getTxIxResume(value)
+                    });
+                    transaction = value;
+                    return true;
+                })
+                .catch((error) => {
+                    console.error("wrapSol transaction init error:", error);
+                    setTransactionStatus({
+                        lastOperation: transactionStatus.currentOperation,
+                        currentOperation: TransactionStatus.InitTransactionFailure,
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                        result: `${error}`
+                    });
+                    customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                    return false;
+                });
+            } else {
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+                    result: 'Cannot start transaction! Wallet not found!'
+                });
+                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                return false;
+            }
+        };
+
+        const signTx = async (): Promise<boolean> => {
+            if (wallet) {
+                consoleOut("Signing transaction...");
+                return await wallet
+                    .signTransaction(transaction)
+                    .then((signed: Transaction) => {
+                        consoleOut("signTransaction returned a signed transaction:", signed);
+                        signedTransaction = signed;
+                        // Try signature verification by serializing the transaction
+                        try {
+                            encodedTx = signedTransaction.serialize().toString('base64');
+                            consoleOut('encodedTx:', encodedTx, 'orange');
+                        } catch (error) {
+                            console.error(error);
+                            setTransactionStatus({
+                                lastOperation: TransactionStatus.SignTransaction,
+                                currentOperation: TransactionStatus.SignTransactionFailure
+                            });
+                            transactionLog.push({
+                                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                                result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                            });
+                            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                            return false;
+                        }
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SignTransactionSuccess,
+                            currentOperation: TransactionStatus.SendTransaction,
+                        });
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+                            result: {signer: wallet.publicKey.toBase58()}
+                        });
+                        return true;
+                    })
+                    .catch(error => {
+                        console.error("Signing transaction failed!");
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SignTransaction,
+                            currentOperation: TransactionStatus.SignTransactionFailure,
+                        });
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                        });
+                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                        return false;
+                    });
+            } else {
+                console.error("Cannot sign transaction! Wallet not found!");
+                setTransactionStatus({
+                    lastOperation: TransactionStatus.SignTransaction,
+                    currentOperation: TransactionStatus.WalletNotFound,
+                });
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+                    result: 'Cannot sign transaction! Wallet not found!'
+                });
+                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                return false;
+            }
+        };
+
+        const sendTx = async (): Promise<boolean> => {
+            if (wallet) {
+                return await connection
+                    .sendEncodedTransaction(encodedTx)
+                    .then((sig) => {
+                        consoleOut("sendEncodedTransaction returned a signature:", sig);
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SendTransactionSuccess,
+                            currentOperation: TransactionStatus.ConfirmTransaction,
+                        });
+                        signature = sig;
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+                            result: `signature: ${signature}`
+                        });
+                        return true;
+                    })
+                    .catch((error) => {
+                        console.error(error);
+                        setTransactionStatus({
+                            lastOperation: TransactionStatus.SendTransaction,
+                            currentOperation: TransactionStatus.SendTransactionFailure,
+                        });
+                        transactionLog.push({
+                            action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+                            result: { error, encodedTx }
+                        });
+                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                        return false;
+                    });
+            } else {
+                setTransactionStatus({
+                    lastOperation: TransactionStatus.SendTransaction,
+                    currentOperation: TransactionStatus.WalletNotFound,
+                });
+                transactionLog.push({
+                    action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+                    result: 'Cannot send transaction! Wallet not found!'
+                });
+                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                return false;
+            }
+        };
+
+        const confirmTx = async (): Promise<boolean> => {
+            return await connection
+                .confirmTransaction(signature, "confirmed")
+                .then((result) => {
+                    consoleOut("confirmTransaction result:", result);
+                    setTransactionStatus({
+                        lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+                        currentOperation: TransactionStatus.TransactionFinished,
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+                        result: ''
+                    });
+                    return true;
+                })
+                .catch(() => {
+                    setTransactionStatus({
+                        lastOperation: TransactionStatus.ConfirmTransaction,
+                        currentOperation: TransactionStatus.ConfirmTransactionFailure,
+                    });
+                    transactionLog.push({
+                        action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+                        result: signature
+                    });
+                    customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                    return false;
+                });
+        };
+    
+        if (wallet) {
+            const create = await createTx();
+            consoleOut("created:", create);
+            if (create && !transactionCancelled) {
+                const sign = await signTx();
+                consoleOut("signed:", sign);
+                if (sign && !transactionCancelled) {
+                    const sent = await sendTx();
+                    consoleOut("sent:", sent);
+                    if (sent && !transactionCancelled) {
+                        const confirmed = await confirmTx();
+                        consoleOut("confirmed:", confirmed);
+                        if (confirmed) {
+                            setIsBusy(false);
+                            setInputAmount(0);
+                            setFromAmount('');
+                            refreshUserBalances();
+                        } else { setIsBusy(false); }
+                    } else { setIsBusy(false); }
+                } else { setIsBusy(false); }
+            } else { setIsBusy(false); }
+        }
+    }
+
+    const onStartUnwrapTx = async () => {
+        let transaction: Transaction;
+        let signedTransaction: Transaction;
+        let signature: any;
+        let encodedTx: string;
+        const transactionLog: any[] = [];
+    
+        clearTransactionStatusContext();
+        setTransactionCancelled(false);
+        setIsBusy(true);
+
+        if (publicKey) {
+            setTransactionStatus({
+                lastOperation: TransactionStatus.TransactionStart,
+                currentOperation: TransactionStatus.InitTransaction
+            });
+            await delay(2000);
+            setIsBusy(false);
+            setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+            });
+        }
+    }
+
+    const onStartSwapTx = async () => {
+        let transaction: Transaction;
+        let signedTransaction: Transaction;
+        let signature: any;
+        let encodedTx: string;
+        const transactionLog: any[] = [];
+    
+        clearTransactionStatusContext();
+        setTransactionCancelled(false);
+        setIsBusy(true);
+
+        /*
+        const createTx = async (): Promise<boolean> => {
+          if (publicKey) {
+    
+            setTransactionStatus({
+              lastOperation: TransactionStatus.TransactionStart,
+              currentOperation: TransactionStatus.InitTransaction
+            });
+
+            // Log data for the create Tx
+            const data = {
+            }
+            consoleOut('data:', data);
+    
+            // Log input data
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+              inputs: data
+            });
+    
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+              result: ''
+            });
+    
+            // Create a transaction
+            return await props.idoClient.createWithdrawUsdcTx(
+              meanIdoAddress,                                           // meanIdoAddress
+              amount                                                    // amount
+            )
+            .then(value => {
+              consoleOut('createDepositUsdcTx returned transaction:', value);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.InitTransactionSuccess,
+                currentOperation: TransactionStatus.SignTransaction
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+                result: getTxIxResume(value[1])
+              });
+              transaction = value[1];
+              return true;
+            })
+            .catch(error => {
+              console.error('createDepositUsdcTx error:', error);
+              setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.InitTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+                result: `${error}`
+              });
+              customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+              return false;
+            });
+          } else {
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+              result: 'Cannot start transaction! Wallet not found!'
+            });
+            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            return false;
+          }
+        }
+    
+        const signTx = async (): Promise<boolean> => {
+          if (wallet) {
+            consoleOut('Signing transaction...');
+            return await wallet.signTransaction(transaction)
+            .then((signed: Transaction) => {
+              consoleOut('signTransaction returned a signed transaction:', signed);
+              signedTransaction = signed;
+              // Try signature verification by serializing the transaction
+              try {
+                encodedTx = signedTransaction.serialize().toString('base64');
+                consoleOut('encodedTx:', encodedTx, 'orange');
+              } catch (error) {
+                console.error(error);
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SignTransaction,
+                  currentOperation: TransactionStatus.SignTransactionFailure
+                });
+                transactionLog.push({
+                  action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                  result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+                });
+                customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+                return false;
+              }
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransactionSuccess,
+                currentOperation: TransactionStatus.SendTransaction
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+                result: {signer: wallet.publicKey.toBase58()}
+              });
+              return true;
+            })
+            .catch(error => {
+              console.error('Signing transaction failed!');
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              });
+              customLogger.logWarning('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+              return false;
+            });
+          } else {
+            console.error('Cannot sign transaction! Wallet not found!');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.WalletNotFound
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+              result: 'Cannot sign transaction! Wallet not found!'
+            });
+            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            return false;
+          }
+        }
+    
+        const sendTx = async (): Promise<boolean> => {
+          if (wallet) {
+            return await props.connection
+              .sendEncodedTransaction(encodedTx)
+              .then(sig => {
+                consoleOut('sendEncodedTransaction returned a signature:', sig);
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SendTransactionSuccess,
+                  currentOperation: TransactionStatus.ConfirmTransaction
+                });
+                signature = sig;
+                transactionLog.push({
+                  action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+                  result: `signature: ${signature}`
+                });
+                return true;
+              })
+              .catch(error => {
+                console.error(error);
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SendTransaction,
+                  currentOperation: TransactionStatus.SendTransactionFailure
+                });
+                transactionLog.push({
+                  action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+                  result: { error, encodedTx }
+                });
+                customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+                return false;
+              });
+          } else {
+            console.error('Cannot send transaction! Wallet not found!');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.WalletNotFound
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+              result: 'Cannot send transaction! Wallet not found!'
+            });
+            customLogger.logError('IDO Withdraw USDC transaction failed', { transcript: transactionLog });
+            return false;
+          }
+        }
+        */
+
+        if (publicKey) {
+            setTransactionStatus({
+                lastOperation: TransactionStatus.TransactionStart,
+                currentOperation: TransactionStatus.InitTransaction
+            });
+            await delay(2000);
+            setIsBusy(false);
+            setTransactionStatus({
+                lastOperation: transactionStatus.currentOperation,
+                currentOperation: TransactionStatus.TransactionFinished
+            });
+
+        //   const create = await createTx();
+        //   consoleOut('create:', create);
+        //   if (create && !transactionCancelled) {
+        //     const sign = await signTx();
+        //     consoleOut('sign:', sign);
+        //     if (sign && !transactionCancelled) {
+        //       const sent = await sendTx();
+        //       consoleOut('sent:', sent);
+        //       if (sent && !transactionCancelled) {
+        //         consoleOut('Send Tx to confirmation queue:', signature);
+        //         startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoWithdraw);
+        //         setWithdrawAmount("");
+        //         setIsBusy(false);
+        //         setTransactionStatus({
+        //           lastOperation: transactionStatus.currentOperation,
+        //           currentOperation: TransactionStatus.TransactionFinished
+        //         });
+        //       } else { setIsBusy(false); }
+        //     } else { setIsBusy(false); }
+        //   } else { setIsBusy(false); }
+        }
+    };
+
     // Validation
 
     const isExchangeValid = useCallback((): boolean => {
@@ -1170,7 +1658,7 @@ export const JupiterExchange = (props: {
                             onMaxAmount={
                                 () => {
                                     const maxFromAmount = getMaxAllowedSwapAmount();
-                                    // console.log('maxFromAmount', maxFromAmount);
+                                    console.log('maxFromAmount', maxFromAmount);
                                     if (toMint && mintList[fromMint] && maxFromAmount > 0) {
                                         setInputAmount(maxFromAmount);
                                         const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
@@ -1183,6 +1671,7 @@ export const JupiterExchange = (props: {
                                 showTokenSelector();
                             }}
                             onPriceClick={() => refreshPrices()}
+                            onBalanceClick={() => refreshUserBalances()}
                             inputPosition="right"
                             translationId="source"
                             inputLabel={
@@ -1236,6 +1725,7 @@ export const JupiterExchange = (props: {
                             }
                             readonly={fromNative()}
                             mintList={mintList}
+                            onBalanceClick={() => refreshUserBalances()}
                             onSelectToken={() => {
                                 setSubjectTokenSelection("destination");
                                 showTokenSelector();
@@ -1294,14 +1784,32 @@ export const JupiterExchange = (props: {
 
                     {/* Action button */}
                     <Button
-                        className="main-cta"
+                        className={`main-cta ${isBusy ? 'inactive' : ''}`}
                         block
                         type="primary"
                         shape="round"
                         size="large"
-                        onClick={() => {}}
+                        onClick={() => {
+                            if (isWrap()) {
+                                onStartWrapTx();
+                            } else if (isUnwrap()) {
+                                onStartUnwrapTx();
+                            } else {
+                                onStartSwapTx();
+                            }
+                        }}
                         disabled={!isExchangeValid() || refreshing} >
-                        {transactionStartButtonLabel}
+                        {isBusy && (
+                            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                        )}
+                        {isBusy
+                            ? isWrap()
+                                ? 'Wrapping'
+                                : isUnwrap()
+                                    ? 'Unwrapping'
+                                    : 'Swapping'
+                            : transactionStartButtonLabel
+                        }
                     </Button>
 
                 </div>

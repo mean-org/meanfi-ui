@@ -221,7 +221,7 @@ export const WrapView = () => {
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                 result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
               });
-              customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+              customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
               return false;
             }
             setTransactionStatus({
