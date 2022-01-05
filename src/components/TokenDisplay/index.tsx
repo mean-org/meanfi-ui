@@ -1,10 +1,12 @@
 import React from "react";
+import { TokenInfo } from "@solana/spl-token-registry";
 import { IconCaretDown } from "../../Icons";
 import { getTokenByMintAddress } from "../../utils/tokens";
 import { shortenAddress } from "../../utils/utils";
 import { Identicon } from "../Identicon";
 
 export const TokenDisplay = (props: {
+  fullTokenInfo?: TokenInfo | undefined;
   name?: string;
   icon?: JSX.Element;
   className?: string;
@@ -15,7 +17,7 @@ export const TokenDisplay = (props: {
   noTokenLabel?: string;
   onClick: any;
 }) => {
-  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel } = props;
+  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo } = props;
   const token = getTokenByMintAddress(mintAddress);
 
   return (
@@ -24,7 +26,15 @@ export const TokenDisplay = (props: {
         {mintAddress ? (
           <>
             <div className="token-icon">
-              {icon ? icon : (
+              {fullTokenInfo ? (
+                <>
+                  {fullTokenInfo && fullTokenInfo.logoURI ? (
+                    <img alt={`${fullTokenInfo.name}`} width={20} height={20} src={fullTokenInfo.logoURI} />
+                  ) : (
+                    <Identicon address={mintAddress} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </>
+              ) : icon ? icon : (
                 <>
                   {token && token.logoURI ? (
                     <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
@@ -34,7 +44,9 @@ export const TokenDisplay = (props: {
                 </>
               )}
             </div>
-            {props.symbol ? (
+            {fullTokenInfo ? (
+              <div className="token-symbol">{fullTokenInfo.symbol}</div>
+            ) : props.symbol ? (
               <div className="token-symbol">{props.symbol}</div>
             ) : token && token.symbol ? (
               <div className="token-symbol">{token.symbol}</div>
@@ -42,7 +54,7 @@ export const TokenDisplay = (props: {
               <div className="token-symbol">{shortenAddress(mintAddress)}</div>
             )}
             {showName && (
-              <div className="token-name">{name ? `(${name})` : token ? `(${token.name})` : ''}</div>
+              <div className="token-name">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</div>
             )}
             {showCaretDown && (
               <span className="flex-center dropdown-arrow">

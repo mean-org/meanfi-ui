@@ -11,9 +11,9 @@ import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
-import { ExchangeOneTimeSwapUi, ExchangeRepeatingSwapUi, } from '../../views';
+import { JupiterExchange, OneTimeExchange, RecurringExchange, } from '../../views';
 
-type SwapOption = "one-time" | "recurring";
+type SwapOption = "one-time" | "recurring" | "jupiter";
 
 export const SwapView = () => {
   const location = useLocation();
@@ -21,6 +21,7 @@ export const SwapView = () => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
+    isWhitelisted,
     recurringBuys,
     setRecurringBuys,
   } = useContext(AppStateContext);
@@ -151,11 +152,16 @@ export const SwapView = () => {
               <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
                 {t('swap.tabset.recurring')}
               </div>
+              {isWhitelisted && (
+                <div className={`tab-button ${currentTab === "jupiter" ? 'active' : ''}`} onClick={() => onTabChange("jupiter")}>
+                  Jupiter
+                </div>
+              )}
             </div>
             {/* One time exchange */}
             {
               currentTab === "one-time" && (
-                <ExchangeOneTimeSwapUi
+                <OneTimeExchange
                   connection={connection}
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
@@ -165,12 +171,22 @@ export const SwapView = () => {
             {/* Repeating exchange */}
             {
               currentTab === "recurring" && (
-                <ExchangeRepeatingSwapUi
+                <RecurringExchange
                   connection={connection}
                   endpoint={endpoint}
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
                   onRefreshRequested={() => setLoadingRecurringBuys(false)}
+                />
+              )
+            }
+            {/* Jupiter exchange */}
+            {
+              currentTab === "jupiter" && (
+                <JupiterExchange
+                  connection={connection}
+                  queryFromMint={queryFromMint}
+                  queryToMint={queryToMint}
                 />
               )
             }

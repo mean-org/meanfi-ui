@@ -45,6 +45,7 @@
     "@ant-design/icons": "^4.7",
     "@craco/craco": "^6.4",
     "@influxdata/influxdb-client": "1.21.0",
+    "@jup-ag/core": "^1.0.0-beta",
     "@ledgerhq/hw-transport": "^6.11",
     "@ledgerhq/hw-transport-webhid": "^6.11",
     "@mean-dao/ddca": "1.2.32",
@@ -133,6 +134,8 @@
     "typescript": "~4.5.2"
   },
   "resolutions": {
+    "@saberhq/stableswap-sdk": "1.9.0",
+    "@saberhq/token-utils": "1.9.0",
     "@solana/web3.js": "1.31.0"
   }
 }
