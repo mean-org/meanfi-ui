@@ -18,6 +18,7 @@ export const JupiterExchangeOutput = (props: {
   onSelectedRoute: any;
   routes: RouteInfo[];
   showRoutes: boolean;
+  className?: string;
   readonly?: boolean;
 }) => {
 
@@ -89,7 +90,7 @@ export const JupiterExchangeOutput = (props: {
 
   return (
     <>
-      <div className="well">
+      <div className={`well ${props.className || ''}`}>
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">

@@ -882,7 +882,7 @@ export const JupiterExchange = (props: {
     useEffect(() => {
         let timer: any;
 
-        if (jupiter && inputToken && outputToken && slippage && !isWrap() && !isUnwrap()) {
+        if (jupiter && inputToken && outputToken && slippage && inputAmount && !isWrap() && !isUnwrap()) {
             timer = setInterval(() => {
                 consoleOut(`Trigger refresh routes after ${EXCHANGE_ROUTES_REFRESH_TIMEOUT / 1000} seconds`);
                 setRefreshing(true);
@@ -900,6 +900,7 @@ export const JupiterExchange = (props: {
         slippage,
         inputToken,
         outputToken,
+        inputAmount,
         refreshRoutes,
         isUnwrap,
         isWrap,
@@ -1239,6 +1240,7 @@ export const JupiterExchange = (props: {
                                 setSubjectTokenSelection("destination");
                                 showTokenSelector();
                             }}
+                            className={!isWrap() && !isUnwrap() ? 'mb-2' : ''}
                             routes={routes}
                             onSelectedRoute={(route: any) => {
                                 consoleOut('onSelectedRoute:', route, 'blue');
@@ -1251,13 +1253,13 @@ export const JupiterExchange = (props: {
 
                     {/* Powered by Jupiter */}
                     {(!isWrap() && !isUnwrap()) && (
-                        <div className="flexible-left">
+                        <div className="flexible-left pr-2">
                             <div className="left">&nbsp;</div>
                             <div className="right font-size-75 fg-secondary-50">Powered by Jupiter <img src="/assets/jupiter-logo.svg" className="jupiter-logo" alt="Jupiter Aggregator" /></div>
                         </div>
                     )}
 
-                    {/* Title bar with settings */}
+                    {/* Rate and info */}
                     {(!isWrap() && !isUnwrap()) && (
                         <div className="info-line-and-settings flexible-left">
                             <div className="left"><span>&nbsp;</span></div>
