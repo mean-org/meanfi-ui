@@ -182,7 +182,7 @@ export const SwapView = () => {
             }
             {/* Jupiter exchange */}
             {
-              currentTab === "jupiter" && (
+              isWhitelisted && currentTab === "jupiter" && (
                 <JupiterExchange
                   connection={connection}
                   queryFromMint={queryFromMint}
