@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction, TransactionSignature } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, delay, getTransactionStatusForLogs, isLocal } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs, isLocal } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
 import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
@@ -27,18 +27,10 @@ import "./style.less";
 import { NATIVE_SOL } from "../../utils/tokens";
 import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
-import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { TransactionStatus } from "../../models/enums";
 import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
-import { SendTransactionOptions, SignerWalletAdapter } from "@solana/wallet-adapter-base";
-
-interface CustomWallet {
-    publicKey: PublicKey
-    sendTransaction(transaction: Transaction, connection: Connection, options?: SendTransactionOptions): Promise<TransactionSignature>;
-    signTransaction(transaction: Transaction): Promise<Transaction>;
-    signAllTransactions(transaction: Transaction[]): Promise<Transaction[]>;
-}
+import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -56,14 +48,9 @@ export const JupiterExchange = (props: {
         refreshPrices,
         setTransactionStatus,
     } = useContext(AppStateContext);
-    const {
-        startFetchTxSignatureInfo,
-        clearTransactionStatusContext,
-    } = useContext(TransactionStatusContext);
     const [transactionCancelled, setTransactionCancelled] = useState(false);
     const [isBusy, setIsBusy] = useState(false);
-    const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-    const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
+    const [fromMint, setFromMint] = useState<string | undefined>();
     const [toMint, setToMint] = useState<string | undefined>(undefined);
     const [paramsProcessed, setParamsProcessed] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -109,21 +96,31 @@ export const JupiterExchange = (props: {
 
     // Set fromMint & toMint from query string if params are provided
     useEffect(() => {
-        if (paramsProcessed || !props.queryFromMint || !props.queryToMint) { return; }
+        if (paramsProcessed) { return; }
 
-        if (props.queryFromMint) {
-            setFromMint(props.queryFromMint);
-            setLastFromMint(props.queryFromMint);
+        setParamsProcessed(true);
+
+        if (props.queryFromMint || props.queryToMint) {
+            if (props.queryFromMint) {
+                setFromMint(props.queryFromMint);
+            }
             if (props.queryToMint) {
                 setToMint(props.queryToMint as string);
             }
-            setParamsProcessed(true);
+        } else if (!props.queryFromMint && !props.queryToMint) {
+            const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+            if (from && from.length) {
+                setFromMint(from[0].address);
+            }
+            const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+            if (to && to.length) {
+                setToMint(to[0].address);
+            }
         }
     },[
         paramsProcessed,
         props.queryToMint,
-        props.queryFromMint,
-        setLastFromMint
+        props.queryFromMint
     ]);
 
     const fromNative = useCallback(() => {
@@ -905,7 +902,6 @@ export const JupiterExchange = (props: {
         let encodedTx: string;
         const transactionLog: any[] = [];
     
-        clearTransactionStatusContext();
         setTransactionCancelled(false);
         setIsBusy(true);
 
@@ -1136,7 +1132,6 @@ export const JupiterExchange = (props: {
         let encodedTx: string;
         const transactionLog: any[] = [];
     
-        clearTransactionStatusContext();
         setTransactionCancelled(false);
         setIsBusy(true);
 
@@ -1501,7 +1496,6 @@ export const JupiterExchange = (props: {
                     const onClick = () => {
                         if (!fromMint || fromMint !== token.address) {
                             setFromMint(token.address);
-                            setLastFromMint(token.address);
                             consoleOut('fromMint:', token.address, 'blue');
                             const selectedToken = showFromMintList[token.address];
                             consoleOut('selectedToken:', selectedToken, 'blue');
@@ -1748,10 +1742,10 @@ export const JupiterExchange = (props: {
                     )}
 
                     {/* Powered by Jupiter */}
-                    {(!isWrap() && !isUnwrap()) && (
+                    {(!isWrap() && !isUnwrap() && isExchangeValid()) && (
                         <div className="flexible-left pr-2">
                             <div className="left">&nbsp;</div>
-                            <div className="right font-size-75 fg-secondary-50">Powered by Jupiter <img src="/assets/jupiter-logo.svg" className="jupiter-logo" alt="Jupiter Aggregator" /></div>
+                            <div className="right font-size-75 fg-secondary-50">Powered by Jupiter</div>
                         </div>
                     )}
 

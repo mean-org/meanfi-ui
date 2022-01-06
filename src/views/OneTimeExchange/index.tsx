@@ -44,6 +44,7 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { MSP_OPS } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -87,8 +88,7 @@ export const OneTimeExchange = (props: {
   const [txFees, setTxFees] = useState<TransactionFees>();
   // AGGREGATOR
   const [currentTxSignature, setCurrentTxSignature] = useState("");
-  const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(lastFromMint);
+  const [fromMint, setFromMint] = useState<string | undefined>();
   const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -110,21 +110,31 @@ export const OneTimeExchange = (props: {
 
   // Set fromMint & toMint from query string if params are provided
   useEffect(() => {
-    if (paramsProcessed || !props.queryFromMint || !props.queryToMint) { return; }
+    if (paramsProcessed) { return; }
 
-    if (props.queryFromMint) {
-      setFromMint(props.queryFromMint);
-      setLastFromMint(props.queryFromMint);
+    setParamsProcessed(true);
+
+    if (props.queryFromMint || props.queryToMint) {
+      if (props.queryFromMint) {
+        setFromMint(props.queryFromMint);
+      }
       if (props.queryToMint) {
         setToMint(props.queryToMint as string);
       }
-      setParamsProcessed(true);
+    } else if (!props.queryFromMint && !props.queryToMint) {
+      const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+      if (from && from.length) {
+        setFromMint(from[0].address);
+      }
+      const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+      if (to && to.length) {
+        setToMint(to[0].address);
+      }
     }
   },[
     paramsProcessed,
     props.queryToMint,
-    props.queryFromMint,
-    setLastFromMint
+    props.queryFromMint
   ]);
 
   const isWrap = useCallback(() => {
@@ -598,10 +608,11 @@ export const OneTimeExchange = (props: {
     }
 
   },[
-    connection, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
+    connection,
+    fromMint,
+    mintList,
+    isUnwrap,
+    isWrap,
     toMint,
     refreshTime,
     fromBalance
@@ -1740,7 +1751,6 @@ export const OneTimeExchange = (props: {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
               setFromMint(token.address);
-              setLastFromMint(token.address);
               setExchangeInfo(undefined);
               setRefreshTime(0);
               setRefreshing(true);

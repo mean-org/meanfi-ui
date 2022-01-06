@@ -50,6 +50,7 @@ import {
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
 import { SABER } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
 export const RecurringExchange = (props: {
   queryFromMint: string | null;
@@ -72,6 +73,7 @@ export const RecurringExchange = (props: {
   
   const connection = useMemo(() => props.connection, [props.connection]);
   const [refreshing, setRefreshing] = useState(false);
+  const [paramsProcessed, setParamsProcessed] = useState(false);
   // Get them from the localStorage and set defaults if they are not already stored
   const [lastSwapFromMint, setLastSwapFromMint] = useLocalStorage('lastSwapFromMint', USDC_MINT.toBase58());
   // Continue normal flow
@@ -86,8 +88,7 @@ export const RecurringExchange = (props: {
     flatFee: 0, maxBlockchainFee: 0, maxFeePerSwap: 0, percentFee: 0, totalScheduledSwapsFees: 0
   });
   // AGGREGATOR
-  const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
+  const [fromMint, setFromMint] = useState<string | undefined>();
   const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -107,6 +108,35 @@ export const RecurringExchange = (props: {
   const [showLpList, setShowLpList] = useState(false);
   const [hlaInfo, setHlaInfo] = useState<HlaInfo>();
   const [defaultDdcaOption] = useState("Repeat weekly");
+
+  // Set fromMint & toMint from query string if params are provided
+  useEffect(() => {
+    if (paramsProcessed) { return; }
+
+    setParamsProcessed(true);
+
+    if (props.queryFromMint || props.queryToMint) {
+      if (props.queryFromMint) {
+        setFromMint(props.queryFromMint);
+      }
+      if (props.queryToMint) {
+        setToMint(props.queryToMint as string);
+      }
+    } else if (!props.queryFromMint && !props.queryToMint) {
+      const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+      if (from && from.length) {
+        setFromMint(from[0].address);
+      }
+      const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+      if (to && to.length) {
+        setToMint(to[0].address);
+      }
+    }
+  },[
+    paramsProcessed,
+    props.queryToMint,
+    props.queryFromMint
+  ]);
 
   // DDCA Option selector modal
   const [isDdcaOptionSelectorModalVisible, setDdcaOptionSelectorModalVisibility] = useState(false);
@@ -1017,13 +1047,6 @@ export const RecurringExchange = (props: {
     isSwapAmountValid
   ]);
 
-  // Set toMint appropriately
-  useEffect(() => {
-    if (props.queryToMint) {
-      setToMint(props.queryToMint);
-    }
-  }, [props.queryToMint]);
-
   // Updates the token list everytime is filtered
   const updateTokenListByFilter = useCallback(() => {
 
@@ -1285,7 +1308,6 @@ export const RecurringExchange = (props: {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
               setFromMint(token.address);
-              setLastFromMint(token.address);
               setExchangeInfo(undefined);
               setRefreshTime(0);
               setRefreshing(true);
