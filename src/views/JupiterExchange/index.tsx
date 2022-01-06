@@ -1474,7 +1474,7 @@ export const JupiterExchange = (props: {
             {
                 !refreshing && inputAmount && selectedRoute && infoRow(
                     t("transactions.transaction-info.price-impact"),                
-                    `${parseFloat((selectedRoute.priceImpactPct || 0).toFixed(4))}%`
+                    `${parseFloat((selectedRoute.priceImpactPct * 100 || 0).toFixed(4))}%`
                 )
             }
             {/* {
