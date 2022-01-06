@@ -83,14 +83,19 @@ export const JupiterExchange = (props: {
     const connection = useMemo(() => props.connection, [props.connection]);
 
     const getPlatformFee = useCallback(async () => {
-        const platformFeeAndAccounts = {
-            feeBps: platformFeeAmount * 100,
-            feeAccounts: await getPlatformFeeAccounts(
-                connection,
-              new PublicKey(platformFeesOwner) // The platform fee account owner
-            ) // map of mint to token account pubkey
+        consoleOut('platformFeesOwner:', platformFeesOwner, 'green');
+        consoleOut('platformFeeAmount:', platformFeeAmount, 'green');
+        if (connection) {
+            return {
+                feeBps: platformFeeAmount * 100,
+                feeAccounts: await getPlatformFeeAccounts(
+                    connection,
+                    new PublicKey(platformFeesOwner)
+                )
+            };
+        } else {
+            return undefined;
         }
-        return platformFeeAndAccounts;
     }, [
         connection,
         platformFeesOwner,
@@ -238,7 +243,8 @@ export const JupiterExchange = (props: {
                 connection,
                 cluster: "mainnet-beta",
                 user: publicKey || undefined,
-                // platformFeeAndAccounts: await getPlatformFee()
+                wrapUnwrapSOL: false,
+                platformFeeAndAccounts: await getPlatformFee()
             });
         }
 
@@ -254,7 +260,7 @@ export const JupiterExchange = (props: {
     }, [
         publicKey,
         connection,
-        // getPlatformFee
+        getPlatformFee
     ]);
 
     const getPossiblePairsTokenInfo = ({
@@ -449,8 +455,8 @@ export const JupiterExchange = (props: {
         let map = undefined;
         if (jupiter) {
             map = jupiter.getRouteMap();
+            consoleOut('routeMap:', map, 'blue');
         }
-        consoleOut('routeMap:', map, 'blue');
         return map;
     }, [jupiter]);
 
@@ -578,10 +584,10 @@ export const JupiterExchange = (props: {
                 const routes = response ? response.routesInfos : [];
                 let filteredRoutes: RouteInfo[] = [];
                 if (routes.length) {
-                    filteredRoutes = routes.filter(r => r.outAmount);
+                    filteredRoutes = routes.filter(r => r.outAmount && r.marketInfos && r.marketInfos[r.marketInfos.length - 1].platformFee.pct > 0);
                     setSelectedRoute(filteredRoutes[0]);
-                    console.log("Possible number of routes:", filteredRoutes.length);
-                    console.log("Best quote: ", filteredRoutes[0].outAmount);
+                    consoleOut(`Filtered ${filteredRoutes.length} possible routes:`, filteredRoutes, 'blue');
+                    consoleOut('Best route:', filteredRoutes[0], 'blue');
                 } else {
                     setSelectedRoute(undefined);
                 }

@@ -1444,11 +1444,11 @@
     chalk "^4.0.0"
 
 "@jup-ag/core@^1.0.0-beta":
-  version "1.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@jup-ag/core/-/core-1.0.0-beta.3.tgz#388f6b38dbf5b1508a0c8f2f9bb9251708ab0544"
-  integrity sha512-kKS+oEdyYd4nuhQ99foAeRKbmSnVjGM0yAr4FjVTRxL1w3VBacHO5wF/MdzYodUA2cyGu53xkuneMogiMkLBfQ==
+  version "1.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/@jup-ag/core/-/core-1.0.0-beta.4.tgz#aa76c449d6da4b2ef8bf2832983b9f42a1ea83f9"
+  integrity sha512-gvqpcW5R6kUCcPJseD8Bc4SyngdePwAab/ykGOOBBTZFP3cFaYccju2DpU/+AoQML7CK+3+Y5JIB2nTVuNFNVA==
   dependencies:
-    "@jup-ag/math" "1.0.0-beta.3"
+    "@jup-ag/math" "1.0.0-beta.4"
     "@mercurial-finance/stable-swap-n-pool" "0.2.0"
     "@project-serum/anchor" "0.19.1-beta.1"
     "@project-serum/serum" "~0.13.61"
@@ -1463,10 +1463,10 @@
     jsbi "~4.1.0"
     promise-retry "~2.0.1"
 
-"@jup-ag/math@1.0.0-beta.3":
-  version "1.0.0-beta.3"
-  resolved "https://registry.yarnpkg.com/@jup-ag/math/-/math-1.0.0-beta.3.tgz#c9f23c18ff5a4f50aa1473ed6aecc760b143b08a"
-  integrity sha512-54Zxd/bE8jIAama+kV6aeD9bPdhkodyy8VC4eR7cg8ygFHQaVowt1nl5niz5bq0/PY9QVcSXofRcwoIyZSXRpw==
+"@jup-ag/math@1.0.0-beta.4":
+  version "1.0.0-beta.4"
+  resolved "https://registry.yarnpkg.com/@jup-ag/math/-/math-1.0.0-beta.4.tgz#10b19500349e767591c8484a62bb3d8b4fc4fcbe"
+  integrity sha512-03s/N4YvG59iuO7kFriI1i1PhiCCLAqKQU21mUvM7of5FiszxZ2BPHgktOEozlH9/Sn5F8e2MAhck7bcB3MbbA==
   dependencies:
     "@solana/spl-token-registry" "~0.2.1105"
     "@solana/web3.js" "~1.31.0"
@@ -1890,10 +1890,17 @@
   dependencies:
     cross-fetch "3.0.6"
 
-"@solana/spl-token-registry@^0.2", "@solana/spl-token-registry@^0.2.214", "@solana/spl-token-registry@~0.2.1105":
+"@solana/spl-token-registry@^0.2", "@solana/spl-token-registry@^0.2.214":
   version "0.2.1262"
   resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.1262.tgz#09dedcb39f5236eb89fdb93ac6a5cef49ed666a5"
   integrity sha512-8QCe8uh5WeQaDnXmUGDBxzDPo2I1Iy/P5h0/rVTxrwfPmbKss4jCnT11y8+dmgwjc6YTHDNL7/GlpvMsfyFpHg==
+  dependencies:
+    cross-fetch "3.0.6"
+
+"@solana/spl-token-registry@~0.2.1105":
+  version "0.2.1289"
+  resolved "https://registry.yarnpkg.com/@solana/spl-token-registry/-/spl-token-registry-0.2.1289.tgz#b32ed31098aa97d5d1d64a43001dec2f06856229"
+  integrity sha512-B2GHwHvogvOBKMWE9BgKRmYhbW9bVQW05ogi1OyXDe2GYuWDy2sPwq5tXaw3hodsLH7rgd/c17NCtKPvyIMZOA==
   dependencies:
     cross-fetch "3.0.6"
 

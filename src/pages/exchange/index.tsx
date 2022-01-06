@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
 import { JupiterExchange, RecurringExchange, } from '../../views';
 
-type SwapOption = "one-time" | "recurring" | "jupiter";
+type SwapOption = "one-time" | "recurring";
 
 export const SwapView = () => {
   const location = useLocation();

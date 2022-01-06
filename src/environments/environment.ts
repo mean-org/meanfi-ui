@@ -37,7 +37,7 @@ export class AppConfigService {
             idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
             idoDistributionTreasuryAddress: '',
             idoDistributionTreasurerAddress: '',
-            exchangeFeeAccountOwner: '',
+            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
         staging: {
@@ -55,7 +55,7 @@ export class AppConfigService {
             idoAccountAddress: '',
             idoDistributionTreasuryAddress: '',
             idoDistributionTreasurerAddress: '',
-            exchangeFeeAccountOwner: '',
+            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
         // dev and local will have same config
@@ -74,7 +74,7 @@ export class AppConfigService {
             idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
             idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
             idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-            exchangeFeeAccountOwner: '',
+            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
         local: {
@@ -92,7 +92,7 @@ export class AppConfigService {
             idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
             idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
             idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
-            exchangeFeeAccountOwner: '',
+            exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
     };
