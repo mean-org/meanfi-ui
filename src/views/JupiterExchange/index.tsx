@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { getPlatformFeeAccounts, Jupiter, PlatformFeeAndAccounts, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
@@ -81,6 +81,21 @@ export const JupiterExchange = (props: {
     const platformFeeAmount = appConfig.getConfig().exchangeFlatFee;
 
     const connection = useMemo(() => props.connection, [props.connection]);
+
+    const getPlatformFee = useCallback(async () => {
+        const platformFeeAndAccounts = {
+            feeBps: platformFeeAmount * 100,
+            feeAccounts: await getPlatformFeeAccounts(
+                connection,
+              new PublicKey(platformFeesOwner) // The platform fee account owner
+            ) // map of mint to token account pubkey
+        }
+        return platformFeeAndAccounts;
+    }, [
+        connection,
+        platformFeesOwner,
+        platformFeeAmount,
+    ]);
 
     const sol = useMemo(() => {
         return {
@@ -222,7 +237,8 @@ export const JupiterExchange = (props: {
             return await Jupiter.load({
                 connection,
                 cluster: "mainnet-beta",
-                user: publicKey || undefined
+                user: publicKey || undefined,
+                // platformFeeAndAccounts: await getPlatformFee()
             });
         }
 
@@ -238,6 +254,7 @@ export const JupiterExchange = (props: {
     }, [
         publicKey,
         connection,
+        // getPlatformFee
     ]);
 
     const getPossiblePairsTokenInfo = ({
@@ -428,7 +445,7 @@ export const JupiterExchange = (props: {
 
     // Get routeMap, which maps each tokenMint and their respective tokenMints that are swappable
     // const routeMap = jupiter.getRouteMap();
-    const routeMap =  useMemo(() => {
+    const routeMap = useMemo(() => {
         let map = undefined;
         if (jupiter) {
             map = jupiter.getRouteMap();

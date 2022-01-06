@@ -11,7 +11,7 @@ import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
 import { Connection } from '@solana/web3.js';
 import { useTranslation } from 'react-i18next';
 import { IconExchange } from '../../Icons';
-import { JupiterExchange, OneTimeExchange, RecurringExchange, } from '../../views';
+import { JupiterExchange, RecurringExchange, } from '../../views';
 
 type SwapOption = "one-time" | "recurring" | "jupiter";
 
@@ -21,7 +21,6 @@ export const SwapView = () => {
   const { t } = useTranslation("common");
   const { publicKey, wallet } = useWallet();
   const {
-    isWhitelisted,
     recurringBuys,
     setRecurringBuys,
   } = useContext(AppStateContext);
@@ -152,16 +151,16 @@ export const SwapView = () => {
               <div className={`tab-button ${currentTab === "recurring" ? 'active' : ''}`} onClick={() => onTabChange("recurring")}>
                 {t('swap.tabset.recurring')}
               </div>
-              {isWhitelisted && (
-                <div className={`tab-button ${currentTab === "jupiter" ? 'active' : ''}`} onClick={() => onTabChange("jupiter")}>
-                  Jupiter
-                </div>
-              )}
             </div>
             {/* One time exchange */}
             {
               currentTab === "one-time" && (
-                <OneTimeExchange
+                // <OneTimeExchange
+                //   connection={connection}
+                //   queryFromMint={queryFromMint}
+                //   queryToMint={queryToMint}
+                // />
+                <JupiterExchange
                   connection={connection}
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
@@ -177,16 +176,6 @@ export const SwapView = () => {
                   queryFromMint={queryFromMint}
                   queryToMint={queryToMint}
                   onRefreshRequested={() => setLoadingRecurringBuys(false)}
-                />
-              )
-            }
-            {/* Jupiter exchange */}
-            {
-              isWhitelisted && currentTab === "jupiter" && (
-                <JupiterExchange
-                  connection={connection}
-                  queryFromMint={queryFromMint}
-                  queryToMint={queryToMint}
                 />
               )
             }

@@ -38,7 +38,7 @@ export class AppConfigService {
             idoDistributionTreasuryAddress: '',
             idoDistributionTreasurerAddress: '',
             exchangeFeeAccountOwner: '',
-            exchangeFlatFee: 0.05
+            exchangeFlatFee: 0.25
         },
         staging: {
             appUrl: 'https://app-stage.meanfi.com',
@@ -56,7 +56,7 @@ export class AppConfigService {
             idoDistributionTreasuryAddress: '',
             idoDistributionTreasurerAddress: '',
             exchangeFeeAccountOwner: '',
-            exchangeFlatFee: 0.05
+            exchangeFlatFee: 0.25
         },
         // dev and local will have same config
         development: {
@@ -75,7 +75,7 @@ export class AppConfigService {
             idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
             idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: '',
-            exchangeFlatFee: 0.05
+            exchangeFlatFee: 0.25
         },
         local: {
             appUrl: 'http://localhost:3000',
@@ -93,7 +93,7 @@ export class AppConfigService {
             idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
             idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: '',
-            exchangeFlatFee: 0.05
+            exchangeFlatFee: 0.25
         },
     };
 
