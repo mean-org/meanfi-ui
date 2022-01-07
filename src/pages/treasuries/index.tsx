@@ -150,15 +150,26 @@ export const TreasuriesView = () => {
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
-    connectionConfig.endpoint, streamProgramAddress
+    connectionConfig.endpoint,
+    streamProgramAddress
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
   ]);
 
-  const msp = useMemo(() => new MSP(
-    connectionConfig.endpoint, streamProgramAddress
-  ), [
+  // Also for version 2 of MSP
+  const msp = useMemo(() => {
+    if (wallet && publicKey) {
+      return new MSP(
+        connectionConfig.endpoint,
+        wallet,
+        streamProgramAddress
+      )
+    }
+    return undefined;
+  }, [
+    wallet,
+    publicKey,
     connectionConfig.endpoint,
     streamProgramAddress
   ]);
@@ -3446,7 +3457,7 @@ export const TreasuriesView = () => {
         />
       )}
 
-      {isCreateStreamModalVisible && (
+      {(isCreateStreamModalVisible && msp) && (
         <TreasuryStreamCreateModal
           associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
           connection={connection}

@@ -272,20 +272,24 @@ const AppStateProvider: React.FC = ({ children }) => {
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
-  ),
-  [
+  ), [
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    connectionConfig.endpoint,
+  const msp = useMemo(() => {
+    if (wallet && publicKey) {
+      return new MSP(
+        connectionConfig.endpoint,
+        wallet,
+        streamProgramAddressFromConfig
+      )
+    }
+    return undefined;
+  }, [
     wallet,
-    streamProgramAddressFromConfig
-  ),
-  [
-    wallet,
+    publicKey,
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
   ]);
@@ -704,7 +708,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching") {
+    if (!publicKey || !msp || loadingStreams || fetchTxInfoStatus === "fetching") {
       return [];
     }
 

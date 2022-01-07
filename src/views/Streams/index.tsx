@@ -126,24 +126,27 @@ export const Streams = () => {
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
     streamProgramAddress
-  ),
-  [
+  ), [
     endpoint,
     streamProgramAddress
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    endpoint,
+  const msp = useMemo(() => {
+    if (wallet && publicKey) {
+      return new MSP(
+        endpoint,
+        wallet,
+        streamProgramAddress
+      )
+    }
+    return undefined;
+  }, [
     wallet,
-    streamProgramAddress
-  ),
-  [
-    wallet,
+    publicKey,
     endpoint,
     streamProgramAddress
   ]);
-
 
   // Keep account balance updated
   useEffect(() => {
@@ -183,7 +186,7 @@ export const Streams = () => {
   useEffect(() => {
 
     const refreshStreams = async () => {
-      if (!streamList || !publicKey || loadingStreams) { return; }
+      if (!streamList || !publicKey || !msp || loadingStreams) { return; }
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -3551,30 +3554,41 @@ export const Streams = () => {
             )}
           </div>
         </div>
+
         <StreamOpenModal
           isVisible={isOpenStreamModalVisible}
           handleOk={onAcceptOpenStream}
-          handleClose={closeOpenStreamModal} />
+          handleClose={closeOpenStreamModal}
+        />
+
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
           transactionFees={transactionFees}
           streamDetail={streamDetail}
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
-          content={getStreamClosureMessage()} />
+          content={getStreamClosureMessage()}
+        />
+
         <StreamAddFundsModal
           isVisible={isAddFundsModalVisible}
           transactionFees={transactionFees}
           handleOk={onAcceptAddFunds}
-          handleClose={closeAddFundsModal} />
-        <StreamWithdrawModal
-          moneyStreamingClient={(lastStreamDetail?.version || 0) < 2 ? ms : msp}
-          startUpData={lastStreamDetail}
-          selectedToken={selectedToken}
-          transactionFees={transactionFees}
-          isVisible={isWithdrawModalVisible}
-          handleOk={onAcceptWithdraw}
-          handleClose={closeWithdrawModal} />
+          handleClose={closeAddFundsModal}
+        />
+
+        {(msp && isWithdrawModalVisible) && (
+          <StreamWithdrawModal
+            moneyStreamingClient={(lastStreamDetail?.version || 0) < 2 ? ms : msp}
+            startUpData={lastStreamDetail}
+            selectedToken={selectedToken}
+            transactionFees={transactionFees}
+            isVisible={isWithdrawModalVisible}
+            handleOk={onAcceptWithdraw}
+            handleClose={closeWithdrawModal}
+          />
+        )}
+
         {/* Add funds transaction execution modal */}
         <Modal
           className="mean-modal no-full-screen"

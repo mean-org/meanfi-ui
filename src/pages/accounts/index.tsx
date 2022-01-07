@@ -337,20 +337,24 @@ export const AccountsView = () => {
   const ms = useMemo(() => new MoneyStreaming(
     connection.endpoint,
     streamProgramAddress
-  ),
-  [
+  ), [
     connection.endpoint,
     streamProgramAddress
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    connection.endpoint,
+  const msp = useMemo(() => {
+    if (wallet && publicKey) {
+      return new MSP(
+        connection.endpoint,
+        wallet,
+        streamProgramAddress
+      )
+    }
+    return undefined;
+  }, [
     wallet,
-    streamProgramAddress
-  ),
-  [
-    wallet,
+    publicKey,
     connection.endpoint,
     streamProgramAddress
   ]);
@@ -779,7 +783,7 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!publicKey || (!streamListv1 && !streamListv2) || !msp || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
