@@ -11,7 +11,6 @@ import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType } from '../../models/enums';
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
-import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import { MoneyStreaming } from '@mean-dao/money-streaming';

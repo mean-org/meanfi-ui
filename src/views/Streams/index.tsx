@@ -61,7 +61,7 @@ import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
-import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
@@ -70,7 +70,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
-import { MSP, Stream, STREAM_STATUS } from "@mean-dao/msp";
+import { MSP, Stream, STREAM_STATUS, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 import BN from "bn.js";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -173,6 +173,10 @@ export const Streams = () => {
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
+  }, [connection]);
+
+  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
+    return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
   // Live data calculation
@@ -323,7 +327,7 @@ export const Streams = () => {
         symbol: shortenAddress(address),
       };
       setSelectedToken(unkToken);
-      consoleOut("token selected:", unkToken, 'blue');
+      consoleOut("stream token:", unkToken, 'blue');
       setEffectiveRate(0);
     } else {
       notify({
@@ -340,10 +344,10 @@ export const Streams = () => {
 
   // Watch for stream's associated token changes then load the token to the state as selectedToken
   useEffect(() => {
-    if (streamDetail) {
+    if (streamDetail && selectedToken?.address !== streamDetail.associatedToken) {
       const token = getTokenByMintAddress(streamDetail.associatedToken as string);
       if (token) {
-        consoleOut("stream token:", token);
+        consoleOut("stream token:", token, 'blue');
         if (!selectedToken || selectedToken.address !== token.address) {
           setOldSelectedToken(selectedToken);
           setSelectedToken(token);
@@ -405,17 +409,17 @@ export const Streams = () => {
   };
 
   // Withdraw funds modal
-  const [lastStreamDetail, setLastStreamDetail] = useState<StreamInfo | undefined>(undefined);
+  const [lastStreamDetail, setLastStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
-    const lastDetail = JSON.parse(JSON.stringify(streamDetail)) as StreamInfo;
+    const lastDetail = JSON.parse(JSON.stringify(streamDetail));
 
     // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
-    // since we are allowing withdrawals only for any cliff amount
+    // since we are allowing withdrawals only for any cliff amount but only for < v2 streams
     // TODO: Remove when withdraw feature goes back to normal
-    if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
+    if (lastDetail.version < 2 && !lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
       setTransactionStatus({
         lastOperation: transactionStatus.currentOperation,
         currentOperation: TransactionStatus.FeatureTemporarilyDisabled
@@ -426,28 +430,33 @@ export const Streams = () => {
 
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
-    const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
-    if (token) {
-      consoleOut("stream token:", token);
-      if (!selectedToken || selectedToken.address !== token.address) {
-        setOldSelectedToken(selectedToken);
-        setSelectedToken(token);
-      }
-    } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
-      setCustomToken(streamDetail?.associatedToken as string);
+    // const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
+    // if (token) {
+    //   consoleOut("stream token:", token);
+    //   if (!selectedToken || selectedToken.address !== token.address) {
+    //     setOldSelectedToken(selectedToken);
+    //     setSelectedToken(token);
+    //   }
+    // } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
+    //   setCustomToken(streamDetail?.associatedToken as string);
+    // }
+    if (lastDetail.version < 2) {
+      getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
+    } else {
+      getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+        setTransactionFees(value);
+        consoleOut('transactionFees:', value, 'orange');
+      });
     }
-    getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
-      setTransactionFees(value);
-      consoleOut('transactionFees:', value, 'orange');
-    });
   }, [
     streamDetail,
-    selectedToken,
     transactionStatus.currentOperation,
-    setCustomToken,
-    setSelectedToken,
     getTransactionFees,
-    setTransactionStatus
+    getTransactionFeesV2,
+    setTransactionStatus,
   ]);
 
   const closeWithdrawModal = useCallback(() => {
@@ -3559,6 +3568,7 @@ export const Streams = () => {
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal} />
         <StreamWithdrawModal
+          moneyStreamingClient={(lastStreamDetail?.version || 0) < 2 ? ms : msp}
           startUpData={lastStreamDetail}
           selectedToken={selectedToken}
           transactionFees={transactionFees}

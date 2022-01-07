@@ -7,20 +7,20 @@ import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-strea
 import { useTranslation } from "react-i18next";
 import { TokenInfo } from '@solana/spl-token-registry';
 import { PublicKey } from '@solana/web3.js';
-import { getStream } from '@mean-dao/money-streaming';
-import { useConnection } from '../../contexts/connection';
+import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { notify } from '../../utils/notifications';
+import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 
 export const StreamWithdrawModal = (props: {
-  startUpData: StreamInfo | undefined;
+  startUpData: Stream | StreamInfo | undefined;
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
   selectedToken: TokenInfo | undefined;
   transactionFees: TransactionFees;
+  moneyStreamingClient: MSP | MoneyStreaming;
 }) => {
   const { t } = useTranslation('common');
-  const connection = useConnection();
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -40,12 +40,18 @@ export const StreamWithdrawModal = (props: {
       let streamPublicKey: PublicKey;
       streamPublicKey = new PublicKey(streamId as string);
       try {
-        const detail = await getStream(connection, streamPublicKey);
+        const detail = await props.moneyStreamingClient.getStream(streamPublicKey);
         if (detail) {
           consoleOut('detail', detail);
-          const max = getMaxWithdrawAmount(detail);
+          const v1 = detail as StreamInfo;
+          const v2 = detail as Stream;
+          let max = 0;
+          if (v1.version < 2) {
+            max = getMaxWithdrawAmount(v1);
+          } else {
+            max = v2.withdrawableAmount;
+          }        
           setMaxAmount(max);
-          // setMaxAmount(detail.escrowVestedAmount);
         } else {
           notify({
             message: t('notifications.error-title'),
@@ -66,29 +72,50 @@ export const StreamWithdrawModal = (props: {
     }
 
     if (props.startUpData) {
-      const max = getMaxWithdrawAmount(props.startUpData);
-      if (props.startUpData.state === STREAM_STATE.Running) {
-        setMaxAmount(max);
-        // setMaxAmount(props.startUpData.escrowVestedAmount);
-        setLoadingData(true);
-        try {
-          getStreamDetails(props.startUpData.id as string);
-        } catch (error) {
-          notify({
-            message: t('notifications.error-title'),
-            description: t('notifications.invalid-streamid-message') + '!',
-            type: "error"
-          });
+      const v1 = props.startUpData as StreamInfo;
+      const v2 = props.startUpData as Stream;
+      let max = 0;
+      if (v1.version < 2) {
+        max = getMaxWithdrawAmount(v1);
+        if (v1.state === STREAM_STATE.Running) {
+          setMaxAmount(max);
+          setLoadingData(true);
+          try {
+            getStreamDetails(v1.id as string);
+          } catch (error) {
+            notify({
+              message: t('notifications.error-title'),
+              description: t('notifications.invalid-streamid-message') + '!',
+              type: "error"
+            });
+          }
+        } else {
+          setMaxAmount(max);
         }
       } else {
-        setMaxAmount(max);
-        // setMaxAmount(props.startUpData.escrowVestedAmount);
+        max = v2.withdrawableAmount;
+        if (v2.status === STREAM_STATUS.Running) {
+          setMaxAmount(max);
+          setLoadingData(true);
+          try {
+            getStreamDetails(v2.id as string);
+          } catch (error) {
+            notify({
+              message: t('notifications.error-title'),
+              description: t('notifications.invalid-streamid-message') + '!',
+              type: "error"
+            });
+          }
+        } else {
+          setMaxAmount(max);
+        }
       }
+
     }
   }, [
     t,
-    connection,
     props.startUpData,
+    props.moneyStreamingClient
   ]);
 
   useEffect(() => {
