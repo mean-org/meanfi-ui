@@ -344,16 +344,15 @@ export const AccountsView = () => {
 
   // Also for version 2 of MSP
   const msp = useMemo(() => {
-    if (wallet && publicKey) {
+    if (publicKey) {
       return new MSP(
         connection.endpoint,
-        wallet,
+        publicKey,
         streamProgramAddress
       )
     }
     return undefined;
   }, [
-    wallet,
     publicKey,
     connection.endpoint,
     streamProgramAddress

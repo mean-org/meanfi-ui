@@ -133,16 +133,15 @@ export const Streams = () => {
 
   // Also for version 2 of MSP
   const msp = useMemo(() => {
-    if (wallet && publicKey) {
+    if (publicKey) {
       return new MSP(
         endpoint,
-        wallet,
+        publicKey,
         streamProgramAddress
       )
     }
     return undefined;
   }, [
-    wallet,
     publicKey,
     endpoint,
     streamProgramAddress
