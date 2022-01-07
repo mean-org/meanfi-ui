@@ -21,7 +21,6 @@ import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
-import { TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import moment from "moment";
 import { useWallet } from '../../contexts/wallet';
 import { StepSelector } from '../StepSelector';
@@ -30,8 +29,9 @@ import { Identicon } from '../Identicon';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { customLogger } from '../..';
+import { MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
+import { TreasuryInfo } from '@mean-dao/money-streaming';
 
 const { Option } = Select;
 
@@ -41,10 +41,10 @@ export const TreasuryStreamCreateModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
-  moneyStreamingClient: MoneyStreaming;
+  moneyStreamingClient: MSP;
   nativeBalance: number;
   transactionFees: TransactionFees;
-  treasuryDetails: TreasuryInfo | undefined;
+  treasuryDetails: Treasury | TreasuryInfo | undefined;
   userBalances: any;
 }) => {
   const { t } = useTranslation('common');
@@ -89,7 +89,14 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
     if (props.isVisible && props.treasuryDetails) {
-      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationLeft;
+      const v1 = props.treasuryDetails as TreasuryInfo;
+      const v2 = props.treasuryDetails as Treasury;
+      let unallocated: number;
+      if (v2.version >= 2) {
+        unallocated = v2.balance;
+      } else {
+        unallocated = v1.balance - v1.allocationLeft;
+      }
       setUnallocatedBalance(unallocated);
     }
   }, [

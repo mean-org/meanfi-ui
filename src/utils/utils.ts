@@ -24,6 +24,7 @@ import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
+import BN from "bn.js";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -587,4 +588,14 @@ export async function createAmmAuthority(programId: PublicKey) {
   const [publicKey, nonce] = await PublicKey.findProgramAddress(seeds, programId);
 
   return { publicKey, nonce }
+}
+
+export function getStreamedUnitsPerSecond(rateIntervalInSeconds: number, rateAmount: number) {
+  if (rateIntervalInSeconds <= 0) { return 0; }
+  return rateAmount / rateIntervalInSeconds;
+}
+
+export const toUiAmount = (amount: BN, decimals: number) => {
+  if (!decimals) { return 0; }
+  return amount.toNumber() / (10 ** decimals);
 }

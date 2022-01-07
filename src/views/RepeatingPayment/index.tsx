@@ -39,12 +39,9 @@ import {
 import moment from "moment";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
@@ -57,6 +54,7 @@ import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -607,7 +605,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+    const moneyStream = new MSP(endpoint, streamProgramAddress, "confirmed");
 
     const createTx = async (): Promise<boolean> => {
       if (wallet) {

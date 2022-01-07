@@ -27,8 +27,10 @@ import {
   formatAmount,
   getAmountFromLamports,
   getFormattedRateAmount,
+  getStreamedUnitsPerSecond,
   getTokenAmountAndSymbolByTokenAddress,
-  shortenAddress
+  shortenAddress,
+  toUiAmount
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
@@ -60,6 +62,8 @@ import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { BN } from 'bn.js';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -68,7 +72,7 @@ export const AccountsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const connection = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
   const {
@@ -76,6 +80,8 @@ export const AccountsView = () => {
     userTokens,
     splTokenList,
     streamList,
+    streamListv1,
+    streamListv2,
     streamDetail,
     transactions,
     selectedAsset,
@@ -328,8 +334,26 @@ export const AccountsView = () => {
   ]);
 
   // Create and cache Money Streaming Program instance
-  const ms = useMemo(() => new MoneyStreaming(connection.endpoint, streamProgramAddress),
-  [connection.endpoint, streamProgramAddress]);
+  const ms = useMemo(() => new MoneyStreaming(
+    connection.endpoint,
+    streamProgramAddress
+  ),
+  [
+    connection.endpoint,
+    streamProgramAddress
+  ]);
+
+  // Also for version 2 of MSP
+  const msp = useMemo(() => new MSP(
+    connection.endpoint,
+    wallet,
+    streamProgramAddress
+  ),
+  [
+    wallet,
+    connection.endpoint,
+    streamProgramAddress
+  ]);
 
   const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
     const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
@@ -489,29 +513,6 @@ export const AccountsView = () => {
                   item.displayIndex = meanTokensCopy.length + index;
                   item.isAta = await updateAtaFlag(item);
                 });
-
-                // Add custom tokens to the sorted list (those not in meanTokensCopy and not in sortedList)
-                // TODO: Enable this only if we come up with a way to hide our associated tokens
-                // const cumulativeIndex = meanTokensCopy.length + sortedList.length;
-                // accTks.forEach(async (item: AccountTokenParsedInfo, index: number) => {
-                //   const isInMeanTokenList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                //   const isInSplTokenList = splTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                //   if (!isInMeanTokenList && !isInSplTokenList) {
-                //     const unkToken: UserTokenAccount = {
-                //       address: item.parsedInfo.mint,
-                //       publicAddress: item.pubkey.toBase58(),
-                //       name: 'Unknown Token',
-                //       chainId: getDefaultRpc().networkId,
-                //       decimals: item.parsedInfo.tokenAmount.decimals,
-                //       symbol: shortenAddress(item.parsedInfo.mint),
-                //       balance: item.parsedInfo.tokenAmount.uiAmount || 0,
-                //       isMeanSupportedToken: false,
-                //       isAta: true
-                //     };
-                //     unkToken.displayIndex = cumulativeIndex + index + 1;
-                //     sortedList.push(unkToken);
-                //   }
-                // });
 
                 // Concatenate both lists
                 const finalList = meanTokensCopy.concat(sortedList);
@@ -776,9 +777,9 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
-  const refreshStreamSummary = useCallback(async (streams: StreamInfo[], userWallet: PublicKey) => {
+  const refreshStreamSummary = useCallback(async () => {
 
-    if (!streams || !userWallet || loadingStreamsSummary) { return; }
+    if (!publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -789,9 +790,10 @@ export const AccountsView = () => {
       totalAmount: 0
     };
 
-    const updatedStreams = await ms.refreshStreams(streams, userWallet, userWallet);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
 
-    for (let stream of updatedStreams) {
+    for (let stream of updatedStreamsv1) {
 
       let freshStream = await ms.refreshStream(stream);
       if (!freshStream) { continue; }
@@ -799,8 +801,8 @@ export const AccountsView = () => {
       const streamIsOutgoing = 
           freshStream.treasurerAddress &&
           typeof freshStream.treasurerAddress !== 'string'
-              ? freshStream.treasurerAddress.equals(userWallet)
-              : freshStream.treasurerAddress === userWallet.toBase58();
+              ? freshStream.treasurerAddress.equals(publicKey)
+              : freshStream.treasurerAddress === publicKey.toBase58();
 
       if (streamIsOutgoing) {
         resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
@@ -816,13 +818,46 @@ export const AccountsView = () => {
       }
     }
 
-    resume['totalAmount'] = updatedStreams.length;
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    let streamsUsdNetChange = 0;
+
+    for (let stream of updatedStreamsv2) {
+
+      let freshStream = await msp.refreshStream(stream);
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const streamIsOutgoing = 
+          freshStream.treasurer &&
+          typeof freshStream.treasurer !== 'string'
+              ? freshStream.treasurer.equals(publicKey)
+              : freshStream.treasurer === publicKey.toBase58();
+
+      let streamedUnitsPerSecond = getStreamedUnitsPerSecond(freshStream.rateIntervalInSeconds, freshStream.rateAmount);
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = getPricePerToken(asset as UserTokenAccount);
+      let streamUnitsUsdPerSecond = toUiAmount(new BN(streamedUnitsPerSecond), asset?.decimals || 9) * rate;
+      if (streamIsOutgoing) {
+        streamsUsdNetChange -= streamUnitsUsdPerSecond;
+      } else {
+        streamsUsdNetChange += streamUnitsUsdPerSecond;
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+    resume['totalNet'] += streamsUsdNetChange;
+
+    // Update state
     setLastStreamsSummary(streamsSummary);
     setStreamsSummary(resume);
     setLoadingStreamsSummary(false);
 
   }, [
     ms,
+    msp,
+    publicKey,
+    streamListv1,
+    streamListv2,
     streamsSummary,
     loadingStreamsSummary,
     getPricePerToken,
@@ -836,7 +871,7 @@ export const AccountsView = () => {
 
     const timeout = setTimeout(() => {
       if (publicKey && streamList) {
-        refreshStreamSummary(streamList, publicKey);
+        refreshStreamSummary();
       }
     }, 1000);
 

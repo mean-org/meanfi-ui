@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getPlatformFeeAccounts, Jupiter, PlatformFeeAndAccounts, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, getTransactionStatusForLogs, isLocal } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
 import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";

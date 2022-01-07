@@ -7,13 +7,14 @@ import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { Stream } from '@mean-dao/msp';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
   content: JSX.Element;
   isVisible: boolean;
-  streamDetail: StreamInfo | undefined;
+  streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
   canCloseTreasury?: boolean;
 }) => {
@@ -22,42 +23,95 @@ export const StreamCloseModal = (props: {
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [closeTreasuryOption, setCloseTreasuryOption] = useState(true);
 
-  const getFeeAmount = useCallback((fees: TransactionFees): number => {
-    let fee = 0;
-    const isAddressMyAccount = (addr: string): boolean => {
-      return publicKey && addr && addr === publicKey.toBase58() ? true : false;
-    }
-    // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
-    // If the Beneficiary is initializing the CloseStream Tx, both mspFlatFee and mspPercentFee
-    // must be used by adding the percentFee of the vested amount to the flat fee
-    if (fees && props.streamDetail) {
-      const amItreasurer = isAddressMyAccount(props.streamDetail.treasurerAddress as string);
-      const amIbeneficiary = isAddressMyAccount(props.streamDetail.beneficiaryAddress as string);
-      if (amIbeneficiary) {
-        fee = percentage(fees.mspPercentFee, props.streamDetail.escrowVestedAmount) || 0;
-      } else if (amItreasurer) {
-        fee = fees.mspFlatFee;
+  const amITreasurer = useCallback((): boolean => {
+    if (props.streamDetail && publicKey) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      if ((v1.version < 2 && v1.treasurerAddress === publicKey.toBase58()) || (v2.version >= 2 && v2.treasurer === publicKey.toBase58())) {
+        return true;
       }
     }
-    return fee;
+    return false;
+  }, [
+    publicKey,
+    props.streamDetail,
+  ]);
+
+  const amIBeneficiary = useCallback((): boolean => {
+    if (props.streamDetail && publicKey) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
   }, [
     publicKey,
     props.streamDetail
   ]);
 
-  const amItreasurer = () => {
-    if (props.streamDetail) {
-      const treasurerAddress = props.streamDetail.treasurerAddress as string;
-      return publicKey && publicKey.toBase58() === treasurerAddress ? true : false;
-    }
-  }
+  const getFeeAmount = useCallback((fees: TransactionFees): number => {
+    let fee = 0;
 
-  const amIbeneficiary = () => {
-    if (props.streamDetail) {
-      const beneficiaryAddress = props.streamDetail.beneficiaryAddress as string;
-      return publicKey && publicKey.toBase58() === beneficiaryAddress ? true : false;
+    // If the Treasurer is initializing the CloseStream Tx, mspFlatFee must be used
+    // If the Beneficiary is initializing the CloseStream Tx, both mspFlatFee and mspPercentFee
+    // must be used by adding the percentFee of the vested amount to the flat fee
+    if (fees && props.streamDetail) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      const isTreasurer = amITreasurer();
+      const isBeneficiary = amIBeneficiary();
+      if (isBeneficiary) {
+        if (v1.version < 2) {
+          fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
+        } else {
+          fee = percentage(fees.mspPercentFee, v2.withdrawableAmount) || 0;
+        }
+      } else if (isTreasurer) {
+        fee = fees.mspFlatFee;
+      }
     }
-  }
+    return fee;
+  }, [
+    props.streamDetail,
+    amIBeneficiary,
+    amITreasurer,
+  ]);
+
+  const getWithdrawableAmount = useCallback((): number => {
+    if (props.streamDetail && publicKey) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      if (v1.version < 2) {
+        return v1.escrowVestedAmount;
+      } else {
+        return v2.withdrawableAmount;
+      }
+    }
+    return 0;
+  }, [
+    publicKey,
+    props.streamDetail,
+  ]);
+
+  const getUnvested = useCallback((): number => {
+    if (props.streamDetail && publicKey) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      if (v1.version < 2) {
+        return v1.escrowUnvestedAmount;
+      } else {
+        return v2.fundsLeftInStream;
+      }
+    }
+    return 0;
+  }, [
+    publicKey,
+    props.streamDetail,
+  ]);
 
   useEffect(() => {
     if (!feeAmount && props.transactionFees) {
@@ -100,13 +154,13 @@ export const StreamCloseModal = (props: {
           <div className="p-2 mb-2">
             {infoRow(
               t('close-stream.return-vested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowVestedAmount, props.streamDetail.associatedToken as string)
+              getTokenAmountAndSymbolByTokenAddress(getWithdrawableAmount(), props.streamDetail.associatedToken as string)
             )}
-            {amItreasurer() && infoRow(
+            {amITreasurer() && infoRow(
               t('close-stream.return-unvested-amount') + ':',
-              getTokenAmountAndSymbolByTokenAddress(props.streamDetail.escrowUnvestedAmount, props.streamDetail.associatedToken as string)
+              getTokenAmountAndSymbolByTokenAddress(getUnvested(), props.streamDetail.associatedToken as string)
             )}
-            {amIbeneficiary() && props.streamDetail.escrowVestedAmount > 0 && infoRow(
+            {amIBeneficiary() && getWithdrawableAmount() > 0 && infoRow(
               t('transactions.transaction-info.transaction-fee') + ':',
               `${feeAmount
                 ? '~' + getTokenAmountAndSymbolByTokenAddress((feeAmount as number), props.streamDetail.associatedToken as string)

@@ -76,6 +76,7 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
+import { MSP } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -149,6 +150,13 @@ export const TreasuriesView = () => {
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
+    connectionConfig.endpoint, streamProgramAddress
+  ), [
+    connectionConfig.endpoint,
+    streamProgramAddress
+  ]);
+
+  const msp = useMemo(() => new MSP(
     connectionConfig.endpoint, streamProgramAddress
   ), [
     connectionConfig.endpoint,
@@ -3445,7 +3453,7 @@ export const TreasuriesView = () => {
           handleClose={closeCreateStreamModal}
           handleOk={onAcceptCreateStream}
           isVisible={isCreateStreamModalVisible}
-          moneyStreamingClient={ms}
+          moneyStreamingClient={msp}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           treasuryDetails={treasuryDetails}

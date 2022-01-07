@@ -36,6 +36,7 @@ import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
 import { TreasuryTypeOption } from "../models/treasury-definition";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
+import { MSP, Stream } from "@mean-dao/msp";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -67,9 +68,11 @@ interface AppStateConfig {
   transactionStatus: TransactionStatusInfo;
   previousWalletConnectState: boolean;
   loadingStreams: boolean;
-  streamList: StreamInfo[] | undefined;
-  selectedStream: StreamInfo | undefined;
-  streamDetail: StreamInfo | undefined;
+  streamListv1: StreamInfo[] | undefined;
+  streamListv2: Stream[] | undefined;
+  streamList: Array<Stream | StreamInfo> | undefined;
+  selectedStream: Stream | StreamInfo | undefined;
+  streamDetail: Stream | StreamInfo | undefined;
   streamProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
@@ -117,9 +120,9 @@ interface AppStateConfig {
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
-  setStreamList: (list: StreamInfo[] | undefined) => void;
-  setSelectedStream: (stream: StreamInfo | undefined) => void;
-  setStreamDetail: (stream: StreamInfo | undefined) => void;
+  setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
+  setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
+  setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   openStreamById: (streamId: string) => void;
   getStreamActivity: (streamId: string) => void;
   setCustomStreamDocked: (state: boolean) => void;
@@ -167,6 +170,8 @@ const contextDefaultValues: AppStateConfig = {
   },
   previousWalletConnectState: false,
   loadingStreams: false,
+  streamListv1: undefined,
+  streamListv2: undefined,
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
@@ -246,7 +251,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
@@ -269,6 +274,18 @@ const AppStateProvider: React.FC = ({ children }) => {
     streamProgramAddressFromConfig
   ),
   [
+    connectionConfig.endpoint,
+    streamProgramAddressFromConfig
+  ]);
+
+  // Also for version 2 of MSP
+  const msp = useMemo(() => new MSP(
+    connectionConfig.endpoint,
+    wallet,
+    streamProgramAddressFromConfig
+  ),
+  [
+    wallet,
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
   ]);
@@ -297,13 +314,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
-  const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
-  const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
-  const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+
+  const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
+  const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
+  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
+  const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
+  const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -495,7 +515,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     loadingStreamActivity
   ]);
 
-  const setSelectedStream = (stream: StreamInfo | undefined) => {
+  const setSelectedStream = (stream: Stream | StreamInfo | undefined) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
     if (stream) {
@@ -505,7 +525,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const setStreamDetail = (stream: StreamInfo | undefined) => {
+  const setStreamDetail = (stream: Stream | StreamInfo | undefined) => {
     updateStreamDetail(stream);
   }
 
@@ -694,70 +714,83 @@ const AppStateProvider: React.FC = ({ children }) => {
       clearTransactionStatusContext();
     });
 
+    let streamAccumulator: any[] = [];
+
     ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-      .then(streams => {
-        consoleOut('Streams:', streams, 'blue');        
-        if (streams.length) {
-          let item: StreamInfo | undefined;
-          if (reset) {
-            if (signature) {
-              item = streams.find(d => d.transactionSignature === signature);
-            } else {
-              item = streams[0];
-            }
-          } else {
-            // Try to get current item by its original Tx signature then its id
-            if (signature) {
-              item = streams.find(d => d.transactionSignature === signature);
-            } else if (selectedStream) {
-              const itemFromServer = streams.find(i => i.id === selectedStream.id);
-              item = itemFromServer || streams[0];
-            } else {
-              item = streams[0];
-            }
-          }
-          if (!item) {
-            item = JSON.parse(JSON.stringify(streams[0]));
-          }
-          consoleOut('selectedStream:', item, 'blue');
-          if (item && selectedStream && item.id !== selectedStream.id) {
-            updateSelectedStream(item);
-            ms.refreshStream(item, true)
-              .then(freshStream => {
-                if (freshStream) {
-                  updateStreamDetail(freshStream);
-                  const token = getTokenByMintAddress(freshStream.associatedToken as string);
-                  setSelectedToken(token);
-                  if (!loadingStreamActivity) {
-                    setLoadingStreamActivity(true);
-                    const streamPublicKey = new PublicKey(freshStream.id as string);
-                    ms.listStreamActivity(streamPublicKey)
-                      .then(value => {
-                        consoleOut('activity:', value, 'blue');
-                        setStreamActivity(value);
-                        setLoadingStreamActivity(false);
-                      })
-                      .catch(err => {
-                        console.error(err);
-                        setStreamActivity([]);
-                        setLoadingStreamActivity(false);
-                      });
-                  }
+      .then(streamsv1 => {
+        streamAccumulator.push(...streamsv1);
+        setStreamListv1(streamsv1);
+        msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
+          .then(streamsv2 => {
+            streamAccumulator.push(...streamsv2);
+            setStreamListv2(streamsv2);
+            consoleOut('Streams:', streamAccumulator, 'blue');
+            if (streamAccumulator.length) {
+              let item: Stream | StreamInfo | undefined;
+              if (reset) {
+                if (signature) {
+                  item = streamAccumulator.find(d => d.transactionSignature === signature);
+                } else {
+                  item = streamAccumulator[0];
                 }
-              })
-          } else {
-            if (item) {
-              updateStreamDetail(item);
-              getStreamActivity(item.id as string);
+              } else {
+                // Try to get current item by its original Tx signature then its id
+                if (signature) {
+                  item = streamAccumulator.find(d => d.transactionSignature === signature);
+                } else if (selectedStream) {
+                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
+                  item = itemFromServer || streamAccumulator[0];
+                } else {
+                  item = streamAccumulator[0];
+                }
+              }
+              if (!item) {
+                item = JSON.parse(JSON.stringify(streamAccumulator[0]));
+              }
+              consoleOut('selectedStream:', item, 'blue');
+              if (item && selectedStream && item.id !== selectedStream.id) {
+                updateSelectedStream(item);
+                const mspInstance: any = item.version === 2 ? msp : ms;
+                mspInstance.refreshStream(item, true)
+                  .then((freshStream: Stream | StreamInfo) => {
+                    if (freshStream) {
+                      updateStreamDetail(freshStream);
+                      const token = getTokenByMintAddress(freshStream.associatedToken as string);
+                      setSelectedToken(token);
+                      if (!loadingStreamActivity) {
+                        setLoadingStreamActivity(true);
+                        const streamPublicKey = new PublicKey(freshStream.id as string);
+                        mspInstance.listStreamActivity(streamPublicKey)
+                          .then((value: any) => {
+                            consoleOut('activity:', value, 'blue');
+                            setStreamActivity(value);
+                            setLoadingStreamActivity(false);
+                          })
+                          .catch((err: any) => {
+                            console.error(err);
+                            setStreamActivity([]);
+                            setLoadingStreamActivity(false);
+                          });
+                      }
+                    }
+                  })
+              } else {
+                if (item) {
+                  updateStreamDetail(item);
+                  getStreamActivity(item.id as string);
+                }
+              }
+            } else {
+              setStreamActivity([]);
+              updateSelectedStream(undefined);
+              updateStreamDetail(undefined);
             }
-          }
-        } else {
-          setStreamActivity([]);
-          updateSelectedStream(undefined);
-          updateStreamDetail(undefined);
-        }
-        setStreamList(streams);
-        updateLoadingStreams(false);
+            setStreamList(streamAccumulator);
+            updateLoadingStreams(false);
+          }).catch(err => {
+            console.error(err);
+            updateLoadingStreams(false);
+          });
       }).catch(err => {
         console.error(err);
         updateLoadingStreams(false);
@@ -765,6 +798,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [
     ms,
+    msp,
     publicKey,
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -1022,6 +1056,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         transactionStatus,
         previousWalletConnectState,
         loadingStreams,
+        streamListv1,
+        streamListv2,
         streamList,
         selectedStream,
         streamDetail,
