@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { Button, Col, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { getPlatformFeeAccounts, Jupiter, PlatformFeeAndAccounts, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
+import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils/ids";
 import { useWallet } from "../../contexts/wallet";
-import { consoleOut, getTransactionStatusForLogs, isLocal } from "../../utils/ui";
+import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
 import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
@@ -705,9 +705,8 @@ export const JupiterExchange = (props: {
 
             const filter = (t: any) => {
                 return (
-                    t.symbol.toLowerCase().startsWith(searchFilter.toLowerCase()) ||
-                    t.name.toLowerCase().startsWith(searchFilter.toLowerCase()) ||
-                    t.address.toLowerCase().startsWith(searchFilter.toLowerCase())
+                    t.symbol.toLowerCase().includes(searchFilter.toLowerCase()) ||
+                    t.name.toLowerCase().includes(searchFilter.toLowerCase())
                 );
             };
 
@@ -716,15 +715,18 @@ export const JupiterExchange = (props: {
                     ? mintList
                     : Object.values(mintList)
                         .filter((t: any) => filter(t));
+
                 setShowFromMintList(showFromList);
             }
 
             if (subjectTokenSelection === 'destination') {
 
                 let showToList = !searchFilter
-                    ? possiblePairsTokenInfo || undefined
+                    ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
                     : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
-                        .filter((t: any) => filter(t)) : undefined;
+                        .filter((t: any) => filter(t)) : {};
+
+                consoleOut('showToList:', showToList, 'blue');
 
                 setShowToMintList(showToList);
             }
@@ -785,8 +787,8 @@ export const JupiterExchange = (props: {
         const input = e.target.value;
 
         const newValue = input.trim();
-        setTokenFilter(newValue);
-        updateTokenListByFilter(newValue);
+        setTokenFilter(newValue || '');
+        updateTokenListByFilter(newValue || '');
 
     },[
         updateTokenListByFilter
