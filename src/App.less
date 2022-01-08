@@ -2798,6 +2798,14 @@ main section {
   .field-caret-down {
     position: relative;
   }
+  &.inherit-font {
+    align-items: center;
+    .token-symbol {
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
+  }
 }
 
 .transaction-field {
@@ -3063,6 +3071,13 @@ main section {
 
 .token-selector-wrapper {
   padding: 1rem;
+  .ant-divider.ant-divider-horizontal {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+    margin-top: 0.6rem;
+    margin-bottom: 0.6rem;
+  }
   .token-search-wrapper {
     .transaction-field {
       height: auto;
@@ -3071,12 +3086,22 @@ main section {
       }
     }
   }
+  .common-token-shortcuts {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    > button {
+      margin: 0 8px 12px 4px;
+      min-width: 110px;
+    }
+  }
 }
 
 .token-list {
   display: flex;
   flex-direction: column;
-  max-height: 56vh;
+  max-height: 45vh;
   .token-item {
     display: flex;
     width: 100%;

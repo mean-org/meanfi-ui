@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Modal, Row, Spin } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -8,7 +8,7 @@ import { NATIVE_SOL_MINT, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT } from "../../utils
 import { useWallet } from "../../contexts/wallet";
 import { consoleOut, getTransactionStatusForLogs } from "../../utils/ui";
 import { getJupiterTokenList } from "../../utils/api";
-import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, MAX_TOKEN_LIST_ITEMS, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
@@ -25,12 +25,13 @@ import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.less";
 import { NATIVE_SOL } from "../../utils/tokens";
-import { MEAN_TOKEN_LIST } from "../../constants/token-list";
+import { COMMON_EXCHANGE_TOKENS, MEAN_TOKEN_LIST } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
 import { TransactionStatus } from "../../models/enums";
 import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
+import { TokenDisplay } from "../../components/TokenDisplay";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -198,6 +199,70 @@ export const JupiterExchange = (props: {
         }
     },[sol]);
 
+    // Update all token balances on demmand
+    const refreshUserBalances = useCallback(() => {
+
+        if (!connection) {
+            return;
+        }
+
+        if (!publicKey || !tokenList) {
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+
+            const balancesMap: any = {};
+
+            balancesMap[NATIVE_SOL_MINT.toBase58()] = account ? (account.lamports / LAMPORTS_PER_SOL) : 0;
+
+            const tokens = Object.values(mintList)
+                .filter((t: any) => t.symbol !== 'SOL')
+                .map((t: any) => new PublicKey(t.address));
+
+            const error = (_error: any, tl: PublicKey[]) => {
+                console.error(_error);
+                for (let t of tl) {
+                    balancesMap[t.toBase58()] = 0;
+                }
+            };
+
+            const success = (response: any) => {
+                for (let acc of response.value) {
+                    const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
+                    const address = decoded.mint.toBase58();
+
+                    if (mintList[address]) {
+                        balancesMap[address] = decoded.amount.toNumber() / (10 ** mintList[address].decimals);
+                    } else {
+                        balancesMap[address] = 0;
+                    }
+                }
+                setUserBalances(balancesMap);
+            };
+
+            const promise = connection.getTokenAccountsByOwner(
+                publicKey, { programId: TOKEN_PROGRAM_ID }
+            );
+
+            promise
+                .then((response: any) => success(response))
+                .catch((_error: any) => error(_error, tokens));
+
+        });
+
+        return () => {
+            clearTimeout(timeout);
+        }
+
+    }, [
+        tokenList,
+        account,
+        mintList,
+        publicKey,
+        connection,
+    ]);
+
     // Load token list from Jupiter API
     useEffect(() => {
         if (!tokenList || tokenList.length === 0) {
@@ -234,6 +299,20 @@ export const JupiterExchange = (props: {
         }
 
     }, [tokenList]);
+
+    // Automatically update all token balances
+    useEffect(() => {
+        if (fromMint && publicKey && mintList && account && tokenList) {
+            refreshUserBalances();
+        }
+    }, [
+        fromMint,
+        tokenList,
+        account,
+        mintList,
+        publicKey,
+        refreshUserBalances
+    ]);
 
     // Init the Jupiter instance
     useEffect(() => {
@@ -346,70 +425,6 @@ export const JupiterExchange = (props: {
         }
     };
 
-    // Update all token balances on demmand
-    const refreshUserBalances = useCallback(() => {
-
-        if (!connection) {
-            return;
-        }
-
-        if (!publicKey || !tokenList) {
-            return;
-        }
-
-        const timeout = setTimeout(() => {
-
-            const balancesMap: any = {};
-
-            balancesMap[NATIVE_SOL_MINT.toBase58()] = account ? (account.lamports / LAMPORTS_PER_SOL) : 0;
-
-            const tokens = Object.values(mintList)
-                .filter((t: any) => t.symbol !== 'SOL')
-                .map((t: any) => new PublicKey(t.address));
-
-            const error = (_error: any, tl: PublicKey[]) => {
-                console.error(_error);
-                for (let t of tl) {
-                    balancesMap[t.toBase58()] = 0;
-                }
-            };
-
-            const success = (response: any) => {
-                for (let acc of response.value) {
-                    const decoded = ACCOUNT_LAYOUT.decode(acc.account.data);
-                    const address = decoded.mint.toBase58();
-
-                    if (mintList[address]) {
-                        balancesMap[address] = decoded.amount.toNumber() / (10 ** mintList[address].decimals);
-                    } else {
-                        balancesMap[address] = 0;
-                    }
-                }
-                setUserBalances(balancesMap);
-            };
-
-            const promise = connection.getTokenAccountsByOwner(
-                publicKey, { programId: TOKEN_PROGRAM_ID }
-            );
-
-            promise
-                .then((response: any) => success(response))
-                .catch((_error: any) => error(_error, tokens));
-
-        });
-
-        return () => {
-            clearTimeout(timeout);
-        }
-
-    }, [
-        tokenList,
-        account,
-        mintList,
-        publicKey,
-        connection,
-    ]);
-
     // Calculates the max allowed amount to swap
     const getMaxAllowedSwapAmount = useCallback(() => {
 
@@ -433,20 +448,6 @@ export const JupiterExchange = (props: {
         toMint,
         fromMint,
         userBalances
-    ]);
-
-    // Automatically update all token balances
-    useEffect(() => {
-        if (fromMint && publicKey && mintList && account && tokenList) {
-            refreshUserBalances();
-        }
-    }, [
-        fromMint,
-        tokenList,
-        account,
-        mintList,
-        publicKey,
-        refreshUserBalances
     ]);
 
     // Get routeMap, which maps each tokenMint and their respective tokenMints that are swappable
@@ -705,9 +706,8 @@ export const JupiterExchange = (props: {
 
             const filter = (t: any) => {
                 return (
-                    t.symbol.toLowerCase().startsWith(searchFilter.toLowerCase()) ||
-                    t.name.toLowerCase().startsWith(searchFilter.toLowerCase()) ||
-                    t.address.toLowerCase().startsWith(searchFilter.toLowerCase())
+                    t.symbol.toLowerCase().includes(searchFilter.toLowerCase()) ||
+                    t.name.toLowerCase().includes(searchFilter.toLowerCase())
                 );
             };
 
@@ -716,15 +716,18 @@ export const JupiterExchange = (props: {
                     ? mintList
                     : Object.values(mintList)
                         .filter((t: any) => filter(t));
+
                 setShowFromMintList(showFromList);
             }
 
             if (subjectTokenSelection === 'destination') {
 
                 let showToList = !searchFilter
-                    ? possiblePairsTokenInfo || undefined
+                    ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
                     : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
-                        .filter((t: any) => filter(t)) : undefined;
+                        .filter((t: any) => filter(t)) : {};
+
+                consoleOut('showToList:', showToList, 'blue');
 
                 setShowToMintList(showToList);
             }
@@ -785,8 +788,8 @@ export const JupiterExchange = (props: {
         const input = e.target.value;
 
         const newValue = input.trim();
-        setTokenFilter(newValue);
-        updateTokenListByFilter(newValue);
+        setTokenFilter(newValue || '');
+        updateTokenListByFilter(newValue || '');
 
     },[
         updateTokenListByFilter
@@ -1512,6 +1515,60 @@ export const JupiterExchange = (props: {
         ) : null;
     }
 
+    const renderCommonTokens = () => {
+        const quickTokens: TokenInfo[] = [];
+        COMMON_EXCHANGE_TOKENS.forEach(symbol => {
+            const qt = tokenList.find(t => t.symbol === symbol);
+            if (qt) {
+                quickTokens.push(qt);
+            }
+        });
+        return quickTokens.map((token: TokenInfo, index: number) => {
+            const onClick = () => {
+                if (subjectTokenSelection === "source") {
+                    if (!fromMint || fromMint !== token.address) {
+                        setFromMint(token.address);
+                        consoleOut('fromMint:', token.address, 'blue');
+                        const selectedToken = showFromMintList[token.address];
+                        consoleOut('selectedToken:', selectedToken, 'blue');
+                        if (selectedToken) {
+                            setInputToken(selectedToken);
+                            refreshUserBalances();
+                        }
+                    }
+                    onCloseTokenSelector();
+                } else {
+                    if (!toMint || toMint !== token.address) {
+                        setToMint(token.address);
+                        consoleOut('toMint:', token.address, 'blue');
+                        const selectedToken = showToMintList[token.address] as TokenInfo;
+                        consoleOut('selectedToken:', selectedToken, 'blue');
+                        if (selectedToken) {
+                            setOutputToken(selectedToken);
+                            if (selectedToken.address === sol.address) {
+                                setSelectedRoute(undefined);
+                            }
+                            refreshUserBalances();
+                        }
+                    }
+                    onCloseTokenSelector();
+                }
+            };
+
+            return (
+                <Button
+                    key={`${index}`}
+                    type="ghost"
+                    shape="round"
+                    size="small"
+                    onClick={onClick}
+                    className="thin-stroke">
+                    <TokenDisplay className="inherit-font" mintAddress={token.address} onClick={() => {}} />
+                </Button>
+            );
+        })
+    }
+
     const renderSourceTokenList = (
         <>
             {showFromMintList && Object.values(showFromMintList).length ? (
@@ -1530,53 +1587,57 @@ export const JupiterExchange = (props: {
                         onCloseTokenSelector();
                     };
 
-                    return (
-                        <div
-                            key={index + 100}
-                            onClick={onClick}
-                            className={`token-item ${fromMint && fromMint === token.address
-                                    ? "selected"
-                                    : areSameTokens(
-                                        token,
-                                        toMint ? showFromMintList[toMint] : undefined
-                                    )
-                                        ? "disabled"
-                                        : "simplelink"
-                                }`}>
-                            <div className="token-icon">
-                                {token.logoURI ? (
-                                    <img
-                                        alt={`${token.name}`}
-                                        width={24}
-                                        height={24}
-                                        src={token.logoURI}
-                                    />
-                                ) : (
-                                    <Identicon
-                                        address={token.address}
-                                        style={{ width: "24", display: "inline-flex" }}
-                                    />
-                                )}
+                    if (index < MAX_TOKEN_LIST_ITEMS) {
+                        return (
+                            <div
+                                key={index + 100}
+                                onClick={onClick}
+                                className={`token-item ${fromMint && fromMint === token.address
+                                        ? "selected"
+                                        : areSameTokens(
+                                            token,
+                                            toMint ? showFromMintList[toMint] : undefined
+                                        )
+                                            ? "disabled"
+                                            : "simplelink"
+                                    }`}>
+                                <div className="token-icon">
+                                    {token.logoURI ? (
+                                        <img
+                                            alt={`${token.name}`}
+                                            width={24}
+                                            height={24}
+                                            src={token.logoURI}
+                                        />
+                                    ) : (
+                                        <Identicon
+                                            address={token.address}
+                                            style={{ width: "24", display: "inline-flex" }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="token-description">
+                                    <div className="token-symbol">{token.symbol}</div>
+                                    <div className="token-name">{token.name}</div>
+                                </div>
+                                {publicKey &&
+                                    userBalances &&
+                                    mintList[token.address] &&
+                                    userBalances[token.address] > 0 && (
+                                        <div className="token-balance">
+                                            {!userBalances[token.address] ||
+                                                userBalances[token.address] === 0
+                                                ? ""
+                                                : userBalances[token.address].toFixed(
+                                                    mintList[token.address].decimals
+                                                )}
+                                        </div>
+                                    )}
                             </div>
-                            <div className="token-description">
-                                <div className="token-symbol">{token.symbol}</div>
-                                <div className="token-name">{token.name}</div>
-                            </div>
-                            {publicKey &&
-                                userBalances &&
-                                mintList[token.address] &&
-                                userBalances[token.address] > 0 && (
-                                    <div className="token-balance">
-                                        {!userBalances[token.address] ||
-                                            userBalances[token.address] === 0
-                                            ? ""
-                                            : userBalances[token.address].toFixed(
-                                                mintList[token.address].decimals
-                                            )}
-                                    </div>
-                                )}
-                        </div>
-                    );
+                        );
+                    } else {
+                        return null;
+                    }
                 })
             ) : (
                 <p>{t("general.loading")}...</p>
@@ -1605,48 +1666,52 @@ export const JupiterExchange = (props: {
                         onCloseTokenSelector();
                     };
 
-                    return (
-                        <div
-                            key={index + 100}
-                            onClick={onClick}
-                            className={`token-item ${toMint && toMint === token.address
-                                    ? "selected"
-                                    : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
-                                        ? 'disabled'
-                                        : "simplelink"
-                                }`}>
-                            <div className="token-icon">
-                                {token.logoURI ? (
-                                    <img
-                                        alt={`${token.name}`}
-                                        width={24}
-                                        height={24}
-                                        src={token.logoURI}
-                                    />
-                                ) : (
-                                    <Identicon
-                                        address={token.address}
-                                        style={{ width: "24", display: "inline-flex" }}
-                                    />
-                                )}
+                    if (index < MAX_TOKEN_LIST_ITEMS) {
+                        return (
+                            <div
+                                key={index + 100}
+                                onClick={onClick}
+                                className={`token-item ${toMint && toMint === token.address
+                                        ? "selected"
+                                        : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
+                                            ? 'disabled'
+                                            : "simplelink"
+                                    }`}>
+                                <div className="token-icon">
+                                    {token.logoURI ? (
+                                        <img
+                                            alt={`${token.name}`}
+                                            width={24}
+                                            height={24}
+                                            src={token.logoURI}
+                                        />
+                                    ) : (
+                                        <Identicon
+                                            address={token.address}
+                                            style={{ width: "24", display: "inline-flex" }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="token-description">
+                                    <div className="token-symbol">{token.symbol}</div>
+                                    <div className="token-name">{token.name}</div>
+                                </div>
+                                {
+                                    publicKey && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+                                        <div className="token-balance">
+                                            {
+                                                !userBalances[token.address] || userBalances[token.address] === 0
+                                                    ? ''
+                                                    : userBalances[token.address].toFixed(mintList[token.address].decimals)
+                                            }
+                                        </div>
+                                    )
+                                }
                             </div>
-                            <div className="token-description">
-                                <div className="token-symbol">{token.symbol}</div>
-                                <div className="token-name">{token.name}</div>
-                            </div>
-                            {
-                                publicKey && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
-                                    <div className="token-balance">
-                                        {
-                                            !userBalances[token.address] || userBalances[token.address] === 0
-                                                ? ''
-                                                : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                                        }
-                                    </div>
-                                )
-                            }
-                        </div>
-                    );
+                        );
+                    } else {
+                        return null;
+                    }
                 })
             ) : (
                 <p>{t("general.loading")}...</p>
@@ -1846,15 +1911,19 @@ export const JupiterExchange = (props: {
                     <div className="modal-title">{t("token-selector.modal-title")}</div>
                 }
                 onCancel={onCloseTokenSelector}
-                width={450}
+                width={400}
                 footer={null}>
                 <div className="token-selector-wrapper">
                     <div className="token-search-wrapper">
                         <TextInput
                             value={tokenFilter}
-                            placeholder={t('token-selector.search-input-placeholder')}
+                            placeholder={t('token-selector.exchange-search-input-placeholder')}
                             onInputChange={onTokenSearchInputChange} />
                     </div>
+                    <div className="common-token-shortcuts">
+                        {renderCommonTokens()}
+                    </div>
+                    <Divider />
                     <div className="token-list vertical-scroll">
                         {subjectTokenSelection === "source"
                             ? renderSourceTokenList

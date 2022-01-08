@@ -582,6 +582,7 @@
 	"token-selector": {
 		"modal-title": "Selecione um token",
 		"search-input-placeholder": "Pesquisar token nome, símbolo ou endereço",
+		"exchange-search-input-placeholder": "Pesquisar token nome ou símbolo",
 		"looking-for-sol": "Looking for SOL? You need to",
 		"wrap-sol-first": "wrap it first to wSOL"
 	},

@@ -11,6 +11,7 @@ export const TRANSACTION_STATUS_RETRY_TIMEOUT = 30 * 1000;   // Max timeout for 
 export const MIN_SLIPPAGE_VALUE = 0.1;
 export const DEFAULT_SLIPPAGE_PERCENT = 1;
 export const MAX_SLIPPAGE_VALUE = 20;
+export const MAX_TOKEN_LIST_ITEMS = 50;
 
 export const INPUT_AMOUNT_PATTERN = /^[0-9]*[.,]?[0-9]*$/;
 export const DATEPICKER_FORMAT = 'MM/DD/YYYY';
