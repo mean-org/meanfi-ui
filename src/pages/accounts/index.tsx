@@ -793,20 +793,22 @@ export const AccountsView = () => {
 
     for (let stream of updatedStreamsv1) {
 
-      let freshStream = await ms.refreshStream(stream);
-      if (!freshStream) { continue; }
-
       const streamIsOutgoing = 
-          freshStream.treasurerAddress &&
-          typeof freshStream.treasurerAddress !== 'string'
-              ? freshStream.treasurerAddress.equals(publicKey)
-              : freshStream.treasurerAddress === publicKey.toBase58();
+          stream.treasurerAddress &&
+          typeof stream.treasurerAddress !== 'string'
+              ? stream.treasurerAddress.equals(publicKey)
+              : stream.treasurerAddress === publicKey.toBase58();
 
       if (streamIsOutgoing) {
         resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
       } else {
         resume['incomingAmount'] = resume['incomingAmount'] + 1;  
       }
+
+      // Get refreshed data
+      let freshStream = await ms.refreshStream(stream);
+      if (!freshStream) { continue; }
+
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = getPricePerToken(asset as UserTokenAccount);
       if (streamIsOutgoing) {
@@ -822,14 +824,21 @@ export const AccountsView = () => {
 
     for (let stream of updatedStreamsv2) {
 
+      const streamIsOutgoing = 
+          stream.treasurer &&
+          typeof stream.treasurer !== 'string'
+              ? stream.treasurer.equals(publicKey)
+              : stream.treasurer === publicKey.toBase58();
+
+      if (streamIsOutgoing) {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      } else {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+      }
+
+      // Get refreshed data
       let freshStream = await msp.refreshStream(stream);
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
-
-      const streamIsOutgoing = 
-          freshStream.treasurer &&
-          typeof freshStream.treasurer !== 'string'
-              ? freshStream.treasurer.equals(publicKey)
-              : freshStream.treasurer === publicKey.toBase58();
 
       let streamedUnitsPerSecond = getStreamedUnitsPerSecond(freshStream.rateIntervalInSeconds, freshStream.rateAmount);
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
