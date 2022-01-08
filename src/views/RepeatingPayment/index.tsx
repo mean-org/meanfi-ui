@@ -79,7 +79,6 @@ export const RepeatingPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
-    streamProgramAddress,
     previousWalletConnectState,
     refreshPrices,
     setSelectedToken,
