@@ -75,6 +75,7 @@ export const AccountsView = () => {
   const { publicKey, connected, wallet } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
+  const [msp, setMsp] = useState<MSP | undefined>();
   const {
     coinPrices,
     userTokens,
@@ -149,6 +150,25 @@ export const AccountsView = () => {
     triggerWindowResize();
     closeQrScannerModal();
   };
+
+  useEffect(() => {
+
+    if (!wallet || !publicKey || !connection || !connected || msp) {
+      return;
+    }
+
+    setMsp(new MSP(
+      connection.endpoint,
+      publicKey
+    ));
+
+  }, [
+    msp,
+    connected, 
+    connection, 
+    publicKey, 
+    wallet
+  ])
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
@@ -361,6 +381,7 @@ export const AccountsView = () => {
       refreshStreamList();
     }
   }, [
+    wallet,
     publicKey,
     streamList,
     isFirstLoad,
@@ -703,6 +724,7 @@ export const AccountsView = () => {
     }
 
   }, [
+    wallet,
     publicKey,
     connected,
     streamList,
@@ -765,7 +787,7 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+    if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -775,8 +797,6 @@ export const AccountsView = () => {
       outgoingAmount: 0,
       totalAmount: 0
     };
-
-    const msp = new MSP(connection.endpoint, publicKey, "confirmed");
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -850,18 +870,17 @@ export const AccountsView = () => {
     setLoadingStreamsSummary(false);
 
   }, [
-    ms,
-    wallet,
-    publicKey,
-    streamListv1,
-    streamListv2,
-    streamsSummary,
-    connection.endpoint,
-    loadingStreamsSummary,
-    getPricePerToken,
-    setStreamsSummary,
-    setLastStreamsSummary,
-    setLoadingStreamsSummary,
+    ms, 
+    msp,
+    publicKey, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary, 
+    loadingStreamsSummary, 
+    getPricePerToken, 
+    setStreamsSummary, 
+    setLastStreamsSummary, 
+    setLoadingStreamsSummary
   ]);
 
   // Live data calculation

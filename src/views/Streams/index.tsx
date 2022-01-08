@@ -122,6 +122,7 @@ export const Streams = () => {
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  // const [msp, setMsp] = useState<MSP | undefined>();
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -130,6 +131,21 @@ export const Streams = () => {
   ), [
     endpoint,
     streamProgramAddress
+  ]);
+
+  const msp: MSP | undefined = useMemo(() => {
+    if (!msp && wallet && publicKey && endpoint && connected) {
+      return new MSP(
+        endpoint,
+        publicKey
+      );
+    }
+    return msp;
+  }, [
+    connected, 
+    endpoint, 
+    publicKey, 
+    wallet
   ]);
 
   // Keep account balance updated
@@ -170,9 +186,9 @@ export const Streams = () => {
   useEffect(() => {
 
     const refreshStreams = async () => {
-      if (!streamList || !publicKey || loadingStreams) { return; }
+      if (!msp ||!streamList || !publicKey || loadingStreams) { return; }
 
-      const msp = new MSP(endpoint, publicKey, "confirmed");
+      // const msp = new MSP(endpoint, publicKey, "confirmed");
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -228,6 +244,7 @@ export const Streams = () => {
 
   }, [
     ms,
+    msp,
     wallet,
     endpoint,
     publicKey,
