@@ -157,6 +157,7 @@ export const AccountsView = () => {
       return;
     }
 
+    console.log('We are indeed init again');
     setMsp(new MSP(
       connection.endpoint,
       publicKey

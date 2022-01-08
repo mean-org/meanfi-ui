@@ -11,7 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { consoleOut, isLocal, isProd, isValidAddress, percentual } from '../../utils/ui';
 import "./style.less";
-import { AirdropRedeem, IdoDeposit, IdoRedeem, SolaniumRedeem } from '../../views';
+import { AirdropRedeem, IdoDeposit, IdoRedeem } from '../../views';
 import { IdoWithdraw } from '../../views/IdoWithdraw';
 import Countdown from 'react-countdown';
 import dateFormat from "dateformat";
@@ -30,7 +30,7 @@ import { formatThousands, getFormattedRateAmount, getTokenAmountAndSymbolByToken
 import { CUSTOM_USDC, MEAN_TOKEN_LIST } from '../../constants/token-list';
 import { PartnerImage } from '../../models/common-types';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { ClockCircleFilled, DoubleRightOutlined, SettingOutlined } from '@ant-design/icons';
+import { ClockCircleFilled, DoubleRightOutlined } from '@ant-design/icons';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 
 type IdoTabOption = "deposit" | "withdraw";
@@ -79,7 +79,7 @@ export const IdoLiveView = () => {
   const [idoEndUtc, setIdoEndUtc] = useState<Date | undefined>();
   const [idoStartUtc, setIdoStartUtc] = useState<Date | undefined>();
   const [redeemStartUtc, setRedeemStartUtc] = useState<Date | undefined>();
-  const [idoFinishedFireworks, setIdoFinishedFireworks] = useState(false);
+  // const [idoFinishedFireworks, setIdoFinishedFireworks] = useState(false);
   const [idoClient, setIdoClient] = useState<IdoClient | undefined>(undefined);
   const [forceRefreshIdoStatus, setForceRefreshIdoStatus] = useState(false);
   const [loadingIdoStatus, setLoadingIdoStatus] = useState(false);
@@ -389,50 +389,50 @@ export const IdoLiveView = () => {
   ]);
 
   // Turn ON fireworks when needed
-  useEffect(() => {
+  // useEffect(() => {
 
-    const forceRefreshData = () => {
-      const refreshCtaElement = document.getElementById("refresh-data-cta");
-      if (refreshCtaElement) {
-        console.log('Got refreshCtaElement!');
-        refreshCtaElement.click();
-      }
-    }
+  //   const forceRefreshData = () => {
+  //     const refreshCtaElement = document.getElementById("refresh-data-cta");
+  //     if (refreshCtaElement) {
+  //       console.log('Got refreshCtaElement!');
+  //       refreshCtaElement.click();
+  //     }
+  //   }
 
-    if (!redeemStarted) {
-      setRedeemStarted(true);
-    }
+  //   if (!redeemStarted) {
+  //     setRedeemStarted(true);
+  //   }
 
-    if (!idoFinished && regionLimitationAcknowledged) {
-      setIdoFinished(true);
-      consoleOut('Setting fireworks ON...', '', 'blue');
-      setIdoFinishedFireworks(true);
-      forceRefreshData();
-    }
+  //   if (!idoFinished && regionLimitationAcknowledged) {
+  //     setIdoFinished(true);
+  //     consoleOut('Setting fireworks ON...', '', 'blue');
+  //     setIdoFinishedFireworks(true);
+  //     forceRefreshData();
+  //   }
 
-  }, [
-    idoEndUtc,
-    idoFinished,
-    redeemStarted,
-    regionLimitationAcknowledged,
-  ]);
+  // }, [
+  //   idoEndUtc,
+  //   idoFinished,
+  //   redeemStarted,
+  //   regionLimitationAcknowledged,
+  // ]);
 
   // Turn OFF fireworks
-  useEffect(() => {
-    let timeout: any;
+  // useEffect(() => {
+  //   let timeout: any;
 
-    if (idoFinishedFireworks) {
-      timeout = setTimeout(() => {
-        consoleOut('Setting fireworks OFF...', '', 'blue');
-        setIdoFinishedFireworks(false);
-      }, 7000);
-    }
+  //   if (idoFinishedFireworks) {
+  //     timeout = setTimeout(() => {
+  //       consoleOut('Setting fireworks OFF...', '', 'blue');
+  //       setIdoFinishedFireworks(false);
+  //     }, 7000);
+  //   }
 
-    return () => {
-      clearTimeout(timeout);
-    }
+  //   return () => {
+  //     clearTimeout(timeout);
+  //   }
 
-  }, [idoFinishedFireworks]);
+  // }, [idoFinishedFireworks]);
 
   // Set coolOff flag
   useEffect(() => {
@@ -868,7 +868,7 @@ export const IdoLiveView = () => {
 
   return (
     <>
-      <div className={`ido-overlay ${regionLimitationAcknowledged && idoFinishedFireworks ? 'active' : '' }`}>
+      {/* <div className={`ido-overlay ${regionLimitationAcknowledged && idoFinishedFireworks ? 'active' : '' }`}>
         {idoFinishedFireworks && (
           <div id="pyro">
             <div className="before"></div>
@@ -876,8 +876,8 @@ export const IdoLiveView = () => {
             <h1 className="heading ido-heading text-center mb-0">Yay! 🥳🥳🥳 We made it!<br/><br/>The Mean IDO has concluded ✅<br/>The Mean Life has just begun 😎</h1>
           </div>
         )}
-      </div>
-      <div className={`solid-bg position-relative ${regionLimitationAcknowledged && idoFinishedFireworks ? 'blurry' : '' }`}>
+      </div> */}
+      <div className={`solid-bg position-relative`}>
 
         {/* {isLocal() && (
           <>
