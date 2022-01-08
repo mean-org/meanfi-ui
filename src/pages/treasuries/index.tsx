@@ -53,7 +53,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
@@ -76,6 +76,7 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
+import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2 } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -231,6 +232,10 @@ export const TreasuriesView = () => {
 
   const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
     return await calculateActionFees(connection, action);
+  }, [connection]);
+
+  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
+    return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
   const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
@@ -931,12 +936,12 @@ export const TreasuriesView = () => {
   const showCreateTreasuryModal = useCallback(() => {
     resetTransactionStatus();
     setIsCreateTreasuryModalVisibility(true);
-    getTransactionFees(MSP_ACTIONS.createTreasury).then(value => {
+    getTransactionFeesV2(MSP_ACTIONS_V2.createTreasury).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
   }, [
-    getTransactionFees,
+    getTransactionFeesV2,
     resetTransactionStatus
   ]);
   const closeCreateTreasuryModal = useCallback(() => setIsCreateTreasuryModalVisibility(false), []);
@@ -1489,6 +1494,7 @@ export const TreasuriesView = () => {
     }
   };
 
+  // TODO: me quedé aquí
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {

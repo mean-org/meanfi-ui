@@ -277,13 +277,25 @@ export const Streams = () => {
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
     resetTransactionStatus();
-    getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-      setTransactionFees(value);
+
+    if (streamDetail) {
+      if (streamDetail.version < 2) {
+        getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
       setIsCloseStreamModalVisibility(true);
-      consoleOut('transactionFees:', value, 'orange');
-    });
+    }
   }, [
+    streamDetail,
     getTransactionFees,
+    getTransactionFeesV2,
     resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
@@ -367,18 +379,29 @@ export const Streams = () => {
     } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
       setCustomToken(streamDetail?.associatedToken as string);
     }
-    getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
-      setTransactionFees(value);
+
+    if (streamDetail) {
+      if (streamDetail.version < 2) {
+        getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFeesV2(MSP_ACTIONS_V2.addFunds).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
       setIsAddFundsModalVisibility(true);
-      consoleOut('transactionFees:', value, 'orange');
-    });
+    }
     setTimeout(() => {
       refreshTokenBalance();
     }, 100);
   }, [
+    streamDetail,
     selectedToken,
-    streamDetail?.associatedToken,
     refreshTokenBalance,
+    getTransactionFeesV2,
     getTransactionFees,
     setSelectedToken,
     setCustomToken,
