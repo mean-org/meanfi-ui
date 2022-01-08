@@ -256,6 +256,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
+  // const [msp, setMsp] = useState<MSP | undefined>();
   const {
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -275,6 +276,22 @@ const AppStateProvider: React.FC = ({ children }) => {
   ), [
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
+  ]);
+
+  //
+  const msp: MSP | undefined = useMemo(() => {
+    if (!msp && wallet && publicKey && connectionConfig && connected) {
+      return new MSP(
+        connectionConfig.endpoint,
+        publicKey
+      );
+    }
+    return msp;
+  }, [
+    connected, 
+    connectionConfig, 
+    publicKey, 
+    wallet
   ]);
 
   const today = new Date().toLocaleDateString("en-US");
@@ -440,8 +457,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        if (publicKey) {
-          const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
+        if (msp && publicKey) {
+          // const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
@@ -704,108 +721,109 @@ const AppStateProvider: React.FC = ({ children }) => {
       return [];
     }
 
-    setLoadingStreams(true);
-    const signature = lastSentTxStatus || '';
-    setTimeout(() => {
-      clearTransactionStatusContext();
-    });
-
-    const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-
-    let streamAccumulator: any[] = [];
-
-    ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-      .then(streamsv1 => {
-        streamAccumulator.push(...streamsv1);
-        setStreamListv1(streamsv1);
-        msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
-          .then(streamsv2 => {
-            streamAccumulator.push(...streamsv2);
-            setStreamListv2(streamsv2);
-            consoleOut('Streams:', streamAccumulator, 'blue');
-            if (streamAccumulator.length) {
-              let item: Stream | StreamInfo | undefined;
-              if (reset) {
-                if (signature) {
-                  item = streamAccumulator.find(d => d.transactionSignature === signature);
-                } else {
-                  item = streamAccumulator[0];
-                }
-              } else {
-                // Try to get current item by its original Tx signature then its id
-                if (signature) {
-                  item = streamAccumulator.find(d => d.transactionSignature === signature);
-                } else if (selectedStream) {
-                  const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
-                  item = itemFromServer || streamAccumulator[0];
-                } else {
-                  item = streamAccumulator[0];
-                }
-              }
-              if (!item) {
-                item = JSON.parse(JSON.stringify(streamAccumulator[0]));
-              }
-              consoleOut('selectedStream:', item, 'blue');
-              if (item && selectedStream && item.id !== selectedStream.id) {
-                updateSelectedStream(item);
-                const mspInstance: any = item.version === 2 ? msp : ms;
-                mspInstance.refreshStream(item, true)
-                  .then((freshStream: Stream | StreamInfo) => {
-                    if (freshStream) {
-                      updateStreamDetail(freshStream);
-                      const token = getTokenByMintAddress(freshStream.associatedToken as string);
-                      setSelectedToken(token);
-                      if (!loadingStreamActivity) {
-                        setLoadingStreamActivity(true);
-                        const streamPublicKey = new PublicKey(freshStream.id as string);
-                        mspInstance.listStreamActivity(streamPublicKey)
-                          .then((value: any) => {
-                            consoleOut('activity:', value, 'blue');
-                            setStreamActivity(value);
-                            setLoadingStreamActivity(false);
-                          })
-                          .catch((err: any) => {
-                            console.error(err);
-                            setStreamActivity([]);
-                            setLoadingStreamActivity(false);
-                          });
-                      }
-                    }
-                  })
-              } else {
-                if (item) {
-                  updateStreamDetail(item);
-                  getStreamActivity(item.id as string);
-                }
-              }
-            } else {
-              setStreamActivity([]);
-              updateSelectedStream(undefined);
-              updateStreamDetail(undefined);
-            }
-            setStreamList(streamAccumulator);
-            updateLoadingStreams(false);
-          }).catch(err => {
-            console.error(err);
-            updateLoadingStreams(false);
-          });
-      }).catch(err => {
-        console.error(err);
-        updateLoadingStreams(false);
+    if (msp) {
+      setLoadingStreams(true);
+      const signature = lastSentTxStatus || '';
+      setTimeout(() => {
+        clearTransactionStatusContext();
       });
 
+      // const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
+
+      let streamAccumulator: any[] = [];
+
+      ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+        .then(streamsv1 => {
+          streamAccumulator.push(...streamsv1);
+          setStreamListv1(streamsv1);
+          msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
+            .then(streamsv2 => {
+              streamAccumulator.push(...streamsv2);
+              setStreamListv2(streamsv2);
+              consoleOut('Streams:', streamAccumulator, 'blue');
+              if (streamAccumulator.length) {
+                let item: Stream | StreamInfo | undefined;
+                if (reset) {
+                  if (signature) {
+                    item = streamAccumulator.find(d => d.transactionSignature === signature);
+                  } else {
+                    item = streamAccumulator[0];
+                  }
+                } else {
+                  // Try to get current item by its original Tx signature then its id
+                  if (signature) {
+                    item = streamAccumulator.find(d => d.transactionSignature === signature);
+                  } else if (selectedStream) {
+                    const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
+                    item = itemFromServer || streamAccumulator[0];
+                  } else {
+                    item = streamAccumulator[0];
+                  }
+                }
+                if (!item) {
+                  item = JSON.parse(JSON.stringify(streamAccumulator[0]));
+                }
+                consoleOut('selectedStream:', item, 'blue');
+                if (item && selectedStream && item.id !== selectedStream.id) {
+                  updateSelectedStream(item);
+                  const mspInstance: any = item.version === 2 ? msp : ms;
+                  mspInstance.refreshStream(item, true)
+                    .then((freshStream: Stream | StreamInfo) => {
+                      if (freshStream) {
+                        updateStreamDetail(freshStream);
+                        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+                        setSelectedToken(token);
+                        if (!loadingStreamActivity) {
+                          setLoadingStreamActivity(true);
+                          const streamPublicKey = new PublicKey(freshStream.id as string);
+                          mspInstance.listStreamActivity(streamPublicKey)
+                            .then((value: any) => {
+                              consoleOut('activity:', value, 'blue');
+                              setStreamActivity(value);
+                              setLoadingStreamActivity(false);
+                            })
+                            .catch((err: any) => {
+                              console.error(err);
+                              setStreamActivity([]);
+                              setLoadingStreamActivity(false);
+                            });
+                        }
+                      }
+                    })
+                } else {
+                  if (item) {
+                    updateStreamDetail(item);
+                    getStreamActivity(item.id as string);
+                  }
+                }
+              } else {
+                setStreamActivity([]);
+                updateSelectedStream(undefined);
+                updateStreamDetail(undefined);
+              }
+              setStreamList(streamAccumulator);
+              updateLoadingStreams(false);
+            }).catch(err => {
+              console.error(err);
+              updateLoadingStreams(false);
+            });
+        }).catch(err => {
+          console.error(err);
+          updateLoadingStreams(false);
+        });
+    }
+
   }, [
-    ms,
-    wallet,
-    publicKey,
-    loadingStreams,
-    selectedStream,
-    lastSentTxStatus,
-    fetchTxInfoStatus,
-    loadingStreamActivity,
-    connectionConfig.endpoint,
-    clearTransactionStatusContext,
-    getStreamActivity,
+    ms, 
+    msp, 
+    publicKey, 
+    loadingStreams, 
+    selectedStream, 
+    lastSentTxStatus, 
+    fetchTxInfoStatus, 
+    loadingStreamActivity, 
+    clearTransactionStatusContext, 
+    getStreamActivity
   ]);
 
   // Streams refresh timeout
