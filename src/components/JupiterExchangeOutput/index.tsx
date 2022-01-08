@@ -30,7 +30,6 @@ export const JupiterExchangeOutput = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | undefined>(undefined);
-  const [savings, setSavings] = useState(0);
 
   const toUiAmount = (amount: BN, decimals: number) => {
     if (!amount || !decimals) {
@@ -54,32 +53,6 @@ export const JupiterExchangeOutput = (props: {
   }, [
     props.routes,
     selectedRouteIndex
-  ]);
-
-  // Calculate savings
-  useEffect(() => {
-
-    if (!props.routes || !props.routes.length || !props.toToken) {
-      return;
-    }
-
-    if (props.routes.length === 1) {
-      setSavings(0);
-      return;
-    }
-
-    const firstInfo =  props.routes[0];
-    const lastInfo = props.routes[props.routes.length - 1];
-    const bestAmountOut = toUiAmount(new BN(firstInfo.outAmount), props.toToken.decimals);
-    const worstAmountOut = toUiAmount(new BN(lastInfo.outAmount), props.toToken.decimals);
-    const showBadge = props.routes.length > 1 && bestAmountOut > worstAmountOut;
-    const saveAmount = showBadge ? bestAmountOut - worstAmountOut : 0;
-
-    setSavings(saveAmount);
-
-  }, [
-    props.routes,
-    props.toToken,
   ]);
 
   const getPricePerToken = (token: TokenInfo): number => {
@@ -173,58 +146,62 @@ export const JupiterExchangeOutput = (props: {
               const marketInfo = c.marketInfos;
               const labels = marketInfo.map(item => item.marketMeta.amm.label).join(' x ');
 
-              return (
-                <div
-                  key={`${index}`}
-                  className={
-                    index === selectedRouteIndex
-                      ? "swap-client-card selected"
-                      : "swap-client-card"
-                  }
-                  onClick={() => {
-                    setSelectedRouteIndex(index);
-                    props.onSelectedRoute(c);
-                  }}>
-                  <div className="card-content">
-                    {index === 0 && showBadge && (
-                      <span
-                        className={`badge ${
-                          index === selectedRouteIndex ? "bg-orange-red" : "disabled"
-                        }`}>
-                        {t("swap.clients-label-savings")}:{" "}
-                        {formatAmount(savings, decimals)}
-                      </span>
-                    )}
-                    <div className="highlight flex-column">
-                      <span className="font-size-100 font-bold">
-                        {labels || ''}
-                      </span>
-                      <div className="font-size-75">
-                        {marketInfo.map((value: MarketInfo, idx: number) => {
-                          const tokenIn = props.fromToken;
-                          const tokenOut = props.mintList[value.outputMint.toBase58()] as TokenInfo;
-                          return (
-                            <span key={`route-${idx}`}>
-                              {(idx === 0 && tokenIn) && (
-                                <span>{tokenIn.symbol}</span>
-                              )}
-                              {tokenOut && (
-                                <>
-                                  <span className="route-separator">→</span>
-                                  <span>{tokenOut.symbol}</span>
-                                </>
-                              )}
-                            </span>
-                          );
-                        })}
+              if (index < 10) {
+                return (
+                  <div
+                    key={`${index}`}
+                    className={
+                      index === selectedRouteIndex
+                        ? "swap-client-card selected"
+                        : "swap-client-card"
+                    }
+                    onClick={() => {
+                      setSelectedRouteIndex(index);
+                      props.onSelectedRoute(c);
+                    }}>
+                    <div className="card-content">
+                      {index === 0 && showBadge && (
+                        <span
+                          className={`badge ${
+                            index === selectedRouteIndex ? "bg-orange-red" : "disabled"
+                          }`}>
+                          {t("swap.routes-best-price-label")}
+                        </span>
+                      )}
+                      <div className="highlight flex-column">
+                        <span className="font-size-100 font-bold">
+                          {labels || ''}
+                        </span>
+                        <div className="font-size-75">
+                          {marketInfo.map((value: MarketInfo, idx: number) => {
+                            const tokenIn = props.fromToken;
+                            const tokenOut = props.mintList[value.outputMint.toBase58()] as TokenInfo;
+                            return (
+                              <span key={`route-${idx}`}>
+                                {(idx === 0 && tokenIn) && (
+                                  <span>{tokenIn.symbol}</span>
+                                )}
+                                {tokenOut && (
+                                  <>
+                                    <span className="route-separator">→</span>
+                                    <span>{tokenOut.symbol}</span>
+                                  </>
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="amount">
+                        {formatAmount(amountOut, decimals)}
                       </div>
                     </div>
-                    <div className="amount">
-                      {formatAmount(amountOut, decimals)}
-                    </div>
                   </div>
-                </div>
-              );
+                );
+              } else {
+                return null;
+              }
+
             })}
           </div>
         )}

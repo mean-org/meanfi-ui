@@ -76,7 +76,7 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2 } from '@mean-dao/msp';
+import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -125,8 +125,8 @@ export const TreasuriesView = () => {
   const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
-  const [treasuryDetails, setTreasuryDetails] = useState<TreasuryInfo | undefined>(undefined);
-  const [highlightedStream, sethHighlightedStream] = useState<StreamInfo | undefined>();
+  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [highlightedStream, sethHighlightedStream] = useState<Stream | StreamInfo | undefined>();
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
@@ -1494,16 +1494,30 @@ export const TreasuriesView = () => {
     }
   };
 
-  // TODO: me quedé aquí
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
-    setIsAddFundsModalVisibility(true);
-    getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
-      setTransactionFees(value);
-      consoleOut('transactionFees:', value, 'orange');
-    });
-  }, [getTransactionFees]);
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        getTransactionFeesV2(MSP_ACTIONS_V2.addFunds).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
+      setIsAddFundsModalVisibility(true);
+    }
+  }, [
+    treasuryDetails,
+    getTransactionFees,
+    getTransactionFeesV2
+  ]);
+
   const closeAddFundsModal = useCallback(() => {
     setIsAddFundsModalVisibility(false);
   }, []);
@@ -1781,13 +1795,27 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
-    setIsCloseTreasuryModalVisibility(true);
-    getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-      setTransactionFees(value);
-      consoleOut('transactionFees:', value, 'orange');
-    });
+
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        getTransactionFeesV2(MSP_ACTIONS_V2.closeTreasury).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
+      setIsCloseTreasuryModalVisibility(true);
+    }
+
   }, [
+    treasuryDetails,
     getTransactionFees,
+    getTransactionFeesV2,
     setTransactionStatus,
   ]);
 
@@ -2047,7 +2075,28 @@ export const TreasuriesView = () => {
       setIsCloseStreamModalVisibility(true);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
+      setIsCloseStreamModalVisibility(true);
+    }
+
+  }, [
+    treasuryDetails,
+    getTransactionFees,
+    getTransactionFeesV2,
+  ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = (closeTreasury: boolean) => {
     hideCloseStreamModal();
