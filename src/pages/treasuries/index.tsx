@@ -3395,6 +3395,7 @@ export const TreasuriesView = () => {
       {isCloseStreamModalVisible && (
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
+          selectedToken={selectedToken}
           transactionFees={transactionFees}
           streamDetail={highlightedStream}
           handleOk={onAcceptCloseStream}
