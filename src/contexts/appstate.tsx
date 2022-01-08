@@ -440,7 +440,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        const detail = await ms.getStream(streamPublicKey);
+        const msp = new MSP(connectionConfig.endpoint, wallet, "confirmed");
+        const detail = await msp.getStream(streamPublicKey);
         consoleOut('customStream', detail);
         if (detail) {
           setStreamDetail(detail);
