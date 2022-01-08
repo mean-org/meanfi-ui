@@ -7,6 +7,7 @@ import { percentage } from '../../utils/ui';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { Stream } from '@mean-dao/msp';
 
 export const StreamPauseModal = (props: {
   handleClose: any;
@@ -14,7 +15,7 @@ export const StreamPauseModal = (props: {
   tokenBalance: number;
   content: JSX.Element;
   isVisible: boolean;
-  streamDetail: StreamInfo | undefined;
+  streamDetail: any;  // TODO: Account for this type         Stream | StreamInfo | undefined
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');

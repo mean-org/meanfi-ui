@@ -3442,6 +3442,7 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
+  /*
   const renderStreamOptions = (item: Stream | StreamInfo) => {
     const v1 = item as StreamInfo;
     const v2 = item as Stream;
@@ -3536,7 +3537,7 @@ export const TreasuriesView = () => {
                   <span className="align-middle">{shortenAddress(item.beneficiaryAddress as string)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-130">
-                  <span className="align-middle">{getStreamRateAmount(item)}</span>
+                  <span className="align-middle">{item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-120">
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
@@ -3565,7 +3566,6 @@ export const TreasuriesView = () => {
       {treasuryDetails && (
         <div className="stream-fields-container">
 
-          {/* Treasury name and Number of streams */}
           <div className="mb-3">
             <Row>
               <Col span={12}>
@@ -3668,7 +3668,6 @@ export const TreasuriesView = () => {
     return (
       <>
         <Space size="middle">
-          {/* Add funds to the treasury */}
           <Button
             type="default"
             shape="round"
@@ -3681,7 +3680,7 @@ export const TreasuriesView = () => {
               ? t('treasuries.treasury-detail.cta-add-funds-busy')
               : t('treasuries.treasury-detail.cta-add-funds')}
           </Button>
-          {/* Create stream */}
+
           <Button
             type="default"
             shape="round"
@@ -3780,7 +3779,6 @@ export const TreasuriesView = () => {
               ) : (
                 <>
                 <div className="rate-amount">
-                  {/* <span className="badge small error text-uppercase">missing</span> */}
                   {formatThousands(item.streamsAmount)}
                 </div>
                 <div className="interval">streams</div>
@@ -3807,6 +3805,7 @@ export const TreasuriesView = () => {
     )}
     </>
   );
+  */
 
   return (
     <>
@@ -3843,9 +3842,10 @@ export const TreasuriesView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingTreasuries}>
+                  <p>En breve...</p>
+                  {/* <Spin spinning={loadingTreasuries}>
                     {renderTreasuryList}
-                  </Spin>
+                  </Spin> */}
                 </div>
                 <div className="bottom-ctas">
                   {customStreamDocked ? (
@@ -3898,7 +3898,8 @@ export const TreasuriesView = () => {
               <div className="inner-container">
                 {connected ? (
                   <>
-                    {treasuryDetails && (
+                    <p>Almost there...</p>
+                    {/* {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={"Refresh balance"}>
@@ -3969,7 +3970,7 @@ export const TreasuriesView = () => {
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
-                    )}
+                    )} */}
                   </>
                 ) : (
                   <div className="h-100 flex-center">
@@ -4057,14 +4058,26 @@ export const TreasuriesView = () => {
           userBalances={userBalances}
           streamStats={streamStats}
           treasuryStreams={treasuryStreams}
-          associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
+          associatedToken={
+            treasuryDetails
+              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+               ? (treasuryDetails as Treasury).associatedToken as string
+               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+              : ''
+          }
           isBusy={isBusy}
         />
       )}
 
       {isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
-          associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
+          associatedToken={
+            treasuryDetails
+              ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+               ? (treasuryDetails as Treasury).associatedToken as string
+               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+              : ''
+          }
           connection={connection}
           handleClose={closeCreateStreamModal}
           handleOk={onAcceptCreateStream}

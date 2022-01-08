@@ -8,6 +8,7 @@ import { TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/typ
 import { TransactionStatus } from '../../models/enums';
 import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { Treasury } from '@mean-dao/msp';
 
 export const TreasuryCloseModal = (props: {
   handleClose: any;
@@ -16,7 +17,7 @@ export const TreasuryCloseModal = (props: {
   nativeBalance: number;
   content: JSX.Element;
   isVisible: boolean;
-  treasuryDetails: TreasuryInfo | undefined;
+  treasuryDetails: TreasuryInfo | Treasury | undefined
   transactionFees: TransactionFees;
   transactionStatus: TransactionStatus | undefined;
   isBusy: boolean;
