@@ -91,7 +91,11 @@ export const StreamAddFundsModal = (props: {
                 <div
                   className="token-max simplelink"
                   onClick={() => setValue(
-                    getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
+                    getTokenAmountAndSymbolByTokenAddress(
+                      tokenBalance,
+                      selectedToken.address,
+                      true
+                    )
                   )}>
                   MAX
                 </div>
@@ -121,7 +125,11 @@ export const StreamAddFundsModal = (props: {
             <span>{t('add-funds.label-right')}:</span>
             <span>
               {`${tokenBalance && selectedToken
-                  ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                  ? getTokenAmountAndSymbolByTokenAddress(
+                      tokenBalance,
+                      selectedToken?.address,
+                      true
+                    )
                   : "0"
               }`}
             </span>
