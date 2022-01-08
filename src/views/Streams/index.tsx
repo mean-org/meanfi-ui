@@ -172,7 +172,7 @@ export const Streams = () => {
     const refreshStreams = async () => {
       if (!streamList || !publicKey || loadingStreams) { return; }
 
-      const msp = new MSP(endpoint, wallet, "confirmed");
+      const msp = new MSP(endpoint, publicKey, "confirmed");
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -1030,11 +1030,11 @@ export const Streams = () => {
 
         // Init a streaming operation
         console.log('Streams -> AddFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, wallet, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
 
         // Create a transaction
         return await moneyStream.addFunds(
-          wallet.publicKey,
+          publicKey,
           treasury,
           stream,
           tokenAmount,
@@ -1399,7 +1399,7 @@ export const Streams = () => {
 
         // Init a streaming operation
         console.log('Streams -> WithdrawFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, wallet, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
 
         // Create a transaction
         return await moneyStream.withdraw(
@@ -1763,7 +1763,7 @@ export const Streams = () => {
 
         // Init a streaming operation
         console.log('Streams -> CloseStreamTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, wallet, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
 
         // Create a transaction
         return await moneyStream.closeStream(
