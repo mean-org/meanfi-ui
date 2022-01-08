@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { isValidNumber, shortenAddress, truncateFloat } from "../../utils/utils";
+import { isValidNumber, shortenAddress, toUiAmount, truncateFloat } from "../../utils/utils";
 import { consoleOut, percentage } from "../../utils/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { notify } from '../../utils/notifications';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
 import { AppStateContext } from '../../contexts/appstate';
+import { BN } from 'bn.js';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -59,8 +60,8 @@ export const StreamWithdrawModal = (props: {
           if (v1.version < 2) {
             max = getMaxWithdrawAmount(v1);
           } else {
-            max = v2.withdrawableAmount;
-          }        
+            max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+          }
           setMaxAmount(max);
         } else {
           notify({
@@ -104,7 +105,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
         }
       } else {
-        max = v2.withdrawableAmount;
+        max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
         if (v2.status === STREAM_STATUS.Running) {
           setMaxAmount(max);
           setLoadingData(true);
@@ -131,6 +132,7 @@ export const StreamWithdrawModal = (props: {
     endpoint,
     streamProgramAddress,
     props.startUpData,
+    props.selectedToken?.decimals
   ]);
 
   useEffect(() => {

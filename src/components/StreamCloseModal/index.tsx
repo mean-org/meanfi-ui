@@ -4,16 +4,19 @@ import { Modal, Button, Row, Col, Radio } from 'antd';
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useWallet } from '../../contexts/wallet';
 import { percentage } from '../../utils/ui';
-import { getTokenAmountAndSymbolByTokenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { StreamInfo, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { Stream } from '@mean-dao/msp';
+import { TokenInfo } from '@solana/spl-token-registry';
+import BN from 'bn.js';
 
 export const StreamCloseModal = (props: {
   handleClose: any;
   handleOk: any;
   content: JSX.Element;
   isVisible: boolean;
+  selectedToken: TokenInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   transactionFees: TransactionFees;
   canCloseTreasury?: boolean;
@@ -68,7 +71,8 @@ export const StreamCloseModal = (props: {
         if (v1.version < 2) {
           fee = percentage(fees.mspPercentFee, v1.escrowVestedAmount) || 0;
         } else {
-          fee = percentage(fees.mspPercentFee, v2.withdrawableAmount) || 0;
+          const wa = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+          fee = percentage(fees.mspPercentFee, wa) || 0;
         }
       } else if (isTreasurer) {
         fee = fees.mspFlatFee;
@@ -77,6 +81,7 @@ export const StreamCloseModal = (props: {
     return fee;
   }, [
     props.streamDetail,
+    props.selectedToken?.decimals,
     amIBeneficiary,
     amITreasurer,
   ]);
@@ -88,13 +93,14 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowVestedAmount;
       } else {
-        return v2.withdrawableAmount;
+        return toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
+    props.selectedToken?.decimals
   ]);
 
   const getUnvested = useCallback((): number => {
@@ -104,13 +110,14 @@ export const StreamCloseModal = (props: {
       if (v1.version < 2) {
         return v1.escrowUnvestedAmount;
       } else {
-        return v2.fundsLeftInStream;
+        return toUiAmount(new BN(v2.fundsLeftInStream), props.selectedToken?.decimals || 6);
       }
     }
     return 0;
   }, [
     publicKey,
     props.streamDetail,
+    props.selectedToken?.decimals
   ]);
 
   useEffect(() => {

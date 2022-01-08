@@ -32,6 +32,7 @@ import {
   getTokenSymbol,
   getTxIxResume,
   shortenAddress,
+  toTokenAmount,
   toUiAmount
 } from "../../utils/utils";
 import {
@@ -949,7 +950,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && publicKey && streamDetail) {
+      if (wallet && publicKey && streamDetail && selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -961,12 +962,14 @@ export const Streams = () => {
         const amount = parseFloat(addAmount);
         setAddFundsAmount(amount);
 
+        const tokenAmount = toTokenAmount(amount, selectedToken.decimals);
+
         const data = {
-          contributor: wallet.publicKey.toBase58(),               // contributor
-          treasury: treasury.toBase58(),                          // treasury
-          stream: stream.toBase58(),                              // stream
-          contributorMint: contributorMint.toBase58(),            // contributorMint
-          amount                                                  // amount
+          contributor: wallet.publicKey.toBase58(),                       // contributor
+          treasury: treasury.toBase58(),                                  // treasury
+          stream: stream.toBase58(),                                      // stream
+          contributorMint: contributorMint.toBase58(),                    // contributorMint
+          tokenAmount                                                     // amount
         }
         consoleOut('add funds data:', data);
 
@@ -1011,7 +1014,7 @@ export const Streams = () => {
           publicKey,
           treasury,
           stream,
-          amount,
+          tokenAmount,
           AllocationType.All
         )
         .then(value => {
@@ -2645,7 +2648,7 @@ export const Streams = () => {
                               : t("streams.stream-detail.withdraw-funds-cta")
                       }
                     </Button>
-                    {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
+                    {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -3552,6 +3555,7 @@ export const Streams = () => {
 
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
+          selectedToken={selectedToken}
           transactionFees={transactionFees}
           streamDetail={streamDetail}
           handleOk={onAcceptCloseStream}
