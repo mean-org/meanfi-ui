@@ -323,7 +323,7 @@ export const JupiterExchange = (props: {
                 cluster: "mainnet-beta",
                 user: publicKey || undefined,
                 wrapUnwrapSOL: false,
-                platformFeeAndAccounts: await getPlatformFee()
+                platformFeeAndAccounts: await getPlatformFee(),
             });
         }
 
@@ -402,7 +402,7 @@ export const JupiterExchange = (props: {
                     new PublicKey(outputToken.address),
                     inputAmountLamports,
                     slippage,
-                    true
+                    true,
                 ))
                 : null;
 
@@ -1754,6 +1754,7 @@ export const JupiterExchange = (props: {
                                     }
                                 }
                             }
+                            debounceTime={500}
                             onSelectToken={() => {
                                 setSubjectTokenSelection("source");
                                 showTokenSelector();

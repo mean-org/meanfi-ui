@@ -207,7 +207,7 @@ export const ExchangeOutput = (props: {
                             selected ? "bg-orange-red" : "disabled"
                           }`}
                         >
-                          {t("swap.clients-label-savings")}:{" "}
+                          {t("swap.routes-best-price-label")}:{" "}
                           {formatAmount(
                             savings,
                             props.toToken?.decimals || 2

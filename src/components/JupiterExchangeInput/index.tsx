@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount } from '../../utils/utils';
 import { useWallet } from '../../contexts/wallet';
+import { DebounceInput } from 'react-debounce-input';
 import { TokenDisplay } from '../TokenDisplay';
 
 export const JupiterExchangeInput = (props: {
@@ -17,6 +18,7 @@ export const JupiterExchangeInput = (props: {
   onBalanceClick?: any;
   translationId: string;
   readonly?: boolean;
+  debounceTime?: number;
   inputPosition: "left" | "right";
   inputLabel: string;
 }) => {
@@ -68,7 +70,7 @@ export const JupiterExchangeInput = (props: {
             </div>
             <div className={`transaction-field-row ${props.inputPosition === "left" ? 'main-row' : 'main-row reverse' }`}>
                 <div className="input-control">
-                    <input
+                    <DebounceInput
                         className="general-text-input"
                         inputMode="decimal"
                         autoComplete="off"
@@ -79,6 +81,7 @@ export const JupiterExchangeInput = (props: {
                         placeholder="0.0"
                         minLength={1}
                         maxLength={79}
+                        debounceTimeout={props.debounceTime || 300}
                         spellCheck="false"
                         readOnly={props.readonly ? true : false}
                         value={props.tokenAmount} />
