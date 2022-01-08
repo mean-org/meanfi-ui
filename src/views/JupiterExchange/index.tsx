@@ -1666,48 +1666,52 @@ export const JupiterExchange = (props: {
                         onCloseTokenSelector();
                     };
 
-                    return (
-                        <div
-                            key={index + 100}
-                            onClick={onClick}
-                            className={`token-item ${toMint && toMint === token.address
-                                    ? "selected"
-                                    : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
-                                        ? 'disabled'
-                                        : "simplelink"
-                                }`}>
-                            <div className="token-icon">
-                                {token.logoURI ? (
-                                    <img
-                                        alt={`${token.name}`}
-                                        width={24}
-                                        height={24}
-                                        src={token.logoURI}
-                                    />
-                                ) : (
-                                    <Identicon
-                                        address={token.address}
-                                        style={{ width: "24", display: "inline-flex" }}
-                                    />
-                                )}
+                    if (index < MAX_TOKEN_LIST_ITEMS) {
+                        return (
+                            <div
+                                key={index + 100}
+                                onClick={onClick}
+                                className={`token-item ${toMint && toMint === token.address
+                                        ? "selected"
+                                        : areSameTokens(token, (fromMint ? showToMintList[fromMint] : undefined))
+                                            ? 'disabled'
+                                            : "simplelink"
+                                    }`}>
+                                <div className="token-icon">
+                                    {token.logoURI ? (
+                                        <img
+                                            alt={`${token.name}`}
+                                            width={24}
+                                            height={24}
+                                            src={token.logoURI}
+                                        />
+                                    ) : (
+                                        <Identicon
+                                            address={token.address}
+                                            style={{ width: "24", display: "inline-flex" }}
+                                        />
+                                    )}
+                                </div>
+                                <div className="token-description">
+                                    <div className="token-symbol">{token.symbol}</div>
+                                    <div className="token-name">{token.name}</div>
+                                </div>
+                                {
+                                    publicKey && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
+                                        <div className="token-balance">
+                                            {
+                                                !userBalances[token.address] || userBalances[token.address] === 0
+                                                    ? ''
+                                                    : userBalances[token.address].toFixed(mintList[token.address].decimals)
+                                            }
+                                        </div>
+                                    )
+                                }
                             </div>
-                            <div className="token-description">
-                                <div className="token-symbol">{token.symbol}</div>
-                                <div className="token-name">{token.name}</div>
-                            </div>
-                            {
-                                publicKey && userBalances && mintList[token.address] && userBalances[token.address] > 0 && (
-                                    <div className="token-balance">
-                                        {
-                                            !userBalances[token.address] || userBalances[token.address] === 0
-                                                ? ''
-                                                : userBalances[token.address].toFixed(mintList[token.address].decimals)
-                                        }
-                                    </div>
-                                )
-                            }
-                        </div>
-                    );
+                        );
+                    } else {
+                        return null;
+                    }
                 })
             ) : (
                 <p>{t("general.loading")}...</p>
