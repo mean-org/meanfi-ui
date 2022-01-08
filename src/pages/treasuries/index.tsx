@@ -23,7 +23,8 @@ import {
   getTokenByMintAddress,
   getTokenSymbol,
   getTxIxResume,
-  shortenAddress
+  shortenAddress,
+  toUiAmount
 } from '../../utils/utils';
 import { Button, Col, Divider, Dropdown, Empty, Menu, Modal, Row, Space, Spin, Tooltip } from 'antd';
 import {
@@ -76,7 +77,8 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream } from '@mean-dao/msp';
+import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import BN from 'bn.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -681,105 +683,131 @@ export const TreasuriesView = () => {
   ]);
 
   const isTreasurer = useCallback((): boolean => {
-    return publicKey && treasuryDetails && treasuryDetails.treasurerAddress === publicKey.toBase58()
-            ? true
-            : false;
+    if (treasuryDetails && publicKey) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        return v2.treasurer === publicKey.toBase58() ? true : false;
+      } else {
+        return v1.treasurerAddress === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
   }, [
     publicKey,
-    treasuryDetails,
+    treasuryDetails
   ]);
 
-  const getStreamIcon = useCallback((item: StreamInfo) => {
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
+  }, [publicKey]);
+
+  const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
+    const isInbound = isInboundStream(item);
     return isInbound
       ? (<ArrowDownOutlined className="mean-svg-icons incoming" />)
       : (<ArrowUpOutlined className="mean-svg-icons outgoing" />)
-  }, [
-    publicKey
-  ]);
+  }, [isInboundStream]);
 
-  const getStreamDescription = (item: StreamInfo): string => {
+  const getStreamDescription = useCallback((item: Stream | StreamInfo): string => {
     let title = '';
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused) {
-        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      const isInbound = isInboundStream(item);
+      if (v1.version < 2) {
+        if (isInbound) {
+          if (v1.state === STREAM_STATE.Schedule) {
+            title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+          } else if (v1.state === STREAM_STATE.Paused) {
+            title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+          } else {
+            title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+          }
+        } else {
+          if (v2.status === STREAM_STATUS.Schedule) {
+            title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+          } else if (v2.status === STREAM_STATUS.Paused) {
+            title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+          } else {
+            title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+          }
+        }
       } else {
-        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      }
-    } else {
-      if (item.isUpdatePending) {
-        title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused) {
-        title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else {
-        title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
       }
     }
     return title;
-  }
+  }, [
+    t,
+    isInboundStream
+  ]);
 
-  const getStreamStatus = useCallback((item: StreamInfo) => {
-
-    if (item.isUpdatePending) {
-      return 'Update pending';
-    }
-
-    switch (item.state) {
-      case STREAM_STATE.Schedule:
-        return t('treasuries.treasury-streams.status-scheduled');
-      case STREAM_STATE.Paused:
-        return t('treasuries.treasury-streams.status-stopped');
-      default:
-        return t('treasuries.treasury-streams.status-running');
+  const getStreamStatus = useCallback((item: Stream | StreamInfo) => {
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+    if (v1.version < 2) {
+      switch (v1.state) {
+        case STREAM_STATE.Schedule:
+          return t('treasuries.treasury-streams.status-scheduled');
+        case STREAM_STATE.Paused:
+          return t('treasuries.treasury-streams.status-stopped');
+        default:
+          return t('treasuries.treasury-streams.status-running');
+      }
+    } else {
+      switch (v2.status) {
+        case STREAM_STATUS.Schedule:
+          return t('treasuries.treasury-streams.status-scheduled');
+        case STREAM_STATUS.Paused:
+          return t('treasuries.treasury-streams.status-stopped');
+        default:
+          return t('treasuries.treasury-streams.status-running');
+      }
     }
   }, [t]);
 
-  const getRateAmountDisplay = (item: StreamInfo): string => {
+  const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
-    if (item && item.rateAmount && item.associatedToken) {
-      value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+
+    if (item) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
       value += ' ';
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
   }
 
-  const getDepositAmountDisplay = (item: StreamInfo): string => {
+  const getDepositAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
+
     if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
-      value += getFormattedNumberToLocale(formatAmount(item.allocationReserved, 2));
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
       value += ' ';
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
-  }
-
-  const getStreamRateAmount = (item: StreamInfo) => {
-    let strOut = '';
-    if (item && item.rateAmount > 0) {
-      strOut = `${getRateAmountDisplay(item)} ${getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}`;
-    } else {
-      strOut = getDepositAmountDisplay(item);
-    }
-    return strOut;
   }
 
   const getTreasuryClosureMessage = () => {
-
-    // if (publicKey && treasuryDetails) {
-    //   const me = publicKey.toBase58();
-    //   const treasury = treasuryDetails.id as string;
-    //   const treasurer = treasuryDetails.treasurerAddress as string;
-    // }
-
     return (
       <div>{t('treasuries.close-treasury-confirmation')}</div>
     );
@@ -791,8 +819,12 @@ export const TreasuriesView = () => {
     if (publicKey && highlightedStream) {
 
       const me = publicKey.toBase58();
-      const treasurer = highlightedStream.treasurerAddress as string;
-      const beneficiary = highlightedStream.beneficiaryAddress as string;
+
+      const treasurer = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).treasurer as string : (highlightedStream as StreamInfo).treasurerAddress as string;
+
+      const beneficiary = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).beneficiary as string : (highlightedStream as StreamInfo).beneficiaryAddress as string;
 
       if (treasurer === me) {  // If I am the treasurer
         message = t('close-stream.context-treasurer-single-beneficiary', {beneficiary: shortenAddress(beneficiary)});
@@ -812,8 +844,11 @@ export const TreasuriesView = () => {
 
     if (publicKey && highlightedStream) {
 
-      const treasury = highlightedStream.treasuryAddress as string;
-      const beneficiary = highlightedStream.beneficiaryAddress as string;
+      const treasury = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).treasury as string : (highlightedStream as StreamInfo).treasuryAddress as string;
+
+      const beneficiary = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).beneficiary as string : (highlightedStream as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.pause-stream-confirmation', {
         treasury: shortenAddress(treasury),
@@ -832,8 +867,11 @@ export const TreasuriesView = () => {
 
     if (publicKey && highlightedStream) {
 
-      const treasury = highlightedStream.treasuryAddress as string;
-      const beneficiary = highlightedStream.beneficiaryAddress as string;
+      const treasury = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).treasury as string : (highlightedStream as StreamInfo).treasuryAddress as string;
+
+      const beneficiary = highlightedStream.version && highlightedStream.version >= 2
+        ? (highlightedStream as Stream).beneficiary as string : (highlightedStream as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.resume-stream-confirmation', {
         treasury: shortenAddress(treasury),
