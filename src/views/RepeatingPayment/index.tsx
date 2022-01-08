@@ -16,6 +16,7 @@ import {
   getTxIxResume,
   isValidNumber,
   shortenAddress,
+  toTokenAmount,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
 import { DATEPICKER_FORMAT } from "../../constants";
@@ -605,7 +606,7 @@ export const RepeatingPayment = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
+      if (wallet && publicKey && selectedToken) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
@@ -616,8 +617,8 @@ export const RepeatingPayment = () => {
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('beneficiaryMint:', selectedToken?.address);
-        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
+        consoleOut('beneficiaryMint:', selectedToken.address);
+        const beneficiaryMint = new PublicKey(selectedToken.address as string);
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
         const now = new Date();
@@ -688,9 +689,9 @@ export const RepeatingPayment = () => {
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
           recipientNote,                                              // streamName
-          amount,                                                     // allocationAssigned
+          toTokenAmount(amount, selectedToken.decimals),              // allocationAssigned
           0,                                                          // allocationReserved
-          rateAmount,                                                 // rateAmount
+          toTokenAmount(rateAmount, selectedToken.decimals),          // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
         )

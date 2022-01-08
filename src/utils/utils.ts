@@ -599,3 +599,8 @@ export const toUiAmount = (amount: BN, decimals: number) => {
   if (!decimals) { return 0; }
   return amount.toNumber() / (10 ** decimals);
 }
+
+export const toTokenAmount = (amount: number, decimals: number) => {
+  if (!amount || !decimals) { return 0; }
+  return amount * (10 ** decimals);
+}
