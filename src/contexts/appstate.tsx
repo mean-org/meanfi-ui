@@ -440,18 +440,26 @@ const AppStateProvider: React.FC = ({ children }) => {
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        const msp = new MSP(connectionConfig.endpoint, wallet, "confirmed");
-        const detail = await msp.getStream(streamPublicKey);
-        consoleOut('customStream', detail);
-        if (detail) {
-          setStreamDetail(detail);
-          setStreamList([detail]);
-          getStreamActivity(streamId);
-          setCustomStreamDocked(true);
-          notify({
-            description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
-            type: "success"
-          });
+        if (publicKey) {
+          const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
+          const detail = await msp.getStream(streamPublicKey);
+          consoleOut('customStream', detail);
+          if (detail) {
+            setStreamDetail(detail);
+            setStreamList([detail]);
+            getStreamActivity(streamId);
+            setCustomStreamDocked(true);
+            notify({
+              description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
+              type: "success"
+            });
+          } else {
+            notify({
+              message: t('notifications.error-title'),
+              description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+              type: "error"
+            });
+          }
         } else {
           notify({
             message: t('notifications.error-title'),
