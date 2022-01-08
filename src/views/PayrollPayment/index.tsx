@@ -328,9 +328,9 @@ export const PayrollPayment = () => {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(searchString.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(searchString.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(searchString.toLowerCase())
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
         );
       };
 

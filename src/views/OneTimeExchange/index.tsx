@@ -974,9 +974,9 @@ export const OneTimeExchange = (props: {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().includes(tokenFilter.toLowerCase()) ||
+          t.name.toLowerCase().includes(tokenFilter.toLowerCase()) ||
+          t.address.toLowerCase().includes(tokenFilter.toLowerCase())
         );
       };      
       
