@@ -2645,7 +2645,7 @@ export const Streams = () => {
                               : t("streams.stream-detail.withdraw-funds-cta")
                       }
                     </Button>
-                    {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
+                    {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -3552,6 +3552,7 @@ export const Streams = () => {
 
         <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
+          selectedToken={selectedToken}
           transactionFees={transactionFees}
           streamDetail={streamDetail}
           handleOk={onAcceptCloseStream}
