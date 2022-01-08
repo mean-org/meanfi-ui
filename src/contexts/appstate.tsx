@@ -256,6 +256,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
+  const [msp, setMsp] = useState<MSP | undefined>();
   const {
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -278,13 +279,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => {
+  useMemo(() => {
     if (wallet && wallet.publicKey) {
-      return new MSP(
+      console.log('wallet.publicKey', wallet.publicKey.toBase58());
+      setMsp(new MSP(
         connectionConfig.endpoint,
         wallet,
         streamProgramAddressFromConfig
-      )
+      ));
     }
     return undefined;
   }, [
@@ -292,6 +294,22 @@ const AppStateProvider: React.FC = ({ children }) => {
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
   ]);
+
+  // // Also for version 2 of MSP
+  // const msp = useMemo(() => {
+  //   if (wallet && wallet.publicKey) {
+  //     return new MSP(
+  //       connectionConfig.endpoint,
+  //       wallet,
+  //       streamProgramAddressFromConfig
+  //     )
+  //   }
+  //   return undefined;
+  // }, [
+  //   wallet,
+  //   connectionConfig.endpoint,
+  //   streamProgramAddressFromConfig
+  // ]);
 
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
