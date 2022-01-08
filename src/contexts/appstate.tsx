@@ -256,7 +256,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
-  // const [msp, setMsp] = useState<MSP | undefined>();
   const {
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -276,17 +275,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   ), [
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
-  ]);
-
-  // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    connectionConfig.endpoint,
-    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
-    "confirmed"
-  ), [
-    wallet,
-    publicKey,
-    connectionConfig.endpoint,
   ]);
 
   const today = new Date().toLocaleDateString("en-US");
@@ -703,7 +691,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey || !msp || loadingStreams || fetchTxInfoStatus === "fetching") {
+    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching") {
       return [];
     }
 
@@ -712,6 +700,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     setTimeout(() => {
       clearTransactionStatusContext();
     });
+
+    const msp = new MSP(connectionConfig.endpoint, wallet, "confirmed");
 
     let streamAccumulator: any[] = [];
 
@@ -797,15 +787,16 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [
     ms,
-    msp,
+    wallet,
     publicKey,
+    loadingStreams,
+    selectedStream,
     lastSentTxStatus,
     fetchTxInfoStatus,
     loadingStreamActivity,
-    selectedStream,
-    loadingStreams,
+    connectionConfig.endpoint,
+    clearTransactionStatusContext,
     getStreamActivity,
-    clearTransactionStatusContext
   ]);
 
   // Streams refresh timeout

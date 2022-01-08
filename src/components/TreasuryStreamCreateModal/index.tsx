@@ -32,6 +32,7 @@ import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { customLogger } from '../..';
 import { MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
+import { useConnectionConfig } from '../../contexts/connection';
 
 const { Option } = Select;
 
@@ -41,7 +42,6 @@ export const TreasuryStreamCreateModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
-  moneyStreamingClient: MSP;
   nativeBalance: number;
   transactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
@@ -49,6 +49,7 @@ export const TreasuryStreamCreateModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { wallet, publicKey, connected } = useWallet();
+  const { endpoint } = useConnectionConfig();
   const {
     tokenList,
     coinPrices,
@@ -457,7 +458,8 @@ export const TreasuryStreamCreateModal = (props: {
           return false;
         }
 
-        return await props.moneyStreamingClient.createStream(
+        const msp = new MSP(endpoint, wallet, "confirmed");
+        return await msp.createStream(
           publicKey,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary

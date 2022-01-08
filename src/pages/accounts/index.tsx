@@ -119,7 +119,6 @@ export const AccountsView = () => {
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
@@ -340,17 +339,6 @@ export const AccountsView = () => {
   ), [
     connection.endpoint,
     streamProgramAddress
-  ]);
-
-  // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    connection.endpoint,
-    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
-    "confirmed"
-  ), [
-    wallet,
-    publicKey,
-    connection.endpoint,
   ]);
 
   const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
@@ -777,7 +765,7 @@ export const AccountsView = () => {
 
   const refreshStreamSummary = useCallback(async () => {
 
-    if (!publicKey || (!streamListv1 && !streamListv2) || !msp || loadingStreamsSummary) { return; }
+    if (!publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -787,6 +775,8 @@ export const AccountsView = () => {
       outgoingAmount: 0,
       totalAmount: 0
     };
+
+    const msp = new MSP(connection.endpoint, wallet, "confirmed");
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -861,11 +851,12 @@ export const AccountsView = () => {
 
   }, [
     ms,
-    msp,
+    wallet,
     publicKey,
     streamListv1,
     streamListv2,
     streamsSummary,
+    connection.endpoint,
     loadingStreamsSummary,
     getPricePerToken,
     setStreamsSummary,
@@ -1228,46 +1219,9 @@ export const AccountsView = () => {
 
         {/* {isLocal() && (
           <div className="debug-bar">
-            <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
             <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
             <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
             <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
-          </div>
-        )} */}
-        {/* {isLocal() && (
-          <div className="debug-bar">
-            {streamList && streamList.length && (
-              <>
-                <div className="item-list-header compact">
-                  <div className="header-row">
-                    <div className="std-table-cell responsive-cell">I/O</div>
-                    <div className="std-table-cell responsive-cell">State</div>
-                    <div className="std-table-cell responsive-cell">Vested</div>
-                    <div className="std-table-cell responsive-cell">Unvested</div>
-                  </div>
-                </div>
-                <div className="item-list-body compact">
-                  {streamList.map((item, index) => {
-                    return (
-                      <div key={`${index}`} className="item-list-row">
-                        <div className="std-table-cell responsive-cell">
-                          <span className="align-middle">{isInboundStream(item) ? 'Inbound' : 'Outbound'}</span>
-                        </div>
-                        <div className="std-table-cell responsive-cell">
-                          <span className="align-middle">{item.state}</span>
-                        </div>
-                        <div className="std-table-cell responsive-cell">
-                          <span className="align-middle">{getTokenAmountAndSymbolByTokenAddress(item.escrowVestedAmount, '')}</span>
-                        </div>
-                        <div className="std-table-cell responsive-cell">
-                          <span className="align-middle">{getTokenAmountAndSymbolByTokenAddress(item.escrowUnvestedAmount, '')}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
           </div>
         )} */}
 

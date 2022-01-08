@@ -131,17 +131,6 @@ export const Streams = () => {
     streamProgramAddress
   ]);
 
-  // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    endpoint,
-    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
-    "confirmed"
-  ), [
-    wallet,
-    publicKey,
-    endpoint,
-  ]);
-
   // Keep account balance updated
   useEffect(() => {
 
@@ -180,7 +169,9 @@ export const Streams = () => {
   useEffect(() => {
 
     const refreshStreams = async () => {
-      if (!streamList || !publicKey || !msp || loadingStreams) { return; }
+      if (!streamList || !publicKey || loadingStreams) { return; }
+
+      const msp = new MSP(endpoint, wallet, "confirmed");
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -236,7 +227,8 @@ export const Streams = () => {
 
   }, [
     ms,
-    msp,
+    wallet,
+    endpoint,
     publicKey,
     streamList,
     streamListv1,
@@ -3574,9 +3566,8 @@ export const Streams = () => {
           handleClose={closeAddFundsModal}
         />
 
-        {(msp && isWithdrawModalVisible) && (
+        {(isWithdrawModalVisible) && (
           <StreamWithdrawModal
-            moneyStreamingClient={(lastStreamDetail?.version || 0) < 2 ? ms : msp}
             startUpData={lastStreamDetail}
             selectedToken={selectedToken}
             transactionFees={transactionFees}

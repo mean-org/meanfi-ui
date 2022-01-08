@@ -76,7 +76,6 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { MSP } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -155,17 +154,6 @@ export const TreasuriesView = () => {
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
-  ]);
-
-  // Also for version 2 of MSP
-  const msp = useMemo(() => new MSP(
-    connectionConfig.endpoint,
-    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
-    "confirmed"
-  ), [
-    wallet,
-    publicKey,
-    connectionConfig.endpoint,
   ]);
 
   // Keep account balance updated
@@ -3451,14 +3439,13 @@ export const TreasuriesView = () => {
         />
       )}
 
-      {(isCreateStreamModalVisible && msp) && (
+      {isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal
           associatedToken={treasuryDetails ? treasuryDetails.associatedTokenAddress as string : ''}
           connection={connection}
           handleClose={closeCreateStreamModal}
           handleOk={onAcceptCreateStream}
           isVisible={isCreateStreamModalVisible}
-          moneyStreamingClient={msp}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
           treasuryDetails={treasuryDetails}

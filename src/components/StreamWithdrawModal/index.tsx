@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
+import { useConnectionConfig } from '../../contexts/connection';
+import { useWallet } from '../../contexts/wallet';
 import { isValidNumber, shortenAddress, truncateFloat } from "../../utils/utils";
 import { consoleOut, percentage } from "../../utils/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -10,6 +12,7 @@ import { PublicKey } from '@solana/web3.js';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { notify } from '../../utils/notifications';
 import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { AppStateContext } from '../../contexts/appstate';
 
 export const StreamWithdrawModal = (props: {
   startUpData: Stream | StreamInfo | undefined;
@@ -18,9 +21,13 @@ export const StreamWithdrawModal = (props: {
   isVisible: boolean;
   selectedToken: TokenInfo | undefined;
   transactionFees: TransactionFees;
-  moneyStreamingClient: MSP | MoneyStreaming;
 }) => {
   const { t } = useTranslation('common');
+  const { endpoint } = useConnectionConfig();
+  const { wallet } = useWallet();
+  const {
+    streamProgramAddress,
+  } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
@@ -36,11 +43,11 @@ export const StreamWithdrawModal = (props: {
   }
 
   useEffect(() => {
-    const getStreamDetails = async (streamId: string) => {
+    const getStreamDetails = async (streamId: string, client: MSP | MoneyStreaming) => {
       let streamPublicKey: PublicKey;
       streamPublicKey = new PublicKey(streamId as string);
       try {
-        const detail = await props.moneyStreamingClient.getStream(streamPublicKey);
+        const detail = await client.getStream(streamPublicKey);
         if (detail) {
           consoleOut('detail', detail);
           const v1 = detail as StreamInfo;
@@ -81,7 +88,8 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            getStreamDetails(v1.id as string);
+            const ms = new MSP(endpoint, streamProgramAddress);
+            getStreamDetails(v1.id as string, ms);
           } catch (error) {
             notify({
               message: t('notifications.error-title'),
@@ -98,7 +106,8 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            getStreamDetails(v2.id as string);
+            const msp = new MSP(endpoint, wallet, "confirmed");
+            getStreamDetails(v2.id as string, msp);
           } catch (error) {
             notify({
               message: t('notifications.error-title'),
@@ -114,8 +123,10 @@ export const StreamWithdrawModal = (props: {
     }
   }, [
     t,
+    wallet,
+    endpoint,
+    streamProgramAddress,
     props.startUpData,
-    props.moneyStreamingClient
   ]);
 
   useEffect(() => {
