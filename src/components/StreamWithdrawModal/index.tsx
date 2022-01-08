@@ -24,7 +24,7 @@ export const StreamWithdrawModal = (props: {
 }) => {
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
-  const { wallet } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const {
     streamProgramAddress,
   } = useContext(AppStateContext);
@@ -43,6 +43,9 @@ export const StreamWithdrawModal = (props: {
   }
 
   useEffect(() => {
+
+    if (!wallet || !publicKey) { return; }
+
     const getStreamDetails = async (streamId: string, client: MSP | MoneyStreaming) => {
       let streamPublicKey: PublicKey;
       streamPublicKey = new PublicKey(streamId as string);
@@ -88,7 +91,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const ms = new MSP(endpoint, streamProgramAddress);
+            const ms = new MoneyStreaming(endpoint, streamProgramAddress);
             getStreamDetails(v1.id as string, ms);
           } catch (error) {
             notify({
@@ -106,7 +109,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const msp = new MSP(endpoint, wallet, "confirmed");
+            const msp = new MSP(endpoint, publicKey, "confirmed");
             getStreamDetails(v2.id as string, msp);
           } catch (error) {
             notify({
@@ -123,6 +126,7 @@ export const StreamWithdrawModal = (props: {
     }
   }, [
     t,
+    publicKey,
     wallet,
     endpoint,
     streamProgramAddress,

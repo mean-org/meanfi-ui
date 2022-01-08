@@ -701,7 +701,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       clearTransactionStatusContext();
     });
 
-    const msp = new MSP(connectionConfig.endpoint, wallet, "confirmed");
+    const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
 
     let streamAccumulator: any[] = [];
 

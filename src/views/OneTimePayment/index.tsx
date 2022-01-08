@@ -556,10 +556,10 @@ export const OneTimePayment = () => {
 
         // Init a streaming operation
         console.log('OneTimePayment -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, wallet, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
 
         return await moneyStream.oneTimePayment(
-          wallet.publicKey,
+          publicKey,
           beneficiary,                                                // beneficiary
           associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount

@@ -776,7 +776,7 @@ export const AccountsView = () => {
       totalAmount: 0
     };
 
-    const msp = new MSP(connection.endpoint, wallet, "confirmed");
+    const msp = new MSP(connection.endpoint, publicKey, "confirmed");
 
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
