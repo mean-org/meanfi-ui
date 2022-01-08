@@ -476,7 +476,7 @@ export const OneTimePayment = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
@@ -555,7 +555,7 @@ export const OneTimePayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, wallet, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey.toBase58(), "confirmed");
 
         return await moneyStream.oneTimePayment(
           wallet.publicKey,

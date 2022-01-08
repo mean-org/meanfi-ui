@@ -279,16 +279,15 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   // Also for version 2 of MSP
   const msp = useMemo(() => {
-    if (wallet && publicKey) {
+    if (publicKey) {
       return new MSP(
         connectionConfig.endpoint,
-        wallet,
+        publicKey.toBase58(),
         streamProgramAddressFromConfig
       )
     }
     return undefined;
   }, [
-    wallet,
     publicKey,
     connectionConfig.endpoint,
     streamProgramAddressFromConfig

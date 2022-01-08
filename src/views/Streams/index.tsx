@@ -133,16 +133,15 @@ export const Streams = () => {
 
   // Also for version 2 of MSP
   const msp = useMemo(() => {
-    if (wallet && publicKey) {
+    if (publicKey) {
       return new MSP(
         endpoint,
-        wallet,
+        publicKey.toBase58(),
         streamProgramAddress
       )
     }
     return undefined;
   }, [
-    wallet,
     publicKey,
     endpoint,
     streamProgramAddress
@@ -963,7 +962,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1017,7 +1016,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamProgramAddress, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey.toBase58(), "confirmed");
 
         // Create a transaction
         return await moneyStream.addFunds(
@@ -1334,7 +1333,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1385,7 +1384,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamProgramAddress, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey.toBase58(), "confirmed");
 
         // Create a transaction
         return await moneyStream.withdraw(
@@ -1702,7 +1701,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && streamDetail) {
+      if (wallet && publicKey && streamDetail) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1748,7 +1747,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamProgramAddress, "confirmed");
+        const moneyStream = new MSP(endpoint, publicKey.toBase58(), "confirmed");
 
         // Create a transaction
         return await moneyStream.closeStream(
