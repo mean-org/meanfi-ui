@@ -2070,12 +2070,6 @@ export const TreasuriesView = () => {
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
-    getTransactionFees(MSP_ACTIONS.closeStream).then(value => {
-      setTransactionFees(value);
-      setIsCloseStreamModalVisibility(true);
-      consoleOut('transactionFees:', value, 'orange');
-    });
-
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2359,12 +2353,28 @@ export const TreasuriesView = () => {
   // Pause stream modal
   const [isPauseStreamModalVisible, setIsPauseStreamModalVisibility] = useState(false);
   const showPauseStreamModal = useCallback(() => {
-    getTransactionFees(MSP_ACTIONS.pauseStream).then(value => {
-      setTransactionFees(value);
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        getTransactionFeesV2(MSP_ACTIONS_V2.pauseStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFees(MSP_ACTIONS.pauseStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
       setIsPauseStreamModalVisibility(true);
-      consoleOut('transactionFees:', value, 'orange');
-    });
-  }, [getTransactionFees]);
+    }
+
+  }, [
+    treasuryDetails,
+    getTransactionFees,
+    getTransactionFeesV2,
+  ]);
+
   const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
   const onAcceptPauseStream = () => {
     hidePauseStreamModal();
@@ -2611,12 +2621,28 @@ export const TreasuriesView = () => {
   // Resume stream modal
   const [isResumeStreamModalVisible, setIsResumeStreamModalVisibility] = useState(false);
   const showResumeStreamModal = useCallback(() => {
-    getTransactionFees(MSP_ACTIONS.pauseStream).then(value => {
-      setTransactionFees(value);
+    if (treasuryDetails) {
+      const v2 = treasuryDetails as Treasury;
+      if (v2.version && v2.version >= 2) {
+        getTransactionFeesV2(MSP_ACTIONS_V2.resumeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      } else {
+        getTransactionFees(MSP_ACTIONS.resumeStream).then(value => {
+          setTransactionFees(value);
+          consoleOut('transactionFees:', value, 'orange');
+        });
+      }
       setIsResumeStreamModalVisibility(true);
-      consoleOut('transactionFees:', value, 'orange');
-    });
-  }, [getTransactionFees]);
+    }
+
+  }, [
+    treasuryDetails,
+    getTransactionFees,
+    getTransactionFeesV2,
+  ]);
+
   const hideResumeStreamModal = useCallback(() => setIsResumeStreamModalVisibility(false), []);
   const onAcceptResumeStream = () => {
     hideResumeStreamModal();
@@ -2862,11 +2888,11 @@ export const TreasuriesView = () => {
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(true);
-    getTransactionFees(MSP_ACTIONS.createStream).then(value => {
+    getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
-  }, [getTransactionFees]);
+  }, [getTransactionFeesV2]);
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
