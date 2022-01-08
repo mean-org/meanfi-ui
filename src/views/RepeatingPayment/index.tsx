@@ -604,9 +604,6 @@ export const RepeatingPayment = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    // Init a streaming operation
-    const moneyStream = new MSP(endpoint, streamProgramAddress, "confirmed");
-
     const createTx = async (): Promise<boolean> => {
       if (wallet) {
         consoleOut("Start transaction for contract type:", contract?.name);
@@ -680,6 +677,9 @@ export const RepeatingPayment = () => {
           customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         }
+
+        // Init a streaming operation
+        const moneyStream = new MSP(endpoint, wallet, "confirmed");
 
         return await moneyStream.createStream(
           wallet.publicKey,                                           // wallet
