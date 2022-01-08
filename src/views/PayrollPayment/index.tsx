@@ -686,7 +686,7 @@ export const PayrollPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, publicKey.toBase58(), "confirmed");
+        const moneyStream = new MSP(endpoint, wallet, "confirmed");
 
         return await moneyStream.createStream(
           wallet.publicKey,                                           // wallet
