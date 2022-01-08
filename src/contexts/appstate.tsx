@@ -279,18 +279,20 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   // Also for version 2 of MSP
-  useMemo(() => {
-    if (wallet && wallet.publicKey) {
-      console.log('wallet.publicKey', wallet.publicKey.toBase58());
+  useEffect(() => {
+    if (wallet && publicKey) {
+      console.log('AppState -> wallet.publicKey', wallet.publicKey.toBase58());
       setMsp(new MSP(
         connectionConfig.endpoint,
         wallet,
         streamProgramAddressFromConfig
       ));
+    } else {
+      setMsp(undefined);
     }
-    return undefined;
   }, [
     wallet,
+    publicKey,
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
   ]);

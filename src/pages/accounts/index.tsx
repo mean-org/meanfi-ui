@@ -345,6 +345,7 @@ export const AccountsView = () => {
   // Also for version 2 of MSP
   const msp = useMemo(() => {
     if (wallet && wallet.publicKey) {
+      console.log('Accounts -> wallet.publicKey', wallet.publicKey.toBase58());
       return new MSP(
         connection.endpoint,
         wallet,

@@ -134,6 +134,7 @@ export const Streams = () => {
   // Also for version 2 of MSP
   const msp = useMemo(() => {
     if (wallet && wallet.publicKey) {
+      console.log('Streams -> wallet.publicKey', wallet.publicKey.toBase58());
       return new MSP(
         endpoint,
         wallet,
@@ -1016,6 +1017,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
+        console.log('Streams -> AddFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
         const moneyStream = new MSP(endpoint, wallet, "confirmed");
 
         // Create a transaction
@@ -1384,6 +1386,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
+        console.log('Streams -> WithdrawFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
         const moneyStream = new MSP(endpoint, wallet, "confirmed");
 
         // Create a transaction
@@ -1747,6 +1750,7 @@ export const Streams = () => {
         }
 
         // Init a streaming operation
+        console.log('Streams -> CloseStreamTx -> wallet.publicKey', wallet.publicKey.toBase58());
         const moneyStream = new MSP(endpoint, wallet, "confirmed");
 
         // Create a transaction
