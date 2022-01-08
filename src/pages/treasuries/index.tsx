@@ -158,20 +158,14 @@ export const TreasuriesView = () => {
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => {
-    if (wallet && wallet.publicKey) {
-      console.log('Treasuries -> wallet.publicKey', wallet.publicKey.toBase58());
-      return new MSP(
-        connectionConfig.endpoint,
-        wallet,
-        streamProgramAddress
-      )
-    }
-    return undefined;
-  }, [
-    wallet,
+  const msp = useMemo(() => new MSP(
     connectionConfig.endpoint,
-    streamProgramAddress
+    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
+    "confirmed"
+  ), [
+    wallet,
+    publicKey,
+    connectionConfig.endpoint,
   ]);
 
   // Keep account balance updated

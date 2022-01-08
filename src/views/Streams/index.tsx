@@ -132,20 +132,14 @@ export const Streams = () => {
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => {
-    if (wallet && wallet.publicKey) {
-      console.log('Streams -> wallet.publicKey', wallet.publicKey.toBase58());
-      return new MSP(
-        endpoint,
-        wallet,
-        streamProgramAddress
-      )
-    }
-    return undefined;
-  }, [
-    wallet,
+  const msp = useMemo(() => new MSP(
     endpoint,
-    streamProgramAddress
+    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
+    "confirmed"
+  ), [
+    wallet,
+    publicKey,
+    endpoint,
   ]);
 
   // Keep account balance updated

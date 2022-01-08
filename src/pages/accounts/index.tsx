@@ -343,20 +343,14 @@ export const AccountsView = () => {
   ]);
 
   // Also for version 2 of MSP
-  const msp = useMemo(() => {
-    if (wallet && wallet.publicKey) {
-      console.log('Accounts -> wallet.publicKey', wallet.publicKey.toBase58());
-      return new MSP(
-        connection.endpoint,
-        wallet,
-        streamProgramAddress
-      )
-    }
-    return undefined;
-  }, [
-    wallet,
+  const msp = useMemo(() => new MSP(
     connection.endpoint,
-    streamProgramAddress
+    !wallet || !wallet.publicKey ? { publicKey: publicKey } : wallet,
+    "confirmed"
+  ), [
+    wallet,
+    publicKey,
+    connection.endpoint,
   ]);
 
   const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
@@ -893,43 +887,36 @@ export const AccountsView = () => {
   useEffect(() => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       if (lastSentTxOperationType === OperationType.StreamCreate || lastSentTxOperationType === OperationType.Transfer) {
-        if (!loadingStreams) {
-          consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
-          setLoadingStreams(true);
-          ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-            .then((streams: any[]) => {
-              setStreamList(streams);
-              if (streams.length) {
-                let item: StreamInfo | undefined;
-                if (lastSentTxStatus) {
-                  item = streams.find(d => d.transactionSignature === lastSentTxStatus);
-                }
-                if (!item) {
-                  item = streams[0];
-                }
-                setSelectedStream(item);
-              }
-              setLoadingStreams(false);
-            }).catch((err: any) => {
-              console.error(err);
-              setLoadingStreams(false);
-            });
-        }
+        refreshStreamList();
+        // if (!loadingStreams) {
+        //   consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
+        //   setLoadingStreams(true);
+        //   ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+        //     .then((streams: any[]) => {
+        //       setStreamList(streams);
+        //       if (streams.length) {
+        //         let item: StreamInfo | undefined;
+        //         if (lastSentTxStatus) {
+        //           item = streams.find(d => d.transactionSignature === lastSentTxStatus);
+        //         }
+        //         if (!item) {
+        //           item = streams[0];
+        //         }
+        //         setSelectedStream(item);
+        //       }
+        //       setLoadingStreams(false);
+        //     }).catch((err: any) => {
+        //       console.error(err);
+        //       setLoadingStreams(false);
+        //     });
+        // }
       }
     }
   }, [
-    ms,
-    publicKey,
-    loadingStreams,
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
-    clearTransactionStatusContext,
-    setLoadingStreams,
-    setSelectedStream,
-    setStreamList,
-    navigate
+    refreshStreamList,
   ]);
 
   ///////////////
