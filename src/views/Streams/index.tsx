@@ -1343,7 +1343,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && streamDetail && msp) {
+      if (publicKey && streamDetail && msp && selectedToken) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1351,8 +1351,8 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const beneficiary = new PublicKey((streamDetail as Stream).beneficiary as string);
-        const amount = parseFloat(withdrawAmount);
-        setWithdrawFundsAmount(amount);
+        const amount = toTokenAmount(parseFloat(withdrawAmount as string), selectedToken.decimals);
+        setWithdrawFundsAmount(parseFloat(withdrawAmount as string));
 
         const data = {
           stream: stream.toBase58(),
