@@ -2265,7 +2265,7 @@ export const Streams = () => {
                     </Col>
                     {isOtp() && (
                       <Col span={12}>
-                        <div className="info-label text-truncate">
+                        <div className="info-label">
                           Amount
                         </div>
                         <div className="transaction-detail-row">
@@ -2586,7 +2586,7 @@ export const Streams = () => {
                     </Col>
                     {isOtp() && (
                       <Col span={12}>
-                        <div className="info-label text-truncate">
+                        <div className="info-label">
                           Amount
                         </div>
                         <div className="transaction-detail-row">
@@ -2898,7 +2898,7 @@ export const Streams = () => {
                     </Col>
                     {isOtp() && (
                       <Col span={12}>
-                        <div className="info-label text-truncate">
+                        <div className="info-label">
                           Amount
                         </div>
                         <div className="transaction-detail-row">
@@ -3254,7 +3254,7 @@ export const Streams = () => {
                     </Col>
                     {isOtp() && (
                       <Col span={12}>
-                        <div className="info-label text-truncate">
+                        <div className="info-label">
                           Amount
                         </div>
                         <div className="transaction-detail-row">
