@@ -426,15 +426,15 @@ export const TreasuriesView = () => {
 
       if (msp && ms) {
         let treasuryAccumulator: any[] = [];
-        ms.listTreasuries(publicKey)
-          .then((treasuriesv1) => {
-            treasuryAccumulator.push(...treasuriesv1);
-            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+        msp.listTreasuries(publicKey)
+          .then((treasuriesv2) => {
+            treasuryAccumulator.push(...treasuriesv2);
+            consoleOut('v2 treasuries:', treasuriesv2, 'blue');
 
-            msp.listTreasuries(publicKey)
-              .then(treasuriesv2 => {
-                treasuryAccumulator.push(...treasuriesv2);
-                consoleOut('v2 treasuries:', treasuriesv2, 'blue');
+            ms.listTreasuries(publicKey)
+              .then(treasuriesv1 => {
+                treasuryAccumulator.push(...treasuriesv1);
+                consoleOut('v2 treasuries:', treasuriesv1, 'blue');
 
                 let item: Treasury | TreasuryInfo | undefined = undefined;
                 if (treasuryAccumulator.length) {

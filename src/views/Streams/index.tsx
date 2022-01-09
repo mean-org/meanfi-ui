@@ -189,27 +189,10 @@ export const Streams = () => {
     const refreshStreams = async () => {
       if (!msp ||!streamList || !publicKey || loadingStreams) { return; }
 
-      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
 
       const newList: Array<Stream | StreamInfo> = [];
-      // Get an updated version for each v1 stream in the list
-      if (updatedStreamsv1 && updatedStreamsv1.length) {
-        let freshStream: StreamInfo;
-        for (const stream of updatedStreamsv1) {
-          if (streamDetail && streamDetail.id === stream.id) {
-            freshStream = await ms.refreshStream(streamDetail);
-            if (freshStream) {
-              setStreamDetail(freshStream);
-            }
-          }
-          freshStream = await ms.refreshStream(stream);
-          if (freshStream) {
-            newList.push(freshStream);
-          }
-        }
-      }
-
       // Get an updated version for each v2 stream in the list
       if (updatedStreamsv2 && updatedStreamsv2.length) {
         let freshStream: Stream;
@@ -221,6 +204,23 @@ export const Streams = () => {
             }
           }
           freshStream = await msp.refreshStream(stream);
+          if (freshStream) {
+            newList.push(freshStream);
+          }
+        }
+      }
+
+      // Get an updated version for each v1 stream in the list
+      if (updatedStreamsv1 && updatedStreamsv1.length) {
+        let freshStream: StreamInfo;
+        for (const stream of updatedStreamsv1) {
+          if (streamDetail && streamDetail.id === stream.id) {
+            freshStream = await ms.refreshStream(streamDetail);
+            if (freshStream) {
+              setStreamDetail(freshStream);
+            }
+          }
+          freshStream = await ms.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
           }
