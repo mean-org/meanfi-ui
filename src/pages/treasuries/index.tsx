@@ -4041,8 +4041,6 @@ export const TreasuriesView = () => {
                               }
                             />
                           </Tooltip>
-                        </span>
-                        <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
                             <Button
                               type="default"
