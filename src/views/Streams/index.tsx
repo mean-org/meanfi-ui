@@ -233,7 +233,9 @@ export const Streams = () => {
     }
 
     const timeout = setTimeout(() => {
-      refreshStreams();
+      if (!customStreamDocked) {
+        refreshStreams();
+      }
     }, 1000);
 
     return () => {
@@ -251,6 +253,7 @@ export const Streams = () => {
     streamListv2,
     streamDetail,
     loadingStreams,
+    customStreamDocked,
     setStreamDetail,
     setStreamList,
   ])
@@ -791,7 +794,7 @@ export const Streams = () => {
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
   useEffect(() => {
-    if (!ms || !streamDetail) { return; }
+    if (!streamDetail) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       switch (lastSentTxOperationType) {
@@ -816,7 +819,6 @@ export const Streams = () => {
       }
     }
   }, [
-    ms,
     streamList,
     streamDetail,
     fetchTxInfoStatus,
@@ -3413,6 +3415,7 @@ export const Streams = () => {
   return (
     <>
       <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
+
         {/* Left / top panel*/}
         <div className="meanfi-two-panel-left">
           <div className="meanfi-panel-heading">
@@ -3511,6 +3514,7 @@ export const Streams = () => {
             </div>
           </div>
         </div>
+
         {/* Right / down panel */}
         <div className="meanfi-two-panel-right">
           <div className="meanfi-panel-heading"><span className="title">{t('streams.stream-detail.heading')}</span></div>

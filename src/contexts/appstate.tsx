@@ -723,7 +723,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching") {
+    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching" || customStreamDocked) {
       return;
     }
 
@@ -818,15 +818,16 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
 
   }, [
-    ms, 
-    msp, 
-    publicKey, 
-    loadingStreams, 
-    selectedStream, 
-    lastSentTxStatus, 
-    fetchTxInfoStatus, 
-    loadingStreamActivity, 
-    clearTransactionStatusContext, 
+    ms,
+    msp,
+    publicKey,
+    loadingStreams,
+    selectedStream,
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    customStreamDocked,
+    loadingStreamActivity,
+    clearTransactionStatusContext,
     getStreamActivity
   ]);
 
