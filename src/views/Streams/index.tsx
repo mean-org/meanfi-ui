@@ -1333,13 +1333,6 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-
-          // TODO: Remove when withdraw feature goes back to normal
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-          });
-
           return false;
         });
       } else {
@@ -1433,13 +1426,6 @@ export const Streams = () => {
             result: `${error}`
           });
           customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-
-          // TODO: Remove when withdraw feature goes back to normal
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-          });
-
           return false;
         });
       } else {
@@ -1542,13 +1528,6 @@ export const Streams = () => {
               result: { error, encodedTx }
             });
             customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
-
-            // TODO: Remove when withdraw feature goes back to normal
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-            });
-
             return false;
           });
       } else {
