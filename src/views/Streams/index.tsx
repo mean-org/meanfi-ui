@@ -2307,10 +2307,7 @@ export const Streams = () => {
                     null
                   ) : stream && stream.escrowUnvestedAmount > 0 && (
                     <div className="mb-3">
-                      {/* <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
-                        ? getEscrowEstimatedDepletionUtcLabel(stream.escrowEstimatedDepletionUtc as Date)
-                        : ''}
-                      </div> */}
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           <IconBank className="mean-svg-icons" />
@@ -2632,10 +2629,7 @@ export const Streams = () => {
                     null
                   ) : stream.fundsLeftInStream > 0 && (
                     <div className="mb-3">
-                      {/* <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
-                        ? getEscrowEstimatedDepletionUtcLabel(stream.estimatedDepletionDate as Date)
-                        : ''}
-                      </div> */}
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           <IconBank className="mean-svg-icons" />
@@ -3005,12 +2999,7 @@ export const Streams = () => {
                     null
                   ) : (
                     <div className="mb-3">
-                      {/* <div className="info-label text-truncate">{stream && !stream?.escrowUnvestedAmount
-                        ? t('streams.stream-detail.label-funds-left-in-account')
-                        : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${stream && stream.escrowEstimatedDepletionUtc
-                          ? getReadableDate(stream.escrowEstimatedDepletionUtc.toString())
-                          : ''})`}
-                      </div> */}
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           {stream && stream.state === STREAM_STATE.Running ? (
@@ -3361,14 +3350,7 @@ export const Streams = () => {
                     null
                   ) : (
                     <div className="mb-3">
-                      {/* <div className="info-label text-truncate">
-                        {!stream.fundsLeftInStream
-                          ? t('streams.stream-detail.label-funds-left-in-account')
-                          : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${stream && stream.estimatedDepletionDate
-                            ? getReadableDate(stream.estimatedDepletionDate.toString())
-                            : ''})`
-                        }
-                      </div> */}
+                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')}</div>
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           {stream.status === STREAM_STATUS.Running ? (
