@@ -131,27 +131,20 @@ export const AirdropRedeem = (props: {
         const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals);
         const streamName = 'Airdrop unlocked';
         const now = new Date();
-
         const cliffAmount = 0;
         const cliffVestPercent = userAllocation.cliffPercent * 100 * 10_000;
-
-        // const rateAmountUnits = allocation.monthlyRate * tenPowDecimals;
-        // const allocationAssignedUnits = allocation.tokenAmount * tenPowDecimals;
-        // const allocationReservedUnits = allocation.tokenAmount * tenPowDecimals;
-
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         const data = {
           treasurer: treasurer.toBase58(),
           treasury: treasury.toBase58(),
           beneficiary: publicKey.toBase58(),
           associatedToken: associatedToken.toBase58(),
+          streamName: streamName,
+          allocationAssigned: allocation,
+          allocationReserved: allocation,
           rateAmount: rateAmount,
           rateIntervalInSeconds: getRateIntervalInSeconds(PaymentRateType.PerMonth),
           startUtc: now.toUTCString(),
-          streamName: streamName,
-          allocation: allocation,
-          allocationReserved: allocation,
           rateCliffInSeconds: undefined,
           cliffVestAmount: undefined,
           cliffVestPercent: cliffVestPercent,
@@ -170,6 +163,8 @@ export const AirdropRedeem = (props: {
           result: ''
         });
 
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+
         // Create a transaction
         return await msp.createStream(
           treasurer,                                                        // treasurer
@@ -182,6 +177,8 @@ export const AirdropRedeem = (props: {
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
           now,                                                              // startUtc
+          cliffAmount,
+          cliffVestPercent
         )
         .then(value => {
           consoleOut('createStream2 returned transaction:', value);
