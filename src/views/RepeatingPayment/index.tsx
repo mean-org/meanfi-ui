@@ -683,6 +683,7 @@ export const RepeatingPayment = () => {
         const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
+          publicKey,                                                  // initializer
           publicKey,                                                  // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary

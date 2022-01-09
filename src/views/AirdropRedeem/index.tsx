@@ -12,7 +12,7 @@ import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType }
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
-import { getWhitelistAllocation } from '../../utils/api';
+import { getWhitelistAllocation, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
 import { updateCreateStream2Tx } from '../../utils/transactions';
@@ -162,6 +162,7 @@ export const AirdropRedeem = (props: {
 
         // Create a transaction
         return await msp.createStream(
+          beneficiary,                                                      // initializer
           treasurer,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
@@ -186,8 +187,6 @@ export const AirdropRedeem = (props: {
             result: getTxIxResume(value)
           });
           transaction = value;
-          const createStreamTxB64 = value.serialize({ verifySignatures: true, requireAllSignatures: false }).toString("base64");
-          consoleOut('createStreamTxB64:', createStreamTxB64, 'orange');
           return true;
         })
         .catch(error => {
@@ -227,9 +226,9 @@ export const AirdropRedeem = (props: {
 
           // Send Tx to add treasurer signature
           try {
-            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: false }).toString('base64');
+            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: true }).toString('base64');
             consoleOut('encodedTx before updating:', encodedTx, 'orange');
-            const updatedTx = await updateCreateStream2Tx(publicKey, signed, WhitelistClaimType.Airdrop, appConfig.getConfig().apiUrl);
+            const updatedTx = await sendSignClaimTxRequest(publicKey.toBase58(), encodedTx);
             signedTransaction = updatedTx;
             encodedTx = signedTransaction.serialize().toString('base64');
             consoleOut('encodedTx:', encodedTx, 'orange');
@@ -239,7 +238,7 @@ export const AirdropRedeem = (props: {
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: 'updateCloseTx returned an updated Tx'
+              result: 'sendSignClaimTxRequest returned an updated Tx'
             });
             return true;
           } catch (error) {

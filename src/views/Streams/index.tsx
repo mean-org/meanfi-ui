@@ -189,27 +189,10 @@ export const Streams = () => {
     const refreshStreams = async () => {
       if (!msp ||!streamList || !publicKey || loadingStreams) { return; }
 
-      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
 
       const newList: Array<Stream | StreamInfo> = [];
-      // Get an updated version for each v1 stream in the list
-      if (updatedStreamsv1 && updatedStreamsv1.length) {
-        let freshStream: StreamInfo;
-        for (const stream of updatedStreamsv1) {
-          if (streamDetail && streamDetail.id === stream.id) {
-            freshStream = await ms.refreshStream(streamDetail);
-            if (freshStream) {
-              setStreamDetail(freshStream);
-            }
-          }
-          freshStream = await ms.refreshStream(stream);
-          if (freshStream) {
-            newList.push(freshStream);
-          }
-        }
-      }
-
       // Get an updated version for each v2 stream in the list
       if (updatedStreamsv2 && updatedStreamsv2.length) {
         let freshStream: Stream;
@@ -221,6 +204,23 @@ export const Streams = () => {
             }
           }
           freshStream = await msp.refreshStream(stream);
+          if (freshStream) {
+            newList.push(freshStream);
+          }
+        }
+      }
+
+      // Get an updated version for each v1 stream in the list
+      if (updatedStreamsv1 && updatedStreamsv1.length) {
+        let freshStream: StreamInfo;
+        for (const stream of updatedStreamsv1) {
+          if (streamDetail && streamDetail.id === stream.id) {
+            freshStream = await ms.refreshStream(streamDetail);
+            if (freshStream) {
+              setStreamDetail(freshStream);
+            }
+          }
+          freshStream = await ms.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
           }
@@ -2048,6 +2048,19 @@ export const Streams = () => {
     return actionText;
   }
 
+  const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
+    let value = '';
+
+    const token = getTokenByMintAddress(item.mint as string);
+    if (streamVersion < 2) {
+      value += getFormattedNumberToLocale(formatAmount(item.amount, 2));
+    } else {
+      value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), 2));
+    }
+    
+    return parseFloat(value);
+  }
+
   const isScheduledOtp = (): boolean => {
     if (streamDetail && streamDetail.rateAmount === 0) {
       const now = new Date().toUTCString();
@@ -2294,10 +2307,10 @@ export const Streams = () => {
                     null
                   ) : stream && stream.escrowUnvestedAmount > 0 && (
                     <div className="mb-3">
-                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
+                      {/* <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
                         ? getEscrowEstimatedDepletionUtcLabel(stream.escrowEstimatedDepletionUtc as Date)
                         : ''}
-                      </div>
+                      </div> */}
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           <IconBank className="mean-svg-icons" />
@@ -2461,7 +2474,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -2615,10 +2632,10 @@ export const Streams = () => {
                     null
                   ) : stream.fundsLeftInStream > 0 && (
                     <div className="mb-3">
-                      <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
+                      {/* <div className="info-label text-truncate">{t('streams.stream-detail.label-funds-left-in-account')} {stream
                         ? getEscrowEstimatedDepletionUtcLabel(stream.estimatedDepletionDate as Date)
                         : ''}
-                      </div>
+                      </div> */}
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           <IconBank className="mean-svg-icons" />
@@ -2766,7 +2783,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>                                
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -2984,12 +3005,12 @@ export const Streams = () => {
                     null
                   ) : (
                     <div className="mb-3">
-                      <div className="info-label text-truncate">{stream && !stream?.escrowUnvestedAmount
+                      {/* <div className="info-label text-truncate">{stream && !stream?.escrowUnvestedAmount
                         ? t('streams.stream-detail.label-funds-left-in-account')
                         : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${stream && stream.escrowEstimatedDepletionUtc
                           ? getReadableDate(stream.escrowEstimatedDepletionUtc.toString())
                           : ''})`}
-                      </div>
+                      </div> */}
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           {stream && stream.state === STREAM_STATE.Running ? (
@@ -3125,7 +3146,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                      getAmountWithSymbol(
+                                        getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                      )}
+                                    </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -3336,14 +3361,14 @@ export const Streams = () => {
                     null
                   ) : (
                     <div className="mb-3">
-                      <div className="info-label text-truncate">
+                      {/* <div className="info-label text-truncate">
                         {!stream.fundsLeftInStream
                           ? t('streams.stream-detail.label-funds-left-in-account')
                           : `${t('streams.stream-detail.label-funds-left-in-account')} (${t('streams.stream-detail.label-funds-runout')} ${stream && stream.estimatedDepletionDate
                             ? getReadableDate(stream.estimatedDepletionDate.toString())
                             : ''})`
                         }
-                      </div>
+                      </div> */}
                       <div className="transaction-detail-row">
                         <span className="info-icon">
                           {stream.status === STREAM_STATUS.Running ? (
@@ -3464,7 +3489,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>

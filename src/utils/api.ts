@@ -85,7 +85,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
   }
 };
 
-export const sendSignClaimTxRequest = async (whitelistedAddress: string, base64ClaimTx: string): Promise<string> => {
+export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders,
@@ -95,7 +95,7 @@ export const sendSignClaimTxRequest = async (whitelistedAddress: string, base64C
     }),
   }
 
-  let url = `${appConfig.getConfig().apiUrl}/whitelists/${whitelistedAddress}`;
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
 
   try {
     const response = await fetch(url, options)

@@ -461,6 +461,7 @@ export const TreasuryStreamCreateModal = (props: {
 
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
         return await msp.createStream(
+          publicKey,                                                        // initializer
           publicKey,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary

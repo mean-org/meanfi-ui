@@ -125,7 +125,7 @@ interface AppStateConfig {
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
   openStreamById: (streamId: string) => void;
-  getStreamActivity: (streamId: string) => void;
+  getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
   // Accounts
   setShouldLoadTokens: (state: boolean) => void;
@@ -470,7 +470,7 @@ const AppStateProvider: React.FC = ({ children }) => {
           if (detail) {
             setStreamDetail(detail);
             setStreamList([detail]);
-            getStreamActivity(streamId);
+            getStreamActivity(streamId, detail.version);
             setCustomStreamDocked(true);
             notify({
               description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
@@ -507,29 +507,47 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const getStreamActivity = useCallback((streamId: string) => {
+  const getStreamActivity = useCallback((streamId: string, version: number) => {
     if (!connected || !streamId) {
       return [];
     }
 
     if (!loadingStreamActivity) {
+
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      ms.listStreamActivity(streamPublicKey)
-        .then(value => {
-          consoleOut('activity:', value);
-          setStreamActivity(value);
-          setLoadingStreamActivity(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setStreamActivity([]);
-          setLoadingStreamActivity(false);
-        });
+
+      if (version === 2 && msp) {
+        msp.listStreamActivity(streamPublicKey)
+          .then(value => {
+            consoleOut('activity:', value);
+            setStreamActivity(value);
+            setLoadingStreamActivity(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamActivity([]);
+            setLoadingStreamActivity(false);
+          });
+
+      } else if (version < 2) {
+        ms.listStreamActivity(streamPublicKey)
+          .then(value => {
+            consoleOut('activity:', value);
+            setStreamActivity(value);
+            setLoadingStreamActivity(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamActivity([]);
+            setLoadingStreamActivity(false);
+          });  
+      }
     }
 
   }, [
     ms,
+    msp,
     connected,
     loadingStreamActivity
   ]);
@@ -538,7 +556,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateSelectedStream(stream);
     updateStreamDetail(stream);
     if (stream) {
-      getStreamActivity(stream.id as string);
+      getStreamActivity(stream.id as string, (stream as any).version);
     } else {
       setStreamActivity([]);
     }
@@ -797,7 +815,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 } else {
                   if (item) {
                     updateStreamDetail(item);
-                    getStreamActivity(item.id as string);
+                    getStreamActivity(item.id as string, item.version);
                   }
                 }
               } else {
