@@ -28,6 +28,7 @@ export const StreamWithdrawModal = (props: {
   const { wallet, publicKey } = useWallet();
   const {
     streamProgramAddress,
+    streamV2ProgramAddress,
   } = useContext(AppStateContext);
   const [withdrawAmountInput, setWithdrawAmountInput] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<number>(0);
@@ -110,7 +111,7 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
           setLoadingData(true);
           try {
-            const msp = new MSP(endpoint, publicKey, "confirmed");
+            const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
             getStreamDetails(v2.id as string, msp);
           } catch (error) {
             notify({
@@ -130,8 +131,9 @@ export const StreamWithdrawModal = (props: {
     publicKey,
     wallet,
     endpoint,
-    streamProgramAddress,
     props.startUpData,
+    streamProgramAddress,
+    streamV2ProgramAddress,
     props.selectedToken?.decimals
   ]);
 

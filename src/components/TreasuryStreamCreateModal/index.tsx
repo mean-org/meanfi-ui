@@ -66,6 +66,7 @@ export const TreasuryStreamCreateModal = (props: {
     transactionStatus,
     isVerifiedRecipient,
     isAllocationReserved,
+    streamV2ProgramAddress,
     refreshPrices,
     setSelectedToken,
     setEffectiveRate,
@@ -458,7 +459,7 @@ export const TreasuryStreamCreateModal = (props: {
           return false;
         }
 
-        const msp = new MSP(endpoint, publicKey, "confirmed");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
         return await msp.createStream(
           publicKey,                                                        // treasurer
           treasury,                                                         // treasury

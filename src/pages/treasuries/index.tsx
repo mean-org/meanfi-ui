@@ -98,6 +98,7 @@ export const TreasuriesView = () => {
     detailsPanelOpen,
     transactionStatus,
     streamProgramAddress,
+    streamV2ProgramAddress,
     previousWalletConnectState,
     setSelectedToken,
     setEffectiveRate,
@@ -119,8 +120,8 @@ export const TreasuriesView = () => {
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
-  const [treasuryList, setTreasuryList] = useState<TreasuryInfo[]>([]);
-  const [selectedTreasury, setSelectedTreasury] = useState<TreasuryInfo | undefined>(undefined);
+  const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
+  const [selectedTreasury, setSelectedTreasury] = useState<Treasury | TreasuryInfo | undefined>(undefined);
   const [loadingTreasuries, setLoadingTreasuries] = useState(false);
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
@@ -158,6 +159,21 @@ export const TreasuriesView = () => {
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
+  ]);
+
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from treasuries');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddress,
+        "confirmed"
+      );
+    }
+  }, [
+    connectionConfig.endpoint,
+    publicKey,
+    streamV2ProgramAddress
   ]);
 
   // Keep account balance updated
@@ -249,7 +265,6 @@ export const TreasuriesView = () => {
     });
 
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
-    const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
 
     treasuryStreamsPerfCounter.start();
     if (isNewTreasury) {
@@ -315,7 +330,7 @@ export const TreasuriesView = () => {
   ]);
 
   const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
-    if (!connection || !publicKey || !ms || loadingTreasuryDetails) { return; }
+    if (!connection || !publicKey || !msp || loadingTreasuryDetails) { return; }
 
     setTimeout(() => {
       setLoadingTreasuryDetails(true);
@@ -323,7 +338,7 @@ export const TreasuriesView = () => {
 
     treasuryDetailPerfCounter.start();
     const treasueyPk = new PublicKey(treasuryId);
-    ms.getTreasury(treasueyPk)
+    msp.getTreasury(treasueyPk)
       .then(details => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
@@ -332,17 +347,17 @@ export const TreasuriesView = () => {
           setSignalRefreshTreasuryStreams(true);
 
           // Preset active token to the treasury associated token
-          const token = getTokenByMintAddress(details.associatedTokenAddress as string);
+          const token = getTokenByMintAddress(details.associatedToken as string);
           consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
           if (token) {
             if (!selectedToken || selectedToken.address !== token.address) {
               setSelectedToken(token);
             }
-          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedTokenAddress)) {
-            setCustomToken(details.associatedTokenAddress as string);
+          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedToken)) {
+            setCustomToken(details.associatedToken as string);
           }
 
-          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.type);
+          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.treasuryType);
           if (tOption) {
             setTreasuryOption(tOption);
           }
@@ -382,7 +397,7 @@ export const TreasuriesView = () => {
       });
 
   }, [
-    ms,
+    msp,
     publicKey,
     connection,
     selectedToken,
@@ -394,7 +409,7 @@ export const TreasuriesView = () => {
   ]);
 
   const refreshTreasuries = useCallback((reset = false) => {
-    if (!connection || !publicKey || !ms || loadingTreasuries) { return; }
+    if (!connection || !publicKey || loadingTreasuries) { return; }
 
     if (!loadingTreasuries && fetchTxInfoStatus !== "fetching") {
 
@@ -405,47 +420,51 @@ export const TreasuriesView = () => {
       });
 
       treasuryListPerfCounter.start();
-      ms.listTreasuries(publicKey)
-        .then((treasuries) => {
-          consoleOut('treasuries:', treasuries, 'blue');
-          let item: TreasuryInfo | undefined = undefined;
 
-          if (treasuries.length) {
-
-            if (reset) {
-              item = treasuries[0];
-            } else {
-              // Try to get current item by its original Tx signature then its id
-              if (selectedTreasury) {
-                const itemFromServer = treasuries.find(i => i.id === selectedTreasury.id);
-                item = itemFromServer || treasuries[0];
-              } else {
+      if (msp && ms) {
+        let treasuryAccumulator: any[] = [];
+        ms.listTreasuries(publicKey)
+          .then((treasuries) => {
+            consoleOut('treasuries:', treasuries, 'blue');
+            let item: TreasuryInfo | undefined = undefined;
+  
+            if (treasuries.length) {
+  
+              if (reset) {
                 item = treasuries[0];
+              } else {
+                // Try to get current item by its original Tx signature then its id
+                if (selectedTreasury) {
+                  const itemFromServer = treasuries.find(i => i.id === selectedTreasury.id);
+                  item = itemFromServer || treasuries[0];
+                } else {
+                  item = treasuries[0];
+                }
               }
+              if (!item) {
+                item = JSON.parse(JSON.stringify(treasuries[0]));
+              }
+              if (item) {
+                setSelectedTreasury(item);
+                openTreasuryById(item.id as string);
+              }
+            } else {
+              setSelectedTreasury(undefined);
+              setTreasuryDetails(undefined);
+              setTreasuryStreams([]);
             }
-            if (!item) {
-              item = JSON.parse(JSON.stringify(treasuries[0]));
-            }
-            if (item) {
-              setSelectedTreasury(item);
-              openTreasuryById(item.id as string);
-            }
-          } else {
-            setSelectedTreasury(undefined);
-            setTreasuryDetails(undefined);
-            setTreasuryStreams([]);
-          }
-
-          setTreasuryList(treasuries);
-        })
-        .catch(error => {
-          console.error(error);
-        })
-        .finally(() => {
-          setLoadingTreasuries(false);
-          treasuryListPerfCounter.stop();
-          consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
-        });
+  
+            setTreasuryList(treasuries);
+          })
+          .catch(error => {
+            console.error(error);
+          })
+          .finally(() => {
+            setLoadingTreasuries(false);
+            treasuryListPerfCounter.stop();
+            consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
+          });
+      }
     }
 
   }, [
@@ -1354,7 +1373,7 @@ export const TreasuriesView = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && treasuryName && treasuryOption) {
+      if (publicKey && treasuryName && treasuryOption && msp) {
         consoleOut("Start transaction for create treasury", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -1404,8 +1423,7 @@ export const TreasuriesView = () => {
         }
 
         consoleOut('type:', treasuryOption.type.toString(), 'blue');
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-        return await moneyStream.createTreasury(
+        return await msp.createTreasury(
           publicKey,                                                  // wallet
           treasuryName,                                               // label
           treasuryOption.type                                         // type
@@ -1739,7 +1757,7 @@ export const TreasuriesView = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && treasuryDetails && selectedToken) {
+      if (publicKey && treasuryDetails && selectedToken && msp) {
         consoleOut("Start transaction for treasury addFunds", '', 'blue');
         consoleOut('Wallet address:', publicKey.toBase58());
 
@@ -1796,10 +1814,8 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.addFunds(
+        return await msp.addFunds(
           publicKey,
           treasury,
           stream,
@@ -2133,7 +2149,7 @@ export const TreasuriesView = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && treasuryDetails) {
+      if (publicKey && treasuryDetails && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -2178,10 +2194,8 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.closeTreasury(
+        return await msp.closeTreasury(
           publicKey,                                  // treasurer
           treasury,                                   // treasury
         )
@@ -2509,7 +2523,7 @@ export const TreasuriesView = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && highlightedStream) {
+      if (publicKey && highlightedStream && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -2555,9 +2569,8 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
         // Create a transaction
-        return await moneyStream.closeStream(
+        return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID,
           closeTreasury
@@ -2870,7 +2883,7 @@ export const TreasuriesView = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && highlightedStream) {
+      if (publicKey && highlightedStream && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -2915,10 +2928,8 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.pauseStream(
+        return await msp.pauseStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )
@@ -3232,7 +3243,7 @@ export const TreasuriesView = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (publicKey && highlightedStream) {
+      if (publicKey && highlightedStream && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -3277,10 +3288,8 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        const moneyStream = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.resumeStream(
+        return await msp.resumeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
         )

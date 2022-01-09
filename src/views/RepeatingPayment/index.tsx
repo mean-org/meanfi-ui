@@ -79,6 +79,7 @@ export const RepeatingPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
+    streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
     setSelectedToken,
@@ -679,8 +680,7 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        console.log('RepeatingPayment -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
           publicKey,                                           // wallet

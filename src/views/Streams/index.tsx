@@ -96,6 +96,7 @@ export const Streams = () => {
     streamsSummary,
     lastStreamsSummary,
     streamProgramAddress,
+    streamV2ProgramAddress,
     customStreamDocked,
     setStreamList,
     openStreamById,
@@ -122,7 +123,6 @@ export const Streams = () => {
   const { account } = useNativeAccount();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
-  // const [msp, setMsp] = useState<MSP | undefined>();
 
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
@@ -133,19 +133,19 @@ export const Streams = () => {
     streamProgramAddress
   ]);
 
-  const msp: MSP | undefined = useMemo(() => {
-    if (!msp && wallet && publicKey && endpoint && connected) {
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from streams');
       return new MSP(
         endpoint,
-        publicKey
+        streamV2ProgramAddress,
+        "confirmed"
       );
     }
-    return msp;
   }, [
-    connected, 
-    endpoint, 
-    publicKey, 
-    wallet
+    publicKey,
+    endpoint,
+    streamV2ProgramAddress
   ]);
 
   // Keep account balance updated
@@ -187,8 +187,6 @@ export const Streams = () => {
 
     const refreshStreams = async () => {
       if (!msp ||!streamList || !publicKey || loadingStreams) { return; }
-
-      // const msp = new MSP(endpoint, publicKey, "confirmed");
 
       const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
       const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
@@ -990,7 +988,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && publicKey && streamDetail && selectedToken) {
+      if (publicKey && streamDetail && selectedToken && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1005,7 +1003,7 @@ export const Streams = () => {
         const tokenAmount = toTokenAmount(amount, selectedToken.decimals);
 
         const data = {
-          contributor: wallet.publicKey.toBase58(),                       // contributor
+          contributor: publicKey.toBase58(),                       // contributor
           treasury: treasury.toBase58(),                                  // treasury
           stream: stream.toBase58(),                                      // stream
           contributorMint: contributorMint.toBase58(),                    // contributorMint
@@ -1045,12 +1043,8 @@ export const Streams = () => {
           return false;
         }
 
-        // Init a streaming operation
-        console.log('Streams -> AddFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.addFunds(
+        return await msp.addFunds(
           publicKey,
           treasury,
           stream,
@@ -1364,7 +1358,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && publicKey && streamDetail) {
+      if (publicKey && streamDetail && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1414,12 +1408,8 @@ export const Streams = () => {
           return false;
         }
 
-        // Init a streaming operation
-        console.log('Streams -> WithdrawFundsTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.withdraw(
+        return await msp.withdraw(
           beneficiary,
           stream,
           amount
@@ -1733,7 +1723,7 @@ export const Streams = () => {
     }
 
     const createTxV2 = async (): Promise<boolean> => {
-      if (wallet && publicKey && streamDetail) {
+      if (publicKey && streamDetail && msp) {
         setTransactionStatus({
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
@@ -1742,7 +1732,7 @@ export const Streams = () => {
 
         const data = {
           stream: streamPublicKey.toBase58(),                     // stream
-          initializer: wallet.publicKey.toBase58(),               // initializer
+          initializer: publicKey.toBase58(),                      // initializer
         }
         consoleOut('data:', data);
 
@@ -1778,12 +1768,8 @@ export const Streams = () => {
           return false;
         }
 
-        // Init a streaming operation
-        console.log('Streams -> CloseStreamTx -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
-
         // Create a transaction
-        return await moneyStream.closeStream(
+        return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
           streamPublicKey,                                  // Stream ID
           true                                              // closeTreasury

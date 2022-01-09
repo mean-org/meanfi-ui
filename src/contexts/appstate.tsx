@@ -74,6 +74,7 @@ interface AppStateConfig {
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
   streamProgramAddress: string;
+  streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
@@ -176,6 +177,7 @@ const contextDefaultValues: AppStateConfig = {
   selectedStream: undefined,
   streamDetail: undefined,
   streamProgramAddress: '',
+  streamV2ProgramAddress: '',
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
@@ -256,6 +258,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const accounts = useAccountsContext();
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
+  const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
   // const [msp, setMsp] = useState<MSP | undefined>();
   const {
     lastSentTxStatus,
@@ -264,9 +267,14 @@ const AppStateProvider: React.FC = ({ children }) => {
   } = useContext(TransactionStatusContext);
 
   const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
   if (!streamProgramAddress) {
     setStreamProgramAddress(streamProgramAddressFromConfig);
+  }
+
+  if (!streamV2ProgramAddress) {
+    setStreamV2ProgramAddress(streamV2ProgramAddressFromConfig);
   }
 
   // Create and cache Money Streaming Program instance
@@ -283,13 +291,14 @@ const AppStateProvider: React.FC = ({ children }) => {
       console.log('New MSP from appState');
       return new MSP(
         connectionConfig.endpoint,
-        publicKey,
+        streamV2ProgramAddressFromConfig,
         "confirmed"
       );
     }
   }, [
+    publicKey,
     connectionConfig.endpoint,
-    publicKey
+    streamV2ProgramAddressFromConfig
   ]);
 
   const today = new Date().toLocaleDateString("en-US");
@@ -456,7 +465,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       streamPublicKey = new PublicKey(streamId);
       try {
         if (msp && publicKey) {
-          // const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
           const detail = await msp.getStream(streamPublicKey);
           consoleOut('customStream', detail);
           if (detail) {
@@ -716,7 +724,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const refreshStreamList = useCallback((reset = false) => {
     if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching") {
-      return [];
+      return;
     }
 
     if (msp) {
@@ -725,8 +733,6 @@ const AppStateProvider: React.FC = ({ children }) => {
       setTimeout(() => {
         clearTransactionStatusContext();
       });
-
-      // const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
 
       let streamAccumulator: any[] = [];
 
@@ -1077,6 +1083,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         selectedStream,
         streamDetail,
         streamProgramAddress,
+        streamV2ProgramAddress,
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,

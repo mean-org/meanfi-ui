@@ -81,7 +81,7 @@ export const PayrollPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
-    streamProgramAddress,
+    streamV2ProgramAddress,
     timeSheetRequirement,
     previousWalletConnectState,
     refreshPrices,
@@ -687,7 +687,7 @@ export const PayrollPayment = () => {
 
         // Init a streaming operation
         console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
           publicKey,                                           // wallet

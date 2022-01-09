@@ -64,7 +64,7 @@ export const OneTimePayment = () => {
     fromCoinAmount,
     transactionStatus,
     isVerifiedRecipient,
-    streamProgramAddress,
+    streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
     setSelectedToken,
@@ -555,8 +555,7 @@ export const OneTimePayment = () => {
         }
 
         // Init a streaming operation
-        console.log('OneTimePayment -> wallet.publicKey', wallet.publicKey.toBase58());
-        const moneyStream = new MSP(endpoint, publicKey, "confirmed");
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.oneTimePayment(
           publicKey,

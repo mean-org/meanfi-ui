@@ -96,6 +96,7 @@ export const AccountsView = () => {
     loadingStreamsSummary,
     streamProgramAddress,
     canShowAccountDetails,
+    streamV2ProgramAddress,
     previousWalletConnectState,
     setStreamList,
     setStreamDetail,
@@ -160,7 +161,7 @@ export const AccountsView = () => {
     console.log('New MSP from /acounts');
     setMsp(new MSP(
       connection.endpoint,
-      publicKey
+      streamV2ProgramAddress
     ));
 
   }, [
@@ -168,7 +169,8 @@ export const AccountsView = () => {
     connected, 
     connection, 
     publicKey, 
-    wallet
+    wallet,
+    streamV2ProgramAddress
   ])
 
   const startSwitch = useCallback(() => {
