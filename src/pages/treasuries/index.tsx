@@ -80,6 +80,7 @@ import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
 import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
+import { InfoIcon } from '../../components/InfoIcon';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -3780,35 +3781,45 @@ export const TreasuriesView = () => {
     return (
       <>
         <Space size="middle">
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={isTxInProgress() || loadingTreasuries}
-            onClick={showAddFundsModal}>
-            {isAddingFunds() && (<LoadingOutlined />)}
-            {isAddingFunds()
-              ? t('treasuries.treasury-detail.cta-add-funds-busy')
-              : t('treasuries.treasury-detail.cta-add-funds')}
-          </Button>
-
-          <Button
-            type="default"
-            shape="round"
-            size="small"
-            className="thin-stroke"
-            disabled={
-              isTxInProgress() ||
-              isAnythingLoading() ||
-              (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
-            }
-            onClick={showCreateStreamModal}>
-            {isCreatingStream() && (<LoadingOutlined />)}
-            {isCreatingStream()
-              ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
-              : t('treasuries.treasury-streams.create-stream-main-cta')}
-          </Button>
+          {isNewTreasury ? (
+            <>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={isTxInProgress() || loadingTreasuries}
+                onClick={showAddFundsModal}>
+                {isAddingFunds() && (<LoadingOutlined />)}
+                {isAddingFunds()
+                  ? t('treasuries.treasury-detail.cta-add-funds-busy')
+                  : t('treasuries.treasury-detail.cta-add-funds')}
+              </Button>
+              <Button
+                type="default"
+                shape="round"
+                size="small"
+                className="thin-stroke"
+                disabled={
+                  isTxInProgress() ||
+                  isAnythingLoading() ||
+                  (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
+                }
+                onClick={showCreateStreamModal}>
+                {isCreatingStream() && (<LoadingOutlined />)}
+                {isCreatingStream()
+                  ? t('treasuries.treasury-streams.create-stream-main-cta-busy')
+                  : t('treasuries.treasury-streams.create-stream-main-cta')}
+              </Button>
+            </>
+          ) : (
+            <div className="flex-row align-items">
+              <span className="simplelink underline-on-hover">Start V2 Migration</span>
+              <InfoIcon content={<p>There is a new and improved version of the Treasuries feature. To continue using this treasury you must update it first.</p>} placement="leftBottom">
+                <InfoCircleOutlined />
+              </InfoIcon>
+            </div>
+          )}
           {isClosingTreasury() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
