@@ -2048,6 +2048,19 @@ export const Streams = () => {
     return actionText;
   }
 
+  const getActivityAmountDisplay = (item: StreamActivity, streamVersion: number): number => {
+    let value = '';
+
+    const token = getTokenByMintAddress(item.mint as string);
+    if (streamVersion < 2) {
+      value += getFormattedNumberToLocale(formatAmount(item.amount, 2));
+    } else {
+      value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), 2));
+    }
+    
+    return parseFloat(value);
+  }
+
   const isScheduledOtp = (): boolean => {
     if (streamDetail && streamDetail.rateAmount === 0) {
       const now = new Date().toUTCString();
@@ -2461,7 +2474,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -2766,7 +2783,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>                                
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -3125,7 +3146,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                      getAmountWithSymbol(
+                                        getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                      )}
+                                    </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
@@ -3464,7 +3489,11 @@ export const Streams = () => {
                                   <span className="align-middle">{getActivityAction(item)}</span>
                                 </div>
                                 <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getAmountWithSymbol(item.amount, item.mint)}</span>
+                                  <span className="align-middle">{
+                                    getAmountWithSymbol(
+                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
+                                    )}
+                                  </span>
                                 </div>
                                 <div className="std-table-cell fixed-width-120" >
                                   <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
