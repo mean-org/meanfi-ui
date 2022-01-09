@@ -46,9 +46,6 @@ export const IdoRedeem = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>();
 
-  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
-  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
-
   const meanToken = useMemo(() => {
     const token = userTokens.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');

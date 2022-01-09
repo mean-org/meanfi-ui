@@ -15,7 +15,6 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { updateCreateStream2Tx } from '../../utils/transactions';
 import { MSP } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
@@ -47,14 +46,14 @@ export const AirdropRedeem = (props: {
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>(null);
 
-  const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
-  const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
-
   const meanToken = useMemo(() => {
     const token = userTokens.filter(t => t.symbol === 'MEAN');
     consoleOut('token:', token, 'blue');
     return token[0];
   }, [userTokens]);
+
+  const treasuryAddress = useMemo(() => appConfig.getConfig().idoAirdropTreasuryAddress, []);
+  const treasurerAddress = useMemo(() => appConfig.getConfig().idoAirdropTreasurerAddress, []);
 
   useEffect(() => {
     if (!publicKey) {
@@ -120,19 +119,17 @@ export const AirdropRedeem = (props: {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
-        const tenPowDecimals = 1_000_000;
-        const oneMonthInSeconds = 2_629_750;
 
         const beneficiary = publicKey;
         const treasurer = new PublicKey(treasurerAddress);
-        const treasury = new PublicKey('hgghghghghghggghghghghghghghghghggghghg');
+        const treasury = new PublicKey(treasuryAddress);
         const associatedToken = new PublicKey(meanToken.address as string);
         const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals);
         const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals);
         const streamName = 'Airdrop unlocked';
         const now = new Date();
         const cliffAmount = 0;
-        const cliffVestPercent = userAllocation.cliffPercent * 100 * 10_000;
+        const cliffVestPercent = userAllocation.cliffPercent * 100;
 
         const data = {
           treasurer: treasurer.toBase58(),
@@ -145,10 +142,8 @@ export const AirdropRedeem = (props: {
           rateAmount: rateAmount,
           rateIntervalInSeconds: getRateIntervalInSeconds(PaymentRateType.PerMonth),
           startUtc: now.toUTCString(),
-          rateCliffInSeconds: undefined,
-          cliffVestAmount: undefined,
+          cliffVestAmount: cliffAmount,
           cliffVestPercent: cliffVestPercent,
-          autoPauseInSeconds: undefined
         }
         consoleOut('data:', data);
 
@@ -191,6 +186,8 @@ export const AirdropRedeem = (props: {
             result: getTxIxResume(value)
           });
           transaction = value;
+          const createStreamTxB64 = value.serialize({ verifySignatures: true, requireAllSignatures: false }).toString("base64");
+          consoleOut('createStreamTxB64:', createStreamTxB64, 'orange');
           return true;
         })
         .catch(error => {

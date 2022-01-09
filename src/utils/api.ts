@@ -84,3 +84,27 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
     return null;
   }
 };
+
+export const sendSignClaimTxRequest = async (whitelistedAddress: string, base64ClaimTx: string): Promise<string> => {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders,
+    body: JSON.stringify({
+      claimType: 1,
+      base64ClaimTransaction: base64ClaimTx,
+    }),
+  }
+
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${whitelistedAddress}`;
+
+  try {
+    const response = await fetch(url, options)
+    if (response.status !== 200) {
+      throw new Error(`Error: request response status: ${response.status}`);
+    }
+    const signedClaimTxResponse = (await response.json()) as any;
+    return signedClaimTxResponse.base64SignedClaimTransaction;
+  } catch (error) {
+    throw (error);
+  }
+}
