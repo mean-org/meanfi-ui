@@ -690,7 +690,8 @@ export const PayrollPayment = () => {
         const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
-          publicKey,                                           // wallet
+          publicKey,                                                  // initializer
+          publicKey,                                                  // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint

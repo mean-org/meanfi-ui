@@ -53,6 +53,7 @@ export const BANNED_TOKENS = [
 
 export const meanFiHeaders = new Headers();
 meanFiHeaders.append('X-Api-Version', '1.0');
+meanFiHeaders.append('content-type', 'application/json;charset=UTF-8');
 export const requestOptions: RequestInit = {
   headers: meanFiHeaders
 }

@@ -14,8 +14,8 @@ export interface AppConfig {
     logglyCustomerKey: string;
     logglyTag: string;
     idoAccountAddress: string;
-    idoDistributionTreasuryAddress: string;
-    idoDistributionTreasurerAddress: string;
+    idoAirdropTreasuryAddress: string;
+    idoAirdropTreasurerAddress: string;
     exchangeFeeAccountOwner: string;
     exchangeFlatFee: number;
 }
@@ -37,8 +37,8 @@ export class AppConfigService {
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
             idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
-            idoDistributionTreasuryAddress: '',
-            idoDistributionTreasurerAddress: '',
+            idoAirdropTreasuryAddress: '',
+            idoAirdropTreasurerAddress: '',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
@@ -56,8 +56,8 @@ export class AppConfigService {
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
             idoAccountAddress: '',
-            idoDistributionTreasuryAddress: '',
-            idoDistributionTreasurerAddress: '',
+            idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
+            idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
@@ -76,8 +76,8 @@ export class AppConfigService {
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
             idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
-            idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
-            idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+            idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
+            idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
@@ -95,8 +95,8 @@ export class AppConfigService {
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
             idoAccountAddress: '7Aq5qVfeubLqYmrjQr8gPwL4JPHCA51QG69VeLYrtvHG',
-            idoDistributionTreasuryAddress: '6tZLW5PgRQ4Cu64dbFpmE5zXKjduF9tfQtTtWBAxGdd1',
-            idoDistributionTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
+            idoAirdropTreasuryAddress: '7AoKzQPk16CVHdy2k3T2G41K8jfCdf2wgkMkwXmYWv54',
+            idoAirdropTreasurerAddress: 'GYHuK9gPVPJm7VqgFX7wKQ93U9rPCwKqjzLh32P1Ed4G',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
         },
