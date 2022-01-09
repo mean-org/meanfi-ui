@@ -718,7 +718,6 @@ export const IdoLiveView = () => {
             idoClient={idoClient}
             idoDetails={idoDetails}
             idoStatus={idoStatus}
-            moneyStreamingClient={ms}
             redeemStarted={today > redeemStartUtc}
             disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
             selectedToken={selectedToken}

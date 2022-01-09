@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTxIxResume } from '../../utils/utils';
+import { getTxIxResume, toTokenAmount } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,8 @@ import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { updateCreateStream2Tx } from '../../utils/transactions';
+import { MSP } from '@mean-dao/msp';
+import { useConnectionConfig } from '../../contexts/connection';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -25,15 +27,16 @@ export const AirdropRedeem = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   redeemStarted: boolean;
-  moneyStreamingClient: MoneyStreaming;
   selectedToken: TokenInfo | undefined;
 }) => {
   const { t } = useTranslation('common');
+  const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
   const {
     userTokens,
     selectedToken,
     transactionStatus,
+    streamV2ProgramAddress,
     setTransactionStatus,
   } = useContext(AppStateContext);
   const {
@@ -42,7 +45,7 @@ export const AirdropRedeem = (props: {
   } = useContext(TransactionStatusContext);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const [userAllocation, setUserAllocation] = useState<Allocation | null>();
+  const [userAllocation, setUserAllocation] = useState<Allocation | null>(null);
 
   const treasuryAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasuryAddress, []);
   const treasurerAddress = useMemo(() => appConfig.getConfig().idoDistributionTreasurerAddress, []);
@@ -83,7 +86,12 @@ export const AirdropRedeem = (props: {
   // Validation
 
   const isValidOperation = (): boolean => {
-    return !props.disabled && userAllocation && userAllocation.tokenAmount > 0 ? true : false;
+    return  userAllocation &&
+            userAllocation.tokenAmount > 0 &&
+            userAllocation.cliffPercent > 0 &&
+            userAllocation.cliffPercent < 1 &&
+            userAllocation.monthlyRate > 0
+      ? true : false;
   }
 
   const getTransactionStartButtonLabel = (): string => {
@@ -91,10 +99,10 @@ export const AirdropRedeem = (props: {
       ? t('transactions.validation.not-connected')
       : !userAllocation || !userAllocation.tokenAmount
         ? 'Nothing to claim'
-        : 'Arriving soon';
+        : 'Claim now';
   }
 
-  const onExecuteRedeemTx = async () => {
+  const onExecuteAirdropTx = async () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -112,16 +120,26 @@ export const AirdropRedeem = (props: {
           lastOperation: TransactionStatus.TransactionStart,
           currentOperation: TransactionStatus.InitTransaction
         });
+        const tenPowDecimals = 1_000_000;
+        const oneMonthInSeconds = 2_629_750;
 
         const beneficiary = publicKey;
         const treasurer = new PublicKey(treasurerAddress);
-        const treasury = new PublicKey(treasuryAddress);
+        const treasury = new PublicKey('hgghghghghghggghghghghghghghghghggghghg');
         const associatedToken = new PublicKey(meanToken.address as string);
-        const allocation = userAllocation.tokenAmount;
-        const rateAmount = userAllocation.monthlyRate;
-        const streamName = 'Solanium unlocked';
+        const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals);
+        const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals);
+        const streamName = 'Airdrop unlocked';
         const now = new Date();
-        const cliffVestPercent = userAllocation.cliffPercent * 100;
+
+        const cliffAmount = 0;
+        const cliffVestPercent = userAllocation.cliffPercent * 100 * 10_000;
+
+        // const rateAmountUnits = allocation.monthlyRate * tenPowDecimals;
+        // const allocationAssignedUnits = allocation.tokenAmount * tenPowDecimals;
+        // const allocationReservedUnits = allocation.tokenAmount * tenPowDecimals;
+
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         const data = {
           treasurer: treasurer.toBase58(),
@@ -153,7 +171,7 @@ export const AirdropRedeem = (props: {
         });
 
         // Create a transaction
-        return await props.moneyStreamingClient.createStream2(
+        return await msp.createStream(
           treasurer,                                                        // treasurer
           treasury,                                                         // treasury
           beneficiary,                                                      // beneficiary
@@ -163,7 +181,7 @@ export const AirdropRedeem = (props: {
           allocation,                                                       // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(PaymentRateType.PerMonth),               // rateIntervalInSeconds
-          now                                                               // startUtc
+          now,                                                              // startUtc
         )
         .then(value => {
           consoleOut('createStream2 returned transaction:', value);
@@ -371,8 +389,8 @@ export const AirdropRedeem = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={true}
-        onClick={() => {}}>
+        disabled={props.disabled || !isValidOperation()}
+        onClick={onExecuteAirdropTx}>
         {isBusy && (
           <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
         )}
