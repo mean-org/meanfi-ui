@@ -305,9 +305,9 @@ export const TreasuriesView = () => {
 
   }, [
     ms,
+    msp,
     publicKey,
     loadingTreasuryStreams,
-    connectionConfig.endpoint,
   ]);
 
   const setCustomToken = useCallback((address: string) => {
