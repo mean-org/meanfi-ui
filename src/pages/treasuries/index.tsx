@@ -1810,17 +1810,19 @@ export const TreasuriesView = () => {
         });
 
         const treasury = new PublicKey(treasuryDetails.id);
+        const associatedToken = new PublicKey(selectedToken.address);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
         const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
 
         console.log('params.streamId', params.streamId);
 
         const data = {
-          contributor: publicKey.toBase58(),                       // contributor
-          treasury: treasury.toBase58(),                           // treasury
-          stream: stream?.toBase58(),                              // stream
-          amount,                                                  // amount
-          allocationType: params.allocationType                    // allocationType
+          contributor: publicKey.toBase58(),                        // contributor
+          treasury: treasury.toBase58(),                            // treasury
+          associatedToken: associatedToken.toBase58(),              // associatedToken
+          stream: stream?.toBase58(),                               // stream
+          amount,                                                   // amount
+          allocationType: params.allocationType                     // allocationType
         }
         consoleOut('data:', data);
 
@@ -1860,6 +1862,7 @@ export const TreasuriesView = () => {
         return await msp.addFunds(
           publicKey,
           treasury,
+          associatedToken,
           stream,
           amount,
           params.allocationType

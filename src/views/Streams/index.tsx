@@ -994,15 +994,16 @@ export const Streams = () => {
 
         const stream = new PublicKey(streamDetail.id as string);
         const treasury = new PublicKey((streamDetail as Stream).treasury as string);
-        const contributorMint = new PublicKey(streamDetail.associatedToken as string);
+        const associatedToken = new PublicKey(streamDetail.associatedToken as string);
         const amount = toTokenAmount(parseFloat(addAmount as string), selectedToken.decimals);
         setAddFundsAmount(parseFloat(addAmount));
         const data = {
           contributor: publicKey.toBase58(),                              // contributor
           treasury: treasury.toBase58(),                                  // treasury
+          associatedToken: associatedToken.toBase58(),                    // associatedToken
           stream: stream.toBase58(),                                      // stream
-          contributorMint: contributorMint.toBase58(),                    // contributorMint
-          amount                                                          // amount
+          amount,                                                         // amount
+          allocationType: AllocationType.All                              // allocationType
         }
         consoleOut('add funds data:', data);
 
@@ -1042,6 +1043,7 @@ export const Streams = () => {
         return await msp.addFunds(
           publicKey,
           treasury,
+          associatedToken,
           stream,
           amount,
           AllocationType.All
