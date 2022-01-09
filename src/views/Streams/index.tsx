@@ -992,17 +992,14 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const treasury = new PublicKey((streamDetail as Stream).treasury as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
-        const amount = parseFloat(addAmount);
-        setAddFundsAmount(amount);
-
-        const tokenAmount = toTokenAmount(amount, selectedToken.decimals);
-
+        const amount = toTokenAmount(parseFloat(addAmount as string), selectedToken.decimals);
+        setAddFundsAmount(parseFloat(addAmount));
         const data = {
-          contributor: publicKey.toBase58(),                       // contributor
+          contributor: publicKey.toBase58(),                              // contributor
           treasury: treasury.toBase58(),                                  // treasury
           stream: stream.toBase58(),                                      // stream
           contributorMint: contributorMint.toBase58(),                    // contributorMint
-          tokenAmount                                                     // amount
+          amount                                                          // amount
         }
         consoleOut('add funds data:', data);
 
@@ -1043,7 +1040,7 @@ export const Streams = () => {
           publicKey,
           treasury,
           stream,
-          tokenAmount,
+          amount,
           AllocationType.All
         )
         .then(value => {

@@ -619,8 +619,8 @@ export const RepeatingPayment = () => {
         const beneficiary = new PublicKey(recipientAddress as string);
         consoleOut('beneficiaryMint:', selectedToken.address);
         const beneficiaryMint = new PublicKey(selectedToken.address as string);
-        const amount = parseFloat(fromCoinAmount as string);
-        const rateAmount = parseFloat(paymentRateAmount as string);
+        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+        const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const fromParsedDate = new Date(parsedDate);
@@ -683,14 +683,14 @@ export const RepeatingPayment = () => {
         const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
         return await moneyStream.createStream(
-          publicKey,                                           // wallet
+          publicKey,                                                  // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
           recipientNote,                                              // streamName
-          toTokenAmount(amount, selectedToken.decimals),              // allocationAssigned
+          amount,                                                     // allocationAssigned
           0,                                                          // allocationReserved
-          toTokenAmount(rateAmount, selectedToken.decimals),          // rateAmount
+          rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
           fromParsedDate,                                             // startUtc
         )
