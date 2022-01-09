@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
 import { OperationType, TransactionStatus } from "../../models/enums";
@@ -476,7 +476,7 @@ export const OneTimePayment = () => {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (wallet && publicKey) {
+      if (wallet && publicKey && selectedToken) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
@@ -487,9 +487,9 @@ export const OneTimePayment = () => {
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('associatedToken:', selectedToken?.address);
-        const associatedToken = new PublicKey(selectedToken?.address as string);
-        const amount = parseFloat(fromCoinAmount as string);
+        consoleOut('associatedToken:', selectedToken.address);
+        const associatedToken = new PublicKey(selectedToken.address as string);
+        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         let fromParsedDate = new Date(parsedDate);

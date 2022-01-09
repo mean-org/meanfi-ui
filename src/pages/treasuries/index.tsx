@@ -424,37 +424,46 @@ export const TreasuriesView = () => {
       if (msp && ms) {
         let treasuryAccumulator: any[] = [];
         ms.listTreasuries(publicKey)
-          .then((treasuries) => {
-            consoleOut('treasuries:', treasuries, 'blue');
-            let item: TreasuryInfo | undefined = undefined;
-  
-            if (treasuries.length) {
-  
-              if (reset) {
-                item = treasuries[0];
-              } else {
-                // Try to get current item by its original Tx signature then its id
-                if (selectedTreasury) {
-                  const itemFromServer = treasuries.find(i => i.id === selectedTreasury.id);
-                  item = itemFromServer || treasuries[0];
+          .then((treasuriesv1) => {
+            treasuryAccumulator.push(...treasuriesv1);
+            consoleOut('v1 treasuries:', treasuriesv1, 'blue');
+
+            msp.listTreasuries(publicKey)
+              .then(treasuriesv2 => {
+                treasuryAccumulator.push(...treasuriesv2);
+                consoleOut('v2 treasuries:', treasuriesv2, 'blue');
+
+                let item: Treasury | TreasuryInfo | undefined = undefined;
+                if (treasuryAccumulator.length) {
+      
+                  if (reset) {
+                    item = treasuryAccumulator[0];
+                  } else {
+                    // Try to get current item by its original Tx signature then its id
+                    if (selectedTreasury) {
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
+                      item = itemFromServer || treasuryAccumulator[0];
+                    } else {
+                      item = treasuryAccumulator[0];
+                    }
+                  }
+                  if (!item) {
+                    item = JSON.parse(JSON.stringify(treasuryAccumulator[0]));
+                  }
+                  if (item) {
+                    setSelectedTreasury(item);
+                    openTreasuryById(item.id as string);
+                  }
                 } else {
-                  item = treasuries[0];
+                  setSelectedTreasury(undefined);
+                  setTreasuryDetails(undefined);
+                  setTreasuryStreams([]);
                 }
-              }
-              if (!item) {
-                item = JSON.parse(JSON.stringify(treasuries[0]));
-              }
-              if (item) {
-                setSelectedTreasury(item);
-                openTreasuryById(item.id as string);
-              }
-            } else {
-              setSelectedTreasury(undefined);
-              setTreasuryDetails(undefined);
-              setTreasuryStreams([]);
-            }
-  
-            setTreasuryList(treasuries);
+                setTreasuryList(treasuryAccumulator);
+              })
+              .catch(error => {
+                console.error(error);
+              })
           })
           .catch(error => {
             console.error(error);
@@ -469,6 +478,7 @@ export const TreasuriesView = () => {
 
   }, [
     ms,
+    msp,
     publicKey,
     connection,
     selectedTreasury,
@@ -790,6 +800,9 @@ export const TreasuriesView = () => {
       const v2 = item as Stream;
       const isInbound = isInboundStream(item);
       if (v1.version < 2) {
+        if (v1.streamName) {
+          return `${v1.streamName}`;
+        }
         if (isInbound) {
           if (v1.state === STREAM_STATE.Schedule) {
             title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
@@ -797,6 +810,27 @@ export const TreasuriesView = () => {
             title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
           } else {
             title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+          }
+        } else {
+          if (v1.state === STREAM_STATE.Schedule) {
+            title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+          } else if (v1.state === STREAM_STATE.Paused) {
+            title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+          } else {
+            title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+          }
+        }
+      } else {
+        if (v2.name) {
+          return `${v2.name}`;
+        }
+        if (isInbound) {
+          if (v2.status === STREAM_STATUS.Schedule) {
+            title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+          } else if (v2.status === STREAM_STATUS.Paused) {
+            title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+          } else {
+            title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
           }
         } else {
           if (v2.status === STREAM_STATUS.Schedule) {
@@ -807,7 +841,6 @@ export const TreasuriesView = () => {
             title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
           }
         }
-      } else {
       }
     }
     return title;
@@ -1075,7 +1108,7 @@ export const TreasuriesView = () => {
   ]);
 
   const onExecuteRefreshTreasuryBalance = useCallback(async() => {
-    
+
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -3496,7 +3529,6 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
-  /*
   const renderStreamOptions = (item: Stream | StreamInfo) => {
     const v1 = item as StreamInfo;
     const v2 = item as Stream;
@@ -3585,10 +3617,10 @@ export const TreasuriesView = () => {
                 <div className="std-table-cell first-cell">{getStreamIcon(item)}</div>
                 <div className="std-table-cell responsive-cell">
                   {status && (<span className="badge darken small text-uppercase mr-1">{status}</span>)}
-                  <span className="align-middle">{item.streamName || getStreamDescription(item)}</span>
+                  <span className="align-middle">{getStreamDescription(item)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-90">
-                  <span className="align-middle">{shortenAddress(item.beneficiaryAddress as string)}</span>
+                  <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-130">
                   <span className="align-middle">{item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}</span>
@@ -3609,7 +3641,10 @@ export const TreasuriesView = () => {
     );
   }
 
+  /*
   const renderTreasuryMeta = () => {
+    const v1 = treasuryDetails as TreasuryInfo;
+    const v2 = treasuryDetails as Treasury;
     const token = tokenList.find(t => t.address === treasuryDetails?.associatedTokenAddress);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;

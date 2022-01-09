@@ -447,27 +447,21 @@ export const Streams = () => {
     // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
     // since we are allowing withdrawals only for any cliff amount but only for < v2 streams
     // TODO: Remove when withdraw feature goes back to normal
-    if (lastDetail.version < 2 && !lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
-      setTransactionStatus({
-        lastOperation: transactionStatus.currentOperation,
-        currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-      });
-      setWithdrawFundsTransactionModalVisibility(true);
-      return;
+    if (lastDetail && lastDetail.version < 2) {
+      if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
+        setTransactionStatus({
+          lastOperation: transactionStatus.currentOperation,
+          currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+        });
+        setWithdrawFundsTransactionModalVisibility(true);
+        return;
+      }
+    } else {
+      resetTransactionStatus();
     }
 
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
-    // const token = getTokenByMintAddress(streamDetail?.associatedToken as string);
-    // if (token) {
-    //   consoleOut("stream token:", token);
-    //   if (!selectedToken || selectedToken.address !== token.address) {
-    //     setOldSelectedToken(selectedToken);
-    //     setSelectedToken(token);
-    //   }
-    // } else if (!token && (!selectedToken || selectedToken.address !== streamDetail?.associatedToken)) {
-    //   setCustomToken(streamDetail?.associatedToken as string);
-    // }
     if (lastDetail.version < 2) {
       getTransactionFees(MSP_ACTIONS.withdraw).then(value => {
         setTransactionFees(value);
@@ -485,6 +479,7 @@ export const Streams = () => {
     getTransactionFees,
     getTransactionFeesV2,
     setTransactionStatus,
+    resetTransactionStatus
   ]);
 
   const closeWithdrawModal = useCallback(() => {
