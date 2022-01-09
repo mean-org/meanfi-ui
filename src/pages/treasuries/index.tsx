@@ -32,7 +32,6 @@ import {
   copyText,
   consoleOut,
   isValidAddress,
-  getIntervalFromSeconds,
   getTransactionModalTitle,
   getFormattedNumberToLocale,
   getTransactionStatusForLogs,
@@ -562,7 +561,6 @@ export const TreasuriesView = () => {
   // Maintain stream stats
   useEffect(() => {
 
-    // TODO: Attack later
     const updateStats = () => {
       if (treasuryStreams && treasuryStreams.length) {
         const scheduled = treasuryStreams.filter(s => {
@@ -3540,29 +3538,24 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
-  const renderStreamOptions = (item: Stream | StreamInfo, isNew: boolean) => {
+  const renderStreamOptions = (item: Stream | StreamInfo, isNewTreasury: boolean) => {
     const v1 = item as StreamInfo;
     const v2 = item as Stream;
     const menu = (
       <Menu>
-        {isNew && (
+        {isNewTreasury && (
           <>
             {v1.version < 2
-              ? v1.state === STREAM_STATE.Paused
-                ? (
-                  <Menu.Item key="1" onClick={showResumeStreamModal}>
-                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                  </Menu.Item>
-                ) : v1.state === STREAM_STATE.Running ? (
-                  <Menu.Item key="2" onClick={showPauseStreamModal}>
-                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
-                  </Menu.Item>
-                ) : null
+              ? null
               : v2.status === STREAM_STATUS.Paused
                 ? (
-                  <Menu.Item key="1" onClick={showResumeStreamModal}>
-                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                  </Menu.Item>
+                  <>
+                    {v2.remainingAllocationAmount > 0 && (
+                      <Menu.Item key="1" onClick={showResumeStreamModal}>
+                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+                      </Menu.Item>
+                    )}
+                  </>
                 ) : v2.status === STREAM_STATUS.Running ? (
                   <Menu.Item key="2" onClick={showPauseStreamModal}>
                     <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
