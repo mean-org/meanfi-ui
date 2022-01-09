@@ -55,7 +55,7 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
 import { IconBank, IconClock, IconExternalLink, IconRefresh, IconSort, IconTrash } from '../../Icons';
 import { TreasuryOpenModal } from '../../components/TreasuryOpenModal';
-import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo, TreasuryType } from '@mean-dao/money-streaming/lib/types';
+import { MSP_ACTIONS, StreamInfo, STREAM_STATE, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { TreasuryCreateModal } from '../../components/TreasuryCreateModal';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import dateFormat from 'dateformat';
@@ -78,7 +78,7 @@ import { TreasuryTopupParams } from '../../models/common-types';
 import { TokenInfo } from '@solana/spl-token-registry';
 import './style.less';
 import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-streaming';
-import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP } from '@mean-dao/msp';
+import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -329,17 +329,19 @@ export const TreasuriesView = () => {
     setSelectedToken,
   ]);
 
-  const openTreasuryById = useCallback((treasuryId: string, dock = false) => {
-    if (!connection || !publicKey || !msp || loadingTreasuryDetails) { return; }
+  const openTreasuryById = useCallback((treasuryId: string, isNew = true, dock = false) => {
+    if (!connection || !publicKey || !msp || !ms || loadingTreasuryDetails) { return; }
 
     setTimeout(() => {
       setLoadingTreasuryDetails(true);
     });
 
+    const mspInstance: any = isNew || dock ? msp : ms;
+
     treasuryDetailPerfCounter.start();
     const treasueyPk = new PublicKey(treasuryId);
-    msp.getTreasury(treasueyPk)
-      .then(details => {
+    mspInstance.getTreasury(treasueyPk)
+      .then((details: Treasury | Treasury | undefined) => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
           setSelectedTreasury(details);
@@ -381,7 +383,7 @@ export const TreasuriesView = () => {
           }
         }
       })
-      .catch(error => {
+      .catch((error: any) => {
         console.error(error);
         setTreasuryDetails(undefined);
         notify({
@@ -397,6 +399,7 @@ export const TreasuriesView = () => {
       });
 
   }, [
+    ms,
     msp,
     publicKey,
     connection,
@@ -452,7 +455,8 @@ export const TreasuriesView = () => {
                   }
                   if (item) {
                     setSelectedTreasury(item);
-                    openTreasuryById(item.id as string);
+                    const isNewTreasury = (item as Treasury).version && (item as Treasury).version >= 2 ? true : false;
+                    openTreasuryById(item.id as string, isNewTreasury);
                   }
                 } else {
                   setSelectedTreasury(undefined);
@@ -905,6 +909,13 @@ export const TreasuriesView = () => {
     return value;
   }
 
+  const getTreasuryTotalStreams = useCallback((item: Treasury | TreasuryInfo) => {
+    const v1 = item as TreasuryInfo;
+    const v2 = item as Treasury;
+    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    return isNewTreasury ? v2.totalStreams : v1.streamsAmount;
+  }, []);
+
   const getTreasuryClosureMessage = () => {
     return (
       <div>{t('treasuries.close-treasury-confirmation')}</div>
@@ -1054,7 +1065,7 @@ export const TreasuriesView = () => {
   const onAcceptOpenTreasury = (e: any) => {
     closeOpenTreasuryModal();
     consoleOut('treasury id:', e, 'blue');
-    openTreasuryById(e, true);
+    openTreasuryById(e, true, true);
   };
 
   const onCancelCustomTreasuryClick = () => {
@@ -1800,9 +1811,8 @@ export const TreasuriesView = () => {
         });
 
         const treasury = new PublicKey(treasuryDetails.id);
-        const amount = parseFloat(params.amount);
         const stream = params.streamId ? new PublicKey(params.streamId) : undefined;
-        const tokenAmount = toTokenAmount(amount, selectedToken.decimals);
+        const amount = toTokenAmount(parseFloat(params.amount as string), selectedToken.decimals);
 
         console.log('params.streamId', params.streamId);
 
@@ -1810,7 +1820,7 @@ export const TreasuriesView = () => {
           contributor: publicKey.toBase58(),                       // contributor
           treasury: treasury.toBase58(),                           // treasury
           stream: stream?.toBase58(),                              // stream
-          tokenAmount,                                             // amount
+          amount,                                                  // amount
           allocationType: params.allocationType                    // allocationType
         }
         consoleOut('data:', data);
@@ -1852,7 +1862,7 @@ export const TreasuriesView = () => {
           publicKey,
           treasury,
           stream,
-          tokenAmount,
+          amount,
           params.allocationType
         )
         .then(value => {
@@ -3641,11 +3651,17 @@ export const TreasuriesView = () => {
     );
   }
 
-  /*
   const renderTreasuryMeta = () => {
     const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
-    const token = tokenList.find(t => t.address === treasuryDetails?.associatedTokenAddress);
+    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+    const token = isNewTreasury
+      ? v2.associatedToken
+        ? getTokenByMintAddress(v2.associatedToken as string)
+        : undefined
+      : v1.associatedTokenAddress
+        ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+        : undefined;
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
       event.currentTarget.className = "error";
@@ -3666,8 +3682,8 @@ export const TreasuriesView = () => {
                     <IconSort className="mean-svg-icons" />
                   </span>
                   <span className="info-data flex-row wrap align-items-center">
-                    <span className="mr-1">{formatThousands(treasuryDetails.streamsAmount)}</span>
-                    {treasuryDetails.streamsAmount > 0 && (
+                    <span className="mr-1">{formatThousands(isNewTreasury ? v2.totalStreams : v1.streamsAmount)}</span>
+                    {(v1.streamsAmount > 0 || v2.totalStreams > 0) && (
                       <>
                         {streamStats && streamStats.total > 0 && (
                           <>
@@ -3698,8 +3714,12 @@ export const TreasuriesView = () => {
                   <span className="info-data">
                     {
                       getAmountWithSymbol(
-                        treasuryDetails.balance,
-                        treasuryDetails.associatedTokenAddress as string
+                        isNewTreasury
+                          ? toUiAmount(new BN(v2.balance), token ? token.decimals : 6)
+                          : v1.balance,
+                        token ? token.address : isNewTreasury
+                          ? v2.associatedToken  as string
+                          : v1.associatedTokenAddress as string
                       )
                     }
                   </span>
@@ -3720,11 +3740,11 @@ export const TreasuriesView = () => {
                       {token && token.logoURI ? (
                         <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} onError={imageOnErrorHandler} />
                       ) : (
-                        <Identicon address={treasuryDetails.associatedTokenAddress} style={{ width: "24", display: "inline-flex" }} />
+                        <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "24", display: "inline-flex" }} />
                       )}
                     </span>
                     <span className="info-data text-truncate">
-                      {token && token.symbol ? `${token.symbol} (${token.name})` : shortenAddress(treasuryDetails.associatedTokenAddress as string)}
+                      {token && token.symbol ? `${token.symbol} (${token.name})` : shortenAddress(isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string)}
                     </span>
                   </div>
                 </Col>
@@ -3754,6 +3774,9 @@ export const TreasuriesView = () => {
   };
 
   const renderCtaRow = () => {
+    const v1 = treasuryDetails as TreasuryInfo;
+    const v2 = treasuryDetails as Treasury;
+    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
     return (
       <>
         <Space size="middle">
@@ -3775,7 +3798,11 @@ export const TreasuriesView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={isTxInProgress() || isAnythingLoading() || (!treasuryDetails || treasuryDetails.balance - treasuryDetails.allocationLeft <= 0)}
+            disabled={
+              isTxInProgress() ||
+              isAnythingLoading() ||
+              (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
+            }
             onClick={showCreateStreamModal}>
             {isCreatingStream() && (<LoadingOutlined />)}
             {isCreatingStream()
@@ -3817,7 +3844,16 @@ export const TreasuriesView = () => {
     <>
     {treasuryList && treasuryList.length ? (
       treasuryList.map((item, index) => {
-        const token = item.associatedTokenAddress ? getTokenByMintAddress(item.associatedTokenAddress as string) : undefined;
+        const v1 = item as TreasuryInfo;
+        const v2 = item as Treasury;
+        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+        const token = isNewTreasury
+          ? v2.associatedToken
+            ? getTokenByMintAddress(v2.associatedToken as string)
+            : undefined
+          : v1.associatedTokenAddress
+            ? getTokenByMintAddress(v1.associatedTokenAddress as string)
+            : undefined;
         const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
           event.currentTarget.src = FALLBACK_COIN_IMAGE;
           event.currentTarget.className = "error";
@@ -3826,7 +3862,7 @@ export const TreasuriesView = () => {
           consoleOut('selected treasury:', item, 'blue');
           setSelectedTreasury(item);
           setTreasuryStreams([]);
-          openTreasuryById(item.id as string);
+          openTreasuryById(item.id as string, isNewTreasury);
           setDtailsPanelOpen(true);
         };
         return (
@@ -3834,12 +3870,12 @@ export const TreasuriesView = () => {
             className={`transaction-list-row ${selectedTreasury && selectedTreasury.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               <div className="token-icon">
-                {item.associatedTokenAddress ? (
+                {(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress) ? (
                   <>
                     {token ? (
                       <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
                     ) : (
-                      <Identicon address={item.associatedTokenAddress} style={{ width: "30", display: "inline-flex" }} />
+                      <Identicon address={(isNewTreasury ? v2.associatedToken : v1.associatedTokenAddress)} style={{ width: "30", display: "inline-flex" }} />
                     )}
                   </>
                 ) : (
@@ -3848,11 +3884,14 @@ export const TreasuriesView = () => {
               </div>
             </div>
             <div className="description-cell">
-              {item.label ? (
+              {(isNewTreasury ? v2.name : v1.label) ? (
                 <div className="title text-truncate">
-                  {item.label}
+                  {isNewTreasury ? v2.name : v1.label}
                   <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    {item.type === TreasuryType.Open ? 'Open' : 'Locked'}
+                    {isNewTreasury
+                      ? v2.treasuryType === TreasuryType.Open ? 'Open' : 'Locked'
+                      : v1.type === TreasuryType.Open ? 'Open' : 'Locked'
+                    }
                   </span>
                 </div>
               ) : (
@@ -3863,12 +3902,12 @@ export const TreasuriesView = () => {
               )}
             </div>
             <div className="rate-cell text-center">
-              {item.upgradeRequired ? (
+              {!isNewTreasury && v1.upgradeRequired ? (
                 <span>&nbsp;</span>
               ) : (
                 <>
                 <div className="rate-amount">
-                  {formatThousands(item.streamsAmount)}
+                  {formatThousands(isNewTreasury ? v2.totalStreams : v1.streamsAmount)}
                 </div>
                 <div className="interval">streams</div>
                 </>
@@ -3894,7 +3933,6 @@ export const TreasuriesView = () => {
     )}
     </>
   );
-  */
 
   return (
     <>
@@ -3931,10 +3969,9 @@ export const TreasuriesView = () => {
 
               <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <p>En breve...</p>
-                  {/* <Spin spinning={loadingTreasuries}>
+                  <Spin spinning={loadingTreasuries}>
                     {renderTreasuryList}
-                  </Spin> */}
+                  </Spin>
                 </div>
                 <div className="bottom-ctas">
                   {customStreamDocked ? (
@@ -3987,8 +4024,7 @@ export const TreasuriesView = () => {
               <div className="inner-container">
                 {connected ? (
                   <>
-                    <p>Almost there...</p>
-                    {/* {treasuryDetails && (
+                    {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
                           <Tooltip placement="bottom" title={"Refresh balance"}>
@@ -4031,7 +4067,7 @@ export const TreasuriesView = () => {
                           <>
                             {renderTreasuryMeta()}
                             <Divider className="activity-divider" plain></Divider>
-                            {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && treasuryDetails.streamsAmount > 0)) && (
+                            {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
                               <>
                                 {renderCtaRow()}
                                 <Divider className="activity-divider" plain></Divider>
@@ -4059,7 +4095,7 @@ export const TreasuriesView = () => {
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
-                    )} */}
+                    )}
                   </>
                 ) : (
                   <div className="h-100 flex-center">
@@ -4137,7 +4173,7 @@ export const TreasuriesView = () => {
         content={getStreamResumeMessage()}
       />
 
-      {/* {isAddFundsModalVisible && (
+      {isAddFundsModalVisible && (
         <TreasuryAddFundsModal
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
@@ -4156,7 +4192,7 @@ export const TreasuriesView = () => {
           }
           isBusy={isBusy}
         />
-      )} */}
+      )}
 
       {isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal

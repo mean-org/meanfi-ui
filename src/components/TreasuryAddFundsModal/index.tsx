@@ -7,7 +7,7 @@ import { TokenInfo } from '@solana/spl-token-registry';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress } from '../../utils/utils';
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
@@ -18,21 +18,11 @@ import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
+import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import BN from 'bn.js';
 
 const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
-
-interface StreamSummary {
-  allocationReserved: number;
-  associatedToken: string;
-  beneficiaryAddress: string;
-  id: string;
-  rateAmount: number;
-  rateIntervalInSeconds: number;
-  state: STREAM_STATE;
-  streamName: String;
-  streamSubtitle: String;
-};
 
 export const TreasuryAddFundsModal = (props: {
   handleClose: any;
@@ -43,7 +33,7 @@ export const TreasuryAddFundsModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   streamStats: TreasuryStreamsBreakdown | undefined;
-  treasuryStreams: StreamInfo[];
+  treasuryStreams: (Stream | StreamInfo)[];
   associatedToken: string;
 }) => {
   const {
@@ -63,7 +53,6 @@ export const TreasuryAddFundsModal = (props: {
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
-  const [streamSummaries, setStreamSummaries] = useState<StreamSummary[]>([]);
   const [customTokenInput, setCustomTokenInput] = useState("");
   const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
 
@@ -98,6 +87,19 @@ export const TreasuryAddFundsModal = (props: {
   //   Getters   //
   /////////////////
 
+  const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
+    if (item && publicKey) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      if (v1.version < 2) {
+        return v1.beneficiaryAddress === publicKey.toBase58() ? true : false;
+      } else {
+        return v2.beneficiary === publicKey.toBase58() ? true : false;
+      }
+    }
+    return false;
+  }, [publicKey]);
+
   const getPricePerToken = (token: TokenInfo): number => {
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
@@ -119,140 +121,204 @@ export const TreasuryAddFundsModal = (props: {
       : t('treasuries.add-funds.main-cta');
   }
 
-  const getStreamIcon = useCallback((item: StreamSummary) => {
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-    
-    if (isInbound) {
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return (<IconTimer className="mean-svg-icons incoming" />);
-        case STREAM_STATE.Paused:
-          return (<IconIncomingPaused className="mean-svg-icons incoming" />);
-        default:
-          return (<IconDownload className="mean-svg-icons incoming" />);
+  const getStreamIcon = useCallback((item: Stream | StreamInfo) => {
+    const isInbound = isInboundStream(item);
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+
+    if (v1.version < 2) {
+      if (isInbound) {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return (<IconTimer className="mean-svg-icons incoming" />);
+          case STREAM_STATE.Paused:
+            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
+          default:
+            return (<IconDownload className="mean-svg-icons incoming" />);
+        }
+      } else {
+        switch (v1.state) {
+          case STREAM_STATE.Schedule:
+            return (<IconTimer className="mean-svg-icons outgoing" />);
+          case STREAM_STATE.Paused:
+            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
+          default:
+            return (<IconUpload className="mean-svg-icons outgoing" />);
+        }
       }
     } else {
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          return (<IconTimer className="mean-svg-icons outgoing" />);
-        case STREAM_STATE.Paused:
-          return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
-        default:
-          return (<IconUpload className="mean-svg-icons outgoing" />);
+      if (isInbound) {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return (<IconTimer className="mean-svg-icons incoming" />);
+          case STREAM_STATUS.Paused:
+            return (<IconIncomingPaused className="mean-svg-icons incoming" />);
+          default:
+            return (<IconDownload className="mean-svg-icons incoming" />);
+        }
+      } else {
+        switch (v2.status) {
+          case STREAM_STATUS.Schedule:
+            return (<IconTimer className="mean-svg-icons outgoing" />);
+          case STREAM_STATUS.Paused:
+            return (<IconOutgoingPaused className="mean-svg-icons outgoing" />);
+          default:
+            return (<IconUpload className="mean-svg-icons outgoing" />);
+        }
       }
     }
-  }, [
-    publicKey
-  ]);
+  }, [isInboundStream]);
 
-  const getStreamDescription = useCallback((item: StreamInfo): string => {
+  const getStreamDescription = useCallback((item: Stream | StreamInfo): string => {
     let title = '';
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
+    const isInbound = isInboundStream(item);
 
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        title = `${t('streams.stream-list.title-pending-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused) {
-        title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+    const v1 = item as StreamInfo;
+    const v2 = item as Stream;
+
+    if (v1.version < 2) {
+      if (isInbound) {
+        if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v1.treasurerAddress}`)})`;
+        }
       } else {
-        title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${item.treasurerAddress}`)})`;
+        if (v1.state === STREAM_STATE.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+        } else if (v1.state === STREAM_STATE.Paused) {
+          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v1.beneficiaryAddress}`)})`;
+        }
       }
     } else {
-      if (item.isUpdatePending) {
-        title = `${t('streams.stream-list.title-pending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Schedule) {
-        title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
-      } else if (item.state === STREAM_STATE.Paused) {
-        title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+      if (isInbound) {
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-receiving-from')} (${shortenAddress(`${v2.treasurer}`)})`;
+        }
       } else {
-        title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${item.beneficiaryAddress}`)})`;
+        if (v2.status === STREAM_STATUS.Schedule) {
+          title = `${t('streams.stream-list.title-scheduled-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+        } else if (v2.status === STREAM_STATUS.Paused) {
+          title = `${t('streams.stream-list.title-paused-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+        } else {
+          title = `${t('streams.stream-list.title-sending-to')} (${shortenAddress(`${v2.beneficiary}`)})`;
+        }
       }
     }
     return title;
   }, [
     t,
-    publicKey
+    isInboundStream
   ]);
 
-  const getTransactionSubTitle = useCallback((item: StreamInfo) => {
+  const getStreamSubTitle = useCallback((item: Stream | StreamInfo) => {
     let title = '';
-    const isInbound = item.beneficiaryAddress === publicKey?.toBase58() ? true : false;
-    const isOtp = item.rateAmount === 0 ? true : false;
 
-    if (isInbound) {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-inbound');
-        return title;
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      const isInbound = isInboundStream(item);
+      let rateAmount = item.rateAmount > 0 ? getRateAmountDisplay(item) : getTransferAmountDisplay(item);
+      if (item.rateAmount > 0) {
+        rateAmount += ' ' + getIntervalFromSeconds(item.rateIntervalInSeconds, false, t);
       }
 
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
+      if (v1.version < 2) {
+        if (isInbound) {
+          if (v1.state === STREAM_STATE.Schedule) {
+            title = t('streams.stream-list.subtitle-scheduled-inbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v1.startUtc as string)}`;
           } else {
-            title = t('streams.stream-list.subtitle-paused-inbound');
+            title = t('streams.stream-list.subtitle-running-inbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v1.startUtc as string)}`;
           }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-inbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
-      }
-    } else {
-      if (item.isUpdatePending) {
-        title = t('streams.stream-list.subtitle-pending-outbound');
-        return title;
-      }
-
-      switch (item.state) {
-        case STREAM_STATE.Schedule:
-          title = t('streams.stream-list.subtitle-scheduled-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        case STREAM_STATE.Paused:
-          if (isOtp) {
-            title = t('streams.stream-list.subtitle-paused-otp');
+        } else {
+          if (v1.state === STREAM_STATE.Schedule) {
+            title = t('streams.stream-list.subtitle-scheduled-outbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v1.startUtc as string)}`;
           } else {
-            title = t('streams.stream-list.subtitle-paused-outbound');
+            title = t('streams.stream-list.subtitle-running-outbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v1.startUtc as string)}`;
           }
-          break;
-        case STREAM_STATE.Running:
-          title = t('streams.stream-list.subtitle-running-outbound');
-          title += ` ${getShortDate(item.startUtc as string)}`;
-          break;
-        default:
-          break;
+        }
+      } else {
+        if (isInbound) {
+          if (v2.status === STREAM_STATUS.Schedule) {
+            title = t('streams.stream-list.subtitle-scheduled-inbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v2.startUtc as string)}`;
+          } else {
+            title = t('streams.stream-list.subtitle-running-inbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v2.startUtc as string)}`;
+          }
+        } else {
+          if (v2.status === STREAM_STATUS.Schedule) {
+            title = t('streams.stream-list.subtitle-scheduled-outbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v2.startUtc as string)}`;
+          } else {
+            title = t('streams.stream-list.subtitle-running-outbound', {
+              rate: rateAmount
+            });
+            title += ` ${getShortDate(v2.startUtc as string)}`;
+          }
+        }
       }
     }
+
     return title;
 
   }, [
     t,
-    publicKey
+    isInboundStream
   ]);
 
-  const getRateAmountDisplay = (item: StreamSummary): string => {
+  const getRateAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
-    if (item && item.rateAmount && item.associatedToken) {
-      value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+
+    if (item) {
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
       value += ' ';
       value += getTokenSymbol(item.associatedToken as string);
     }
     return value;
   }
 
-  const getTransferAmountDisplay = (item: StreamSummary): string => {
+  const getTransferAmountDisplay = (item: Stream | StreamInfo): string => {
     let value = '';
+
     if (item && item.rateAmount === 0 && item.allocationReserved > 0) {
-      value += getFormattedNumberToLocale(formatAmount(item.allocationReserved, 2));
+      const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
+      if (item.version < 2) {
+        value += getFormattedNumberToLocale(formatAmount(item.rateAmount, 2));
+      } else {
+        value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.rateAmount), token?.decimals || 6), 2));
+      }
       value += ' ';
       value += getTokenSymbol(item.associatedToken as string);
     }
@@ -306,6 +372,15 @@ export const TreasuryAddFundsModal = (props: {
     t,
   ]);
 
+  const getStreamName = useCallback((item: Stream | StreamInfo | undefined) => {
+    if (item) {
+      const v1 = item as StreamInfo;
+      const v2 = item as Stream;
+      return v1.version < 2 ? v1.streamName : v2.name;
+    }
+    return '';
+  }, []);
+
   /////////////////////
   // Data management //
   /////////////////////
@@ -332,35 +407,17 @@ export const TreasuryAddFundsModal = (props: {
     toggleOverflowEllipsisMiddle
   ]);
 
-  // When modal goes visible, Build a list of StreamSummary from treasuryStreams
+  // When modal goes visible, update allocation type option
   useEffect(() => {
-    if (props.isVisible && props.streamStats && props.streamStats.total > 0 && props.treasuryStreams && props.treasuryStreams.length > 0) {
-      const summaries = props.treasuryStreams.map(item => {
-        return {
-          allocationReserved: item.allocationReserved,
-          associatedToken: item.associatedToken,
-          beneficiaryAddress: item.beneficiaryAddress,
-          id: item.id,
-          rateAmount: item.rateAmount,
-          rateIntervalInSeconds: item.rateIntervalInSeconds,
-          state: item.state,
-          streamName: item.streamName || getStreamDescription(item),
-          streamSubtitle: getTransactionSubTitle(item),
-        } as StreamSummary;
-      });
-      setStreamSummaries(summaries);
-      if (summaries.length === 1) {
+    if (props.treasuryStreams && props.treasuryStreams.length > 0) {
+      if (props.treasuryStreams.length === 1) {
         setAllocationOption(AllocationType.Specific);
       } else {
         setAllocationOption(AllocationType.All);
       }
     }
   }, [
-    props.isVisible,
-    props.streamStats,
     props.treasuryStreams,
-    getStreamDescription,
-    getTransactionSubTitle
   ]);
 
   // Window resize listener
@@ -485,8 +542,8 @@ export const TreasuryAddFundsModal = (props: {
   // Rendering //
   ///////////////
 
-  const renderStreamSelectItem = (item: StreamSummary) => ({
-    key: item.streamName as string,
+  const renderStreamSelectItem = (item: Stream | StreamInfo) => ({
+    key: getStreamName(item) as string,
     value: item.id as string,
     label: (
       <div className={`transaction-list-row`}>
@@ -494,8 +551,8 @@ export const TreasuryAddFundsModal = (props: {
           {getStreamIcon(item)}
         </div>
         <div className="description-cell">
-          <div className="title text-truncate">{item.streamName}</div>
-          <div className="subtitle text-truncate">{item.streamSubtitle}</div>
+          <div className="title text-truncate">{getStreamDescription(item)}</div>
+          <div className="subtitle text-truncate">{getStreamSubTitle(item)}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
@@ -510,7 +567,7 @@ export const TreasuryAddFundsModal = (props: {
   });
 
   const renderStreamSelectOptions = () => {
-    const options = streamSummaries.map((stream: StreamSummary, index: number) => {
+    const options = props.treasuryStreams.map((stream: Stream | StreamInfo, index: number) => {
       return renderStreamSelectItem(stream);
     });
     return options;
@@ -671,8 +728,13 @@ export const TreasuryAddFundsModal = (props: {
                         options={renderStreamSelectOptions()}
                         placeholder={t('treasuries.add-funds.search-streams-placeholder')}
                         filterOption={(inputValue, option) => {
-                          const originalItem = streamSummaries.find(i => i.streamName === option!.key);
-                          return option!.value.indexOf(inputValue) !== -1 || originalItem?.streamName.indexOf(inputValue) !== -1
+                          const originalItem = props.treasuryStreams.find(i => {
+                            const streamName = i.version < 2
+                              ? (i as StreamInfo).streamName
+                              : (i as Stream).name;
+                            return streamName === option!.key ? true : false;
+                          });
+                          return option!.value.indexOf(inputValue) !== -1 || getStreamName(originalItem).indexOf(inputValue) !== -1
                         }}
                         onSelect={onStreamSelected}
                       />
