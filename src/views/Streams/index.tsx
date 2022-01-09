@@ -73,6 +73,7 @@ import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
 import { MSP, Stream, STREAM_STATUS, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 import BN from "bn.js";
+import { InfoIcon } from "../../components/InfoIcon";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -2343,7 +2344,23 @@ export const Streams = () => {
                   )}
 
                   {/* Withdraw button */}
-                  <div className="mt-3 mb-3 withdraw-container">
+                  <div className="mt-3 mb-3 withdraw-container flex-row align-items">
+                    <Button
+                      block
+                      className="withdraw-cta"
+                      type="text"
+                      shape="round"
+                      size="small"
+                      onClick={() => {}}>
+                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                      Start V2 Migration
+                    </Button>
+                    <InfoIcon content={<p>There is a new and improved version of the streams feature. To continue using this stream you must update it first.</p>} placement="leftBottom">
+                      <InfoCircleOutlined />
+                    </InfoIcon>
+                  </div>
+
+                  {/* <div className="mt-3 mb-3 withdraw-container">
                     <Button
                       block
                       className="withdraw-cta"
@@ -2381,7 +2398,7 @@ export const Streams = () => {
                         </Button>
                       </Dropdown>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </Spin>
 
@@ -2912,7 +2929,23 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  <div className="mt-3 mb-3 withdraw-container">
+                  <div className="mt-3 mb-3 withdraw-container flex-row align-items">
+                    <Button
+                      block
+                      className="withdraw-cta"
+                      type="text"
+                      shape="round"
+                      size="small"
+                      onClick={() => {}}>
+                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                      Start V2 Migration
+                    </Button>
+                    <InfoIcon content={<p>There is a new and improved version of the streams feature. To continue using this stream you must update it first.</p>} placement="leftBottom">
+                      <InfoCircleOutlined />
+                    </InfoIcon>
+                  </div>
+
+                  {/* <div className="mt-3 mb-3 withdraw-container">
                     {isOtp() ? (
                       <>
                         <Button
@@ -2975,7 +3008,7 @@ export const Streams = () => {
                         )}
                       </>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </Spin>
 
