@@ -125,7 +125,7 @@ export const TreasuriesView = () => {
   const [treasuriesLoaded, setTreasuriesLoaded] = useState(false);
   const [customStreamDocked, setCustomStreamDocked] = useState(false);
   const [loadingTreasuryStreams, setLoadingTreasuryStreams] = useState(false);
-  const [treasuryStreams, setTreasuryStreams] = useState<StreamInfo[]>([]);
+  const [treasuryStreams, setTreasuryStreams] = useState<(Stream | StreamInfo)[]>([]);
   const [streamStats, setStreamStats] = useState<TreasuryStreamsBreakdown | undefined>(undefined);
   const [signalRefreshTreasuryStreams, setSignalRefreshTreasuryStreams] = useState(false);
   const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -241,7 +241,7 @@ export const TreasuriesView = () => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
-  const getTreasuryStreams = useCallback((treasuryPk: PublicKey) => {
+  const getTreasuryStreams = useCallback((treasuryPk: PublicKey, isNewTreasury: boolean) => {
     if (!publicKey || !ms || loadingTreasuryStreams) { return; }
 
     setTimeout(() => {
@@ -249,27 +249,50 @@ export const TreasuriesView = () => {
     });
 
     consoleOut('Executing getTreasuryStreams...', '', 'blue');
+    const msp = new MSP(connectionConfig.endpoint, publicKey, "confirmed");
 
     treasuryStreamsPerfCounter.start();
-    ms.listStreams({treasury: treasuryPk })
-      .then((streams) => {
-        consoleOut('treasuryStreams:', streams, 'blue');
-        setTreasuryStreams(streams);
-      })
-      .catch(err => {
-        console.error(err);
-        setTreasuryStreams([]);
-      })
-      .finally(() => {
-        setLoadingTreasuryStreams(false);
-        treasuryStreamsPerfCounter.stop();
-        consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
-      });
+    if (isNewTreasury) {
+      if (msp) {
+        msp.listStreams({treasury: treasuryPk })
+          .then((streams) => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setTreasuryStreams(streams);
+          })
+          .catch(err => {
+            console.error(err);
+            setTreasuryStreams([]);
+          })
+          .finally(() => {
+            setLoadingTreasuryStreams(false);
+            treasuryStreamsPerfCounter.stop();
+            consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
+          });
+      }
+    } else {
+      if (ms) {
+        ms.listStreams({treasury: treasuryPk })
+          .then((streams) => {
+            consoleOut('treasuryStreams:', streams, 'blue');
+            setTreasuryStreams(streams);
+          })
+          .catch(err => {
+            console.error(err);
+            setTreasuryStreams([]);
+          })
+          .finally(() => {
+            setLoadingTreasuryStreams(false);
+            treasuryStreamsPerfCounter.stop();
+            consoleOut(`getTreasuryStreams took ${(treasuryStreamsPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
+          });
+      }
+    }
 
   }, [
     ms,
     publicKey,
     loadingTreasuryStreams,
+    connectionConfig.endpoint,
   ]);
 
   const setCustomToken = useCallback((address: string) => {
@@ -481,13 +504,16 @@ export const TreasuriesView = () => {
 
   // Reload Treasury streams whenever the selected treasury changes
   useEffect(() => {
-    if (!publicKey || !ms) { return; }
+    if (!publicKey) { return; }
 
     if (treasuryDetails && !loadingTreasuryStreams && signalRefreshTreasuryStreams) {
       setSignalRefreshTreasuryStreams(false);
       consoleOut('calling getTreasuryStreams...', '', 'blue');
       const treasuryPk = new PublicKey(treasuryDetails.id as string);
-      getTreasuryStreams(treasuryPk);
+      const isNewTreasury = (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
+        ? true
+        : false;
+      getTreasuryStreams(treasuryPk, isNewTreasury);
     }
   }, [
     ms,
@@ -502,11 +528,30 @@ export const TreasuriesView = () => {
   // Maintain stream stats
   useEffect(() => {
 
+    // TODO: Attack later
     const updateStats = () => {
       if (treasuryStreams && treasuryStreams.length) {
-        const scheduled = treasuryStreams.filter(s => s.state === STREAM_STATE.Schedule);
-        const running = treasuryStreams.filter(s => s.state === STREAM_STATE.Running);
-        const stopped = treasuryStreams.filter(s => s.state === STREAM_STATE.Paused);
+        const scheduled = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Schedule
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Schedule
+          }
+        });
+        const running = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Running
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Running
+          }
+        });
+        const stopped = treasuryStreams.filter(s => {
+          if (s.version < 2) {
+            return (s as StreamInfo).state === STREAM_STATE.Paused
+          } else {
+            return (s as Stream).status === STREAM_STATUS.Paused
+          }
+        });
         const stats: TreasuryStreamsBreakdown = {
           total: treasuryStreams.length,
           scheduled: scheduled.length,
@@ -4048,7 +4093,7 @@ export const TreasuriesView = () => {
         content={getStreamResumeMessage()}
       />
 
-      {isAddFundsModalVisible && (
+      {/* {isAddFundsModalVisible && (
         <TreasuryAddFundsModal
           handleOk={onAcceptAddFunds}
           handleClose={closeAddFundsModal}
@@ -4067,7 +4112,7 @@ export const TreasuriesView = () => {
           }
           isBusy={isBusy}
         />
-      )}
+      )} */}
 
       {isCreateStreamModalVisible && (
         <TreasuryStreamCreateModal

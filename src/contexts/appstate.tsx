@@ -278,20 +278,18 @@ const AppStateProvider: React.FC = ({ children }) => {
     streamProgramAddressFromConfig
   ]);
 
-  //
-  const msp: MSP | undefined = useMemo(() => {
-    if (!msp && wallet && publicKey && connectionConfig && connected) {
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from appState');
       return new MSP(
         connectionConfig.endpoint,
-        publicKey
+        publicKey,
+        "confirmed"
       );
     }
-    return msp;
   }, [
-    connected, 
-    connectionConfig, 
-    publicKey, 
-    wallet
+    connectionConfig.endpoint,
+    publicKey
   ]);
 
   const today = new Date().toLocaleDateString("en-US");
