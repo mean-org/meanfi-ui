@@ -2173,13 +2173,13 @@ export const Streams = () => {
     </>
   );
 
-  const menu = (
-    <Menu>
-      <Menu.Item key="1" onClick={showCloseStreamModal}>
-        <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
-      </Menu.Item>
-    </Menu>
-  );
+  // const menu = (
+  //   <Menu>
+  //     <Menu.Item key="1" onClick={showCloseStreamModal}>
+  //       <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
+  //     </Menu.Item>
+  //   </Menu>
+  // );
 
   const renderInboundStreamV1 = (stream: StreamInfo) => {
     const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
@@ -2737,7 +2737,7 @@ export const Streams = () => {
                               : t("streams.stream-detail.withdraw-funds-cta")
                       }
                     </Button>
-                    {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                    {/* {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -2748,7 +2748,7 @@ export const Streams = () => {
                           icon={<EllipsisOutlined />}>
                         </Button>
                       </Dropdown>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </Spin>
@@ -3393,30 +3393,32 @@ export const Streams = () => {
 
                   {/* Top up (add funds) button */}
                   <div className="mt-3 mb-3 withdraw-container">
-                    {isOtp() ? (
-                      <>
-                        <Button
-                          block
-                          className="withdraw-cta"
-                          type="text"
-                          shape="round"
-                          size="small"
-                          disabled={fetchTxInfoStatus === "fetching"}
-                          onClick={showCloseStreamModal}>
-                          {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                          {isClosing()
-                            ? t("streams.stream-detail.cta-disabled-closing")
-                            : isCreating()
-                              ? t("streams.stream-detail.cta-disabled-creating")
-                              : isAddingFunds()
-                                ? t("streams.stream-detail.cta-disabled-funding")
-                                : isWithdrawing()
-                                  ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                  : t("streams.stream-detail.cancel-scheduled-transfer")
-                          }
-                        </Button>
-                      </>
-                    ) : (
+                    {
+                    // isOtp() ? (
+                    //   <>
+                    //     <Button
+                    //       block
+                    //       className="withdraw-cta"
+                    //       type="text"
+                    //       shape="round"
+                    //       size="small"
+                    //       disabled={fetchTxInfoStatus === "fetching"}
+                    //       onClick={showCloseStreamModal}>
+                    //       {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
+                    //       {isClosing()
+                    //         ? t("streams.stream-detail.cta-disabled-closing")
+                    //         : isCreating()
+                    //           ? t("streams.stream-detail.cta-disabled-creating")
+                    //           : isAddingFunds()
+                    //             ? t("streams.stream-detail.cta-disabled-funding")
+                    //             : isWithdrawing()
+                    //               ? t("streams.stream-detail.cta-disabled-withdrawing")
+                    //               : t("streams.stream-detail.cancel-scheduled-transfer")
+                    //       }
+                    //     </Button>
+                    //   </>
+                    // ) : 
+                    (
                       <>
                         <Button
                           block
@@ -3441,7 +3443,7 @@ export const Streams = () => {
                                   : t("streams.stream-detail.add-funds-cta")
                           }
                         </Button>
-                        {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                        {/* {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
                           <Dropdown overlay={menu} trigger={["click"]}>
                             <Button
                               shape="round"
@@ -3452,7 +3454,7 @@ export const Streams = () => {
                               icon={<EllipsisOutlined />}>
                             </Button>
                           </Dropdown>
-                        )}
+                        )} */}
                       </>
                     )}
                   </div>
@@ -3726,7 +3728,7 @@ export const Streams = () => {
           handleClose={closeOpenStreamModal}
         />
 
-        <StreamCloseModal
+        {/* <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
           selectedToken={selectedToken}
           transactionFees={transactionFees}
@@ -3734,7 +3736,7 @@ export const Streams = () => {
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()}
-        />
+        /> */}
 
         <StreamAddFundsModal
           isVisible={isAddFundsModalVisible}
