@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from '../../utils/utils';
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
@@ -33,6 +33,7 @@ import { customLogger } from '../..';
 import { MSP, TransactionFees, Treasury, TreasuryType } from '@mean-dao/msp';
 import { TreasuryInfo } from '@mean-dao/money-streaming';
 import { useConnectionConfig } from '../../contexts/connection';
+import { BN } from 'bn.js';
 
 const { Option } = Select;
 
@@ -91,19 +92,18 @@ export const TreasuryStreamCreateModal = (props: {
 
   useEffect(() => {
     if (props.isVisible && props.treasuryDetails) {
-      const v1 = props.treasuryDetails as TreasuryInfo;
       const v2 = props.treasuryDetails as Treasury;
-      let unallocated: number;
-      if (v2.version >= 2) {
-        unallocated = v2.balance;
-      } else {
-        unallocated = v1.balance - v1.allocationLeft;
-      }
-      setUnallocatedBalance(unallocated);
+      const isNewTreasury = v2.version >= 2 ? true : false;
+      const unallocated = props.treasuryDetails.balance - props.treasuryDetails.allocationAssigned;
+      setUnallocatedBalance(isNewTreasury
+        ? toUiAmount(new BN(unallocated), selectedToken?.decimals || 6)
+        : unallocated
+      );
     }
   }, [
     props.isVisible,
-    props.treasuryDetails
+    props.treasuryDetails,
+    selectedToken?.decimals
   ]);
 
   /////////////////
@@ -372,7 +372,7 @@ export const TreasuryStreamCreateModal = (props: {
     setIsBusy(true);
 
     const createTx = async (): Promise<boolean> => {
-      if (publicKey && props.treasuryDetails) {
+      if (publicKey && props.treasuryDetails && selectedToken) {
         consoleOut('Wallet address:', publicKey.toBase58());
 
         setTransactionStatus({
@@ -383,8 +383,8 @@ export const TreasuryStreamCreateModal = (props: {
         const beneficiary = new PublicKey(recipientAddress as string);
         const associatedToken = new PublicKey(selectedToken?.address as string);
         const treasury = new PublicKey(props.treasuryDetails.id as string);
-        const fundingAmount = parseFloat(fromCoinAmount as string);
-        const rateAmount = parseFloat(paymentRateAmount as string);
+        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+        const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
         const fromParsedDate = new Date(parsedDate);
@@ -418,12 +418,12 @@ export const TreasuryStreamCreateModal = (props: {
           treasury: treasury.toBase58(),                                              // treasury
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
           associatedToken: associatedToken.toBase58(),                                // associatedToken
+          streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
+          allocation: amount,                                                         // fundingAmount
+          allocationReserved: isAllocationReserved ? amount : 0,                      // allocationReserved
           rateAmount: rateAmount,                                                     // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
           startUtc: fromParsedDate,                                                   // startUtc
-          streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
-          allocation: fundingAmount,                                                  // fundingAmount
-          allocationReserved: isAllocationReserved ? fundingAmount : 0,               // allocationReserved
         };
         consoleOut('data:', data);
 
@@ -466,8 +466,8 @@ export const TreasuryStreamCreateModal = (props: {
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
           recipientNote,                                                    // streamName
-          fundingAmount,                                                    // fundingAmount
-          isAllocationReserved ? fundingAmount : 0,                         // allocationReserved
+          amount,                                                           // fundingAmount
+          isAllocationReserved ? amount : 0,                                // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
           fromParsedDate                                                    // startUtc
