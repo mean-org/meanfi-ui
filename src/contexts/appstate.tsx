@@ -124,7 +124,7 @@ interface AppStateConfig {
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
-  openStreamById: (streamId: string) => void;
+  openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
   // Accounts
@@ -459,7 +459,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const openStreamById = async (streamId: string) => {
+  const openStreamById = async (streamId: string, dock = false) => {
     let streamPublicKey: PublicKey;
     try {
       streamPublicKey = new PublicKey(streamId);
@@ -469,19 +469,23 @@ const AppStateProvider: React.FC = ({ children }) => {
           consoleOut('customStream', detail);
           if (detail) {
             setStreamDetail(detail);
-            setStreamList([detail]);
-            getStreamActivity(streamId, detail.version);
-            setCustomStreamDocked(true);
-            notify({
-              description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
-              type: "success"
-            });
+            if (dock) {
+              setStreamList([detail]);
+              getStreamActivity(streamId, detail.version);
+              setCustomStreamDocked(true);
+              notify({
+                description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
+                type: "success"
+              });
+            }
           } else {
-            notify({
-              message: t('notifications.error-title'),
-              description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
-              type: "error"
-            });
+            if (dock) {
+              notify({
+                message: t('notifications.error-title'),
+                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+                type: "error"
+              });
+            }
           }
         } else {
           notify({

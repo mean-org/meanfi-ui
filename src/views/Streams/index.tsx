@@ -45,6 +45,7 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isLocal,
   isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
@@ -62,18 +63,18 @@ import { StreamAddFundsModal } from "../../components/StreamAddFundsModal";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { StreamCloseModal } from "../../components/StreamCloseModal";
 import { useNativeAccount } from "../../contexts/accounts";
-import { AllocationType, MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { useTranslation } from "react-i18next";
 import { customLogger } from '../..';
 import { useLocation, useNavigate } from "react-router-dom";
 import { NATIVE_SOL_MINT } from "../../utils/ids";
 import { TransactionStatusContext } from "../../contexts/transaction-status";
 import { Identicon } from "../../components/Identicon";
-import { MSP, Stream, STREAM_STATUS, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 import BN from "bn.js";
 import { InfoIcon } from "../../components/InfoIcon";
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
+import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
+import { AllocationType, MSP, Stream, STREAM_STATUS, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -115,6 +116,7 @@ export const Streams = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
+    lastSentTxStatus,
     lastSentTxOperationType,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -328,7 +330,7 @@ export const Streams = () => {
   const showOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(true), []);
   const closeOpenStreamModal = useCallback(() => setIsOpenStreamModalVisibility(false), []);
   const onAcceptOpenStream = (e: any) => {
-    openStreamById(e);
+    openStreamById(e, true);
     closeOpenStreamModal();
   };
 
@@ -808,8 +810,9 @@ export const Streams = () => {
           refreshStreamList(true);
           break;
         case OperationType.StreamAddFunds:
+          clearTransactionStatusContext();
           if (customStreamDocked) {
-            openStreamById(streamDetail?.id as string);
+            openStreamById(streamDetail?.id as string, false);
           } else {
             refreshStreamList(false);
           }
@@ -829,6 +832,7 @@ export const Streams = () => {
     setStreamList,
     refreshStreamList,
     openStreamById,
+    clearTransactionStatusContext
   ]);
 
   // Transaction execution (Applies to all transactions)
@@ -3557,6 +3561,15 @@ export const Streams = () => {
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="secondary-link" onClick={() => clearTransactionStatusContext()}>[STOP]</span>
+          <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+          <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
+        </div>
+      )} */}
+
       <div className={`meanfi-two-panel-layout ${detailsPanelOpen ? 'details-open' : ''}`}>
 
         {/* Left / top panel*/}
