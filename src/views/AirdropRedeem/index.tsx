@@ -353,7 +353,7 @@ export const AirdropRedeem = (props: {
 
     const confirmTx = async (): Promise<boolean> => {
       return await props.connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -408,7 +408,7 @@ export const AirdropRedeem = (props: {
               if (confirmed) {
                 await sendRecordClaimTxRequest(publicKey.toBase58(), signature);
                 setIsBusy(false);
-                navigate('/accounts/streams');
+                navigate('/accounts');
               } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
