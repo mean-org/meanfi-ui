@@ -23,4 +23,5 @@ export class Allocation {
     tokenAmount!: number;
     cliffPercent!: number;
     monthlyRate!: number;
+    isAirdropCompleted!: boolean;
 }

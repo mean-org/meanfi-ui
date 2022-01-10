@@ -15,9 +15,10 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
-import { updateCreateStream2Tx } from '../../utils/transactions';
+import { isError, updateCreateStream2Tx } from '../../utils/transactions';
 import { MSP } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
+import { useNavigate } from 'react-router-dom';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -28,6 +29,7 @@ export const AirdropRedeem = (props: {
   redeemStarted: boolean;
   selectedToken: TokenInfo | undefined;
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { endpoint } = useConnectionConfig();
   const { connected, wallet, publicKey } = useWallet();
@@ -89,7 +91,8 @@ export const AirdropRedeem = (props: {
             userAllocation.tokenAmount > 0 &&
             userAllocation.cliffPercent > 0 &&
             userAllocation.cliffPercent < 1 &&
-            userAllocation.monthlyRate > 0
+            userAllocation.monthlyRate > 0 &&
+            !userAllocation.isAirdropCompleted
       ? true : false;
   }
 
@@ -98,12 +101,15 @@ export const AirdropRedeem = (props: {
       ? t('transactions.validation.not-connected')
       : !userAllocation || !userAllocation.tokenAmount
         ? 'Nothing to claim'
-        : 'Claim now';
+        : userAllocation.isAirdropCompleted
+          ? 'Airdrop has completed'
+          : isError(transactionStatus.currentOperation)
+            ? 'Retry operation'
+            : 'Claim now'
   }
 
   const onExecuteAirdropTx = async () => {
     let transaction: Transaction;
-    let signedTransaction: Transaction;
     let signature: any;
     let encodedTx: string;
     const transactionLog: any[] = [];
@@ -111,6 +117,18 @@ export const AirdropRedeem = (props: {
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
+
+    const screamOut = (message: any) => {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.SignTransaction,
+        currentOperation: TransactionStatus.SignTransactionFailure
+      });
+      transactionLog.push({
+        action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+        result: message
+      });
+      customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+    }
 
     const createTx = async (): Promise<boolean> => {
       if (publicKey && userAllocation && selectedToken) {
@@ -126,7 +144,7 @@ export const AirdropRedeem = (props: {
         const associatedToken = new PublicKey(meanToken.address as string);
         const allocation = toTokenAmount(userAllocation.tokenAmount, meanToken.decimals);
         const rateAmount = toTokenAmount(userAllocation.monthlyRate, meanToken.decimals);
-        const streamName = 'Airdrop unlocked';
+        const streamName = 'MEAN Airdrop';
         const now = new Date();
         const cliffAmount = 0;
         const cliffVestPercent = userAllocation.cliffPercent * 100;
@@ -218,7 +236,6 @@ export const AirdropRedeem = (props: {
         return await wallet.signTransaction(transaction)
           .then(async (signed: Transaction) => {
             consoleOut('signTransaction returned a signed transaction:', signed);
-            signedTransaction = signed;
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
               result: {signer: wallet.publicKey.toBase58()}
@@ -230,21 +247,13 @@ export const AirdropRedeem = (props: {
               consoleOut('encodedTx before updating:', encodedTx, 'orange');
               const response = await sendSignClaimTxRequest(publicKey.toBase58(), encodedTx);
               consoleOut('sendSignClaimTxRequest response:', response, 'blue');
+              consoleOut('Felipe');
               if (!response || !response.base64SignedClaimTransaction) {
-                console.log('Unexplainable here!');
-                setTransactionStatus({
-                  lastOperation: TransactionStatus.SignTransaction,
-                  currentOperation: TransactionStatus.SignTransactionFailure
-                });
-                transactionLog.push({
-                  action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-                  result: 'There was no allocation'
-                });
-                customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+                consoleOut('There was no allocation', '', 'red');
+                screamOut('There was no allocation');
                 return false;
               }
-              signedTransaction = response.base64SignedClaimTransaction;
-              encodedTx = signedTransaction.serialize().toString('base64');
+              encodedTx = response.base64SignedClaimTransaction;
               consoleOut('encodedTx:', encodedTx, 'orange');
               setTransactionStatus({
                 lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -398,6 +407,7 @@ export const AirdropRedeem = (props: {
               if (confirmed) {
                 await sendRecordClaimTxRequest(publicKey.toBase58(), signature);
                 setIsBusy(false);
+                navigate('/accounts/streams');
               } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -416,16 +426,15 @@ export const AirdropRedeem = (props: {
                 <div className="airdrop-amount">
                   <CountUp
                     end={userAllocation.tokenAmount}
-                    decimals={meanToken.decimals}
+                    decimals={2}
                     separator=','
                     duration={2} />
                   <span className="ml-1">{meanToken.symbol}</span>
                 </div>
               </>
             ) : (
-              <div className="airdrop-amount">0.000000 MEAN</div>
+              <div className="airdrop-amount">0.00 MEAN</div>
             )}
-            <div className="font-size-100 mb-3 text-center fg-orange-red">The airdrop is slightly delayed, please follow the official channels. New date to be announced.</div>
           </>
         )}
       </div>

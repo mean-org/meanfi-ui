@@ -85,7 +85,7 @@ export const getWhitelistAllocation = async (address: string, claimType: Whiteli
   }
 };
 
-export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: string): Promise<any> => {
+export async function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
   const options: RequestInit = {
     method: "POST",
     headers: meanFiHeaders,
