@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
-import { getTxIxResume, toTokenAmount } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTxIxResume, toTokenAmount } from '../../utils/utils';
 import { AppStateContext } from '../../contexts/appstate';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +16,11 @@ import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxReques
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
 import { isError, updateCreateStream2Tx } from '../../utils/transactions';
-import { MSP } from '@mean-dao/msp';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 import { useConnectionConfig } from '../../contexts/connection';
 import { useNavigate } from 'react-router-dom';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { notify } from '../../utils/notifications';
 
 export const AirdropRedeem = (props: {
   connection: Connection;
@@ -27,6 +29,7 @@ export const AirdropRedeem = (props: {
   idoDetails: IdoDetails;
   disabled: boolean;
   redeemStarted: boolean;
+  nativeBalance: number;
   selectedToken: TokenInfo | undefined;
 }) => {
   const navigate = useNavigate();
@@ -47,6 +50,9 @@ export const AirdropRedeem = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [userAllocation, setUserAllocation] = useState<Allocation | null>(null);
+  const [transactionFee, setTransactionFee] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   const meanToken = useMemo(() => {
     const token = userTokens.filter(t => t.symbol === 'MEAN');
@@ -84,6 +90,24 @@ export const AirdropRedeem = (props: {
     userAllocation
   ]);
 
+  useEffect(() => {
+    const getTransactionFees = async (): Promise<TransactionFees> => {
+      return await calculateActionFees(props.connection, MSP_ACTIONS.createStreamWithFunds);
+    }
+    if (!transactionFee.mspFlatFee) {
+      getTransactionFees().then(values => {
+        setTransactionFee(values);
+        consoleOut("transactionFee:", values);
+        consoleOut('blockchainFee:', values.blockchainFee + values.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+      });
+    }
+  }, [
+    props.connection,
+    props.nativeBalance,
+    transactionFee.mspFlatFee
+  ]);
+
   // Validation
 
   const isValidOperation = (): boolean => {
@@ -92,7 +116,8 @@ export const AirdropRedeem = (props: {
             userAllocation.cliffPercent > 0 &&
             userAllocation.cliffPercent < 1 &&
             userAllocation.monthlyRate > 0 &&
-            !userAllocation.isAirdropCompleted
+            !userAllocation.isAirdropCompleted &&
+            props.nativeBalance > transactionFee.blockchainFee + transactionFee.mspFlatFee
       ? true : false;
   }
 
@@ -103,9 +128,11 @@ export const AirdropRedeem = (props: {
         ? 'Nothing to claim'
         : userAllocation.isAirdropCompleted
           ? 'Airdrop has completed'
-          : isError(transactionStatus.currentOperation)
-            ? 'Retry operation'
-            : 'Claim now'
+          : props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee
+            ? `Need at least ${getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())}`
+            : isError(transactionStatus.currentOperation)
+              ? 'Retry operation'
+              : 'Claim now'
   }
 
   const onExecuteAirdropTx = async () => {
@@ -175,6 +202,29 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
           result: ''
         });
+
+        // Abort transaction if not enough balance to pay for gas fees
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFee.blockchainFee + transactionFee.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', props.nativeBalance, 'blue');
+        if (props.nativeBalance < transactionFee.blockchainFee + transactionFee.mspFlatFee) {
+          const noBalanceMessage = `Not enough balance (${
+            getTokenAmountAndSymbolByTokenAddress(props.nativeBalance, NATIVE_SOL_MINT.toBase58())
+          }) to pay for network fees (${
+            getTokenAmountAndSymbolByTokenAddress(transactionFee.blockchainFee + transactionFee.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+          })`;
+          notify({
+            message: 'Not enough SOL balance',
+            description: noBalanceMessage,
+            type: 'error'
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: noBalanceMessage
+          });
+          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          return false;
+        }
 
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 

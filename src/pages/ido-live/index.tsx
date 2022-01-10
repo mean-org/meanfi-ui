@@ -720,6 +720,7 @@ export const IdoLiveView = () => {
             idoStatus={idoStatus}
             redeemStarted={today > redeemStartUtc}
             disabled={today < redeemStartUtc || fetchTxInfoStatus === "fetching"}
+            nativeBalance={nativeBalance}
             selectedToken={selectedToken}
           />
         );
