@@ -459,6 +459,7 @@ export const TreasuryStreamCreateModal = (props: {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
         return await msp.createStream(
           publicKey,                                                        // initializer

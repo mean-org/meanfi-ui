@@ -451,19 +451,21 @@ export const Streams = () => {
     // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
     // since we are allowing withdrawals only for any cliff amount but only for < v2 streams
     // TODO: Remove when withdraw feature goes back to normal
-    if (lastDetail && lastDetail.version < 2) {
-      if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
-        setTransactionStatus({
-          lastOperation: transactionStatus.currentOperation,
-          currentOperation: TransactionStatus.FeatureTemporarilyDisabled
-        });
-        setWithdrawFundsTransactionModalVisibility(true);
-        return;
-      }
-    } else {
-      resetTransactionStatus();
-    }
 
+    // if (lastDetail && lastDetail.version < 2) {
+    //   if (!lastDetail.cliffVestAmount && (!lastDetail.cliffVestPercent || lastDetail.cliffVestPercent === 100)) {
+    //     setTransactionStatus({
+    //       lastOperation: transactionStatus.currentOperation,
+    //       currentOperation: TransactionStatus.FeatureTemporarilyDisabled
+    //     });
+    //     setWithdrawFundsTransactionModalVisibility(true);
+    //     return;
+    //   }
+    // } else {
+    //   resetTransactionStatus();
+    // }
+
+    resetTransactionStatus();
     setLastStreamDetail(lastDetail);
     setIsWithdrawModalVisibility(true);
     if (lastDetail.version < 2) {
@@ -479,10 +481,8 @@ export const Streams = () => {
     }
   }, [
     streamDetail,
-    transactionStatus.currentOperation,
     getTransactionFees,
     getTransactionFeesV2,
-    setTransactionStatus,
     resetTransactionStatus
   ]);
 
@@ -940,6 +940,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.addFunds(
           wallet.publicKey,
@@ -1039,6 +1040,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.addFunds(
           publicKey,
@@ -1305,6 +1307,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.withdraw(
           beneficiary,
@@ -1398,6 +1401,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.withdraw(
           beneficiary,
@@ -1656,6 +1660,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -1744,6 +1749,7 @@ export const Streams = () => {
           return false;
         }
 
+        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -2173,13 +2179,13 @@ export const Streams = () => {
     </>
   );
 
-  // const menu = (
-  //   <Menu>
-  //     <Menu.Item key="1" onClick={showCloseStreamModal}>
-  //       <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
-  //     </Menu.Item>
-  //   </Menu>
-  // );
+  const menu = (
+    <Menu>
+      <Menu.Item key="1" onClick={showCloseStreamModal}>
+        <span className="menu-item-text">{t('streams.stream-detail.close-money-stream-menu-item')}</span>
+      </Menu.Item>
+    </Menu>
+  );
 
   const renderInboundStreamV1 = (stream: StreamInfo) => {
     const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
@@ -2383,23 +2389,7 @@ export const Streams = () => {
                   )}
 
                   {/* Withdraw button */}
-                  <div className="mt-3 mb-3 withdraw-container flex-row align-items">
-                    <Button
-                      block
-                      className="withdraw-cta"
-                      type="text"
-                      shape="round"
-                      size="small"
-                      onClick={() => {}}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      Start V2 Migration
-                    </Button>
-                    <InfoIcon content={<p>There is a new and improved version of the streams feature. To continue using this stream you must update it first.</p>} placement="leftBottom">
-                      <InfoCircleOutlined />
-                    </InfoIcon>
-                  </div>
-
-                  {/* <div className="mt-3 mb-3 withdraw-container">
+                  <div className="mt-3 mb-1 withdraw-container">
                     <Button
                       block
                       className="withdraw-cta"
@@ -2437,7 +2427,13 @@ export const Streams = () => {
                         </Button>
                       </Dropdown>
                     )}
-                  </div> */}
+                  </div>
+                  <div className="mt-1 mb-2 flex-row flex-center">
+                    <span className="simplelink underline-on-hover">V1</span>
+                    <InfoIcon content={<p>There is a new and improved version of the streams feature.<br/>You'll be able to upgrade soon to enjoy new features.</p>} placement="leftBottom">
+                      <InfoCircleOutlined />
+                    </InfoIcon>
+                  </div>
                 </div>
               </Spin>
 
@@ -3022,23 +3018,8 @@ export const Streams = () => {
                   )}
 
                   {/* Top up (add funds) button */}
-                  <div className="mt-3 mb-3 withdraw-container flex-row align-items">
-                    <Button
-                      block
-                      className="withdraw-cta"
-                      type="text"
-                      shape="round"
-                      size="small"
-                      onClick={() => {}}>
-                      {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
-                      Start V2 Migration
-                    </Button>
-                    <InfoIcon content={<p>There is a new and improved version of the streams feature. To continue using this stream you must update it first.</p>} placement="leftBottom">
-                      <InfoCircleOutlined />
-                    </InfoIcon>
-                  </div>
-
-                  {/* <div className="mt-3 mb-3 withdraw-container">
+                  {/* Withdraw */}
+                  <div className="mt-3 mb-1 withdraw-container">
                     {isOtp() ? (
                       <>
                         <Button
@@ -3101,7 +3082,13 @@ export const Streams = () => {
                         )}
                       </>
                     )}
-                  </div> */}
+                  </div>
+                  <div className="mt-1 mb-2 flex-row flex-center">
+                    <span className="simplelink underline-on-hover">V1</span>
+                    <InfoIcon content={<p>There is a new and improved version of the streams feature.<br/>You'll be able to upgrade soon to enjoy new features.</p>} placement="leftBottom">
+                      <InfoCircleOutlined />
+                    </InfoIcon>
+                  </div>
                 </div>
               </Spin>
 
@@ -3710,7 +3697,7 @@ export const Streams = () => {
           handleClose={closeOpenStreamModal}
         />
 
-        {/* <StreamCloseModal
+        <StreamCloseModal
           isVisible={isCloseStreamModalVisible}
           selectedToken={selectedToken}
           transactionFees={transactionFees}
@@ -3718,7 +3705,7 @@ export const Streams = () => {
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()}
-        /> */}
+        />
 
         <StreamAddFundsModal
           isVisible={isAddFundsModalVisible}

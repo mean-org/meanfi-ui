@@ -178,6 +178,7 @@ export const AirdropRedeem = (props: {
 
         const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
 
+        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.createStream(
           beneficiary,                                                      // initializer

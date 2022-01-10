@@ -36,13 +36,13 @@ export const StreamWithdrawModal = (props: {
   const [loadingData, setLoadingData] = useState(false);
 
   // TODO: Temp method to get withdraw amount up to the vested cliff amount
-  const getMaxWithdrawAmount = (item: StreamInfo) => {
-    let maxWithdrawableAmount = item.cliffVestAmount;
-    if (item.cliffVestPercent > 0 && item.cliffVestPercent < 100) {
-      maxWithdrawableAmount = (item.cliffVestPercent * item.allocationAssigned / 100);
-    }
-    return maxWithdrawableAmount;
-  }
+  // const getMaxWithdrawAmount = (item: StreamInfo) => {
+  //   let maxWithdrawableAmount = item.cliffVestAmount;
+  //   if (item.cliffVestPercent > 0 && item.cliffVestPercent < 100) {
+  //     maxWithdrawableAmount = (item.cliffVestPercent * item.allocationAssigned / 100);
+  //   }
+  //   return maxWithdrawableAmount;
+  // }
 
   useEffect(() => {
 
@@ -59,7 +59,7 @@ export const StreamWithdrawModal = (props: {
           const v2 = detail as Stream;
           let max = 0;
           if (v1.version < 2) {
-            max = getMaxWithdrawAmount(v1);
+            max = v1.escrowVestedAmount;
           } else {
             max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
           }
@@ -88,7 +88,7 @@ export const StreamWithdrawModal = (props: {
       const v2 = props.startUpData as Stream;
       let max = 0;
       if (v1.version < 2) {
-        max = getMaxWithdrawAmount(v1);
+        max = v1.escrowVestedAmount;
         if (v1.state === STREAM_STATE.Running) {
           setMaxAmount(max);
           setLoadingData(true);
@@ -124,7 +124,6 @@ export const StreamWithdrawModal = (props: {
           setMaxAmount(max);
         }
       }
-
     }
   }, [
     t,
