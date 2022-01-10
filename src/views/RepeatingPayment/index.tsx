@@ -33,6 +33,7 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
+  isLocal,
   isToday,
   isValidAddress,
   PaymentRateTypeOption
@@ -55,7 +56,10 @@ import { notify } from '../../utils/notifications';
 import { TokenDisplay } from '../../components/TokenDisplay';
 import { TextInput } from '../../components/TextInput';
 import { TokenListItem } from '../../components/TokenListItem';
-import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
+import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
+import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
+import { MSP_ACTIONS } from '@mean-dao/money-streaming/lib/types';
+import { MSP, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -70,6 +74,7 @@ export const RepeatingPayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
+    isWhitelisted,
     loadingPrices,
     recipientAddress,
     recipientNote,
@@ -79,6 +84,7 @@ export const RepeatingPayment = () => {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
+    streamProgramAddress,
     streamV2ProgramAddress,
     previousWalletConnectState,
     refreshPrices,
@@ -112,6 +118,7 @@ export const RepeatingPayment = () => {
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [mspClientVersion, setMspClientVersion] = useState(1);
 
   useEffect(() => {
 
@@ -189,17 +196,32 @@ export const RepeatingPayment = () => {
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
 
+  const getTransactionFees = useCallback(async (action: MSP_ACTIONS): Promise<TransactionFees> => {
+    return await calculateActionFees(connection, action);
+  }, [connection]);
+
+  const getTransactionFeesV2 = useCallback(async (action: MSP_ACTIONS_V2): Promise<TransactionFees> => {
+    return await calculateActionFeesV2(connection, action);
+  }, [connection]);
+
   useEffect(() => {
-    const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
-    }
-    if (!repeatingPaymentFees.mspFlatFee) {
-      getTransactionFees().then(values => {
-        setRepeatingPaymentFees(values);
-        consoleOut("repeatingPaymentFees:", values);
+    if (mspClientVersion === 1) {
+      getTransactionFees(MSP_ACTIONS.createStreamWithFunds).then(value => {
+        setRepeatingPaymentFees(value);
+        consoleOut("repeatingPaymentFees:", value, 'orange');
+      });
+    } else {
+      getTransactionFeesV2(MSP_ACTIONS_V2.closeStream).then(value => {
+        setRepeatingPaymentFees(value);
+        consoleOut("repeatingPaymentFees:", value, 'orange');
       });
     }
-  }, [connection, repeatingPaymentFees]);
+  }, [
+    mspClientVersion,
+    repeatingPaymentFees.mspFlatFee,
+    getTransactionFeesV2,
+    getTransactionFees,
+  ]);
 
   const resetTransactionStatus = () => {
     setTransactionStatus({
@@ -605,7 +627,132 @@ export const RepeatingPayment = () => {
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    const createTx = async (): Promise<boolean> => {
+    const createV1Tx = async (): Promise<boolean> => {
+      if (wallet && publicKey && selectedToken) {
+        consoleOut("Start transaction for contract type:", contract?.name);
+        consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        consoleOut('Beneficiary address:', recipientAddress);
+        const beneficiary = new PublicKey(recipientAddress as string);
+        consoleOut('beneficiaryMint:', selectedToken.address);
+        const beneficiaryMint = new PublicKey(selectedToken.address as string);
+        const amount = parseFloat(fromCoinAmount as string);
+        const rateAmount = parseFloat(paymentRateAmount as string);
+        const now = new Date();
+        const parsedDate = Date.parse(paymentStartDate as string);
+        const fromParsedDate = new Date(parsedDate);
+        fromParsedDate.setHours(now.getHours());
+        fromParsedDate.setMinutes(now.getMinutes());
+        fromParsedDate.setSeconds(now.getSeconds());
+        fromParsedDate.setMilliseconds(now.getMilliseconds());
+        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+
+        // Create a transaction
+        const data = {
+          wallet: wallet.publicKey.toBase58(),                        // wallet
+          treasury: 'undefined',                                      // treasury
+          beneficiary: beneficiary.toBase58(),                        // beneficiary
+          beneficiaryMint: beneficiaryMint.toBase58(),                // beneficiaryMint
+          rateAmount: rateAmount,                                     // rateAmount
+          rateIntervalInSeconds:
+            getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
+          startUtc: fromParsedDate,                                   // startUtc
+          streamName: recipientNote
+            ? recipientNote.trim()
+            : undefined,                                              // streamName
+          allocation: amount                                          // allocation
+        };
+        consoleOut('data:', data);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: data
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+        if (nativeBalance < repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
+          });
+          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        // Init a streaming operation
+        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+
+        return await moneyStream.createStream(
+          publicKey,                                                  // wallet
+          undefined,                                                  // treasury
+          beneficiary,                                                // beneficiary
+          beneficiaryMint,                                            // beneficiaryMint
+          recipientNote,                                              // streamName
+          amount,                                                     // allocationAssigned
+          0,                                                          // allocationReserved
+          rateAmount,                                                 // rateAmount
+          getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
+          fromParsedDate,                                             // startUtc
+        )
+        .then(value => {
+          consoleOut('createStream returned transaction:', value);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.InitTransactionSuccess,
+            currentOperation: TransactionStatus.SignTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+            result: getTxIxResume(value)
+          });
+          transaction = value;
+          return true;
+        })
+        .catch(error => {
+          console.error('createStream error:', error);
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.InitTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+            result: `${error}`
+          });
+          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const createV2Tx = async (): Promise<boolean> => {
       if (wallet && publicKey && selectedToken) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
@@ -840,9 +987,14 @@ export const RepeatingPayment = () => {
 
     if (wallet) {
       showTransactionModal();
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
+      let created: boolean;
+      if (mspClientVersion === 1) {
+        created = await createV1Tx();
+      } else {
+        created = await createV2Tx();
+      }
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('signed:', sign);
         if (sign && !transactionCancelled) {
@@ -858,6 +1010,14 @@ export const RepeatingPayment = () => {
       } else { setIsBusy(false); }
     }
   };
+
+  const toggleMspClient = () => {
+    if (mspClientVersion === 2) {
+      setMspClientVersion(1);
+    } else {
+      setMspClientVersion(2);
+    }
+  }
 
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
@@ -928,6 +1088,16 @@ export const RepeatingPayment = () => {
 
   return (
     <>
+      {(isLocal() || isWhitelisted) && (
+        <div className="debug-bar">
+          <span className="secondary-link" onClick={() => toggleMspClient()}>[Toggle MSP client]</span>
+          <span className="ml-1">MSP client version:</span><span className="ml-1 font-bold fg-dark-active">{mspClientVersion || '-'}</span>
+          {/* <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+          <span className="ml-1">recentlyCreatedVault:</span><span className="ml-1 font-bold fg-dark-active">{recentlyCreatedVault ? shortenAddress(recentlyCreatedVault, 8) : '-'}</span>
+          <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span> */}
+        </div>
+      )}
+
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
