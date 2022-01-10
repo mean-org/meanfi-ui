@@ -37,7 +37,7 @@ export class AppConfigService {
             logglyCustomerKey: '8aaea666-b5e8-469b-828a-89c9ca60cdef',
             logglyTag: 'MeanFiWebApp',
             idoAccountAddress: 'E7hiYsz4SRAXjadPYbjML2VDSfY1CwGUYFkHWU9yvk7n',
-            idoAirdropTreasuryAddress: '',
+            idoAirdropTreasuryAddress: 'GFfFaytdGYtiXWfNuJXPusWjS5T792hvr4t6xnAJXEd6',
             idoAirdropTreasurerAddress: '9KYCrkB4LLC3HxLEPqE2PJpvYoDLszgWPKNVWp74uhC5',
             exchangeFeeAccountOwner: 'CLazQV1BhSrxfgRHko4sC8GYBU3DoHcX4xxRZd12Kohr',
             exchangeFlatFee: 0.25
