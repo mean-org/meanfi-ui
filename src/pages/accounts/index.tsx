@@ -910,28 +910,6 @@ export const AccountsView = () => {
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
       if (lastSentTxOperationType === OperationType.StreamCreate || lastSentTxOperationType === OperationType.Transfer) {
         refreshStreamList();
-        // if (!loadingStreams) {
-        //   consoleOut(`${OperationType[lastSentTxOperationType as OperationType]} operation completed.`, 'Refreshing streams...', 'blue');
-        //   setLoadingStreams(true);
-        //   ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-        //     .then((streams: any[]) => {
-        //       setStreamList(streams);
-        //       if (streams.length) {
-        //         let item: StreamInfo | undefined;
-        //         if (lastSentTxStatus) {
-        //           item = streams.find(d => d.transactionSignature === lastSentTxStatus);
-        //         }
-        //         if (!item) {
-        //           item = streams[0];
-        //         }
-        //         setSelectedStream(item);
-        //       }
-        //       setLoadingStreams(false);
-        //     }).catch((err: any) => {
-        //       console.error(err);
-        //       setLoadingStreams(false);
-        //     });
-        // }
       }
     }
   }, [

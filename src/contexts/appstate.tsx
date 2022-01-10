@@ -27,7 +27,7 @@ import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
-import { consoleOut } from "../utils/ui";
+import { consoleOut, isProd } from "../utils/ui";
 import { appConfig } from "..";
 import { ChainId } from "@saberhq/token-utils";
 import { DdcaAccount } from "@mean-dao/ddca";
@@ -758,15 +758,27 @@ const AppStateProvider: React.FC = ({ children }) => {
 
       let streamAccumulator: any[] = [];
 
-      ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
-        .then(streamsv1 => {
-          streamAccumulator.push(...streamsv1);
-          setStreamListv1(streamsv1);
-          msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
-            .then(streamsv2 => {
-              streamAccumulator.push(...streamsv2);
-              setStreamListv2(streamsv2);
+      msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
+        .then(streamsv2 => {
+          streamAccumulator.push(...streamsv2);
+          setStreamListv2(streamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+          ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+          .then(streamsv1 => {
+              streamAccumulator.push(...streamsv1);
+              setStreamListv1(streamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+              streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
               consoleOut('Streams:', streamAccumulator, 'blue');
+              // Sort debugging block
+              if (!isProd()) {
+                const debugTable: any[] = [];
+                streamAccumulator.forEach(item => debugTable.push({
+                  createdBlockTime: item.createdBlockTime,
+                  name: item.version < 2 ? item.streamName : item.name.trim(),
+                }));
+                console.table(debugTable);
+              }
+              // End of debugging block
+              setStreamList(streamAccumulator);
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;
                 if (reset) {
@@ -792,7 +804,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 consoleOut('selectedStream:', item, 'blue');
                 if (item && selectedStream && item.id !== selectedStream.id) {
                   updateSelectedStream(item);
-                  const mspInstance: any = item.version === 2 ? msp : ms;
+                  const mspInstance: any = item.version < 2 ? ms : msp;
                   mspInstance.refreshStream(item, true)
                     .then((freshStream: Stream | StreamInfo) => {
                       if (freshStream) {
@@ -827,7 +839,6 @@ const AppStateProvider: React.FC = ({ children }) => {
                 updateSelectedStream(undefined);
                 updateStreamDetail(undefined);
               }
-              setStreamList(streamAccumulator);
               updateLoadingStreams(false);
             }).catch(err => {
               console.error(err);
