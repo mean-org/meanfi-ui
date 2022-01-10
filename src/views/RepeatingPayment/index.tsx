@@ -118,7 +118,7 @@ export const RepeatingPayment = () => {
   const [tokenFilter, setTokenFilter] = useState("");
   const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
-  const [mspClientVersion, setMspClientVersion] = useState(1);
+  const [mspClientVersion, setMspClientVersion] = useState(2);
 
   useEffect(() => {
 
