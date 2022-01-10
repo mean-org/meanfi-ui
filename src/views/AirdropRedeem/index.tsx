@@ -12,7 +12,7 @@ import { OperationType, PaymentRateType, TransactionStatus, WhitelistClaimType }
 import { IdoClient, IdoDetails, IdoStatus } from '../../integrations/ido/ido-client';
 import { appConfig, customLogger } from '../..';
 import { LoadingOutlined } from '@ant-design/icons';
-import { getWhitelistAllocation, sendSignClaimTxRequest } from '../../utils/api';
+import { getWhitelistAllocation, sendRecordClaimTxRequest, sendSignClaimTxRequest } from '../../utils/api';
 import { Allocation } from '../../models/common-types';
 import CountUp from 'react-countup';
 import { updateCreateStream2Tx } from '../../utils/transactions';
@@ -216,58 +216,71 @@ export const AirdropRedeem = (props: {
       if (wallet && publicKey) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then(async (signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
-          });
-
-          // Send Tx to add treasurer signature
-          try {
-            encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: true }).toString('base64');
-            consoleOut('encodedTx before updating:', encodedTx, 'orange');
-            const updatedTx = await sendSignClaimTxRequest(publicKey.toBase58(), encodedTx);
-            signedTransaction = updatedTx;
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransactionSuccess,
-              currentOperation: TransactionStatus.SendTransaction
-            });
+          .then(async (signed: Transaction) => {
+            consoleOut('signTransaction returned a signed transaction:', signed);
+            signedTransaction = signed;
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: 'sendSignClaimTxRequest returned an updated Tx'
+              result: {signer: wallet.publicKey.toBase58()}
             });
-            return true;
-          } catch (error) {
+
+            // Send Tx to add treasurer signature
+            try {
+              encodedTx = signed.serialize({ requireAllSignatures: false, verifySignatures: true }).toString('base64');
+              consoleOut('encodedTx before updating:', encodedTx, 'orange');
+              const response = await sendSignClaimTxRequest(publicKey.toBase58(), encodedTx);
+              consoleOut('sendSignClaimTxRequest response:', response, 'blue');
+              if (!response || !response.base64SignedClaimTransaction) {
+                console.log('Unexplainable here!');
+                setTransactionStatus({
+                  lastOperation: TransactionStatus.SignTransaction,
+                  currentOperation: TransactionStatus.SignTransactionFailure
+                });
+                transactionLog.push({
+                  action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                  result: 'There was no allocation'
+                });
+                customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+                return false;
+              }
+              signedTransaction = response.base64SignedClaimTransaction;
+              encodedTx = signedTransaction.serialize().toString('base64');
+              consoleOut('encodedTx:', encodedTx, 'orange');
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransactionSuccess,
+                currentOperation: TransactionStatus.SendTransaction
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+                result: 'sendSignClaimTxRequest returned an updated Tx'
+              });
+              return true;
+            } catch (error) {
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              });
+              customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+              return false;
+            }
+          })
+          .catch(error => {
+            console.error('Signing transaction failed!');
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransaction,
               currentOperation: TransactionStatus.SignTransactionFailure
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
             customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
             return false;
-          }
-
-        })
-        .catch(error => {
-          console.error('Signing transaction failed!');
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
           });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
-          return false;
-        });
       } else {
         console.error('Cannot sign transaction! Wallet not found!');
         setTransactionStatus({
@@ -328,6 +341,48 @@ export const AirdropRedeem = (props: {
       }
     }
 
+    const confirmTx = async (): Promise<boolean> => {
+      return await props.connection
+        .confirmTransaction(signature, "confirmed")
+        .then(result => {
+          consoleOut('confirmTransaction result:', result);
+          if (result && result.value && !result.value.err) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
+              result: ''
+            });
+            return true;
+          } else {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.ConfirmTransaction,
+              currentOperation: TransactionStatus.ConfirmTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+              result: signature
+            });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            throw(result?.value?.err || new Error("Could not confirm transaction"));
+          }
+        })
+        .catch(e => {
+          setTransactionStatus({
+            lastOperation: TransactionStatus.ConfirmTransaction,
+            currentOperation: TransactionStatus.ConfirmTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
+            result: signature
+          });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          return false;
+        });
+    }
+
     if (publicKey) {
       const create = await createTx();
       consoleOut('create:', create);
@@ -338,18 +393,16 @@ export const AirdropRedeem = (props: {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.IdoClaim);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
+              const confirmed = await confirmTx();
+              consoleOut("confirmed:", confirmed);
+              if (confirmed) {
+                await sendRecordClaimTxRequest(publicKey.toBase58(), signature);
+                setIsBusy(false);
+              } else { setIsBusy(false); }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
-
   };
 
   return (

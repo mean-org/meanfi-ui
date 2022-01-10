@@ -103,7 +103,28 @@ export const sendSignClaimTxRequest = async (address: string, base64ClaimTx: str
       throw new Error(`Error: request response status: ${response.status}`);
     }
     const signedClaimTxResponse = (await response.json()) as any;
-    return signedClaimTxResponse.base64SignedClaimTransaction;
+    return signedClaimTxResponse;
+  } catch (error) {
+    throw (error);
+  }
+}
+
+export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders,
+  }
+
+  let url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
+
+  try {
+    const response = await fetch(url, options)
+    if (response.status !== 200) {
+      throw new Error(`Error: request response status: ${response.status}`);
+    }
+
+    return response;
+
   } catch (error) {
     throw (error);
   }
