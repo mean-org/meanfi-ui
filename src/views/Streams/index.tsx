@@ -231,7 +231,7 @@ export const Streams = () => {
 
       // Finally update the combined list
       if (newList.length) {
-        setStreamList(newList);
+        setStreamList(newList.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
       }
     }
 
