@@ -168,12 +168,14 @@ const WalletContext = React.createContext<{
   wallet: WalletAdapter | undefined;
   connected: boolean;
   select: () => void;
+  autoConnect: boolean;
   provider: typeof WALLET_PROVIDERS[number] | undefined;
   resetWalletProvider: () => void;
 }>({
   wallet: undefined,
   connected: false,
   select() {},
+  autoConnect: true,
   provider: undefined,
   resetWalletProvider: () => {},
 });
@@ -182,7 +184,8 @@ export function WalletProvider({ children = null as any }) {
   const { t } = useTranslation("common");
   const { endpoint } = useConnectionConfig();
 
-  const [autoConnect, setAutoConnect] = useState(false);
+  // If we want to play with autoConnect, here it is
+  const [autoConnect, setAutoConnect] = useState(true);
   const [providerName, setProviderName] = useLocalStorageState("providerName");
 
   const resetWalletProvider = () => {
@@ -256,7 +259,8 @@ export function WalletProvider({ children = null as any }) {
   useEffect(() => {
     if (wallet && autoConnect) {
       wallet.connect();
-      setAutoConnect(false);
+      // TODO: Only turn OFF autoConnect after connecting if the setting is configured ON
+      // setAutoConnect(false);
     }
 
     return () => {};
@@ -274,6 +278,7 @@ export function WalletProvider({ children = null as any }) {
         connected,
         select,
         provider,
+        autoConnect,
         resetWalletProvider,
       }}>
       {children}
@@ -353,13 +358,14 @@ export function WalletProvider({ children = null as any }) {
 }
 
 export function useWallet() {
-  const { wallet, connected, provider, select, resetWalletProvider } = useContext(WalletContext);
+  const { wallet, connected, provider, autoConnect, select, resetWalletProvider } = useContext(WalletContext);
 
   return {
     wallet,
     connected,
     provider,
     select,
+    autoConnect,
     resetWalletProvider,
     publicKey: wallet?.publicKey,
     connect() {

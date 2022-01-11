@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import { useCallback, useMemo, useState } from "react";
-import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
-import { shortenAddress, useLocalStorageState } from "../../utils/utils";
+import { useCallback, useState } from "react";
+import { useWallet } from "../../contexts/wallet";
+import { shortenAddress } from "../../utils/utils";
 import {
   IconCopy,
   IconExternalLink,
@@ -28,7 +28,7 @@ export const CurrentUserBadge = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
-  const { wallet, provider, select, disconnect, resetWalletProvider } = useWallet();
+  const { wallet, provider, select, disconnect } = useWallet();
 
   const switchWallet = () => {
     setTimeout(() => {
@@ -60,7 +60,8 @@ export const CurrentUserBadge = () => {
     setStreamList(undefined);
     close();
     disconnect();
-    resetWalletProvider();
+    // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
+    // resetWalletProvider();
   }
 
   return (

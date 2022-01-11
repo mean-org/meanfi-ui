@@ -61,10 +61,11 @@ export const AppLayout = React.memo((props: any) => {
 
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
-    if (window.localStorage.getItem('walletProvider')) {
-      window.localStorage.removeItem('walletProvider');
-    }
-    window.localStorage.removeItem('providerName');
+    // TODO: Next lines are useful if we turn OFF wallet autoConnect
+    // if (window.localStorage.getItem('walletProvider')) {
+    //   window.localStorage.removeItem('walletProvider');
+    // }
+    // window.localStorage.removeItem('providerName');
   }
 
   const getPlatform = (): string => {
