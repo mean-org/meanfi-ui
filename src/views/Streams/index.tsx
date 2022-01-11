@@ -2063,11 +2063,11 @@ export const Streams = () => {
 
     const token = getTokenByMintAddress(item.mint as string);
     if (streamVersion < 2) {
-      value += getFormattedNumberToLocale(formatAmount(item.amount, 2));
+      value += formatAmount(item.amount, token?.decimals || 6);
     } else {
-      value += getFormattedNumberToLocale(formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), 2));
+      value += formatAmount(toUiAmount(new BN(item.amount), token?.decimals || 6), token?.decimals || 6);
     }
-    
+
     return parseFloat(value);
   }
 
@@ -2190,6 +2190,54 @@ export const Streams = () => {
       </Menu.Item>
     </Menu>
   );
+
+  const renderActivities = (streamVersion: number) => {
+    return (
+      <div className="activity-list">
+        <Spin spinning={loadingStreamActivity}>
+          {streamActivity && (
+            <>
+              <div className="item-list-header compact">
+                <div className="header-row">
+                  <div className="std-table-cell first-cell">&nbsp;</div>
+                  <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
+                  <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
+                  <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
+                  <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
+                </div>
+              </div>
+              <div className="item-list-body compact">
+                {streamActivity.map((item, index) => {
+                  return (
+                    <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
+                      <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
+                      <div className="std-table-cell fixed-width-80">
+                        <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
+                      </div>
+                      <div className="std-table-cell fixed-width-60">
+                        <span className="align-middle">{getActivityAction(item)}</span>
+                      </div>
+                      <div className="std-table-cell fixed-width-60">
+                        <span className="align-middle">{
+                          getAmountWithSymbol(
+                            getActivityAmountDisplay(item, streamVersion), item.mint
+                          )}
+                        </span>
+                      </div>
+                      <div className="std-table-cell fixed-width-120" >
+                        <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </Spin>
+      </div>
+    );
+  }
 
   const renderInboundStreamV1 = (stream: StreamInfo) => {
     const token = stream.associatedToken ? getTokenByMintAddress(stream.associatedToken as string) : undefined;
@@ -2444,51 +2492,7 @@ export const Streams = () => {
               <Divider className="activity-divider" plain></Divider>
               {!streamActivity || streamActivity.length === 0 ? (
                 <p>{t('streams.stream-activity.no-activity')}.</p>
-              ) : (
-                <div className="activity-list">
-                  <Spin spinning={loadingStreamActivity}>
-                    {streamActivity && (
-                      <>
-                        <div className="item-list-header compact">
-                          <div className="header-row">
-                            <div className="std-table-cell first-cell">&nbsp;</div>
-                            <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                            <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                          </div>
-                        </div>
-                        <div className="item-list-body compact">
-                          {streamActivity.map((item, index) => {
-                            return (
-                              <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                                <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                                <div className="std-table-cell fixed-width-80">
-                                  <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getActivityAction(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{
-                                    getAmountWithSymbol(
-                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
-                                    )}
-                                  </span>
-                                </div>
-                                <div className="std-table-cell fixed-width-120" >
-                                  <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                                </div>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </Spin>
-                </div>
-              )}
+              ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
               <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
@@ -2750,51 +2754,7 @@ export const Streams = () => {
               <Divider className="activity-divider" plain></Divider>
               {!streamActivity || streamActivity.length === 0 ? (
                 <p>{t('streams.stream-activity.no-activity')}.</p>
-              ) : (
-                <div className="activity-list">
-                  <Spin spinning={loadingStreamActivity}>
-                    {streamActivity && (
-                      <>
-                        <div className="item-list-header compact">
-                          <div className="header-row">
-                            <div className="std-table-cell first-cell">&nbsp;</div>
-                            <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                            <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                          </div>
-                        </div>
-                        <div className="item-list-body compact">
-                          {streamActivity.map((item, index) => {
-                            return (
-                              <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                                <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                                <div className="std-table-cell fixed-width-80">
-                                  <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getActivityAction(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{
-                                    getAmountWithSymbol(
-                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
-                                    )}
-                                  </span>                                
-                                </div>
-                                <div className="std-table-cell fixed-width-120" >
-                                  <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                                </div>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </Spin>
-                </div>
-              )}
+              ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
               <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
@@ -3099,51 +3059,7 @@ export const Streams = () => {
               <Divider className="activity-divider" plain></Divider>
               {!streamActivity || streamActivity.length === 0 ? (
                 <p>{t('streams.stream-activity.no-activity')}.</p>
-              ) : (
-                <div className="activity-list">
-                  <Spin spinning={loadingStreamActivity}>
-                    {streamActivity && (
-                      <>
-                        <div className="item-list-header compact">
-                          <div className="header-row">
-                            <div className="std-table-cell first-cell">&nbsp;</div>
-                            <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                            <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                          </div>
-                        </div>
-                        <div className="item-list-body compact">
-                          {streamActivity.map((item, index) => {
-                            return (
-                              <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                                <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                                <div className="std-table-cell fixed-width-80">
-                                  <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getActivityAction(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{
-                                      getAmountWithSymbol(
-                                        getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
-                                      )}
-                                    </span>
-                                </div>
-                                <div className="std-table-cell fixed-width-120" >
-                                  <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                                </div>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </Spin>
-                </div>
-              )}
+              ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
               <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>
@@ -3408,51 +3324,7 @@ export const Streams = () => {
               <Divider className="activity-divider" plain></Divider>
               {!streamActivity || streamActivity.length === 0 ? (
                 <p>{t('streams.stream-activity.no-activity')}.</p>
-              ) : (
-                <div className="activity-list">
-                  <Spin spinning={loadingStreamActivity}>
-                    {streamActivity && (
-                      <>
-                        <div className="item-list-header compact">
-                          <div className="header-row">
-                            <div className="std-table-cell first-cell">&nbsp;</div>
-                            <div className="std-table-cell fixed-width-80">{t('streams.stream-activity.heading')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-action')}</div>
-                            <div className="std-table-cell fixed-width-60">{t('streams.stream-activity.label-amount')}</div>
-                            <div className="std-table-cell fixed-width-120">{t('streams.stream-activity.label-date')}</div>
-                          </div>
-                        </div>
-                        <div className="item-list-body compact">
-                          {streamActivity.map((item, index) => {
-                            return (
-                              <a key={`${index}`} className="item-list-row" target="_blank" rel="noopener noreferrer"
-                                  href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${item.signature}${getSolanaExplorerClusterParam()}`}>
-                                <div className="std-table-cell first-cell">{getActivityIcon(item)}</div>
-                                <div className="std-table-cell fixed-width-80">
-                                  <span className={isAddressMyAccount(item.initializer) ? 'text-capitalize align-middle' : 'align-middle'}>{getActivityActor(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{getActivityAction(item)}</span>
-                                </div>
-                                <div className="std-table-cell fixed-width-60">
-                                  <span className="align-middle">{
-                                    getAmountWithSymbol(
-                                      getActivityAmountDisplay(item, (streamDetail as any).version), item.mint
-                                    )}
-                                  </span>
-                                </div>
-                                <div className="std-table-cell fixed-width-120" >
-                                  <span className="align-middle">{getShortDate(item.utcDate as string, true)}</span>
-                                </div>
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </Spin>
-                </div>
-              )}
+              ) : renderActivities(stream.version)}
             </div>
             <div className="stream-share-ctas">
               <span className="copy-cta" onClick={() => onCopyStreamAddress(stream.id)}>STREAM ID: {stream.id}</span>

@@ -512,7 +512,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   }
 
   const getStreamActivity = useCallback((streamId: string, version: number) => {
-    if (!connected || !streamId) {
+    if (!connected || !streamId || !ms || !msp) {
       return [];
     }
 
@@ -521,8 +521,8 @@ const AppStateProvider: React.FC = ({ children }) => {
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
 
-      if (version === 2 && msp) {
-        msp.listStreamActivity(streamPublicKey)
+      if (version < 2) {
+        ms.listStreamActivity(streamPublicKey)
           .then(value => {
             consoleOut('activity:', value);
             setStreamActivity(value);
@@ -534,8 +534,8 @@ const AppStateProvider: React.FC = ({ children }) => {
             setLoadingStreamActivity(false);
           });
 
-      } else if (version < 2) {
-        ms.listStreamActivity(streamPublicKey)
+      } else {
+        msp.listStreamActivity(streamPublicKey)
           .then(value => {
             consoleOut('activity:', value);
             setStreamActivity(value);
