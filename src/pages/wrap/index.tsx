@@ -493,13 +493,7 @@ export const WrapView = () => {
                       {getMaxPossibleAmount() > 0 && (
                         <div className="token-max simplelink"
                           onClick={() => {
-                            setValue(
-                              getTokenAmountAndSymbolByTokenAddress(
-                                getMaxPossibleAmount(),
-                                WRAPPED_SOL_MINT_ADDRESS,
-                                true,
-                              )
-                            );
+                            setValue(getMaxPossibleAmount().toFixed(selectedToken?.decimals));
                           }}>
                           MAX
                         </div>

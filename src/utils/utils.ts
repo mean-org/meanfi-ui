@@ -291,19 +291,6 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
 }
 
-export const truncateFloat = (value: any, decimals = 2): string => {
-  const numericString = value.toString();
-  const splitted = numericString.split('.');
-
-  if (splitted.length === 1 || splitted[1].length <= decimals) {
-    return numericString;
-  }
-
-  const reshapedDecimals = splitted[1].slice(0, decimals);
-  splitted[1] = reshapedDecimals;
-  return splitted.join('.');
-}
-
 export const getComputedFees = (fees: TransactionFees): number => {
   return fees.mspFlatFee ? fees.blockchainFee + fees.mspFlatFee : fees.blockchainFee;
 }

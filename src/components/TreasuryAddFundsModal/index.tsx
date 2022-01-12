@@ -649,9 +649,7 @@ export const TreasuryAddFundsModal = (props: {
                       {selectedToken && tokenBalance ? (
                         <div
                           className="token-max simplelink"
-                          onClick={() => setTopupAmount(
-                            getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken.address, true)
-                          )}>
+                          onClick={() => setTopupAmount(tokenBalance.toFixed(selectedToken.decimals))}>
                           MAX
                         </div>
                       ) : null}

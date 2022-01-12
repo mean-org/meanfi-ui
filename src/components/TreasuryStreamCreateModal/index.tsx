@@ -972,13 +972,7 @@ export const TreasuryStreamCreateModal = (props: {
                   {selectedToken && unallocatedBalance ? (
                     <div
                       className="token-max simplelink"
-                      onClick={() => setFromCoinAmount(
-                        getTokenAmountAndSymbolByTokenAddress(
-                          unallocatedBalance,
-                          selectedToken.address,
-                          true
-                        )
-                      )}>
+                      onClick={() => setFromCoinAmount(unallocatedBalance.toFixed(selectedToken.decimals))}>
                       MAX
                     </div>
                   ) : null}

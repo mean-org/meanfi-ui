@@ -1391,7 +1391,7 @@ export const AccountsView = () => {
                 </div>
               ) : (
                 <>
-                  <div className="boxed-area add-account">
+                  <div className="boxed-area container-max-width-600 add-account">
                     {accountAddress && (
                       <div className="back-button">
                         <span className="icon-button-container">

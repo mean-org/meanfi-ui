@@ -482,7 +482,7 @@ export const PlaygroundView = () => {
     <>
       <section>
         <div className="container mt-4 flex-column flex-center">
-          <div className="boxed-area">
+          <div className="boxed-area container-max-width-600">
             <div className="button-tabset-container">
               <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
                 Demo 1

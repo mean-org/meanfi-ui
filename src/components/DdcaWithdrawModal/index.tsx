@@ -5,8 +5,7 @@ import {
   getTokenAmountAndSymbolByTokenAddress,
   getTokenDecimals,
   getTokenSymbol,
-  isValidNumber,
-  truncateFloat
+  isValidNumber
 } from "../../utils/utils";
 import { DdcaDetails, TransactionFees } from '@mean-dao/ddca';
 import { percentage } from "../../utils/ui";
@@ -37,7 +36,7 @@ export const DdcaWithdrawModal = (props: {
   }, [feeAmount, props.transactionFees]);
 
   const onAcceptWithdrawal = () => {
-    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(withdrawAmountInput)
+    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
       ? true : false;
     setWithdrawAmountInput('');
     props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
@@ -105,9 +104,9 @@ export const DdcaWithdrawModal = (props: {
       : false;
   }
 
-  const getDisplayAmount = (amount: any, addSymbol = false): string => {
+  const getDisplayAmount = (amount: number, addSymbol = false): string => {
     if (props && props.ddcaDetails) {
-      const bareAmount = truncateFloat(amount, getTokenDecimals(props.ddcaDetails.toMint as string));
+      const bareAmount = amount.toFixed(getTokenDecimals(props.ddcaDetails.toMint as string));
       if (addSymbol) {
         return bareAmount + ' ' + getTokenSymbol(props.ddcaDetails.toMint as string);
       }

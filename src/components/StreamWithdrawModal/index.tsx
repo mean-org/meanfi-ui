@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
 import { useWallet } from '../../contexts/wallet';
-import { isValidNumber, shortenAddress, toUiAmount, truncateFloat } from "../../utils/utils";
+import { isValidNumber, shortenAddress, toUiAmount } from "../../utils/utils";
 import { consoleOut, percentage } from "../../utils/ui";
 import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { useTranslation } from "react-i18next";
@@ -143,7 +143,7 @@ export const StreamWithdrawModal = (props: {
   }, [feeAmount, props.transactionFees]);
 
   const onAcceptWithdrawal = () => {
-    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(withdrawAmountInput)
+    const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
       ? true : false;
     setWithdrawAmountInput('');
     props.handleOk(isMaxAmount ? maxAmount : withdrawAmountInput);
@@ -211,10 +211,10 @@ export const StreamWithdrawModal = (props: {
       : false;
   }
 
-  const getDisplayAmount = (amount: any, addSymbol = false): string => {
+  const getDisplayAmount = (amount: number, addSymbol = false): string => {
     if (props && props.startUpData && props.selectedToken) {
       const token = props.selectedToken;
-      const bareAmount = truncateFloat(amount, token.decimals);
+      const bareAmount = amount.toFixed(token.decimals);
       if (addSymbol) {
         return token.name === 'Unknown' ? `${bareAmount} [${props.selectedToken.symbol}]` : `${bareAmount} ${props.selectedToken.symbol}`;
       }
