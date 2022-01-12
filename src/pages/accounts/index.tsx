@@ -191,8 +191,8 @@ export const AccountsView = () => {
     openDetailsPanel: boolean = false
   ) => {
     setStatus(FetchStatus.Fetching);
-    setSolAccountItems(0);
     if (clearTxList) {
+      setSolAccountItems(0);
       setTransactions(undefined);
     }
     setSelectedAsset(asset);

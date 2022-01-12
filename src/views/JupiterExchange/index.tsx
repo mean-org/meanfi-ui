@@ -700,19 +700,17 @@ export const JupiterExchange = (props: {
 
         if (!mintList) { return; }
 
-        const searchFilter = searchString || tokenFilter;
-
         const timeout = setTimeout(() => {
 
             const filter = (t: any) => {
                 return (
-                    t.symbol.toLowerCase().includes(searchFilter.toLowerCase()) ||
-                    t.name.toLowerCase().includes(searchFilter.toLowerCase())
+                    t.symbol.toLowerCase().includes(searchString?.toLowerCase()) ||
+                    t.name.toLowerCase().includes(searchString?.toLowerCase())
                 );
             };
 
             if (subjectTokenSelection === 'source') {
-                let showFromList = !searchFilter
+                let showFromList = !searchString
                     ? mintList
                     : Object.values(mintList)
                         .filter((t: any) => filter(t));
@@ -722,7 +720,7 @@ export const JupiterExchange = (props: {
 
             if (subjectTokenSelection === 'destination') {
 
-                let showToList = !searchFilter
+                let showToList = !searchString
                     ? possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo).filter(t => t) : {}
                     : possiblePairsTokenInfo ? Object.values(possiblePairsTokenInfo)
                         .filter((t: any) => filter(t)) : {};
@@ -741,7 +739,6 @@ export const JupiterExchange = (props: {
     }, [
         mintList,
         connection,
-        tokenFilter,
         possiblePairsTokenInfo,
         subjectTokenSelection,
     ]);
@@ -786,10 +783,14 @@ export const JupiterExchange = (props: {
     const onTokenSearchInputChange = useCallback((e: any) => {
 
         const input = e.target.value;
-
-        const newValue = input.trim();
-        setTokenFilter(newValue || '');
-        updateTokenListByFilter(newValue || '');
+        console.log('User input:', input);
+        if (input) {
+            setTokenFilter(input);
+            updateTokenListByFilter(input);
+        } else {
+            setTokenFilter('');
+            updateTokenListByFilter('');
+        }
 
     },[
         updateTokenListByFilter
