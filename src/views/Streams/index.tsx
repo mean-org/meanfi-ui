@@ -2735,7 +2735,7 @@ export const Streams = () => {
                               : t("streams.stream-detail.withdraw-funds-cta")
                       }
                     </Button>
-                    {/* {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                    {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -2746,7 +2746,7 @@ export const Streams = () => {
                           icon={<EllipsisOutlined />}>
                         </Button>
                       </Dropdown>
-                    )} */}
+                    )}
                   </div>
                 </div>
               </Spin>
@@ -3032,7 +3032,7 @@ export const Streams = () => {
                                   : t("streams.stream-detail.add-funds-cta")
                           }
                         </Button>
-                        {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                        {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
                           <Dropdown overlay={menu} trigger={["click"]}>
                             <Button
                               shape="round"
@@ -3305,7 +3305,7 @@ export const Streams = () => {
                               : t("streams.stream-detail.add-funds-cta")
                       }
                     </Button>
-                    {/* {(isAuthority() && fetchTxInfoStatus !== "fetching") && (
+                    {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
                       <Dropdown overlay={menu} trigger={["click"]}>
                         <Button
                           shape="round"
@@ -3316,7 +3316,7 @@ export const Streams = () => {
                           icon={<EllipsisOutlined />}>
                         </Button>
                       </Dropdown>
-                    )} */}
+                    )}
                   </div>
                 </div>
               </Spin>
