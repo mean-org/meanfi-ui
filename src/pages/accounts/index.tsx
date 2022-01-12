@@ -59,10 +59,9 @@ import { AccountsMergeModal } from '../../components/AccountsMergeModal';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { MSP, STREAM_STATUS } from '@mean-dao/msp';
 import { BN } from 'bn.js';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
@@ -98,12 +97,9 @@ export const AccountsView = () => {
     canShowAccountDetails,
     streamV2ProgramAddress,
     previousWalletConnectState,
-    setStreamList,
     setStreamDetail,
     setTransactions,
     setSelectedAsset,
-    setSelectedStream,
-    setLoadingStreams,
     setAccountAddress,
     refreshStreamList,
     setDtailsPanelOpen,
@@ -117,7 +113,6 @@ export const AccountsView = () => {
     setCanShowAccountDetails,
   } = useContext(AppStateContext);
   const {
-    lastSentTxStatus,
     fetchTxInfoStatus,
     lastSentTxSignature,
     lastSentTxOperationType,
@@ -397,16 +392,16 @@ export const AccountsView = () => {
   // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
   // Also, do this after any Tx is completed in places where token balances were indeed changed)
   useEffect(() => {
-    if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens.length || !splTokenList.length) {
+    if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens || userTokens.length === 0 || !splTokenList || splTokenList.length === 0 ) {
       return;
     }
 
-    setTimeout(() => {
-      setShouldLoadTokens(false);
-    });
+    // setTimeout(() => {
+    //   setShouldLoadTokens(false);
+    // });
 
     const timeout = setTimeout(() => {
-
+      setShouldLoadTokens(false);
       setTokensLoaded(false);
 
       let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
@@ -543,7 +538,6 @@ export const AccountsView = () => {
                 setAccountTokens(finalList);
                 setTokensLoaded(true);
               } else {
-                console.error('could not get account tokens');
                 setMeanSupportedTokens(meanTokensCopy);
                 setAccountTokens(meanTokensCopy);
                 setExtraUserTokensSorted([]);
@@ -999,9 +993,11 @@ export const AccountsView = () => {
         ? true
         : false;
     }
-    const isNonAta = asset.address !== NATIVE_SOL_MINT.toBase58() && !asset.isAta && asset.publicAddress
+
+    const isOwnedTokenAccount = asset.publicAddress && asset.publicAddress !== accountAddress
           ? true
           : false;
+
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken()
@@ -1011,16 +1007,16 @@ export const AccountsView = () => {
                 : ''}`
           }>
         <div className="icon-cell">
-          {isNonAta ? (
+          {isOwnedTokenAccount && !asset.isAta ? (
             <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
-              <div className="token-icon grayed-out">
-                {asset.logoURI ? (
-                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-                ) : (
-                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-                )}
-              </div>
-            </Tooltip>
+            <div className="token-icon grayed-out">
+              {asset.logoURI ? (
+                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+              ) : (
+                <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+              )}
+            </div>
+          </Tooltip>
           ) : (
             <div className="token-icon">
               {asset.logoURI ? (
@@ -1040,7 +1036,7 @@ export const AccountsView = () => {
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">{isNonAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
+          <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
