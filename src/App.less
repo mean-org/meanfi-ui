@@ -658,6 +658,9 @@ footer.ant-layout-footer {
   &.thin-stroke {
     border-width: 1px;
   }
+  &.no-stroke {
+    border-width: 0;
+  }
   &.ant-btn-sm {
     height: 32px;
   }
@@ -718,6 +721,9 @@ footer.ant-layout-footer {
   line-height: 1;
   &.thin-stroke {
     border-width: 1px;
+  }
+  &.no-stroke {
+    border-width: 0;
   }
   &.ant-btn-sm {
     height: 32px;
@@ -3088,11 +3094,11 @@ main section {
   .common-token-shortcuts {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-between;
     flex-wrap: wrap;
     > button {
-      margin: 0 8px 12px 4px;
-      min-width: 110px;
+      margin: 0;
+      min-width: 92px;
     }
   }
 }

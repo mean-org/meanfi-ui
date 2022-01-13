@@ -17,7 +17,7 @@ export const CUSTOM_USDC = {
 }
 
 export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'MEAN'];
-export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'SOL', 'wSOL', 'mSOL'];
+export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
 
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
