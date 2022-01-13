@@ -660,7 +660,7 @@ export const JupiterExchange = (props: {
                 const routes = response ? response.routesInfos : [];
                 let filteredRoutes: RouteInfo[] = [];
                 if (routes.length) {
-                    filteredRoutes = routes.filter(r => r.outAmount && r.marketInfos && r.marketInfos[r.marketInfos.length - 1].platformFee.pct > 0);
+                    filteredRoutes = routes.filter(r => r.outAmount);
                     setSelectedRoute(filteredRoutes[0]);
                     consoleOut(`Filtered ${filteredRoutes.length} possible routes:`, filteredRoutes, 'blue');
                     consoleOut('Best route:', filteredRoutes[0], 'blue');
