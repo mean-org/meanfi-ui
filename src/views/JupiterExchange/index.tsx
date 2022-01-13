@@ -1828,15 +1828,6 @@ export const JupiterExchange = (props: {
                         }}
                         onPriceClick={() => refreshPrices()}
                         onBalanceClick={() => refreshUserBalances()}
-                        inputPosition="right"
-                        translationId="source"
-                        inputLabel={
-                            showFromMintList[fromMint]
-                                ? `~$${fromAmount
-                                    ? formatAmount(parseFloat(fromAmount) * getPricePerToken(showFromMintList[fromMint] as TokenInfo), 2)
-                                    : '0.00' }`
-                                : ''
-                        }
                     />
                 )}
 

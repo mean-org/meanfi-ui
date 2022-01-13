@@ -2,10 +2,12 @@ import { TokenInfo } from "@solana/spl-token-registry";
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppStateContext } from "../../contexts/appstate";
-import { formatAmount } from "../../utils/utils";
+import { formatAmount, getTokenAmountAndSymbolByTokenAddress } from "../../utils/utils";
 import { TokenDisplay } from "../TokenDisplay";
 import { MarketInfo, RouteInfo } from "@jup-ag/core";
 import BN from "bn.js";
+import { useWallet } from "../../contexts/wallet";
+import { toUsCurrency } from "../../utils/ui";
 
 export const JupiterExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
@@ -30,6 +32,7 @@ export const JupiterExchangeOutput = (props: {
     loadingPrices,
     refreshPrices,
   } = useContext(AppStateContext);
+  const { publicKey } = useWallet();
   const [selectedRouteIndex, setSelectedRouteIndex] = useState<number | undefined>(undefined);
 
   const toUiAmount = (amount: BN, decimals: number) => {
@@ -70,34 +73,48 @@ export const JupiterExchangeOutput = (props: {
         <div className="flex-fixed-right">
           <div className="left inner-label">
             <span>{t("transactions.send-amount.label-right")}:</span>
-            <span className="simplelink" onClick={props.onBalanceClick}>
-              {`${
-                props.toToken && props.toTokenBalance
-                  ? props.toTokenBalance
-                  : "0"
-              }`}
-            </span>
-            {props.toTokenBalance && (
-              <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
-                {`(~$${
-                  props.toToken && props.toTokenBalance
-                    ? formatAmount(
-                        parseFloat(props.toTokenBalance) *
-                          getPricePerToken(props.toToken as TokenInfo),
-                        2
+            {publicKey ? (
+              <>
+                <span className="simplelink" onClick={props.onBalanceClick}>
+                  {`${
+                    props.toToken && props.toTokenBalance
+                      ? getTokenAmountAndSymbolByTokenAddress(
+                          parseFloat(props.toTokenBalance),
+                          props.toToken.address,
+                          true
                       )
-                    : "0.00"
-                })`}
-              </span>
+                      : "0"
+                  }`}
+                </span>
+                {props.toTokenBalance && (
+                  <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
+                    {`(~${
+                      props.toToken && props.toTokenBalance
+                        ? toUsCurrency(
+                            parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo)
+                          )
+                        : "$0.00"
+                    })`}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="balance-amount">0</span>
             )}
           </div>
           <div className="right inner-label">
-            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
-              ~${props.toToken && props.toTokenBalance
-                ? formatAmount(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo), 2)
-                : "0.00"
-              }
-            </span>
+          {publicKey ? (
+            <>
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~{props.toToken && props.toTokenBalance
+                  ? toUsCurrency(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo))
+                  : "$0.00"
+                }
+              </span>
+            </>
+          ) : (
+            <span>~$0.00</span>
+          )}
           </div>
         </div>
 

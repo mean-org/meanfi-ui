@@ -444,7 +444,17 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
 
 export const getFormattedNumberToLocale = (value: any, digits = 0) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat('en-US', { minimumSignificantDigits: 1, minimumFractionDigits: digits }).format(converted);
+    const formatted = new Intl.NumberFormat('en-US', {
+        minimumSignificantDigits: 1,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(converted);
+    return formatted || '';
+}
+
+export const toUsCurrency = (value: any) => {
+    const converted = parseFloat(value.toString());
+    const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(converted);
     return formatted || '';
 }
 
