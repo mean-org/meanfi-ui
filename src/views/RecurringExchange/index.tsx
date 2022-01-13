@@ -1501,8 +1501,6 @@ export const RecurringExchange = (props: {
             <span className="settings-wrapper pr-3">
               <SwapSettings
                 currentValue={slippage}
-                showLpList={showLpList}
-                onToggleShowLpList={onShowLpListToggled}
                 onValueSelected={onSlippageChanged}/>
             </span>
           </div>

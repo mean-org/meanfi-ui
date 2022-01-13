@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Divider, Modal, Row, Spin } from "antd";
+import { Button, Col, Divider, Modal, Row, Spin, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TextInput } from "../../components/TextInput";
 import { Identicon } from "../../components/Identicon";
 import { JupiterExchangeOutput } from "../../components/JupiterExchangeOutput";
-import { InfoCircleOutlined, LoadingOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } from "@ant-design/icons";
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.less";
@@ -67,7 +67,7 @@ export const JupiterExchange = (props: {
     const [inputToken, setInputToken] = useState<TokenInfo | undefined>(undefined);
     const [outputToken, setOutputToken] = useState<TokenInfo | undefined>(undefined);
     const [routes, setRoutes] = useState<RouteInfo[]>([]);
-    const [showRoutesList, setShowRoutesList] = useState(false);
+    const [showFullRoutesList, setShowFullRoutesList] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<RouteInfo>();
     const [subjectTokenSelection, setSubjectTokenSelection] = useState("source");
     const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
@@ -915,8 +915,8 @@ export const JupiterExchange = (props: {
     }, [coinPrices]);
 
     // Event handling
-    const onShowLpListToggled = (value: boolean) => {
-        setShowRoutesList(value);
+    const onShowLpListToggled = () => {
+        setShowFullRoutesList(value => !value);
     };
 
     const onSlippageChanged = (value: any) => {
@@ -1797,180 +1797,183 @@ export const JupiterExchange = (props: {
                 </div>
             )} */}
 
-            <Spin spinning={isBusy || refreshing}>
-                <div className="swap-wrapper">
+            <div className="swap-wrapper">
 
-                    {/* Source token / amount */}
-                    {fromMint && (
-                        <JupiterExchangeInput
-                            token={inputToken}
-                            tokenBalance={
-                                (userBalances && mintList[fromMint] && parseFloat(userBalances[fromMint]) > 0
-                                    ? parseFloat(userBalances[fromMint]).toFixed(mintList[fromMint].decimals)
-                                    : '')
-                            }
-                            tokenAmount={fromAmount}
-                            onInputChange={handleSwapFromAmountChange}
-                            onMaxAmount={
-                                () => {
-                                    const maxFromAmount = getMaxAllowedSwapAmount();
-                                    console.log('maxFromAmount', maxFromAmount);
-                                    if (toMint && mintList[fromMint] && maxFromAmount > 0) {
-                                        setInputAmount(maxFromAmount);
-                                        const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
-                                        setFromAmount(formattedAmount);
-                                    }
+                {/* Source token / amount */}
+                {fromMint && (
+                    <JupiterExchangeInput
+                        token={inputToken}
+                        tokenBalance={
+                            (userBalances && mintList[fromMint] && parseFloat(userBalances[fromMint]) > 0
+                                ? parseFloat(userBalances[fromMint]).toFixed(mintList[fromMint].decimals)
+                                : '')
+                        }
+                        tokenAmount={fromAmount}
+                        onInputChange={handleSwapFromAmountChange}
+                        onMaxAmount={
+                            () => {
+                                const maxFromAmount = getMaxAllowedSwapAmount();
+                                console.log('maxFromAmount', maxFromAmount);
+                                if (toMint && mintList[fromMint] && maxFromAmount > 0) {
+                                    setInputAmount(maxFromAmount);
+                                    const formattedAmount = maxFromAmount.toFixed(mintList[fromMint].decimals);                
+                                    setFromAmount(formattedAmount);
                                 }
                             }
-                            debounceTime={500}
-                            onSelectToken={() => {
-                                setSubjectTokenSelection("source");
-                                showTokenSelector();
-                            }}
-                            onPriceClick={() => refreshPrices()}
-                            onBalanceClick={() => refreshUserBalances()}
-                            inputPosition="right"
-                            translationId="source"
-                            inputLabel={
-                                showFromMintList[fromMint]
-                                    ? `~$${fromAmount
-                                        ? formatAmount(parseFloat(fromAmount) * getPricePerToken(showFromMintList[fromMint] as TokenInfo), 2)
-                                        : '0.00' }`
-                                    : ''
-                            }
-                        />
-                    )}
+                        }
+                        debounceTime={500}
+                        onSelectToken={() => {
+                            setSubjectTokenSelection("source");
+                            showTokenSelector();
+                        }}
+                        onPriceClick={() => refreshPrices()}
+                        onBalanceClick={() => refreshUserBalances()}
+                        inputPosition="right"
+                        translationId="source"
+                        inputLabel={
+                            showFromMintList[fromMint]
+                                ? `~$${fromAmount
+                                    ? formatAmount(parseFloat(fromAmount) * getPricePerToken(showFromMintList[fromMint] as TokenInfo), 2)
+                                    : '0.00' }`
+                                : ''
+                        }
+                    />
+                )}
 
-                    {(inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
-                        <div className="input-amount-too-low flex-row flex-center">
-                            <InfoCircleOutlined className="font-size-75" />
-                            <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
-                        </div>
-                    ) : null}
-
-                    <div className="flip-button-container">
-                        {/* Flip button */}
-                        <div className="flip-button" onClick={flipMintsCallback}>
-                            <IconSwapFlip className="mean-svg-icons" />
-                        </div>
-                        {/* Settings icon */}
-                        <span className="settings-wrapper pr-3">
-                            <SwapSettings
-                                currentValue={slippage}
-                                showLpList={showRoutesList}
-                                onToggleShowLpList={onShowLpListToggled}
-                                onValueSelected={onSlippageChanged}
-                            />
-                        </span>
+                {(inputToken && outputToken && inputAmount && isInAmountTooLow()) ? (
+                    <div className="input-amount-too-low flex-row flex-center">
+                        <InfoCircleOutlined className="font-size-75" />
+                        <span>Minimum swap is at least {toUiAmount(new BN(minInAmount || 0), inputToken.decimals)} {inputToken.symbol} for {toUiAmount(new BN(minOutAmount || 0), outputToken.decimals)} {outputToken.symbol}</span>
                     </div>
+                ) : null}
 
-                    {fromMint && (
-                        <JupiterExchangeOutput
-                            fromToken={inputToken || undefined}
-                            fromTokenAmount={fromAmount}
-                            toToken={outputToken || undefined}
-                            toTokenBalance={
-                                (publicKey && toMint && userBalances && userBalances[toMint] && mintList[toMint] && outputToken
-                                    ? parseFloat(userBalances[toMint] || 0).toFixed(outputToken.decimals)
-                                    : '')
-                            }
-                            toTokenAmount={isWrap() || isUnwrap()
-                                ? fromAmount
-                                : selectedRoute && outputToken
-                                    ? toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals).toFixed(outputToken.decimals)
-                                    : ''
-                            }
-                            readonly={fromNative()}
-                            mintList={mintList}
-                            onBalanceClick={() => refreshUserBalances()}
-                            onSelectToken={() => {
-                                setSubjectTokenSelection("destination");
-                                showTokenSelector();
-                            }}
-                            className={!isWrap() && !isUnwrap() ? 'mb-2' : ''}
-                            routes={routes}
-                            onSelectedRoute={(route: any) => {
-                                consoleOut('onSelectedRoute:', route, 'blue');
-                                setSelectedRoute(route);
-                            }}
-                            showRoutes={showRoutesList && !isWrap() && !isUnwrap()}
-                        />
-
-                    )}
-
-                    {/* Powered by Jupiter */}
-                    {(!isWrap() && !isUnwrap() && isExchangeValid()) && (
-                        <div className="flexible-left pr-2">
-                            <div className="left">&nbsp;</div>
-                            <div className="right font-size-75 fg-secondary-50">Powered by Jupiter</div>
-                        </div>
-                    )}
-
-                    {/* Rate and info */}
-                    {(!isWrap() && !isUnwrap()) && (
-                        <div className="info-line-and-settings flexible-left">
-                            <div className="left"><span>&nbsp;</span></div>
-                            <div className="right info-line">
+                <div className="flip-button-container">
+                    {/* Flip button */}
+                    <div className="flip-button" onClick={flipMintsCallback}>
+                        <IconSwapFlip className="mean-svg-icons" />
+                    </div>
+                    {/* Settings icon */}
+                    <span className="flex-fixed-right flex align-items-center pl-3 pr-3">
+                        {(!isWrap() && !isUnwrap()) ? (
+                            <div className="left flex-row text-left align-items-center">
                             {
                                 inputToken && outputToken && selectedRoute && selectedRoute.outAmount ? (
                                 <>
-                                    {!refreshing && (
-                                        <>
-                                        <div className="left">
-                                            {
-                                            (`1 ${inputToken.symbol} ≈ ${(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)} ${outputToken.symbol}`)
-                                            }
-                                        </div>
-                                        <div className="right pl-1">
-                                            {
-                                                fromAmount ? (
-                                                    <InfoIcon content={txInfoContent()} placement="leftBottom">
-                                                        <InfoCircleOutlined />
-                                                    </InfoIcon>
-                                                ) : null
-                                            }
-                                        </div>
-                                        </>
+                                    <span>{`1 ${inputToken.symbol} ≈ ${(toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals) / inputAmount).toFixed(outputToken.decimals)} ${outputToken.symbol}`}</span>
+                                    {fromAmount && (
+                                        <InfoIcon content={txInfoContent()} placement="bottom">
+                                            <InfoCircleOutlined style={{lineHeight: 0}} />
+                                        </InfoIcon>
                                     )}
+                                    {/* Refresh routes */}
+                                    <span className="icon-button-container">
+                                        {refreshing || isBusy ? (
+                                            <span className="icon-container"><SyncOutlined spin /></span>
+                                        ) : (
+                                            <Tooltip placement="bottom" title="Refresh routes">
+                                                <Button
+                                                    type="default"
+                                                    shape="circle"
+                                                    size="small"
+                                                    icon={<ReloadOutlined />}
+                                                    onClick={() => {
+                                                        setRefreshing(true);
+                                                        refreshRoutes();
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        )}
+                                    </span>
                                 </>
-                                ) : (<span>-</span>)
+                                ) : (<span>&nbsp;</span>)
                             }
                             </div>
-                        </div>
-                    )}
-
-                    {/* Action button */}
-                    <Button
-                        className={`main-cta ${isBusy ? 'inactive' : ''}`}
-                        block
-                        type="primary"
-                        shape="round"
-                        size="large"
-                        onClick={() => {
-                            if (isWrap()) {
-                                onStartWrapTx();
-                            } else if (isUnwrap()) {
-                                onStartUnwrapTx();
-                            } else {
-                                onStartSwapTx();
-                            }
-                        }}
-                        disabled={!isExchangeValid() || refreshing} >
-                        {isBusy && (
-                            <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                        ) : (
+                            <div className="left flex-row text-left align-items-center">&nbsp;</div>
                         )}
-                        {isBusy
-                            ? isWrap()
-                                ? 'Wrapping'
-                                : isUnwrap()
-                                    ? 'Unwrapping'
-                                    : 'Swapping'
-                            : transactionStartButtonLabel
-                        }
-                    </Button>
-
+                        <div className="right">
+                            <SwapSettings
+                                currentValue={slippage}
+                                onValueSelected={onSlippageChanged}
+                            />
+                        </div>
+                    </span>
                 </div>
-            </Spin>
+
+                {fromMint && (
+                    <JupiterExchangeOutput
+                        fromToken={inputToken || undefined}
+                        fromTokenAmount={fromAmount}
+                        toToken={outputToken || undefined}
+                        toTokenBalance={
+                            (publicKey && toMint && userBalances && userBalances[toMint] && mintList[toMint] && outputToken
+                                ? parseFloat(userBalances[toMint] || 0).toFixed(outputToken.decimals)
+                                : '')
+                        }
+                        toTokenAmount={isWrap() || isUnwrap()
+                            ? fromAmount
+                            : selectedRoute && outputToken
+                                ? toUiAmount(new BN(selectedRoute.outAmount), outputToken.decimals).toFixed(outputToken.decimals)
+                                : ''
+                        }
+                        readonly={fromNative()}
+                        mintList={mintList}
+                        onBalanceClick={() => refreshUserBalances()}
+                        onSelectToken={() => {
+                            setSubjectTokenSelection("destination");
+                            showTokenSelector();
+                        }}
+                        className={!isWrap() && !isUnwrap() ? 'mb-2' : ''}
+                        routes={routes}
+                        onSelectedRoute={(route: any) => {
+                            consoleOut('onSelectedRoute:', route, 'blue');
+                            setSelectedRoute(route);
+                        }}
+                        showAllRoutes={showFullRoutesList && !isWrap() && !isUnwrap()}
+                        onToggleShowFullRouteList={onShowLpListToggled}
+                    />
+
+                )}
+
+                {/* Powered by Jupiter */}
+                {(!isWrap() && !isUnwrap() && isExchangeValid()) && (
+                    <div className="flexible-left pr-2 mb-1">
+                        <div className="left">&nbsp;</div>
+                        <div className="right font-size-75 fg-secondary-50">Powered by Jupiter</div>
+                    </div>
+                )}
+
+                {/* Action button */}
+                <Button
+                    className={`main-cta ${isBusy ? 'inactive' : ''}`}
+                    block
+                    type="primary"
+                    shape="round"
+                    size="large"
+                    onClick={() => {
+                        if (isWrap()) {
+                            onStartWrapTx();
+                        } else if (isUnwrap()) {
+                            onStartUnwrapTx();
+                        } else {
+                            onStartSwapTx();
+                        }
+                    }}
+                    disabled={!isExchangeValid() || refreshing} >
+                    {isBusy && (
+                        <span className="mr-1"><LoadingOutlined style={{ fontSize: '16px' }} /></span>
+                    )}
+                    {isBusy
+                        ? isWrap()
+                            ? 'Wrapping'
+                            : isUnwrap()
+                                ? 'Unwrapping'
+                                : 'Swapping'
+                        : transactionStartButtonLabel
+                    }
+                </Button>
+
+            </div>
 
             {/* Token selection modal */}
             <Modal
