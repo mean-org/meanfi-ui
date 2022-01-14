@@ -1134,9 +1134,9 @@ export const TreasuriesView = () => {
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
 
-    const refreshBalance = async (treasury: PublicKey, isNewTreasury: boolean) => {
+    const refreshBalance = async (treasury: PublicKey) => {
 
-      if (!connection || !connected || !publicKey) {
+      if (!connection || !connected || !publicKey || !msp) {
         return false;
       }
 
@@ -1185,13 +1185,14 @@ export const TreasuriesView = () => {
         });
 
         const v2 = treasuryDetails as Treasury;
-        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+        const isNewTreasury = v2.version >= 2 ? true : false;
 
         const treasury = new PublicKey(treasuryDetails.id as string);
         const data = {
           treasurer: publicKey.toBase58(),                      // treasurer
           treasury: treasury.toBase58()                         // treasury
         }
+
         consoleOut('data:', data);
 
         // Log input data
@@ -1226,8 +1227,13 @@ export const TreasuriesView = () => {
           return false;
         }
 
+        const tx = (isNewTreasury && msp !== undefined) ? msp.refreshTreasuryData(
+          publicKey,
+          treasury
+        ) : refreshBalance(treasury);
+
         // Create a transaction
-        return await refreshBalance(treasury, isNewTreasury)
+        return await tx
         .then(value => {
           if (!value) { return false; }
           consoleOut('refreshBalance returned transaction:', value);
@@ -1393,6 +1399,7 @@ export const TreasuriesView = () => {
     }
 
   },[
+    msp,
     clearTransactionStatusContext, 
     connected, 
     connection, 
