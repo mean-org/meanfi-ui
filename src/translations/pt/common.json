@@ -508,6 +508,7 @@
 		"exchange-search-input-placeholder": "Pesquisar token nome ou símbolo",
 		"looking-for-sol": "Looking for SOL? You need to",
 		"modal-title": "Selecione um token",
+		"no-matches": "Nenhuma equivalência encontrada",
 		"search-input-placeholder": "Pesquisar token nome, símbolo ou endereço",
 		"wrap-sol-first": "wrap it first to wSOL"
 	},

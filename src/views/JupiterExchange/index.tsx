@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
-import { Button, Col, Divider, Modal, Row, Spin, Tooltip } from "antd";
+import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
 import useLocalStorage from "../../hooks/useLocalStorage";
@@ -12,7 +12,7 @@ import { DEFAULT_SLIPPAGE_PERCENT, EXCHANGE_ROUTES_REFRESH_TIMEOUT, MAX_TOKEN_LI
 import { JupiterExchangeInput } from "../../components/JupiterExchangeInput";
 import { useNativeAccount } from "../../contexts/accounts";
 import { ACCOUNT_LAYOUT } from "../../utils/layouts";
-import { formatAmount, getTxIxResume, isValidNumber } from "../../utils/utils";
+import { getTxIxResume, isValidNumber } from "../../utils/utils";
 import { AppStateContext } from "../../contexts/appstate";
 import { IconSwapFlip } from "../../Icons";
 import { SwapSettings } from "../../components/SwapSettings";
@@ -24,7 +24,7 @@ import { InfoCircleOutlined, LoadingOutlined, ReloadOutlined, SyncOutlined } fro
 import { appConfig, customLogger } from "../..";
 import BN from 'bn.js';
 import "./style.less";
-import { getTokenByMintAddress, NATIVE_SOL } from "../../utils/tokens";
+import { NATIVE_SOL } from "../../utils/tokens";
 import { COMMON_EXCHANGE_TOKENS, MEAN_TOKEN_LIST, PINNED_TOKENS } from "../../constants/token-list";
 import { InfoIcon } from "../../components/InfoIcon";
 import { TransactionStatus } from "../../models/enums";
@@ -32,7 +32,6 @@ import { wrapSol } from "@mean-dao/money-streaming/lib/utils";
 import { unwrapSol } from "@mean-dao/hybrid-liquidity-ag";
 import { SignerWalletAdapter } from "@solana/wallet-adapter-base";
 import { TokenDisplay } from "../../components/TokenDisplay";
-import { getNetworkIdByCluster } from "../../contexts/connection";
 
 export const JupiterExchange = (props: {
     queryFromMint: string | null;
@@ -852,6 +851,13 @@ export const JupiterExchange = (props: {
         }
 
     }, [updateTokenListByFilter]);
+
+    const onInputCleared = useCallback(() => {
+        setTokenFilter('');
+        updateTokenListByFilter('');
+    },[
+        updateTokenListByFilter
+    ]);
 
     const onTokenSearchInputChange = useCallback((e: any) => {
 
@@ -1712,7 +1718,7 @@ export const JupiterExchange = (props: {
                     }
                 })
             ) : (
-                <p>{t("general.loading")}...</p>
+                <p>{t('token-selector.no-matches')}</p>
             )}
         </>
     );
@@ -1782,7 +1788,7 @@ export const JupiterExchange = (props: {
                     }
                 })
             ) : (
-                <p>{t("general.loading")}...</p>
+                <p>{t('token-selector.no-matches')}</p>
             )}
         </>
     );
@@ -1980,7 +1986,9 @@ export const JupiterExchange = (props: {
                     <div className="token-search-wrapper">
                         <TextInput
                             value={tokenFilter}
+                            allowClear={true}
                             extraClass="mb-1"
+                            onInputClear={onInputCleared}
                             placeholder={t('token-selector.exchange-search-input-placeholder')}
                             onInputChange={onTokenSearchInputChange} />
                     </div>
