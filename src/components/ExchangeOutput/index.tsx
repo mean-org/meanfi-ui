@@ -104,7 +104,7 @@ export const ExchangeOutput = (props: {
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>{t("transactions.send-amount.label-right")}:</span>
+            <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
               {`${
                 props.toToken && props.toTokenBalance
@@ -207,7 +207,7 @@ export const ExchangeOutput = (props: {
                             selected ? "bg-orange-red" : "disabled"
                           }`}
                         >
-                          {t("swap.routes-best-price-label")}:{" "}
+                          {t('swap.routes-best-price-label')}:{" "}
                           {formatAmount(
                             savings,
                             props.toToken?.decimals || 2

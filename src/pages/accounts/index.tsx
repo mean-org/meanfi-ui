@@ -931,15 +931,15 @@ export const AccountsView = () => {
                       e.preventDefault();
                       e.stopPropagation();
                     }}>
-                    <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                    <span className="font-bold text-shadow"><SyncOutlined spin /></span>
                   </div>
                 </div>
               ) : (
                 <div className={streamsSummary.totalNet !== lastStreamsSummary.totalNet ? 'token-icon animate-border' : 'token-icon'}>
                   <div className="streams-count simplelink" onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    refreshStreamList();
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshStreamList();
                     }}>
                     <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
                   </div>
@@ -1056,7 +1056,7 @@ export const AccountsView = () => {
     );
   }
 
-  const renderTokenList = (
+  const renderAssetsList = (
     <>
     {accountTokens && accountTokens.length ? (
       <>
@@ -1154,7 +1154,7 @@ export const AccountsView = () => {
 
   const renderQrCode = (
     <div className="text-center mt-3">
-      <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
+      <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
         <QRCode
           value={accountAddress}
@@ -1277,7 +1277,7 @@ export const AccountsView = () => {
                     <div className="inner-container">
                       <div className="item-block vertical-scroll">
                         {renderMoneyStreamsSummary}
-                        {renderTokenList}
+                        {renderAssetsList}
                       </div>
                       {(accountTokens && accountTokens.length > 0) && (
                         <div className="thin-bottom-ctas">
@@ -1446,7 +1446,7 @@ export const AccountsView = () => {
                           <span className="field-label-left">
                             {accountAddressInput && !isValidAddress(accountAddressInput) ? (
                               <span className="fg-red">
-                                {t("transactions.validation.address-validation")}
+                                {t('transactions.validation.address-validation')}
                               </span>
                             ) : (
                               <span>&nbsp;</span>

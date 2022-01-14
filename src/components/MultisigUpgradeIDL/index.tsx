@@ -155,7 +155,7 @@ export const MultisigUpgradeIDLModal = (props: {
                 value={programId}/>
               {programId && !isValidAddress(programId) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>
@@ -174,7 +174,7 @@ export const MultisigUpgradeIDLModal = (props: {
                 value={idlBufferAddress}/>
               {idlBufferAddress && !isValidAddress(idlBufferAddress) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>

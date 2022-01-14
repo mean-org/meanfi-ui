@@ -119,7 +119,7 @@ export const MultisigMintTokenModal = (props: {
                 value={tokenAddress}/>
               {tokenAddress && !isValidAddress(tokenAddress) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>
@@ -138,7 +138,7 @@ export const MultisigMintTokenModal = (props: {
                 value={mintToAddress}/>
               {mintToAddress && !isValidAddress(mintToAddress) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>

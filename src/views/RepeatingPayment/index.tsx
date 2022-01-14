@@ -1135,7 +1135,7 @@ export const RepeatingPayment = () => {
           {
             recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="form-field-error">
-                {t("transactions.validation.address-validation")}
+                {t('transactions.validation.address-validation')}
               </span>
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">
@@ -1452,8 +1452,8 @@ export const RepeatingPayment = () => {
                 onInputChange={onTokenSearchInputChange} />
             </div>
             <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
-              <span>{t("token-selector.looking-for-sol")}</span>&nbsp;
-              <span className="simplelink underline" onClick={onGotoExchange}>{t("token-selector.wrap-sol-first")}</span>
+              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
             </div>
             <div className="token-list vertical-scroll">
               {filteredTokenList.length > 0 && renderTokenList}

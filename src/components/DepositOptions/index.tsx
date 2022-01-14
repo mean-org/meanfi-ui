@@ -181,7 +181,7 @@ export const DepositOptions = (props: {
             </Tooltip>
           </div>
         )}
-        <div className="modal-title">{t("deposits.modal-title")}</div>
+        <div className="modal-title">{t('deposits.modal-title')}</div>
         </>
       }
       footer={null}
@@ -192,7 +192,7 @@ export const DepositOptions = (props: {
       width={450}>
       <div className="deposit-selector">
         <div className={isSharingAddress ? "options-list hide" : "options-list show"} id="options-list">
-          <p>{t("deposits.heading")}:</p>
+          <p>{t('deposits.heading')}:</p>
           {!connected && (
             <p className="fg-error">{t('deposits.not-connected')}!</p>
           )}
@@ -206,8 +206,8 @@ export const DepositOptions = (props: {
                 size="middle"
                 disabled={!connected}
                 onClick={handleFtxPayButtonClick}>
-                <img src="/assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t("deposits.ftx-cta-label-enabled")} />
-                {t("deposits.ftx-cta-label-enabled")}
+                <img src="/assets/deposit-partners/ftx.ico" className="deposit-partner-icon" alt={t('deposits.ftx-cta-label-enabled')} />
+                {t('deposits.ftx-cta-label-enabled')}
               </Button>
             </Col>
             <Col span={24}>
@@ -220,7 +220,7 @@ export const DepositOptions = (props: {
                 disabled={!connected}
                 onClick={enableAddressSharing}>
                 <IconSolana className="deposit-partner-icon"/>
-                {t("deposits.send-from-wallet-cta-label")}
+                {t('deposits.send-from-wallet-cta-label')}
               </Button>
             </Col>
             <Col span={24}>
@@ -233,8 +233,8 @@ export const DepositOptions = (props: {
                   size="middle"
                   disabled={status !== 'ready'}
                   onClick={handleTransakButtonClick}>
-                  <img src="/assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t("deposits.transak-cta-label")} />
-                  {t("deposits.transak-cta-label")}
+                  <img src="/assets/deposit-partners/transak.png" className="deposit-partner-icon" alt={t('deposits.transak-cta-label')} />
+                  {t('deposits.transak-cta-label')}
                   <IconInfoTriangle className="mean-svg-icons warning" />
                 </Button>
               </Tooltip>
@@ -247,8 +247,8 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromEthereumButtonClick}>
-                <img src="/assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t("deposits.move-from-ethereum-cta-label")} />
-                {t("deposits.move-from-ethereum-cta-label")}
+                <img src="/assets/deposit-partners/eth.png" className="deposit-partner-icon" alt={t('deposits.move-from-ethereum-cta-label')} />
+                {t('deposits.move-from-ethereum-cta-label')}
               </Button>
             </Col>
             <Col span={24}>
@@ -259,8 +259,8 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromPolygonButtonClick}>
-                <img src="/assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t("deposits.move-from-polygon-cta-label")} />
-                {t("deposits.move-from-polygon-cta-label")}
+                <img src="/assets/deposit-partners/polygon.png" className="deposit-partner-icon" alt={t('deposits.move-from-polygon-cta-label')} />
+                {t('deposits.move-from-polygon-cta-label')}
               </Button>
             </Col>
             {/* <Col span={24}>
@@ -271,15 +271,15 @@ export const DepositOptions = (props: {
                 shape="round"
                 size="middle"
                 onClick={handleBridgeFromRenButtonClick}>
-                <img src="/assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t("deposits.move-from-renbridge-cta-label")} />
-                {t("deposits.move-from-renbridge-cta-label")}
+                <img src="/assets/deposit-partners/btc.png" className="deposit-partner-icon" alt={t('deposits.move-from-renbridge-cta-label')} />
+                {t('deposits.move-from-renbridge-cta-label')}
               </Button>
             </Col> */}
           </Row>
         </div>
         <div className={isSharingAddress ? "option-detail-panel p-5 show" : "option-detail-panel hide"}>
           <div className="text-center">
-            <h3 className="font-bold mb-3">{t("deposits.send-from-wallet-cta-label")}</h3>
+            <h3 className="font-bold mb-3">{t('deposits.send-from-wallet-cta-label')}</h3>
             <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
               {publicKey && (
                 <QRCode

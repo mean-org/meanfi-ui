@@ -721,26 +721,26 @@ export const JupiterExchange = (props: {
             let label = '';
 
             if (!publicKey) {
-                label = t("transactions.validation.not-connected");
+                label = t('transactions.validation.not-connected');
             } else if (!inputToken || !fromMint || !toMint) {
-                label = t("transactions.validation.invalid-exchange");
+                label = t('transactions.validation.invalid-exchange');
             } else if (inputAmount === 0) {
-                label = t("transactions.validation.no-amount");
+                label = t('transactions.validation.no-amount');
             } else if (isInAmountTooLow()) {
-                label = t("transactions.validation.minimum-swap-amount", { 
+                label = t('transactions.validation.minimum-swap-amount', { 
                     mintAmount: toUiAmount(new BN(minInAmount || 0), inputToken.decimals), 
                     fromMint: inputToken.symbol
                 });
             } else if(inputAmount > getMaxAllowedSwapAmount()) {
-                label = t("transactions.validation.amount-low");
+                label = t('transactions.validation.amount-low');
             } else if (inputAmount > 0 && !selectedRoute && !isWrap() && !isUnwrap()) {
-                label = t("transactions.validation.exchange-unavailable");
+                label = t('transactions.validation.exchange-unavailable');
             } else if (isWrap()) {
                 label = 'Wrap';
             } else if (isUnwrap()) {
                 label = 'Unwrap';
             } else {    
-                label = t("transactions.validation.valid-approve");
+                label = t('transactions.validation.valid-approve');
             }
 
             setTransactionStartButtonLabel(label);
@@ -1553,40 +1553,40 @@ export const JupiterExchange = (props: {
             <>
             {
                 !refreshing && inputAmount && feeInfo && infoRow(
-                    t("transactions.transaction-info.network-transaction-fee"),
+                    t('transactions.transaction-info.network-transaction-fee'),
                     `${toUiAmount(new BN(feeInfo.signatureFee), sol.decimals)} SOL`
                 )
             }
             {/* {
                 !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
                 infoRow(
-                t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+                t('transactions.transaction-info.protocol-transaction-fee', { protocol: exchangeInfo.fromAmm }),
                 `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
                 )
             } */}
             {
                 !refreshing && inputAmount && slippage && infoRow(
-                    t("transactions.transaction-info.slippage"),
+                    t('transactions.transaction-info.slippage'),
                     `${slippage.toFixed(2)}%`
                 )
             }
             {/* {
                 !refreshing && fromAmount &&
                 infoRow(
-                t("transactions.transaction-info.recipient-receives"),                
+                t('transactions.transaction-info.recipient-receives'),                
                 `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
                 )
             } */}
             {
                 !refreshing && inputAmount && selectedRoute && infoRow(
-                    t("transactions.transaction-info.price-impact"),                
+                    t('transactions.transaction-info.price-impact'),                
                     `${parseFloat((selectedRoute.priceImpactPct * 100 || 0).toFixed(4))}%`
                 )
             }
             {/* {
                 !refreshing && fromAmount && exchangeInfo.fromAmm &&
                 infoRow(
-                t("transactions.transaction-info.exchange-on"),
+                t('transactions.transaction-info.exchange-on'),
                 `${exchangeInfo.fromAmm}`,
                 ':'
                 )
@@ -1832,6 +1832,7 @@ export const JupiterExchange = (props: {
                             setSubjectTokenSelection("source");
                             showTokenSelector();
                         }}
+                        className="mb-0"
                         onPriceClick={() => refreshPrices()}
                         onBalanceClick={() => refreshUserBalances()}
                     />
@@ -1977,7 +1978,7 @@ export const JupiterExchange = (props: {
                 className="mean-modal unpadded-content"
                 visible={isTokenSelectorModalVisible}
                 title={
-                    <div className="modal-title">{t("token-selector.modal-title")}</div>
+                    <div className="modal-title">{t('token-selector.modal-title')}</div>
                 }
                 onCancel={onCloseTokenSelector}
                 width={420}

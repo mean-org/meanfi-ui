@@ -842,14 +842,14 @@ export const OneTimeExchange = (props: {
 
     const timeout = setTimeout(() => {
 
-      let label = t("transactions.validation.not-connected");
+      let label = t('transactions.validation.not-connected');
 
       if (!connected) {
-        label = t("transactions.validation.not-connected");
+        label = t('transactions.validation.not-connected');
       } else if (!fromMint || !toMint) {
-        label = t("transactions.validation.invalid-exchange");
+        label = t('transactions.validation.invalid-exchange');
       } else if ((!selectedClient || !exchangeInfo || !feesInfo) && !isWrap() && !isUnwrap()) {
-        label = t("transactions.validation.exchange-unavailable");
+        label = t('transactions.validation.exchange-unavailable');
       } else if(!isValidBalance()) {
 
         let needed = 0;
@@ -868,10 +868,10 @@ export const OneTimeExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: needed.toString() });
 
       } else if (fromSwapAmount === 0) {
-        label = t("transactions.validation.no-amount");
+        label = t('transactions.validation.no-amount');
       } else if (!isSwapAmountValid()) {
 
         let needed = 0;
@@ -903,21 +903,21 @@ export const OneTimeExchange = (props: {
         }
 
         if (needed === 0) {
-          label = t("transactions.validation.amount-low");
+          label = t('transactions.validation.amount-low');
         } else if (!isFromSerum) {
-          label = t("transactions.validation.insufficient-amount-needed", { 
+          label = t('transactions.validation.insufficient-amount-needed', { 
             amount: needed.toString(), 
             symbol: fromSymbol 
           });
         } else {
           const balance = parseFloat(fromBalance);
           if (fromSwapAmount > (balance - (feesInfo?.network || 0))) {
-            label = t("transactions.validation.insufficient-amount-needed", { 
+            label = t('transactions.validation.insufficient-amount-needed', { 
               amount: fromSwapAmount.toString(), 
               symbol: fromSymbol 
             });
           } else {
-            label = t("transactions.validation.minimum-swap-amount", { 
+            label = t('transactions.validation.minimum-swap-amount', { 
               mintAmount: needed.toString(),
               fromMint: fromSymbol
             });
@@ -925,7 +925,7 @@ export const OneTimeExchange = (props: {
         }
 
       } else {    
-        label = t("transactions.validation.valid-approve");
+        label = t('transactions.validation.valid-approve');
       }
 
       setTransactionStartButtonLabel(label);
@@ -1692,42 +1692,42 @@ export const OneTimeExchange = (props: {
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.network-transaction-fee"),
+          t('transactions.transaction-info.network-transaction-fee'),
           `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
         !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
         infoRow(
-          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          t('transactions.transaction-info.protocol-transaction-fee', { protocol: exchangeInfo.fromAmm }),
           `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount && slippage &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
+          t('transactions.transaction-info.slippage'),
           `${slippage.toFixed(2)}%`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.recipient-receives"),                
+          t('transactions.transaction-info.recipient-receives'),                
           `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.price-impact"),                
+          t('transactions.transaction-info.price-impact'),                
           `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(4))}%`
         )
       }
       {
         !refreshing && fromAmount && exchangeInfo.fromAmm &&
         infoRow(
-          t("transactions.transaction-info.exchange-on"),
+          t('transactions.transaction-info.exchange-on'),
           `${exchangeInfo.fromAmm}`,
           ':'
         )
@@ -1804,7 +1804,7 @@ export const OneTimeExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -1869,7 +1869,7 @@ export const OneTimeExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -2041,7 +2041,7 @@ export const OneTimeExchange = (props: {
             className="mean-modal unpadded-content"
             visible={isTokenSelectorModalVisible}
             title={
-              <div className="modal-title">{t("token-selector.modal-title")}</div>
+              <div className="modal-title">{t('token-selector.modal-title')}</div>
             }
             onCancel={onCloseTokenSelector}
             width={450}
@@ -2081,7 +2081,7 @@ export const OneTimeExchange = (props: {
                   {(fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut) && (
                     <p className="operation">
                       {
-                        t("transactions.status.tx-swap-operation", {
+                        t('transactions.status.tx-swap-operation', {
                           fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
                           toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
                         })
@@ -2099,7 +2099,7 @@ export const OneTimeExchange = (props: {
                     {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                   <p className="operation">
-                    {t("transactions.status.tx-swap-operation-success")}.
+                    {t('transactions.status.tx-swap-operation-success')}.
                   </p>
                   <Button
                     block
@@ -2107,7 +2107,7 @@ export const OneTimeExchange = (props: {
                     shape="round"
                     size="middle"
                     onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
+                    {t('general.cta-close')}
                   </Button>
                 </>
               ) : isError() ? (
@@ -2115,7 +2115,7 @@ export const OneTimeExchange = (props: {
                   <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
                   {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <h4 className="mb-4">
-                      {t("transactions.status.tx-start-failure", {
+                      {t('transactions.status.tx-start-failure', {
                         accountBalance: getTokenAmountAndSymbolByTokenAddress(
                           parseFloat(fromBalance),
                           NATIVE_SOL_MINT.toBase58()
@@ -2134,7 +2134,7 @@ export const OneTimeExchange = (props: {
                       {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ? (
                         <>
                           <p className="operation">
-                            {t("transactions.status.tx-confirm-failure-check")}
+                            {t('transactions.status.tx-confirm-failure-check')}
                           </p>
                           <p className="operation">
                             <a className="secondary-link" 
@@ -2185,7 +2185,7 @@ export const OneTimeExchange = (props: {
                 <>
                   <Spin indicator={bigLoadingIcon} className="icon" />
                   <h4 className="font-bold mb-4 text-uppercase">
-                    {t("transactions.status.tx-wait")}...
+                    {t('transactions.status.tx-wait')}...
                   </h4>
                 </>
               )}

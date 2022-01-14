@@ -933,14 +933,14 @@ export const RecurringExchange = (props: {
 
     const timeout = setTimeout(() => {
 
-      let label = t("transactions.validation.not-connected");
+      let label = t('transactions.validation.not-connected');
 
       if (!connected) {
-        label = t("transactions.validation.not-connected");
+        label = t('transactions.validation.not-connected');
       } else if (!fromMint || !toMint) {
-        label = t("transactions.validation.invalid-exchange");
+        label = t('transactions.validation.invalid-exchange');
       } else if ((!selectedClient || !exchangeInfo || !feesInfo) && !isWrap() && !isUnwrap()) {
-        label = t("transactions.validation.exchange-unavailable");
+        label = t('transactions.validation.exchange-unavailable');
       } else if(!isValidBalance()) {
 
         let needed = 0;
@@ -959,10 +959,10 @@ export const RecurringExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: needed.toString() });
 
       } else if (fromSwapAmount === 0) {
-        label = t("transactions.validation.no-amount");
+        label = t('transactions.validation.no-amount');
       } else if (!isSwapAmountValid()) {
 
         let needed = 0;
@@ -994,21 +994,21 @@ export const RecurringExchange = (props: {
         }
 
         if (needed === 0) {
-          label = t("transactions.validation.amount-low");
+          label = t('transactions.validation.amount-low');
         } else if (!isFromSerum) {
-          label = t("transactions.validation.insufficient-amount-needed", { 
+          label = t('transactions.validation.insufficient-amount-needed', { 
             amount: needed.toString(), 
             symbol: fromSymbol 
           });
         } else {
           const balance = parseFloat(fromBalance);
           if (fromSwapAmount > (balance - (feesInfo?.network || 0))) {
-            label = t("transactions.validation.insufficient-amount-needed", { 
+            label = t('transactions.validation.insufficient-amount-needed', { 
               amount: fromSwapAmount.toString(), 
               symbol: fromSymbol 
             });
           } else {
-            label = t("transactions.validation.minimum-swap-amount", { 
+            label = t('transactions.validation.minimum-swap-amount', { 
               mintAmount: needed.toString(),
               fromMint: fromSymbol
             });
@@ -1016,7 +1016,7 @@ export const RecurringExchange = (props: {
         }
 
       } else {    
-        label = t("transactions.validation.valid-ddca-review");
+        label = t('transactions.validation.valid-ddca-review');
       }
 
       setTransactionStartButtonLabel(label);
@@ -1249,42 +1249,42 @@ export const RecurringExchange = (props: {
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.network-transaction-fee"),
+          t('transactions.transaction-info.network-transaction-fee'),
           `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
         !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
         infoRow(
-          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          t('transactions.transaction-info.protocol-transaction-fee', { protocol: exchangeInfo.fromAmm }),
           `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount && slippage &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
+          t('transactions.transaction-info.slippage'),
           `${slippage.toFixed(2)}%`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.recipient-receives"),                
+          t('transactions.transaction-info.recipient-receives'),                
           `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.price-impact"),                
+          t('transactions.transaction-info.price-impact'),                
           `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(2))}%`
         )
       }
       {
         !refreshing && fromAmount && exchangeInfo.fromAmm &&
         infoRow(
-          t("transactions.transaction-info.exchange-on"),
+          t('transactions.transaction-info.exchange-on'),
           `${exchangeInfo.fromAmm}`,
           ':'
         )
@@ -1361,7 +1361,7 @@ export const RecurringExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -1426,7 +1426,7 @@ export const RecurringExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -1619,7 +1619,7 @@ export const RecurringExchange = (props: {
             className="mean-modal unpadded-content"
             visible={isTokenSelectorModalVisible}
             title={
-              <div className="modal-title">{t("token-selector.modal-title")}</div>
+              <div className="modal-title">{t('token-selector.modal-title')}</div>
             }
             onCancel={onCloseTokenSelector}
             width={450}

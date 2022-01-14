@@ -72,7 +72,7 @@ export const JupiterExchangeOutput = (props: {
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>{t("transactions.send-amount.label-right")}:</span>
+            <span>{t('transactions.send-amount.label-right')}:</span>
             {publicKey ? (
               <>
                 <span className="simplelink" onClick={props.onBalanceClick}>
@@ -183,7 +183,7 @@ export const JupiterExchangeOutput = (props: {
                             className={`badge ${
                               index === selectedRouteIndex ? "bg-orange-red" : "disabled"
                             }`}>
-                            {t("swap.routes-best-price-label")}
+                            {t('swap.routes-best-price-label')}
                           </span>
                         )}
                         <div className="highlight flex-column">

@@ -46,7 +46,7 @@ export const MultisigParticipants = (props: {
                             allowClear={true}
                             alwaysShowClear={true}
                             key={`${index}`}
-                            error={isValidAddress(participant) ? '' : t("transactions.validation.valid-address-required")}
+                            error={isValidAddress(participant) ? '' : t('transactions.validation.valid-address-required')}
                             onInputClear={() => onRemoveSingleItem(index)}
                             onInputChange={(e: any) => {
                                 const value = e.target.value;

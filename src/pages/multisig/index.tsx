@@ -79,8 +79,6 @@ import { MultisigTransferTokensModal } from '../../components/MultisigTransferTo
 import { MultisigUpgradeProgramModal } from '../../components/MultisigUpgradeProgramModal';
 import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
-import idl from '../../models/mean-multisig-idl';
-import { encodeIdlAccount } from '@project-serum/anchor/dist/cjs/idl';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 
@@ -162,7 +160,7 @@ export const MultisigView = () => {
     };
 
     const provider = new Provider(connection, wallet as any, opts);
-    
+
     return new Program(
       MultisigIdl,
       MEAN_MULTISIG,
@@ -195,7 +193,7 @@ export const MultisigView = () => {
         }
       ],
     });
-    
+
     const results = accountInfos.map((t: any) => {
       let tokenAccount = AccountLayout.decode(t.account.data);
       tokenAccount.address = t.pubkey;
@@ -4187,7 +4185,7 @@ export const MultisigView = () => {
             <div className="description-cell text-right">
               <div className="subtitle">
               {
-                t("multisig.multisig-accounts.pending-transactions", {
+                t('multisig.multisig-accounts.pending-transactions', {
                   txs: item.pendingTxsAmount
                 })
               }
@@ -4322,7 +4320,7 @@ export const MultisigView = () => {
                         <span 
                           className="copy-cta" 
                           onClick={() => copyMultisigAddress(selectedMultisig.id)}>
-                            {`${t("multisig.multisig-account-detail.copy-id-title")}: ${selectedMultisig.id}`}
+                            {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
                         </span>
                         
                         <a 

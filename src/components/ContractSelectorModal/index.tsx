@@ -111,7 +111,7 @@ export const ContractSelectorModal = (props: {
         shape="round"
         size="large"
         onClick={props.handleOk}>
-        {t("contract-selector.primary-action")}
+        {t('contract-selector.primary-action')}
       </Button>
     </Modal>
   );

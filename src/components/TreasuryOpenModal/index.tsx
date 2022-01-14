@@ -116,7 +116,7 @@ export const TreasuryOpenModal = (props: {
         {
           treasuryId && !isValidAddress(treasuryId) ? (
             <span className="form-field-error">
-              {t("transactions.validation.address-validation")}
+              {t('transactions.validation.address-validation')}
             </span>
           ) : isAddressOwnAccount() ? (
             <span className="form-field-error">

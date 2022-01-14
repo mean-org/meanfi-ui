@@ -226,7 +226,7 @@ export const MultisigTransferTokensModal = (props: {
                 value={to}/>
               {to && !isValidAddress(to) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>

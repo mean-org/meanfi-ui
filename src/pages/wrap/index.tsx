@@ -456,7 +456,7 @@ export const WrapView = () => {
                 <div className="transaction-field-row">
                   <span className="field-label-left">&nbsp;</span>
                   <span className="field-label-right">
-                    <span>{t("faucet.current-sol-balance")}:</span>
+                    <span>{t('faucet.current-sol-balance')}:</span>
                     <span className="balance-amount">
                       {`${nativeBalance
                           ? getTokenAmountAndSymbolByTokenAddress(
@@ -513,15 +513,15 @@ export const WrapView = () => {
                   <span className="field-label-left">
                     {nativeBalance <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees)) ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-low")}
+                        {t('transactions.validation.amount-low')}
                       </span>
                     ) : parseFloat(wrapAmount) > getMaxPossibleAmount() ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-sol-high")}
+                        {t('transactions.validation.amount-sol-high')}
                       </span>
                     ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-lt-fee")}
+                        {t('transactions.validation.amount-lt-fee')}
                       </span>
                     ) : (
                       <span>&nbsp;</span>
@@ -532,7 +532,7 @@ export const WrapView = () => {
               </div>
               <div className="p-2 mb-2">
                 {infoRow(
-                  t("faucet.wrap-transaction-fee") + ":",
+                  t('faucet.wrap-transaction-fee') + ":",
                   `${
                     wrapFees
                       ? "~" +
@@ -546,7 +546,7 @@ export const WrapView = () => {
                 )}
                 {isValidInput() &&
                   infoRow(
-                    t("faucet.wrapped-amount") + ":",
+                    t('faucet.wrapped-amount') + ":",
                     `${
                       wrapFees
                         ? "~" +
@@ -571,7 +571,7 @@ export const WrapView = () => {
                 disabled={!isValidInput()}
                 onClick={onTransactionStart}
               >
-                {t("faucet.wrap-sol-cta")}
+                {t('faucet.wrap-sol-cta')}
               </Button>
               {/* Transaction execution modal */}
               <Modal
@@ -591,7 +591,7 @@ export const WrapView = () => {
                         {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
-                        {t("transactions.status.tx-wrap-operation")}{" "}
+                        {t('transactions.status.tx-wrap-operation')}{" "}
                         {wrapAmount} SOL ...
                       </p>
                       {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
@@ -608,7 +608,7 @@ export const WrapView = () => {
                         {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
-                        {t("transactions.status.tx-wrap-operation-success")}.
+                        {t('transactions.status.tx-wrap-operation-success')}.
                       </p>
                       <Button
                         block
@@ -617,7 +617,7 @@ export const WrapView = () => {
                         size="middle"
                         onClick={hideTransactionModal}
                       >
-                        {t("general.cta-close")}
+                        {t('general.cta-close')}
                       </Button>
                     </>
                   ) : isError() ? (
@@ -629,7 +629,7 @@ export const WrapView = () => {
                       {transactionStatus.currentOperation ===
                       TransactionStatus.TransactionStartFailure ? (
                         <h4 className="mb-4">
-                          {t("transactions.status.tx-start-failure", {
+                          {t('transactions.status.tx-start-failure', {
                             accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
                               nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
@@ -653,14 +653,14 @@ export const WrapView = () => {
                         shape="round"
                         size="middle"
                         onClick={hideTransactionModal}>
-                        {t("general.cta-close")}
+                        {t('general.cta-close')}
                       </Button>
                     </>
                   ) : (
                     <>
                       <Spin indicator={bigLoadingIcon} className="icon" />
                       <h4 className="font-bold mb-4 text-uppercase">
-                        {t("transactions.status.tx-wait")}...
+                        {t('transactions.status.tx-wait')}...
                       </h4>
                     </>
                   )}
@@ -668,7 +668,7 @@ export const WrapView = () => {
               </Modal>
             </div>
           ) : (
-            <p>{t("general.not-connected")}.</p>
+            <p>{t('general.not-connected')}.</p>
           )}
         </div>
       </div>

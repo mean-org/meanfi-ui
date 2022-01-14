@@ -1229,7 +1229,7 @@ export const ExchangeDcasView = () => {
             {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
-                  {t("streams.stream-detail.label-start-date-started")}
+                  {t('streams.stream-detail.label-start-date-started')}
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
@@ -1321,14 +1321,14 @@ export const ExchangeDcasView = () => {
                 onClick={showAddFundsModal}>
                 {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                 {isCreating()
-                  ? t("ddcas.add-funds-cta-disabled-executing-swap")
+                  ? t('ddcas.add-funds-cta-disabled-executing-swap')
                   : isClosing()
-                    ? t("ddcas.add-funds-cta-disabled-closing")
+                    ? t('ddcas.add-funds-cta-disabled-closing')
                     : isAddingFunds()
-                      ? t("ddcas.add-funds-cta-disabled-funding")
+                      ? t('ddcas.add-funds-cta-disabled-funding')
                       : isWithdrawing()
-                        ? t("ddcas.add-funds-cta-disabled-withdrawing")
-                        : t("streams.stream-detail.add-funds-cta")
+                        ? t('ddcas.add-funds-cta-disabled-withdrawing')
+                        : t('streams.stream-detail.add-funds-cta')
                 }
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
@@ -1359,7 +1359,7 @@ export const ExchangeDcasView = () => {
                       {t('streams.stream-activity.heading')}
                     </div>
                     <div className="std-table-cell fixed-width-150">
-                      {t("streams.stream-activity.label-date")}
+                      {t('streams.stream-activity.label-date')}
                     </div>
                   </div>
                 </div>
@@ -1403,7 +1403,7 @@ export const ExchangeDcasView = () => {
                     {t('streams.stream-activity.heading')}
                   </div>
                   <div className="std-table-cell fixed-width-150">
-                    {t("streams.stream-activity.label-date")}
+                    {t('streams.stream-activity.label-date')}
                   </div>
                 </div>
               </div>

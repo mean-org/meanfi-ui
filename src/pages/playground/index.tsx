@@ -527,7 +527,7 @@ export const PlaygroundView = () => {
                 {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
-                {t("transactions.status.tx-generic-operation-success")}.
+                {t('transactions.status.tx-generic-operation-success')}.
               </p>
               <Button
                 block
@@ -535,7 +535,7 @@ export const PlaygroundView = () => {
                 shape="round"
                 size="middle"
                 onClick={hideTransactionModal}>
-                {t("general.cta-close")}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -549,7 +549,7 @@ export const PlaygroundView = () => {
                   {transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
                     <>
                       <p className="operation">
-                        {t("transactions.status.tx-confirm-failure-check")}
+                        {t('transactions.status.tx-confirm-failure-check')}
                       </p>
                       <p className="operation">
                         <a className="secondary-link"
@@ -567,14 +567,14 @@ export const PlaygroundView = () => {
                 shape="round"
                 size="middle"
                 onClick={hideTransactionModal}>
-                {t("general.cta-close")}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-4 text-uppercase">
-                {t("transactions.status.tx-wait")}...
+                {t('transactions.status.tx-wait')}...
               </h4>
             </>
           )}

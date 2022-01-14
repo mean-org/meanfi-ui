@@ -156,7 +156,7 @@ export const MultisigSetProgramAuthModal = (props: {
                 value={programId}/>
               {programId && !isValidAddress(programId) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>
@@ -175,7 +175,7 @@ export const MultisigSetProgramAuthModal = (props: {
                 value={newAuthAddress}/>
               {newAuthAddress && !isValidAddress(newAuthAddress) && (
                 <span className="form-field-error">
-                  {t("transactions.validation.address-validation")}
+                  {t('transactions.validation.address-validation')}
                 </span>
               )}
             </div>

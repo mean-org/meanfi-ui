@@ -10,6 +10,7 @@ import {
   LoadingOutlined,
   ReloadOutlined,
   SearchOutlined,
+  SyncOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
 import {
@@ -2173,7 +2174,7 @@ export const Streams = () => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}>
-                  <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                  <span className="font-bold text-shadow"><SyncOutlined spin /></span>
                 </div>
               </div>
             ) : (
@@ -2492,14 +2493,14 @@ export const Streams = () => {
                       onClick={showWithdrawModal}>
                       {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                       {isClosing()
-                        ? t("streams.stream-detail.cta-disabled-closing")
+                        ? t('streams.stream-detail.cta-disabled-closing')
                         : isCreating()
-                          ? t("streams.stream-detail.cta-disabled-creating")
+                          ? t('streams.stream-detail.cta-disabled-creating')
                           : isAddingFunds()
-                            ? t("streams.stream-detail.cta-disabled-funding")
+                            ? t('streams.stream-detail.cta-disabled-funding')
                             : isWithdrawing()
-                              ? t("streams.stream-detail.cta-disabled-withdrawing")
-                              : t("streams.stream-detail.withdraw-funds-cta")
+                              ? t('streams.stream-detail.cta-disabled-withdrawing')
+                              : t('streams.stream-detail.withdraw-funds-cta')
                       }
                     </Button>
                     {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
@@ -2760,14 +2761,14 @@ export const Streams = () => {
                       onClick={showWithdrawModal}>
                       {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                       {isClosing()
-                        ? t("streams.stream-detail.cta-disabled-closing")
+                        ? t('streams.stream-detail.cta-disabled-closing')
                         : isCreating()
-                          ? t("streams.stream-detail.cta-disabled-creating")
+                          ? t('streams.stream-detail.cta-disabled-creating')
                           : isAddingFunds()
-                            ? t("streams.stream-detail.cta-disabled-funding")
+                            ? t('streams.stream-detail.cta-disabled-funding')
                             : isWithdrawing()
-                              ? t("streams.stream-detail.cta-disabled-withdrawing")
-                              : t("streams.stream-detail.withdraw-funds-cta")
+                              ? t('streams.stream-detail.cta-disabled-withdrawing')
+                              : t('streams.stream-detail.withdraw-funds-cta')
                       }
                     </Button>
                     {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
@@ -3031,14 +3032,14 @@ export const Streams = () => {
                           onClick={showCloseStreamModal}>
                           {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                           {isClosing()
-                            ? t("streams.stream-detail.cta-disabled-closing")
+                            ? t('streams.stream-detail.cta-disabled-closing')
                             : isCreating()
-                              ? t("streams.stream-detail.cta-disabled-creating")
+                              ? t('streams.stream-detail.cta-disabled-creating')
                               : isAddingFunds()
-                                ? t("streams.stream-detail.cta-disabled-funding")
+                                ? t('streams.stream-detail.cta-disabled-funding')
                                 : isWithdrawing()
-                                  ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                  : t("streams.stream-detail.cancel-scheduled-transfer")
+                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
+                                  : t('streams.stream-detail.cancel-scheduled-transfer')
                           }
                         </Button>
                       </>
@@ -3057,14 +3058,14 @@ export const Streams = () => {
                           onClick={showAddFundsModal}>
                           {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                           {isClosing()
-                            ? t("streams.stream-detail.cta-disabled-closing")
+                            ? t('streams.stream-detail.cta-disabled-closing')
                             : isCreating()
-                              ? t("streams.stream-detail.cta-disabled-creating")
+                              ? t('streams.stream-detail.cta-disabled-creating')
                               : isAddingFunds()
-                                ? t("streams.stream-detail.cta-disabled-funding")
+                                ? t('streams.stream-detail.cta-disabled-funding')
                                 : isWithdrawing()
-                                  ? t("streams.stream-detail.cta-disabled-withdrawing")
-                                  : t("streams.stream-detail.add-funds-cta")
+                                  ? t('streams.stream-detail.cta-disabled-withdrawing')
+                                  : t('streams.stream-detail.add-funds-cta')
                           }
                         </Button>
                         {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
@@ -3330,14 +3331,14 @@ export const Streams = () => {
                       onClick={showAddFundsModal}>
                       {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                       {isClosing()
-                        ? t("streams.stream-detail.cta-disabled-closing")
+                        ? t('streams.stream-detail.cta-disabled-closing')
                         : isCreating()
-                          ? t("streams.stream-detail.cta-disabled-creating")
+                          ? t('streams.stream-detail.cta-disabled-creating')
                           : isAddingFunds()
-                            ? t("streams.stream-detail.cta-disabled-funding")
+                            ? t('streams.stream-detail.cta-disabled-funding')
                             : isWithdrawing()
-                              ? t("streams.stream-detail.cta-disabled-withdrawing")
-                              : t("streams.stream-detail.add-funds-cta")
+                              ? t('streams.stream-detail.cta-disabled-withdrawing')
+                              : t('streams.stream-detail.add-funds-cta')
                       }
                     </Button>
                     {(isTreasurer() && fetchTxInfoStatus !== "fetching") && (
