@@ -73,6 +73,7 @@ interface AppStateConfig {
   streamList: Array<Stream | StreamInfo> | undefined;
   selectedStream: Stream | StreamInfo | undefined;
   streamDetail: Stream | StreamInfo | undefined;
+  highLightableStreamId: string | undefined;
   streamProgramAddress: string;
   streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
@@ -124,6 +125,7 @@ interface AppStateConfig {
   setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
   setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
   setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
+  setHighLightableStreamId: (id: string | undefined) => void,
   openStreamById: (streamId: string, dock: boolean) => void;
   getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
@@ -176,6 +178,7 @@ const contextDefaultValues: AppStateConfig = {
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  highLightableStreamId: undefined,
   streamProgramAddress: '',
   streamV2ProgramAddress: '',
   loadingStreamActivity: false,
@@ -227,6 +230,7 @@ const contextDefaultValues: AppStateConfig = {
   setStreamList: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
+  setHighLightableStreamId: () => {},
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
@@ -259,7 +263,6 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
   const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
-  // const [msp, setMsp] = useState<MSP | undefined>();
   const {
     lastSentTxStatus,
     fetchTxInfoStatus,
@@ -335,6 +338,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
+  const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -791,6 +795,9 @@ const AppStateProvider: React.FC = ({ children }) => {
                   // Try to get current item by its original Tx signature then its id
                   if (signature) {
                     item = streamAccumulator.find(d => d.transactionSignature === signature);
+                  } else if (highLightableStreamId) {
+                    const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
+                    item = highLightableItem || streamAccumulator[0];
                   } else if (selectedStream) {
                     const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
                     item = itemFromServer || streamAccumulator[0];
@@ -860,6 +867,7 @@ const AppStateProvider: React.FC = ({ children }) => {
     fetchTxInfoStatus,
     customStreamDocked,
     loadingStreamActivity,
+    highLightableStreamId,
     clearTransactionStatusContext,
     getStreamActivity
   ]);
@@ -1116,6 +1124,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         streamList,
         selectedStream,
         streamDetail,
+        highLightableStreamId,
         streamProgramAddress,
         streamV2ProgramAddress,
         loadingStreamActivity,
@@ -1165,6 +1174,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         setStreamList,
         setSelectedStream,
         setStreamDetail,
+        setHighLightableStreamId,
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,

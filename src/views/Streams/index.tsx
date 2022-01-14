@@ -91,15 +91,16 @@ export const Streams = () => {
     streamDetail,
     selectedToken,
     loadingStreams,
-    loadingStreamActivity,
+    streamsSummary,
     streamActivity,
     detailsPanelOpen,
     transactionStatus,
-    streamsSummary,
+    customStreamDocked,
     lastStreamsSummary,
     streamProgramAddress,
+    loadingStreamActivity,
+    highLightableStreamId,
     streamV2ProgramAddress,
-    customStreamDocked,
     setStreamList,
     openStreamById,
     setStreamDetail,
@@ -112,6 +113,7 @@ export const Streams = () => {
     refreshTokenBalance,
     setTransactionStatus,
     setCustomStreamDocked,
+    setHighLightableStreamId,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -286,6 +288,39 @@ export const Streams = () => {
       window.removeEventListener('resize', resizeListener);
     }
   }, []);
+
+  useEffect(() => {
+    if (loadingStreams || !streamList || streamList.length === 0 || !highLightableStreamId) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      if (streamDetail && streamDetail.id !== highLightableStreamId) {
+        const item = streamList.find(s => s.id === highLightableStreamId);
+        if (item) {
+          setSelectedStream(item);
+        }
+        setHighLightableStreamId(undefined);
+      }
+      const highlightTarget = document.getElementById(highLightableStreamId);
+      if (highlightTarget) {
+        consoleOut('Scrolling stream into view...', '', 'green');
+        highlightTarget.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    streamList,
+    streamDetail,
+    loadingStreams,
+    highLightableStreamId,
+    setHighLightableStreamId,
+    setSelectedStream,
+  ]);
 
   const resetTransactionStatus = useCallback(() => {
     setTransactionStatus({
@@ -3355,6 +3390,7 @@ export const Streams = () => {
         };
         return (
           <div key={`${index + 50}`} onClick={onStreamClick}
+            id={`${item.id}`}
             className={`transaction-list-row ${streamDetail && streamDetail.id === item.id ? 'selected' : ''}`}>
             <div className="icon-cell">
               {getStreamTypeIcon(item)}

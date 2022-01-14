@@ -80,6 +80,7 @@ import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-st
 import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
+import { useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -102,11 +103,13 @@ export const TreasuriesView = () => {
     previousWalletConnectState,
     setSelectedToken,
     setEffectiveRate,
+    refreshStreamList,
     setTreasuryOption,
     setDtailsPanelOpen,
     resetContractValues,
     refreshTokenBalance,
     setTransactionStatus,
+    setHighLightableStreamId,
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
@@ -119,6 +122,7 @@ export const TreasuriesView = () => {
   const { width } = useWindowSize();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
+  const navigate = useNavigate();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
   const [treasuryList, setTreasuryList] = useState<(Treasury | TreasuryInfo)[]>([]);
   const [selectedTreasury, setSelectedTreasury] = useState<Treasury | TreasuryInfo | undefined>(undefined);
@@ -3575,15 +3579,22 @@ export const TreasuriesView = () => {
                   </Menu.Item>
                 ) : null
             }
-            {/* <Menu.Item key="3" onClick={showCloseStreamModal}>
+            <Menu.Item key="3" onClick={showCloseStreamModal}>
               <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
-            </Menu.Item> */}
+            </Menu.Item>
           </>
         )}
         <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
-        <Menu.Item key="5" onClick={() => {}}>
+        <Menu.Item key="5" onClick={() => {
+            setHighLightableStreamId(item.id as string);
+            // refreshStreamList();
+            navigate('/accounts/streams');
+          }}>
+          <span className="menu-item-text">Show stream</span>
+        </Menu.Item>
+        <Menu.Item key="6" onClick={() => {}}>
           <a href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${item.id}${getSolanaExplorerClusterParam()}`}
               target="_blank" rel="noopener noreferrer">
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-explorer-link')}</span>
