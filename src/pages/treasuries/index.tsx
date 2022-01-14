@@ -1134,7 +1134,7 @@ export const TreasuriesView = () => {
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
     setIsBusy(true);
 
-    const refreshBalance = async (treasury: PublicKey) => {
+    const refreshBalance = async (treasury: PublicKey, isNewTreasury: boolean) => {
 
       if (!connection || !connected || !publicKey) {
         return false;
@@ -1184,6 +1184,9 @@ export const TreasuriesView = () => {
           currentOperation: TransactionStatus.InitTransaction
         });
 
+        const v2 = treasuryDetails as Treasury;
+        const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+
         const treasury = new PublicKey(treasuryDetails.id as string);
         const data = {
           treasurer: publicKey.toBase58(),                      // treasurer
@@ -1219,15 +1222,15 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         }
 
         // Create a transaction
-        return await refreshBalance(treasury)
+        return await refreshBalance(treasury, isNewTreasury)
         .then(value => {
           if (!value) { return false; }
-          consoleOut('closeTreasury returned transaction:', value);
+          consoleOut('refreshBalance returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -1240,7 +1243,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('closeTreasury error:', error);
+          console.error('refreshBalance error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -1249,7 +1252,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1257,7 +1260,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1370,9 +1373,9 @@ export const TreasuriesView = () => {
     }
 
     if (wallet) {
-      const create = await createTx();
-      consoleOut('create:', create);
-      if (create && !transactionCancelled) {
+      const created = await createTx();
+      consoleOut('created:', created);
+      if (created && !transactionCancelled) {
         const sign = await signTx();
         consoleOut('sign:', sign);
         if (sign && !transactionCancelled) {
@@ -3589,7 +3592,7 @@ export const TreasuriesView = () => {
         </Menu.Item>
         <Menu.Item key="5" onClick={() => {
             setHighLightableStreamId(item.id as string);
-            // refreshStreamList();
+            refreshStreamList();
             navigate('/accounts/streams');
           }}>
           <span className="menu-item-text">Show stream</span>
@@ -4063,7 +4066,7 @@ export const TreasuriesView = () => {
                     {treasuryDetails && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Refresh balance"}>
+                          <Tooltip placement="bottom" title={"Refresh treasury data"}>
                             <Button
                               type="default"
                               shape="circle"
