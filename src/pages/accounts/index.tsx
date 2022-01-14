@@ -981,7 +981,7 @@ export const AccountsView = () => {
     </>
   );
 
-  const renderToken = (asset: UserTokenAccount, index: number) => {
+  const renderAsset = (asset: UserTokenAccount, index: number) => {
     const onTokenAccountClick = () => selectAsset(asset, true, true);
     const tokenPrice = getPricePerToken(asset);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -1007,16 +1007,16 @@ export const AccountsView = () => {
                 : ''}`
           }>
         <div className="icon-cell">
-          {isOwnedTokenAccount && !asset.isAta ? (
+          {publicKey && isOwnedTokenAccount && !asset.isAta ? (
             <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
-            <div className="token-icon grayed-out">
-              {asset.logoURI ? (
-                <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
-              ) : (
-                <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
-              )}
-            </div>
-          </Tooltip>
+              <div className="token-icon grayed-out">
+                {asset.logoURI ? (
+                  <img alt={`${asset.name}`} width={30} height={30} src={asset.logoURI} onError={imageOnErrorHandler} />
+                ) : (
+                  <Identicon address={asset.address} style={{ width: "30", display: "inline-flex" }} />
+                )}
+              </div>
+            </Tooltip>
           ) : (
             <div className="token-icon">
               {asset.logoURI ? (
@@ -1036,7 +1036,11 @@ export const AccountsView = () => {
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
+          {publicKey ? (
+            <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
+            ) : (
+            <div className="subtitle text-truncate">{asset.name}</div>
+          )}
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
@@ -1058,7 +1062,7 @@ export const AccountsView = () => {
       <>
         {/* Render mean supported tokens */}
         {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
-          meanSupportedTokens.map((asset, index) => renderToken(asset, index))
+          meanSupportedTokens.map((asset, index) => renderAsset(asset, index))
         )}
         {/* Render divider if there are extra tokens */}
         {(accountTokens.length > meanSupportedTokens.length) && (
@@ -1066,7 +1070,7 @@ export const AccountsView = () => {
         )}
         {/* Render extra user tokens */}
         {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
-          extraUserTokensSorted.map((asset, index) => renderToken(asset, index + 50))
+          extraUserTokensSorted.map((asset, index) => renderAsset(asset, index + 50))
         )}
       </>
     ) : (
