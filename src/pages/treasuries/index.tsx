@@ -3589,11 +3589,11 @@ export const TreasuriesView = () => {
                   </Menu.Item>
                 ) : null
             }
-            <Menu.Item key="3" onClick={showCloseStreamModal}>
-              <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
-            </Menu.Item>
           </>
         )}
+        <Menu.Item key="3" onClick={showCloseStreamModal}>
+          <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+        </Menu.Item>
         <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
