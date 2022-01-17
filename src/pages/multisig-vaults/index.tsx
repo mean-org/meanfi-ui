@@ -8,6 +8,11 @@ import { Button, Divider, Empty, Spin, Tooltip } from 'antd';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { IconExternalLink, IconRefresh, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
+import { ConfirmOptions, Connection, PublicKey } from '@solana/web3.js';
+import { Program, Provider } from '@project-serum/anchor';
+import MultisigIdl from "../../models/mean-multisig-idl";
+import { MEAN_MULTISIG } from '../../utils/ids';
+import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 export const MultisigVaultsView = () => {
     const connectionConfig = useConnectionConfig();
@@ -41,6 +46,64 @@ export const MultisigVaultsView = () => {
         clearTransactionStatusContext,
     } = useContext(TransactionStatusContext);
     const { t } = useTranslation('common');
+
+    const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
+      commitment: "confirmed",
+      disableRetryOnRateLimit: true
+    }), [
+      connectionConfig.endpoint
+    ]);
+
+    const multisigClient = useMemo(() => {
+  
+      const opts: ConfirmOptions = {
+        preflightCommitment: "recent",
+        commitment: "recent",
+      };
+
+      const provider = new Provider(connection, wallet as any, opts);
+
+      return new Program(
+        MultisigIdl,
+        MEAN_MULTISIG,
+        provider
+      );
+  
+    }, [
+      connection, 
+      wallet
+    ]);
+
+    const getMultisigVaults = useCallback(async (
+      connection: Connection,
+      multisig: PublicKey
+    ) => {
+  
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [multisig.toBuffer()],
+        MEAN_MULTISIG
+      );
+  
+      const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
+        filters: [
+          {
+            memcmp: { offset: 32, bytes: multisigSigner.toBase58() },
+          }, 
+          {
+            dataSize: AccountLayout.span
+          }
+        ],
+      });
+  
+      const results = accountInfos.map((t: any) => {
+        let tokenAccount = AccountLayout.decode(t.account.data);
+        tokenAccount.address = t.pubkey;
+        return tokenAccount;
+      });
+  
+      return results;
+  
+    },[]);
 
     return (
         <>

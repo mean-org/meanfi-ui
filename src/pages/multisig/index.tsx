@@ -66,7 +66,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
@@ -85,6 +85,7 @@ import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgram
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigView = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
@@ -126,6 +127,7 @@ export const MultisigView = () => {
   });
 
   // MULTISIG
+  const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigAccountInfo[]>([]);
   const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
@@ -171,6 +173,16 @@ export const MultisigView = () => {
     connection, 
     wallet
   ]);
+
+  // Parse query params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('ms')) {
+      const multisigAddress = params.get('ms');
+      setMultisigAddress(multisigAddress || '');
+      consoleOut('multisigAddress:', multisigAddress, 'blue');
+    }
+  }, [location]);
 
   const getMultisigVaults = useCallback(async (
     connection: Connection,
@@ -3978,19 +3990,27 @@ export const MultisigView = () => {
       {/* New Vault */}
       <Menu.Item
         key="20"
+        onClick={() => {
+          const url = `/multisig-vaults?ms=${selectedMultisig}`;
+          navigate(url);
+        }}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
+      </Menu.Item>
+      <Menu.Item
+        key="21"
         onClick={onShowCreateVaultModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
       </Menu.Item>
       {/* Transfer tokens */}
       <Menu.Item
-        key="21"
+        key="22"
         onClick={showTransferTokenModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
       </Menu.Item>
-      <Menu.Divider key="22" />
+      <Menu.Divider key="23" />
       {/* Set Vault Auth */}
       <Menu.Item
-        key="23"
+        key="24"
         disabled={true}
         onClick={() => {}}>
         <span className="menu-item-text">Set Vault Auth</span>
