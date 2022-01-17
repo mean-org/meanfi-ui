@@ -1565,10 +1565,10 @@
     prompt-sync "^4.2.0"
     yaml "^1.10.2"
 
-"@mean-dao/msp@^0.1.36":
-  version "0.1.36"
-  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-0.1.36.tgz#c4cd199124ad791915f0c2bf6407247b6b74f36c"
-  integrity sha512-lSBIRIkGsrCh9eLk4QjR9mlKCrhmtB3XbLp+giGuUivH81GOv8u9Hi9Q8xc7TOgq8fE/+c0Vj0vcOHmiMvCbCA==
+"@mean-dao/msp@^0.1.37":
+  version "0.1.37"
+  resolved "https://registry.yarnpkg.com/@mean-dao/msp/-/msp-0.1.37.tgz#315bd22d7de59399cac8fe6a39e9c7fc660a14a9"
+  integrity sha512-itY4fhaHLhrJJs3wI+gIziJPXZmPakLc0HukdK/fZNwzT8+oOUcnV/L5Huu2Lz8ywO2dzl4IfQhX69UgFkhzqA==
   dependencies:
     "@project-serum/anchor" "0.19.1.beta.1"
     "@solana/spl-token" "^0.1.8"
