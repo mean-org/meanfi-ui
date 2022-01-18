@@ -3982,7 +3982,7 @@ export const MultisigView = () => {
 
   const tokensOptionsMenu = (
     <Menu>
-      {/* New Vault */}
+      {/* Go to vaults */}
       <Menu.Item
         key="20"
         onClick={() => {
@@ -3993,6 +3993,7 @@ export const MultisigView = () => {
         }}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
       </Menu.Item>
+      {/* New Vault */}
       <Menu.Item
         key="21"
         onClick={onShowCreateVaultModal}>

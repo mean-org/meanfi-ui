@@ -4,25 +4,34 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
-import { Button, Divider, Empty, Spin, Tooltip } from 'antd';
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { IconExternalLink, IconRefresh, IconTrash } from '../../Icons';
+import { Button, Col, Divider, Empty, Row, Spin, Tooltip } from 'antd';
+import { ArrowLeftOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { IconExternalLink, IconInfoCircle, IconRefresh, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, PublicKey } from '@solana/web3.js';
+import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
-import { MEAN_MULTISIG } from '../../utils/ids';
-import { AccountLayout, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useLocation } from 'react-router-dom';
-import { consoleOut } from '../../utils/ui';
+import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
+import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { consoleOut, delay, getTransactionStatusForLogs } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
-import { shortenAddress } from '../../utils/utils';
+import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigVault } from '../../models/multisig';
+import { TransactionFees } from '@mean-dao/msp';
+import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultModal';
+import { useNativeAccount } from '../../contexts/accounts';
+import { OperationType, TransactionStatus } from '../../models/enums';
+import { customLogger } from '../..';
+import { ACCOUNT_LAYOUT } from '../../utils/layouts';
+import { BN } from 'bn.js';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { account } = useNativeAccount();
   const connectionConfig = useConnectionConfig();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, wallet } = useWallet();
   const {
       theme,
       tokenList,
@@ -52,9 +61,20 @@ export const MultisigVaultsView = () => {
       clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
+  const [nativeBalance, setNativeBalance] = useState(0);
+  const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
+  const [loadingVaults, setLoadingVaults] = useState(false);
+  const [isCreateVaultModalVisible, setCreateVaultModalVisible] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [transactionCancelled, setTransactionCancelled] = useState(false);
+  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
+  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
+  const [transactionFees, setTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -81,6 +101,27 @@ export const MultisigVaultsView = () => {
   }, [
     connection, 
     wallet
+  ]);
+
+  // Keep account balance updated
+  useEffect(() => {
+
+    const getAccountBalance = (): number => {
+      return (account?.lamports || 0) / LAMPORTS_PER_SOL;
+    }
+
+    if (account?.lamports !== previousBalance || !nativeBalance) {
+      // Refresh token balance
+      refreshTokenBalance();
+      setNativeBalance(getAccountBalance());
+      // Update previous balance
+      setPreviousBalance(account?.lamports);
+    }
+  }, [
+    account,
+    nativeBalance,
+    previousBalance,
+    refreshTokenBalance
   ]);
 
   // Parse query params
@@ -119,7 +160,9 @@ export const MultisigVaultsView = () => {
     console.log('accountInfos:', accountInfos);
 
     const results = accountInfos.map((t: any) => {
-      let tokenAccount = AccountLayout.decode(t.account.data);
+
+      // let tokenAccount = AccountLayout.decode(t.account.data);
+      let tokenAccount = ACCOUNT_LAYOUT.decode(t.account.data);
       tokenAccount.address = t.pubkey;
       return tokenAccount;
     });
@@ -136,6 +179,7 @@ export const MultisigVaultsView = () => {
     }
 
     const timeout = setTimeout(() => {
+      setLoadingVaults(true);
       getMultisigVaults(connection, new PublicKey(multisigAddress))
       .then((result: MultisigVault[]) => {
         consoleOut('multisig vaults:', result, 'blue');
@@ -144,7 +188,8 @@ export const MultisigVaultsView = () => {
           setSelectedVault(result[0]);
         }
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error(err))
+      .finally(() => setLoadingVaults(false));
     });
 
     return () => {
@@ -159,17 +204,476 @@ export const MultisigVaultsView = () => {
     getMultisigVaults
   ]);
 
+  const onRefreshVaults = useCallback(() => {
+    setLoadingVaults(true);
+    getMultisigVaults(connection, new PublicKey(multisigAddress))
+    .then((result: MultisigVault[]) => {
+      consoleOut('multisig vaults:', result, 'blue');
+      setMultisigVaults(result);
+      if (result.length > 0 && !selectedVault) {
+        setSelectedVault(result[0]);
+      }
+    })
+    .catch(err => console.error(err))
+    .finally(() => setLoadingVaults(false));
+  }, [
+    connection,
+    selectedVault,
+    multisigAddress,
+    getMultisigVaults,
+  ]);
+
+  const isTxInProgress = useCallback((): boolean => {
+    return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
+  }, [
+    isBusy,
+    fetchTxInfoStatus,
+  ]);
+
+  const isSuccess = (): boolean => {
+    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
+  }
+
+  const isError = (): boolean => {
+    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
+            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
+            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
+            ? true
+            : false;
+  }
+
+  // Shows create vault modal
+  const onShowCreateVaultModal = useCallback(() => {
+    setCreateVaultModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  },[]);
+
+  const onVaultCreated = useCallback(() => {
+
+    onRefreshVaults();
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  },[
+    onRefreshVaults,
+    setTransactionStatus
+  ]);
+
+  const onExecuteCreateVaultTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.CreateVault);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const createVault = async (data: any) => {
+
+      if (!multisigAddress || !publicKey || !data || !data.token) { return null; }
+
+      const selectedMultisig = new PublicKey(multisigAddress);
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.toBuffer()],
+        multisigClient.programId
+      );
+
+      const mintAddress = new PublicKey(data.token.address);
+      const tokenAccount = Keypair.generate();
+      const ixs: TransactionInstruction[] = [
+        SystemProgram.createAccount({
+          fromPubkey: publicKey,
+          newAccountPubkey: tokenAccount.publicKey,
+          programId: TOKEN_PROGRAM_ID,
+          lamports: await Token.getMinBalanceRentForExemptAccount(multisigClient.provider.connection),
+          space: AccountLayout.span
+        }),
+        Token.createInitAccountInstruction(
+          TOKEN_PROGRAM_ID,
+          mintAddress,
+          tokenAccount.publicKey,
+          multisigSigner
+        )
+      ];
+
+      let tx = new Transaction().add(...ixs);
+      tx.feePayer = publicKey;
+      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("recent");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[tokenAccount]);
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = { token: data.token }; 
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await createVault(data)
+          .then(value => {
+            if (!value) { return false; }
+            consoleOut('createTreasury returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('createTreasury error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+          
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateVault);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onVaultCreated();
+            setOngoingOperation(undefined);
+            setCreateVaultModalVisible(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    clearTransactionStatusContext,
+    connection,
+    multisigClient.programId,
+    multisigClient.provider.connection,
+    nativeBalance,
+    onVaultCreated,
+    publicKey,
+    multisigAddress,
+    setTransactionStatus,
+    startFetchTxSignatureInfo,
+    transactionCancelled,
+    transactionFees.blockchainFee,
+    transactionFees.mspFlatFee,
+    transactionStatus.currentOperation,
+    wallet
+  ]);
+
+  const onAcceptCreateVault = useCallback((params: any) => {
+    onExecuteCreateVaultTx(params);
+  },[
+    onExecuteCreateVaultTx
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
+
+  const renderCtaRow = () => {
+    return (
+      <>
+        <p>CTA row here</p>
+      </>
+    );
+  }
+
+  const renderVaultMeta = () => {
+    return (
+      <>
+      {selectedVault && (
+        <div className="stream-fields-container">
+
+          {/* Row 1 */}
+          <div className="mb-3">
+            <Row>
+              <Col span={12}>
+                <div className="transaction-detail-row">
+                  <span className="info-label">
+                    Label for Info 1
+                  </span>
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconInfoCircle className="mean-svg-icons" />
+                  </span>
+                  <div className="info-data flex-row wrap align-items-center">
+                    Info 1
+                  </div>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="transaction-detail-row">
+                  <span className="info-label">
+                    Label for Info 2
+                  </span>
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconInfoCircle className="mean-svg-icons" />
+                  </span>
+                  <div className="info-data flex-row wrap align-items-center">
+                    Info 2
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Row 2 */}
+          <div className="mb-3">
+            <Row>
+              <Col span={12}>
+                <div className="transaction-detail-row">
+                  <span className="info-label">
+                    Label for Info 3
+                  </span>
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconInfoCircle className="mean-svg-icons" />
+                  </span>
+                  <div className="info-data flex-row wrap align-items-center">
+                    Info 3
+                  </div>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div className="transaction-detail-row">
+                  <span className="info-label">
+                    Label for Info 4
+                  </span>
+                </div>
+                <div className="transaction-detail-row">
+                  <span className="info-icon">
+                    <IconInfoCircle className="mean-svg-icons" />
+                  </span>
+                  <div className="info-data flex-row wrap align-items-center">
+                    Info 4
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+        </div>
+      )}
+      </>
+    );
+  };
 
   const renderMultisigVaults = (
     <>
     {multisigVaults && multisigVaults.length ? (
       multisigVaults.map((item, index) => {
+        const token = getTokenByMintAddress(item.mint.toBase58());
         const onVaultSelected = (ev: any) => {
-          consoleOut('selected vault:', item, 'blue');
           setSelectedVault(item);
+          setDtailsPanelOpen(true);
+          const resume = `\naddress: ${item.address.toBase58()}\nmint: ${token ? token.address : item.mint.toBase58()}`;
+          consoleOut('resume:', resume, 'blue');
+          consoleOut('selected vault:', item, 'blue');
         };
         return (
           <div 
@@ -186,11 +690,17 @@ export const MultisigVaultsView = () => {
               <Identicon address={item.address.toBase58()} style={{ width: "30", display: "inline-flex" }} />
             </div>
             <div className="description-cell">
-              <div className="title text-truncate">{shortenAddress(item.mint.toBase58(), 8)}</div>
+              <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
               <div className="subtitle text-truncate">{shortenAddress(item.address.toBase58(), 8)}</div>
             </div>
             <div className="rate-cell">
-              <div className="rate-amount text-uppercase">{+item.amount}</div>
+              <div className="rate-amount text-uppercase">
+                {getTokenAmountAndSymbolByTokenAddress(
+                  toUiAmount(new BN(item.amount), token?.decimals || 6),
+                  token ? token.address as string : '',
+                  true
+                )}
+              </div>
             </div>
           </div>
         );
@@ -198,7 +708,7 @@ export const MultisigVaultsView = () => {
     ) : (
       <>
         <div className="h-100 flex-center">
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{publicKey
             ? t('multisig.multisig-vaults.no-vaults')
             : t('multisig.multisig-vaults.not-connected')}</p>} />
         </div>
@@ -218,14 +728,26 @@ export const MultisigVaultsView = () => {
 
             <div className="meanfi-two-panel-left">
 
-              {/* <div className="meanfi-panel-heading">
-                <span className="title">{t('treasuries.screen-title')}</span>
-                <Tooltip placement="bottom" title={t('treasuries.refresh-tooltip')}>
-                  <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
+              <div className="meanfi-panel-heading">
+                <div className="back-button">
+                  <span className="icon-button-container">
+                    <Tooltip placement="bottom" title={t('multisig.multisig-vaults.back-to-multisig-accounts-cta')}>
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => {
+                          navigate('/multisig');
+                        }}
+                      />
+                    </Tooltip>
+                  </span>
+                </div>
+                <span className="title">{t('multisig.multisig-vaults.screen-title')}</span>
+                <Tooltip placement="bottom" title={t('multisig.multisig-vaults.refresh-tooltip')}>
+                  <div className={`transaction-stats ${loadingVaults ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
                     <Spin size="small" />
-                    {(!customStreamDocked && !loadingTreasuries) && (
-                      <span className="incoming-transactions-amout">{formatThousands(treasuryList.length)}</span>
-                    )}
                     <span className="transaction-legend">
                       <span className="icon-button-container">
                         <Button
@@ -239,128 +761,78 @@ export const MultisigVaultsView = () => {
                     </span>
                   </div>
                 </Tooltip>
-              </div> */}
+              </div>
 
-              {/* <div className="inner-container">
+              <div className="inner-container">
                 <div className="item-block vertical-scroll">
-                  <Spin spinning={loadingTreasuries}>
-                    {renderTreasuryList}
+                  <Spin spinning={loadingVaults}>
+                    {renderMultisigVaults}
                   </Spin>
                 </div>
                 <div className="bottom-ctas">
-                  {customStreamDocked ? (
-                    <div className="create-stream">
-                      <Button
-                        block
-                        type="primary"
-                        shape="round"
-                        disabled={!connected}
-                        onClick={onCancelCustomTreasuryClick}>
-                        {t('treasuries.back-to-treasuries-cta')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="create-stream">
-                      <Button
-                        block
-                        type="primary"
-                        shape="round"
-                        disabled={!connected}
-                        onClick={onCreateTreasuryClick}>
-                        {connected
-                          ? t('treasuries.create-new-treasury-cta')
-                          : t('transactions.validation.not-connected')
-                        }
-                      </Button>
-                    </div>
-                  )}
-                  {(!customStreamDocked && connected) && (
-                    <div className="open-stream">
-                      <Tooltip title={t('treasuries.lookup-treasury-cta-tooltip')}>
-                        <Button
-                          shape="round"
-                          type="text"
-                          size="small"
-                          className="ant-btn-shaded"
-                          onClick={showOpenTreasuryModal}
-                          icon={<SearchOutlined />}>
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  )}
+                  <div className="create-stream">
+                    <Button
+                      block
+                      type="primary"
+                      shape="round"
+                      disabled={!publicKey}
+                      onClick={onShowCreateVaultModal}>
+                      {publicKey
+                        ? t('multisig.multisig-account-detail.cta-create-vault')
+                        : t('transactions.validation.not-connected')
+                      }
+                    </Button>
+                  </div>
                 </div>
-              </div> */}
+              </div>
 
             </div>
 
             <div className="meanfi-two-panel-right">
-              <div className="meanfi-panel-heading"><span className="title">{t('treasuries.treasury-detail-heading')}</span></div>
+              <div className="meanfi-panel-heading">
+                <span className="title">{t('multisig.multisig-vaults.vault-detail-heading')}</span>
+              </div>
 
-              {/* <div className="inner-container">
-                {connected ? (
+              <div className="inner-container">
+                {publicKey ? (
                   <>
-                    {treasuryDetails && (
+                    {selectedVault && (
                       <div className="float-top-right">
                         <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Refresh balance"}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconRefresh className="mean-svg-icons" />}
-                              onClick={() => onExecuteRefreshTreasuryBalance()}
-                              disabled={
-                                isTxInProgress() ||
-                                !isTreasurer() ||
-                                isAnythingLoading()
-                              }
-                            />
-                          </Tooltip>
-                          <Tooltip placement="bottom" title={t('treasuries.treasury-detail.cta-close')}>
+                          <Tooltip placement="bottom" title={t('multisig.multisig-vaults.cta-close')}>
                             <Button
                               type="default"
                               shape="circle"
                               size="middle"
                               icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={showCloseTreasuryModal}
-                              disabled={
-                                isTxInProgress() ||
-                                (treasuryStreams && treasuryStreams.length > 0) ||
-                                !isTreasurer() ||
-                                isAnythingLoading()
-                              }
+                              onClick={() => {}}
+                              disabled={isTxInProgress()}
                             />
                           </Tooltip>
                         </span>
                       </div>
                     )}
-                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingTreasuries || loadingTreasuryDetails || !treasuryDetails) ? 'h-100 flex-center' : ''}`}>
-                      <Spin spinning={loadingTreasuries || loadingTreasuryDetails}>
-                        {treasuryDetails && (
+                    <div className={`stream-details-data-wrapper vertical-scroll ${(loadingVaults || !selectedVault) ? 'h-100 flex-center' : ''}`}>
+                      <Spin spinning={loadingVaults}>
+                        {selectedVault && (
                           <>
-                            {renderTreasuryMeta()}
+                            {renderVaultMeta()}
                             <Divider className="activity-divider" plain></Divider>
-                            {(!treasuryDetails.autoClose || (treasuryDetails.autoClose && getTreasuryTotalStreams(treasuryDetails) > 0 )) && (
-                              <>
-                                {renderCtaRow()}
-                                <Divider className="activity-divider" plain></Divider>
-                              </>
-                            )}
-                            {renderTreasuryStreams()}
+                            {renderCtaRow()}
                           </>
                         )}
                       </Spin>
-                      {(!loadingTreasuries && !loadingTreasuryDetails && !loadingTreasuryStreams) && (
+                      {!loadingVaults && (
                         <>
-                        {(!treasuryList || treasuryList.length === 0) && !treasuryDetails && (
+                        {(!multisigVaults || multisigVaults.length === 0) && !selectedVault && (
                           <div className="h-100 flex-center">
-                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-detail.no-treasury-loaded')}</p>} />
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-vaults.no-vault-loaded')}</p>} />
                           </div>
                         )}
                         </>
                       )}
                     </div>
-                    {treasuryDetails && (
+                    {/* {selectedVault && (
                       <div className="stream-share-ctas">
                         <span className="copy-cta" onClick={() => onCopyTreasuryAddress(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
@@ -368,14 +840,14 @@ export const MultisigVaultsView = () => {
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
-                    )}
+                    )} */}
                   </>
                 ) : (
                   <div className="h-100 flex-center">
                     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('treasuries.treasury-list.not-connected')}</p>} />
                   </div>
                 )}
-              </div> */}
+              </div>
 
             </div>
 
@@ -384,6 +856,15 @@ export const MultisigVaultsView = () => {
         </div>
 
       </div>
+
+      <MultisigCreateVaultModal
+        handleOk={onAcceptCreateVault}
+        handleClose={() => setCreateVaultModalVisible(false)}
+        isVisible={isCreateVaultModalVisible}
+        nativeBalance={nativeBalance}
+        transactionFees={transactionFees}
+        isBusy={isBusy}
+      />
 
       <PreFooter />
     </>
