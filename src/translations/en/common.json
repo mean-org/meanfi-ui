@@ -320,6 +320,10 @@
 			"loading-transactions": "Loading transactions",
 			"no-transactions": "This multisig account has no transactions"
 		},
+		"multisig-vaults": {
+			"no-vaults": "No vaults available",
+			"not-connected": "Please connect your wallet to see vaults"
+		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",
 		"screen-title": "Multisig accounts",

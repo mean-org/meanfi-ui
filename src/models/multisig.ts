@@ -39,3 +39,16 @@ export type MintTokensInfo = {
   mintTo: string;
   amount: number;
 }
+
+export type MultisigVault = {
+  address: PublicKey;
+  amount: any;
+  closeAuthority: any;
+  closeAuthorityOption: number;
+  delegatedAmount: any;
+  isNative: any;
+  isNativeOption: number;
+  mint: any;
+  owner: any;
+  state: number;
+}

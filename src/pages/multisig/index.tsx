@@ -66,7 +66,7 @@ import { useNativeAccount } from '../../contexts/accounts';
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
@@ -85,7 +85,6 @@ import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgram
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const MultisigView = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
@@ -127,7 +126,6 @@ export const MultisigView = () => {
   });
 
   // MULTISIG
-  const [multisigAddress, setMultisigAddress] = useState('');
   const [multisigAccounts, setMultisigAccounts] = useState<MultisigAccountInfo[]>([]);
   const [multisigTokens, setMultisigTokens] = useState<any[]>([]);
   const [multisigVaults, setMultisigVaults] = useState<any[]>([]);
@@ -174,16 +172,6 @@ export const MultisigView = () => {
     wallet
   ]);
 
-  // Parse query params
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.has('ms')) {
-      const multisigAddress = params.get('ms');
-      setMultisigAddress(multisigAddress || '');
-      consoleOut('multisigAddress:', multisigAddress, 'blue');
-    }
-  }, [location]);
-
   const getMultisigVaults = useCallback(async (
     connection: Connection,
     multisig: PublicKey
@@ -195,6 +183,8 @@ export const MultisigView = () => {
       MEAN_MULTISIG
     );
 
+    console.log('multisigSigner:', multisigSigner.toBase58());
+
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
         {
@@ -205,6 +195,8 @@ export const MultisigView = () => {
         }
       ],
     });
+
+    console.log('accountInfos:', accountInfos);
 
     const results = accountInfos.map((t: any) => {
       let tokenAccount = AccountLayout.decode(t.account.data);
@@ -3710,7 +3702,10 @@ export const MultisigView = () => {
 
     const timeout = setTimeout(() => {
       getMultisigVaults(connection, selectedMultisig.id)
-      .then(result => setMultisigVaults(result))
+      .then(result => {
+        consoleOut('multisig vaults:', result, 'blue');
+        setMultisigVaults(result);
+      })
       .catch(err => console.error(err));
     });
 
@@ -3991,8 +3986,10 @@ export const MultisigView = () => {
       <Menu.Item
         key="20"
         onClick={() => {
-          const url = `/multisig-vaults?ms=${selectedMultisig}`;
-          navigate(url);
+          if (selectedMultisig) {
+            const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+            navigate(url);
+          }
         }}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
       </Menu.Item>

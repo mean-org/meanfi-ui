@@ -311,6 +311,10 @@
 			"not-connected": "Please connect your wallet to see your multisig accounts",
 			"pending-transactions": "{{txs}} pending transactions"
 		},
+		"multisig-vaults": {
+			"no-vaults": "No vaults available",
+			"not-connected": "Please connect your wallet to see vaults"
+		},
 		"multisig-detail-heading": "Multisig account details",
 		"multisig-transactions": {
 			"column-created-on": "Created on",
