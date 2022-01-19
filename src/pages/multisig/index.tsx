@@ -4091,7 +4091,22 @@ export const MultisigView = () => {
             </Button>
           </Dropdown>
 
-          <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
+          <Button
+            type="default"
+            size="middle"
+            className="dropdown-like-button"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            <div>Vaults</div>
+            <div className="ml-1">&nbsp;</div>
+          </Button>
+
+          {/* <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
             <Button
               type="default"
               size="middle"
@@ -4101,7 +4116,7 @@ export const MultisigView = () => {
               <span className="mr-2">Vaults</span>
               <IconCaretDown className="mean-svg-icons" />
             </Button>
-          </Dropdown>
+          </Dropdown> */}
 
           <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
             <Button
