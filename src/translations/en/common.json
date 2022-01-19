@@ -295,6 +295,7 @@
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
+			"cta-view-all-vaults": "View all vaults",
 			"cta-mint": "Mint",
 			"cta-transfer": "Transfer Tokens",
 			"cta-upgrade-program": "Upgrade Program",
@@ -318,6 +319,19 @@
 			"column-program-id": "Program",
 			"loading-transactions": "Loading transactions",
 			"no-transactions": "This multisig account has no transactions"
+		},
+		"multisig-vaults": {
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"cta-close": "Close vault",
+			"cta-close-busy": "Closing vault",
+			"cta-transfer": "Transfer Tokens",
+			"cta-transfer-busy": "Transferring tokens",
+			"no-vault-loaded": "No vault loaded",
+			"no-vaults": "No vaults available",
+			"not-connected": "Please connect your wallet to see vaults",
+			"refresh-tooltip": "Click to refresh the list of vaults",
+			"screen-title": "Multisig vaults",
+			"vault-detail-heading": "Vault details"
 		},
 		"pending-transactions": "pending transactions",
 		"refresh-tooltip": "Click to refresh the list of multisig accounts",

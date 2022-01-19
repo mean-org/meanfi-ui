@@ -28,6 +28,7 @@ import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
+import { MultisigVaultsView } from "./pages/multisig-vaults";
 
 export function AppRoutes() {
 
@@ -63,6 +64,7 @@ export function AppRoutes() {
                       <Route path="/ido-lp" element={<IdoLpView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
+                      <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>

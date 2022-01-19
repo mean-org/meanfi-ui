@@ -183,6 +183,8 @@ export const MultisigView = () => {
       MEAN_MULTISIG
     );
 
+    console.log('multisigSigner:', multisigSigner.toBase58());
+
     const accountInfos = await connection.getProgramAccounts(TOKEN_PROGRAM_ID, {
       filters: [
         {
@@ -193,6 +195,8 @@ export const MultisigView = () => {
         }
       ],
     });
+
+    console.log('accountInfos:', accountInfos);
 
     const results = accountInfos.map((t: any) => {
       let tokenAccount = AccountLayout.decode(t.account.data);
@@ -3698,7 +3702,10 @@ export const MultisigView = () => {
 
     const timeout = setTimeout(() => {
       getMultisigVaults(connection, selectedMultisig.id)
-      .then(result => setMultisigVaults(result))
+      .then(result => {
+        consoleOut('multisig vaults:', result, 'blue');
+        setMultisigVaults(result);
+      })
       .catch(err => console.error(err));
     });
 
@@ -3975,22 +3982,33 @@ export const MultisigView = () => {
 
   const tokensOptionsMenu = (
     <Menu>
-      {/* New Vault */}
+      {/* Go to vaults */}
       <Menu.Item
         key="20"
+        onClick={() => {
+          if (selectedMultisig) {
+            const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+            navigate(url);
+          }
+        }}>
+        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
+      </Menu.Item>
+      {/* New Vault */}
+      <Menu.Item
+        key="21"
         onClick={onShowCreateVaultModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
       </Menu.Item>
       {/* Transfer tokens */}
       <Menu.Item
-        key="21"
+        key="22"
         onClick={showTransferTokenModal}>
         <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
       </Menu.Item>
-      <Menu.Divider key="22" />
+      <Menu.Divider key="23" />
       {/* Set Vault Auth */}
       <Menu.Item
-        key="23"
+        key="24"
         disabled={true}
         onClick={() => {}}>
         <span className="menu-item-text">Set Vault Auth</span>
@@ -4073,7 +4091,22 @@ export const MultisigView = () => {
             </Button>
           </Dropdown>
 
-          <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
+          <Button
+            type="default"
+            size="middle"
+            className="dropdown-like-button"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            <div>Vaults</div>
+            <div className="ml-1">&nbsp;</div>
+          </Button>
+
+          {/* <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
             <Button
               type="default"
               size="middle"
@@ -4083,7 +4116,7 @@ export const MultisigView = () => {
               <span className="mr-2">Vaults</span>
               <IconCaretDown className="mean-svg-icons" />
             </Button>
-          </Dropdown>
+          </Dropdown> */}
 
           <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
             <Button
