@@ -6,7 +6,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Spin, Tooltip } from 'antd';
 import { ArrowLeftOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { IconExternalLink, IconInfoCircle, IconRefresh, IconTrash } from '../../Icons';
+import { IconExternalLink, IconInfoCircle, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
@@ -14,7 +14,7 @@ import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { consoleOut, delay, getTransactionStatusForLogs } from '../../utils/ui';
+import { consoleOut, copyText, delay, getTransactionStatusForLogs } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
 import { MultisigVault } from '../../models/multisig';
@@ -25,6 +25,7 @@ import { OperationType, TransactionStatus } from '../../models/enums';
 import { customLogger } from '../..';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
+import { notify } from '../../utils/notifications';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();
@@ -222,6 +223,23 @@ export const MultisigVaultsView = () => {
     multisigAddress,
     getMultisigVaults,
   ]);
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = useCallback((address: any) => {
+
+    if (copyText(address.toString())) {
+      notify({
+        description: t('notifications.account-address-copied-message'),
+        type: "info"
+      });
+    } else {
+      notify({
+        description: t('notifications.account-address-not-copied-message'),
+        type: "error"
+      });
+    }
+
+  },[t])
 
   const isTxInProgress = useCallback((): boolean => {
     return isBusy || fetchTxInfoStatus === "fetching" ? true : false;
@@ -567,6 +585,46 @@ export const MultisigVaultsView = () => {
     onExecuteCreateVaultTx
   ]);
 
+  const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
+    const token = tokenList.find(t => t.address === tokenAddress);
+    if (!token) {
+      return (
+        <>
+          <span className="info-icon token-icon">
+            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
+          </span>
+          <span className="info-data ml-1">
+          {
+            getTokenAmountAndSymbolByTokenAddress(
+              toUiAmount(new BN(amount), 6),
+              tokenAddress
+            )
+          }
+          </span>
+        </>
+      );
+    }
+    return (
+      <>
+        <span className="info-icon token-icon">
+          {token.logoURI ? (
+            <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
+          ) : (
+            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
+          )}
+        </span>
+        <span className="info-data ml-1">
+          {
+            getTokenAmountAndSymbolByTokenAddress(
+              toUiAmount(new BN(amount), token.decimals || 6),
+              token.address
+            )
+          }
+        </span>
+      </>
+    );
+  }
+
   ///////////////
   // Rendering //
   ///////////////
@@ -591,67 +649,34 @@ export const MultisigVaultsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Label for Info 1
+                    Mint
                   </span>
                 </div>
                 <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                  <div className="info-data flex-row wrap align-items-center">
-                    Info 1
-                  </div>
+                  {
+                    getTokenIconAndAmount(
+                      selectedVault.mint.toBase58(),
+                      selectedVault.amount
+                    )
+                  }
                 </div>
               </Col>
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Label for Info 2
+                    Authority
                   </span>
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
-                    <IconInfoCircle className="mean-svg-icons" />
+                    <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <div className="info-data flex-row wrap align-items-center">
-                    Info 2
+                  <div onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
+                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
+                    {shortenAddress(selectedVault.owner.toBase58(), 8)}
                   </div>
-                </div>
-              </Col>
-            </Row>
-          </div>
 
-          {/* Row 2 */}
-          <div className="mb-3">
-            <Row>
-              <Col span={12}>
-                <div className="transaction-detail-row">
-                  <span className="info-label">
-                    Label for Info 3
-                  </span>
-                </div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                  <div className="info-data flex-row wrap align-items-center">
-                    Info 3
-                  </div>
-                </div>
-              </Col>
-              <Col span={12}>
-                <div className="transaction-detail-row">
-                  <span className="info-label">
-                    Label for Info 4
-                  </span>
-                </div>
-                <div className="transaction-detail-row">
-                  <span className="info-icon">
-                    <IconInfoCircle className="mean-svg-icons" />
-                  </span>
-                  <div className="info-data flex-row wrap align-items-center">
-                    Info 4
-                  </div>
                 </div>
               </Col>
             </Row>
