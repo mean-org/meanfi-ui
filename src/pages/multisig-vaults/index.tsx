@@ -4,15 +4,15 @@ import { useConnectionConfig } from '../../contexts/connection';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
-import { Button, Col, Divider, Empty, Row, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
+import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { IconExternalLink, IconInfoCircle, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
-import { ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Account, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
-import { AccountLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getTransactionStatusForLogs } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
@@ -26,6 +26,7 @@ import { customLogger } from '../..';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
+import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();
@@ -69,6 +70,7 @@ export const MultisigVaultsView = () => {
   const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
   const [loadingVaults, setLoadingVaults] = useState(false);
   const [isCreateVaultModalVisible, setCreateVaultModalVisible] = useState(false);
+  const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
@@ -262,6 +264,19 @@ export const MultisigVaultsView = () => {
             : false;
   }
 
+  const resetTransactionStatus = useCallback(() => {
+
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+
+  }, [
+    setTransactionStatus
+  ]);
+
+  const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
+
   // Shows create vault modal
   const onShowCreateVaultModal = useCallback(() => {
     setCreateVaultModalVisible(true);
@@ -276,14 +291,11 @@ export const MultisigVaultsView = () => {
   const onVaultCreated = useCallback(() => {
 
     onRefreshVaults();
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
+    resetTransactionStatus();
 
   },[
     onRefreshVaults,
-    setTransactionStatus
+    resetTransactionStatus
   ]);
 
   const onExecuteCreateVaultTx = useCallback(async (data: any) => {
@@ -585,6 +597,411 @@ export const MultisigVaultsView = () => {
     onExecuteCreateVaultTx
   ]);
 
+  // Transfer token modal
+  const showTransferTokenModal = useCallback(() => {
+    setIsTransferTokenModalVisible(true);
+    const fees = {
+      blockchainFee: 0.000005,
+      mspFlatFee: 0.000010,
+      mspPercentFee: 0
+    };
+    setTransactionFees(fees);
+  }, []);
+
+  const onAcceptTransferToken = (params: any) => {
+    consoleOut('params', params, 'blue');
+    onExecuteTransferTokensTx(params);
+  };
+
+  const onTokensTransfered = useCallback(() => {
+
+    onRefreshVaults();
+    resetTransactionStatus();
+
+  },[
+    onRefreshVaults,
+    resetTransactionStatus
+  ]);
+
+  const onExecuteTransferTokensTx = useCallback(async (data: any) => {
+
+    let transaction: Transaction;
+    let signedTransaction: Transaction;
+    let signature: any;
+    let encodedTx: string;
+    const transactionLog: any[] = [];
+
+    clearTransactionStatusContext();
+    setTransactionCancelled(false);
+    setOngoingOperation(OperationType.TransferTokens);
+    setRetryOperationPayload(data);
+    setIsBusy(true);
+
+    const transferTokens = async (data: any) => {
+
+      if (!publicKey || !multisigAddress) { 
+        throw Error("Invalid transaction data");
+      }
+
+      const selectedMultisig = new PublicKey(multisigAddress);
+
+      const [multisigSigner] = await PublicKey.findProgramAddress(
+        [selectedMultisig.toBuffer()],
+        multisigClient.programId
+      );
+
+      const fromAddress = new PublicKey(data.from);
+      const fromAccountInfo = await connection.getAccountInfo(fromAddress);
+      
+      if (!fromAccountInfo) { 
+        throw Error("Invalid from token account");
+      }
+
+      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data));
+      const fromMintAddress = new PublicKey(fromAccount.mint);
+      const mintInfo = await connection.getAccountInfo(fromMintAddress);
+
+      if (!mintInfo) { 
+        throw Error("Invalid token mint account");
+      }
+
+      const mint = MintLayout.decode(Buffer.from(mintInfo.data));
+      let toAddress = new PublicKey(data.to);
+      let toAccountInfo = await connection.getAccountInfo(toAddress);
+
+      if (!toAccountInfo) { 
+        throw Error("Invalid to token account");
+      }
+
+      let ixs: TransactionInstruction[] = [];
+
+      if (!toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+
+        const toAccountATA = await Token.getAssociatedTokenAddress(
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+          TOKEN_PROGRAM_ID,
+          fromMintAddress,
+          toAddress,
+          true
+        );
+
+        const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
+
+        if (!toAccountATAInfo) {
+          ixs.push(
+            Token.createAssociatedTokenAccountInstruction(
+              ASSOCIATED_TOKEN_PROGRAM_ID,
+              TOKEN_PROGRAM_ID,
+              fromMintAddress,
+              toAccountATA,
+              toAddress,
+              publicKey
+            )
+          );
+        }
+
+        toAddress = toAccountATA;
+      }
+
+      if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
+        const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
+        const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
+
+        if (!mintAddress.equals(fromMintAddress)) {
+          throw Error("Invalid to token account mint");
+        }
+      }
+
+      const transaction = new Account();
+      const txSize = 1000;
+
+      ixs.push(
+        await multisigClient.account.transaction.createInstruction(
+          transaction,
+          txSize
+        )
+      );
+
+      const transferIx = Token.createTransferInstruction(
+        TOKEN_PROGRAM_ID,
+        fromAddress,
+        toAddress,
+        multisigSigner,
+        [],
+        new BN(data.amount * 10 ** mint.decimals).toNumber()
+      );
+
+      let tx = multisigClient.transaction.createTransaction(
+        TOKEN_PROGRAM_ID,
+        OperationType.TransferTokens,
+        transferIx.keys,
+        Buffer.from(transferIx.data),
+        {
+          accounts: {
+            multisig: selectedMultisig,
+            transaction: transaction.publicKey,
+            proposer: publicKey,
+            rent: SYSVAR_RENT_PUBKEY
+          },
+          signers: [transaction],
+          instructions: ixs,
+        }
+      );
+
+      tx.feePayer = publicKey;
+      const { blockhash } = await connection.getRecentBlockhash("recent");
+      tx.recentBlockhash = blockhash;
+      tx.partialSign(...[transaction]);
+
+      return tx;
+    };
+
+    const createTx = async (): Promise<boolean> => {
+
+      if (publicKey && data) {
+        consoleOut("Start transaction for create multisig", '', 'blue');
+        consoleOut('Wallet address:', publicKey.toBase58());
+
+        setTransactionStatus({
+          lastOperation: TransactionStatus.TransactionStart,
+          currentOperation: TransactionStatus.InitTransaction
+        });
+
+        // Create a transaction
+        const payload = {
+          from: data.from,
+          to: data.to,
+          amount: data.amount
+        };
+        
+        consoleOut('data:', payload);
+
+        // Log input data
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
+          inputs: payload
+        });
+
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
+          result: ''
+        });
+
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
+        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
+        consoleOut('nativeBalance:', nativeBalance, 'blue');
+
+        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
+          setTransactionStatus({
+            lastOperation: transactionStatus.currentOperation,
+            currentOperation: TransactionStatus.TransactionStartFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
+            result: `Not enough balance (${
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(
+                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
+                NATIVE_SOL_MINT.toBase58()
+              )
+            })`
+          });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          return false;
+        }
+
+        return await transferTokens(data)
+          .then(value => {
+            consoleOut('createTreasury returned transaction:', value);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.InitTransactionSuccess,
+              currentOperation: TransactionStatus.SignTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
+              result: getTxIxResume(value)
+            });
+            transaction = value;
+            return true;
+          })
+          .catch(error => {
+            console.error('createTreasury error:', error);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.InitTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
+              result: `${error}`
+            });
+            customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+            return false;
+          });
+          
+      } else {
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot start transaction! Wallet not found!'
+        });
+        customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const signTx = async (): Promise<boolean> => {
+      if (wallet) {
+        consoleOut('Signing transaction...');
+        return await wallet.signTransaction(transaction)
+        .then((signed: Transaction) => {
+          consoleOut('signTransaction returned a signed transaction:', signed);
+          signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            return false;
+          }
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransactionSuccess,
+            currentOperation: TransactionStatus.SendTransaction
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+            result: {signer: wallet.publicKey.toBase58()}
+          });
+          return true;
+        })
+        .catch(error => {
+          console.error(error);
+          setTransactionStatus({
+            lastOperation: TransactionStatus.SignTransaction,
+            currentOperation: TransactionStatus.SignTransactionFailure
+          });
+          transactionLog.push({
+            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+          });
+          customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
+          return false;
+        });
+      } else {
+        console.error('Cannot sign transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SignTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot sign transaction! Wallet not found!'
+        });
+        customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    const sendTx = async (): Promise<boolean> => {
+      if (wallet) {
+        return await connection
+          .sendEncodedTransaction(encodedTx)
+          .then(sig => {
+            consoleOut('sendEncodedTransaction returned a signature:', sig);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransactionSuccess,
+              currentOperation: TransactionStatus.ConfirmTransaction
+            });
+            signature = sig;
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
+              result: `signature: ${signature}`
+            });
+            return true;
+          })
+          .catch(error => {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SendTransaction,
+              currentOperation: TransactionStatus.SendTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
+              result: { error, encodedTx }
+            });
+            customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+            return false;
+          });
+      } else {
+        console.error('Cannot send transaction! Wallet not found!');
+        setTransactionStatus({
+          lastOperation: TransactionStatus.SendTransaction,
+          currentOperation: TransactionStatus.WalletNotFound
+        });
+        transactionLog.push({
+          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
+          result: 'Cannot send transaction! Wallet not found!'
+        });
+        customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+        return false;
+      }
+    }
+
+    if (wallet) {
+      const create = await createTx();
+      consoleOut('created:', create);
+      if (create && !transactionCancelled) {
+        const sign = await signTx();
+        consoleOut('signed:', sign);
+        if (sign && !transactionCancelled) {
+          const sent = await sendTx();
+          consoleOut('sent:', sent);
+          if (sent && !transactionCancelled) {
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
+            setIsBusy(false);
+            setTransactionStatus({
+              lastOperation: transactionStatus.currentOperation,
+              currentOperation: TransactionStatus.TransactionFinished
+            });
+            await delay(1000);
+            onTokensTransfered();
+            setOngoingOperation(undefined);
+            setIsTransferTokenModalVisible(false);
+          } else { setIsBusy(false); }
+        } else { setIsBusy(false); }
+      } else { setIsBusy(false); }
+    }
+
+  }, [
+    wallet,
+    publicKey,
+    connection,
+    nativeBalance,
+    multisigAddress,
+    transactionCancelled,
+    multisigClient.programId,
+    multisigClient.transaction,
+    multisigClient.account.transaction,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onTokensTransfered,
+    setTransactionStatus,
+    startFetchTxSignatureInfo,
+    clearTransactionStatusContext,
+  ]);
+
   const getTokenIconAndAmount = (tokenAddress: string, amount: any) => {
     const token = tokenList.find(t => t.address === tokenAddress);
     if (!token) {
@@ -632,7 +1049,27 @@ export const MultisigVaultsView = () => {
   const renderCtaRow = () => {
     return (
       <>
-        <p>CTA row here</p>
+        <Space size="middle">
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingVaults}
+            onClick={showTransferTokenModal}>
+            {isTxInProgress() && (<LoadingOutlined />)}
+            {t('multisig.multisig-vaults.cta-transfer')}
+          </Button>
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={true}
+            onClick={() => {}}>
+            Set Vault Auth
+          </Button>
+        </Space>
       </>
     );
   }
@@ -881,6 +1318,19 @@ export const MultisigVaultsView = () => {
         </div>
 
       </div>
+
+      {isTransferTokenModalVisible && (
+        <MultisigTransferTokensModal
+          isVisible={isTransferTokenModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptTransferToken}
+          handleAfterClose={onAfterEveryModalClose}
+          handleClose={() => setIsTransferTokenModalVisible(false)}
+          isBusy={isBusy}
+          vaults={multisigVaults}
+        />
+      )}
 
       <MultisigCreateVaultModal
         handleOk={onAcceptCreateVault}

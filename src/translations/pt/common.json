@@ -315,6 +315,8 @@
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 			"cta-close": "Close vault",
 			"cta-close-busy": "Closing vault",
+			"cta-transfer": "Transfer Tokens",
+			"cta-transfer-busy": "Transferring tokens",
 			"no-vault-loaded": "No vault loaded",
 			"no-vaults": "No vaults available",
 			"not-connected": "Please connect your wallet to see vaults",
