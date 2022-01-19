@@ -4079,6 +4079,25 @@ export const MultisigView = () => {
       <>
         <Space size="middle">
 
+          <Button
+            type="default"
+            shape="round"
+            size="small"
+            className="thin-stroke"
+            disabled={isTxInProgress() || loadingMultisigAccounts}
+            onClick={() => {
+              if (selectedMultisig) {
+                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
+                navigate(url);
+              }
+            }}>
+            {multisigVaults && multisigVaults.length > 0 ? (
+              <div>Vaults ({multisigVaults.length})</div>
+              ) : (
+              <div>Vaults</div>
+            )}
+          </Button>
+
           <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
             <Button
               type="default"
@@ -4090,21 +4109,6 @@ export const MultisigView = () => {
               <IconCaretDown className="mean-svg-icons" />
             </Button>
           </Dropdown>
-
-          <Button
-            type="default"
-            size="middle"
-            className="dropdown-like-button"
-            disabled={isTxInProgress() || loadingMultisigAccounts}
-            onClick={() => {
-              if (selectedMultisig) {
-                const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
-                navigate(url);
-              }
-            }}>
-            <div>Vaults</div>
-            <div className="ml-1">&nbsp;</div>
-          </Button>
 
           {/* <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
             <Button
