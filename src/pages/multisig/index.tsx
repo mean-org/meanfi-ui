@@ -89,16 +89,15 @@ export const MultisigView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
-    // theme,
     isWhitelisted,
-    // treasuryOption,
     detailsPanelOpen,
     transactionStatus,
+    highLightableMultisigId,
     previousWalletConnectState,
     setDtailsPanelOpen,
     refreshTokenBalance,
-    setTransactionStatus
-
+    setTransactionStatus,
+    setHighLightableMultisigId,
   } = useContext(AppStateContext);
 
   const {
@@ -3480,7 +3479,7 @@ export const MultisigView = () => {
         .all()
         .then((accs: any) => {
 
-          let multisigInfoArray: any = [];
+          let multisigInfoArray: MultisigAccountInfo[] = [];
           let filteredAccs = accs.filter((a: any) => {
             if (a.account.owners.filter((o: PublicKey) => o.equals(publicKey)).length) { return true; }
             return false;
@@ -3519,8 +3518,27 @@ export const MultisigView = () => {
           }
 
           setTimeout(() => {
-            setMultisigAccounts(multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime()));
-            setSelectedMultisig(multisigInfoArray[0]);
+            multisigInfoArray.sort((a: any, b: any) => b.createdOnUtc.getTime() - a.createdOnUtc.getTime());
+            setMultisigAccounts(multisigInfoArray);
+            if (highLightableMultisigId) {
+              // Select a multisig that was instructed to highlight even before entering this feature
+              const sig = multisigInfoArray.find(m => m.address.toBase58() === highLightableMultisigId);
+              if (sig) {
+                setSelectedMultisig(sig);
+              } else {
+                setSelectedMultisig(multisigInfoArray[0]);
+              }
+              setHighLightableMultisigId(undefined);
+            } else if (selectedMultisig) {
+              const sig = multisigInfoArray.find(m => m.id.equals(selectedMultisig.id));
+              if (sig) {
+                setSelectedMultisig(sig);
+              } else {
+                setSelectedMultisig(multisigInfoArray[0]);
+              }
+            } else {
+              setSelectedMultisig(multisigInfoArray[0]);
+            }
             setLoadingMultisigAccounts(false);
           });
         }

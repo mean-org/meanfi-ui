@@ -5,15 +5,15 @@ import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
-import { ArrowLeftOutlined, LoadingOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { IconExternalLink, IconInfoCircle, IconRefresh, IconShieldOutline, IconTrash } from '../../Icons';
+import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
+import { IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { Account, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
 import MultisigIdl from "../../models/mean-multisig-idl";
 import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { consoleOut, copyText, delay, getTransactionStatusForLogs } from '../../utils/ui';
 import { Identicon } from '../../components/Identicon';
 import { getTokenAmountAndSymbolByTokenAddress, getTokenByMintAddress, getTxIxResume, shortenAddress, toUiAmount } from '../../utils/utils';
@@ -27,7 +27,6 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { TokenDisplay } from '../../components/TokenDisplay';
 import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 export const MultisigVaultsView = () => {
@@ -37,32 +36,20 @@ export const MultisigVaultsView = () => {
   const connectionConfig = useConnectionConfig();
   const { publicKey, wallet } = useWallet();
   const {
-      theme,
-      tokenList,
-      tokenBalance,
-      selectedToken,
-      treasuryOption,
-      detailsPanelOpen,
-      transactionStatus,
-      streamProgramAddress,
-      streamV2ProgramAddress,
-      previousWalletConnectState,
-      setSelectedToken,
-      setEffectiveRate,
-      refreshStreamList,
-      setTreasuryOption,
-      setDtailsPanelOpen,
-      resetContractValues,
-      refreshTokenBalance,
-      setTransactionStatus,
-      setHighLightableStreamId,
+    tokenList,
+    detailsPanelOpen,
+    transactionStatus,
+    setDtailsPanelOpen,
+    refreshTokenBalance,
+    setTransactionStatus,
+    setHighLightableMultisigId,
   } = useContext(AppStateContext);
   const {
-      fetchTxInfoStatus,
-      lastSentTxSignature,
-      lastSentTxOperationType,
-      startFetchTxSignatureInfo,
-      clearTransactionStatusContext,
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    startFetchTxSignatureInfo,
+    clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
   const { t } = useTranslation('common');
   const [nativeBalance, setNativeBalance] = useState(0);
@@ -1107,12 +1094,24 @@ export const MultisigVaultsView = () => {
                   <span className="info-icon">
                     <IconShieldOutline className="mean-svg-icons" />
                   </span>
-                  <div onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
-                       className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
-                       style={{cursor: 'pointer', fontSize: '1.1rem'}}>
-                    {shortenAddress(selectedVault.owner.toBase58(), 8)}
-                  </div>
-
+                  <Link to="/multisig" className="info-data flex-row wrap align-items-center simplelink underline-on-hover"
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setHighLightableMultisigId(selectedVault.owner.toBase58());
+                      navigate('/multisig');
+                    }}>
+                    {shortenAddress(selectedVault.owner.toBase58(), 6)}
+                    <div className="icon-button-container">
+                      <Button
+                        type="default"
+                        shape="circle"
+                        size="middle"
+                        icon={<CopyOutlined />}
+                        onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
+                      />
+                    </div>
+                  </Link>
                 </div>
               </Col>
             </Row>
@@ -1159,7 +1158,7 @@ export const MultisigVaultsView = () => {
                   <Identicon address={item.mint.toBase58()} style={{
                     width: "28px",
                     display: "inline-flex",
-                    height: "28px",
+                    height: "26px",
                     overflow: "hidden",
                     borderRadius: "50%"
                   }} />

@@ -96,6 +96,8 @@ interface AppStateConfig {
   ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
+  // Multisig
+  highLightableMultisigId: string | undefined;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -143,6 +145,8 @@ interface AppStateConfig {
   setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
+  // Multisig
+  setHighLightableMultisigId: (id: string | undefined) => void,
 }
 
 const contextDefaultValues: AppStateConfig = {
@@ -201,6 +205,8 @@ const contextDefaultValues: AppStateConfig = {
   ddcaOption: undefined,
   recurringBuys: [],
   loadingRecurringBuys: false,
+  // Multisig
+  highLightableMultisigId: undefined,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
@@ -248,6 +254,8 @@ const contextDefaultValues: AppStateConfig = {
   setDdcaOption: () => {},
   setRecurringBuys: () => {},
   setLoadingRecurringBuys: () => {},
+  // Multisig
+  setHighLightableMultisigId: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -339,6 +347,7 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
   const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
   const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
+  const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -1143,6 +1152,7 @@ const AppStateProvider: React.FC = ({ children }) => {
         loadingStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
+        highLightableMultisigId,
         setTheme,
         setDtailsPanelOpen,
         setShouldLoadTokens,
@@ -1187,7 +1197,8 @@ const AppStateProvider: React.FC = ({ children }) => {
         setLastStreamsSummary,
         setLoadingStreamsSummary,
         setRecurringBuys,
-        setLoadingRecurringBuys
+        setLoadingRecurringBuys,
+        setHighLightableMultisigId
       }}>
       {children}
     </AppStateContext.Provider>
