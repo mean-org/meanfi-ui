@@ -3442,7 +3442,7 @@ export const MultisigView = () => {
     } 
 
     const approvals = account.signers.filter((s: boolean) => s === true).length;
-    
+
     if (selectedMultisig && selectedMultisig.threshold === approvals) {
       return MultisigTransactionStatus.Approved;
     }
@@ -3555,12 +3555,14 @@ export const MultisigView = () => {
     }
 
   }, [
-    connected, 
-    connection, 
-    multisigClient, 
     publicKey,
+    connected,
+    connection,
+    multisigClient,
+    selectedMultisig,
     loadingMultisigAccounts,
-    selectedMultisig
+    highLightableMultisigId,
+    setHighLightableMultisigId
   ]);
 
   // Subscribe to multisig account changes
