@@ -9,7 +9,7 @@ import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/
 import { TokenDisplay } from '../TokenDisplay';
 import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, isValidNumber, shortenAddress, toUiAmount } from '../../utils/utils';
 import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
-import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
+import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionOperationDescription, isValidAddress, percentage } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
 import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
@@ -58,7 +58,6 @@ export const TreasuryAddFundsModal = (props: {
   const [customTokenInput, setCustomTokenInput] = useState("");
   const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
   const [treasuryType, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
-  const [isNewTreasury, setIsNewTreasury] = useState(false);
 
   const numTreasuryStreams = useCallback(() => {
     return props.treasuryStreams ? props.treasuryStreams.length : 0;
@@ -91,6 +90,39 @@ export const TreasuryAddFundsModal = (props: {
   //   Getters   //
   /////////////////
 
+  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
+
+  const getMaxAmount = useCallback(() => {
+    if (props.withdrawTransactionFees && allocationOption === AllocationType.Specific && selectedStreamForAllocation) {
+      const stream = props.treasuryStreams && props.treasuryStreams.length > 0
+        ? props.treasuryStreams.find(ts => ts.id === selectedStreamForAllocation)
+        : undefined;
+      if (stream && (stream as any).feePayedByTreasurer) {
+        const fee = getFeeAmount(props.withdrawTransactionFees, tokenBalance);
+        return tokenBalance - fee;
+      }
+    }
+    return selectedToken && tokenBalance ? tokenBalance : 0;
+  },[
+    tokenBalance,
+    selectedToken,
+    allocationOption,
+    props.treasuryStreams,
+    selectedStreamForAllocation,
+    props.withdrawTransactionFees,
+  ]);
+
   const isInboundStream = useCallback((item: Stream | StreamInfo): boolean => {
     if (item && publicKey) {
       const v1 = item as StreamInfo;
@@ -114,11 +146,12 @@ export const TreasuryAddFundsModal = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
+    const amount = topupAmount ? parseFloat(topupAmount) : 0;
     return !selectedToken || !tokenBalance
       ? t('transactions.validation.no-balance')
       : !topupAmount || !isValidNumber(topupAmount) || !parseFloat(topupAmount)
       ? t('transactions.validation.no-amount')
-      : parseFloat(topupAmount) > tokenBalance
+      : amount > getMaxAmount()
       ? t('transactions.validation.amount-high')
       : allocationOption === AllocationType.Specific && !selectedStreamForAllocation
       ? t('transactions.validation.select-stream')
@@ -421,7 +454,6 @@ export const TreasuryAddFundsModal = (props: {
       ? (props.treasuryDetails as Treasury).treasuryType
       : (props.treasuryDetails as TreasuryInfo).type as TreasuryType;
     setTreasuryType(tt);
-    setIsNewTreasury(isNew);
     if (props.treasuryStreams && props.treasuryStreams.length > 0) {
       if (props.treasuryStreams.length === 1 && tt === TreasuryType.Open) {
         setAllocationOption(AllocationType.Specific);
@@ -537,10 +569,11 @@ export const TreasuryAddFundsModal = (props: {
   //////////////////
 
   const isValidInput = (): boolean => {
+    const amount = topupAmount ? parseFloat(topupAmount) : 0;
     return selectedToken &&
            tokenBalance &&
-           topupAmount && parseFloat(topupAmount) > 0 &&
-           parseFloat(topupAmount) <= tokenBalance
+           amount > 0 &&
+           amount <= getMaxAmount()
             ? true
             : false;
   }
@@ -618,7 +651,6 @@ export const TreasuryAddFundsModal = (props: {
       afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      {/* sdsssd */}
       <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
@@ -668,7 +700,7 @@ export const TreasuryAddFundsModal = (props: {
                       {selectedToken && tokenBalance ? (
                         <div
                           className="token-max simplelink"
-                          onClick={() => setTopupAmount(tokenBalance.toFixed(selectedToken.decimals))}>
+                          onClick={() => setTopupAmount(getMaxAmount().toFixed(selectedToken.decimals))}>
                           MAX
                         </div>
                       ) : null}
