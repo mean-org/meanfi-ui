@@ -27,6 +27,7 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
+import { TokenDisplay } from '../../components/TokenDisplay';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();
@@ -1149,7 +1150,11 @@ export const MultisigVaultsView = () => {
               }`
             }>
             <div className="icon-cell">
-              <Identicon address={item.address.toBase58()} style={{ width: "30", display: "inline-flex" }} />
+              <TokenDisplay
+                mintAddress={item.mint.toBase58()}
+                fullTokenInfo={token}
+                onClick={() => {}}
+              />
             </div>
             <div className="description-cell">
               <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>

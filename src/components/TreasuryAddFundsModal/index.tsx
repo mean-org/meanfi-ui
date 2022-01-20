@@ -11,14 +11,14 @@ import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTokenSymbol, is
 import { IconCaretDown, IconCheckedBox, IconDownload, IconIncomingPaused, IconOutgoingPaused, IconTimer, IconUpload } from '../../Icons';
 import { consoleOut, getFormattedNumberToLocale, getIntervalFromSeconds, getShortDate, getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { TreasuryStreamsBreakdown } from '../../models/streams';
-import { StreamInfo, STREAM_STATE, TransactionFees } from '@mean-dao/money-streaming/lib/types';
+import { StreamInfo, STREAM_STATE, TransactionFees, TreasuryInfo } from '@mean-dao/money-streaming/lib/types';
 import { SelectOption, TreasuryTopupParams } from '../../models/common-types';
 import { AllocationType, TransactionStatus } from '../../models/enums';
 import { useWallet } from '../../contexts/wallet';
 import { notify } from '../../utils/notifications';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { isError } from '../../utils/transactions';
-import { Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { Stream, STREAM_STATUS, Treasury, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 
 const { Option } = Select;
@@ -33,6 +33,7 @@ export const TreasuryAddFundsModal = (props: {
   nativeBalance: number;
   transactionFees: TransactionFees;
   streamStats: TreasuryStreamsBreakdown | undefined;
+  treasuryDetails: Treasury | TreasuryInfo | undefined;
   treasuryStreams: (Stream | StreamInfo)[];
   associatedToken: string;
 }) => {
@@ -55,6 +56,8 @@ export const TreasuryAddFundsModal = (props: {
   const [allocationOption, setAllocationOption] = useState<AllocationType>(AllocationType.None);
   const [customTokenInput, setCustomTokenInput] = useState("");
   const [selectedStreamForAllocation, setSelectedStreamForAllocation] = useState('');
+  const [treasuryType, setTreasuryType] = useState<TreasuryType>(TreasuryType.Open);
+  const [isNewTreasury, setIsNewTreasury] = useState(false);
 
   const numTreasuryStreams = useCallback(() => {
     return props.treasuryStreams ? props.treasuryStreams.length : 0;
@@ -409,14 +412,26 @@ export const TreasuryAddFundsModal = (props: {
 
   // When modal goes visible, update allocation type option
   useEffect(() => {
+    if (!props.treasuryDetails) { return; }
+    const isNew = (props.treasuryDetails as Treasury).version && (props.treasuryDetails as Treasury).version >= 2
+      ? true
+      : false;
+    const tt = isNew
+      ? (props.treasuryDetails as Treasury).treasuryType
+      : (props.treasuryDetails as TreasuryInfo).type as TreasuryType;
+    setTreasuryType(tt);
+    setIsNewTreasury(isNew);
     if (props.treasuryStreams && props.treasuryStreams.length > 0) {
-      if (props.treasuryStreams.length === 1) {
+      if (props.treasuryStreams.length === 1 && tt === TreasuryType.Open) {
         setAllocationOption(AllocationType.Specific);
+      } else if (tt === TreasuryType.Lock) {
+        setAllocationOption(AllocationType.None);
       } else {
         setAllocationOption(AllocationType.All);
       }
     }
   }, [
+    props.treasuryDetails,
     props.treasuryStreams,
   ]);
 
@@ -576,6 +591,9 @@ export const TreasuryAddFundsModal = (props: {
   const allocationOptionsMenu = (
     <Menu activeKey={allocationOption.toString()}>
       {allocationOptions.map((item) => {
+        if (item.key === AllocationType.Specific && treasuryType === TreasuryType.Lock) {
+          return null;
+        }
         return (
           <Menu.Item
             className={item.visible ? 'active' : 'hidden'}

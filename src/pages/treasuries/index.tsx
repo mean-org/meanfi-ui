@@ -4223,6 +4223,7 @@ export const TreasuriesView = () => {
           handleClose={closeAddFundsModal}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
+          treasuryDetails={treasuryDetails}
           isVisible={isAddFundsModalVisible}
           userBalances={userBalances}
           streamStats={streamStats}
