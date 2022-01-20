@@ -38,6 +38,7 @@ import {
   getTransactionOperationDescription,
   delay,
   isProd,
+  getIntervalFromSeconds,
 } from '../../utils/ui';
 import {
   FALLBACK_COIN_IMAGE,
@@ -3680,7 +3681,14 @@ export const TreasuriesView = () => {
                   <span className="align-middle">{shortenAddress(item.version < 2 ? (item as StreamInfo).beneficiaryAddress as string : (item as Stream).beneficiary as string)}</span>
                 </div>
                 <div className="std-table-cell fixed-width-130">
-                  <span className="align-middle">{item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}</span>
+                  <span className="align-middle">
+                    {
+                      item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)
+                    }
+                    {item && item.rateAmount > 0 && (
+                      <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
+                    )}
+                  </span>
                 </div>
                 <div className="std-table-cell fixed-width-120">
                   <span className="align-middle">{getShortDate(item.startUtc as string, true)}</span>
