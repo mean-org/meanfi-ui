@@ -28,6 +28,7 @@ import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
 import { TokenDisplay } from '../../components/TokenDisplay';
+import { FALLBACK_COIN_IMAGE } from '../../constants';
 
 export const MultisigVaultsView = () => {
   const location = useLocation();
@@ -1025,11 +1026,7 @@ export const MultisigVaultsView = () => {
     return (
       <>
         <span className="info-icon token-icon">
-          {token.logoURI ? (
-            <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
-          ) : (
-            <Identicon address={tokenAddress} style={{ width: "30", display: "inline-flex" }} />
-          )}
+          <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} />
         </span>
         <span className="info-data ml-1">
           {
@@ -1066,9 +1063,10 @@ export const MultisigVaultsView = () => {
             shape="round"
             size="small"
             className="thin-stroke"
-            disabled={true}
+            disabled={isTxInProgress() || loadingVaults}
             onClick={() => {}}>
-            Set Vault Auth
+            {isTxInProgress() && (<LoadingOutlined />)}
+            {t('multisig.multisig-vaults.cta-change-multisig')}
           </Button>
         </Space>
       </>
@@ -1087,7 +1085,7 @@ export const MultisigVaultsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Mint
+                    Balance
                   </span>
                 </div>
                 <div className="transaction-detail-row">
@@ -1102,7 +1100,7 @@ export const MultisigVaultsView = () => {
               <Col span={12}>
                 <div className="transaction-detail-row">
                   <span className="info-label">
-                    Authority
+                    Multisig Authority
                   </span>
                 </div>
                 <div className="transaction-detail-row">
@@ -1131,6 +1129,10 @@ export const MultisigVaultsView = () => {
     {multisigVaults && multisigVaults.length ? (
       multisigVaults.map((item, index) => {
         const token = getTokenByMintAddress(item.mint.toBase58());
+        const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+          event.currentTarget.src = FALLBACK_COIN_IMAGE;
+          event.currentTarget.className = "error";
+        };
         const onVaultSelected = (ev: any) => {
           setSelectedVault(item);
           setDtailsPanelOpen(true);
@@ -1150,11 +1152,19 @@ export const MultisigVaultsView = () => {
               }`
             }>
             <div className="icon-cell">
-              <TokenDisplay
-                mintAddress={item.mint.toBase58()}
-                fullTokenInfo={token}
-                onClick={() => {}}
-              />
+              <div className="token-icon">
+                {token && token.logoURI ? (
+                  <img alt={`${token.name}`} width={30} height={30} src={token.logoURI} onError={imageOnErrorHandler} />
+                ) : (
+                  <Identicon address={item.mint.toBase58()} style={{
+                    width: "28px",
+                    display: "inline-flex",
+                    height: "28px",
+                    overflow: "hidden",
+                    borderRadius: "50%"
+                  }} />
+                )}
+              </div>
             </div>
             <div className="description-cell">
               <div className="title text-truncate">{token ? token.symbol : `Unknown token [${shortenAddress(item.mint.toBase58(), 6)}]`}</div>
