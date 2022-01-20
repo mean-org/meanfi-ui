@@ -14,7 +14,8 @@ import {
   getTransactionStatusForLogs,
   isToday,
   isValidAddress,
-  PaymentRateTypeOption
+  PaymentRateTypeOption,
+  percentage
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
@@ -50,7 +51,7 @@ export const TreasuryStreamCreateModal = (props: {
   userBalances: any;
 }) => {
   const { t } = useTranslation('common');
-  const { wallet, publicKey, connected } = useWallet();
+  const { wallet, publicKey } = useWallet();
   const { endpoint } = useConnectionConfig();
   const {
     tokenList,
@@ -90,6 +91,7 @@ export const TreasuryStreamCreateModal = (props: {
   const [transactionCancelled, setTransactionCancelled] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [unallocatedBalance, setUnallocatedBalance] = useState(0);
+  const [isFeePaidByTreasurer, setIsFeePaidByTreasurer] = useState(false);
 
   useEffect(() => {
     if (props.isVisible && props.treasuryDetails) {
@@ -139,7 +141,7 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const getStepOneContinueButtonLabel = (): string => {
-    return !connected
+    return !publicKey
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
         ? t('transactions.validation.select-recipient')
@@ -155,15 +157,16 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const getTransactionStartButtonLabel = (): string => {
-    return !connected
+    const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
+    return !publicKey
       ? t('transactions.validation.not-connected')
       : !recipientAddress || isAddressOwnAccount()
       ? t('transactions.validation.select-recipient')
       : !selectedToken || unallocatedBalance === 0
       ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !parseFloat(fromCoinAmount)
+      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !amount
       ? t('transactions.validation.no-amount')
-      : parseFloat(fromCoinAmount) > unallocatedBalance
+      : (isFeePaidByTreasurer && amount > getMaxAmount()) || (!isFeePaidByTreasurer && amount > unallocatedBalance)
       ? t('transactions.validation.amount-high')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
@@ -222,6 +225,31 @@ export const TreasuryStreamCreateModal = (props: {
     setEffectiveRate,
     setSelectedToken,
     toggleOverflowEllipsisMiddle
+  ]);
+
+  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return fee;
+  }
+
+  const getMaxAmount = useCallback(() => {
+    if (isFeePaidByTreasurer && props.withdrawTransactionFees) {
+      const fee = getFeeAmount(props.withdrawTransactionFees, unallocatedBalance);
+      return unallocatedBalance - fee;
+    }
+    return unallocatedBalance;
+  },[
+    unallocatedBalance,
+    isFeePaidByTreasurer,
+    props.withdrawTransactionFees,
   ]);
 
   /////////////////////
@@ -353,6 +381,10 @@ export const TreasuryStreamCreateModal = (props: {
     setPaymentStartDate(date);
   }
 
+  const onFeePayedByTreasurerChange = (e: any) => {
+    setIsFeePaidByTreasurer(e.target.checked);
+  }
+
   const onIsVerifiedRecipientChange = (e: any) => {
     setIsVerifiedRecipient(e.target.checked);
   }
@@ -473,7 +505,10 @@ export const TreasuryStreamCreateModal = (props: {
           isAllocationReserved ? amount : 0,                                // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
-          fromParsedDate                                                    // startUtc
+          fromParsedDate,                                                   // startUtc
+          undefined,                                                        // cliffVestAmount
+          undefined,                                                        // cliffVestPercent
+          isFeePaidByTreasurer                                              // feePayedByTreasurer
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -654,10 +689,12 @@ export const TreasuryStreamCreateModal = (props: {
   }
 
   const isSendAmountValid = (): boolean => {
-    return connected &&
+    const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
+    return publicKey &&
            selectedToken &&
-           fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= unallocatedBalance
+           amount > 0 &&
+           ((isFeePaidByTreasurer && amount <= getMaxAmount()) ||
+            (!isFeePaidByTreasurer && amount <= unallocatedBalance))
     ? true
     : false;
   }
@@ -973,7 +1010,7 @@ export const TreasuryStreamCreateModal = (props: {
                   {selectedToken && unallocatedBalance ? (
                     <div
                       className="token-max simplelink"
-                      onClick={() => setFromCoinAmount(unallocatedBalance.toFixed(selectedToken.decimals))}>
+                      onClick={() => setFromCoinAmount(getMaxAmount().toFixed(selectedToken.decimals))}>
                       MAX
                     </div>
                   ) : null}
@@ -1017,7 +1054,7 @@ export const TreasuryStreamCreateModal = (props: {
           </div>
 
           {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
-            <div className="mb-4 flex-fixed-right">
+            <div className="mb-2 flex-fixed-right">
               <div className="left form-label flex-row align-items-center">
                 {t('treasuries.treasury-streams.allocation-reserved-label')}
                 <a className="simplelink" href="https://docs.meanfi.com/platform/specifications/money-streaming-protocol#treasuries-and-streams"
@@ -1039,8 +1076,12 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           )}
 
-          <div className="text-center">
-            <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+          <div className="ml-1 mb-3">
+            <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>
+          </div>
+
+          <div className="ml-1">
+            <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
           </div>
 
         </div>
@@ -1056,7 +1097,7 @@ export const TreasuryStreamCreateModal = (props: {
             shape="round"
             size="large"
             onClick={onContinueButtonClick}
-            disabled={!connected ||
+            disabled={!publicKey ||
               !isMemoValid() ||
               !isValidAddress(recipientAddress) ||
               isAddressOwnAccount() ||
@@ -1072,7 +1113,7 @@ export const TreasuryStreamCreateModal = (props: {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected ||
+          disabled={!publicKey ||
             !isMemoValid() ||
             !isValidAddress(recipientAddress) ||
             isAddressOwnAccount() ||

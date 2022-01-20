@@ -761,7 +761,8 @@
 			"option-resume-stream": "Resume",
 			"status-running": "Running",
 			"status-scheduled": "Scheduled",
-			"status-stopped": "Stopped"
+			"status-stopped": "Stopped",
+			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary"
 		}
 	},
 	"ui-language": {

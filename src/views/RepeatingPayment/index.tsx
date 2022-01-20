@@ -1401,7 +1401,7 @@ export const RepeatingPayment = () => {
 
         {/* Confirm recipient address is correct Checkbox */}
         <div className="mb-2">
-          <Checkbox onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
         </div>
 
         {/* Action button */}

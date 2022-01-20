@@ -3682,9 +3682,7 @@ export const TreasuriesView = () => {
                 </div>
                 <div className="std-table-cell fixed-width-130">
                   <span className="align-middle">
-                    {
-                      item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)
-                    }
+                    {item.rateAmount > 0 ? getRateAmountDisplay(item) : getDepositAmountDisplay(item)}
                     {item && item.rateAmount > 0 && (
                       <span>{getIntervalFromSeconds(item.rateIntervalInSeconds, true, t)}</span>
                     )}
