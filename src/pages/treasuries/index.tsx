@@ -148,6 +148,9 @@ export const TreasuriesView = () => {
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
+  const [withdrawTransactionFees, setWithdrawTransactionFees] = useState<TransactionFees>({
+    blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
+  });
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -1663,6 +1666,10 @@ export const TreasuriesView = () => {
         getTransactionFeesV2(MSP_ACTIONS_V2.addFunds).then(value => {
           setTransactionFees(value);
           consoleOut('transactionFees:', value, 'orange');
+        });
+        getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+          setWithdrawTransactionFees(value);
+          consoleOut('withdrawTransactionFees:', value, 'orange');
         });
       } else {
         getTransactionFees(MSP_ACTIONS.addFunds).then(value => {
@@ -3541,6 +3548,10 @@ export const TreasuriesView = () => {
       setTransactionFees(value);
       consoleOut('transactionFees:', value, 'orange');
     });
+    getTransactionFeesV2(MSP_ACTIONS_V2.withdraw).then(value => {
+      setWithdrawTransactionFees(value);
+      consoleOut('withdrawTransactionFees:', value, 'orange');
+    });
   }, [getTransactionFeesV2]);
 
   const closeCreateStreamModal = useCallback(() => {
@@ -4223,6 +4234,7 @@ export const TreasuriesView = () => {
           handleClose={closeAddFundsModal}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
+          withdrawTransactionFees={withdrawTransactionFees}
           treasuryDetails={treasuryDetails}
           isVisible={isAddFundsModalVisible}
           userBalances={userBalances}
@@ -4254,6 +4266,7 @@ export const TreasuriesView = () => {
           isVisible={isCreateStreamModalVisible}
           nativeBalance={nativeBalance}
           transactionFees={transactionFees}
+          withdrawTransactionFees={withdrawTransactionFees}
           treasuryDetails={treasuryDetails}
           userBalances={userBalances}
         />

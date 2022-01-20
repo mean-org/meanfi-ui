@@ -45,6 +45,7 @@ export const TreasuryStreamCreateModal = (props: {
   isVisible: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  withdrawTransactionFees: TransactionFees;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   userBalances: any;
 }) => {

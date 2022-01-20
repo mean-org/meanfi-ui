@@ -32,6 +32,7 @@ export const TreasuryAddFundsModal = (props: {
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  withdrawTransactionFees: TransactionFees;
   streamStats: TreasuryStreamsBreakdown | undefined;
   treasuryDetails: Treasury | TreasuryInfo | undefined;
   treasuryStreams: (Stream | StreamInfo)[];
