@@ -58,7 +58,7 @@ export const MultisigVaultsView = () => {
   const [multisigVaults, setMultisigVaults] = useState<MultisigVault[]>([]);
   const [selectedVault, setSelectedVault] = useState<MultisigVault | undefined>(undefined);
   const [loadingVaults, setLoadingVaults] = useState(false);
-  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
+  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [isCreateVaultModalVisible, setCreateVaultModalVisible] = useState(false);
   const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
