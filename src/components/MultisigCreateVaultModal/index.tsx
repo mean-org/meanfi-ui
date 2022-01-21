@@ -191,7 +191,7 @@ export const MultisigCreateVaultModal = (props: {
             {/* Token mint */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-vault.token-label')}</div>
-              <div className={`well ${props.isBusy && 'disabled'}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on">

@@ -268,13 +268,13 @@
 		},
 		"create-new-multisig-account-cta": "Create multisig",
 		"create-vault": {
-			"main-cta": "",
-			"main-cta-busy": "",
-			"modal-title": "",
-			"no-token": "",
-			"success-message": "",
-			"token-label": "",
-			"token-placeholder": ""
+			"main-cta": "Create",
+			"main-cta-busy": "Creating vault",
+			"modal-title": "Create a multisig Vault",
+			"no-token": "Select token",
+			"success-message": "Your multisig vault was created successfully",
+			"token-label": "From Account",
+			"token-placeholder": "Enter the address of the token mint"
 		},
 		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
 		"mint-tokens": {
@@ -324,6 +324,7 @@
 			"not-connected": "Please connect your wallet to see vaults",
 			"refresh-tooltip": "Click to refresh the list of vaults",
 			"screen-title": "Multisig vaults",
+			"validation-amount-high": "Amount exceeds the vault balance",
 			"vault-detail-heading": "Vault details"
 		},
 		"multisig-detail-heading": "Multisig account details",
@@ -347,7 +348,7 @@
 			"success-message": "Tokens transferred successfully.",
 			"transfer-amount-label": "Amount",
 			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
-			"transfer-to-label": "Transfer to",
+			"transfer-to-label": "Transfer to (Destination Account)",
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
 		"upgrade-program": {

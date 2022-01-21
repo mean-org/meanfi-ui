@@ -658,7 +658,7 @@ export const TreasuryAddFundsModal = (props: {
             {/* Top up amount */}
             <div className="mb-3">
               <div className="form-label">{t('treasuries.add-funds.label')}</div>
-              <div className={`well ${props.isBusy && 'disabled'}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-left">
                   <div className="left">
                     <span className="add-on">

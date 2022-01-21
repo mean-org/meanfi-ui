@@ -80,7 +80,7 @@ export const TreasuryCreateModal = (props: {
             {/* Treasury name */}
             <div className="mb-3">
               <div className="form-label">{t('treasuries.create-treasury.treasury-name-input-label')}</div>
-              <div className={`well ${props.isBusy && 'disabled'}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input

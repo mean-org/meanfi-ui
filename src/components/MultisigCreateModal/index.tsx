@@ -101,7 +101,7 @@ export const MultisigCreateModal = (props: {
             {/* Multisig label */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-label-input-label')}</div>
-              <div className={`well ${props.isBusy && 'disabled'}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
@@ -124,7 +124,7 @@ export const MultisigCreateModal = (props: {
             {/* Multisig threshold */}
             <div className="mb-3">
               <div className="form-label">{t('multisig.create-multisig.multisig-threshold-input-label')}</div>
-              <div className={`well ${props.isBusy && 'disabled'}`}>
+              <div className={`well ${props.isBusy ? 'disabled' : ''}`}>
                 <div className="flex-fixed-right">
                   <div className="left">
                     <input
