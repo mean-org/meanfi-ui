@@ -327,7 +327,7 @@
 			"cta-close-busy": "Closing vault",
 			"cta-transfer": "Initiate Withdrawal",
 			"cta-transfer-busy": "Initiating Withdrawal Request",
-			"cta-change-multisig": "Change Multisig",
+			"cta-change-multisig": "Transfer Ownership",
 			"cta-change-multisig-busy": "Changing Multisig",
 			"no-vault-loaded": "No vault loaded",
 			"no-vaults": "No vaults available",
