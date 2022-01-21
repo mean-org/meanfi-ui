@@ -81,6 +81,7 @@ import { MultisigCreateVaultModal } from '../../components/MultisigCreateVaultMo
 import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
+import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -3907,6 +3908,7 @@ export const MultisigView = () => {
                   </span>
                   <div className="info-data flex-row wrap align-items-center">
                     {selectedMultisig.owners.length}
+                    <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners} />
                   </div>
                 </div>
               </Col>

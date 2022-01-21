@@ -1886,9 +1886,7 @@ export const MultisigVaultsView = () => {
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-program-id')}</div>
             <div className="std-table-cell responsive-cell">{t('multisig.multisig-transactions.column-created-on')}</div>
             <div className="std-table-cell text-center fixed-width-120">
-              {
-                t('multisig.multisig-transactions.column-pending-signatures')
-              }
+              {t('multisig.multisig-transactions.column-pending-signatures')}
             </div>
           </div>
         </div>
@@ -1910,9 +1908,7 @@ export const MultisigVaultsView = () => {
                     { 
                       item.status === MultisigTransactionStatus.Pending && (
                         <span className="align-middle" style={{ marginRight:5 }} >
-                        {
-                          `${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`
-                        }
+                        {`${item.signers.filter(s => s === true).length}/${selectedMultisig.threshold}`}
                         </span>
                       )
                     }
