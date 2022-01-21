@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransferParams } from "@solana/web3.js";
 import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
@@ -636,6 +636,7 @@ export const JupiterExchange = (props: {
         tokenList,
         inputToken,
         userBalances,
+        subjectTokenSelection,
         fromNative
     ]);
 
@@ -1468,7 +1469,7 @@ export const JupiterExchange = (props: {
     }
 
     const onStartSwapTx = useCallback(async () => {
-        if (!jupiter || !wallet || !selectedRoute) { return; }
+        if (!jupiter || !wallet || !selectedRoute || !publicKey) { return; }
 
         setIsBusy(true);
 
@@ -1477,6 +1478,16 @@ export const JupiterExchange = (props: {
             const { execute } = await jupiter.exchange({
                 route: selectedRoute,
             });
+
+            // const transferParams: TransferParams = {
+            //     fromPubkey: publicKey,
+            //     lamports: 20000,
+            //     toPubkey: new PublicKey(platformFeesOwner)
+            // };
+
+            // transactions.swapTransaction.add(
+            //     SystemProgram.transfer(transferParams)
+            // );
 
             // Execute swap
             const swapResult: any = await execute({
@@ -1502,7 +1513,9 @@ export const JupiterExchange = (props: {
     }, [
         wallet,
         jupiter,
+        publicKey,
         selectedRoute,
+        // platformFeesOwner,
         refreshUserBalances
     ]);
 
