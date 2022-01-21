@@ -577,14 +577,19 @@ export const JupiterExchange = (props: {
 
         if (pairs) {
 
-            // Was SOL left selected on the TO while other token was selected in the FROM?
-            if (inputToken.address !== sol.address &&
-                inputToken.address !== WRAPPED_SOL_MINT_ADDRESS &&
-                toMint && toMint === sol.address) {
-                // Preset TO token with the first in the pairs list
-                const first = pairs[Object.keys(pairs)[0]]
-                if (first) {
-                    setToMint(first.address);
+            // If SOL was left selected on the TO while other token was selected in the FROM
+            // not been wsol then try pre-selecting MEAN if available, if not, the first available
+            if (subjectTokenSelection === "source" &&
+                toMint && toMint === sol.address &&
+                inputToken.address !== WRAPPED_SOL_MINT_ADDRESS) {
+                const to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
+                if (to && pairs[to.address]) {
+                    setToMint(to.address);
+                } else {
+                    const first = pairs[Object.keys(pairs)[0]]
+                    if (first) {
+                        setToMint(first.address);
+                    }
                 }
             }
 
