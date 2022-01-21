@@ -2107,6 +2107,18 @@ main section {
   }
 }
 
+.cebra-list {
+  > .cebra-list-item {
+    padding: 1px 2px;
+    &:not(:last-of-type) {
+      border-bottom: var(--custom-border-style);
+    }
+    &:nth-child(even) {
+      background-color: var(--darken);
+    }
+  }
+}
+
 .payroll .place-transaction-box,
 .exchange .place-transaction-box,
 .transfers .place-transaction-box {

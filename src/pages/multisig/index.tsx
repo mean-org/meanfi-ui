@@ -132,7 +132,7 @@ export const MultisigView = () => {
   const [multisigPendingTxs, setMultisigPendingTxs] = useState<MultisigTransactionInfo[]>([]);
   const [loadingMultisigAccounts, setLoadingMultisigAccounts] = useState(true);
   const [loadingMultisigAccountDetails, setLoadingMultisigAccountDetails] = useState(false);
-  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(false);
+  const [loadingMultisigTxs, setLoadingMultisigTxs] = useState(true);
   const [selectedMultisig, setSelectedMultisig] = useState<MultisigAccountInfo | undefined>(undefined);
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransactionInfo | undefined>();
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);

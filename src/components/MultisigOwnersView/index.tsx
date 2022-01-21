@@ -35,16 +35,16 @@ export const MultisigOwnersView = (props: {
   const bodyContent = (
     <>
     {props.participants && props.participants.length > 0 ? (
-      <>
+      <div className="cebra-list">
       {props.participants.map((item, index) => {
         return (
-          <div key={`${index}`} className="flex-fixed-right">
+          <div key={`${index}`} className="cebra-list-item flex-fixed-right">
             <div className="left">Owner {index + 1}</div>
             <div className="right text-monospace">{shortenAddress(item.toBase58(), 6)}</div>
           </div>
         );
       })}
-      </>
+      </div>
     ) : (
       <div className="pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
     )}
