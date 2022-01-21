@@ -333,7 +333,7 @@
 			"no-vaults": "No vaults available",
 			"not-connected": "Please connect your wallet to see vaults",
 			"refresh-tooltip": "Click to refresh the list of vaults",
-			"screen-title": "Multisig vaults",
+			"screen-title": "{{multisigName}} vaults {{vaultCount}}",
 			"validation-amount-high": "Amount exceeds the vault balance",
 			"vault-detail-heading": "Vault details"
 		},

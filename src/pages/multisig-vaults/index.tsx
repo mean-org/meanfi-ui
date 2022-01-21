@@ -2104,7 +2104,17 @@ export const MultisigVaultsView = () => {
                     </Tooltip>
                   </span>
                 </div>
-                <span className="title">{t('multisig.multisig-vaults.screen-title')}</span>
+                <span className="title">
+                  {multisigVaults && selectedMultisig
+                    ? t('multisig.multisig-vaults.screen-title', {
+                        multisigName: selectedMultisig.label,
+                        vaultCount: `(${multisigVaults ? multisigVaults.length : 0})`
+                      })
+                    : t('multisig.multisig-vaults.screen-title', {
+                        multisigName: 'Multisig'
+                      })
+                  }
+                </span>
                 <Tooltip placement="bottom" title={t('multisig.multisig-vaults.refresh-tooltip')}>
                   <div className={`transaction-stats ${loadingVaults ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshVaults}>
                     <Spin size="small" />
