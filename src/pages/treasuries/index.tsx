@@ -4013,7 +4013,7 @@ export const TreasuriesView = () => {
                   <div className={`transaction-stats user-address ${loadingTreasuries ? 'click-disabled' : 'simplelink'}`} onClick={onRefreshTreasuriesClick}>
                     <Spin size="small" />
                     {(!customStreamDocked && !loadingTreasuries) && (
-                      <span className="incoming-transactions-amout">{formatThousands(treasuryList.length)}</span>
+                      <span className="incoming-transactions-amout">({formatThousands(treasuryList.length)})</span>
                     )}
                     <span className="transaction-legend">
                       <span className="icon-button-container">

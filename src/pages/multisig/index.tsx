@@ -59,7 +59,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconShieldOutline, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconShieldOutline, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -4283,17 +4283,17 @@ export const MultisigView = () => {
             <div className="meanfi-two-panel-left">
 
               <div className="meanfi-panel-heading">
+                {isWhitelisted ? (
+                  <IconUserGroup className="mean-svg-icons mr-1" />
+                  ) : (
+                  <IconUsers className="mean-svg-icons mr-1" />
+                )}
                 <span className="title">{t('multisig.screen-title')}</span>
                 <Tooltip placement="bottom" title={t('multisig.refresh-tooltip')}>
-                  <div 
-                    className={
-                      `transaction-stats user-address ${loadingMultisigAccounts 
-                        ? 'click-disabled' 
-                        : 'simplelink'}`
-                    }>
+                  <div className={`transaction-stats user-address ${loadingMultisigAccounts ? 'click-disabled' : 'simplelink'}`}>
                     <Spin size="small" />
                     {!loadingMultisigAccounts && (
-                      <span className="incoming-transactions-amout">{formatThousands(multisigAccounts.length)}</span>
+                      <span className="incoming-transactions-amout">({formatThousands(multisigAccounts.length)})</span>
                     )}
                     <span className="transaction-legend">
                       <span className="icon-button-container">

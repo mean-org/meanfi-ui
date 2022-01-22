@@ -6,7 +6,7 @@ import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
 import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { IconShieldOutline, IconTrash } from '../../Icons';
+import { IconSafe, IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { Account, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
@@ -2104,15 +2104,14 @@ export const MultisigVaultsView = () => {
                     </Tooltip>
                   </span>
                 </div>
+                <IconSafe className="mean-svg-icons mr-1" />
                 <span className="title">
                   {multisigVaults && selectedMultisig
                     ? t('multisig.multisig-vaults.screen-title', {
                         multisigName: selectedMultisig.label,
-                        vaultCount: `(${multisigVaults ? multisigVaults.length : 0})`
+                        vaultCount: multisigVaults ? multisigVaults.length : 0
                       })
-                    : t('multisig.multisig-vaults.screen-title', {
-                        multisigName: 'Multisig'
-                      })
+                    : t('multisig.multisig-vaults.screen-title-no-vaults')
                   }
                 </span>
                 <Tooltip placement="bottom" title={t('multisig.multisig-vaults.refresh-tooltip')}>
