@@ -59,7 +59,7 @@ import useWindowSize from '../../hooks/useWindowResize';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { notify } from '../../utils/notifications';
-import { IconCaretDown, IconClock, IconDocument, IconExternalLink, IconShieldOutline, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
+import { IconCaretDown, IconClock, IconDocument, IconEdit, IconExternalLink, IconShieldOutline, IconTrash, IconUserGroup, IconUsers, IconWallet } from '../../Icons';
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import dateFormat from 'dateformat';
 import { useNativeAccount } from '../../contexts/accounts';
@@ -4272,6 +4272,13 @@ export const MultisigView = () => {
     </>
   );
 
+  /**
+   * TODO: Place icons for sub-screens as follows
+   * tokens screen icon -> coin
+   * programs screen icon -> code "like in the app-context menu"
+   * data screen icon -> database
+   */
+
   return (
     <>
       <div className="container main-container">
@@ -4346,6 +4353,32 @@ export const MultisigView = () => {
               <div className="inner-container">
                 {connected ? (
                   <>
+                    {selectedMultisig && (
+                      <div className="float-top-right">
+                        <span className="icon-button-container secondary-button">
+                          <Tooltip placement="bottom" title={"Edit"}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                              onClick={() => {}}
+                              disabled={isTxInProgress()}
+                            />
+                          </Tooltip>
+                          <Tooltip placement="bottom" title={"Delete multisig"}>
+                            <Button
+                              type="default"
+                              shape="circle"
+                              size="middle"
+                              icon={<IconTrash className="mean-svg-icons" />}
+                              onClick={() => {}}
+                              disabled={isTxInProgress()}
+                            />
+                          </Tooltip>
+                        </span>
+                      </div>
+                    )}
                     <div className={
                       `stream-details-data-wrapper vertical-scroll ${
                         (loadingMultisigAccounts || !selectedMultisig) 

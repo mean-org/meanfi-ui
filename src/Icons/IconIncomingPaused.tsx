@@ -1,6 +1,6 @@
-export const IconIncomingPaused = (props: {className: string}) => {
+export const IconIncomingPaused = (props: {className: string; style?: React.CSSProperties;}) => {
     return (
-        <svg className={props.className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fillRule="evenodd" clipRule="evenodd">
+        <svg className={props.className} style={props.style} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fillRule="evenodd" clipRule="evenodd">
             <path d="M21 5a2 2 0 00-2-2H3a2 2 0 00-2 2v16a2 2 0 002 2h16a2 2 0 002-2V5z" fill="none" stroke="currentColor"/>
             <g fillRule="nonzero">
                 <path d="M9.948 5.708c-.644 0-1.182.493-1.238 1.135a30.922 30.922 0 00-.09 4.038l-.21.015-1.242.09a1.054 1.054 0 00-.808 1.613 13.38 13.38 0 003.468 3.662l.497.357c.404.29.947.29 1.35 0l.497-.357a13.38 13.38 0 003.468-3.662 1.05 1.05 0 00-.808-1.613l-1.241-.09c-.07-.006-.14-.01-.211-.015a30.922 30.922 0 00-.09-4.038 1.25 1.25 0 00-1.238-1.135H9.948zm-.047 5.72a29.647 29.647 0 01.053-4.47h2.092c.13 1.487.148 2.982.053 4.47l-.001.041c0 .331.263.608.594.624.27.013.539.03.808.05l.901.065a12.131 12.131 0 01-2.958 3.038l-.443.318-.443-.318A12.144 12.144 0 017.6 12.208l.901-.066c.27-.02.539-.036.808-.05a.627.627 0 00.594-.624l-.001-.039-.001-.001z" fill="currentColor"/>
