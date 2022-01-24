@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransferParams } from "@solana/web3.js";
 import { Button, Col, Divider, Modal, Row, Tooltip } from "antd";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { getPlatformFeeAccounts, Jupiter, RouteInfo, TOKEN_LIST_URL, TransactionFeeInfo } from "@jup-ag/core";
@@ -577,14 +577,19 @@ export const JupiterExchange = (props: {
 
         if (pairs) {
 
-            // Was SOL left selected on the TO while other token was selected in the FROM?
-            if (inputToken.address !== sol.address &&
-                inputToken.address !== WRAPPED_SOL_MINT_ADDRESS &&
-                toMint && toMint === sol.address) {
-                // Preset TO token with the first in the pairs list
-                const first = pairs[Object.keys(pairs)[0]]
-                if (first) {
-                    setToMint(first.address);
+            // If SOL was left selected on the TO while other token was selected in the FROM
+            // not been wsol then try pre-selecting MEAN if available, if not, the first available
+            if (subjectTokenSelection === "source" &&
+                toMint && toMint === sol.address &&
+                inputToken.address !== WRAPPED_SOL_MINT_ADDRESS) {
+                const to = MEAN_TOKEN_LIST.find(t => t.chainId === 101 && t.symbol === 'MEAN');
+                if (to && pairs[to.address]) {
+                    setToMint(to.address);
+                } else {
+                    const first = pairs[Object.keys(pairs)[0]]
+                    if (first) {
+                        setToMint(first.address);
+                    }
                 }
             }
 
@@ -631,6 +636,7 @@ export const JupiterExchange = (props: {
         tokenList,
         inputToken,
         userBalances,
+        subjectTokenSelection,
         fromNative
     ]);
 
@@ -1463,7 +1469,7 @@ export const JupiterExchange = (props: {
     }
 
     const onStartSwapTx = useCallback(async () => {
-        if (!jupiter || !wallet || !selectedRoute) { return; }
+        if (!jupiter || !wallet || !selectedRoute || !publicKey) { return; }
 
         setIsBusy(true);
 
@@ -1472,6 +1478,16 @@ export const JupiterExchange = (props: {
             const { execute } = await jupiter.exchange({
                 route: selectedRoute,
             });
+
+            // const transferParams: TransferParams = {
+            //     fromPubkey: publicKey,
+            //     lamports: 20000,
+            //     toPubkey: new PublicKey(platformFeesOwner)
+            // };
+
+            // transactions.swapTransaction.add(
+            //     SystemProgram.transfer(transferParams)
+            // );
 
             // Execute swap
             const swapResult: any = await execute({
@@ -1497,7 +1513,9 @@ export const JupiterExchange = (props: {
     }, [
         wallet,
         jupiter,
+        publicKey,
         selectedRoute,
+        // platformFeesOwner,
         refreshUserBalances
     ]);
 

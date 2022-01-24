@@ -29,7 +29,6 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
 import { consoleOut, isProd } from "../utils/ui";
 import { appConfig } from "..";
-import { ChainId } from "@saberhq/token-utils";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
@@ -1058,7 +1057,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
       const mainnetList = res
-        .filterByChainId(ChainId.MainnetBeta)
+        .filterByChainId(101)
         .excludeByTag("nft")
         .getList() as UserTokenAccount[];
       // Filter out the banned tokens
