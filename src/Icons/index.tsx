@@ -7,6 +7,7 @@ export { IconChat } from "./IconChat";
 export { IconCheckedBox } from "./IconCheckedBox";
 export { IconClock } from "./IconClock";
 export { IconCodeBlock } from "./IconCodeBlock";
+export { IconCoin } from "./IconCoin";
 export { IconCopy } from "./IconCopy";
 export { IconDiscord } from "./IconDiscord";
 export { IconDocument } from "./IconDocument";

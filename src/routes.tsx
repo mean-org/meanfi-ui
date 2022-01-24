@@ -20,7 +20,6 @@ import {
   TreasuriesView,
   WrapView,
   MultisigView
-
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -29,6 +28,7 @@ import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { MultisigVaultsView } from "./pages/multisig-vaults";
+import { MultisigTokensView } from "./pages/multisig-tokens";
 
 export function AppRoutes() {
 
@@ -65,6 +65,7 @@ export function AppRoutes() {
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
+                      <Route path="/multisig-tokens" element={<MultisigTokensView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
