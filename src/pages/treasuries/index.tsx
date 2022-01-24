@@ -1483,7 +1483,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Create Treasury using MSP V2...', '', 'blue');
         return await msp.createTreasury(
           publicKey,                                                  // wallet
           treasuryName,                                               // label
@@ -1776,7 +1776,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting Add Funds using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.addFunds(
           publicKey,
@@ -1881,7 +1881,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Add Funds using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.addFunds(
           publicKey,
@@ -2176,7 +2176,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting Close Treasury using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.closeTreasury(
           publicKey,                                  // treasurer
@@ -2264,7 +2264,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Close Treasury using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.closeTreasury(
           publicKey,                                  // treasurer
@@ -2551,7 +2551,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting Close Stream using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -2641,7 +2641,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Close Stream using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -2914,7 +2914,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting Stream Pause using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.pauseStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -3002,7 +3002,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Stream Pause using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.pauseStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -3276,7 +3276,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting Stream Resume using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.resumeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -3364,7 +3364,7 @@ export const TreasuriesView = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting Stream Resume using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.resumeStream(
           publicKey as PublicKey,                           // Initializer public key
