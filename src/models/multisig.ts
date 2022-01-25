@@ -54,3 +54,8 @@ export type MultisigVault = {
   owner: PublicKey;
   state: number;
 }
+
+export type MultisigParticipant = {
+  name: string;
+  address: string;
+}

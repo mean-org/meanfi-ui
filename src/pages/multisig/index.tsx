@@ -368,7 +368,7 @@ export const MultisigView = () => {
         [multisig.publicKey.toBuffer()],
         multisigClient.programId
       );
-      
+
       const owners = data.owners.map((p: string) => new PublicKey(p));
       const encodedUIntArray = new TextEncoder().encode(data.label);
       const label = Buffer
@@ -421,7 +421,7 @@ export const MultisigView = () => {
           threshold: data.threshold,
           signers: data.signers
         };
-        
+
         consoleOut('data:', payload);
 
         // Log input data
@@ -487,7 +487,7 @@ export const MultisigView = () => {
             customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),

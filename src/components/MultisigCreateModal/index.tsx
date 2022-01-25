@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
-import { TreasuryTypeOption } from '../../models/treasury-definition';
 import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription, isValidAddress } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
@@ -13,6 +11,7 @@ import { NATIVE_SOL_MINT } from '../../utils/ids';
 import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
+import { MultisigParticipant } from '../../models/multisig';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -32,7 +31,7 @@ export const MultisigCreateModal = (props: {
 
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
-  const [multisigOwners, setMultisigOwners] = useState<string[]>([]);
+  const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
 
   const onAcceptModal = () => {
     props.handleOk({
@@ -54,7 +53,7 @@ export const MultisigCreateModal = (props: {
       setMultisigOwners([]);
 
     }, 50);
-    
+
     setTransactionStatus({
         lastOperation: TransactionStatus.Iddle,
         currentOperation: TransactionStatus.Iddle
@@ -71,7 +70,7 @@ export const MultisigCreateModal = (props: {
   }
 
   const isOwnersListValid = () => {
-    return multisigOwners.every(o => o.length > 0 && isValidAddress(o));
+    return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
   }
 
   const onThresholdInputValueChange = (e: any) => {
@@ -147,7 +146,7 @@ export const MultisigCreateModal = (props: {
             <div className="form-label">{t('multisig.create-multisig.multisig-participants')}</div>
             <MultisigParticipants
               participants={multisigOwners}
-              onParticipantsChanged={(e: string[]) => setMultisigOwners(e)}
+              onParticipantsChanged={(e: MultisigParticipant[]) => setMultisigOwners(e)}
             />
 
           </>

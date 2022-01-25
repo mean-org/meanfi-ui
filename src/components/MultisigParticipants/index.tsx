@@ -1,58 +1,83 @@
-import { PlusOutlined } from "@ant-design/icons";
 import React, { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { PlusOutlined } from "@ant-design/icons";
+import { MultisigParticipant } from "../../models/multisig";
 import { isValidAddress } from "../../utils/ui";
 import { TextInput } from "../TextInput";
 
 export const MultisigParticipants = (props: {
-  participants: string[];
-  onParticipantsChanged: any;
+    participants: MultisigParticipant[];
+    onParticipantsChanged: any;
 }) => {
     const { t } = useTranslation('common');
 
-    const setSingleItem = useCallback((participant: string, index: number) => {
-        const items = JSON.parse(JSON.stringify(props.participants));
-        items[index] = participant;
+    const setSingleItemName = useCallback((name: string, index: number) => {
+        const items = JSON.parse(JSON.stringify(props.participants)) as MultisigParticipant[];
+        items[index].name = name;
+        props.onParticipantsChanged(items);
+    }, [props]);
+
+    const setSingleItemAddress = useCallback((address: string, index: number) => {
+        const items = JSON.parse(JSON.stringify(props.participants)) as MultisigParticipant[];
+        items[index].address = address;
         props.onParticipantsChanged(items);
     }, [props]);
 
     const onRemoveSingleItem = useCallback((index: number) => {
-        const items = JSON.parse(JSON.stringify(props.participants)) as string[];
+        const items = JSON.parse(JSON.stringify(props.participants)) as MultisigParticipant[];
         items.splice(index, 1);
         props.onParticipantsChanged(items);
     }, [props]);
 
     const addParticipant = useCallback(() => {
-        const items = JSON.parse(JSON.stringify(props.participants)) as string[];
-        items.push('');
-        props.onParticipantsChanged(items);
+        const items = JSON.parse(JSON.stringify(props.participants)) as MultisigParticipant[];
+        items.push({
+            name: `Owner ${items.length + 1}`,
+            address: ''
+        });
+        if (!checkIfDuplicateExists(items)) {
+            props.onParticipantsChanged(items);
+        }
     }, [props]);
 
-    const checkIfDuplicateExists = (arr: string[]): boolean => {
-        return new Set(arr).size !== arr.length ? true : false;
+    const checkIfDuplicateExists = (arr: MultisigParticipant[]): boolean => {
+        const items = arr.map(i => i.address);
+        return new Set(items).size !== items.length ? true : false;
     }
 
     return (
         <>
         {props.participants && props.participants.length > 0 ? (
             <div className="mb-3">
-                {props.participants.map((participant: string, index: number) => {
+                {props.participants.map((participant: MultisigParticipant, index: number) => {
                     return (
-                        <TextInput
-                            placeholder="Type or paste the address of multisig participant"
-                            extraClass="small"
-                            id={`participant-${index + 1}`}
-                            value={participant}
-                            allowClear={true}
-                            alwaysShowClear={true}
-                            key={`${index}`}
-                            error={isValidAddress(participant) ? '' : t('transactions.validation.valid-address-required')}
-                            onInputClear={() => onRemoveSingleItem(index)}
-                            onInputChange={(e: any) => {
-                                const value = e.target.value;
-                                setSingleItem(value, index);
-                            }}
-                        />
+                        <div className="well-group" key={`${index}`}>
+                            <TextInput
+                                placeholder="Enter participant name or description"
+                                extraClass="mb-1 small"
+                                id={`participant-name-${index + 1}`}
+                                value={participant.name}
+                                allowClear={false}
+                                onInputChange={(e: any) => {
+                                    const value = e.target.value;
+                                    setSingleItemName(value, index);
+                                }}
+                            />
+                            <TextInput
+                                placeholder="Type or paste the address of multisig participant"
+                                extraClass="mb-0 small"
+                                id={`participant-address-${index + 1}`}
+                                value={participant.address}
+                                allowClear={true}
+                                alwaysShowClear={true}
+                                error={isValidAddress(participant.address) ? '' : t('transactions.validation.valid-address-required')}
+                                onInputClear={() => onRemoveSingleItem(index)}
+                                onInputChange={(e: any) => {
+                                    const value = e.target.value;
+                                    setSingleItemAddress(value, index);
+                                }}
+                            />
+                        </div>
                     );
                 })}
                 {checkIfDuplicateExists(props.participants) && (

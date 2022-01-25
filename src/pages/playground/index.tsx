@@ -19,6 +19,7 @@ import {
   getTransactionStatusForLogs
 } from "../../utils/ui";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { MultisigParticipant } from "../../models/multisig";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -100,7 +101,7 @@ export const PlaygroundView = () => {
     const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
     const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
     const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
-    const [participants, setParticipants] = useState<string[]>([]);
+    const [participants, setParticipants] = useState<MultisigParticipant[]>([]);
 
     useEffect(() => {
       if (!selectedMint) {
@@ -459,7 +460,7 @@ export const PlaygroundView = () => {
     <div className="mt-3">
       <MultisigParticipants
         participants={participants}
-        onParticipantsChanged={(e: string[]) => setParticipants(e)}
+        onParticipantsChanged={(e: MultisigParticipant[]) => setParticipants(e)}
       />
     </div>
     </>
