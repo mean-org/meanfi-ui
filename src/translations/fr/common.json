@@ -354,6 +354,12 @@
 			"transfer-to-label": "Transfer to (Destination Account)",
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
+		"update-multisig": {
+			"main-cta": "Save changes",
+			"main-cta-busy": "Saving changes",
+			"modal-title": "Edit multisig",
+			"success-message": "Your changes to the multisig account were saved!"
+		},
 		"upgrade-program": {
 			"buffer-account-label": "New program buffer",
 			"buffer-account-placeholder": "Enter the address of the buffer account",

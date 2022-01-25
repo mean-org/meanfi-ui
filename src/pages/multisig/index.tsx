@@ -82,6 +82,7 @@ import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
+import { MultisigEditModal } from '../../components/MultisigEditModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -137,6 +138,7 @@ export const MultisigView = () => {
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransactionInfo | undefined>();
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
+  const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isMintTokenModalVisible, setIsMintTokenModalVisible] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
   const [isCreateVaultModalVisible, setCreateVaultModalVisible] = useState(false);
@@ -650,7 +652,7 @@ export const MultisigView = () => {
   ]);
 
   const onCreateMultisigClick = useCallback(() => {
-    
+
     resetTransactionStatus();
     setIsCreateMultisigModalVisible(true);
 
@@ -686,6 +688,30 @@ export const MultisigView = () => {
     }
 
   },[t])
+
+  const onEditMultisigClick = useCallback(() => {
+
+    resetTransactionStatus();
+    setIsEditMultisigModalVisible(true);
+
+  },[
+    resetTransactionStatus
+  ]);
+
+  const onAcceptEditMultisig = (data: any) => {
+    consoleOut('multisig:', data, 'blue');
+    // onExecuteEditMultisigTx(data);
+  };
+
+  const onMultisigSaved = useCallback(() => {
+
+    setIsEditMultisigModalVisible(false);
+    setLoadingMultisigAccounts(true);
+    resetTransactionStatus();
+
+  },[
+    resetTransactionStatus
+  ])
 
   // Transfer token modal
   const showTransferTokenModal = useCallback(() => {
@@ -4362,7 +4388,7 @@ export const MultisigView = () => {
                               shape="circle"
                               size="middle"
                               icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                              onClick={() => {}}
+                              onClick={() => onEditMultisigClick()}
                               disabled={isTxInProgress()}
                             />
                           </Tooltip>
@@ -4448,6 +4474,21 @@ export const MultisigView = () => {
         handleClose={() => setIsCreateMultisigModalVisible(false)}
         isBusy={isBusy}
       />
+
+      {/* TODO: Pass the participants from the selected multisig */}
+      {(isEditMultisigModalVisible && selectedMultisig) && (
+        <MultisigEditModal
+          isVisible={isEditMultisigModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptEditMultisig}
+          multisigName={selectedMultisig.label}
+          multisigThreshold={selectedMultisig.threshold}
+          participants={[]}
+          handleClose={() => setIsEditMultisigModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
 
       <MultisigMintTokenModal
         isVisible={isMintTokenModalVisible}
