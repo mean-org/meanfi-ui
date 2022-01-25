@@ -76,11 +76,6 @@ export const AppBar = (props: {
     }, 200);
   }
 
-  // const getChartsLink = (): string => {
-  //   const bucket = appConfig.getConfig().influxDbBucket;
-  //   return `${MEANFI_METRICS_URL}&var-meanfi_env=${bucket}&refresh=5m&kiosk=tv`;
-  // }
-
   useEffect(() => {
     const mobileMenuTriggerClickListener = () => {
       if (!isMenuOpen) {
@@ -158,23 +153,9 @@ export const AppBar = (props: {
           </Menu.Item>
         )}
       </SubMenu>
-      {/* <Menu.Item key="charts">
-        <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
-          <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
-          &nbsp;<IconExternalLink className="mean-svg-icons link" />
-        </a>
-      </Menu.Item> */}
-      {/* TODO: Remove this limitation when releasing to the public */}
       <Menu.Item key="/ido">
         <Link to="/ido">IDO</Link>
       </Menu.Item>
-      {(isWhitelisted || isLocal()) && (
-        <>
-        <Menu.Item key="/ido-live">
-          <Link to="/ido-live">IDO (Dev)</Link>
-        </Menu.Item>
-        </>
-      )}
     </Menu>
   );
 
@@ -274,24 +255,9 @@ export const AppBar = (props: {
                   &nbsp;<IconExternalLink className="mean-svg-icons link" />
                 </a>
               </li>
-              {/* Charts */}
-              {/* <li key="charts" className="mobile-menu-item" style={{'--animation-order': isProd() ? 8 : 10} as CustomCSSProps}>
-                <a href={getChartsLink()} target="_blank" rel="noopener noreferrer">
-                  <span className="menu-item-text">{t('ui-menus.main-menu.charts')}</span>
-                  &nbsp;<IconExternalLink className="mean-svg-icons link" />
-                </a>
-              </li> */}
               <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
                 <Link to="/ido">IDO</Link>
               </li>
-              {/* TODO: Remove this limitation when releasing to the public */}
-              {(isWhitelisted || isLocal()) && (
-                <>
-                <li key="/ido-live" className="mobile-menu-item" style={{'--animation-order': isProd() ? 10 : 12} as CustomCSSProps}>
-                  <Link to="/ido-live">IDO (Dev)</Link>
-                </li>
-                </>
-              )}
             </ul>
           </div>
           <DepositOptions
