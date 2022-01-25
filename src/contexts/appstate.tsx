@@ -571,9 +571,35 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setSelectedStream = (stream: Stream | StreamInfo | undefined) => {
     updateSelectedStream(stream);
-    updateStreamDetail(stream);
+    // updateStreamDetail(stream);
     if (stream) {
-      getStreamActivity(stream.id as string, (stream as any).version);
+      // getStreamActivity(stream.id as string, (stream as any).version);
+
+      const mspInstance: any = stream.version < 2 ? ms : msp;
+      mspInstance.getStream(new PublicKey(stream.id as string))
+        .then((detail: Stream | StreamInfo) => {
+          if (detail) {
+            updateStreamDetail(detail);
+            const token = getTokenByMintAddress(detail.associatedToken as string);
+            setSelectedToken(token);
+            if (!loadingStreamActivity) {
+              setLoadingStreamActivity(true);
+              const streamPublicKey = new PublicKey(detail.id as string);
+              mspInstance.listStreamActivity(streamPublicKey)
+                .then((value: any) => {
+                  consoleOut('activity:', value, 'blue');
+                  setStreamActivity(value);
+                  setLoadingStreamActivity(false);
+                })
+                .catch((err: any) => {
+                  console.error(err);
+                  setStreamActivity([]);
+                  setLoadingStreamActivity(false);
+                });
+            }
+          }
+        })
+
     } else {
       setStreamActivity([]);
     }
@@ -821,15 +847,15 @@ const AppStateProvider: React.FC = ({ children }) => {
                 if (item && selectedStream && item.id !== selectedStream.id) {
                   updateSelectedStream(item);
                   const mspInstance: any = item.version < 2 ? ms : msp;
-                  mspInstance.refreshStream(item, true)
-                    .then((freshStream: Stream | StreamInfo) => {
-                      if (freshStream) {
-                        updateStreamDetail(freshStream);
-                        const token = getTokenByMintAddress(freshStream.associatedToken as string);
+                  mspInstance.getStream(item)
+                    .then((detail: Stream | StreamInfo) => {
+                      if (detail) {
+                        updateStreamDetail(detail);
+                        const token = getTokenByMintAddress(detail.associatedToken as string);
                         setSelectedToken(token);
                         if (!loadingStreamActivity) {
                           setLoadingStreamActivity(true);
-                          const streamPublicKey = new PublicKey(freshStream.id as string);
+                          const streamPublicKey = new PublicKey(detail.id as string);
                           mspInstance.listStreamActivity(streamPublicKey)
                             .then((value: any) => {
                               consoleOut('activity:', value, 'blue');

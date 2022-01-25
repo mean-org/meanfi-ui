@@ -962,10 +962,12 @@ export const TreasuriesView = () => {
     if (publicKey && highlightedStream) {
 
       const treasury = highlightedStream.version && highlightedStream.version >= 2
-        ? (highlightedStream as Stream).treasury as string : (highlightedStream as StreamInfo).treasuryAddress as string;
+        ? (highlightedStream as Stream).treasury as string
+        : (highlightedStream as StreamInfo).treasuryAddress as string;
 
       const beneficiary = highlightedStream.version && highlightedStream.version >= 2
-        ? (highlightedStream as Stream).beneficiary as string : (highlightedStream as StreamInfo).beneficiaryAddress as string;
+        ? (highlightedStream as Stream).beneficiary as string
+        : (highlightedStream as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.pause-stream-confirmation', {
         treasury: shortenAddress(treasury),
@@ -985,10 +987,12 @@ export const TreasuriesView = () => {
     if (publicKey && highlightedStream) {
 
       const treasury = highlightedStream.version && highlightedStream.version >= 2
-        ? (highlightedStream as Stream).treasury as string : (highlightedStream as StreamInfo).treasuryAddress as string;
+        ? (highlightedStream as Stream).treasury as string
+        : (highlightedStream as StreamInfo).treasuryAddress as string;
 
       const beneficiary = highlightedStream.version && highlightedStream.version >= 2
-        ? (highlightedStream as Stream).beneficiary as string : (highlightedStream as StreamInfo).beneficiaryAddress as string;
+        ? (highlightedStream as Stream).beneficiary as string
+        : (highlightedStream as StreamInfo).beneficiaryAddress as string;
 
       message = t('streams.resume-stream-confirmation', {
         treasury: shortenAddress(treasury),
