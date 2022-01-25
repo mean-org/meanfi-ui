@@ -302,13 +302,13 @@ export const Streams = () => {
         if (item) {
           setSelectedStream(item);
         }
-        setHighLightableStreamId(undefined);
       }
       const highlightTarget = document.getElementById(highLightableStreamId);
       if (highlightTarget) {
         consoleOut('Scrolling stream into view...', '', 'green');
         highlightTarget.scrollIntoView({ behavior: 'smooth' });
       }
+      setHighLightableStreamId(undefined);
     });
 
     return () => {

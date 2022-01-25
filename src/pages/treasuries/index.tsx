@@ -3594,7 +3594,7 @@ export const TreasuriesView = () => {
               : v2.status === STREAM_STATUS.Paused
                 ? (
                   <>
-                    {v2.remainingAllocationAmount > 0 && (
+                    {v2.fundsLeftInStream > 0 && (
                       <Menu.Item key="1" onClick={showResumeStreamModal}>
                         <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
                       </Menu.Item>
