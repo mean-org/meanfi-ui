@@ -19,7 +19,8 @@ import {
   TransfersView,
   TreasuriesView,
   WrapView,
-  MultisigView
+  MultisigView,
+  StatsView
 } from "./pages";
 
 import { ServiceUnavailableView } from "./pages/service-unavailable";
@@ -62,6 +63,7 @@ export function AppRoutes() {
                       <Route path="/ido-live" element={<IdoLiveView />} />
                       <Route path="/ido-blocked" element={<IdoBlockedView />} />
                       <Route path="/ido-lp" element={<IdoLpView />} />
+                      <Route path="/stats" element={<StatsView />} />
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />

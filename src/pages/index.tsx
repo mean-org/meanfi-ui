@@ -14,3 +14,4 @@ export { TransfersView } from './transfers';
 export { TreasuriesView } from './treasuries';
 export { WrapView } from './wrap';
 export { MultisigView } from './multisig';
+export { StatsView } from './stats';

@@ -156,6 +156,11 @@ export const AppBar = (props: {
       <Menu.Item key="/ido">
         <Link to="/ido">IDO</Link>
       </Menu.Item>
+      {(isLocal() || isWhitelisted) && (
+        <Menu.Item key="/stats">
+          <Link to="/stats">Stats</Link>
+        </Menu.Item>
+      )}
     </Menu>
   );
 
@@ -258,6 +263,11 @@ export const AppBar = (props: {
               <li key="/ido" className="mobile-menu-item" style={{'--animation-order': isProd() ? 9 : 11} as CustomCSSProps}>
                 <Link to="/ido">IDO</Link>
               </li>
+              {(isLocal() || isWhitelisted) && (
+                <li key="/stats" className="mobile-menu-item" style={{'--animation-order': 12} as CustomCSSProps}>
+                  <Link to="/stats">Stats</Link>
+                </li>
+              )}
             </ul>
           </div>
           <DepositOptions

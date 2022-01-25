@@ -97,6 +97,7 @@ export const ALLOWED_ADDRESSES_LIST = [
     '9PLqBWNkjegBdz4UD5LYSswWVXfxMf8hUsK2R9b3Lj23', // AMA
     'HGb43H86jJNLN4MW1sDWKruUZYrs3rkNQkf3acF8uXiv', // PNL
     '49XcDH9tWX67uw53TzNrPE5ovGsXd7VxgH735jBg6K64', // PL
+    'HvPJ1eSqAnUtoC1dfKCAaDDFaWviHkbfBWoYJmP1BUDa', // TBM
     '9gB9rcJiaKq6iXcJn8AqD5xoxTr3ZLPHpFGWRaVx99jH', // TAB trader
 ];
 
