@@ -133,7 +133,8 @@ export const Streams = () => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     endpoint,
-    streamProgramAddress
+    streamProgramAddress,
+    "finalized"
   ), [
     endpoint,
     streamProgramAddress
@@ -145,7 +146,7 @@ export const Streams = () => {
       return new MSP(
         endpoint,
         streamV2ProgramAddress,
-        "confirmed"
+        "finalized"
       );
     }
   }, [

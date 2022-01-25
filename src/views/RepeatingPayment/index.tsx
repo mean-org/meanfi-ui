@@ -702,7 +702,7 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
+        const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "finalized");
 
         return await moneyStream.createStream(
           publicKey,                                                  // wallet
@@ -827,7 +827,7 @@ export const RepeatingPayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
         return await moneyStream.createStream(
           publicKey,                                                  // initializer

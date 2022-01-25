@@ -290,7 +290,8 @@ const AppStateProvider: React.FC = ({ children }) => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
-    streamProgramAddressFromConfig
+    streamProgramAddressFromConfig,
+    "finalized"
   ), [
     connectionConfig.endpoint,
     streamProgramAddressFromConfig
@@ -302,7 +303,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddressFromConfig,
-        "confirmed"
+        "finalized"
       );
     }
   }, [

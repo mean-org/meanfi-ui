@@ -555,7 +555,7 @@ export const OneTimePayment = () => {
         }
 
         // Init a streaming operation
-        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
         return await moneyStream.oneTimePayment(
           publicKey,

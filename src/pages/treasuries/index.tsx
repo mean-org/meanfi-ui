@@ -163,7 +163,8 @@ export const TreasuriesView = () => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
-    streamProgramAddress
+    streamProgramAddress,
+    "finalized"
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
@@ -175,7 +176,7 @@ export const TreasuriesView = () => {
       return new MSP(
         connectionConfig.endpoint,
         streamV2ProgramAddress,
-        "confirmed"
+        "finalized"
       );
     }
   }, [

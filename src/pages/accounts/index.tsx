@@ -156,7 +156,8 @@ export const AccountsView = () => {
     console.log('New MSP from /acounts');
     setMsp(new MSP(
       connection.endpoint,
-      streamV2ProgramAddress
+      streamV2ProgramAddress,
+      "finalized"
     ));
 
   }, [
@@ -353,7 +354,8 @@ export const AccountsView = () => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     connection.endpoint,
-    streamProgramAddress
+    streamProgramAddress,
+    "finalized"
   ), [
     connection.endpoint,
     streamProgramAddress

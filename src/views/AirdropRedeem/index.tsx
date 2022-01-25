@@ -226,7 +226,7 @@ export const AirdropRedeem = (props: {
           return false;
         }
 
-        const msp = new MSP(endpoint, streamV2ProgramAddress, "confirmed");
+        const msp = new MSP(endpoint, streamV2ProgramAddress, "finalized");
 
         consoleOut('Starting withdraw using MSP V2...', '', 'blue');
         // Create a transaction

@@ -158,7 +158,8 @@ export const IdoLiveView = () => {
   // Create and cache Money Streaming Program instance
   const ms = useMemo(() => new MoneyStreaming(
     connectionConfig.endpoint,
-    streamProgramAddress
+    streamProgramAddress,
+    "finalized"
   ), [
     connectionConfig.endpoint,
     streamProgramAddress
