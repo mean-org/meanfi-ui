@@ -578,6 +578,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       const mspInstance: any = stream.version < 2 ? ms : msp;
       mspInstance.getStream(new PublicKey(stream.id as string))
         .then((detail: Stream | StreamInfo) => {
+          consoleOut('detail:', detail, 'blue');
           if (detail) {
             updateStreamDetail(detail);
             const token = getTokenByMintAddress(detail.associatedToken as string);

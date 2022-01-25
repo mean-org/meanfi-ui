@@ -3382,7 +3382,6 @@ export const Streams = () => {
       streamList.map((item, index) => {
         const token = item.associatedToken ? getTokenByMintAddress(item.associatedToken as string) : undefined;
         const onStreamClick = () => {
-          consoleOut('selected stream:', item);
           setSelectedStream(item);
           setDtailsPanelOpen(true);
         };
