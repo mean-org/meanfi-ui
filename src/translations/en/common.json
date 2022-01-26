@@ -321,6 +321,17 @@
 			"loading-transactions": "Loading transactions",
 			"no-transactions": "This multisig account has no transactions"
 		},
+		"multisig-programs": {
+			"cta-create-program": "Create program",
+			"modal-title": "Create program",
+			"no-program-loaded": "No program details",
+			"no-programs": "No programs available",
+			"not-connected": "Please connect your wallet to see programs",
+			"program-detail-heading": "Program details",
+			"refresh-tooltip": "Click to refresh the list of programs",
+			"screen-title": "Programs - {{multisigName}} ({{programCount}})",
+			"screen-title-no-programs": "Programs"
+		},
 		"multisig-vaults": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
 			"cta-change-multisig": "Transfer Ownership",

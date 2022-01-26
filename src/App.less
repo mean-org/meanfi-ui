@@ -4083,6 +4083,9 @@ main section {
       transform-origin: top;
       opacity: 1;
       z-index: 1;
+      .meanfi-panel-heading .title {
+        max-width: 170px;
+      }
       .inner-container {
         height: calc(100% - var(--footer-bar-height));
         background-color: transparent;
@@ -4151,6 +4154,13 @@ main section {
     .meanfi-two-panel-right {
       flex: 0 0 100%;
       max-width: 100%;
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1199.98px) {
+    .meanfi-two-panel-left {
+      .meanfi-panel-heading .title {
+        max-width: 170px;
+      }
     }
   }
   @media (min-width: 768px) {
@@ -4995,16 +5005,16 @@ main section {
   margin-bottom: 0 !important;
 }
 .mb-1 {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem !important;
 }
 .mb-2 {
-  margin-bottom: 1rem;
+  margin-bottom: 1rem !important;
 }
 .mb-3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem !important;
 }
 .mb-4 {
-  margin-bottom: 2rem;
+  margin-bottom: 2rem !important;
 }
 
 // Font weight

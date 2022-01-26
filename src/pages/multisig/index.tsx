@@ -4062,6 +4062,18 @@ export const MultisigView = () => {
 
   const programsOptionsMenu = (
     <Menu>
+      {isUnderDevelopment() && (
+        <Menu.Item
+          key="29"
+          onClick={() => {
+            if (selectedMultisig) {
+              const url = `/multisig-programs?ms=${selectedMultisig.id.toBase58()}`;
+              navigate(url);
+            }
+          }}>
+          <span className="menu-item-text">See programs</span>
+        </Menu.Item>
+      )}
       {/* Upgrade program */}
       <Menu.Item
         key="30"
@@ -4149,9 +4161,8 @@ export const MultisigView = () => {
             <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
               <Button
                 type="default"
-                shape="round"
-                size="small"
-                className="dropdown-like-button thin-stroke"
+                size="middle"
+                className="dropdown-like-button"
                 disabled={isTxInProgress() || loadingMultisigAccounts}
                 onClick={() => {}}>
                 <span className="mr-2">Mint</span>
@@ -4432,7 +4443,6 @@ export const MultisigView = () => {
                         onClick={() => copyMultisigAddress(selectedMultisig.id)}>
                           {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
                       </span>
-                      
                       <a 
                         className="explorer-cta" 
                         target="_blank" 
