@@ -1,12 +1,12 @@
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useConnectionConfig } from '../../contexts/connection';
+import { getSolanaExplorerClusterParam, useConnectionConfig } from '../../contexts/connection';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { useWallet } from '../../contexts/wallet';
 import { AppStateContext } from '../../contexts/appstate';
 import { Button, Col, Divider, Empty, Row, Space, Spin, Tooltip } from 'antd';
 import { ArrowLeftOutlined, CopyOutlined, LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
-import { IconSafe, IconShieldOutline, IconTrash } from '../../Icons';
+import { IconExternalLink, IconSafe, IconShieldOutline, IconTrash } from '../../Icons';
 import { PreFooter } from '../../components/PreFooter';
 import { Account, ConfirmOptions, Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY, Transaction, TransactionInstruction } from '@solana/web3.js';
 import { Program, Provider } from '@project-serum/anchor';
@@ -27,9 +27,9 @@ import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { BN } from 'bn.js';
 import { notify } from '../../utils/notifications';
 import { MultisigTransferTokensModal } from '../../components/MultisigTransferTokensModal';
-import { FALLBACK_COIN_IMAGE } from '../../constants';
+import { FALLBACK_COIN_IMAGE, SOLANA_EXPLORER_URI_INSPECT_ADDRESS } from '../../constants';
 
-export const MultisigTokensView = () => {
+export const MultisigProgramsView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { account } = useNativeAccount();
@@ -46,8 +46,6 @@ export const MultisigTokensView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
@@ -63,8 +61,6 @@ export const MultisigTokensView = () => {
   const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -463,20 +459,6 @@ export const MultisigTokensView = () => {
     fetchTxInfoStatus,
   ]);
 
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
   const resetTransactionStatus = useCallback(() => {
 
     setTransactionStatus({
@@ -521,8 +503,6 @@ export const MultisigTokensView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.CreateVault);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const createVault = async (data: any) => {
@@ -779,7 +759,6 @@ export const MultisigTokensView = () => {
             });
             await delay(1000);
             onVaultCreated();
-            setOngoingOperation(undefined);
             setCreateVaultModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -846,8 +825,6 @@ export const MultisigTokensView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TransferTokens);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const transferTokens = async (data: any) => {
@@ -1189,7 +1166,6 @@ export const MultisigTokensView = () => {
             });
             await delay(1000);
             onTokensTransfered();
-            setOngoingOperation(undefined);
             setIsTransferTokenModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1283,7 +1259,6 @@ export const MultisigTokensView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const approveTx = async (data: any) => {
@@ -1521,7 +1496,6 @@ export const MultisigTokensView = () => {
             });
             await delay(1000);
             onTxApproved();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1553,7 +1527,6 @@ export const MultisigTokensView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const finishTx = async (data: any) => {
@@ -1808,7 +1781,6 @@ export const MultisigTokensView = () => {
             });
             await delay(1000);
             onTxExecuted();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1874,7 +1846,7 @@ export const MultisigTokensView = () => {
       );
     } else if (selectedMultisig && !loadingMultisigTxs && multisigPendingTxs.length === 0) {
       return (
-        <div className="mb-2">{t('multisig.multisig-transactions.no-transactions')}</div>
+        <div className="mb-2">{t('multisig.multisig-vaults.no-transactions')}</div>
       );
     }
 
@@ -2144,7 +2116,7 @@ export const MultisigTokensView = () => {
                       block
                       type="primary"
                       shape="round"
-                      disabled={!publicKey}
+                      disabled={!publicKey || !selectedMultisig}
                       onClick={onShowCreateVaultModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-vault')
@@ -2203,15 +2175,15 @@ export const MultisigTokensView = () => {
                         </>
                       )}
                     </div>
-                    {/* {selectedVault && (
+                    {selectedVault && (
                       <div className="stream-share-ctas">
-                        <span className="copy-cta" onClick={() => onCopyTreasuryAddress(treasuryDetails.id)}>TREASURY ID: {treasuryDetails.id}</span>
+                        <span className="copy-cta" onClick={() => copyAddressToClipboard(selectedVault.address.toBase58())}>VAULT ADDRESS: {selectedVault.address.toBase58()}</span>
                         <a className="explorer-cta" target="_blank" rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${treasuryDetails.id}${getSolanaExplorerClusterParam()}`}>
+                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedVault.address.toBase58()}${getSolanaExplorerClusterParam()}`}>
                           <IconExternalLink className="mean-svg-icons" />
                         </a>
                       </div>
-                    )} */}
+                    )}
                   </>
                 ) : (
                   <div className="h-100 flex-center">

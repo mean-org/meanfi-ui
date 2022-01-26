@@ -4149,8 +4149,9 @@ export const MultisigView = () => {
             <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
               <Button
                 type="default"
-                size="middle"
-                className="dropdown-like-button"
+                shape="round"
+                size="small"
+                className="dropdown-like-button thin-stroke"
                 disabled={isTxInProgress() || loadingMultisigAccounts}
                 onClick={() => {}}>
                 <span className="mr-2">Mint</span>
@@ -4370,41 +4371,37 @@ export const MultisigView = () => {
               </div>
 
               <div className="inner-container">
-                {connected ? (
+                {connected && selectedMultisig ? (
                   <>
-                    {selectedMultisig && (
-                      <div className="float-top-right">
-                        <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Edit"}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                              onClick={() => onEditMultisigClick()}
-                              disabled={isTxInProgress()}
-                            />
-                          </Tooltip>
-                          <Tooltip placement="bottom" title={"Delete multisig"}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={() => {}}
-                              disabled={isTxInProgress()}
-                            />
-                          </Tooltip>
-                        </span>
-                      </div>
-                    )}
-                    <div className={
-                      `stream-details-data-wrapper vertical-scroll ${
-                        (loadingMultisigAccounts || !selectedMultisig) 
-                          ? 'h-100 flex-center' 
-                          : ''
-                        }`
-                      }>
+                    {/* Top action icons */}
+                    <div className="float-top-right">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title={"Edit"}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                            onClick={() => onEditMultisigClick()}
+                            disabled={isTxInProgress()}
+                          />
+                        </Tooltip>
+                        <Tooltip placement="bottom" title={"Delete multisig"}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconTrash className="mean-svg-icons" />}
+                            onClick={() => {}}
+                            disabled={isTxInProgress()}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
+                    {/* Details area */}
+                    <div className="stream-details-data-wrapper vertical-scroll">
+
                       <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}>
                         {selectedMultisig && (
                           <>
@@ -4416,6 +4413,7 @@ export const MultisigView = () => {
                           </>
                         )}
                       </Spin>
+
                       {(!loadingMultisigAccounts && !loadingMultisigTxs) && (
                         <>
                         {(!multisigAccounts || multisigAccounts.length === 0) && !selectedMultisig && (
@@ -4426,27 +4424,29 @@ export const MultisigView = () => {
                         </>
                       )}
                     </div>
-                    {selectedMultisig && (
-                      <div className="stream-share-ctas">
-                        <span 
-                          className="copy-cta" 
-                          onClick={() => copyMultisigAddress(selectedMultisig.id)}>
-                            {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
-                        </span>
-                        
-                        <a 
-                          className="explorer-cta" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
-                          <IconExternalLink className="mean-svg-icons" />
-                        </a>
-                      </div>
-                    )}
+
+                    {/* Copy address CTA */}
+                    <div className="stream-share-ctas">
+                      <span 
+                        className="copy-cta" 
+                        onClick={() => copyMultisigAddress(selectedMultisig.id)}>
+                          {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
+                      </span>
+                      
+                      <a 
+                        className="explorer-cta" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
+                        <IconExternalLink className="mean-svg-icons" />
+                      </a>
+                    </div>
                   </>
                 ) : (
                   <div className="h-100 flex-center">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-accounts.not-connected')}</p>} />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+                      ? t('multisig.multisig-account-detail.no-multisig-loaded')
+                      : t('multisig.multisig-accounts.not-connected')}</p>} />
                   </div>
                 )}
               </div>

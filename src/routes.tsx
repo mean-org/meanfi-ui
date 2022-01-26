@@ -29,7 +29,7 @@ import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { MultisigVaultsView } from "./pages/multisig-vaults";
-import { MultisigTokensView } from "./pages/multisig-tokens";
+import { MultisigProgramsView } from "./pages/multisig-programs";
 
 export function AppRoutes() {
 
@@ -67,7 +67,7 @@ export function AppRoutes() {
                       <Route path="/custody" element={<CustodyView />} />
                       <Route path="/multisig" element={<MultisigView />} />
                       <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
-                      <Route path="/multisig-tokens" element={<MultisigTokensView />} />
+                      <Route path="/multisig-programs" element={<MultisigProgramsView />} />
                       <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
                       <Route path='*' element={<NotFoundView />} />
                     </Routes>
