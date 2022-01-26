@@ -129,11 +129,9 @@ export const AppBar = (props: {
         <Menu.Item key="/treasuries">
           <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
         </Menu.Item>
-        {(isWhitelisted || isLocal()) && (
-          <Menu.Item key="/multisig">
-            <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-          </Menu.Item>
-        )}
+        <Menu.Item key="/multisig">
+          <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+        </Menu.Item>
         <Menu.Item key="/custody">
           <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
         </Menu.Item>
