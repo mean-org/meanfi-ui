@@ -46,8 +46,6 @@ export const MultisigVaultsView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
-    lastSentTxSignature,
-    lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
@@ -63,8 +61,6 @@ export const MultisigVaultsView = () => {
   const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const [transactionCancelled, setTransactionCancelled] = useState(false);
-  const [ongoingOperation, setOngoingOperation] = useState<OperationType | undefined>(undefined);
-  const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [transactionFees, setTransactionFees] = useState<TransactionFees>({
     blockchainFee: 0, mspFlatFee: 0, mspPercentFee: 0
   });
@@ -463,20 +459,6 @@ export const MultisigVaultsView = () => {
     fetchTxInfoStatus,
   ]);
 
-  const isSuccess = (): boolean => {
-    return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
-  }
-
-  const isError = (): boolean => {
-    return  transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ||
-            transactionStatus.currentOperation === TransactionStatus.InitTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SignTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ||
-            transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure
-            ? true
-            : false;
-  }
-
   const resetTransactionStatus = useCallback(() => {
 
     setTransactionStatus({
@@ -521,8 +503,6 @@ export const MultisigVaultsView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.CreateVault);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const createVault = async (data: any) => {
@@ -779,7 +759,6 @@ export const MultisigVaultsView = () => {
             });
             await delay(1000);
             onVaultCreated();
-            setOngoingOperation(undefined);
             setCreateVaultModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -846,8 +825,6 @@ export const MultisigVaultsView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TransferTokens);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const transferTokens = async (data: any) => {
@@ -1189,7 +1166,6 @@ export const MultisigVaultsView = () => {
             });
             await delay(1000);
             onTokensTransfered();
-            setOngoingOperation(undefined);
             setIsTransferTokenModalVisible(false);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
@@ -1283,7 +1259,6 @@ export const MultisigVaultsView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const approveTx = async (data: any) => {
@@ -1521,7 +1496,6 @@ export const MultisigVaultsView = () => {
             });
             await delay(1000);
             onTxApproved();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -1553,7 +1527,6 @@ export const MultisigVaultsView = () => {
 
     clearTransactionStatusContext();
     setTransactionCancelled(false);
-    setRetryOperationPayload(data);
     setIsBusy(true);
 
     const finishTx = async (data: any) => {
@@ -1808,7 +1781,6 @@ export const MultisigVaultsView = () => {
             });
             await delay(1000);
             onTxExecuted();
-            setOngoingOperation(undefined);
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
@@ -2144,7 +2116,7 @@ export const MultisigVaultsView = () => {
                       block
                       type="primary"
                       shape="round"
-                      disabled={!publicKey}
+                      disabled={!publicKey || !selectedMultisig}
                       onClick={onShowCreateVaultModal}>
                       {publicKey
                         ? t('multisig.multisig-account-detail.cta-create-vault')
