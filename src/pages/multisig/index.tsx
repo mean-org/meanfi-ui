@@ -67,7 +67,7 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
+import { MultisigAccountInfo, MultisigParticipant, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -83,6 +83,8 @@ import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
 import { MultisigEditModal } from '../../components/MultisigEditModal';
+import { MultisigParticipants } from '../../components/MultisigParticipants';
+import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -359,19 +361,35 @@ export const MultisigView = () => {
     const createMultisig = async (data: any) => {
 
       const multisig = new Account();
-      // Disc. + threshold + nonce + label.
-      const baseSize = 8 + 8 + 1 + 4 + 32;
-      // Add enough for 2 more participants, in case the user changes one's mind later.
-      const fudge = 64;
-      // Can only grow the participant set by 2x the initialized value.
-      const ownerSize = data.owners.length * 32 + 8;
-      const multisigSize = baseSize + ownerSize + fudge;
+      // // threshold + nonce + label + created_on + pending_txs.
+      // const dataSize = 8 + 1 + 4 + 32 + 8 + 8;
+      // // up to 10 owners (address and name)
+      // const ownersSize = 10 * 32 + 8;
+      // const ownersNameSize = 10 * 32 + 8;
+      // // Disc. + owners + data + names
+      // const multisigSize = 8 + ownersSize + dataSize + ownersNameSize;
+      const multisigSize = 1_000; // fixed multisig bytes with extra space
       const [, nonce] = await PublicKey.findProgramAddress(
         [multisig.publicKey.toBuffer()],
         multisigClient.programId
       );
 
-      const owners = data.owners.map((p: string) => new PublicKey(p));
+      const getParticipantNameBuffer = (name: string) => {
+        const encodedUIntArray = new TextEncoder().encode(name);
+        const buffer = Buffer
+          .alloc(32)
+          .fill(encodedUIntArray, 0, encodedUIntArray.byteLength);
+        return buffer;
+      };
+
+      const owners = data.owners.map((p: MultisigParticipant) => {
+        return {
+          address: new PublicKey(p.address),
+          name: getParticipantNameBuffer(p.name)
+        }
+      });
+
+      console.log(owners);
       const encodedUIntArray = new TextEncoder().encode(data.label);
       const label = Buffer
         .alloc(32)
@@ -384,11 +402,10 @@ export const MultisigView = () => {
         label,
         {
           accounts: {
-            multisig: multisig.publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            multisig: multisig.publicKey
           },
           signers: [multisig],
-          instructions: [
+          preInstructions: [
             await multisigClient.account.multisig.createInstruction(
               multisig,
               multisigSize
@@ -421,7 +438,7 @@ export const MultisigView = () => {
           wallet: publicKey.toBase58(),                               // wallet
           label: data.label,                                          // multisig label
           threshold: data.threshold,
-          signers: data.signers
+          owners: data.owners
         };
 
         consoleOut('data:', payload);
@@ -3513,6 +3530,8 @@ export const MultisigView = () => {
           });
 
           for (let info of filteredAccs) {
+
+            // console.log('info.account', info.account);
             
             let address: any;
             let labelBuffer = Buffer
@@ -3525,19 +3544,37 @@ export const MultisigView = () => {
               .then(k => { 
 
                 address = k[0];
+                let owners: MultisigParticipant[] = [];
+
+                for (let i = 0; i < info.account.owners.length; i ++) {
+                  owners.push({
+                    address: info.account.owners[i].toBase58(),
+                    name: info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
+                      ? new TextDecoder().decode(
+                          Buffer.from(
+                            Uint8Array.of(
+                              ...info.account.ownersNames[i].filter((b: any) => b !== 0)
+                            )
+                          )
+                        )
+                      : ""
+                  } as MultisigParticipant);
+                }
 
                 let multisigInfo = {
                   id: info.publicKey,
                   label: new TextDecoder().decode(labelBuffer),
                   address,
-                  nounce: info.account.nounce,
+                  nounce: info.account.nonce,
                   ownerSeqNumber: info.account.ownerSetSeqno,
                   threshold: info.account.threshold.toNumber(),
                   pendingTxsAmount: info.account.pendingTxs.toNumber(),
                   createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                  owners: info.account.owners
+                  owners: owners
       
                 } as MultisigAccountInfo;
+
+                // console.log(multisigInfo);
 
                 multisigInfoArray.push(multisigInfo);
 
@@ -4484,7 +4521,7 @@ export const MultisigView = () => {
           handleOk={onAcceptEditMultisig}
           multisigName={selectedMultisig.label}
           multisigThreshold={selectedMultisig.threshold}
-          participants={[]}
+          participants={selectedMultisig.owners}
           handleClose={() => setIsEditMultisigModalVisible(false)}
           isBusy={isBusy}
         />

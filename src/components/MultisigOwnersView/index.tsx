@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 import { CloseOutlined } from "@ant-design/icons";
 import { shortenAddress } from "../../utils/utils";
 import "./style.less";
-import { PublicKey } from "@solana/web3.js";
+import { MultisigParticipant } from "../../models/multisig";
 
 export const MultisigOwnersView = (props: {
-  participants: PublicKey[];
+  participants: MultisigParticipant[];
   label: string;
   className?: string;
 }) => {
@@ -39,8 +39,8 @@ export const MultisigOwnersView = (props: {
       {props.participants.map((item, index) => {
         return (
           <div key={`${index}`} className="cebra-list-item flex-fixed-right">
-            <div className="left">Owner {index + 1}</div>
-            <div className="right text-monospace">{shortenAddress(item.toBase58(), 6)}</div>
+            <div className="left">{item.name}</div>
+            <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
           </div>
         );
       })}

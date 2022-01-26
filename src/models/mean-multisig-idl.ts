@@ -1,7 +1,7 @@
 import { Idl } from "@project-serum/anchor";
 
 const idl: Idl = {
-  version: "0.9.0",
+  version: "0.10.0",
   name: "mean_multisig",
   instructions: [
     {
@@ -10,19 +10,16 @@ const idl: Idl = {
         {
           "name": "multisig",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
+          "isSigner": true
         }
       ],
       "args": [
         {
           "name": "owners",
           "type": {
-            "vec": "publicKey"
+            "vec": {
+              "defined": "Owner"
+            }
           }
         },
         {
@@ -56,11 +53,6 @@ const idl: Idl = {
           "name": "proposer",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
@@ -125,7 +117,9 @@ const idl: Idl = {
         {
           "name": "owners",
           "type": {
-            "vec": "publicKey"
+            "vec": {
+              "defined": "Owner"
+            }
           }
         },
         {
@@ -152,7 +146,9 @@ const idl: Idl = {
         {
           "name": "owners",
           "type": {
-            "vec": "publicKey"
+            "vec": {
+              "defined": "Owner"
+            }
           }
         }
       ]
@@ -189,7 +185,7 @@ const idl: Idl = {
         {
           "name": "multisigSigner",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         },
         {
           "name": "transaction",
@@ -235,6 +231,17 @@ const idl: Idl = {
           {
             "name": "pendingTxs",
             "type": "u64"
+          },
+          {
+            "name": "ownersNames",
+            "type": {
+              "vec": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
           }
         ]
       }
@@ -292,6 +299,22 @@ const idl: Idl = {
   ],
   types: [
     {
+      "name": "Owner",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "address",
+            "type": "publicKey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "TransactionAccount",
       "type": {
         "kind": "struct",
@@ -314,39 +337,54 @@ const idl: Idl = {
   ],
   errors: [
     {
-      "code": 300,
+      "code": 6000,
       "name": "InvalidOwner",
       "msg": "The given owner is not part of this multisig."
     },
     {
-      "code": 301,
+      "code": 6001,
+      "name": "InvalidOwnersLen",
+      "msg": "Owners length must be non zero."
+    },
+    {
+      "code": 6002,
       "name": "NotEnoughSigners",
       "msg": "Not enough owners signed this transaction."
     },
     {
-      "code": 302,
+      "code": 6003,
       "name": "TransactionAlreadySigned",
       "msg": "Cannot delete a transaction that has been signed by an owner."
     },
     {
-      "code": 303,
+      "code": 6004,
       "name": "Overflow",
       "msg": "Operation overflow"
     },
     {
-      "code": 304,
+      "code": 6005,
       "name": "UnableToDelete",
       "msg": "Cannot delete a transaction the owner did not create."
     },
     {
-      "code": 305,
+      "code": 6006,
       "name": "AlreadyExecuted",
       "msg": "The given transaction has already been executed."
     },
     {
-      "code": 306,
+      "code": 6007,
       "name": "InvalidThreshold",
       "msg": "Threshold must be less than or equal to the number of owners."
+    },
+    {
+      "code": 6008,
+      "name": "UniqueOwners",
+      "msg": "Owners must be unique"
+    },
+    {
+      "code": 6009,
+      "name": "OwnerNameTooLong",
+      "msg": "Owner name must have less than 32 bytes"
     }
   ]
 }
