@@ -39,7 +39,7 @@ export const MultisigOwnersView = (props: {
       {props.participants.map((item, index) => {
         return (
           <div key={`${index}`} className="cebra-list-item flex-fixed-right">
-            <div className="left">{item.name}</div>
+            <div className="left">{item.name || `Owner ${index + 1}`}</div>
             <div className="right text-monospace">{shortenAddress(item.address, 6)}</div>
           </div>
         );
