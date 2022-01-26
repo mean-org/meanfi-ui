@@ -42,7 +42,8 @@ import {
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
-  isLocal
+  isLocal,
+  isDev
 
 } from '../../utils/ui';
 
@@ -688,6 +689,10 @@ export const MultisigView = () => {
     fetchTxInfoStatus,
     lastSentTxOperationType,
   ]);
+
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
 
   // Copy address to clipboard
   const copyMultisigAddress = useCallback((address: any) => {
@@ -3499,16 +3504,6 @@ export const MultisigView = () => {
 
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -4065,42 +4060,6 @@ export const MultisigView = () => {
     </Menu>
   );
 
-  const tokensOptionsMenu = (
-    <Menu>
-      {/* Go to vaults */}
-      <Menu.Item
-        key="20"
-        onClick={() => {
-          if (selectedMultisig) {
-            const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
-            navigate(url);
-          }
-        }}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
-      </Menu.Item>
-      {/* New Vault */}
-      <Menu.Item
-        key="21"
-        onClick={onShowCreateVaultModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
-      </Menu.Item>
-      {/* Transfer tokens */}
-      <Menu.Item
-        key="22"
-        onClick={showTransferTokenModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
-      </Menu.Item>
-      <Menu.Divider key="23" />
-      {/* Set Vault Auth */}
-      <Menu.Item
-        key="24"
-        disabled={true}
-        onClick={() => {}}>
-        <span className="menu-item-text">Set Vault Auth</span>
-      </Menu.Item>
-    </Menu>
-  );
-
   const programsOptionsMenu = (
     <Menu>
       {/* Upgrade program */}
@@ -4116,12 +4075,14 @@ export const MultisigView = () => {
         <span className="menu-item-text">Upgrade IDL</span>
       </Menu.Item>
       {/* Kill Switch */}
-      <Menu.Item
-        key="32"
-        disabled={true}
-        onClick={() => {}}>
-        <span className="menu-item-text">Kill Switch</span>
-      </Menu.Item>
+      {isUnderDevelopment() && (
+        <Menu.Item
+          key="32"
+          disabled={true}
+          onClick={() => {}}>
+          <span className="menu-item-text">Kill Switch</span>
+        </Menu.Item>
+      )}
       <Menu.Divider key="33" />
       {/* Set Program Auth */}
       <Menu.Item
@@ -4183,53 +4144,48 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Mint</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
+          {/* Available to local dev or whitelisted addresses in dev */}
+          {isUnderDevelopment() && (
+            <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Mint</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
-          {/* <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Vaults</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown> */}
+          {isUnderDevelopment() && (
+            <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Programs</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
-          <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Programs</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
-
-           <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Data</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
+          {isUnderDevelopment() && (
+            <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Data</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
           {/* Operation indication */}
           {isMintingToken() ? (
