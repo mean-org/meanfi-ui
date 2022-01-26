@@ -373,6 +373,7 @@ export function useWallet() {
     },
     disconnect() {
       wallet?.disconnect();
+      resetWalletProvider();
     },
   };
 }
