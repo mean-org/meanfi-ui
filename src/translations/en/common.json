@@ -659,7 +659,7 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
-			"amount-high": "Amount exceeds your {{symbol}} balance",
+			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",
