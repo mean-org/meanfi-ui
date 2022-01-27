@@ -3384,6 +3384,7 @@ export const Streams = () => {
         const onStreamClick = () => {
           setSelectedStream(item);
           setDtailsPanelOpen(true);
+          consoleOut('list item selected:', item, 'blue');
         };
         const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
           event.currentTarget.src = FALLBACK_COIN_IMAGE;
