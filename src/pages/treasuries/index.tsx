@@ -423,9 +423,8 @@ export const TreasuriesView = () => {
   const refreshTreasuries = useCallback((reset = false) => {
     if (!connection || !publicKey || loadingTreasuries) { return; }
 
-    if (!loadingTreasuries && fetchTxInfoStatus !== "fetching") {
+    if (fetchTxInfoStatus !== "fetching") {
 
-      // const signature = lastSentTxStatus || '';
       setTimeout(() => {
         setLoadingTreasuries(true);
         clearTransactionStatusContext();
@@ -443,7 +442,7 @@ export const TreasuriesView = () => {
             ms.listTreasuries(publicKey)
               .then(treasuriesv1 => {
                 treasuryAccumulator.push(...treasuriesv1);
-                consoleOut('v2 treasuries:', treasuriesv1, 'blue');
+                consoleOut('v1 treasuries:', treasuriesv1, 'blue');
 
                 let item: Treasury | TreasuryInfo | undefined = undefined;
                 if (treasuryAccumulator.length) {
@@ -451,7 +450,7 @@ export const TreasuriesView = () => {
                   if (reset) {
                     item = treasuryAccumulator[0];
                   } else {
-                    // Try to get current item by its original Tx signature then its id
+                    // Try to get current item by its id
                     if (selectedTreasury) {
                       const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
                       item = itemFromServer || treasuryAccumulator[0];
@@ -460,7 +459,7 @@ export const TreasuriesView = () => {
                     }
                   }
                   if (!item) {
-                    item = JSON.parse(JSON.stringify(treasuryAccumulator[0]));
+                    item = Object.assign({}, treasuryAccumulator[0]);
                   }
                   if (item) {
                     setSelectedTreasury(item);
@@ -472,16 +471,22 @@ export const TreasuriesView = () => {
                   setTreasuryDetails(undefined);
                   setTreasuryStreams([]);
                 }
-                setTreasuryList(treasuryAccumulator);
               })
               .catch(error => {
                 console.error(error);
               })
+              .finally(() => {
+                setTreasuryList(treasuryAccumulator);
+                consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+                setLoadingTreasuries(false);
+                treasuryListPerfCounter.stop();
+                consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
+              });
           })
           .catch(error => {
             console.error(error);
-          })
-          .finally(() => {
+            setTreasuryList(treasuryAccumulator);
+            consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
             setLoadingTreasuries(false);
             treasuryListPerfCounter.stop();
             consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
@@ -527,7 +532,6 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        refreshTreasuries(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -539,8 +543,10 @@ export const TreasuriesView = () => {
     }
   }, [
     connected,
-    previousWalletConnectState,
     publicKey,
+    treasuriesLoaded,
+    loadingTreasuries,
+    previousWalletConnectState,
     refreshTreasuries
   ]);
 
@@ -643,6 +649,7 @@ export const TreasuriesView = () => {
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
+  // For now just refresh treasuries keeping the selection or reseting to first item
   useEffect(() => {
     if (!publicKey) { return; }
 

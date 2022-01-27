@@ -827,7 +827,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                   }
                 }
                 if (!item) {
-                  item = JSON.parse(JSON.stringify(streamAccumulator[0]));
+                  item = Object.assign({}, streamAccumulator[0]);
                 }
                 consoleOut('selectedStream:', item, 'blue');
                 if (item && selectedStream && item.id !== selectedStream.id) {

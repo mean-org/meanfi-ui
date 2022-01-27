@@ -485,7 +485,7 @@ export const Streams = () => {
   const [isWithdrawModalVisible, setIsWithdrawModalVisibility] = useState(false);
 
   const showWithdrawModal = useCallback(async () => {
-    const lastDetail = JSON.parse(JSON.stringify(streamDetail));
+    const lastDetail = Object.assign({}, streamDetail);
 
     // Abort transaction under the status "FeatureTemporarilyDisabled" if there is no vested cliff
     // since we are allowing withdrawals only for any cliff amount but only for < v2 streams

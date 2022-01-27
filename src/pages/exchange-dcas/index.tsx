@@ -836,7 +836,7 @@ export const ExchangeDcasView = () => {
               }
             }
             if (!item) {
-              item = JSON.parse(JSON.stringify(dcas[0]));
+              item = Object.assign({}, dcas[0]);
             }
             if (item) {
               setSelectedDdca(item);

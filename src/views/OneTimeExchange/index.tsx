@@ -374,7 +374,7 @@ export const OneTimeExchange = (props: {
       const list: any = { };
 
       for (let info of TOKENS) {
-        let mint = JSON.parse(JSON.stringify(info));
+        let mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
