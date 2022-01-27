@@ -870,8 +870,7 @@ export const MultisigView = () => {
           accounts: {
             multisig: selectedMultisig.id,
             transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
+            proposer: publicKey
           },
           signers: [transaction],
           instructions: ixs,
@@ -879,7 +878,7 @@ export const MultisigView = () => {
       );
 
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
       tx.partialSign(...[transaction]);
 
@@ -1785,7 +1784,7 @@ export const MultisigView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
   
       return tx;

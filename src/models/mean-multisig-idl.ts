@@ -185,7 +185,7 @@ const idl: Idl = {
         {
           "name": "multisigSigner",
           "isMut": false,
-          "isSigner": true
+          "isSigner": false
         },
         {
           "name": "transaction",
