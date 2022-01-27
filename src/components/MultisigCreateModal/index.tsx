@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useState } from 'react';
 import { Modal, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant } from '../../models/multisig';
+import { useWallet } from '../../contexts/wallet';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -24,6 +25,7 @@ export const MultisigCreateModal = (props: {
   transactionFees: TransactionFees;
 }) => {
   const { t } = useTranslation('common');
+  const { publicKey } = useWallet();
   const {
     transactionStatus,
     setTransactionStatus,
@@ -32,6 +34,22 @@ export const MultisigCreateModal = (props: {
   const [multisigLabel, setMultisigLabel] = useState('');
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
+
+  // When modal goes visible, add current wallet address as first participant
+  useEffect(() => {
+    if (publicKey && props.isVisible) {
+      setMultisigThreshold(1);
+      const items: MultisigParticipant[] = [];
+      items.push({
+          name: `Owner 1`,
+          address: publicKey.toBase58()
+      });
+      setMultisigOwners(items);
+    }
+  }, [
+    publicKey,
+    props.isVisible,
+  ]);
 
   const onAcceptModal = () => {
     props.handleOk({

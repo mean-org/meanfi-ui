@@ -4473,14 +4473,16 @@ export const MultisigView = () => {
 
       </div>
 
-      <MultisigCreateModal
-        isVisible={isCreateMultisigModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptCreateMultisig}
-        handleClose={() => setIsCreateMultisigModalVisible(false)}
-        isBusy={isBusy}
-      />
+      {isCreateMultisigModalVisible && (
+        <MultisigCreateModal
+          isVisible={isCreateMultisigModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptCreateMultisig}
+          handleClose={() => setIsCreateMultisigModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
 
       {/* TODO: Pass the participants from the selected multisig */}
       {(isEditMultisigModalVisible && selectedMultisig) && (
