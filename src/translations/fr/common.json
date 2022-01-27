@@ -270,7 +270,7 @@
 		"create-vault": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a multisig Vault",
+			"modal-title": "Create a Multisig Vault",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
 			"token-label": "From Account",
