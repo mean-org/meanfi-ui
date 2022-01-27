@@ -80,15 +80,17 @@ export const MultisigParticipants = (props: {
                         </div>
                     );
                 })}
-                {checkIfDuplicateExists(props.participants) && (
+                {checkIfDuplicateExists(props.participants) ? (
                     <span className="form-field-error pl-2">{t('multisig.create-multisig.multisig-duplicate-participants')}</span>
-                )}
+                ) : props.participants.length === 10 ? (
+                    <span className="form-field-hint pl-1">{t('multisig.create-multisig.multisig-threshold-input-max-warn')}</span>
+                ) : null}
             </div>
         ) : (
             <div className="inner-label pl-1">{t('multisig.create-multisig.multisig-no-participants')}</div>
         )}
         <div className="text-right mt-3">
-            <span className="flat-button change-button" onClick={() => addParticipant()}>
+            <span className={`flat-button change-button ${props.participants.length === 10 ? 'disabled' : ''}`} onClick={() => addParticipant()}>
                 <PlusOutlined />
                 <span className="ml-1">{t('multisig.add-participant-cta')}</span>
             </span>

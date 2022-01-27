@@ -590,11 +590,17 @@ footer.ant-layout-footer {
   padding: 2px 4px;
   transition: background 0.1s ease-out 0s;
   outline: none !important;
-  &:hover,
-  &.active,
-  &:focus {
-    background-color: var(--darken);
-    text-decoration: none;
+  &:not(.disabled) {
+    &:hover,
+    &.active,
+    &:focus {
+      background-color: var(--darken);
+      text-decoration: none;
+    }
+  }
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.7;
   }
   &.icon-button {
     display: inline-flex;
@@ -3358,6 +3364,10 @@ main section {
       }
     }
   }
+}
+
+.simple-modal-inner-max-height {
+  max-height: 64vh;
 }
 
 .icon-button-container {

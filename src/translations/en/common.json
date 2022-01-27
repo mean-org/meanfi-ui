@@ -263,6 +263,8 @@
 			"multisig-participants": "Valid signers",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
+			"multisig-threshold-input-max": "Max number of signatures is 10",
+			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
 			"success-message": "Your new multisig account was created successfully."
 		},

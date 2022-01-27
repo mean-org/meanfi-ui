@@ -69,6 +69,17 @@ export const MultisigCreateModal = (props: {
     setMultisigLabel(e.target.value);
   }
 
+  const isFormValid = () => {
+    return  multisigThreshold &&
+            multisigThreshold <= 10 &&
+            multisigLabel &&
+            multisigOwners.length >= multisigThreshold &&
+            multisigOwners.length <= 10 &&
+            isOwnersListValid()
+      ? true
+      : false;
+  }
+
   const isOwnersListValid = () => {
     return multisigOwners.every(o => o.address.length > 0 && isValidAddress(o.address));
   }
@@ -93,7 +104,7 @@ export const MultisigCreateModal = (props: {
       afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
+      <div className={!props.isBusy ? "panel1 show vertical-scroll simple-modal-inner-max-height" : "panel1 hide"}>
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
@@ -139,6 +150,15 @@ export const MultisigCreateModal = (props: {
                     />
                   </div>
                 </div>
+                {!multisigThreshold || +multisigThreshold < 1 ? (
+                  <span className="form-field-error">
+                    {t('multisig.create-multisig.multisig-threshold-input-empty')}
+                  </span>
+                ) : multisigThreshold > 10 ? (
+                  <span className="form-field-error">
+                    {t('multisig.create-multisig.multisig-threshold-input-max')}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -228,7 +248,7 @@ export const MultisigCreateModal = (props: {
             type="primary"
             shape="round"
             size="middle"
-            disabled={!multisigThreshold || !multisigLabel || multisigOwners.length < multisigThreshold || !isOwnersListValid()}
+            disabled={!isFormValid()}
             onClick={() => {
               if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                 onAcceptModal();
