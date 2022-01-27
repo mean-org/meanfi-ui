@@ -1117,6 +1117,10 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+    notify({
+      description: t('treasuries.create-treasury.success-message'),
+      type: "success"
+    });
   }
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
@@ -1654,7 +1658,6 @@ export const TreasuriesView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTreasuryCreated();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1706,6 +1709,10 @@ export const TreasuriesView = () => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
+    });
+    notify({
+      description: t('treasuries.add-funds.success-message'),
+      type: "success"
     });
   };
 
@@ -2061,7 +2068,6 @@ export const TreasuriesView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }

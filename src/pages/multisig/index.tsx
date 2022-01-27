@@ -238,8 +238,13 @@ export const MultisigView = () => {
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
     resetTransactionStatus();
+    notify({
+      description: t('multisig.create-multisig.success-message'),
+      type: "success"
+    });
 
   },[
+    t,
     resetTransactionStatus
   ])
 
@@ -642,7 +647,6 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onMultisigCreated();
             setOngoingOperation(undefined);
             setIsCreateMultisigModalVisible(false);
@@ -3965,8 +3969,8 @@ export const MultisigView = () => {
                     <IconWallet className="mean-svg-icons" />
                   </span>
                   <div className="info-data flex-row wrap align-items-center">
-                    {selectedMultisig.owners.length}
-                    <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners} />
+                    {selectedMultisig.owners ? selectedMultisig.owners.length : 0}
+                    <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
                   </div>
                 </div>
               </Col>
