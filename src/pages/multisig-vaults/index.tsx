@@ -1957,16 +1957,16 @@ export const MultisigVaultsView = () => {
                       navigate('/multisig');
                     }}>
                     {shortenAddress(selectedVault.owner.toBase58(), 6)}
-                    <div className="icon-button-container">
-                      <Button
-                        type="default"
-                        shape="circle"
-                        size="middle"
-                        icon={<CopyOutlined />}
-                        onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
-                      />
-                    </div>
                   </Link>
+                  <div className="icon-button-container">
+                    <Button
+                      type="default"
+                      shape="circle"
+                      size="middle"
+                      icon={<CopyOutlined />}
+                      onClick={() => copyAddressToClipboard(selectedVault.owner.toBase58())}
+                    />
+                  </div>
                 </div>
               </Col>
             </Row>
