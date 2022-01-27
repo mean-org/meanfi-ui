@@ -46,6 +46,8 @@ export const MultisigVaultsView = () => {
   } = useContext(AppStateContext);
   const {
     fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
@@ -459,6 +461,18 @@ export const MultisigVaultsView = () => {
     fetchTxInfoStatus,
   ]);
 
+  const isCreatingVault = useCallback((): boolean => {
+
+    return ( 
+      fetchTxInfoStatus === "fetching" && 
+      lastSentTxOperationType === OperationType.CreateVault
+    );
+
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxOperationType,
+  ]);
+
   const resetTransactionStatus = useCallback(() => {
 
     setTransactionStatus({
@@ -487,8 +501,13 @@ export const MultisigVaultsView = () => {
 
     onRefreshVaults();
     resetTransactionStatus();
+    notify({
+      description: t('multisig.create-vault.success-message'),
+      type: "success"
+    });
 
   },[
+    t,
     onRefreshVaults,
     resetTransactionStatus
   ]);
@@ -757,7 +776,6 @@ export const MultisigVaultsView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onVaultCreated();
             setCreateVaultModalVisible(false);
           } else { setIsBusy(false); }
@@ -1831,6 +1849,14 @@ export const MultisigVaultsView = () => {
             {isTxInProgress() && (<LoadingOutlined />)}
             {t('multisig.multisig-vaults.cta-change-multisig')}
           </Button>
+
+          {/* Operation indication */}
+          {isCreatingVault() ? (
+            <div className="flex-row flex-center">
+              <LoadingOutlined />
+              <span className="ml-1">{t('multisig.multisig-account-detail.cta-create-vault-busy')}</span>
+            </div>
+          ) : null}
         </Space>
       </>
     );

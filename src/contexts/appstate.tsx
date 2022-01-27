@@ -848,7 +848,7 @@ const AppStateProvider: React.FC = ({ children }) => {
                 if (item && selectedStream && item.id !== selectedStream.id) {
                   updateSelectedStream(item);
                   const mspInstance: any = item.version < 2 ? ms : msp;
-                  mspInstance.getStream(item)
+                  mspInstance.getStream(new PublicKey(item.id as string))
                     .then((detail: Stream | StreamInfo) => {
                       if (detail) {
                         updateStreamDetail(detail);
