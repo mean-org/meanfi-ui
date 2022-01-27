@@ -1652,7 +1652,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryCreate);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -2062,7 +2062,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryAddFunds);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
@@ -3181,7 +3181,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -3541,7 +3541,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
             setOngoingOperation(undefined);
