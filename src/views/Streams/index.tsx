@@ -1251,7 +1251,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamAddFunds);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamAddFunds);
             setIsBusy(false);
             onAddFundsTransactionFinished();
           } else { setIsBusy(false); }
@@ -1609,7 +1609,7 @@ export const Streams = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamWithdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamWithdraw);
             setIsBusy(false);
             onWithdrawFundsTransactionFinished();
           } else { setIsBusy(false); }

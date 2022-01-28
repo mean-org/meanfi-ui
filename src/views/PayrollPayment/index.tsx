@@ -857,7 +857,7 @@ export const PayrollPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
           } else { setIsBusy(false); }

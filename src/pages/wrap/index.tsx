@@ -308,7 +308,7 @@ export const WrapView = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then((result) => {
           consoleOut("confirmTransaction result:", result);
           setTransactionStatus({

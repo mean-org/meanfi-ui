@@ -712,7 +712,7 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -765,7 +765,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
+              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {

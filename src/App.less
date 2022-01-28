@@ -63,6 +63,12 @@
   --gradStart: #ffffff;
   --gradEnd: #d2d2d2;
 
+  /* Black with alpha */
+  --darken-05: rgba(0, 0, 0, 0.05);
+  --darken-10: rgba(0, 0, 0, 0.10);
+  --darken-20: rgba(0, 0, 0, 0.20);
+  --darken-30: rgba(0, 0, 0, 0.30);
+
   /* Properties */
   --custom-border-radius: 7px;
   --custom-control-height: 40px;
@@ -590,11 +596,16 @@ footer.ant-layout-footer {
   padding: 2px 4px;
   transition: background 0.1s ease-out 0s;
   outline: none !important;
+  background-color: var(--darken-10);
+  &.tiny {
+    font-size: 12px;
+    font-weight: 400;
+  }
   &:not(.disabled) {
     &:hover,
     &.active,
     &:focus {
-      background-color: var(--darken);
+      background-color: var(--darken-20);
       text-decoration: none;
     }
   }
