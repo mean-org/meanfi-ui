@@ -1013,6 +1013,20 @@ export const TreasuriesView = () => {
     );
   }
 
+  const isTreasuryFunded = useCallback((): boolean => {
+
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury
+        ? v2.associatedToken ? true : false
+        : v1.associatedTokenAddress ? true : false;
+    }
+    return false;
+
+  }, [treasuryDetails]);
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -4118,7 +4132,8 @@ export const TreasuriesView = () => {
                               disabled={
                                 isTxInProgress() ||
                                 !isTreasurer() ||
-                                isAnythingLoading()
+                                isAnythingLoading() ||
+                                !isTreasuryFunded()
                               }
                             />
                           </Tooltip>
@@ -4133,7 +4148,8 @@ export const TreasuriesView = () => {
                                 isTxInProgress() ||
                                 (treasuryStreams && treasuryStreams.length > 0) ||
                                 !isTreasurer() ||
-                                isAnythingLoading()
+                                isAnythingLoading() ||
+                                !isTreasuryFunded()
                               }
                             />
                           </Tooltip>
