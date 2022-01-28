@@ -792,7 +792,6 @@ const AppStateProvider: React.FC = ({ children }) => {
               streamAccumulator.push(...streamsv1);
               setStreamListv1(streamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
               streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-              consoleOut('Streams:', streamAccumulator, 'blue');
               // Sort debugging block
               if (!isProd()) {
                 const debugTable: any[] = [];
@@ -804,6 +803,7 @@ const AppStateProvider: React.FC = ({ children }) => {
               }
               // End of debugging block
               setStreamList(streamAccumulator);
+              consoleOut('Streams:', streamAccumulator, 'blue');
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;
                 if (reset) {

@@ -789,7 +789,7 @@ export const Streams = () => {
       if (v1.version < 2) {
         switch (v1.state) {
           case STREAM_STATE.Schedule:
-            return t('streams.status.scheduled', {date: getShortDate(item.startUtc as string)});
+            return t('streams.status.scheduled', {date: getShortDate(v1.startUtc as string)});
           case STREAM_STATE.Paused:
             return t('streams.status.stopped');
           default:
@@ -798,8 +798,11 @@ export const Streams = () => {
       } else {
         switch (v2.status) {
           case STREAM_STATUS.Schedule:
-            return t('streams.status.scheduled', {date: getShortDate(item.startUtc as string)});
+            return t('streams.status.scheduled', {date: getShortDate(v2.startUtc as string)});
           case STREAM_STATUS.Paused:
+            if (v2.isManuallyPaused) {
+              return t('streams.status.stopped-manually');
+            }
             return t('streams.status.stopped');
           default:
             return t('streams.status.streaming');

@@ -454,6 +454,7 @@
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
 			"stopped": "Ran out of funds",
+			"stopped-manually": "Manually stopped",
 			"streaming": "Streaming"
 		},
 		"stream-activity": {
