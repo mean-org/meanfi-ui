@@ -63,6 +63,7 @@ import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
 import { MSP, STREAM_STATUS } from '@mean-dao/msp';
 import { BN } from 'bn.js';
+import { STREAM_STATE } from '@mean-dao/money-streaming';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -816,14 +817,14 @@ export const AccountsView = () => {
 
       // Get refreshed data
       let freshStream = await ms.refreshStream(stream);
-      if (!freshStream) { continue; }
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = getPricePerToken(asset as UserTokenAccount);
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       if (streamIsOutgoing) {
-        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowUnvestedAmount || 0 * rate);
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
       } else {
-        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowVestedAmount || 0 * rate);
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       }
     }
 
@@ -849,10 +850,10 @@ export const AccountsView = () => {
       let freshStream = await msp.refreshStream(stream);
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      let streamedUnitsPerSecond = getStreamedUnitsPerSecond(freshStream.rateIntervalInSeconds, freshStream.rateAmount);
+      const streamedUnitsPerSecond = getStreamedUnitsPerSecond(freshStream.rateIntervalInSeconds, freshStream.rateAmount);
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = getPricePerToken(asset as UserTokenAccount);
-      let streamUnitsUsdPerSecond = toUiAmount(new BN(streamedUnitsPerSecond), asset?.decimals || 9) * rate;
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const streamUnitsUsdPerSecond = toUiAmount(new BN(streamedUnitsPerSecond), asset?.decimals || 9) * rate;
       if (streamIsOutgoing) {
         streamsUsdNetChange -= streamUnitsUsdPerSecond;
       } else {
