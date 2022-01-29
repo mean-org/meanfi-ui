@@ -3609,35 +3609,37 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
-  const renderStreamOptions = (item: Stream | StreamInfo, isNewTreasury: boolean) => {
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
+  const renderStreamOptions = (item: Stream | StreamInfo) => {
+    const streamV2 = item as Stream;
+    const treasuryV2 = treasuryDetails as Treasury;
+    const isNewTreasury = treasuryV2.version && treasuryV2.version >= 2 ? true : false;
+
     const menu = (
       <Menu>
-        {isNewTreasury && (
+        {(isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open) && (
           <>
-            {v1.version < 2
-              ? null
-              : v2.status === STREAM_STATUS.Paused
-                ? (
-                  <>
-                    {v2.fundsLeftInStream > 0 && (
-                      <Menu.Item key="1" onClick={showResumeStreamModal}>
-                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                      </Menu.Item>
-                    )}
-                  </>
-                ) : v2.status === STREAM_STATUS.Running ? (
-                  <Menu.Item key="2" onClick={showPauseStreamModal}>
-                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
-                  </Menu.Item>
-                ) : null
+            {streamV2.status === STREAM_STATUS.Paused
+              ? (
+                <>
+                  {streamV2.fundsLeftInStream > 0 && (
+                    <Menu.Item key="1" onClick={showResumeStreamModal}>
+                      <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+                    </Menu.Item>
+                  )}
+                </>
+              ) : streamV2.status === STREAM_STATUS.Running ? (
+                <Menu.Item key="2" onClick={showPauseStreamModal}>
+                  <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
+                </Menu.Item>
+              ) : null
             }
           </>
         )}
-        <Menu.Item key="3" onClick={showCloseStreamModal}>
-          <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
-        </Menu.Item>
+        {(!isNewTreasury || (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open)) && (
+          <Menu.Item key="3" onClick={showCloseStreamModal}>
+            <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+          </Menu.Item>
+        )}
         <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
@@ -3683,10 +3685,6 @@ export const TreasuriesView = () => {
       );
     }
 
-    const v1 = treasuryDetails as TreasuryInfo;
-    const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-
     return (
       <>
         <div className="item-list-header compact">
@@ -3725,7 +3723,7 @@ export const TreasuriesView = () => {
                 </div>
                 <div className="std-table-cell last-cell">
                   <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
-                    {renderStreamOptions(item, isNewTreasury)}
+                    {renderStreamOptions(item)}
                   </span>
                 </div>
               </div>
@@ -3859,7 +3857,6 @@ export const TreasuriesView = () => {
   };
 
   const renderCtaRow = () => {
-    const v1 = treasuryDetails as TreasuryInfo;
     const v2 = treasuryDetails as Treasury;
     const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
     return (
