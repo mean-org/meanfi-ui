@@ -2,7 +2,6 @@ import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/ico
 import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MultisigParticipants } from "../../components/MultisigParticipants";
 import { PreFooter } from "../../components/PreFooter";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
@@ -19,7 +18,7 @@ import {
   getTransactionStatusForLogs
 } from "../../utils/ui";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
-import { MultisigParticipant } from "../../models/multisig";
+import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -101,7 +100,6 @@ export const PlaygroundView = () => {
     const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
     const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
     const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
-    const [participants, setParticipants] = useState<MultisigParticipant[]>([]);
 
     useEffect(() => {
       if (!selectedMint) {
@@ -395,6 +393,7 @@ export const PlaygroundView = () => {
 
     <Divider/>
 
+    <h3>Primary, Secondary and Terciary buttons</h3>
     <div className="row mb-2">
       <div className="col">
         <Button type="primary" shape="round" size="small" className="thin-stroke">Primary</Button>
@@ -406,6 +405,7 @@ export const PlaygroundView = () => {
         <Button type="ghost"   shape="round" size="small" className="thin-stroke">Ghost</Button>
       </div>
     </div>
+    <h3>Primary, Secondary and Terciary buttons disabled</h3>
     <div className="row mb-2">
       <div className="col">
         <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>Primary disabled</Button>
@@ -418,6 +418,7 @@ export const PlaygroundView = () => {
       </div>
     </div>
 
+    <h3>Animated buttons</h3>
     <div className="row mb-2">
       <div className="col">
         <button className="animated-button-red">
@@ -457,11 +458,40 @@ export const PlaygroundView = () => {
       </div>
     </div>
 
-    <div className="mt-3">
-      <MultisigParticipants
-        participants={participants}
-        onParticipantsChanged={(e: MultisigParticipant[]) => setParticipants(e)}
-      />
+    <h3>Flat buttons</h3>
+    <div className="mb-2">
+      <Space>
+        <span className="flat-button tiny">
+          <IconCopy className="mean-svg-icons" />
+          <span className="ml-1">copy item</span>
+        </span>
+        <span className="flat-button tiny">
+          <IconTrash className="mean-svg-icons" />
+          <span className="ml-1">delete item</span>
+        </span>
+        <span className="flat-button tiny">
+          <IconExternalLink className="mean-svg-icons" />
+          <span className="ml-1">view on blockchain</span>
+        </span>
+      </Space>
+    </div>
+
+    <h3>Flat stroked buttons</h3>
+    <div className="mb-2">
+      <Space>
+        <span className="flat-button tiny stroked">
+          <IconCopy className="mean-svg-icons" />
+          <span className="mx-1">copy item</span>
+        </span>
+        <span className="flat-button tiny stroked">
+          <IconTrash className="mean-svg-icons" />
+          <span className="mx-1">delete item</span>
+        </span>
+        <span className="flat-button tiny stroked">
+          <IconExternalLink className="mean-svg-icons" />
+          <span className="mx-1">view on blockchain</span>
+        </span>
+      </Space>
     </div>
     </>
   );

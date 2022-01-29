@@ -592,14 +592,19 @@ footer.ant-layout-footer {
   cursor: pointer;
   border-width: 0px;
   text-decoration: none;
-  border-radius: 3px;
-  padding: 2px 4px;
+  border-radius: 4px;
+  padding: 2px 6px;
   transition: background 0.1s ease-out 0s;
   outline: none !important;
   background-color: var(--darken-10);
   &.tiny {
     font-size: 12px;
     font-weight: 400;
+  }
+  &.stroked {
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--color-secondary-alpha-50);
   }
   &:not(.disabled) {
     &:hover,
@@ -5001,7 +5006,18 @@ main section {
 .mr-4 {
   margin-right: 2rem;
 }
-
+.mx-0 {
+  margin-left: 0;
+  margin-right: 0;
+}
+.mx-1 {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+.mx-2 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
 .my-0 {
   margin-top: 0;
   margin-bottom: 0;
