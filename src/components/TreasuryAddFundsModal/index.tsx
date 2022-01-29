@@ -65,12 +65,12 @@ export const TreasuryAddFundsModal = (props: {
 
   const allocationOptions = useMemo(() => {
     const options: SelectOption[] = [];
-    options.push({
-      key: AllocationType.All,
-      label: t('treasuries.add-funds.allocation-option-evenly'),
-      value: AllocationType.All,
-      visible: numTreasuryStreams() > 1
-    });
+    // options.push({
+    //   key: AllocationType.All,
+    //   label: t('treasuries.add-funds.allocation-option-evenly'),
+    //   value: AllocationType.All,
+    //   visible: numTreasuryStreams() > 1
+    // });
     options.push({
       key: AllocationType.Specific,
       label: t('treasuries.add-funds.allocation-option-specific'),
@@ -457,10 +457,11 @@ export const TreasuryAddFundsModal = (props: {
     if (props.treasuryStreams && props.treasuryStreams.length > 0) {
       if (props.treasuryStreams.length === 1 && tt === TreasuryType.Open) {
         setAllocationOption(AllocationType.Specific);
-      } else if (tt === TreasuryType.Lock) {
-        setAllocationOption(AllocationType.None);
+      // } else if (tt === TreasuryType.Lock) {
+      //   setAllocationOption(AllocationType.None);
       } else {
-        setAllocationOption(AllocationType.All);
+        setAllocationOption(AllocationType.None);
+        // setAllocationOption(AllocationType.All);
       }
     }
   }, [

@@ -984,7 +984,7 @@ export const Streams = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting addFunds using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.addFunds(
           wallet.publicKey,
@@ -1084,7 +1084,7 @@ export const Streams = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting addFunds using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.addFunds(
           publicKey,
@@ -1704,7 +1704,7 @@ export const Streams = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V1...', '', 'blue');
+        consoleOut('Starting closeStream using MSP V1...', '', 'blue');
         // Create a transaction
         return await ms.closeStream(
           publicKey as PublicKey,                           // Initializer public key
@@ -1793,7 +1793,7 @@ export const Streams = () => {
           return false;
         }
 
-        consoleOut('Starting withdraw using MSP V2...', '', 'blue');
+        consoleOut('Starting closeStream using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.closeStream(
           publicKey as PublicKey,                           // Initializer public key
