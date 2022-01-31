@@ -36,7 +36,6 @@ import {
   getFormattedNumberToLocale,
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
-  delay,
   isProd,
   getIntervalFromSeconds,
 } from '../../utils/ui';
@@ -81,7 +80,7 @@ import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-st
 import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -89,6 +88,7 @@ const treasuryDetailPerfCounter = new PerformanceCounter();
 const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
+  const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -346,29 +346,34 @@ export const TreasuriesView = () => {
     });
 
     const mspInstance: any = isNew || dock ? msp : ms;
+    const treasueyPk = new PublicKey(treasuryId);
 
     treasuryDetailPerfCounter.start();
-    const treasueyPk = new PublicKey(treasuryId);
     mspInstance.getTreasury(treasueyPk)
-      .then((details: Treasury | Treasury | undefined) => {
+      .then((details: Treasury | TreasuryInfo | undefined) => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
           setSelectedTreasury(details);
           setTreasuryDetails(details);
           setSignalRefreshTreasuryStreams(true);
-
+          const v1 = details as TreasuryInfo;
+          const v2 = details as Treasury;
+          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      
           // Preset active token to the treasury associated token
-          const token = getTokenByMintAddress(details.associatedToken as string);
+          const ata = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
+          const type = isNewTreasury ? v2.treasuryType : v1.type;
+          const token = getTokenByMintAddress(ata);
           consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
           if (token) {
             if (!selectedToken || selectedToken.address !== token.address) {
               setSelectedToken(token);
             }
-          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedToken)) {
-            setCustomToken(details.associatedToken as string);
+          } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
+            setCustomToken(ata);
           }
 
-          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.treasuryType);
+          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
           if (tOption) {
             setTreasuryOption(tOption);
           }
@@ -432,8 +437,16 @@ export const TreasuriesView = () => {
 
       treasuryListPerfCounter.start();
 
+      // Get query param
+      let tresuryAddress: string | null = null;
+      const params = new URLSearchParams(location.search);
+      if (params.has('treasury')) {
+        tresuryAddress = params.get('treasury');
+        consoleOut('tresuryAddress:', tresuryAddress, 'blue');
+      }
+
       if (msp && ms) {
-        let treasuryAccumulator: any[] = [];
+        let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
         msp.listTreasuries(publicKey)
           .then((treasuriesv2) => {
             treasuryAccumulator.push(...treasuriesv2);
@@ -446,15 +459,28 @@ export const TreasuriesView = () => {
 
                 let item: Treasury | TreasuryInfo | undefined = undefined;
                 if (treasuryAccumulator.length) {
-      
                   if (reset) {
-                    item = treasuryAccumulator[0];
+                    console.log('tresuryAddress under reset:', tresuryAddress);
+                    if (tresuryAddress) {
+                      // tresuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
+                      item = itemFromServer || treasuryAccumulator[0];
+                    } else {
+                      item = treasuryAccumulator[0];
+                    }
                   } else {
+                    console.log('tresuryAddress under no reset:', tresuryAddress);
                     // Try to get current item by its id
-                    if (selectedTreasury) {
+                    if (tresuryAddress) {
+                      // tresuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
+                      item = itemFromServer || treasuryAccumulator[0];
+                    } else if (selectedTreasury) {
+                      // there was an item already selected
                       const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
                       item = itemFromServer || treasuryAccumulator[0];
                     } else {
+                      // then choose the first one
                       item = treasuryAccumulator[0];
                     }
                   }
@@ -499,6 +525,7 @@ export const TreasuriesView = () => {
     msp,
     publicKey,
     connection,
+    location.search,
     selectedTreasury,
     loadingTreasuries,
     fetchTxInfoStatus,
@@ -4246,6 +4273,13 @@ export const TreasuriesView = () => {
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()}
+          mspClient={
+            highlightedStream
+              ? highlightedStream.version < 2
+                ? ms
+                : msp
+              : undefined
+          }
           canCloseTreasury={numTreasuryStreams() === 1 ? true : false}
         />
       )}

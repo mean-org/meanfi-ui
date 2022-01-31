@@ -46,7 +46,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  isLocal,
   isValidAddress,
 } from "../../utils/ui";
 import { StreamOpenModal } from '../../components/StreamOpenModal';
@@ -75,7 +74,15 @@ import { InfoIcon } from "../../components/InfoIcon";
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { MSP_ACTIONS, StreamActivity, StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming/lib/types';
-import { AllocationType, MSP, Stream, STREAM_STATUS, MSP_ACTIONS as MSP_ACTIONS_V2, TransactionFees, calculateActionFees as calculateActionFeesV2 } from "@mean-dao/msp";
+import {
+  AllocationType,
+  MSP,
+  Stream,
+  STREAM_STATUS,
+  MSP_ACTIONS as MSP_ACTIONS_V2,
+  TransactionFees,
+  calculateActionFees as calculateActionFeesV2,
+} from "@mean-dao/msp";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -119,7 +126,6 @@ export const Streams = () => {
   const {
     fetchTxInfoStatus,
     lastSentTxSignature,
-    lastSentTxStatus,
     lastSentTxOperationType,
     clearTransactionStatusContext,
     startFetchTxSignatureInfo,
@@ -356,6 +362,7 @@ export const Streams = () => {
     getTransactionFeesV2,
     resetTransactionStatus
   ]);
+
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = () => {
     hideCloseStreamModal();
@@ -3594,15 +3601,24 @@ export const Streams = () => {
           handleClose={closeOpenStreamModal}
         />
 
-        <StreamCloseModal
-          isVisible={isCloseStreamModalVisible}
-          selectedToken={selectedToken}
-          transactionFees={transactionFees}
-          streamDetail={streamDetail}
-          handleOk={onAcceptCloseStream}
-          handleClose={hideCloseStreamModal}
-          content={getStreamClosureMessage()}
-        />
+        {isCloseStreamModalVisible && (
+          <StreamCloseModal
+            isVisible={isCloseStreamModalVisible}
+            selectedToken={selectedToken}
+            transactionFees={transactionFees}
+            streamDetail={streamDetail}
+            mspClient={
+              streamDetail
+                ? streamDetail.version < 2
+                  ? ms
+                  : msp
+                : undefined
+            }
+            handleOk={onAcceptCloseStream}
+            handleClose={hideCloseStreamModal}
+            content={getStreamClosureMessage()}
+          />
+        )}
 
         <StreamAddFundsModal
           isVisible={isAddFundsModalVisible}

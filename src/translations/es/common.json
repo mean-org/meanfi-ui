@@ -56,14 +56,17 @@
 		"switch-hide-low-balances": "Hide low balances"
 	},
 	"close-stream": {
+		"cant-close-message": "You cannot close a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
+		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
 		"return-unvested-amount": "Cantidad pendiente",
 		"return-vested-amount": "Cantidad adquirida",
-		"secondary-cta": "Cancelar"
+		"secondary-cta": "Cancelar",
+		"see-details-cta": "see details"
 	},
 	"contract-selector": {
 		"donation-fund": {
