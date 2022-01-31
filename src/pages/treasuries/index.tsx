@@ -1163,6 +1163,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
@@ -1434,20 +1435,21 @@ export const TreasuriesView = () => {
 
   },[
     msp,
-    clearTransactionStatusContext, 
-    connected, 
-    connection, 
-    nativeBalance, 
-    onRefreshTreasuryBalanceTransactionFinished, 
-    publicKey, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    treasuryDetails, 
-    wallet
+    wallet,
+    publicKey,
+    connected,
+    connection,
+    nativeBalance,
+    treasuryDetails,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
   ]);
 
   const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
@@ -1690,6 +1692,7 @@ export const TreasuriesView = () => {
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -1712,7 +1715,8 @@ export const TreasuriesView = () => {
   }, [
     treasuryDetails,
     getTransactionFees,
-    getTransactionFeesV2
+    getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const closeAddFundsModal = useCallback(() => {
@@ -2100,13 +2104,8 @@ export const TreasuriesView = () => {
 
   // Close treasury modal
   const [isCloseTreasuryModalVisible, setIsCloseTreasuryModalVisibility] = useState(false);
-
   const showCloseTreasuryModal = useCallback(() => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2122,12 +2121,11 @@ export const TreasuriesView = () => {
       }
       setIsCloseTreasuryModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
-    setTransactionStatus,
+    resetTransactionStatus
   ]);
 
   const hideCloseTreasuryModal = useCallback(() => {
@@ -2475,6 +2473,7 @@ export const TreasuriesView = () => {
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2490,11 +2489,11 @@ export const TreasuriesView = () => {
       }
       setIsCloseStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = (closeTreasury: boolean) => {
@@ -2854,6 +2853,7 @@ export const TreasuriesView = () => {
   // Pause stream modal
   const [isPauseStreamModalVisible, setIsPauseStreamModalVisibility] = useState(false);
   const showPauseStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2869,11 +2869,11 @@ export const TreasuriesView = () => {
       }
       setIsPauseStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
@@ -3216,6 +3216,7 @@ export const TreasuriesView = () => {
   // Resume stream modal
   const [isResumeStreamModalVisible, setIsResumeStreamModalVisibility] = useState(false);
   const showResumeStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -3231,11 +3232,11 @@ export const TreasuriesView = () => {
       }
       setIsResumeStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const hideResumeStreamModal = useCallback(() => setIsResumeStreamModalVisibility(false), []);
@@ -3576,6 +3577,7 @@ export const TreasuriesView = () => {
   // Create Stream modal
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
+    resetTransactionStatus();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
       setTransactionFees(value);
@@ -3585,7 +3587,10 @@ export const TreasuriesView = () => {
       setWithdrawTransactionFees(value);
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
-  }, [getTransactionFeesV2]);
+  }, [
+    getTransactionFeesV2,
+    resetTransactionStatus
+  ]);
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
