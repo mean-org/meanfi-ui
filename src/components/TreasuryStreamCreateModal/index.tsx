@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
-import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider, Radio } from 'antd';
+import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
 import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +18,7 @@ import {
   percentage
 } from '../../utils/ui';
 import { getTokenByMintAddress } from '../../utils/tokens';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { TokenDisplay } from '../TokenDisplay';
 import { IconCaretDown, IconEdit } from '../../Icons';
 import { OperationType, PaymentRateType, TransactionStatus } from '../../models/enums';
@@ -58,7 +58,6 @@ export const TreasuryStreamCreateModal = (props: {
     coinPrices,
     selectedToken,
     effectiveRate,
-    treasuryOption,
     recipientAddress,
     loadingPrices,
     recipientNote,
@@ -68,7 +67,6 @@ export const TreasuryStreamCreateModal = (props: {
     paymentRateFrequency,
     transactionStatus,
     isVerifiedRecipient,
-    isAllocationReserved,
     streamV2ProgramAddress,
     refreshPrices,
     setSelectedToken,
@@ -389,9 +387,9 @@ export const TreasuryStreamCreateModal = (props: {
     setIsVerifiedRecipient(e.target.checked);
   }
 
-  const onAllocationReservedChanged = (e: any) => {
-    setIsAllocationReserved(e.target.value);
-  }
+  // const onAllocationReservedChanged = (e: any) => {
+  //   setIsAllocationReserved(e.target.value);
+  // }
 
   const onTransactionStart = async () => {
     let transaction: Transaction;
@@ -416,15 +414,23 @@ export const TreasuryStreamCreateModal = (props: {
         const beneficiary = new PublicKey(recipientAddress as string);
         const associatedToken = new PublicKey(selectedToken?.address as string);
         const treasury = new PublicKey(props.treasuryDetails.id as string);
-        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
+        const amount = fromCoinAmount
+          ? toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals)
+          : 0;
         const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
+        const reserved = (props.treasuryDetails as Treasury).treasuryType === TreasuryType.Lock ? true : false;
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        const fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());
+        const startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
+
+        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
         /**
          * createStream params as of Tue 7 Dec 2021
@@ -452,11 +458,11 @@ export const TreasuryStreamCreateModal = (props: {
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
           associatedToken: associatedToken.toBase58(),                                // associatedToken
           streamName: recipientNote ? recipientNote.trim() : undefined,               // streamName
-          allocation: amount,                                                         // fundingAmount
-          allocationReserved: isAllocationReserved ? amount : 0,                      // allocationReserved
+          allocationAssigned: amount,                                                 // allocationAssigned
+          allocationReserved: reserved ? amount : 0,                                  // allocationReserved
           rateAmount: rateAmount,                                                     // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                                   // startUtc
+          startUtc: startUtc,                                                         // startUtc
         };
         consoleOut('data:', data);
 
@@ -501,11 +507,11 @@ export const TreasuryStreamCreateModal = (props: {
           beneficiary,                                                      // beneficiary
           associatedToken,                                                  // associatedToken
           recipientNote,                                                    // streamName
-          amount,                                                           // fundingAmount
-          isAllocationReserved ? amount : 0,                                // allocationReserved
+          amount,                                                           // allocationAssigned
+          reserved ? amount : 0,                                            // allocationReserved
           rateAmount,                                                       // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),                   // rateIntervalInSeconds
-          fromParsedDate,                                                   // startUtc
+          startUtc,                                                         // startUtc
           undefined,                                                        // cliffVestAmount
           undefined,                                                        // cliffVestPercent
           isFeePaidByTreasurer                                              // feePayedByTreasurer
@@ -692,7 +698,7 @@ export const TreasuryStreamCreateModal = (props: {
     const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
     return publicKey &&
            selectedToken &&
-           amount > 0 &&
+           (props.treasuryDetails as Treasury).treasuryType === TreasuryType.Lock && amount > 0 &&
            ((isFeePaidByTreasurer && amount <= getMaxAmount()) ||
             (!isFeePaidByTreasurer && amount <= unallocatedBalance))
     ? true
@@ -772,11 +778,6 @@ export const TreasuryStreamCreateModal = (props: {
                   </span>
                 </span>
               </div>
-              {/* <div className="right">
-                <div className="add-on simplelink" onClick={() => {}}>
-                  <QrcodeOutlined />
-                </div>
-              </div> */}
             </div>
             {
               recipientAddress && !isValidAddress(recipientAddress) ? (
@@ -1053,7 +1054,7 @@ export const TreasuryStreamCreateModal = (props: {
             </div>
           </div>
 
-          {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
+          {/* {treasuryOption && treasuryOption.type === TreasuryType.Lock && (
             <div className="mb-2 flex-fixed-right">
               <div className="left form-label flex-row align-items-center">
                 {t('treasuries.treasury-streams.allocation-reserved-label')}
@@ -1074,7 +1075,7 @@ export const TreasuryStreamCreateModal = (props: {
                 </Radio.Group>
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="ml-1 mb-3">
             <Checkbox checked={isFeePaidByTreasurer} onChange={onFeePayedByTreasurerChange}>{t('treasuries.treasury-streams.fee-payed-by-treasurer')}</Checkbox>

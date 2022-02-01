@@ -3659,7 +3659,7 @@ export const TreasuriesView = () => {
                     </Menu.Item>
                   )}
                 </>
-              ) : streamV2.status === STREAM_STATUS.Running ? (
+              ) : streamV2.status === STREAM_STATUS.Running && streamV2.withdrawableAmount >= streamV2.allocationReserved ? (
                 <Menu.Item key="2" onClick={showPauseStreamModal}>
                   <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
                 </Menu.Item>
@@ -3889,6 +3889,7 @@ export const TreasuriesView = () => {
   };
 
   const renderCtaRow = () => {
+    if (!treasuryDetails) { return null; }
     const v2 = treasuryDetails as Treasury;
     const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
     return (
@@ -3901,7 +3902,7 @@ export const TreasuriesView = () => {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={isTxInProgress() || loadingTreasuries}
+                disabled={isTxInProgress() || loadingTreasuries || (isNewTreasury && v2.treasuryType === TreasuryType.Lock && isTreasuryFunded())}
                 onClick={showAddFundsModal}>
                 {isAddingFunds() && (<LoadingOutlined />)}
                 {isAddingFunds()

@@ -492,22 +492,22 @@ export const OneTimePayment = () => {
         const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        let fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());
+        let startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
 
         // If current user is in the whitelist and we have an amount of minutes to add
         // to the current date selection, calculate it!
         if (isWhitelisted && fixedScheduleValue > 0) {
-          fromParsedDate = addMinutes(fromParsedDate, fixedScheduleValue);
+          startUtc = addMinutes(startUtc, fixedScheduleValue);
         }
 
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString(), 'crimson');
-        consoleOut('fromParsedDate.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
-        consoleOut('fromParsedDate.toISOString()', fromParsedDate.toISOString(), 'crimson');
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
         // Create a transaction
         const data = {
@@ -515,7 +515,7 @@ export const OneTimePayment = () => {
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
           associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
           amount: amount,                                                             // fundingAmount
-          fromParsedDate: fromParsedDate,                                             // startUtc
+          startUtc: startUtc,                                                         // startUtc
           recipientNote: recipientNote
             ? recipientNote.trim()
             : undefined                                                               // streamName
@@ -562,7 +562,7 @@ export const OneTimePayment = () => {
           beneficiary,                                                // beneficiary
           associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount
-          fromParsedDate,                                             // startUtc
+          startUtc,                                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : undefined                                               // streamName

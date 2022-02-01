@@ -427,6 +427,13 @@
 		"streamid-open-cta": "Commencer le transfert",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
+	"transfer-stream": {
+		"label-streamid-input": "New stream owner",
+		"modal-title": "Transfer stream",
+		"streamid-empty": "Missing address",
+		"streamid-open-cta": "Transfer",
+		"streamid-placeholder": "New beneficiary wallet address"
+	},
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
@@ -474,6 +481,7 @@
 			"amount-funded-date": "financé sur",
 			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Fermer le transfert d'argent",
+			"transfer-money-stream-menu-item": "Transfer ownership",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -608,6 +616,8 @@
 			"stream-started-pre": "Votre transfert d'argent pour",
 			"tx-add-funds-operation": "Ajouter des fonds avec",
 			"tx-add-funds-operation-success": "Fonds ajoutés avec succès",
+			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
+			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-close-operation": "Fermer l'opération",
 			"tx-close-operation-success": "Transfert clôturé avec succès",
 			"tx-close-vault-operation": "Close vault operation",
