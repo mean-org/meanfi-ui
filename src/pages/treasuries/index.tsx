@@ -4289,6 +4289,7 @@ export const TreasuriesView = () => {
 
       <StreamPauseModal
         isVisible={isPauseStreamModalVisible}
+        selectedToken={selectedToken}
         transactionFees={transactionFees}
         tokenBalance={tokenBalance}
         streamDetail={highlightedStream}
@@ -4299,6 +4300,7 @@ export const TreasuriesView = () => {
 
       <StreamResumeModal
         isVisible={isResumeStreamModalVisible}
+        selectedToken={selectedToken}
         transactionFees={transactionFees}
         tokenBalance={tokenBalance}
         streamDetail={highlightedStream}
