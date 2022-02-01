@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useEffect, useState } from "react";
 import { Modal, Button, Row, Col } from "antd";
 import { useConnectionConfig } from '../../contexts/connection';
@@ -34,15 +34,7 @@ export const StreamWithdrawModal = (props: {
   const [maxAmount, setMaxAmount] = useState<number>(0);
   const [feeAmount, setFeeAmount] = useState<number | null>(null);
   const [loadingData, setLoadingData] = useState(false);
-
-  // TODO: Temp method to get withdraw amount up to the vested cliff amount
-  // const getMaxWithdrawAmount = (item: StreamInfo) => {
-  //   let maxWithdrawableAmount = item.cliffVestAmount;
-  //   if (item.cliffVestPercent > 0 && item.cliffVestPercent < 100) {
-  //     maxWithdrawableAmount = (item.cliffVestPercent * item.allocationAssigned / 100);
-  //   }
-  //   return maxWithdrawableAmount;
-  // }
+  const [feePayedByTreasurer, setFeePayedByTreasurer] = useState(false);
 
   useEffect(() => {
 
@@ -62,6 +54,7 @@ export const StreamWithdrawModal = (props: {
             max = v1.escrowVestedAmount;
           } else {
             max = toUiAmount(new BN(v2.withdrawableAmount), props.selectedToken?.decimals || 6);
+            setFeePayedByTreasurer(v2.feePayedByTreasurer);
           }
           setMaxAmount(max);
         } else {
@@ -122,9 +115,11 @@ export const StreamWithdrawModal = (props: {
           }
         } else {
           setMaxAmount(max);
+          setFeePayedByTreasurer(v2.feePayedByTreasurer);
         }
       }
     }
+
   }, [
     t,
     publicKey,
@@ -136,11 +131,28 @@ export const StreamWithdrawModal = (props: {
     props.selectedToken?.decimals
   ]);
 
+  const getFeeAmount = useCallback((fees: TransactionFees, amount?: any): number => {
+    let fee = 0;
+    const inputAmount = amount ? parseFloat(amount) : 0;
+    if (fees) {
+      if (fees.mspPercentFee) {
+        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
+      } else if (fees.mspFlatFee) {
+        fee = fees.mspFlatFee;
+      }
+    }
+    return feePayedByTreasurer ? 0 : fee;
+  }, [feePayedByTreasurer]);
+
   useEffect(() => {
     if (!feeAmount && props.transactionFees) {
       setFeeAmount(getFeeAmount(props.transactionFees));
     }
-  }, [feeAmount, props.transactionFees]);
+  }, [
+    feeAmount,
+    props.transactionFees,
+    getFeeAmount
+  ]);
 
   const onAcceptWithdrawal = () => {
     const isMaxAmount = getDisplayAmount(maxAmount) === getDisplayAmount(+withdrawAmountInput)
@@ -186,19 +198,6 @@ export const StreamWithdrawModal = (props: {
       setFeeAmount(getFeeAmount(props.transactionFees, newValue));
     }
   };
-
-  const getFeeAmount = (fees: TransactionFees, amount?: any): number => {
-    let fee = 0;
-    const inputAmount = amount ? parseFloat(amount) : 0;
-    if (fees) {
-      if (fees.mspPercentFee) {
-        fee = inputAmount ? percentage(fees.mspPercentFee, inputAmount) : 0;
-      } else if (fees.mspFlatFee) {
-        fee = fees.mspFlatFee;
-      }
-    }
-    return fee;
-  }
 
   // Validation
 
