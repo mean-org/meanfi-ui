@@ -3667,7 +3667,9 @@ export const TreasuriesView = () => {
             }
           </>
         )}
-        {(!isNewTreasury || (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open)) && (
+        {(!isNewTreasury ||
+          (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open) ||
+          (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Lock && streamV2.status === STREAM_STATUS.Paused)) && (
           <Menu.Item key="3" onClick={showCloseStreamModal}>
             <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
           </Menu.Item>
