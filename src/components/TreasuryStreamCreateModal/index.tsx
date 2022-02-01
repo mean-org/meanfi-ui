@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { useContext, useState } from 'react';
 import { Modal, Button, Select, Dropdown, Menu, DatePicker, Checkbox, Divider } from 'antd';
 import { AppStateContext } from '../../contexts/appstate';
-import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from '../../utils/utils';
+import { cutNumber, formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress, toTokenAmount, toUiAmount } from '../../utils/utils';
 import { useTranslation } from 'react-i18next';
 import { TokenInfo } from '@solana/spl-token-registry';
 import {
@@ -162,7 +162,7 @@ export const TreasuryStreamCreateModal = (props: {
       ? t('transactions.validation.select-recipient')
       : !selectedToken || unallocatedBalance === 0
       ? t('transactions.validation.no-balance')
-      : !fromCoinAmount || !isValidNumber(fromCoinAmount) || !amount
+      : amount === 0
       ? t('transactions.validation.no-amount')
       : (isFeePaidByTreasurer && amount > getMaxAmount()) || (!isFeePaidByTreasurer && amount > unallocatedBalance)
       ? t('transactions.validation.amount-high')
@@ -698,7 +698,7 @@ export const TreasuryStreamCreateModal = (props: {
     const amount = fromCoinAmount ? parseFloat(fromCoinAmount) : 0;
     return publicKey &&
            selectedToken &&
-           (props.treasuryDetails as Treasury).treasuryType === TreasuryType.Lock && amount > 0 &&
+           amount > 0 &&
            ((isFeePaidByTreasurer && amount <= getMaxAmount()) ||
             (!isFeePaidByTreasurer && amount <= unallocatedBalance))
     ? true
@@ -1011,7 +1011,7 @@ export const TreasuryStreamCreateModal = (props: {
                   {selectedToken && unallocatedBalance ? (
                     <div
                       className="token-max simplelink"
-                      onClick={() => setFromCoinAmount(getMaxAmount().toFixed(selectedToken.decimals))}>
+                      onClick={() => setFromCoinAmount(cutNumber(getMaxAmount(), selectedToken.decimals))}>
                       MAX
                     </div>
                   ) : null}

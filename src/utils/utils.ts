@@ -591,3 +591,9 @@ export const toTokenAmount = (amount: number, decimals: number) => {
   if (!amount || !decimals) { return 0; }
   return amount * (10 ** decimals);
 }
+
+export function cutNumber(amount: number, decimals: number) {
+  const str = `${amount}`;
+
+  return str.slice(0, str.indexOf('.') + decimals + 1);
+}
