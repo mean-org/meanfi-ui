@@ -312,7 +312,7 @@ export const StreamCloseModal = (props: {
             </div>
           )}
 
-          {props.canCloseTreasury && (
+          {props.canCloseTreasury && treasuryDetails && !treasuryDetails.autoClose && (
             <div className="mb-4 flex-fixed-right">
               <div className="form-label left">
                 {t('treasuries.treasury-streams.close-stream-also-closes-treasury-label')}
