@@ -457,7 +457,7 @@ export const Streams = () => {
 
   const onTransferStreamTransactionFinished = () => {
     resetTransactionStatus();
-    closeTransferStreamModal();
+    hideTransferStreamTransactionModal();
   };
 
   const onAfterTransferStreamTransactionModalClosed = () => {

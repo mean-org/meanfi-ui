@@ -79,7 +79,7 @@ export const StreamTransferOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!address}
+        disabled={!address || !isValidAddress(address) || isAddressOwnAccount()}
         onClick={onAcceptNewAddress}>
         {!address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>
