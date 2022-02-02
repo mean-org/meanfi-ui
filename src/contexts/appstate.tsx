@@ -782,15 +782,19 @@ const AppStateProvider: React.FC = ({ children }) => {
       });
 
       let streamAccumulator: any[] = [];
+      let rawStreamsv1: StreamInfo[] = [];
+      let rawStreamsv2: Stream[] = [];
 
       msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
         .then(streamsv2 => {
           streamAccumulator.push(...streamsv2);
-          setStreamListv2(streamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+          rawStreamsv2 = streamsv2;
+          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
           ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
           .then(streamsv1 => {
               streamAccumulator.push(...streamsv1);
-              setStreamListv1(streamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+              rawStreamsv1 = streamsv1;
+              rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
               streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
               // Sort debugging block
               if (!isProd()) {
@@ -803,6 +807,8 @@ const AppStateProvider: React.FC = ({ children }) => {
               }
               // End of debugging block
               setStreamList(streamAccumulator);
+              setStreamListv2(rawStreamsv2);
+              setStreamListv1(rawStreamsv1);
               consoleOut('Streams:', streamAccumulator, 'blue');
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;

@@ -85,6 +85,8 @@ import {
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
 import { StreamTreasuryType } from "../../models/treasuries";
+import { StreamsSummary } from "../../models/streams";
+import { UserTokenAccount } from "../../models/transactions";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -96,6 +98,7 @@ export const Streams = () => {
   const { connected, wallet, publicKey } = useWallet();
   const {
     streamList,
+    coinPrices,
     streamListv1,
     streamListv2,
     streamDetail,
@@ -108,6 +111,7 @@ export const Streams = () => {
     customStreamDocked,
     lastStreamsSummary,
     streamProgramAddress,
+    loadingStreamsSummary,
     loadingStreamActivity,
     highLightableStreamId,
     streamV2ProgramAddress,
@@ -118,11 +122,14 @@ export const Streams = () => {
     setEffectiveRate,
     setSelectedStream,
     refreshStreamList,
+    setStreamsSummary,
     setDtailsPanelOpen,
     setShouldLoadTokens,
     refreshTokenBalance,
     setTransactionStatus,
     setCustomStreamDocked,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setHighLightableStreamId,
   } = useContext(AppStateContext);
   const {
@@ -198,7 +205,17 @@ export const Streams = () => {
     return await calculateActionFeesV2(connection, action);
   }, [connection]);
 
-  // Live data calculation
+  const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !token.symbol) { return 0; }
+    const tokenSymbol = token.symbol.toUpperCase();
+    const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+
+    return coinPrices && coinPrices[symbol]
+      ? coinPrices[symbol]
+      : 0;
+  }, [coinPrices])
+
+  // Live data calculation - Streams list
   useEffect(() => {
 
     const refreshStreams = async () => {
@@ -273,6 +290,129 @@ export const Streams = () => {
     setStreamDetail,
     setStreamList,
   ])
+
+  // Live data calculation - Stream summary
+  useEffect(() => {
+
+    const refreshStreamSummary = async () => {
+
+      if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
+
+      setLoadingStreamsSummary(true);
+
+      let resume: StreamsSummary = {
+        totalNet: 0,
+        incomingAmount: 0,
+        outgoingAmount: 0,
+        totalAmount: 0
+      };
+
+      const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
+      const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
+
+      // consoleOut('=========== Block strat ===========', '', 'orange');
+
+      for (let stream of updatedStreamsv1) {
+
+        const streamIsOutgoing = 
+            stream.treasurerAddress &&
+            typeof stream.treasurerAddress !== 'string'
+                ? stream.treasurerAddress.equals(publicKey)
+                : stream.treasurerAddress === publicKey.toBase58();
+  
+        if (streamIsOutgoing) {
+          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+        } else {
+          resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        }
+
+        // Get refreshed data
+        let freshStream = await ms.refreshStream(stream) as StreamInfo;
+        if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+        const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+        if (streamIsOutgoing) {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+        } else {
+          resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+        }
+      }
+
+      resume['totalAmount'] = updatedStreamsv1.length;
+
+      // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
+
+      let streamsUsdNetChange = 0;
+
+      for (let stream of updatedStreamsv2) {
+
+        const streamIsOutgoing = 
+            stream.treasurer &&
+            typeof stream.treasurer !== 'string'
+                ? stream.treasurer.equals(publicKey)
+                : stream.treasurer === publicKey.toBase58();
+
+        if (streamIsOutgoing) {
+          resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+        } else {
+          resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        }
+
+        // Get refreshed data
+        let freshStream = await msp.refreshStream(stream) as Stream;
+        if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+        const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+        const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
+        // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
+        // consoleOut(`streamUnitsPerSecond: ${streamIsOutgoing ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
+        // consoleOut(`streamUnitsUsdPerSecond: ${streamIsOutgoing ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
+        if (streamIsOutgoing) {
+          streamsUsdNetChange -= streamUnitsUsdPerSecond;
+        } else {
+          streamsUsdNetChange += streamUnitsUsdPerSecond;
+        }
+      }
+
+      resume['totalAmount'] += updatedStreamsv2.length;
+      resume['totalNet'] += streamsUsdNetChange;
+
+      // consoleOut('totalNet:', resume['totalNet'], 'blue');
+      // consoleOut('=========== Block ends ===========', '', 'orange');
+
+      // Update state
+      setLastStreamsSummary(streamsSummary);
+      setStreamsSummary(resume);
+      setLoadingStreamsSummary(false);
+
+    }
+
+    const timeout = setTimeout(() => {
+      if (publicKey && streamList) {
+        refreshStreamSummary();
+      }
+    }, 3000);
+
+    return () => {
+      clearTimeout(timeout);
+    }
+
+  }, [
+    ms,
+    msp,
+    publicKey,
+    streamList,
+    streamListv1,
+    streamListv2,
+    streamsSummary,
+    loadingStreamsSummary,
+    setLoadingStreamsSummary,
+    setLastStreamsSummary,
+    setStreamsSummary,
+    getPricePerToken,
+  ]);
 
   // Handle overflow-ellipsis-middle elements of resize
   useEffect(() => {
@@ -2460,7 +2600,7 @@ export const Streams = () => {
                 </div>
               </div>
             ) : (
-              <div className={streamsSummary.totalNet !== lastStreamsSummary.totalNet ? 'token-icon animate-border' : 'token-icon'}>
+              <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
                 <div className="streams-count simplelink" onClick={(e) => refreshStreamList()}>
                   <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
                 </div>
@@ -2486,9 +2626,9 @@ export const Streams = () => {
             )}
           </div>
           <div className="operation-vector">
-            {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (
+            {streamsSummary.totalNet > 0 ? (
               <ArrowUpOutlined className="mean-svg-icons success bounce" />
-            ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
+            ) : streamsSummary.totalNet < 0 ? (
               <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
             ) : (
               <span className="online-status neutral"></span>
