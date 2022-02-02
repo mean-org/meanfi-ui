@@ -428,6 +428,8 @@
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
 	"transfer-stream": {
+		"destination-address-is-sender": "The new address cannot be the sender",
+		"destination-is-own-account": "Transfer stream to yourself is not allowed",
 		"label-streamid-input": "New stream owner",
 		"modal-title": "Transfer stream",
 		"streamid-empty": "Missing address",

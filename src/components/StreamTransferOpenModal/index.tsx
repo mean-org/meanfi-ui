@@ -1,18 +1,33 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useState } from 'react';
 import { Modal, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { isValidAddress } from '../../utils/ui';
 import { useWallet } from '../../contexts/wallet';
+import { Stream } from '@mean-dao/msp';
+import { StreamInfo } from '@mean-dao/money-streaming';
 
 export const StreamTransferOpenModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
+  streamDetail: Stream | StreamInfo | undefined;
 }) => {
   const [address, setAddress] = useState('');
   const { publicKey } = useWallet();
   const { t } = useTranslation('common');
+
+  const isAddressTreasurer = useCallback((address: string): boolean => {
+    if (props.streamDetail && address) {
+      const v1 = props.streamDetail as StreamInfo;
+      const v2 = props.streamDetail as Stream;
+      if ((v1.version < 2 && v1.treasurerAddress === address) ||
+          (v2.version >= 2 && v2.treasurer === address)) {
+        return true;
+      }
+    }
+    return false;
+  }, [props.streamDetail]);
 
   const handleAddressChange = (e: any) => {
     setAddress(e.target.value);
@@ -66,7 +81,11 @@ export const StreamTransferOpenModal = (props: {
             </span>
           ) : isAddressOwnAccount() ? (
             <span className="form-field-error">
-              {t('transactions.recipient.recipient-is-own-account')}
+              {t('transfer-stream.destination-is-own-account')}
+            </span>
+          ) : isAddressTreasurer(address) ? (
+            <span className="form-field-error">
+              {t('transfer-stream.destination-address-is-sender')}
             </span>
           ) : (null)
         }
@@ -79,7 +98,7 @@ export const StreamTransferOpenModal = (props: {
         type="primary"
         shape="round"
         size="large"
-        disabled={!address || !isValidAddress(address) || isAddressOwnAccount()}
+        disabled={!address || !isValidAddress(address) || isAddressOwnAccount() || isAddressTreasurer(address)}
         onClick={onAcceptNewAddress}>
         {!address ? t('transfer-stream.streamid-empty') : t('transfer-stream.streamid-open-cta')}
       </Button>

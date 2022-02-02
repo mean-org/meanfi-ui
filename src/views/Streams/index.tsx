@@ -3887,6 +3887,7 @@ export const Streams = () => {
 
         <StreamTransferOpenModal
           isVisible={isTransferStreamModalVisible}
+          streamDetail={streamDetail}
           handleOk={onAcceptTransferStream}
           handleClose={closeTransferStreamModal}
         />
