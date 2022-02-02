@@ -14,8 +14,7 @@ import { useConnection } from '../../contexts/connection';
 import { MoneyStreaming } from '@mean-dao/money-streaming';
 import { PublicKey } from '@solana/web3.js';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-type StreamTreasuryType = "open" | "locked" | "unknown";
+import { StreamTreasuryType } from '../../models/treasuries';
 
 export const StreamCloseModal = (props: {
   handleClose: any;

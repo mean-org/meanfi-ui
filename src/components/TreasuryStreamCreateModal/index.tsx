@@ -432,27 +432,9 @@ export const TreasuryStreamCreateModal = (props: {
         consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
         consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
-        /**
-         * createStream params as of Tue 7 Dec 2021
-         * 
-         * treasurer: PublicKey,
-         * treasury: PublicKey | undefined
-         * beneficiary: PublicKey
-         * associatedToken: PublicKey
-         * rateAmount?: number | undefined
-         * rateIntervalInSeconds?: number | undefined
-         * startUtc?: Date | undefined
-         * streamName?: string | undefined
-         * allocation?: number | undefined
-         * allocationReserved?: number | undefined
-         * rateCliffInSeconds?: number | undefined
-         * cliffVestAmount?: number | undefined
-         * cliffVestPercent?: number | undefined
-         * autoPauseInSeconds?: number | undefined
-         */
-
         // Create a transaction
         const data = {
+          initializer: publicKey.toBase58(),                                          // initializer
           treasurer: publicKey.toBase58(),                                            // treasurer
           treasury: treasury.toBase58(),                                              // treasury
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
@@ -463,8 +445,28 @@ export const TreasuryStreamCreateModal = (props: {
           rateAmount: rateAmount,                                                     // rateAmount
           rateIntervalInSeconds: getRateIntervalInSeconds(paymentRateFrequency),      // rateIntervalInSeconds
           startUtc: startUtc,                                                         // startUtc
+          cliffVestAmount: undefined,                                                 // cliffVestAmount
+          cliffVestPercent: undefined,                                                // cliffVestPercent
+          feePayedByTreasurer: isFeePaidByTreasurer                                   // feePayedByTreasurer
         };
         consoleOut('data:', data);
+
+        /**
+         * initializer: PublicKey,
+         * treasurer: PublicKey,
+         * treasury: PublicKey | undefined,
+         * beneficiary: PublicKey,
+         * associatedToken: PublicKey,
+         * streamName: string,
+         * allocationAssigned: number,
+         * allocationReserved?: number | undefined,
+         * rateAmount?: number | undefined,
+         * rateIntervalInSeconds?: number | undefined,
+         * startUtc?: Date | undefined,
+         * cliffVestAmount?: number | undefined,
+         * cliffVestPercent?: number | undefined,
+         * feePayedByTreasurer?: boolean | undefined
+         */
 
         // Log input data
         transactionLog.push({

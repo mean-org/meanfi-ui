@@ -84,6 +84,7 @@ import {
   calculateActionFees as calculateActionFeesV2,
 } from "@mean-dao/msp";
 import { StreamTransferOpenModal } from "../../components/StreamTransferOpenModal";
+import { StreamTreasuryType } from "../../models/treasuries";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -749,10 +750,10 @@ export const Streams = () => {
   }, [oldSelectedToken, setSelectedToken]);
 
   const [addFundsAmount, setAddFundsAmount] = useState<number>(0);
-  const onAcceptAddFunds = (amount: any) => {
+  const onAcceptAddFunds = (data: any) => {
     closeAddFundsModal();
-    consoleOut('AddFunds amount:', parseFloat(amount));
-    onExecuteAddFundsTransaction(amount);
+    consoleOut('AddFunds input:', data, 'blue');
+    onExecuteAddFundsTransaction(data);
   };
 
   // Withdraw funds modal
@@ -1195,7 +1196,7 @@ export const Streams = () => {
     resetTransactionStatus();
   }
 
-  const onExecuteAddFundsTransaction = async (addAmount: string) => {
+  const onExecuteAddFundsTransaction = async (addFundsData: any) => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
@@ -1216,7 +1217,7 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const treasury = new PublicKey((streamDetail as StreamInfo).treasuryAddress as string);
         const contributorMint = new PublicKey(streamDetail.associatedToken as string);
-        const amount = parseFloat(addAmount);
+        const amount = parseFloat(addFundsData.amount);
         setAddFundsAmount(amount);
 
         const data = {
@@ -1316,15 +1317,19 @@ export const Streams = () => {
         const stream = new PublicKey(streamDetail.id as string);
         const treasury = new PublicKey((streamDetail as Stream).treasury as string);
         const associatedToken = new PublicKey(streamDetail.associatedToken as string);
-        const amount = toTokenAmount(parseFloat(addAmount as string), selectedToken.decimals);
-        setAddFundsAmount(parseFloat(addAmount));
+        const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
+        const treasuryType = addFundsData.treasuryType as StreamTreasuryType;
+        setAddFundsAmount(parseFloat(addFundsData.amount));
+
         const data = {
           contributor: publicKey.toBase58(),                              // contributor
           treasury: treasury.toBase58(),                                  // treasury
           associatedToken: associatedToken.toBase58(),                    // associatedToken
           stream: stream.toBase58(),                                      // stream
           amount,                                                         // amount
-          allocationType: AllocationType.All                              // allocationType
+          allocationType: treasuryType === "locked"                       // allocationType
+            ? AllocationType.Specific
+            : AllocationType.None
         }
         consoleOut('add funds data:', data);
 
@@ -1363,12 +1368,14 @@ export const Streams = () => {
         consoleOut('Starting addFunds using MSP V2...', '', 'blue');
         // Create a transaction
         return await msp.addFunds(
-          publicKey,
-          treasury,
-          associatedToken,
-          stream,
-          amount,
-          AllocationType.Specific
+          publicKey,                                          // contributor
+          treasury,                                           // treasury
+          associatedToken,                                    // associatedToken
+          stream,                                             // stream
+          amount,                                             // amount
+          treasuryType === "locked"                           // allocationType
+            ? AllocationType.Specific
+            : AllocationType.None
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -3903,12 +3910,22 @@ export const Streams = () => {
           />
         )}
 
-        <StreamAddFundsModal
-          isVisible={isAddFundsModalVisible}
-          transactionFees={transactionFees}
-          handleOk={onAcceptAddFunds}
-          handleClose={closeAddFundsModal}
-        />
+        {isAddFundsModalVisible && (
+          <StreamAddFundsModal
+            isVisible={isAddFundsModalVisible}
+            transactionFees={transactionFees}
+            streamDetail={streamDetail}
+            mspClient={
+              streamDetail
+                ? streamDetail.version < 2
+                  ? ms
+                  : msp
+                : undefined
+            }
+            handleOk={onAcceptAddFunds}
+            handleClose={closeAddFundsModal}
+          />
+        )}
 
         {(isWithdrawModalVisible) && (
           <StreamWithdrawModal

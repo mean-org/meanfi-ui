@@ -32,7 +32,7 @@ import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { TreasuryTypeOption } from "../models/treasury-definition";
+import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";

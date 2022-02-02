@@ -6,3 +6,5 @@ export interface TreasuryTypeOption {
     translationId: string;
     disabled: boolean;
 }
+
+export type StreamTreasuryType = "open" | "locked" | "unknown";

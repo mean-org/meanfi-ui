@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { CheckOutlined, InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { TREASURY_TYPE_OPTIONS } from '../../constants/treasury-type-options';
 import { AppStateContext } from '../../contexts/appstate';
-import { TreasuryTypeOption } from '../../models/treasury-definition';
+import { TreasuryTypeOption } from '../../models/treasuries';
 import { TransactionStatus } from '../../models/enums';
 import { getTransactionOperationDescription } from '../../utils/ui';
 import { isError } from '../../utils/transactions';
