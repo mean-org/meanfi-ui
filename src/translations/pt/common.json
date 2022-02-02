@@ -57,6 +57,7 @@
 	},
 	"close-stream": {
 		"cant-close-message": "You cannot close a stream from a locked treasury",
+		"cant-topup-message": "You cannot top up a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Após a conclusão desta transferência de dinheiro, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}) e os fundos pendentes serão devolvidos à conta original  ({{treasury}}) ",
 		"context-treasurer-single-beneficiary": "Na conclusão desta transferência monetária, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}), e os fundos pendentes serão devolvidos ao contribuinte original.",

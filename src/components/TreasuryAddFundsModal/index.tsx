@@ -457,12 +457,11 @@ export const TreasuryAddFundsModal = (props: {
     if (props.treasuryStreams && props.treasuryStreams.length > 0) {
       if (props.treasuryStreams.length === 1 && tt === TreasuryType.Open) {
         setAllocationOption(AllocationType.Specific);
-      // } else if (tt === TreasuryType.Lock) {
-      //   setAllocationOption(AllocationType.None);
       } else {
         setAllocationOption(AllocationType.None);
-        // setAllocationOption(AllocationType.All);
       }
+    } else {
+      setAllocationOption(AllocationType.None);
     }
   }, [
     props.treasuryDetails,
@@ -747,7 +746,7 @@ export const TreasuryAddFundsModal = (props: {
             </div>
 
             {/* Funds Allocation options */}
-            {numTreasuryStreams() > 0 && (
+            {(numTreasuryStreams() > 0 && treasuryType === TreasuryType.Open) && (
               <div className="mb-3">
                 <div className="form-label">{t('treasuries.add-funds.allocation-label')}</div>
                 <div className="well">
@@ -878,8 +877,6 @@ export const TreasuryAddFundsModal = (props: {
               onClick={() => {
                 if (transactionStatus.currentOperation === TransactionStatus.Iddle) {
                   onAcceptModal();
-                // } else if (transactionStatus.currentOperation === TransactionStatus.TransactionFinished) {
-                //   onCloseModal();
                 } else {
                   refreshPage();
                 }
@@ -888,8 +885,6 @@ export const TreasuryAddFundsModal = (props: {
                 ? t('treasuries.add-funds.main-cta-busy')
                 : transactionStatus.currentOperation === TransactionStatus.Iddle
                 ? getTransactionStartButtonLabel()
-                // : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
-                // ? t('general.cta-finish')
                 : t('general.refresh')
               }
             </Button>

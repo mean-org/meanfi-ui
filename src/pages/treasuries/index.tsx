@@ -3904,7 +3904,7 @@ export const TreasuriesView = () => {
                 shape="round"
                 size="small"
                 className="thin-stroke"
-                disabled={isTxInProgress() || loadingTreasuries || (isNewTreasury && v2.treasuryType === TreasuryType.Lock && isTreasuryFunded())}
+                disabled={isTxInProgress() || loadingTreasuries}
                 onClick={showAddFundsModal}>
                 {isAddingFunds() && (<LoadingOutlined />)}
                 {isAddingFunds()
@@ -4324,8 +4324,8 @@ export const TreasuriesView = () => {
           associatedToken={
             treasuryDetails
               ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-               ? (treasuryDetails as Treasury).associatedToken as string
-               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
               : ''
           }
           isBusy={isBusy}
@@ -4337,8 +4337,8 @@ export const TreasuriesView = () => {
           associatedToken={
             treasuryDetails
               ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-               ? (treasuryDetails as Treasury).associatedToken as string
-               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
               : ''
           }
           connection={connection}

@@ -1318,7 +1318,6 @@ export const Streams = () => {
         const treasury = new PublicKey((streamDetail as Stream).treasury as string);
         const associatedToken = new PublicKey(streamDetail.associatedToken as string);
         const amount = toTokenAmount(parseFloat(addFundsData.amount as string), selectedToken.decimals);
-        const treasuryType = addFundsData.treasuryType as StreamTreasuryType;
         setAddFundsAmount(parseFloat(addFundsData.amount));
 
         const data = {
@@ -1327,9 +1326,7 @@ export const Streams = () => {
           associatedToken: associatedToken.toBase58(),                    // associatedToken
           stream: stream.toBase58(),                                      // stream
           amount,                                                         // amount
-          allocationType: treasuryType === "locked"                       // allocationType
-            ? AllocationType.Specific
-            : AllocationType.None
+          allocationType: AllocationType.Specific                         // allocationType
         }
         consoleOut('add funds data:', data);
 
@@ -1373,9 +1370,7 @@ export const Streams = () => {
           associatedToken,                                    // associatedToken
           stream,                                             // stream
           amount,                                             // amount
-          treasuryType === "locked"                           // allocationType
-            ? AllocationType.Specific
-            : AllocationType.None
+          AllocationType.Specific                             // allocationType
         )
         .then(value => {
           consoleOut('addFunds returned transaction:', value);
@@ -3928,7 +3923,7 @@ export const Streams = () => {
           />
         )}
 
-        {(isWithdrawModalVisible) && (
+        {isWithdrawModalVisible && (
           <StreamWithdrawModal
             startUpData={lastStreamDetail}
             selectedToken={selectedToken}

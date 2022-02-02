@@ -13,7 +13,8 @@ import { useWallet } from '../../contexts/wallet';
 import { useConnection } from '../../contexts/connection';
 import { PublicKey } from '@solana/web3.js';
 import { consoleOut } from '../../utils/ui';
-import { LoadingOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export const StreamAddFundsModal = (props: {
   handleClose: any;
@@ -31,6 +32,8 @@ export const StreamAddFundsModal = (props: {
     refreshPrices,
   } = useContext(AppStateContext);
   const { t } = useTranslation('common');
+  const location = useLocation();
+  const navigate = useNavigate();
   const connection = useConnection();
   const { publicKey } = useWallet();
   const [topupAmount, setTopupAmount] = useState<string>('');
@@ -39,7 +42,7 @@ export const StreamAddFundsModal = (props: {
   const [streamTreasuryType, setStreamTreasuryType] = useState<StreamTreasuryType | undefined>(undefined);
   const [loadingTreasuryDetails, setLoadingTreasuryDetails] = useState(true);
   const [localStreamDetail, setLocalStreamDetail] = useState<Stream | StreamInfo | undefined>(undefined);
-  // const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
+  const [treasuryDetails, setTreasuryDetails] = useState<Treasury | TreasuryInfo | undefined>(undefined);
 
   const getTreasuryTypeByTreasuryId = useCallback(async (treasuryId: string, streamVersion: number): Promise<StreamTreasuryType | undefined> => {
     if (!connection || !publicKey || !props.mspClient) { return undefined; }
@@ -50,7 +53,7 @@ export const StreamAddFundsModal = (props: {
     try {
       const details = await mspInstance.getTreasury(treasueyPk);
       if (details) {
-        // setTreasuryDetails(details);
+        setTreasuryDetails(details);
         consoleOut('treasuryDetails:', details, 'blue');
         const v1 = details as TreasuryInfo;
         const v2 = details as Treasury;
@@ -62,7 +65,7 @@ export const StreamAddFundsModal = (props: {
           return "open";
         }
       } else {
-        // setTreasuryDetails(undefined);
+        setTreasuryDetails(undefined);
         return "unknown";
       }
     } catch (error) {
@@ -77,6 +80,16 @@ export const StreamAddFundsModal = (props: {
     connection,
     props.mspClient,
   ]);
+
+  const getTreasuryName = useCallback(() => {
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury ? v2.name : v1.label;
+    }
+    return '-';
+  }, [treasuryDetails]);
 
   // Read and keep the input copy of the stream
   useEffect(() => {
@@ -166,6 +179,35 @@ export const StreamAddFundsModal = (props: {
         <div className="transaction-progress">
           <LoadingOutlined style={{ fontSize: 48 }} className="icon mt-0" spin />
           <h4 className="operation">{t('close-stream.loading-treasury-message')}</h4>
+        </div>
+      ) : streamTreasuryType === "locked" ? (
+        // The user can't top-up the stream
+        <div className="transaction-progress">
+          <ExclamationCircleOutlined style={{ fontSize: 48 }} className="icon mt-0" />
+          <h4 className="operation">{t('close-stream.cant-topup-message')}</h4>
+
+          {/* Only if the user is on streams offer navigating to the treasury */}
+          {location.pathname === '/accounts/streams' && treasuryDetails && (
+            <div className="mt-3">
+              <span className="mr-1">{t('treasuries.treasury-detail.treasury-name-label')}:</span>
+              <span className="mr-1 font-bold">{getTreasuryName()}</span>
+              <span className="simplelink underline-on-hover" onClick={() => {
+                props.handleClose();
+                const url = `/treasuries?treasury=${treasuryDetails.id}`;
+                navigate(url);
+              }}>{t('close-stream.see-details-cta')}</span>
+            </div>
+          )}
+
+          <div className="mt-3">
+            <Button
+                type="primary"
+                shape="round"
+                size="large"
+                onClick={props.handleClose}>
+                {t('general.cta-close')}
+            </Button>
+          </div>
         </div>
       ) : (
         <>
