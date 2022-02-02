@@ -161,7 +161,7 @@ export const IdoLpWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+            customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -184,7 +184,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
+          customLogger.logError('Withdraw Mean Lp transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -372,7 +372,7 @@ export const IdoLpWithdraw = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -395,7 +395,7 @@ export const IdoLpWithdraw = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Collect Mean funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Collect Mean funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

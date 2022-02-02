@@ -903,7 +903,7 @@ export const RepeatingPayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -926,7 +926,7 @@ export const RepeatingPayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

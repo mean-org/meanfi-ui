@@ -154,7 +154,7 @@ export const AirdropRedeem = (props: {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
         result: message
       });
-      customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+      customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -324,7 +324,7 @@ export const AirdropRedeem = (props: {
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                 result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
               });
-              customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+              customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
               return false;
             }
           })
@@ -338,7 +338,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {

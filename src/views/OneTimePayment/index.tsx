@@ -624,7 +624,7 @@ export const OneTimePayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -647,7 +647,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

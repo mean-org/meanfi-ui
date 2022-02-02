@@ -1410,7 +1410,7 @@ export const OneTimeExchange = (props: {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
         result: {signer: `${wallet?.publicKey.toBase58() || '-'}`, error: `${_error}`}
       }]);
-      customLogger.logWarning('Swap transaction failed', { transcript: transactionLog });
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
       throw(_error);
     }
 

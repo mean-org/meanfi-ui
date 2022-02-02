@@ -692,7 +692,7 @@ export const MultisigProgramsView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -715,7 +715,7 @@ export const MultisigProgramsView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -977,7 +977,7 @@ export const MultisigProgramsView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1000,7 +1000,7 @@ export const MultisigProgramsView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

@@ -733,7 +733,7 @@ export const Streams = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -756,7 +756,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1569,7 +1569,7 @@ export const Streams = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1592,7 +1592,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1927,7 +1927,7 @@ export const Streams = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+            customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1950,7 +1950,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2275,7 +2275,7 @@ export const Streams = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2298,7 +2298,7 @@ export const Streams = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

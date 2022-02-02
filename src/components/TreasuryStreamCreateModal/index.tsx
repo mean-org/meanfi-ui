@@ -575,7 +575,7 @@ export const TreasuryStreamCreateModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -598,7 +598,7 @@ export const TreasuryStreamCreateModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

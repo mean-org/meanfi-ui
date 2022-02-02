@@ -348,7 +348,7 @@ export const ExchangeDcasView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
             });
-            customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
             return false;
           }
         })
@@ -362,7 +362,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -619,7 +619,7 @@ export const ExchangeDcasView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
+            customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -642,7 +642,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

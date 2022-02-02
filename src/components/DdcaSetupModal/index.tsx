@@ -397,7 +397,7 @@ export const DdcaSetupModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -420,7 +420,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -648,7 +648,7 @@ export const DdcaSetupModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -671,7 +671,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

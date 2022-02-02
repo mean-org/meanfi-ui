@@ -244,7 +244,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Wrap transaction failed', { transcript: transactionLog });
+            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -350,8 +350,6 @@ export const WrapView = () => {
             const confirmed = await confirmTx();
             consoleOut("confirmed:", confirmed);
             if (confirmed) {
-              // Report success
-              customLogger.logInfo('Wrap transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else {
               setIsBusy(false);

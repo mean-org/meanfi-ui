@@ -180,7 +180,7 @@ export const AccountsMergeModal = (props: {
                   action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                   result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
                 });
-                customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
+                customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
                 return false;
               }
               setTransactionStatus({
@@ -203,7 +203,7 @@ export const AccountsMergeModal = (props: {
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                 result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
               });
-              customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
+              customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
               return false;
             });
           } else {
