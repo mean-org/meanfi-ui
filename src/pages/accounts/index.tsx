@@ -1189,12 +1189,12 @@ export const AccountsView = () => {
   const renderTokenBuyOptions = () => {
     return (
       <div className="buy-token-options">
-        <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
+        <h3 className="text-center mb-3">{t('assets.no-balance.line1', { tokenSymbol: selectedAsset?.symbol })} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
           {isSelectedAssetNativeAccount() && (
             <Button shape="round" type="ghost"
-                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', { tokenSymbol: selectedAsset?.symbol })}</Button>
           )}
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
           {selectedAsset?.publicAddress !== accountAddress && (
