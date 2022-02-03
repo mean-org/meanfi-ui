@@ -389,7 +389,7 @@ export const DdcaAddFundsModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+            customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -412,7 +412,7 @@ export const DdcaAddFundsModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

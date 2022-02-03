@@ -492,22 +492,22 @@ export const OneTimePayment = () => {
         const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        let fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());
+        let startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
 
         // If current user is in the whitelist and we have an amount of minutes to add
         // to the current date selection, calculate it!
         if (isWhitelisted && fixedScheduleValue > 0) {
-          fromParsedDate = addMinutes(fromParsedDate, fixedScheduleValue);
+          startUtc = addMinutes(startUtc, fixedScheduleValue);
         }
 
-        consoleOut('fromParsedDate.toString()', fromParsedDate.toString(), 'crimson');
-        consoleOut('fromParsedDate.toLocaleString()', fromParsedDate.toLocaleString(), 'crimson');
-        consoleOut('fromParsedDate.toISOString()', fromParsedDate.toISOString(), 'crimson');
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString(), 'crimson');
+        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
         // Create a transaction
         const data = {
@@ -515,7 +515,7 @@ export const OneTimePayment = () => {
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
           associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
           amount: amount,                                                             // fundingAmount
-          fromParsedDate: fromParsedDate,                                             // startUtc
+          startUtc: startUtc,                                                         // startUtc
           recipientNote: recipientNote
             ? recipientNote.trim()
             : undefined                                                               // streamName
@@ -550,7 +550,7 @@ export const OneTimePayment = () => {
               getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -562,7 +562,7 @@ export const OneTimePayment = () => {
           beneficiary,                                                // beneficiary
           associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount
-          fromParsedDate,                                             // startUtc
+          startUtc,                                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : undefined                                               // streamName
@@ -624,7 +624,7 @@ export const OneTimePayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -647,7 +647,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -712,7 +712,7 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -765,7 +765,7 @@ export const OneTimePayment = () => {
           if (sent && !transactionCancelled) {
             if (isScheduledPayment()) {
               consoleOut('Send Tx to confirmation queue:', signature);
-              startFetchTxSignatureInfo(signature, "confirmed", OperationType.Transfer);
+              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
               setIsBusy(false);
               handleGoToStreamsClick();
             } else {

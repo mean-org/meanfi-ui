@@ -20,6 +20,7 @@ import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
+import useSolanaStatus from "../../contexts/cluster-stats";
 
 const { Header, Content, Footer } = Layout;
 
@@ -50,15 +51,26 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const { performanceInfo } = useSolanaStatus();
 
   // Clear cachedRpc on App destroy (window is being reloaded)
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    return () => {
-        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    }
-  })
+  // useEffect(() => {
+  //   window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   return () => {
+  //       window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   }
+  // })
 
+  useEffect(() => {
+    // performanceInfo.status === ClusterStatsStatus.Ready
+    if (performanceInfo) {
+      consoleOut('performanceInfo:', performanceInfo, 'blue');
+    }
+  }, [
+    performanceInfo
+  ]);
+
+  /*
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
     // TODO: Next lines are useful if we turn OFF wallet autoConnect
@@ -67,6 +79,7 @@ export const AppLayout = React.memo((props: any) => {
     // }
     // window.localStorage.removeItem('providerName');
   }
+  */
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';

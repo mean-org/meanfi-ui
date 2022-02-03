@@ -681,7 +681,7 @@ export const PayrollPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -758,7 +758,7 @@ export const PayrollPayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
+            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
             return false;
           }
           signedTransaction = signed;
@@ -782,7 +782,7 @@ export const PayrollPayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -857,7 +857,7 @@ export const PayrollPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
           } else { setIsBusy(false); }

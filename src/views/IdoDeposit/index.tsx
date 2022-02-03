@@ -179,7 +179,7 @@ export const IdoDeposit = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -202,7 +202,7 @@ export const IdoDeposit = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {

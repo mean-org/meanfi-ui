@@ -56,14 +56,18 @@
 		"switch-hide-low-balances": "Hide low balances"
 	},
 	"close-stream": {
+		"cant-close-message": "You cannot close a stream from a locked treasury",
+		"cant-topup-message": "You cannot top up a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Após a conclusão desta transferência de dinheiro, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}) e os fundos pendentes serão devolvidos à conta original  ({{treasury}}) ",
 		"context-treasurer-single-beneficiary": "Na conclusão desta transferência monetária, o fluxo de dinheiro será interrompido imediatamente, os fundos adquiridos serão enviados ao beneficiário ({{beneficiary}}), e os fundos pendentes serão devolvidos ao contribuinte original.",
+		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Concluir transferência",
 		"primary-cta": "Concluir transferência",
 		"return-unvested-amount": "Montante pendentes",
 		"return-vested-amount": "Montante adquiridos",
-		"secondary-cta": "Cancelar"
+		"secondary-cta": "Cancelar",
+		"see-details-cta": "see details"
 	},
 	"contract-selector": {
 		"donation-fund": {
@@ -424,6 +428,15 @@
 		"streamid-open-cta": "Iniciar transferência",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
 	},
+	"transfer-stream": {
+		"destination-address-is-sender": "The new address cannot be the sender",
+		"destination-is-own-account": "Transfer stream to yourself is not allowed",
+		"label-streamid-input": "New stream owner",
+		"modal-title": "Transfer stream",
+		"streamid-empty": "Missing address",
+		"streamid-open-cta": "Transfer",
+		"streamid-placeholder": "New beneficiary wallet address"
+	},
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
 		"screen-title": "Payroll"
@@ -454,6 +467,7 @@
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
 			"stopped": "Ran out of funds",
+			"stopped-manually": "Manually stopped",
 			"streaming": "Streaming"
 		},
 		"stream-activity": {
@@ -470,6 +484,7 @@
 			"amount-funded-date": "financiado em",
 			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Fechar transferência de dinheiro",
+			"transfer-money-stream-menu-item": "Transfer ownership",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -604,6 +619,8 @@
 			"stream-started-pre": "Sua transferência de dinheiro para",
 			"tx-add-funds-operation": "Adicionando fundos com",
 			"tx-add-funds-operation-success": "Fundos adicionados com sucesso",
+			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
+			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-close-operation": "Feche a negociação",
 			"tx-close-operation-success": "Transferência fechada com sucesso",
 			"tx-close-vault-operation": "Close vault operation",

@@ -96,27 +96,6 @@ export const AccountsMergeModal = (props: {
               result: ''
             });
 
-            // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-            // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-            // consoleOut('blockchainFee:', otpFees.blockchainFee, 'blue');
-            // consoleOut('nativeBalance:', nativeBalance, 'blue');
-            // if (nativeBalance < otpFees.blockchainFee) {
-            //   setTransactionStatus({
-            //     lastOperation: transactionStatus.currentOperation,
-            //     currentOperation: TransactionStatus.TransactionStartFailure
-            //   });
-            //   transactionLog.push({
-            //     action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            //     result: `Not enough balance (${
-            //       getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            //     }) to pay for network fees (${
-            //       getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())
-            //     })`
-            //   });
-            //   customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
-            //   return false;
-            // }
-
             return await createTokenMergeTx(
                 props.connection,
                 mintPubkey,
@@ -180,7 +159,7 @@ export const AccountsMergeModal = (props: {
                   action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                   result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
                 });
-                customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
+                customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
                 return false;
               }
               setTransactionStatus({
@@ -203,7 +182,7 @@ export const AccountsMergeModal = (props: {
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                 result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
               });
-              customLogger.logWarning('Token accounts merge transaction failed', { transcript: transactionLog });
+              customLogger.logError('Token accounts merge transaction failed', { transcript: transactionLog });
               return false;
             });
           } else {

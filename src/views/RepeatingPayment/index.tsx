@@ -697,7 +697,7 @@ export const RepeatingPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -770,12 +770,16 @@ export const RepeatingPayment = () => {
         const rateAmount = toTokenAmount(parseFloat(paymentRateAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        const fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        fromParsedDate.setSeconds(now.getSeconds());
-        fromParsedDate.setMilliseconds(now.getMilliseconds());
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+        const startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
+
+        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
         // Create a transaction
         const data = {
@@ -786,7 +790,7 @@ export const RepeatingPayment = () => {
           rateAmount: rateAmount,                                     // rateAmount
           rateIntervalInSeconds:
             getRateIntervalInSeconds(paymentRateFrequency),           // rateIntervalInSeconds
-          startUtc: fromParsedDate,                                   // startUtc
+          startUtc: startUtc,                                         // startUtc
           streamName: recipientNote
             ? recipientNote.trim()
             : undefined,                                              // streamName
@@ -822,7 +826,7 @@ export const RepeatingPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -840,7 +844,7 @@ export const RepeatingPayment = () => {
           0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate,                                             // startUtc
+          startUtc,                                                   // startUtc
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -899,7 +903,7 @@ export const RepeatingPayment = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -922,7 +926,7 @@ export const RepeatingPayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1002,7 +1006,7 @@ export const RepeatingPayment = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamCreate);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
             setIsBusy(false);
             handleGoToStreamsClick();
           } else { setIsBusy(false); }

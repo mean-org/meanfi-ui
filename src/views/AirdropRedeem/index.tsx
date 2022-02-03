@@ -154,7 +154,7 @@ export const AirdropRedeem = (props: {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
         result: message
       });
-      customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+      customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
     }
 
     const createTx = async (): Promise<boolean> => {
@@ -222,7 +222,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: noBalanceMessage
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -268,7 +268,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -276,7 +276,7 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -324,7 +324,7 @@ export const AirdropRedeem = (props: {
                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                 result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
               });
-              customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+              customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
               return false;
             }
           })
@@ -338,7 +338,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -351,7 +351,7 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -383,7 +383,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -396,7 +396,7 @@ export const AirdropRedeem = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Airdrop Redeem transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -425,7 +425,7 @@ export const AirdropRedeem = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
               result: signature
             });
-            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
             throw(result?.value?.err || new Error("Could not confirm transaction"));
           }
         })
@@ -438,7 +438,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
             result: signature
           });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
           return false;
         });
     }

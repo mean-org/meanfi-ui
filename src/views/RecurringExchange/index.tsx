@@ -474,7 +474,7 @@ export const RecurringExchange = (props: {
 
       //TODO: Remove token filtering when HLA program implementation covers all tokens
       for (let info of TOKENS) {
-        let mint = JSON.parse(JSON.stringify(info));
+        let mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
