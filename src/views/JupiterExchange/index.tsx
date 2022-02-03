@@ -1295,7 +1295,7 @@ export const JupiterExchange = (props: {
                         action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
                         result: `${error}`
                     });
-                    customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                    customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                     return false;
                 });
             } else {
@@ -1303,7 +1303,7 @@ export const JupiterExchange = (props: {
                     action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
                     result: 'Cannot start transaction! Wallet not found!'
                 });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                 return false;
             }
         };
@@ -1330,7 +1330,7 @@ export const JupiterExchange = (props: {
                                 action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                                 result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
                             });
-                            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                            customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                             return false;
                         }
                         setTransactionStatus({
@@ -1353,7 +1353,7 @@ export const JupiterExchange = (props: {
                             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
                             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
                         });
-                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                         return false;
                     });
             } else {
@@ -1366,7 +1366,7 @@ export const JupiterExchange = (props: {
                     action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
                     result: 'Cannot sign transaction! Wallet not found!'
                 });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                 return false;
             }
         };
@@ -1398,7 +1398,7 @@ export const JupiterExchange = (props: {
                             action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
                             result: { error, encodedTx }
                         });
-                        customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                        customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                         return false;
                     });
             } else {
@@ -1410,7 +1410,7 @@ export const JupiterExchange = (props: {
                     action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
                     result: 'Cannot send transaction! Wallet not found!'
                 });
-                customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                 return false;
             }
         };
@@ -1439,7 +1439,7 @@ export const JupiterExchange = (props: {
                         action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
                         result: signature
                     });
-                    customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+                    customLogger.logError('Unwrap transaction failed', { transcript: transactionLog });
                     return false;
                 });
         };

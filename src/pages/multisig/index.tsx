@@ -461,7 +461,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -489,7 +489,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           });
 
@@ -498,7 +498,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -524,7 +524,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -547,7 +547,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -560,7 +560,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -592,7 +592,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -605,7 +605,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -863,7 +863,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -927,7 +927,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -950,7 +950,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -963,7 +963,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -995,7 +995,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1008,7 +1008,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1138,7 +1138,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1167,16 +1167,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1202,7 +1202,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1225,7 +1225,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1238,7 +1238,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1270,7 +1270,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1283,7 +1283,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1425,7 +1425,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1454,16 +1454,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1489,7 +1489,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1512,7 +1512,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1525,7 +1525,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1557,7 +1557,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1570,7 +1570,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1773,7 +1773,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1802,16 +1802,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1837,7 +1837,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1860,7 +1860,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1873,7 +1873,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1905,7 +1905,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1918,7 +1918,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2106,7 +2106,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2135,16 +2135,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2170,7 +2170,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2193,7 +2193,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2206,7 +2206,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2238,7 +2238,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2251,7 +2251,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2456,7 +2456,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2485,16 +2485,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2520,7 +2520,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2543,7 +2543,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2556,7 +2556,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2588,7 +2588,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2601,7 +2601,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }

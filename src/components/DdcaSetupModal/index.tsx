@@ -614,7 +614,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+          customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -622,7 +622,7 @@ export const DdcaSetupModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Recurring scheduled exchange transaction failed', { transcript: transactionLog });
+        customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -648,7 +648,7 @@ export const DdcaSetupModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+            customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -671,7 +671,7 @@ export const DdcaSetupModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+          customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -684,7 +684,7 @@ export const DdcaSetupModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+        customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -718,7 +718,7 @@ export const DdcaSetupModal = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+            customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -731,7 +731,7 @@ export const DdcaSetupModal = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('DDCA Create vault transaction failed', { transcript: transactionLog });
+        customLogger.logError('WakeAndSwap transaction failed', { transcript: transactionLog });
         return false;
       }
     }

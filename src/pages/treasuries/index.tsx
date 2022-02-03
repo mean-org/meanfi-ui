@@ -1538,7 +1538,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1605,7 +1605,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1836,7 +1836,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1873,7 +1873,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1881,7 +1881,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1941,7 +1941,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1978,7 +1978,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1986,7 +1986,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2012,7 +2012,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2035,7 +2035,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2048,7 +2048,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2080,7 +2080,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2093,7 +2093,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -3332,7 +3332,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3343,7 +3343,7 @@ export const TreasuriesView = () => {
           streamPublicKey,                                  // Stream ID
         )
         .then(value => {
-          consoleOut('pauseStream returned transaction:', value);
+          consoleOut('resumeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -3356,7 +3356,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('pauseStream error:', error);
+          console.error('resumeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -3365,7 +3365,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3373,7 +3373,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -3420,7 +3420,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3431,7 +3431,7 @@ export const TreasuriesView = () => {
           streamPublicKey,                                  // Stream ID
         )
         .then(value => {
-          consoleOut('pauseStream returned transaction:', value);
+          consoleOut('resumeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -3444,7 +3444,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('pauseStream error:', error);
+          console.error('resumeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -3453,7 +3453,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3461,7 +3461,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
