@@ -799,16 +799,14 @@ export const AccountsView = () => {
 
     for (let stream of updatedStreamsv1) {
 
-      const streamIsOutgoing = 
-          stream.treasurerAddress &&
-          typeof stream.treasurerAddress !== 'string'
-              ? stream.treasurerAddress.equals(publicKey)
-              : stream.treasurerAddress === publicKey.toBase58();
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+        ? true
+        : false;
 
-      if (streamIsOutgoing) {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
       } else {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
       }
 
       // Get refreshed data
@@ -817,10 +815,10 @@ export const AccountsView = () => {
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
       const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
-      if (streamIsOutgoing) {
-        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
-      } else {
+      if (isIncoming) {
         resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+      } else {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
       }
     }
 
@@ -832,16 +830,14 @@ export const AccountsView = () => {
 
     for (let stream of updatedStreamsv2) {
 
-      const streamIsOutgoing = 
-          stream.treasurer &&
-          typeof stream.treasurer !== 'string'
-              ? stream.treasurer.equals(publicKey)
-              : stream.treasurer === publicKey.toBase58();
+      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+        ? true
+        : false;
 
-      if (streamIsOutgoing) {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
       } else {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
       }
 
       // Get refreshed data
@@ -852,12 +848,12 @@ export const AccountsView = () => {
       const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
       const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
       // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
-      // consoleOut(`streamUnitsPerSecond: ${streamIsOutgoing ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
-      // consoleOut(`streamUnitsUsdPerSecond: ${streamIsOutgoing ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
-      if (streamIsOutgoing) {
-        streamsUsdNetChange -= streamUnitsUsdPerSecond;
-      } else {
+      // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
+      // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
+      if (isIncoming) {
         streamsUsdNetChange += streamUnitsUsdPerSecond;
+      } else {
+        streamsUsdNetChange -= streamUnitsUsdPerSecond;
       }
     }
 

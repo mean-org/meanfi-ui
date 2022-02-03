@@ -54,12 +54,12 @@ export const AppLayout = React.memo((props: any) => {
   const { performanceInfo } = useSolanaStatus();
 
   // Clear cachedRpc on App destroy (window is being reloaded)
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    return () => {
-        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    }
-  })
+  // useEffect(() => {
+  //   window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   return () => {
+  //       window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   }
+  // })
 
   useEffect(() => {
     // performanceInfo.status === ClusterStatsStatus.Ready
@@ -70,6 +70,7 @@ export const AppLayout = React.memo((props: any) => {
     performanceInfo
   ]);
 
+  /*
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
     // TODO: Next lines are useful if we turn OFF wallet autoConnect
@@ -78,6 +79,7 @@ export const AppLayout = React.memo((props: any) => {
     // }
     // window.localStorage.removeItem('providerName');
   }
+  */
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
