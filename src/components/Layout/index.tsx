@@ -66,7 +66,9 @@ export const AppLayout = React.memo((props: any) => {
     if (performanceInfo) {
       consoleOut('performanceInfo:', performanceInfo, 'blue');
     }
-  }, [performanceInfo]);
+  }, [
+    performanceInfo
+  ]);
 
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');

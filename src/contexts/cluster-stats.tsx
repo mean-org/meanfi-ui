@@ -64,6 +64,7 @@ export const SolanaStatusProvider: React.FC = ({ children }) => {
         const samples = await connection.getRecentPerformanceSamples(
           60 * SAMPLE_HISTORY_HOURS
         );
+        console.log('got samples');
 
         if (samples.length < 1) {
           // no samples to work with (node has no history).
