@@ -1,0 +1,200 @@
+@media (max-width: 575px) {
+  .promo-space div:nth-child(1),
+  .promo-space div:nth-child(2) {
+    display: none;
+  }
+  .slide {
+    margin-bottom: 4em;
+  }
+}
+
+@media (max-width: 768px) {
+  .promo-space div:nth-child(2) {
+    display: none;
+  }
+  .slide {
+    margin-bottom: 4em;
+  }
+}
+
+/*************** GENERAL CARDS ***************/
+.card {
+  padding: 0;
+  .card-body {
+    padding-bottom: 12px !important;
+    .card-content {
+      display: flex;
+      justify-content: space-between;
+    }
+    .card-info {
+      font-size: 1.65em;
+    }
+  }
+}
+.ant-row {
+  width: inherit;
+  .ant-card-bordered {
+    border: none;
+    .ant-card-head {
+      padding: 0 12px;
+      border-bottom: 1px solid var(--color-secondary-alpha-20);
+      min-height: 40px;
+      .ant-card-head-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        padding: 6px 0;
+        font-size: 18px;
+      }
+    }
+    .ant-card-body {
+      padding: 12px 12px 0;
+    }
+    .ant-card-head,
+    .ant-card-body,
+    .ant-typography {
+      color: var(--color-secondary-alpha-85);
+    }
+  }
+}
+
+/*************** PROMO SPACE ***************/
+.promo-space_link img {
+  border-radius: var(--custom-border-radius);
+  object-fit: cover;
+}
+ 
+/*************** SUMARY CARD ***************/
+.summary-card {
+  min-height: 24em;
+  .summary-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 4em;
+    padding-bottom: 1em;
+    .summary-content_text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      span {
+        font-size: 16px;
+      }
+      .ant-typography {
+        width: 85%;
+        button {
+          float: right;
+        }
+      }
+      .anticon svg {
+        font-size: 18px;
+      }
+    }
+  }
+}
+
+/*************** PRICE CARD ***************/
+.price-items {
+  display: flex; 
+  justify-content: space-between; 
+  padding-bottom: 1em;
+  .price-items_left {
+    display: flex;
+    flex-flow: column;
+  }
+  .price-items_right {
+    button {
+      color: var(--color-secondary-alpha-85);
+      border: none;
+    }
+    .active {
+      border: var(--custom-border-style);
+    }
+  }
+}
+
+// CHART
+.recharts-responsive-container {
+  .recharts-surface {
+    height: 190px;
+  }
+  .tooltip {
+    border-radius: var(--custom-border-radius);
+    background: var(--color-panel-background);
+    color: var(--color-secondary-alpha-85);
+    padding: 0.6rem 1rem 0.1rem;
+    height: auto;
+    box-shadow: 0px 1px 2px 0px rgb(60 64 67 / 30%), 0px 2px 6px 2px rgb(60 64 67 / 15%);
+    text-align: center;
+  }
+}
+
+/*************** SLIDER CARDS ***************/
+.slider-row {
+  margin-left: 0px !important;
+  margin-right: -30px !important;
+  .slide {
+    overflow-x: scroll;
+    flex-wrap: nowrap !important;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    .slide-card {
+      min-height: 20em;
+      height: fit-content;
+      margin: 0.25em auto 1.25em;
+      .slide-content {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        .slide-content_avatar {
+          display: flex;
+          justify-content: center;
+          margin-left: 3.25em;
+          margin-bottom: 0.5em;
+          .avatar-coin {
+            border-radius: 50%;
+            display: inline-block;
+            font-size: 35px;
+            height: 1em;
+            position: relative;
+            vertical-align: middle;
+            width: 1em;
+            margin-left: -0.25em;
+            .avatar-coin__content {
+              font-size: .5em;
+              line-height: .5em;
+              overflow: hidden!important;
+            }
+          }
+          .avatar-coin__content, 
+          .avatar-coin img {
+            border-radius: inherit;
+            height: inherit;
+            width: inherit;
+          }
+        }
+        .slide-content_info {
+          display: flex;
+          flex-direction: column;
+          .info-pair {
+            font-size: 16px;
+          }
+          .info-liquidity {
+            display: flex;
+            flex-direction: column;
+            span:nth-child(2) {
+              font-size: 18px;
+            }
+          }
+        }
+        .slide-content_buttons {
+          display: grid;
+          align-items: flex-end;
+          height: 5em;
+        }
+      }
+    }
+  }
+}
+

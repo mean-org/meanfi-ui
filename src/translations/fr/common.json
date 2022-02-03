@@ -396,7 +396,11 @@
 		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Connecté au portefeuille {{address}}",
 		"wallet-connection-event-title": "Mise à jour du portefeuille",
-		"wallet-disconnect-message": "Déconnecté du portefeuille"
+		"wallet-disconnect-message": "Déconnecté du portefeuille",
+		"token-address-copied-message": "Adresse du jeton copiée avec succès",
+		"token-address-not-copied-message": "Impossible de copier l'adresse du jeton",
+		"token-authority-copied-message": "Token Authority copié avec succès",
+		"token-authority-not-copied-message": "Impossible de copier l'autorité de jeton"
 	},
 	"open-stream": {
 		"label-streamid-input": "Entrez l'id du transfert",
@@ -417,6 +421,43 @@
 		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
+	},
+	"stats": {
+		"title": "Statistiques",
+		"subtitle": "Tableau de bord analytique",
+		"buy-btn": "Acheter",
+		"total-liquidity-btn": "Ajouter de la liquidité",
+		"summary": {
+			"summary-title": "Résumé du jeton MEAN",
+			"token-name": "Nom",
+			"token-address": "Adresse",
+			"token-authority": "Autorité",
+			"token-decimals": "Décimales",
+			"token-address-copy": "Copier l'adresse du jeton",
+			"token-authority-copy": "Copier l'autorité du jeton"
+		},
+		"price": {
+			"price-title": "Prix"
+		},
+		"market": {
+			"market-cap-title": "Capitalisation boursière",
+			"holders-title": "Titulaires",
+			"volume-title": "Volume (24H)",
+			"total-supply-title": "Offre Totale",
+			"circulating-supply-title": "Offre en Circulation",
+			"total-money-streams-title": "Total des flux d'argent",
+			"total-value-locked-title": "Valeur totale verrouillée",
+			"token-fully_dilluted_market_cap": "La valeur marchande totale de l'offre en circulation d'une crypto-monnaie. Elle est analogue à la capitalisation flottante sur le marché boursier. Capitalisation boursière = prix actuel x offre en circulation",
+			"token-holders": "Des passionnés dénotant une approche à long terme de l'investissement dans les crypto-monnaies",
+			"token-total-volume": "Une mesure de la quantité d'une crypto-monnaie qui a été échangée au cours des dernières 24 heures",
+			"token-total-supply": "Le nombre de pièces qui ont déjà été créées, moins les pièces qui ont été brûlées. C'est analogue aux actions en circulation sur le marché boursier",
+			"token-circulating-suppply": "La quantité de pièces qui circulent sur le marché et qui sont entre les mains du public. C'est analogue aux actions qui coulent sur le marché boursier",
+			"token-total-money-streams": "Nombre total de paiements continus dans le temps qui ont été créés par le programme Money Streaming",
+			"token-total-value-locked": "Le nombre d'actifs qui sont actuellement jalonnés dans un protocole spécifique"
+		},
+		"pairs": {
+			"total-liquidity": "Liquidité totale"
+		}
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Retour aux transferts",

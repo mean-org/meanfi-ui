@@ -41,6 +41,7 @@ export { IconShieldOutline } from "./IconShieldOutline";
 export { IconShieldSolid } from "./IconShieldSolid";
 export { IconSolana } from "./IconSolana";
 export { IconSort } from "./IconSort";
+export { IconStats } from "./IconStats";
 export { IconStream } from "./IconStream";
 export { IconSun } from "./IconSun";
 export { IconSwapFlip } from "./IconSwapFlip";

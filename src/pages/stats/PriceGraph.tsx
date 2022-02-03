@@ -1,0 +1,165 @@
+import React, { useCallback, useEffect, useState } from "react";
+import { data } from "./data";
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+} from "recharts";
+import "./style.less";
+import moment from "moment";
+import { Button } from "antd";
+import { array, bool, str } from "@project-serum/borsh";
+
+const buttons = ["24H", "7D", "30D"];
+
+export const PriceGraph = () => {
+  const [activeBtn, setActiveBtn] = useState(buttons[2]);
+  const [priceChangeData, setPriceData] = useState(data.priceChange);
+
+  const lastPriceChange = priceChangeData[priceChangeData.length - 1];
+  const lastDate = moment(lastPriceChange.dateData).format("MMM Do, YYYY");
+  const lastPrice = lastPriceChange.priceData;    
+
+  const [dateShownOnTop, setDateShownOnTop] = useState(lastDate);
+  const [priceShownOnTop, setPriceShownOnTop] = useState(lastPrice);
+
+  const onClickHandler = (event: any) => {
+    if (event.target.innerHTML !== activeBtn) {
+      setActiveBtn(event.target.innerHTML);
+    }
+  };
+
+  useEffect(() => {
+    if (activeBtn === "30D") {
+      setPriceData(data.priceChange.slice(-30));
+    } else if (activeBtn === "7D") {
+      setPriceData(data.priceChange.slice(-7));
+    } else if (activeBtn === "24H") {
+      setPriceData(data.priceChange.slice(-1));
+    }
+  }, [activeBtn]);
+
+  /*********************** CUSTOM TOOLTIP *************************/
+  const CustomToolTip = ({ active, payload, label }: any) => {
+    const [dateOnTooltip, setDateOnTooltip] = useState("");
+    const [priceOnTooltip, setPriceOnTooltip] = useState("");
+
+    useEffect(() => {
+      if (active) {
+        setDateOnTooltip(moment(new Date(label)).format("MMM Do, YYYY"));
+        setPriceOnTooltip(payload[0].payload.priceData);
+      }
+    }, [active, label, payload]);
+
+    useEffect(() => {
+      window.addEventListener("click", onSelectedInfo);
+      return () => {
+          window.removeEventListener("click", onSelectedInfo);
+      };
+    });
+
+    const onSelectedInfo = useCallback(() => {
+      if (active) {
+        setDateShownOnTop(dateOnTooltip);
+        setPriceShownOnTop(priceOnTooltip);
+      } else {
+        setDateShownOnTop(lastDate);
+        setPriceShownOnTop(lastPrice);
+      }
+    }, [active, dateOnTooltip, priceOnTooltip]);
+
+    if (active) {
+      return (
+        <div className="tooltip">
+          <h4>{dateOnTooltip}</h4>
+          <p>${priceOnTooltip}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <>
+      <div className="price-items">
+        <div className="price-items_left">
+          <span className="price-items_price">
+            $ {priceShownOnTop}
+          </span>
+          <span className="price-items_date">
+            {dateShownOnTop}
+          </span>
+        </div>
+        <div className="price-items_right">
+          {buttons.map((btn, index) => (
+            <Button 
+              key={index}   
+              type="ghost"
+              shape="round" 
+              size="small" 
+              onClick={onClickHandler}
+              className={`thin-stroke ${activeBtn === btn ? "active" : ""}`}
+            >
+              {btn}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <ResponsiveContainer width="105%" height={215}>
+        <AreaChart data={priceChangeData}>
+          <defs>
+            <linearGradient id="color" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#b8011b" stopOpacity={1} />
+              <stop offset="100%" stopColor="#b8011b" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Area dataKey="priceData" fill="url(#color)" stroke="#ff0017" />
+          <XAxis
+            dataKey="dateData"
+            axisLine={false}
+            tickLine={false}
+            tickMargin={15}
+            angle={-45}
+            height={40}
+            tickFormatter={(date) => {
+              const d = new Date(date);
+              
+              if (activeBtn === "24H") {
+                return moment(d).format("hha");
+              } else {
+                return moment(d).format("MMM, DD");
+              }
+            }}
+          />
+          <YAxis
+            dataKey="priceData"
+            axisLine={false}
+            tickLine={false}
+            domain={["auto", "auto"]}
+            width={25}
+            tickSize={0}
+            tickMargin={5}
+            tickFormatter={(priceData) => {
+              if (priceData === 0) {
+                return priceData;
+              } else {
+                return priceData.toFixed(2);
+              }
+            }}
+          />
+          <Tooltip
+            content={
+              <CustomToolTip active={bool} payload={array} label={str} />
+            }
+          />
+          <CartesianGrid opacity={0.2} vertical={false} />
+        </AreaChart>
+      </ResponsiveContainer>
+    </>
+  );
+};

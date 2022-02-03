@@ -396,7 +396,11 @@
 		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
-		"wallet-disconnect-message": "Desconectado de la billetera"
+		"wallet-disconnect-message": "Desconectado de la billetera",
+		"token-address-copied-message": "La dirección del token ha sido copiada correctamente",
+		"token-address-not-copied-message": "No se pudo copiar la dirección del token",
+		"token-authority-copied-message": "La autoridad del token ha sido copiada correctamente",
+		"token-authority-not-copied-message": "No se pudo copiar la autoridad del token"
 	},
 	"open-stream": {
 		"label-streamid-input": "Introduzca id de transferencia ",
@@ -417,6 +421,43 @@
 		"refer-friend-hint": "Refer a friend and earn up to $25 in MEAN tokens when they exchange $100 worth of crypto",
 		"see-rules": "See rules for details",
 		"share-to": "Share to"
+	},
+	"stats": {
+		"title": "Estadísticas",
+		"subtitle": "Panel de análisis",
+		"buy-btn": "Comprar",
+		"total-liquidity-btn": "Adicionar liquidez",
+		"summary": {
+			"summary-title": "Resumen del token MEAN",
+			"token-name": "Nombre",
+			"token-address": "Dirección",
+			"token-authority": "Autoridad",
+			"token-decimals": "Decimales",
+			"token-address-copy": "Copiar dirección de token",
+			"token-authority-copy": "Copiar autoridad de token"
+		},
+		"price": {
+			"price-title": "Precio"
+		},
+		"market": {
+			"market-cap-title": "Capitalización de mercado",
+			"holders-title": "Titulares",
+			"volume-title": "Volumen (24H)",
+			"total-supply-title": "Acciones totales",
+			"circulating-supply-title": "Acciones en circulación",
+			"total-money-streams-title": "Flujo total de dinero",
+			"total-value-locked-title": "Valor total bloqueado",
+			"token-fully_dilluted_market_cap": "El valor total de mercado de la oferta circulante de una criptomoneda. Es análogo a la capitalización del capital flotante en el mercado de valores. Capitalización de mercado = Precio actual x suministro circulante",
+			"token-holders": "Entusiastas que denotan un enfoque a largo plazo para invertir en criptomonedas",
+			"token-total-volume": "Una medida de cuánto se negoció una criptomoneda en las últimas 24 horas",
+			"token-total-supply": "La cantidad de monedas que ya se han creado, menos las monedas que se han quemado. Es análoga a las acciones en circulación en el mercado de valores",
+			"token-circulating-suppply": "La cantidad de monedas que están circulando en el mercado y están en manos públicas. Es análoga a las acciones que fluyen en el mercado de valores",
+			"token-total-money-streams": "Número total de pagos continuos a lo largo del tiempo que han sido creados por el programa Money Streaming",
+			"token-total-value-locked": "La cantidad de activos que se están apostando actualmente en un protocolo específico"
+		},
+		"pairs": {
+			"total-liquidity": "Liquidez Total"
+		}
 	},
 	"streams": {
 		"back-to-my-streams-cta": "Volver a las transferencia",
