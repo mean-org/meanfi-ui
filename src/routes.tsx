@@ -30,6 +30,7 @@ import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { MultisigVaultsView } from "./pages/multisig-vaults";
 import { MultisigProgramsView } from "./pages/multisig-programs";
+import { SolanaClusterStatsProvider } from "./contexts/cluster-stats";
 
 export function AppRoutes() {
 
@@ -38,44 +39,46 @@ export function AppRoutes() {
     <OnlineStatusProvider>
       <BrowserRouter basename={"/"}>
         <ConnectionProvider>
-          <WalletProvider>
-            <AccountsProvider>
-              <TransactionStatusProvider>
-                <AppStateProvider>
-                  <AppLayout>
-                    <Routes>
-                      <Route path='/' element={<Navigate replace to='/accounts' />} />
-                      <Route path="/accounts" element={<AccountsView />} />
-                      <Route path="/accounts/streams" element={<AccountsView />} />
-                      <Route path="/faucet" element={<FaucetView />} />
-                      <Route path="/transfers" element={<TransfersView />} />
-                      <Route path="/treasuries" element={<TreasuriesView />} />
-                      <Route path="/payroll" element={<PayrollView />} />
-                      <Route path="/exchange" element={<SwapView />} />
-                      {(isProd() || isLocal()) && (
-                        <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
-                      )}
-                      <Route path="/wrap" element={<WrapView />} />
-                      {isLocal() && (
-                        <Route path="/playground" element={<PlaygroundView />} />
-                      )}
-                      <Route path="/ido" element={<IdoView />} />
-                      <Route path="/ido-live" element={<IdoLiveView />} />
-                      <Route path="/ido-blocked" element={<IdoBlockedView />} />
-                      <Route path="/ido-lp" element={<IdoLpView />} />
-                      <Route path="/stats" element={<StatsView />} />
-                      <Route path="/custody" element={<CustodyView />} />
-                      <Route path="/multisig" element={<MultisigView />} />
-                      <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
-                      <Route path="/multisig-programs" element={<MultisigProgramsView />} />
-                      <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
-                      <Route path='*' element={<NotFoundView />} />
-                    </Routes>
-                  </AppLayout>
-                </AppStateProvider>
-              </TransactionStatusProvider>
-            </AccountsProvider>
-          </WalletProvider>
+          <SolanaClusterStatsProvider>
+            <WalletProvider>
+              <AccountsProvider>
+                <TransactionStatusProvider>
+                  <AppStateProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route path='/' element={<Navigate replace to='/accounts' />} />
+                        <Route path="/accounts" element={<AccountsView />} />
+                        <Route path="/accounts/streams" element={<AccountsView />} />
+                        <Route path="/faucet" element={<FaucetView />} />
+                        <Route path="/transfers" element={<TransfersView />} />
+                        <Route path="/treasuries" element={<TreasuriesView />} />
+                        <Route path="/payroll" element={<PayrollView />} />
+                        <Route path="/exchange" element={<SwapView />} />
+                        {(isProd() || isLocal()) && (
+                          <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
+                        )}
+                        <Route path="/wrap" element={<WrapView />} />
+                        {isLocal() && (
+                          <Route path="/playground" element={<PlaygroundView />} />
+                        )}
+                        <Route path="/ido" element={<IdoView />} />
+                        <Route path="/ido-live" element={<IdoLiveView />} />
+                        <Route path="/ido-blocked" element={<IdoBlockedView />} />
+                        <Route path="/ido-lp" element={<IdoLpView />} />
+                        <Route path="/stats" element={<StatsView />} />
+                        <Route path="/custody" element={<CustodyView />} />
+                        <Route path="/multisig" element={<MultisigView />} />
+                        <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
+                        <Route path="/multisig-programs" element={<MultisigProgramsView />} />
+                        <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                        <Route path='*' element={<NotFoundView />} />
+                      </Routes>
+                    </AppLayout>
+                  </AppStateProvider>
+                </TransactionStatusProvider>
+              </AccountsProvider>
+            </WalletProvider>
+          </SolanaClusterStatsProvider>
         </ConnectionProvider>
       </BrowserRouter>
     </OnlineStatusProvider>

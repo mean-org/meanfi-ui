@@ -229,15 +229,12 @@ export const Streams = () => {
       if (updatedStreamsv2 && updatedStreamsv2.length) {
         let freshStream: Stream;
         for (const stream of updatedStreamsv2) {
-          if (streamDetail && streamDetail.id === stream.id) {
-            freshStream = await msp.refreshStream(streamDetail);
-            if (freshStream) {
-              setStreamDetail(freshStream);
-            }
-          }
           freshStream = await msp.refreshStream(stream);
           if (freshStream) {
             newList.push(freshStream);
+            if (streamDetail && streamDetail.id === stream.id) {
+              setStreamDetail(freshStream);
+            }
           }
         }
       }
@@ -262,6 +259,8 @@ export const Streams = () => {
       // Finally update the combined list
       if (newList.length) {
         setStreamList(newList.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+        // consoleOut('tu sabe', (newList[11] as any).data.startUtc.toNumber(), 'blue');
+        consoleOut('tu sabe', (newList[11]), 'blue');
       }
     }
 
