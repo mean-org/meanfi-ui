@@ -14,7 +14,7 @@ export type MultisigAccountInfo = {
   id: PublicKey;
   label: string;
   address: PublicKey;
-  owners: PublicKey[];
+  owners: MultisigParticipant[];
   threshold: number;
   nounce: number;
   ownerSeqNumber: number;
@@ -53,4 +53,9 @@ export type MultisigVault = {
   mint: PublicKey;
   owner: PublicKey;
   state: number;
+}
+
+export type MultisigParticipant = {
+  name: string;
+  address: string;
 }

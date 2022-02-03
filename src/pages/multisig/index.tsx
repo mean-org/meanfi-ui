@@ -42,7 +42,8 @@ import {
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
   delay,
-  isLocal
+  isLocal,
+  isDev
 
 } from '../../utils/ui';
 
@@ -67,7 +68,7 @@ import { MEAN_MULTISIG, NATIVE_SOL_MINT } from '../../utils/ids';
 import { customLogger } from '../..';
 import { AccountLayout, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { useNavigate } from 'react-router-dom';
-import { MultisigAccountInfo, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
+import { MultisigAccountInfo, MultisigParticipant, MultisigTransactionInfo, MultisigTransactionStatus } from '../../models/multisig';
 import { MultisigCreateModal } from '../../components/MultisigCreateModal';
 import './style.less';
 
@@ -82,6 +83,7 @@ import { MultisigUpgradeIDLModal } from '../../components/MultisigUpgradeIDL';
 import { encodeInstruction } from '../../models/idl';
 import { MultisigSetProgramAuthModal } from '../../components/MultisigSetProgramAuthModal';
 import { MultisigOwnersView } from '../../components/MultisigOwnersView';
+import { MultisigEditModal } from '../../components/MultisigEditModal';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -137,13 +139,22 @@ export const MultisigView = () => {
   const [highlightedMultisigTx, sethHighlightedMultisigTx] = useState<MultisigTransactionInfo | undefined>();
   const [retryOperationPayload, setRetryOperationPayload] = useState<any>(undefined);
   const [isCreateMultisigModalVisible, setIsCreateMultisigModalVisible] = useState(false);
+  const [isEditMultisigModalVisible, setIsEditMultisigModalVisible] = useState(false);
   const [isMintTokenModalVisible, setIsMintTokenModalVisible] = useState(false);
   const [isTransactionModalVisible, setTransactionModalVisible] = useState(false);
-  const [isCreateVaultModalVisible, setCreateVaultModalVisible] = useState(false);
-  const [isTransferTokenModalVisible, setIsTransferTokenModalVisible] = useState(false);
   const [isUpgradeProgramModalVisible, setIsUpgradeProgramModalVisible] = useState(false);
   const [isUpgradeIDLModalVisible, setIsUpgradeIDLModalVisible] = useState(false);
   const [isSetProgramAuthModalVisible, setIsSetProgramAuthModalVisible] = useState(false);
+
+  // TODO: Remove when releasing to the public
+  useEffect(() => {
+    if (!isWhitelisted && !isLocal()) {
+      navigate('/');
+    }
+  }, [
+    isWhitelisted,
+    navigate
+  ]);
 
   const connection = useMemo(() => new Connection(connectionConfig.endpoint, {
     commitment: "confirmed",
@@ -233,8 +244,13 @@ export const MultisigView = () => {
     setIsCreateMultisigModalVisible(false);
     setLoadingMultisigAccounts(true);
     resetTransactionStatus();
+    notify({
+      description: t('multisig.create-multisig.success-message'),
+      type: "success"
+    });
 
   },[
+    t,
     resetTransactionStatus
   ])
 
@@ -264,32 +280,6 @@ export const MultisigView = () => {
 
   const onTxExecuted = useCallback(() => {
     
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-
-  },[
-    setTransactionStatus
-  ]);
-
-  const onVaultCreated = useCallback(() => {
-
-    setLoadingMultisigAccounts(true);
-    setLoadingMultisigTxs(true);
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-
-  },[
-    setTransactionStatus
-  ]);
-
-  const onTokensTransfered = useCallback(() => {
-
     setLoadingMultisigAccounts(true);
     setLoadingMultisigTxs(true);
     setTransactionStatus({
@@ -357,19 +347,35 @@ export const MultisigView = () => {
     const createMultisig = async (data: any) => {
 
       const multisig = new Account();
-      // Disc. + threshold + nonce + label.
-      const baseSize = 8 + 8 + 1 + 4 + 32;
-      // Add enough for 2 more participants, in case the user changes one's mind later.
-      const fudge = 64;
-      // Can only grow the participant set by 2x the initialized value.
-      const ownerSize = data.owners.length * 32 + 8;
-      const multisigSize = baseSize + ownerSize + fudge;
+      // // threshold + nonce + label + created_on + pending_txs.
+      // const dataSize = 8 + 1 + 4 + 32 + 8 + 8;
+      // // up to 10 owners (address and name)
+      // const ownersSize = 10 * 32 + 8;
+      // const ownersNameSize = 10 * 32 + 8;
+      // // Disc. + owners + data + names
+      // const multisigSize = 8 + ownersSize + dataSize + ownersNameSize;
+      const multisigSize = 1_000; // fixed multisig bytes with extra space
       const [, nonce] = await PublicKey.findProgramAddress(
         [multisig.publicKey.toBuffer()],
         multisigClient.programId
       );
-      
-      const owners = data.owners.map((p: string) => new PublicKey(p));
+
+      const getParticipantNameBuffer = (name: string) => {
+        const encodedUIntArray = new TextEncoder().encode(name);
+        const buffer = Buffer
+          .alloc(32)
+          .fill(encodedUIntArray, 0, encodedUIntArray.byteLength);
+        return buffer;
+      };
+
+      const owners = data.owners.map((p: MultisigParticipant) => {
+        return {
+          address: new PublicKey(p.address),
+          name: getParticipantNameBuffer(p.name)
+        }
+      });
+
+      console.log(owners);
       const encodedUIntArray = new TextEncoder().encode(data.label);
       const label = Buffer
         .alloc(32)
@@ -382,11 +388,10 @@ export const MultisigView = () => {
         label,
         {
           accounts: {
-            multisig: multisig.publicKey,
-            rent: SYSVAR_RENT_PUBKEY,
+            multisig: multisig.publicKey
           },
           signers: [multisig],
-          instructions: [
+          preInstructions: [
             await multisigClient.account.multisig.createInstruction(
               multisig,
               multisigSize
@@ -419,9 +424,9 @@ export const MultisigView = () => {
           wallet: publicKey.toBase58(),                               // wallet
           label: data.label,                                          // multisig label
           threshold: data.threshold,
-          signers: data.signers
+          owners: data.owners
         };
-        
+
         consoleOut('data:', payload);
 
         // Log input data
@@ -456,7 +461,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -484,16 +489,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -519,7 +524,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -542,7 +547,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -555,7 +560,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -587,7 +592,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -600,7 +605,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -622,7 +627,6 @@ export const MultisigView = () => {
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onMultisigCreated();
             setOngoingOperation(undefined);
             setIsCreateMultisigModalVisible(false);
@@ -650,7 +654,7 @@ export const MultisigView = () => {
   ]);
 
   const onCreateMultisigClick = useCallback(() => {
-    
+
     resetTransactionStatus();
     setIsCreateMultisigModalVisible(true);
 
@@ -670,6 +674,10 @@ export const MultisigView = () => {
     lastSentTxOperationType,
   ]);
 
+  const isUnderDevelopment = () => {
+    return isLocal() || (isDev() && isWhitelisted) ? true : false;
+  }
+
   // Copy address to clipboard
   const copyMultisigAddress = useCallback((address: any) => {
 
@@ -687,398 +695,29 @@ export const MultisigView = () => {
 
   },[t])
 
-  // Transfer token modal
-  const showTransferTokenModal = useCallback(() => {
-    setIsTransferTokenModalVisible(true);
-    const fees = {
-      blockchainFee: 0.000005,
-      mspFlatFee: 0.000010,
-      mspPercentFee: 0
-    };
-    setTransactionFees(fees);
-  }, []);
+  const onEditMultisigClick = useCallback(() => {
 
-  const onAcceptTransferToken = (params: any) => {
-    consoleOut('params', params, 'blue');
-    onExecuteTransferTokensTx(params);
+    resetTransactionStatus();
+    setIsEditMultisigModalVisible(true);
+
+  },[
+    resetTransactionStatus
+  ]);
+
+  const onAcceptEditMultisig = (data: any) => {
+    consoleOut('multisig:', data, 'blue');
+    // onExecuteEditMultisigTx(data);
   };
 
-  const onExecuteTransferTokensTx = useCallback(async (data: any) => {
+  const onMultisigSaved = useCallback(() => {
 
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
+    setIsEditMultisigModalVisible(false);
+    setLoadingMultisigAccounts(true);
+    resetTransactionStatus();
 
-    clearTransactionStatusContext();
-    setTransactionCancelled(false);
-    setOngoingOperation(OperationType.TransferTokens);
-    setRetryOperationPayload(data);
-    setIsBusy(true);
-
-    const transferTokens = async (data: any) => {
-
-      if (!selectedMultisig || !publicKey) { 
-        throw Error("Invalid transaction data");
-      }
-
-      const [multisigSigner] = await PublicKey.findProgramAddress(
-        [selectedMultisig.id.toBuffer()],
-        multisigClient.programId
-      );
-
-      const fromAddress = new PublicKey(data.from);
-      const fromAccountInfo = await connection.getAccountInfo(fromAddress);
-      
-      if (!fromAccountInfo) { 
-        throw Error("Invalid from token account");
-      }
-
-      const fromAccount = AccountLayout.decode(Buffer.from(fromAccountInfo.data));
-      const fromMintAddress = new PublicKey(fromAccount.mint);
-      const mintInfo = await connection.getAccountInfo(fromMintAddress);
-
-      if (!mintInfo) { 
-        throw Error("Invalid token mint account");
-      }
-
-      const mint = MintLayout.decode(Buffer.from(mintInfo.data));
-      let toAddress = new PublicKey(data.to);
-      let toAccountInfo = await connection.getAccountInfo(toAddress);
-
-      if (!toAccountInfo) { 
-        throw Error("Invalid to token account");
-      }
-
-      let ixs: TransactionInstruction[] = [];
-
-      if (!toAccountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
-
-        const toAccountATA = await Token.getAssociatedTokenAddress(
-          ASSOCIATED_TOKEN_PROGRAM_ID,
-          TOKEN_PROGRAM_ID,
-          fromMintAddress,
-          toAddress,
-          true
-        );
-
-        const toAccountATAInfo = await connection.getAccountInfo(toAccountATA);
-
-        if (!toAccountATAInfo) {
-          ixs.push(
-            Token.createAssociatedTokenAccountInstruction(
-              ASSOCIATED_TOKEN_PROGRAM_ID,
-              TOKEN_PROGRAM_ID,
-              fromMintAddress,
-              toAccountATA,
-              toAddress,
-              publicKey
-            )
-          );
-        }
-
-        toAddress = toAccountATA;
-      }
-
-      if(toAccountInfo.owner.equals(TOKEN_PROGRAM_ID) && toAccountInfo.data.length === AccountLayout.span) {
-        const toAccount = AccountLayout.decode(Buffer.from(toAccountInfo.data));
-        const mintAddress = new PublicKey(Buffer.from(toAccount.mint));
-
-        if (!mintAddress.equals(fromMintAddress)) {
-          throw Error("Invalid to token account mint");
-        }
-      }
-
-      const transaction = new Account();
-      const txSize = 1000;
-
-      ixs.push(
-        await multisigClient.account.transaction.createInstruction(
-          transaction,
-          txSize
-        )
-      );
-
-      const transferIx = Token.createTransferInstruction(
-        TOKEN_PROGRAM_ID,
-        fromAddress,
-        toAddress,
-        multisigSigner,
-        [],
-        new BN(data.amount * 10 ** mint.decimals).toNumber()
-      );
-
-      let tx = multisigClient.transaction.createTransaction(
-        TOKEN_PROGRAM_ID,
-        OperationType.TransferTokens,
-        transferIx.keys,
-        Buffer.from(transferIx.data),
-        {
-          accounts: {
-            multisig: selectedMultisig.id,
-            transaction: transaction.publicKey,
-            proposer: publicKey,
-            rent: SYSVAR_RENT_PUBKEY
-          },
-          signers: [transaction],
-          instructions: ixs,
-        }
-      );
-
-      tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[transaction]);
-
-      return tx;
-    };
-
-    const createTx = async (): Promise<boolean> => {
-
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        // Create a transaction
-        const payload = {
-          from: data.from,
-          to: data.to,
-          amount: data.amount
-        };
-        
-        consoleOut('data:', payload);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return await transferTokens(data)
-          .then(value => {
-            consoleOut('createTreasury returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('createTreasury error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
-            });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-          
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TransferTokens);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            await delay(1000);
-            onTokensTransfered();
-            setOngoingOperation(undefined);
-            setIsTransferTokenModalVisible(false);
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-
-  }, [
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.account.transaction, 
-    multisigClient.programId, 
-    multisigClient.transaction, 
-    nativeBalance, 
-    onTokensTransfered, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
-  ]);
+  },[
+    resetTransactionStatus
+  ])
 
   const onTransactionModalClosed = () => {
     if (isBusy) {
@@ -1224,7 +863,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Mint tokens transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1288,7 +927,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1311,7 +950,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1324,7 +963,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1356,7 +995,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1369,7 +1008,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1499,7 +1138,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Execute Approve transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1528,16 +1167,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1563,7 +1202,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1586,7 +1225,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1599,7 +1238,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1631,7 +1270,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1644,7 +1283,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1733,7 +1372,7 @@ export const MultisigView = () => {
       );
   
       tx.feePayer = publicKey;
-      const { blockhash } = await connection.getRecentBlockhash("recent");
+      const { blockhash } = await connection.getRecentBlockhash("finalized");
       tx.recentBlockhash = blockhash;
   
       return tx;
@@ -1786,7 +1425,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1815,16 +1454,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1850,7 +1489,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1873,7 +1512,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1886,7 +1525,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1918,7 +1557,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1931,7 +1570,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1987,18 +1626,6 @@ export const MultisigView = () => {
     return ( 
       fetchTxInfoStatus === "fetching" && 
       lastSentTxOperationType === OperationType.MintTokens
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
-
-  const isSendingTokens = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.TransferTokens
     );
 
   }, [
@@ -2146,7 +1773,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2175,16 +1802,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2210,7 +1837,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2233,7 +1860,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2246,7 +1873,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2278,7 +1905,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2291,7 +1918,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2479,7 +2106,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Upgrade IDL transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2508,16 +2135,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2543,7 +2170,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2566,7 +2193,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2579,7 +2206,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2611,7 +2238,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2624,7 +2251,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2829,7 +2456,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2858,16 +2485,16 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
               result: `${error}`
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           });
-          
+
       } else {
         transactionLog.push({
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2893,7 +2520,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2916,7 +2543,7 @@ export const MultisigView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2929,7 +2556,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2961,7 +2588,7 @@ export const MultisigView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2974,7 +2601,7 @@ export const MultisigView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -3032,326 +2659,6 @@ export const MultisigView = () => {
   }, [
     fetchTxInfoStatus,
     lastSentTxOperationType,
-  ]);
-
-  // Shows create vault modal
-  const onShowCreateVaultModal = useCallback(() => {
-    setCreateVaultModalVisible(true);
-    const fees = {
-      blockchainFee: 0.000005,
-      mspFlatFee: 0.000010,
-      mspPercentFee: 0
-    };
-    setTransactionFees(fees);
-  },[]);
-
-  const isCreatingVault = useCallback((): boolean => {
-
-    return ( 
-      fetchTxInfoStatus === "fetching" && 
-      lastSentTxOperationType === OperationType.CreateVault
-    );
-
-  }, [
-    fetchTxInfoStatus,
-    lastSentTxOperationType,
-  ]);
-
-  const onExecuteCreateVaultTx = useCallback(async (data: any) => {
-
-    let transaction: Transaction;
-    let signedTransaction: Transaction;
-    let signature: any;
-    let encodedTx: string;
-    const transactionLog: any[] = [];
-
-    clearTransactionStatusContext();
-    setTransactionCancelled(false);
-    setOngoingOperation(OperationType.CreateVault);
-    setRetryOperationPayload(data);
-    setIsBusy(true);
-
-    const createVault = async (data: any) => {
-
-      if (!selectedMultisig || !publicKey || !data || !data.token) { return null; }
-
-      const [multisigSigner] = await PublicKey.findProgramAddress(
-        [selectedMultisig.id.toBuffer()],
-        multisigClient.programId
-      );
-
-      const mintAddress = new PublicKey(data.token.address);
-      const tokenAccount = Keypair.generate();
-      const ixs: TransactionInstruction[] = [
-        SystemProgram.createAccount({
-          fromPubkey: publicKey,
-          newAccountPubkey: tokenAccount.publicKey,
-          programId: TOKEN_PROGRAM_ID,
-          lamports: await Token.getMinBalanceRentForExemptAccount(multisigClient.provider.connection),
-          space: AccountLayout.span
-        }),
-        Token.createInitAccountInstruction(
-          TOKEN_PROGRAM_ID,
-          mintAddress,
-          tokenAccount.publicKey,
-          multisigSigner
-        )
-      ];
-
-      let tx = new Transaction().add(...ixs);
-      tx.feePayer = publicKey;
-      const { blockhash } = await multisigClient.provider.connection.getRecentBlockhash("recent");
-      tx.recentBlockhash = blockhash;
-      tx.partialSign(...[tokenAccount]);
-
-      return tx;
-    };
-
-    const createTx = async (): Promise<boolean> => {
-
-      if (publicKey && data) {
-        consoleOut("Start transaction for create multisig", '', 'blue');
-        consoleOut('Wallet address:', publicKey.toBase58());
-
-        setTransactionStatus({
-          lastOperation: TransactionStatus.TransactionStart,
-          currentOperation: TransactionStatus.InitTransaction
-        });
-
-        // Create a transaction
-        const payload = { token: data.token }; 
-        consoleOut('data:', payload);
-
-        // Log input data
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.TransactionStart),
-          inputs: payload
-        });
-
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.InitTransaction),
-          result: ''
-        });
-
-        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
-        // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', transactionFees.blockchainFee + transactionFees.mspFlatFee, 'blue');
-        consoleOut('nativeBalance:', nativeBalance, 'blue');
-
-        if (nativeBalance < transactionFees.blockchainFee + transactionFees.mspFlatFee) {
-          setTransactionStatus({
-            lastOperation: transactionStatus.currentOperation,
-            currentOperation: TransactionStatus.TransactionStartFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
-            result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
-            }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(
-                transactionFees.blockchainFee + transactionFees.mspFlatFee, 
-                NATIVE_SOL_MINT.toBase58()
-              )
-            })`
-          });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
-          return false;
-        }
-
-        return await createVault(data)
-          .then(value => {
-            if (!value) { return false; }
-            consoleOut('createTreasury returned transaction:', value);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.InitTransactionSuccess,
-              currentOperation: TransactionStatus.SignTransaction
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionSuccess),
-              result: getTxIxResume(value)
-            });
-            transaction = value;
-            return true;
-          })
-          .catch(error => {
-            console.error('createTreasury error:', error);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.InitTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
-              result: `${error}`
-            });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-          
-      } else {
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot start transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const signTx = async (): Promise<boolean> => {
-      if (wallet) {
-        consoleOut('Signing transaction...');
-        return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
-          consoleOut('signTransaction returned a signed transaction:', signed);
-          signedTransaction = signed;
-          // Try signature verification by serializing the transaction
-          try {
-            encodedTx = signedTransaction.serialize().toString('base64');
-            consoleOut('encodedTx:', encodedTx, 'orange');
-          } catch (error) {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SignTransaction,
-              currentOperation: TransactionStatus.SignTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-            });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
-            return false;
-          }
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58()}
-          });
-          return true;
-        })
-        .catch(error => {
-          console.error(error);
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransaction,
-            currentOperation: TransactionStatus.SignTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
-            result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
-          });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
-          return false;
-        });
-      } else {
-        console.error('Cannot sign transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SignTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot sign transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    const sendTx = async (): Promise<boolean> => {
-      if (wallet) {
-        return await connection
-          .sendEncodedTransaction(encodedTx)
-          .then(sig => {
-            consoleOut('sendEncodedTransaction returned a signature:', sig);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransactionSuccess,
-              currentOperation: TransactionStatus.ConfirmTransaction
-            });
-            signature = sig;
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionSuccess),
-              result: `signature: ${signature}`
-            });
-            return true;
-          })
-          .catch(error => {
-            console.error(error);
-            setTransactionStatus({
-              lastOperation: TransactionStatus.SendTransaction,
-              currentOperation: TransactionStatus.SendTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
-              result: { error, encodedTx }
-            });
-            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-            return false;
-          });
-      } else {
-        console.error('Cannot send transaction! Wallet not found!');
-        setTransactionStatus({
-          lastOperation: TransactionStatus.SendTransaction,
-          currentOperation: TransactionStatus.WalletNotFound
-        });
-        transactionLog.push({
-          action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
-          result: 'Cannot send transaction! Wallet not found!'
-        });
-        customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
-        return false;
-      }
-    }
-
-    if (wallet) {
-      const create = await createTx();
-      consoleOut('created:', create);
-      if (create && !transactionCancelled) {
-        const sign = await signTx();
-        consoleOut('signed:', sign);
-        if (sign && !transactionCancelled) {
-          const sent = await sendTx();
-          consoleOut('sent:', sent);
-          if (sent && !transactionCancelled) {
-            consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.CreateVault);
-            setIsBusy(false);
-            setTransactionStatus({
-              lastOperation: transactionStatus.currentOperation,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            await delay(1000);
-            onVaultCreated();
-            setOngoingOperation(undefined);
-            setCreateVaultModalVisible(false);
-          } else { setIsBusy(false); }
-        } else { setIsBusy(false); }
-      } else { setIsBusy(false); }
-    }
-
-  }, [
-    clearTransactionStatusContext, 
-    connection, 
-    multisigClient.programId, 
-    multisigClient.provider.connection, 
-    nativeBalance, 
-    onVaultCreated, 
-    publicKey, 
-    selectedMultisig, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    wallet
-  ]);
-
-  const onAcceptCreateVault = useCallback((params: any) => {
-    onExecuteCreateVaultTx(params);
-  },[
-    onExecuteCreateVaultTx
   ]);
 
   const getOperationName = useCallback((op: OperationType) => {
@@ -3456,16 +2763,6 @@ export const MultisigView = () => {
 
   const onAfterEveryModalClose = useCallback(() => resetTransactionStatus(),[resetTransactionStatus]);
 
-  // TODO: Remove when releasing to the public
-  useEffect(() => {
-    if (!isWhitelisted && !isLocal()) {
-      navigate('/');
-    }
-  }, [
-    isWhitelisted,
-    navigate
-  ]);
-
   // Refresh the multisig accounts list
   useEffect(() => {
 
@@ -3487,6 +2784,8 @@ export const MultisigView = () => {
           });
 
           for (let info of filteredAccs) {
+
+            // console.log('info.account', info.account);
             
             let address: any;
             let labelBuffer = Buffer
@@ -3499,19 +2798,37 @@ export const MultisigView = () => {
               .then(k => { 
 
                 address = k[0];
+                let owners: MultisigParticipant[] = [];
+
+                for (let i = 0; i < info.account.owners.length; i ++) {
+                  owners.push({
+                    address: info.account.owners[i].toBase58(),
+                    name: info.account.ownersNames.length && info.account.ownersNames[i].length > 0 
+                      ? new TextDecoder().decode(
+                          Buffer.from(
+                            Uint8Array.of(
+                              ...info.account.ownersNames[i].filter((b: any) => b !== 0)
+                            )
+                          )
+                        )
+                      : ""
+                  } as MultisigParticipant);
+                }
 
                 let multisigInfo = {
                   id: info.publicKey,
                   label: new TextDecoder().decode(labelBuffer),
                   address,
-                  nounce: info.account.nounce,
+                  nounce: info.account.nonce,
                   ownerSeqNumber: info.account.ownerSetSeqno,
                   threshold: info.account.threshold.toNumber(),
                   pendingTxsAmount: info.account.pendingTxs.toNumber(),
                   createdOnUtc: new Date(info.account.createdOn.toNumber() * 1000),
-                  owners: info.account.owners
+                  owners: owners
       
                 } as MultisigAccountInfo;
+
+                // console.log(multisigInfo);
 
                 multisigInfoArray.push(multisigInfo);
 
@@ -3907,8 +3224,8 @@ export const MultisigView = () => {
                     <IconWallet className="mean-svg-icons" />
                   </span>
                   <div className="info-data flex-row wrap align-items-center">
-                    {selectedMultisig.owners.length}
-                    <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners} />
+                    {selectedMultisig.owners ? selectedMultisig.owners.length : 0}
+                    <MultisigOwnersView label="view" className="ml-1" participants={selectedMultisig.owners || []} />
                   </div>
                 </div>
               </Col>
@@ -4002,44 +3319,20 @@ export const MultisigView = () => {
     </Menu>
   );
 
-  const tokensOptionsMenu = (
-    <Menu>
-      {/* Go to vaults */}
-      <Menu.Item
-        key="20"
-        onClick={() => {
-          if (selectedMultisig) {
-            const url = `/multisig-vaults?ms=${selectedMultisig.id.toBase58()}`;
-            navigate(url);
-          }
-        }}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-view-all-vaults')}</span>
-      </Menu.Item>
-      {/* New Vault */}
-      <Menu.Item
-        key="21"
-        onClick={onShowCreateVaultModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-create-vault')}</span>
-      </Menu.Item>
-      {/* Transfer tokens */}
-      <Menu.Item
-        key="22"
-        onClick={showTransferTokenModal}>
-        <span className="menu-item-text">{t('multisig.multisig-account-detail.cta-transfer')}</span>
-      </Menu.Item>
-      <Menu.Divider key="23" />
-      {/* Set Vault Auth */}
-      <Menu.Item
-        key="24"
-        disabled={true}
-        onClick={() => {}}>
-        <span className="menu-item-text">Set Vault Auth</span>
-      </Menu.Item>
-    </Menu>
-  );
-
   const programsOptionsMenu = (
     <Menu>
+      {isUnderDevelopment() && (
+        <Menu.Item
+          key="29"
+          onClick={() => {
+            if (selectedMultisig) {
+              const url = `/multisig-programs?ms=${selectedMultisig.id.toBase58()}`;
+              navigate(url);
+            }
+          }}>
+          <span className="menu-item-text">See programs</span>
+        </Menu.Item>
+      )}
       {/* Upgrade program */}
       <Menu.Item
         key="30"
@@ -4053,12 +3346,14 @@ export const MultisigView = () => {
         <span className="menu-item-text">Upgrade IDL</span>
       </Menu.Item>
       {/* Kill Switch */}
-      <Menu.Item
-        key="32"
-        disabled={true}
-        onClick={() => {}}>
-        <span className="menu-item-text">Kill Switch</span>
-      </Menu.Item>
+      {isUnderDevelopment() && (
+        <Menu.Item
+          key="32"
+          disabled={true}
+          onClick={() => {}}>
+          <span className="menu-item-text">Kill Switch</span>
+        </Menu.Item>
+      )}
       <Menu.Divider key="33" />
       {/* Set Program Auth */}
       <Menu.Item
@@ -4120,64 +3415,54 @@ export const MultisigView = () => {
             )}
           </Button>
 
-          <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Mint</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
+          {/* Available to local dev or whitelisted addresses in dev */}
+          {isUnderDevelopment() && (
+            <Dropdown overlay={mintOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Mint</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
-          {/* <Dropdown overlay={tokensOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Vaults</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown> */}
+          {isUnderDevelopment() && (
+            <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Programs</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
-          <Dropdown overlay={programsOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Programs</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
-
-           <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
-            <Button
-              type="default"
-              size="middle"
-              className="dropdown-like-button"
-              disabled={isTxInProgress() || loadingMultisigAccounts}
-              onClick={() => {}}>
-              <span className="mr-2">Data</span>
-              <IconCaretDown className="mean-svg-icons" />
-            </Button>
-          </Dropdown>
+          {isUnderDevelopment() && (
+            <Dropdown overlay={dataOptionsMenu} trigger={["click"]}>
+              <Button
+                type="default"
+                size="middle"
+                className="dropdown-like-button"
+                disabled={isTxInProgress() || loadingMultisigAccounts}
+                onClick={() => {}}>
+                <span className="mr-2">Data</span>
+                <IconCaretDown className="mean-svg-icons" />
+              </Button>
+            </Dropdown>
+          )}
 
           {/* Operation indication */}
           {isMintingToken() ? (
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">{t('multisig.multisig-account-detail.cta-mint-busy')}</span>
-            </div>
-          ) : isSendingTokens() ? (
-            <div className="flex-row flex-center">
-              <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-account-detail.cta-transfer-busy')}</span>
             </div>
           ) : isUpgradingProgram() ? (
             <div className="flex-row flex-center">
@@ -4193,11 +3478,6 @@ export const MultisigView = () => {
             <div className="flex-row flex-center">
               <LoadingOutlined />
               <span className="ml-1">Setting Authority</span>
-            </div>
-          ) : isCreatingVault() ? (
-            <div className="flex-row flex-center">
-              <LoadingOutlined />
-              <span className="ml-1">{t('multisig.multisig-account-detail.cta-create-vault-busy')}</span>
             </div>
           ) : null}
         </Space>
@@ -4277,6 +3557,7 @@ export const MultisigView = () => {
    * tokens screen icon -> coin
    * programs screen icon -> code "like in the app-context menu"
    * data screen icon -> database
+   * Element: container main-container -> interaction-area -> meanfi-two-panel-layout -> meanfi-two-panel-left -> meanfi-panel-heading
    */
 
   return (
@@ -4351,41 +3632,37 @@ export const MultisigView = () => {
               </div>
 
               <div className="inner-container">
-                {connected ? (
+                {connected && selectedMultisig ? (
                   <>
-                    {selectedMultisig && (
-                      <div className="float-top-right">
-                        <span className="icon-button-container secondary-button">
-                          <Tooltip placement="bottom" title={"Edit"}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
-                              onClick={() => {}}
-                              disabled={isTxInProgress()}
-                            />
-                          </Tooltip>
-                          <Tooltip placement="bottom" title={"Delete multisig"}>
-                            <Button
-                              type="default"
-                              shape="circle"
-                              size="middle"
-                              icon={<IconTrash className="mean-svg-icons" />}
-                              onClick={() => {}}
-                              disabled={isTxInProgress()}
-                            />
-                          </Tooltip>
-                        </span>
-                      </div>
-                    )}
-                    <div className={
-                      `stream-details-data-wrapper vertical-scroll ${
-                        (loadingMultisigAccounts || !selectedMultisig) 
-                          ? 'h-100 flex-center' 
-                          : ''
-                        }`
-                      }>
+                    {/* Top action icons */}
+                    <div className="float-top-right">
+                      <span className="icon-button-container secondary-button">
+                        <Tooltip placement="bottom" title={"Edit"}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconEdit className="mean-svg-icons" style={{padding: "2px 0 0"}} />}
+                            onClick={() => onEditMultisigClick()}
+                            disabled={isTxInProgress()}
+                          />
+                        </Tooltip>
+                        <Tooltip placement="bottom" title={"Delete multisig"}>
+                          <Button
+                            type="default"
+                            shape="circle"
+                            size="middle"
+                            icon={<IconTrash className="mean-svg-icons" />}
+                            onClick={() => {}}
+                            disabled={isTxInProgress()}
+                          />
+                        </Tooltip>
+                      </span>
+                    </div>
+
+                    {/* Details area */}
+                    <div className="stream-details-data-wrapper vertical-scroll">
+
                       <Spin spinning={loadingMultisigAccounts || loadingMultisigTxs}>
                         {selectedMultisig && (
                           <>
@@ -4397,6 +3674,7 @@ export const MultisigView = () => {
                           </>
                         )}
                       </Spin>
+
                       {(!loadingMultisigAccounts && !loadingMultisigTxs) && (
                         <>
                         {(!multisigAccounts || multisigAccounts.length === 0) && !selectedMultisig && (
@@ -4407,27 +3685,28 @@ export const MultisigView = () => {
                         </>
                       )}
                     </div>
-                    {selectedMultisig && (
-                      <div className="stream-share-ctas">
-                        <span 
-                          className="copy-cta" 
-                          onClick={() => copyMultisigAddress(selectedMultisig.id)}>
-                            {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
-                        </span>
-                        
-                        <a 
-                          className="explorer-cta" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
-                          <IconExternalLink className="mean-svg-icons" />
-                        </a>
-                      </div>
-                    )}
+
+                    {/* Copy address CTA */}
+                    <div className="stream-share-ctas">
+                      <span 
+                        className="copy-cta" 
+                        onClick={() => copyMultisigAddress(selectedMultisig.id)}>
+                          {`${t('multisig.multisig-account-detail.copy-id-title')}: ${selectedMultisig.id}`}
+                      </span>
+                      <a 
+                        className="explorer-cta" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${selectedMultisig.id}${getSolanaExplorerClusterParam()}`}>
+                        <IconExternalLink className="mean-svg-icons" />
+                      </a>
+                    </div>
                   </>
                 ) : (
                   <div className="h-100 flex-center">
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('multisig.multisig-accounts.not-connected')}</p>} />
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{connected
+                      ? t('multisig.multisig-account-detail.no-multisig-loaded')
+                      : t('multisig.multisig-accounts.not-connected')}</p>} />
                   </div>
                 )}
               </div>
@@ -4440,14 +3719,30 @@ export const MultisigView = () => {
 
       </div>
 
-      <MultisigCreateModal
-        isVisible={isCreateMultisigModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        handleOk={onAcceptCreateMultisig}
-        handleClose={() => setIsCreateMultisigModalVisible(false)}
-        isBusy={isBusy}
-      />
+      {isCreateMultisigModalVisible && (
+        <MultisigCreateModal
+          isVisible={isCreateMultisigModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptCreateMultisig}
+          handleClose={() => setIsCreateMultisigModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
+
+      {(isEditMultisigModalVisible && selectedMultisig) && (
+        <MultisigEditModal
+          isVisible={isEditMultisigModalVisible}
+          nativeBalance={nativeBalance}
+          transactionFees={transactionFees}
+          handleOk={onAcceptEditMultisig}
+          multisigName={selectedMultisig.label}
+          multisigThreshold={selectedMultisig.threshold}
+          participants={selectedMultisig.owners}
+          handleClose={() => setIsEditMultisigModalVisible(false)}
+          isBusy={isBusy}
+        />
+      )}
 
       <MultisigMintTokenModal
         isVisible={isMintTokenModalVisible}
@@ -4458,19 +3753,6 @@ export const MultisigView = () => {
         handleClose={() => setIsMintTokenModalVisible(false)}
         isBusy={isBusy}
       />
-
-      {isTransferTokenModalVisible && (
-        <MultisigTransferTokensModal
-          isVisible={isTransferTokenModalVisible}
-          nativeBalance={nativeBalance}
-          transactionFees={transactionFees}
-          handleOk={onAcceptTransferToken}
-          handleAfterClose={onAfterEveryModalClose}
-          handleClose={() => setIsTransferTokenModalVisible(false)}
-          isBusy={isBusy}
-          vaults={multisigVaults}
-        />
-      )}
 
       {isUpgradeProgramModalVisible && (
         <MultisigUpgradeProgramModal
@@ -4504,15 +3786,6 @@ export const MultisigView = () => {
           isBusy={isBusy}
         />
       )}
-
-      <MultisigCreateVaultModal
-        handleOk={onAcceptCreateVault}
-        handleClose={() => setCreateVaultModalVisible(false)}
-        isVisible={isCreateVaultModalVisible}
-        nativeBalance={nativeBalance}
-        transactionFees={transactionFees}
-        isBusy={isBusy}
-      />
 
       {/* Transaction execution modal */}
       <Modal

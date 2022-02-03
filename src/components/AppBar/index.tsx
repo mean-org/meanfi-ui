@@ -238,9 +238,11 @@ export const AppBar = (props: {
               <li key="/treasuries" className={location.pathname === '/treasuries' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 5} as CustomCSSProps}>
                 <Link to="/treasuries">{t('ui-menus.main-menu.services.treasuries')}</Link>
               </li>
-              <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
-                <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
-              </li>
+              {(isWhitelisted || isLocal()) && (
+                <li key="/multisig" className={location.pathname === '/multisig' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 6} as CustomCSSProps}>
+                  <Link to="/multisig">{t('ui-menus.main-menu.services.multisig')}</Link>
+                </li>
+              )}
               <li key="/custody" className={location.pathname === '/custody' ? 'mobile-menu-item active' : 'mobile-menu-item'} style={{'--animation-order': 7} as CustomCSSProps}>
                 <Link to="/custody">{t('ui-menus.main-menu.services.custody')}</Link>
               </li>

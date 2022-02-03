@@ -203,7 +203,7 @@ export const MultisigCreateVaultModal = (props: {
                               {menu}
                               <Divider style={{ margin: '4px 0' }} />
                               <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                <Input style={{ flex: 'auto' }} value={customToken} onChange={onCustomTokenChange} />
+                                <Input placeholder="Enter token address" style={{ flex: 'auto' }} value={customToken} onChange={onCustomTokenChange} />
                                 <div style={{ flex: '0 0 auto' }} className="flex-row align-items-center">
                                   <span className="flat-button icon-button ml-1" onClick={() => onSetCustomToken(customToken)}><IconCheckedBox className="normal"/></span>
                                 </div>

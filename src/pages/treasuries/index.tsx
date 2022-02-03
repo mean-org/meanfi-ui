@@ -36,7 +36,6 @@ import {
   getFormattedNumberToLocale,
   getTransactionStatusForLogs,
   getTransactionOperationDescription,
-  delay,
   isProd,
   getIntervalFromSeconds,
 } from '../../utils/ui';
@@ -81,7 +80,7 @@ import { Constants, refreshTreasuryBalanceInstruction } from '@mean-dao/money-st
 import { TransactionFees, MSP_ACTIONS as MSP_ACTIONS_V2, calculateActionFees as calculateActionFeesV2, Treasury, Stream, STREAM_STATUS, MSP, TreasuryType } from '@mean-dao/msp';
 import BN from 'bn.js';
 import { InfoIcon } from '../../components/InfoIcon';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const treasuryStreamsPerfCounter = new PerformanceCounter();
@@ -89,6 +88,7 @@ const treasuryDetailPerfCounter = new PerformanceCounter();
 const treasuryListPerfCounter = new PerformanceCounter();
 
 export const TreasuriesView = () => {
+  const location = useLocation();
   const connectionConfig = useConnectionConfig();
   const { publicKey, connected, wallet } = useWallet();
   const {
@@ -346,29 +346,34 @@ export const TreasuriesView = () => {
     });
 
     const mspInstance: any = isNew || dock ? msp : ms;
+    const treasueyPk = new PublicKey(treasuryId);
 
     treasuryDetailPerfCounter.start();
-    const treasueyPk = new PublicKey(treasuryId);
     mspInstance.getTreasury(treasueyPk)
-      .then((details: Treasury | Treasury | undefined) => {
+      .then((details: Treasury | TreasuryInfo | undefined) => {
         if (details) {
           consoleOut('treasuryDetails:', details, 'blue');
           setSelectedTreasury(details);
           setTreasuryDetails(details);
           setSignalRefreshTreasuryStreams(true);
-
+          const v1 = details as TreasuryInfo;
+          const v2 = details as Treasury;
+          const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      
           // Preset active token to the treasury associated token
-          const token = getTokenByMintAddress(details.associatedToken as string);
+          const ata = isNewTreasury ? v2.associatedToken as string : v1.associatedTokenAddress as string;
+          const type = isNewTreasury ? v2.treasuryType : v1.type;
+          const token = getTokenByMintAddress(ata);
           consoleOut("treasury token:", token ? token.symbol : 'Custom', 'blue');
           if (token) {
             if (!selectedToken || selectedToken.address !== token.address) {
               setSelectedToken(token);
             }
-          } else if (!token && (!selectedToken || selectedToken.address !== details.associatedToken)) {
-            setCustomToken(details.associatedToken as string);
+          } else if (!token && (!selectedToken || selectedToken.address !== ata)) {
+            setCustomToken(ata);
           }
 
-          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === details.treasuryType);
+          const tOption = TREASURY_TYPE_OPTIONS.find(t => t.type === type);
           if (tOption) {
             setTreasuryOption(tOption);
           }
@@ -423,9 +428,8 @@ export const TreasuriesView = () => {
   const refreshTreasuries = useCallback((reset = false) => {
     if (!connection || !publicKey || loadingTreasuries) { return; }
 
-    if (!loadingTreasuries && fetchTxInfoStatus !== "fetching") {
+    if (fetchTxInfoStatus !== "fetching") {
 
-      // const signature = lastSentTxStatus || '';
       setTimeout(() => {
         setLoadingTreasuries(true);
         clearTransactionStatusContext();
@@ -433,8 +437,16 @@ export const TreasuriesView = () => {
 
       treasuryListPerfCounter.start();
 
+      // Get query param
+      let tresuryAddress: string | null = null;
+      const params = new URLSearchParams(location.search);
+      if (params.has('treasury')) {
+        tresuryAddress = params.get('treasury');
+        consoleOut('tresuryAddress:', tresuryAddress, 'blue');
+      }
+
       if (msp && ms) {
-        let treasuryAccumulator: any[] = [];
+        let treasuryAccumulator: (Treasury | TreasuryInfo)[] = [];
         msp.listTreasuries(publicKey)
           .then((treasuriesv2) => {
             treasuryAccumulator.push(...treasuriesv2);
@@ -443,24 +455,37 @@ export const TreasuriesView = () => {
             ms.listTreasuries(publicKey)
               .then(treasuriesv1 => {
                 treasuryAccumulator.push(...treasuriesv1);
-                consoleOut('v2 treasuries:', treasuriesv1, 'blue');
+                consoleOut('v1 treasuries:', treasuriesv1, 'blue');
 
                 let item: Treasury | TreasuryInfo | undefined = undefined;
                 if (treasuryAccumulator.length) {
-      
                   if (reset) {
-                    item = treasuryAccumulator[0];
-                  } else {
-                    // Try to get current item by its original Tx signature then its id
-                    if (selectedTreasury) {
-                      const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
+                    console.log('tresuryAddress under reset:', tresuryAddress);
+                    if (tresuryAddress) {
+                      // tresuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
                       item = itemFromServer || treasuryAccumulator[0];
                     } else {
                       item = treasuryAccumulator[0];
                     }
+                  } else {
+                    console.log('tresuryAddress under no reset:', tresuryAddress);
+                    // Try to get current item by its id
+                    if (tresuryAddress) {
+                      // tresuryAddress was passed in as query param?
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === tresuryAddress);
+                      item = itemFromServer || treasuryAccumulator[0];
+                    } else if (selectedTreasury) {
+                      // there was an item already selected
+                      const itemFromServer = treasuryAccumulator.find(i => i.id === selectedTreasury.id);
+                      item = itemFromServer || treasuryAccumulator[0];
+                    } else {
+                      // then choose the first one
+                      item = treasuryAccumulator[0];
+                    }
                   }
                   if (!item) {
-                    item = JSON.parse(JSON.stringify(treasuryAccumulator[0]));
+                    item = Object.assign({}, treasuryAccumulator[0]);
                   }
                   if (item) {
                     setSelectedTreasury(item);
@@ -472,16 +497,22 @@ export const TreasuriesView = () => {
                   setTreasuryDetails(undefined);
                   setTreasuryStreams([]);
                 }
-                setTreasuryList(treasuryAccumulator);
               })
               .catch(error => {
                 console.error(error);
               })
+              .finally(() => {
+                setTreasuryList(treasuryAccumulator);
+                consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
+                setLoadingTreasuries(false);
+                treasuryListPerfCounter.stop();
+                consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
+              });
           })
           .catch(error => {
             console.error(error);
-          })
-          .finally(() => {
+            setTreasuryList(treasuryAccumulator);
+            consoleOut('Combined treasury list:', treasuryAccumulator, 'blue');
             setLoadingTreasuries(false);
             treasuryListPerfCounter.stop();
             consoleOut(`listTreasuries took ${(treasuryListPerfCounter.elapsedTime).toLocaleString()}ms`, '', 'crimson');
@@ -494,6 +525,7 @@ export const TreasuriesView = () => {
     msp,
     publicKey,
     connection,
+    location.search,
     selectedTreasury,
     loadingTreasuries,
     fetchTxInfoStatus,
@@ -527,7 +559,6 @@ export const TreasuriesView = () => {
     if (previousWalletConnectState !== connected) {
       if (!previousWalletConnectState && connected && publicKey) {
         consoleOut('User is connecting...', publicKey.toBase58(), 'green');
-        refreshTreasuries(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'green');
         setTreasuryList([]);
@@ -539,8 +570,10 @@ export const TreasuriesView = () => {
     }
   }, [
     connected,
-    previousWalletConnectState,
     publicKey,
+    treasuriesLoaded,
+    loadingTreasuries,
+    previousWalletConnectState,
     refreshTreasuries
   ]);
 
@@ -643,6 +676,7 @@ export const TreasuriesView = () => {
   ]);
 
   // Handle what to do when pending Tx confirmation reaches finality or on error
+  // For now just refresh treasuries keeping the selection or reseting to first item
   useEffect(() => {
     if (!publicKey) { return; }
 
@@ -1006,6 +1040,20 @@ export const TreasuriesView = () => {
     );
   }
 
+  const isTreasuryFunded = useCallback((): boolean => {
+
+    if (treasuryDetails) {
+      const v1 = treasuryDetails as TreasuryInfo;
+      const v2 = treasuryDetails as Treasury;
+      const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
+      return isNewTreasury
+        ? v2.associatedToken ? true : false
+        : v1.associatedTokenAddress ? true : false;
+    }
+    return false;
+
+  }, [treasuryDetails]);
+
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
   }
@@ -1117,6 +1165,10 @@ export const TreasuriesView = () => {
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
     });
+    notify({
+      description: t('treasuries.create-treasury.success-message'),
+      type: "success"
+    });
   }
 
   const onRefreshTreasuryBalanceTransactionFinished = useCallback(() => {
@@ -1138,6 +1190,7 @@ export const TreasuriesView = () => {
     let encodedTx: string;
     const transactionLog: any[] = [];
 
+    resetTransactionStatus();
     clearTransactionStatusContext();
     setTransactionCancelled(false);
     setOngoingOperation(OperationType.TreasuryRefreshBalance);
@@ -1232,7 +1285,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1301,7 +1354,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1324,7 +1377,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1337,7 +1390,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1369,7 +1422,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -1382,7 +1435,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+        customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1409,20 +1462,21 @@ export const TreasuriesView = () => {
 
   },[
     msp,
-    clearTransactionStatusContext, 
-    connected, 
-    connection, 
-    nativeBalance, 
-    onRefreshTreasuryBalanceTransactionFinished, 
-    publicKey, 
-    setTransactionStatus, 
-    startFetchTxSignatureInfo, 
-    transactionCancelled, 
-    transactionFees.blockchainFee, 
-    transactionFees.mspFlatFee, 
-    transactionStatus.currentOperation, 
-    treasuryDetails, 
-    wallet
+    wallet,
+    publicKey,
+    connected,
+    connection,
+    nativeBalance,
+    treasuryDetails,
+    transactionCancelled,
+    transactionFees.mspFlatFee,
+    transactionFees.blockchainFee,
+    transactionStatus.currentOperation,
+    onRefreshTreasuryBalanceTransactionFinished,
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+    resetTransactionStatus,
+    setTransactionStatus,
   ]);
 
   const onExecuteCreateTreasuryTx = async (treasuryName: string) => {
@@ -1484,7 +1538,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1551,7 +1605,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1574,7 +1628,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1648,13 +1702,12 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryCreate);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryCreate);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onTreasuryCreated();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -1666,6 +1719,7 @@ export const TreasuriesView = () => {
   // Add funds modal
   const [isAddFundsModalVisible, setIsAddFundsModalVisibility] = useState(false);
   const showAddFundsModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -1688,7 +1742,8 @@ export const TreasuriesView = () => {
   }, [
     treasuryDetails,
     getTransactionFees,
-    getTransactionFeesV2
+    getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const closeAddFundsModal = useCallback(() => {
@@ -1706,6 +1761,10 @@ export const TreasuriesView = () => {
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
+    });
+    notify({
+      description: t('treasuries.add-funds.success-message'),
+      type: "success"
     });
   };
 
@@ -1777,7 +1836,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1814,7 +1873,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1822,7 +1881,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1882,7 +1941,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1919,7 +1978,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1927,7 +1986,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -1953,7 +2012,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -1976,7 +2035,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -1989,7 +2048,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2021,7 +2080,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+            customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -2034,7 +2093,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+        customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -2055,13 +2114,12 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.TreasuryAddFunds);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.TreasuryAddFunds);
             setIsBusy(false);
             setTransactionStatus({
               lastOperation: transactionStatus.currentOperation,
               currentOperation: TransactionStatus.TransactionFinished
             });
-            await delay(1000);
             onAddFundsTransactionFinished();
             setOngoingOperation(undefined);
           } else { setIsBusy(false); }
@@ -2073,13 +2131,8 @@ export const TreasuriesView = () => {
 
   // Close treasury modal
   const [isCloseTreasuryModalVisible, setIsCloseTreasuryModalVisibility] = useState(false);
-
   const showCloseTreasuryModal = useCallback(() => {
-    setTransactionStatus({
-      lastOperation: TransactionStatus.Iddle,
-      currentOperation: TransactionStatus.Iddle
-    });
-
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2095,12 +2148,11 @@ export const TreasuriesView = () => {
       }
       setIsCloseTreasuryModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
-    setTransactionStatus,
+    resetTransactionStatus
   ]);
 
   const hideCloseTreasuryModal = useCallback(() => {
@@ -2177,7 +2229,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2265,7 +2317,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2332,7 +2384,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2355,7 +2407,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2448,6 +2500,7 @@ export const TreasuriesView = () => {
   // Close stream modal
   const [isCloseStreamModalVisible, setIsCloseStreamModalVisibility] = useState(false);
   const showCloseStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2463,11 +2516,11 @@ export const TreasuriesView = () => {
       }
       setIsCloseStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
   const hideCloseStreamModal = useCallback(() => setIsCloseStreamModalVisibility(false), []);
   const onAcceptCloseStream = (closeTreasury: boolean) => {
@@ -2552,7 +2605,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2642,7 +2695,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2710,7 +2763,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -2733,7 +2786,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -2827,6 +2880,7 @@ export const TreasuriesView = () => {
   // Pause stream modal
   const [isPauseStreamModalVisible, setIsPauseStreamModalVisibility] = useState(false);
   const showPauseStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -2842,11 +2896,11 @@ export const TreasuriesView = () => {
       }
       setIsPauseStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const hidePauseStreamModal = useCallback(() => setIsPauseStreamModalVisibility(false), []);
@@ -2915,7 +2969,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3003,7 +3057,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3070,7 +3124,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -3093,7 +3147,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3175,7 +3229,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamPause);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamPause);
             setIsBusy(false);
             onCloseStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -3189,6 +3243,7 @@ export const TreasuriesView = () => {
   // Resume stream modal
   const [isResumeStreamModalVisible, setIsResumeStreamModalVisibility] = useState(false);
   const showResumeStreamModal = useCallback(() => {
+    resetTransactionStatus();
     if (treasuryDetails) {
       const v2 = treasuryDetails as Treasury;
       if (v2.version && v2.version >= 2) {
@@ -3204,11 +3259,11 @@ export const TreasuriesView = () => {
       }
       setIsResumeStreamModalVisibility(true);
     }
-
   }, [
     treasuryDetails,
     getTransactionFees,
     getTransactionFeesV2,
+    resetTransactionStatus
   ]);
 
   const hideResumeStreamModal = useCallback(() => setIsResumeStreamModalVisibility(false), []);
@@ -3277,7 +3332,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3288,7 +3343,7 @@ export const TreasuriesView = () => {
           streamPublicKey,                                  // Stream ID
         )
         .then(value => {
-          consoleOut('pauseStream returned transaction:', value);
+          consoleOut('resumeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -3301,7 +3356,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('pauseStream error:', error);
+          console.error('resumeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -3310,7 +3365,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3318,7 +3373,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -3365,7 +3420,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3376,7 +3431,7 @@ export const TreasuriesView = () => {
           streamPublicKey,                                  // Stream ID
         )
         .then(value => {
-          consoleOut('pauseStream returned transaction:', value);
+          consoleOut('resumeStream returned transaction:', value);
           setTransactionStatus({
             lastOperation: TransactionStatus.InitTransactionSuccess,
             currentOperation: TransactionStatus.SignTransaction
@@ -3389,7 +3444,7 @@ export const TreasuriesView = () => {
           return true;
         })
         .catch(error => {
-          console.error('pauseStream error:', error);
+          console.error('resumeStream error:', error);
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.InitTransactionFailure
@@ -3398,7 +3453,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3406,7 +3461,7 @@ export const TreasuriesView = () => {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+        customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -3432,7 +3487,7 @@ export const TreasuriesView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
+            customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -3455,7 +3510,7 @@ export const TreasuriesView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
+          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -3535,7 +3590,7 @@ export const TreasuriesView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "confirmed", OperationType.StreamResume);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamResume);
             setIsBusy(false);
             onResumeStreamTransactionFinished();
             setOngoingOperation(undefined);
@@ -3549,6 +3604,7 @@ export const TreasuriesView = () => {
   // Create Stream modal
   const [isCreateStreamModalVisible, setIsCreateStreamModalVisibility] = useState(false);
   const showCreateStreamModal = useCallback(() => {
+    resetTransactionStatus();
     setIsCreateStreamModalVisibility(true);
     getTransactionFeesV2(MSP_ACTIONS_V2.createStream).then(value => {
       setTransactionFees(value);
@@ -3558,7 +3614,10 @@ export const TreasuriesView = () => {
       setWithdrawTransactionFees(value);
       consoleOut('withdrawTransactionFees:', value, 'orange');
     });
-  }, [getTransactionFeesV2]);
+  }, [
+    getTransactionFeesV2,
+    resetTransactionStatus
+  ]);
 
   const closeCreateStreamModal = useCallback(() => {
     setIsCreateStreamModalVisibility(false);
@@ -3582,35 +3641,39 @@ export const TreasuriesView = () => {
   // Rendering //
   ///////////////
 
-  const renderStreamOptions = (item: Stream | StreamInfo, isNewTreasury: boolean) => {
-    const v1 = item as StreamInfo;
-    const v2 = item as Stream;
+  const renderStreamOptions = (item: Stream | StreamInfo) => {
+    const streamV2 = item as Stream;
+    const treasuryV2 = treasuryDetails as Treasury;
+    const isNewTreasury = treasuryV2.version && treasuryV2.version >= 2 ? true : false;
+
     const menu = (
       <Menu>
-        {isNewTreasury && (
+        {(isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open) && (
           <>
-            {v1.version < 2
-              ? null
-              : v2.status === STREAM_STATUS.Paused
-                ? (
-                  <>
-                    {v2.fundsLeftInStream > 0 && (
-                      <Menu.Item key="1" onClick={showResumeStreamModal}>
-                        <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
-                      </Menu.Item>
-                    )}
-                  </>
-                ) : v2.status === STREAM_STATUS.Running ? (
-                  <Menu.Item key="2" onClick={showPauseStreamModal}>
-                    <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
-                  </Menu.Item>
-                ) : null
+            {streamV2.status === STREAM_STATUS.Paused
+              ? (
+                <>
+                  {streamV2.fundsLeftInStream > 0 && (
+                    <Menu.Item key="1" onClick={showResumeStreamModal}>
+                      <span className="menu-item-text">{t('treasuries.treasury-streams.option-resume-stream')}</span>
+                    </Menu.Item>
+                  )}
+                </>
+              ) : streamV2.status === STREAM_STATUS.Running && streamV2.withdrawableAmount >= streamV2.allocationReserved ? (
+                <Menu.Item key="2" onClick={showPauseStreamModal}>
+                  <span className="menu-item-text">{t('treasuries.treasury-streams.option-pause-stream')}</span>
+                </Menu.Item>
+              ) : null
             }
           </>
         )}
-        <Menu.Item key="3" onClick={showCloseStreamModal}>
-          <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
-        </Menu.Item>
+        {(!isNewTreasury ||
+          (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Open) ||
+          (isNewTreasury && treasuryV2.treasuryType === TreasuryType.Lock && streamV2.status === STREAM_STATUS.Paused)) && (
+          <Menu.Item key="3" onClick={showCloseStreamModal}>
+            <span className="menu-item-text">{t('treasuries.treasury-streams.option-close-stream')}</span>
+          </Menu.Item>
+        )}
         <Menu.Item key="4" onClick={() => onCopyStreamAddress(item.id)}>
           <span className="menu-item-text">Copy Stream ID</span>
         </Menu.Item>
@@ -3656,10 +3719,6 @@ export const TreasuriesView = () => {
       );
     }
 
-    const v1 = treasuryDetails as TreasuryInfo;
-    const v2 = treasuryDetails as Treasury;
-    const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
-
     return (
       <>
         <div className="item-list-header compact">
@@ -3698,7 +3757,7 @@ export const TreasuriesView = () => {
                 </div>
                 <div className="std-table-cell last-cell">
                   <span className={`icon-button-container ${isClosingTreasury() && highlightedStream ? 'click-disabled' : ''}`}>
-                    {renderStreamOptions(item, isNewTreasury)}
+                    {renderStreamOptions(item)}
                   </span>
                 </div>
               </div>
@@ -3832,7 +3891,7 @@ export const TreasuriesView = () => {
   };
 
   const renderCtaRow = () => {
-    const v1 = treasuryDetails as TreasuryInfo;
+    if (!treasuryDetails) { return null; }
     const v2 = treasuryDetails as Treasury;
     const isNewTreasury = v2.version && v2.version >= 2 ? true : false;
     return (
@@ -3859,7 +3918,8 @@ export const TreasuriesView = () => {
                 className="thin-stroke"
                 disabled={
                   isTxInProgress() ||
-                  isAnythingLoading() ||
+                  loadingTreasuries ||
+                  loadingTreasuryDetails ||
                   (!treasuryDetails || !isNewTreasury || v2.balance - v2.allocationAssigned <= 0)
                 }
                 onClick={showCreateStreamModal}>
@@ -4105,7 +4165,8 @@ export const TreasuriesView = () => {
                               disabled={
                                 isTxInProgress() ||
                                 !isTreasurer() ||
-                                isAnythingLoading()
+                                isAnythingLoading() ||
+                                !isTreasuryFunded()
                               }
                             />
                           </Tooltip>
@@ -4120,7 +4181,8 @@ export const TreasuriesView = () => {
                                 isTxInProgress() ||
                                 (treasuryStreams && treasuryStreams.length > 0) ||
                                 !isTreasurer() ||
-                                isAnythingLoading()
+                                isAnythingLoading() ||
+                                !isTreasuryFunded()
                               }
                             />
                           </Tooltip>
@@ -4215,12 +4277,20 @@ export const TreasuriesView = () => {
           handleOk={onAcceptCloseStream}
           handleClose={hideCloseStreamModal}
           content={getStreamClosureMessage()}
+          mspClient={
+            highlightedStream
+              ? highlightedStream.version < 2
+                ? ms
+                : msp
+              : undefined
+          }
           canCloseTreasury={numTreasuryStreams() === 1 ? true : false}
         />
       )}
 
       <StreamPauseModal
         isVisible={isPauseStreamModalVisible}
+        selectedToken={selectedToken}
         transactionFees={transactionFees}
         tokenBalance={tokenBalance}
         streamDetail={highlightedStream}
@@ -4231,6 +4301,7 @@ export const TreasuriesView = () => {
 
       <StreamResumeModal
         isVisible={isResumeStreamModalVisible}
+        selectedToken={selectedToken}
         transactionFees={transactionFees}
         tokenBalance={tokenBalance}
         streamDetail={highlightedStream}
@@ -4254,8 +4325,8 @@ export const TreasuriesView = () => {
           associatedToken={
             treasuryDetails
               ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-               ? (treasuryDetails as Treasury).associatedToken as string
-               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
               : ''
           }
           isBusy={isBusy}
@@ -4267,8 +4338,8 @@ export const TreasuriesView = () => {
           associatedToken={
             treasuryDetails
               ? (treasuryDetails as Treasury).version && (treasuryDetails as Treasury).version >= 2
-               ? (treasuryDetails as Treasury).associatedToken as string
-               : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
+                ? (treasuryDetails as Treasury).associatedToken as string
+                : (treasuryDetails as TreasuryInfo).associatedTokenAddress as string
               : ''
           }
           connection={connection}

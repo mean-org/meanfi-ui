@@ -1,5 +1,5 @@
 import { TreasuryType } from "@mean-dao/money-streaming/lib/types";
-import { TreasuryTypeOption } from "../models/treasury-definition";
+import { TreasuryTypeOption } from "../models/treasuries";
 
 export const TREASURY_TYPE_OPTIONS: TreasuryTypeOption[] = [
     {

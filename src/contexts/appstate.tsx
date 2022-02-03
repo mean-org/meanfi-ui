@@ -32,7 +32,7 @@ import { appConfig } from "..";
 import { DdcaAccount } from "@mean-dao/ddca";
 import { TransactionStatusContext } from "./transaction-status";
 import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
-import { TreasuryTypeOption } from "../models/treasury-definition";
+import { TreasuryTypeOption } from "../models/treasuries";
 import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
 import { initialSummary, StreamsSummary } from "../models/streams";
 import { MSP, Stream } from "@mean-dao/msp";
@@ -571,10 +571,7 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setSelectedStream = (stream: Stream | StreamInfo | undefined) => {
     updateSelectedStream(stream);
-    // updateStreamDetail(stream);
     if (stream) {
-      // getStreamActivity(stream.id as string, (stream as any).version);
-
       const mspInstance: any = stream.version < 2 ? ms : msp;
       mspInstance.getStream(new PublicKey(stream.id as string))
         .then((detail: Stream | StreamInfo) => {
@@ -585,22 +582,10 @@ const AppStateProvider: React.FC = ({ children }) => {
             setSelectedToken(token);
             if (!loadingStreamActivity) {
               setLoadingStreamActivity(true);
-              const streamPublicKey = new PublicKey(detail.id as string);
-              mspInstance.listStreamActivity(streamPublicKey)
-                .then((value: any) => {
-                  consoleOut('activity:', value, 'blue');
-                  setStreamActivity(value);
-                  setLoadingStreamActivity(false);
-                })
-                .catch((err: any) => {
-                  console.error(err);
-                  setStreamActivity([]);
-                  setLoadingStreamActivity(false);
-                });
+              getStreamActivity(detail.id as string, detail.version);
             }
           }
         })
-
     } else {
       setStreamActivity([]);
     }
@@ -797,17 +782,20 @@ const AppStateProvider: React.FC = ({ children }) => {
       });
 
       let streamAccumulator: any[] = [];
+      let rawStreamsv1: StreamInfo[] = [];
+      let rawStreamsv2: Stream[] = [];
 
       msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
         .then(streamsv2 => {
           streamAccumulator.push(...streamsv2);
-          setStreamListv2(streamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+          rawStreamsv2 = streamsv2;
+          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
           ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
           .then(streamsv1 => {
               streamAccumulator.push(...streamsv1);
-              setStreamListv1(streamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
+              rawStreamsv1 = streamsv1;
+              rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
               streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
-              consoleOut('Streams:', streamAccumulator, 'blue');
               // Sort debugging block
               if (!isProd()) {
                 const debugTable: any[] = [];
@@ -819,6 +807,9 @@ const AppStateProvider: React.FC = ({ children }) => {
               }
               // End of debugging block
               setStreamList(streamAccumulator);
+              setStreamListv2(rawStreamsv2);
+              setStreamListv1(rawStreamsv1);
+              consoleOut('Streams:', streamAccumulator, 'blue');
               if (streamAccumulator.length) {
                 let item: Stream | StreamInfo | undefined;
                 if (reset) {
@@ -842,13 +833,13 @@ const AppStateProvider: React.FC = ({ children }) => {
                   }
                 }
                 if (!item) {
-                  item = JSON.parse(JSON.stringify(streamAccumulator[0]));
+                  item = Object.assign({}, streamAccumulator[0]);
                 }
                 consoleOut('selectedStream:', item, 'blue');
                 if (item && selectedStream && item.id !== selectedStream.id) {
                   updateSelectedStream(item);
                   const mspInstance: any = item.version < 2 ? ms : msp;
-                  mspInstance.getStream(item)
+                  mspInstance.getStream(new PublicKey(item.id as string))
                     .then((detail: Stream | StreamInfo) => {
                       if (detail) {
                         updateStreamDetail(detail);

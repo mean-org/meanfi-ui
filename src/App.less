@@ -63,6 +63,12 @@
   --gradStart: #ffffff;
   --gradEnd: #d2d2d2;
 
+  /* Black with alpha */
+  --darken-05: rgba(0, 0, 0, 0.05);
+  --darken-10: rgba(0, 0, 0, 0.10);
+  --darken-20: rgba(0, 0, 0, 0.20);
+  --darken-30: rgba(0, 0, 0, 0.30);
+
   /* Properties */
   --custom-border-radius: 7px;
   --custom-control-height: 40px;
@@ -586,15 +592,31 @@ footer.ant-layout-footer {
   cursor: pointer;
   border-width: 0px;
   text-decoration: none;
-  border-radius: 3px;
-  padding: 2px 4px;
+  border-radius: 4px;
+  padding: 2px 6px;
   transition: background 0.1s ease-out 0s;
   outline: none !important;
-  &:hover,
-  &.active,
-  &:focus {
-    background-color: var(--darken);
-    text-decoration: none;
+  background-color: var(--darken-10);
+  &.tiny {
+    font-size: 12px;
+    font-weight: 400;
+  }
+  &.stroked {
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--color-secondary-alpha-50);
+  }
+  &:not(.disabled) {
+    &:hover,
+    &.active,
+    &:focus {
+      background-color: var(--darken-20);
+      text-decoration: none;
+    }
+  }
+  &.disabled {
+    pointer-events: none;
+    opacity: 0.7;
   }
   &.icon-button {
     display: inline-flex;
@@ -1017,6 +1039,18 @@ footer.ant-layout-footer {
     font-size: 20px;
     margin: 0px;
   }
+}
+
+.warning-bar {
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  font-weight: bold;
+  background-color: var(--color-primary);
+}
+.warning-bar ~ header.ant-layout-header.App-Bar {
+  top: 30px;
 }
 .App-Bar {
   align-self: center;
@@ -2458,6 +2492,17 @@ main section {
   }
 }
 
+// Wells can glue togethwe in a group inside this container
+.well-group {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  border-radius: var(--custom-border-radius);
+  background-color: var(--color-wells);
+  padding: 6px;
+}
+
 // Fields go inside wells
 .well {
   display: block;
@@ -3349,6 +3394,10 @@ main section {
   }
 }
 
+.simple-modal-inner-max-height {
+  max-height: 64vh;
+}
+
 .icon-button-container {
   display: inline-flex;
   justify-content: center;
@@ -4072,6 +4121,9 @@ main section {
       transform-origin: top;
       opacity: 1;
       z-index: 1;
+      .meanfi-panel-heading .title {
+        max-width: 170px;
+      }
       .inner-container {
         height: calc(100% - var(--footer-bar-height));
         background-color: transparent;
@@ -4140,6 +4192,13 @@ main section {
     .meanfi-two-panel-right {
       flex: 0 0 100%;
       max-width: 100%;
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1199.98px) {
+    .meanfi-two-panel-left {
+      .meanfi-panel-heading .title {
+        max-width: 170px;
+      }
     }
   }
   @media (min-width: 768px) {
@@ -4402,7 +4461,6 @@ main section {
             }
           }
           .info-data {
-            flex: 1 1 auto;
             &.large {
               font-size: 1.8rem;
               color: var(--color-secondary-alpha-85);
@@ -4960,7 +5018,18 @@ main section {
 .mr-4 {
   margin-right: 2rem;
 }
-
+.mx-0 {
+  margin-left: 0;
+  margin-right: 0;
+}
+.mx-1 {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+.mx-2 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
 .my-0 {
   margin-top: 0;
   margin-bottom: 0;
@@ -4984,16 +5053,16 @@ main section {
   margin-bottom: 0 !important;
 }
 .mb-1 {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem !important;
 }
 .mb-2 {
-  margin-bottom: 1rem;
+  margin-bottom: 1rem !important;
 }
 .mb-3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem !important;
 }
 .mb-4 {
-  margin-bottom: 2rem;
+  margin-bottom: 2rem !important;
 }
 
 // Font weight

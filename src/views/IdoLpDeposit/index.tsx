@@ -140,7 +140,7 @@ export const IdoLpDeposit = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.InitTransactionFailure),
             result: `${error}`
           });
-          customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -148,7 +148,7 @@ export const IdoLpDeposit = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot start transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -174,7 +174,7 @@ export const IdoLpDeposit = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
           }
           setTransactionStatus({
@@ -197,7 +197,7 @@ export const IdoLpDeposit = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+          customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -210,7 +210,7 @@ export const IdoLpDeposit = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot sign transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }
@@ -242,7 +242,7 @@ export const IdoLpDeposit = (props: {
               action: getTransactionStatusForLogs(TransactionStatus.SendTransactionFailure),
               result: { error, encodedTx }
             });
-            customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+            customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -255,7 +255,7 @@ export const IdoLpDeposit = (props: {
           action: getTransactionStatusForLogs(TransactionStatus.WalletNotFound),
           result: 'Cannot send transaction! Wallet not found!'
         });
-        customLogger.logError('IDO Deposit USDC transaction failed', { transcript: transactionLog });
+        customLogger.logError('IDO LP Deposit USDC transaction failed', { transcript: transactionLog });
         return false;
       }
     }

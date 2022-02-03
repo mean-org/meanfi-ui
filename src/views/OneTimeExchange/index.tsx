@@ -374,7 +374,7 @@ export const OneTimeExchange = (props: {
       const list: any = { };
 
       for (let info of TOKENS) {
-        let mint = JSON.parse(JSON.stringify(info));
+        let mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -1410,7 +1410,7 @@ export const OneTimeExchange = (props: {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
         result: {signer: `${wallet?.publicKey.toBase58() || '-'}`, error: `${_error}`}
       }]);
-      customLogger.logWarning('Swap transaction failed', { transcript: transactionLog });
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
       throw(_error);
     }
 

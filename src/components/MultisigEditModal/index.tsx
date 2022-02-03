@@ -12,20 +12,21 @@ import { TransactionFees } from '@mean-dao/money-streaming';
 import { getTokenAmountAndSymbolByTokenAddress, isValidNumber } from '../../utils/utils';
 import { MultisigParticipants } from '../MultisigParticipants';
 import { MultisigParticipant } from '../../models/multisig';
-import { useWallet } from '../../contexts/wallet';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
-export const MultisigCreateModal = (props: {
+export const MultisigEditModal = (props: {
   handleClose: any;
   handleOk: any;
   isVisible: boolean;
   isBusy: boolean;
   nativeBalance: number;
   transactionFees: TransactionFees;
+  multisigName?: string;
+  multisigThreshold?: number;
+  participants?: MultisigParticipant[];
 }) => {
   const { t } = useTranslation('common');
-  const { publicKey } = useWallet();
   const {
     transactionStatus,
     setTransactionStatus,
@@ -35,20 +36,25 @@ export const MultisigCreateModal = (props: {
   const [multisigThreshold, setMultisigThreshold] = useState(0);
   const [multisigOwners, setMultisigOwners] = useState<MultisigParticipant[]>([]);
 
-  // When modal goes visible, add current wallet address as first participant
+  // When modal goes visible, get passed-in owners to populate participants component
+  // Also get threshold and labe (name)
   useEffect(() => {
-    if (publicKey && props.isVisible) {
-      setMultisigThreshold(1);
-      const items: MultisigParticipant[] = [];
-      items.push({
-          name: `Owner 1`,
-          address: publicKey.toBase58()
-      });
-      setMultisigOwners(items);
+    if (props.isVisible) {
+      if (props.multisigName) {
+        setMultisigLabel(props.multisigName);
+      }
+      if (props.multisigThreshold) {
+        setMultisigThreshold(props.multisigThreshold);
+      }
+      if (props.participants && props.participants.length > 0) {
+        setMultisigOwners(props.participants);
+      }
     }
   }, [
-    publicKey,
     props.isVisible,
+    props.multisigName,
+    props.participants,
+    props.multisigThreshold
   ]);
 
   const onAcceptModal = () => {
@@ -114,7 +120,7 @@ export const MultisigCreateModal = (props: {
   return (
     <Modal
       className="mean-modal simple-modal"
-      title={<div className="modal-title">{t('multisig.create-multisig.modal-title')}</div>}
+      title={<div className="modal-title">{t('multisig.update-multisig.modal-title')}</div>}
       footer={null}
       visible={props.isVisible}
       onOk={onAcceptModal}
@@ -122,7 +128,7 @@ export const MultisigCreateModal = (props: {
       afterClose={onAfterClose}
       width={props.isBusy || transactionStatus.currentOperation !== TransactionStatus.Iddle ? 380 : 480}>
 
-      <div className={!props.isBusy ? "panel1 show vertical-scroll simple-modal-inner-max-height" : "panel1 hide"}>
+      <div className={!props.isBusy ? "panel1 show" : "panel1 hide"}>
 
         {transactionStatus.currentOperation === TransactionStatus.Iddle ? (
           <>
@@ -192,7 +198,7 @@ export const MultisigCreateModal = (props: {
           <>
             <div className="transaction-progress">
               <CheckOutlined style={{ fontSize: 48 }} className="icon mt-0" />
-              <h4 className="font-bold">{t('multisig.create-multisig.success-message')}</h4>
+              <h4 className="font-bold">{t('multisig.update-multisig.success-message')}</h4>
             </div>
           </>
         ) : (
@@ -277,9 +283,9 @@ export const MultisigCreateModal = (props: {
               }
             }}>
             {props.isBusy
-              ? t('multisig.create-multisig.main-cta-busy')
+              ? t('multisig.update-multisig.main-cta-busy')
               : transactionStatus.currentOperation === TransactionStatus.Iddle
-                ? t('multisig.create-multisig.main-cta')
+                ? t('multisig.update-multisig.main-cta')
                 : transactionStatus.currentOperation === TransactionStatus.TransactionFinished
                   ? t('general.cta-finish')
                   : t('general.refresh')

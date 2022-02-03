@@ -56,14 +56,18 @@
 		"switch-hide-low-balances": "Hide low balances"
 	},
 	"close-stream": {
+		"cant-close-message": "You cannot close a stream from a locked treasury",
+		"cant-topup-message": "You cannot top up a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amounts back to the original treasury ({{treasury}}).",
 		"context-treasurer-single-beneficiary": "Closing a stream will stop the money flow, send the vested amount to the beneficiary ({{beneficiary}}), and return the unvested amount back to the contributor.",
+		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Close stream",
 		"primary-cta": "Close stream",
 		"return-unvested-amount": "Unvested amount",
 		"return-vested-amount": "Vested amount",
-		"secondary-cta": "Cancel"
+		"secondary-cta": "Cancel",
+		"see-details-cta": "see details"
 	},
 	"contract-selector": {
 		"donation-fund": {
@@ -263,6 +267,8 @@
 			"multisig-participants": "Valid signers",
 			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
 			"multisig-threshold-input-label": "Minimum required signatures",
+			"multisig-threshold-input-max": "Max number of signatures is 10",
+			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
 			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
 			"success-message": "Your new multisig account was created successfully."
 		},
@@ -270,7 +276,7 @@
 		"create-vault": {
 			"main-cta": "Create",
 			"main-cta-busy": "Creating vault",
-			"modal-title": "Create a multisig Vault",
+			"modal-title": "Create a Multisig Vault",
 			"no-token": "Select token",
 			"success-message": "Your multisig vault was created successfully",
 			"token-label": "From Account",
@@ -295,16 +301,16 @@
 			"copy-id-title": "MULTISIG ID",
 			"created-on": "Created on",
 			"cta-create-vault": "Create vault",
-			"cta-view-all-vaults": "View all vaults",
 			"cta-mint": "Mint",
 			"cta-transfer": "Transfer Tokens",
 			"cta-upgrade-program": "Upgrade Program",
+			"cta-view-all-vaults": "View all vaults",
 			"multisig-address-label": "Address",
 			"multisig-label-label": "Multisig name",
 			"multisig-owners": "Owners",
-			"multisig-participants": "Current multisig owners",
-			"no-multisig-loaded": "Create or lookup a multisig account to view details",
-			"no-multisig-selected": "Please select or lookup a multisig account to view details",
+			"multisig-participants": "Current Multisig Owners",
+			"no-multisig-loaded": "Create or select a multisig account to view details",
+			"no-multisig-selected": "Please select a multisig account to view details",
 			"required-signatures": "Required signatures"
 		},
 		"multisig-accounts": {
@@ -320,6 +326,17 @@
 			"column-program-id": "Program",
 			"loading-transactions": "Loading transactions",
 			"no-transactions": "This multisig account has no transactions"
+		},
+		"multisig-programs": {
+			"cta-create-program": "Create program",
+			"modal-title": "Create program",
+			"no-program-loaded": "No program details",
+			"no-programs": "No programs available",
+			"not-connected": "Please connect your wallet to see programs",
+			"program-detail-heading": "Program details",
+			"refresh-tooltip": "Click to refresh the list of programs",
+			"screen-title": "Programs - {{multisigName}} ({{programCount}})",
+			"screen-title-no-programs": "Programs"
 		},
 		"multisig-vaults": {
 			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
@@ -354,6 +371,12 @@
 			"transfer-to-label": "Transfer to (Destination Account)",
 			"transfer-to-placeholder": "Enter the address of the destination account"
 		},
+		"update-multisig": {
+			"main-cta": "Save changes",
+			"main-cta-busy": "Saving changes",
+			"modal-title": "Edit multisig",
+			"success-message": "Your changes to the multisig account were saved!"
+		},
 		"upgrade-program": {
 			"buffer-account-label": "New program buffer",
 			"buffer-account-placeholder": "Enter the address of the buffer account",
@@ -385,6 +408,7 @@
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
+		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",
@@ -408,6 +432,15 @@
 		"streamid-empty": "Missing stream id",
 		"streamid-open-cta": "Open stream",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"transfer-stream": {
+		"destination-address-is-sender": "The new address cannot be the sender",
+		"destination-is-own-account": "Transfer stream to yourself is not allowed",
+		"label-streamid-input": "New stream owner",
+		"modal-title": "Transfer stream",
+		"streamid-empty": "Missing address",
+		"streamid-open-cta": "Transfer",
+		"streamid-placeholder": "New beneficiary wallet address"
 	},
 	"payroll": {
 		"screen-subtitle": "Setup payroll for your employees",
@@ -476,6 +509,7 @@
 			"status-scheduled": "Scheduled",
 			"status-stopped": "Stopped",
 			"stopped": "Ran out of funds",
+			"stopped-manually": "Manually stopped",
 			"streaming": "Streaming"
 		},
 		"stream-activity": {
@@ -492,6 +526,7 @@
 			"amount-funded-date": "funded on",
 			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Close money stream",
+			"transfer-money-stream-menu-item": "Transfer ownership",
 			"cta-disabled-closing": "Closing money stream...",
 			"cta-disabled-creating": "Create stream in progress...",
 			"cta-disabled-funding": "Add funds in progress...",
@@ -626,6 +661,8 @@
 			"stream-started-pre": "Your money stream for",
 			"tx-add-funds-operation": "Funding stream with",
 			"tx-add-funds-operation-success": "Funds added successfully",
+			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
+			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-close-operation": "Close stream operation",
 			"tx-close-operation-success": "Stream successfully closed",
 			"tx-close-vault-operation": "Close vault operation",
@@ -681,7 +718,7 @@
 		},
 		"validation": {
 			"address-validation": "Not a valid address format",
-			"amount-high": "Amount exceeds your {{symbol}} balance",
+			"amount-high": "Amount exceeds your balance",
 			"amount-low": "Not enough balance",
 			"amount-lt-fee": "Amount has to be greater than the transaction fee",
 			"amount-sol-high": "Amount exceeds your SOL balance",

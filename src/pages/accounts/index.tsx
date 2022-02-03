@@ -27,10 +27,8 @@ import {
   formatAmount,
   getAmountFromLamports,
   getFormattedRateAmount,
-  getStreamedUnitsPerSecond,
   getTokenAmountAndSymbolByTokenAddress,
-  shortenAddress,
-  toUiAmount
+  shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
 import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
@@ -61,8 +59,8 @@ import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
 import { initialSummary, StreamsSummary } from '../../models/streams';
 import { TransactionStatusContext } from '../../contexts/transaction-status';
-import { MSP, STREAM_STATUS } from '@mean-dao/msp';
-import { BN } from 'bn.js';
+import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
@@ -91,7 +89,6 @@ export const AccountsView = () => {
     detailsPanelOpen,
     shouldLoadTokens,
     streamsSummary,
-    lastStreamsSummary,
     loadingStreamsSummary,
     streamProgramAddress,
     canShowAccountDetails,
@@ -326,7 +323,6 @@ export const AccountsView = () => {
   }
 
   // Token Merger Modal
-  // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
   const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
   const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
@@ -726,14 +722,13 @@ export const AccountsView = () => {
     wallet,
     publicKey,
     connected,
-    streamList,
     streamDetail,
     previousWalletConnectState,
-    setStreamsSummary,
-    setLastStreamsSummary,
     setCanShowAccountDetails,
     setAddAccountPanelOpen,
+    setLastStreamsSummary,
     setShouldLoadTokens,
+    setStreamsSummary,
     refreshStreamList,
     setStreamDetail,
     startSwitch,
@@ -800,68 +795,73 @@ export const AccountsView = () => {
     const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
     const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
 
+    // consoleOut('=========== Block strat ===========', '', 'orange');
+
     for (let stream of updatedStreamsv1) {
 
-      const streamIsOutgoing = 
-          stream.treasurerAddress &&
-          typeof stream.treasurerAddress !== 'string'
-              ? stream.treasurerAddress.equals(publicKey)
-              : stream.treasurerAddress === publicKey.toBase58();
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+        ? true
+        : false;
 
-      if (streamIsOutgoing) {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
       } else {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
       }
 
       // Get refreshed data
-      let freshStream = await ms.refreshStream(stream);
-      if (!freshStream) { continue; }
+      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
 
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = getPricePerToken(asset as UserTokenAccount);
-      if (streamIsOutgoing) {
-        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowUnvestedAmount || 0 * rate);
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      if (isIncoming) {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
       } else {
-        resume['totalNet'] = resume['totalNet'] + (freshStream.escrowVestedAmount || 0 * rate);
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
       }
     }
 
     resume['totalAmount'] = updatedStreamsv1.length;
 
+    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
+
     let streamsUsdNetChange = 0;
 
     for (let stream of updatedStreamsv2) {
 
-      const streamIsOutgoing = 
-          stream.treasurer &&
-          typeof stream.treasurer !== 'string'
-              ? stream.treasurer.equals(publicKey)
-              : stream.treasurer === publicKey.toBase58();
+      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+        ? true
+        : false;
 
-      if (streamIsOutgoing) {
-        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
       } else {
-        resume['incomingAmount'] = resume['incomingAmount'] + 1;  
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
       }
 
       // Get refreshed data
-      let freshStream = await msp.refreshStream(stream);
+      let freshStream = await msp.refreshStream(stream) as Stream;
       if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
 
-      let streamedUnitsPerSecond = getStreamedUnitsPerSecond(freshStream.rateIntervalInSeconds, freshStream.rateAmount);
       const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-      const rate = getPricePerToken(asset as UserTokenAccount);
-      let streamUnitsUsdPerSecond = toUiAmount(new BN(streamedUnitsPerSecond), asset?.decimals || 9) * rate;
-      if (streamIsOutgoing) {
-        streamsUsdNetChange -= streamUnitsUsdPerSecond;
-      } else {
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
+      // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
+      // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
+      // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
+      if (isIncoming) {
         streamsUsdNetChange += streamUnitsUsdPerSecond;
+      } else {
+        streamsUsdNetChange -= streamUnitsUsdPerSecond;
       }
     }
 
     resume['totalAmount'] += updatedStreamsv2.length;
     resume['totalNet'] += streamsUsdNetChange;
+
+    // consoleOut('totalNet:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
 
     // Update state
     setLastStreamsSummary(streamsSummary);
@@ -937,7 +937,7 @@ export const AccountsView = () => {
                   </div>
                 </div>
               ) : (
-                <div className={streamsSummary.totalNet !== lastStreamsSummary.totalNet ? 'token-icon animate-border' : 'token-icon'}>
+                <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
                   <div className="streams-count simplelink" onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -967,9 +967,9 @@ export const AccountsView = () => {
               )}
             </div>
             <div className="operation-vector">
-              {streamsSummary.totalNet > lastStreamsSummary.totalNet ? (
+              {streamsSummary.totalNet > 0 ? (
                 <ArrowUpOutlined className="mean-svg-icons success bounce" />
-              ) : streamsSummary.totalNet < lastStreamsSummary.totalNet ? (
+              ) : streamsSummary.totalNet < 0 ? (
                 <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
               ) : (
                 <span className="online-status neutral"></span>
@@ -1183,12 +1183,12 @@ export const AccountsView = () => {
   const renderTokenBuyOptions = () => {
     return (
       <div className="buy-token-options">
-        <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
+        <h3 className="text-center mb-3">{t('assets.no-balance.line1', { tokenSymbol: selectedAsset?.symbol })} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
           {isSelectedAssetNativeAccount() && (
             <Button shape="round" type="ghost"
-                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', { tokenSymbol: selectedAsset?.symbol })}</Button>
           )}
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
           {selectedAsset?.publicAddress !== accountAddress && (
