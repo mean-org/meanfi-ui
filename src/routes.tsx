@@ -30,7 +30,7 @@ import { OnlineStatusProvider } from "./contexts/online-status";
 import { IdoLpView } from "./pages/ido-lp";
 import { MultisigVaultsView } from "./pages/multisig-vaults";
 import { MultisigProgramsView } from "./pages/multisig-programs";
-import { SolanaClusterStatsProvider } from "./contexts/cluster-stats";
+import { SolanaStatusProvider } from "./contexts/cluster-stats";
 
 export function AppRoutes() {
 
@@ -39,7 +39,7 @@ export function AppRoutes() {
     <OnlineStatusProvider>
       <BrowserRouter basename={"/"}>
         <ConnectionProvider>
-          <SolanaClusterStatsProvider>
+          <SolanaStatusProvider>
             <WalletProvider>
               <AccountsProvider>
                 <TransactionStatusProvider>
@@ -78,7 +78,7 @@ export function AppRoutes() {
                 </TransactionStatusProvider>
               </AccountsProvider>
             </WalletProvider>
-          </SolanaClusterStatsProvider>
+          </SolanaStatusProvider>
         </ConnectionProvider>
       </BrowserRouter>
     </OnlineStatusProvider>

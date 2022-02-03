@@ -20,7 +20,7 @@ import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
-import { usePerformanceInfo } from "../../contexts/cluster-stats";
+import useSolanaStatus from "../../contexts/cluster-stats";
 
 const { Header, Content, Footer } = Layout;
 
@@ -51,7 +51,7 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const performanceInfo = usePerformanceInfo();
+  const { performanceInfo } = useSolanaStatus();
 
   // Clear cachedRpc on App destroy (window is being reloaded)
   useEffect(() => {

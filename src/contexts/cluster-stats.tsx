@@ -1,11 +1,6 @@
-import React, { useCallback, useContext, useEffect, useReducer, useState } from "react";
-import { Connection } from "@solana/web3.js";
-import {
-  PerformanceInfo,
-  PerformanceInfoActionType,
-  performanceInfoReducer,
-} from '../utils/solanaPerformanceInfo';
-import { useConnection, useConnectionConfig } from "../contexts/connection";
+import React, { useState, useEffect, useContext, useReducer, useCallback } from "react";
+import { PerformanceInfo, PerformanceInfoActionType, performanceInfoReducer } from "../utils/solanaPerformanceInfo";
+import { useConnection, useConnectionConfig } from "./connection";
 
 export const SAMPLE_HISTORY_HOURS = 1;
 export const PERFORMANCE_SAMPLE_INTERVAL = 60000;
@@ -31,23 +26,25 @@ const initialPerformanceInfo: PerformanceInfo = {
 
 type SetActive = React.Dispatch<React.SetStateAction<boolean>>;
 
-const StatsProviderContext = React.createContext<
-  {
-    setActive: SetActive;
-    setTimedOut: Function;
-    retry: Function;
-    active: boolean;
-  } | undefined
->(undefined);
+interface SolanaStatusConfig {
+  setActive: SetActive;
+  setTimedOut: Function;
+  retry: Function;
+  active: boolean;
+  performanceInfo: PerformanceInfo;
+}
 
-type PerformanceState = { info: PerformanceInfo };
-const PerformanceContext = React.createContext<PerformanceState | undefined>(
-  undefined
-);
+const defaultValues: SolanaStatusConfig = {
+  setActive: () => {},
+  setTimedOut: () => {},
+  retry: () => {},
+  active: false,
+  performanceInfo: initialPerformanceInfo
+};
 
-type Props = { children: React.ReactNode };
+const SolanaStatusContext = React.createContext<SolanaStatusConfig>(defaultValues);
 
-export function SolanaClusterStatsProvider({ children }: Props) {
+export const SolanaStatusProvider: React.FC = ({ children }) => {
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const [active, setActive] = useState(false);
@@ -135,27 +132,22 @@ export function SolanaClusterStatsProvider({ children }: Props) {
   }, []);
 
   return (
-    <StatsProviderContext.Provider
-      value={{ setActive, setTimedOut, retry, active }}>
-      <PerformanceContext.Provider value={{ info: performanceInfo }}>
-        {children}
-      </PerformanceContext.Provider>
-    </StatsProviderContext.Provider>
+    <SolanaStatusContext.Provider
+      value={{
+        setActive,
+        setTimedOut,
+        retry,
+        active,
+        performanceInfo
+      }}>
+      {children}
+    </SolanaStatusContext.Provider>
   );
-}
+};
 
-export function useStatsProvider() {
-  const context = useContext(StatsProviderContext);
-  if (!context) {
-    throw new Error(`useContext must be used within a StatsProvider`);
-  }
+export const useSolanaStatus = () => {
+  const context = useContext(SolanaStatusContext);
   return context;
-}
+};
 
-export function usePerformanceInfo() {
-  const context = useContext(PerformanceContext);
-  if (!context) {
-    throw new Error(`usePerformanceInfo must be used within a StatsProvider`);
-  }
-  return context.info;
-}
+export default useSolanaStatus;

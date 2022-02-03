@@ -259,8 +259,6 @@ export const Streams = () => {
       // Finally update the combined list
       if (newList.length) {
         setStreamList(newList.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1));
-        // consoleOut('tu sabe', (newList[11] as any).data.startUtc.toNumber(), 'blue');
-        consoleOut('tu sabe', (newList[11]), 'blue');
       }
     }
 
