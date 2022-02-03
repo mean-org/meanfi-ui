@@ -408,6 +408,7 @@
 		"network-connection-down": "No network connection. App is OFFLINE!",
 		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
+		"network-performance-low": "Solana network is experiencing degraded performance. Transactions may fail to send or confirm.",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
 		"streamid-copied-message": "Stream address successfully copied to clipboard",

@@ -12,15 +12,15 @@ import { useTranslation } from "react-i18next";
 import { useConnectionConfig } from "../../contexts/connection";
 import { useWallet } from "../../contexts/wallet";
 import { notify } from "../../utils/notifications";
-import { consoleOut, isValidAddress } from "../../utils/ui";
+import { consoleOut, isLocal, isProd, isValidAddress } from "../../utils/ui";
 import ReactGA from 'react-ga';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
 import { isMobile, isDesktop, isTablet, browserName } from "react-device-detect";
 import { environment } from "../../environments/environment";
-import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
+import { GOOGLE_ANALYTICS_PROD_TAG_ID, PERFORMANCE_SAMPLE_INTERVAL, PERFORMANCE_THRESHOLD } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
-import useSolanaStatus from "../../contexts/cluster-stats";
+import { Connection } from "@solana/web3.js";
 
 const { Header, Content, Footer } = Layout;
 
@@ -30,6 +30,7 @@ export const AppLayout = React.memo((props: any) => {
 
   const {
     theme,
+    isWhitelisted,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
@@ -51,26 +52,16 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
-  const { performanceInfo } = useSolanaStatus();
+  const [avgTps, setAvgTps] = useState<number | undefined>(undefined);
 
   // Clear cachedRpc on App destroy (window is being reloaded)
-  // useEffect(() => {
-  //   window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-  //   return () => {
-  //       window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-  //   }
-  // })
-
   useEffect(() => {
-    // performanceInfo.status === ClusterStatsStatus.Ready
-    if (performanceInfo) {
-      consoleOut('performanceInfo:', performanceInfo, 'blue');
+    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+    return () => {
+        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
     }
-  }, [
-    performanceInfo
-  ]);
+  })
 
-  /*
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
     // TODO: Next lines are useful if we turn OFF wallet autoConnect
@@ -79,7 +70,58 @@ export const AppLayout = React.memo((props: any) => {
     // }
     // window.localStorage.removeItem('providerName');
   }
-  */
+
+  // Get network TPS only in prod
+  useEffect(() => {
+
+    if (!isProd() || !isLocal()) { return; }
+
+    const connection = new Connection("https://api.mainnet-beta.solana.com");
+
+    if (!connection) { return; }
+
+    const round = (series: number[]) => {
+      return series.map((n) => Math.round(n));
+    }
+
+    const getPerformanceSamples = async () => {
+      try {
+        const samples = await connection.getRecentPerformanceSamples(60);
+
+        if (samples.length < 1) {
+          // no samples to work with (node has no history).
+          return; // we will allow for a timeout instead of throwing an error
+        }
+
+        let tpsValues = samples
+          .filter((sample) => {
+              return sample.numTransactions !== 0;
+          })
+          .map((sample) => {
+              return sample.numTransactions / sample.samplePeriodSecs;
+          });
+
+        tpsValues = round(tpsValues);
+        // consoleOut('Last 60 TPS samples:', tpsValues, 'blue');
+
+        const avgTps = Math.round(tpsValues[0]);
+        setAvgTps(avgTps);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const performanceInterval = setInterval(
+      getPerformanceSamples,
+      PERFORMANCE_SAMPLE_INTERVAL
+    );
+
+    getPerformanceSamples();
+
+    return () => {
+      clearInterval(performanceInterval);
+    };
+  }, [connectionConfig.endpoint]);
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -148,6 +190,15 @@ export const AppLayout = React.memo((props: any) => {
   }, [
     previousChain,
     connectionConfig
+  ]);
+
+  useEffect(() => {
+    if (avgTps !== undefined && isWhitelisted) {
+      consoleOut('Avg TPS:', avgTps, 'blue');
+    }
+  }, [
+    avgTps,
+    isWhitelisted
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -270,8 +321,11 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
-    <div className="App wormhole-bg">
+    <div className="App">
       <Layout>
+        {(avgTps !== undefined && avgTps < PERFORMANCE_THRESHOLD) && (
+          <div className="warning-bar">{t('notifications.network-performance-low')}</div>
+        )}
         <Header className="App-Bar">
           {(detailsPanelOpen || (addAccountPanelOpen && !canShowAccountDetails)) && (
             <BackButton handleClose={() => closeAllPanels()} />
