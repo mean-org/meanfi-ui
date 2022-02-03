@@ -697,7 +697,7 @@ export const RepeatingPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -826,7 +826,7 @@ export const RepeatingPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(repeatingPaymentFees.blockchainFee + repeatingPaymentFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Repeating Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Repeating Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 

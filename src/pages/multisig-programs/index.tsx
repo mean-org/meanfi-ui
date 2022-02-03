@@ -628,7 +628,7 @@ export const MultisigProgramsView = () => {
               )
             })`
           });
-          customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -913,7 +913,7 @@ export const MultisigProgramsView = () => {
               )
             })`
           });
-          customLogger.logError('Multisig Finish Approoved transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         }
 

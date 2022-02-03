@@ -662,7 +662,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Transfer stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Transfer stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1394,7 +1394,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1495,7 +1495,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1762,7 +1762,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1856,7 +1856,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Withdraw transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2115,7 +2115,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2204,7 +2204,7 @@ export const Streams = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 

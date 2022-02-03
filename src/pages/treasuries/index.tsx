@@ -1285,7 +1285,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Refresh Treasury data transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Refresh Treasury data transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1538,7 +1538,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Create Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1836,7 +1836,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1941,7 +1941,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Treasury Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Treasury Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2229,7 +2229,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2317,7 +2317,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close Treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close Treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2605,7 +2605,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2695,7 +2695,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2969,7 +2969,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3057,7 +3057,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Pause stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Pause stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3332,7 +3332,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -3420,7 +3420,7 @@ export const TreasuriesView = () => {
               getTokenAmountAndSymbolByTokenAddress(transactionFees.blockchainFee + transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Resume stream transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Resume stream transaction failed', { transcript: transactionLog });
           return false;
         }
 

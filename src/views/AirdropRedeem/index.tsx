@@ -222,7 +222,7 @@ export const AirdropRedeem = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: noBalanceMessage
           });
-          customLogger.logError('Create Airdrop Claim transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create Airdrop Claim transaction failed', { transcript: transactionLog });
           return false;
         }
 

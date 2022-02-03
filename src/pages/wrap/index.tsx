@@ -153,7 +153,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: ''
           });
-          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Wrap transaction failed', { transcript: transactionLog });
           return false;
         }
 

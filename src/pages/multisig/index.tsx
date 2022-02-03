@@ -461,7 +461,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Create multisig transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Create multisig transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -863,7 +863,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Mint tokens transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Mint tokens transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1138,7 +1138,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Multisig Execute Approve transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Execute Approve transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1425,7 +1425,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Finish Approoved transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Finish Approoved transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1773,7 +1773,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Upgrade Program transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Upgrade Program transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2106,7 +2106,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Upgrade IDL transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Upgrade IDL transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -2456,7 +2456,7 @@ export const MultisigView = () => {
               )
             })`
           });
-          customLogger.logError('Set program authority transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Set program authority transaction failed', { transcript: transactionLog });
           return false;
         }
 

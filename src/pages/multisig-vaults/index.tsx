@@ -632,7 +632,7 @@ export const MultisigVaultsView = () => {
               )
             })`
           });
-          customLogger.logError('Multisig Create Vault transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Create Vault transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1039,7 +1039,7 @@ export const MultisigVaultsView = () => {
               )
             })`
           });
-          customLogger.logError('Transfer tokens transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Transfer tokens transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1369,7 +1369,7 @@ export const MultisigVaultsView = () => {
               )
             })`
           });
-          customLogger.logError('Multisig Approve transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Multisig Approve transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -1654,7 +1654,7 @@ export const MultisigVaultsView = () => {
               )
             })`
           });
-          customLogger.logError('Add funds transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Add funds transaction failed', { transcript: transactionLog });
           return false;
         }
 

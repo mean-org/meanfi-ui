@@ -496,7 +496,7 @@ export const TreasuryStreamCreateModal = (props: {
               getTokenAmountAndSymbolByTokenAddress(props.transactionFees.blockchainFee + props.transactionFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('CreateStream for a treasury transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('CreateStream for a treasury transaction failed', { transcript: transactionLog });
           return false;
         }
 

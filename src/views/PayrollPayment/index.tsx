@@ -681,7 +681,7 @@ export const PayrollPayment = () => {
               getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 

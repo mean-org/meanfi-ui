@@ -269,7 +269,7 @@ export const ExchangeDcasView = () => {
               getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -553,7 +553,7 @@ export const ExchangeDcasView = () => {
               getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         }
 

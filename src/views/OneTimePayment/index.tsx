@@ -550,7 +550,7 @@ export const OneTimePayment = () => {
               getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
