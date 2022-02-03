@@ -5,11 +5,12 @@
 		"disconnect": "Desconectar",
 		"explorer-link": "Ver en Solana Explorer",
 		"modal-title": "Cuenta",
+		"money-streams": "Flujos de dinero",
 		"network-unknown": "Desconocido",
+		"no-money-streams": "Sin Flujos de Dinero",
 		"non-ata-label": "Non Associated Token Account",
 		"non-ata-tooltip": "MeanFi operates with associated token accounts, please merge your {{tokenSymbol}} accounts.",
-		"money-streams": "Flujos de dinero",
-		"streams-tooltip": "Haga clic para actualizar los activos",
+		"refresh-tooltip": "Haga clic para actualizar los activos",
 		"wallet-change": "Cambiar",
 		"wallet-provider": "Conectado con"
 	},
@@ -19,14 +20,13 @@
 		"modal-title": "Añadir fondos"
 	},
 	"assets": {
-		"accounts-label": "accounts",
 		"account-add-cta-label": "Ir!",
 		"account-add-heading": "Ver los detalles de la cuenta para cualquier dirección en",
 		"account-address-change-cta": "Escanear otra dirección",
 		"account-address-copy-cta": "Copy account address",
 		"account-address-label": "Dirección de cuenta",
 		"account-address-placeholder": "Ingrese la dirección de su cuenta",
-		"account-address-validation": "Formato de dirección no válido",
+		"accounts-label": "accounts",
 		"back-to-assets-cta": "Volver a la lista de activos",
 		"create-account-help-link": "Conozca más sobre billeteras",
 		"create-account-help-post": "abrir una cuenta",
@@ -38,8 +38,8 @@
 		"history-table-date": "Fecha",
 		"history-table-postbalance": "Post saldo",
 		"loading-error": "No pudimos cargar las transacciones. Por favor, recargue la página.",
-		"merge-accounts-link": "Merge token accounts",
 		"merge-accounts-cta": "Merge accounts",
+		"merge-accounts-link": "Merge token accounts",
 		"no-asset-selected": "No ha seleccionado ningún activo. Por favor, elija uno de la izquierda.",
 		"no-balance": {
 			"cta1": "Buy/Deposit {{tokenSymbol}}",
@@ -56,14 +56,18 @@
 		"switch-hide-low-balances": "Hide low balances"
 	},
 	"close-stream": {
+		"cant-close-message": "You cannot close a stream from a locked treasury",
+		"cant-topup-message": "You cannot top up a stream from a locked treasury",
 		"context-beneficiary": "Closing a stream will send the vested amount to your account ({{beneficiary}}) and stop the flow of money immediately.",
 		"context-treasurer-multiple-beneficiaries": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario({{beneficiary}}), y se retornará los fondos pendientes a la cuenta ({{treasury}}) original.",
 		"context-treasurer-single-beneficiary": "Al concluir esta transferencia monetaria se detendrá el flujo de dinero inmediatamente, se enviará los fondos adquiridos al beneficiario ({{beneficiary}}), y se retornará los fondos pendientes al contribuidor original.",
+		"loading-treasury-message": "Analyzing stream",
 		"modal-title": "Concluir transferencia",
 		"primary-cta": "Concluir transferencia",
 		"return-unvested-amount": "Cantidad pendiente",
 		"return-vested-amount": "Cantidad adquirida",
-		"secondary-cta": "Cancelar"
+		"secondary-cta": "Cancelar",
+		"see-details-cta": "see details"
 	},
 	"contract-selector": {
 		"donation-fund": {
@@ -157,27 +161,27 @@
 		}
 	},
 	"ddcas": {
-		"add-funds-cta-disabled-closing": "Canceling in progress...",
-		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
-		"add-funds-cta-disabled-funding": "Add funds in progress...",
-		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
-		"screen-title": "Recurring buys",
-		"streams-ddcas": "Click to refresh recurring buys",
-		"add-funds": {
-			"modal-title": "Top Up/Add Funds",
-			"headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault."
-		},
-		"close-ddca": {
-			"modal-title": "Are you sure?",
-			"primary-cta": "Confirm",
-			"secondary-cta": "Back"
-		},
 		"activity": {
 			"action-deposit": "Deposited {{fromAmount}}",
 			"action-exchange": "Exchanged {{fromAmount}} for {{toAmount}}",
 			"action-withdraw": "Withdrew {{toAmount}}"
 		},
-		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?"
+		"add-funds": {
+			"headline": "Add <strong>{{fromTokenAmount}}</strong> to your personal vault.",
+			"modal-title": "Top Up/Add Funds"
+		},
+		"add-funds-cta-disabled-closing": "Canceling in progress...",
+		"add-funds-cta-disabled-executing-swap": "Exchange in progress...",
+		"add-funds-cta-disabled-funding": "Add funds in progress...",
+		"add-funds-cta-disabled-withdrawing": "Withdraw in progress...",
+		"close-ddca": {
+			"modal-title": "Are you sure?",
+			"primary-cta": "Confirm",
+			"secondary-cta": "Back"
+		},
+		"screen-title": "Recurring buys",
+		"setup-close-warning": "Closing without clicking Start will skip your first purchase. Close anyways?",
+		"streams-ddcas": "Click to refresh recurring buys"
 	},
 	"deposits": {
 		"address-share-disclaimer": "Esta dirección solo se puede usar para recibir tokens SOL y SPL en Solana.",
@@ -211,12 +215,13 @@
 		"wrapped-amount": "Wrapped amount"
 	},
 	"general": {
-		"app-background-disclaimer": "Este producto está en beta. No deposite ni intercambie grandes cantidades de fondos.",
 		"cta-change": "Cambiar",
 		"cta-close": "Cerrar",
 		"cta-finish": "Terminar",
+		"cta-try-again": "Try again",
 		"day": "día",
 		"days": "",
+		"finished": "Finished",
 		"hour": "hora",
 		"loading": "Cargando",
 		"minute": "minuto",
@@ -226,39 +231,182 @@
 		"not-connected": "Su billetera no está conectada, conecte su billetera",
 		"not-implemented": "Sin implementar",
 		"now": "now",
+		"refresh": "Refresh",
+		"refresh-price": "Click to refresh prices",
 		"reload-cta": "Try again now",
 		"reload-cta-disabled": "You can try again in",
+		"retry": "Retry",
 		"seconds": "seconds",
+		"start": "Start",
+		"starting": "Starting",
+		"stepper-label": "Step {{step}} of {{steps}}",
 		"today": "hoy",
 		"week": "semana",
 		"weeks": "",
 		"year": "año",
-		"you": "usted",
 		"yes": "Yes",
-		"start": "Start",
-		"starting": "Starting",
-		"finished": "Finished",
-		"stepper-label": "Step {{step}} of {{steps}}"
+		"you": "usted"
 	},
 	"language-selector": {
 		"modal-title": "Selector de idioma",
 		"primary-action": "Seleccionar",
 		"secondary-action": "Cerrar"
 	},
+	"multisig": {
+		"add-participant-cta": "Add participant",
+		"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+		"create-multisig": {
+			"main-cta": "Create",
+			"main-cta-busy": "Creating multisig",
+			"modal-title": "Create multisig",
+			"multisig-duplicate-participants": "Found duplicate participants, please review.",
+			"multisig-label-input-empty": "Enter a multisig name",
+			"multisig-label-input-label": "Multisig name",
+			"multisig-label-placeholder": "Type a name for your multisig account",
+			"multisig-no-participants": "No participans added yet",
+			"multisig-participants": "Valid signers",
+			"multisig-threshold-input-empty": "Enter a minimum required signatures value",
+			"multisig-threshold-input-label": "Minimum required signatures",
+			"multisig-threshold-input-max": "Max number of signatures is 10",
+			"multisig-threshold-input-max-warn": "Max number of signatures reached (10)",
+			"multisig-threshold-placeholder": "Type a minimum required signatures for your multisig account",
+			"success-message": "Your new multisig account was created successfully."
+		},
+		"create-new-multisig-account-cta": "Create multisig",
+		"create-vault": {
+			"main-cta": "Create",
+			"main-cta-busy": "Creating vault",
+			"modal-title": "Create a Multisig Vault",
+			"no-token": "Select token",
+			"success-message": "Your multisig vault was created successfully",
+			"token-label": "From Account",
+			"token-placeholder": "Enter the address of the token mint"
+		},
+		"lookup-multisig-account-cta-tooltip": "Lookup a multisig account",
+		"mint-tokens": {
+			"main-cta": "Mint tokens",
+			"main-cta-busy": "Minting tokens",
+			"mint-amount-label": "Amount",
+			"mint-amount-placeholder": "Enter the amount of tokens to mint",
+			"mint-to-label": "Mint to",
+			"mint-to-placeholder": "Enter the address of the destination account",
+			"modal-title": "Mint tokens",
+			"success-message": "Your tokens were minted successfully.",
+			"token-address-label": "Token address",
+			"token-address-placeholder": "Enter the address of the token"
+		},
+		"multisig-account-detail": {
+			"address": "Authority",
+			"authority": "Authority",
+			"copy-id-title": "MULTISIG ID",
+			"created-on": "Created on",
+			"cta-create-vault": "Create vault",
+			"cta-mint": "Mint",
+			"cta-transfer": "Transfer Tokens",
+			"cta-upgrade-program": "Upgrade Program",
+			"cta-view-all-vaults": "View all vaults",
+			"multisig-address-label": "Address",
+			"multisig-label-label": "Multisig name",
+			"multisig-owners": "Owners",
+			"multisig-participants": "Current Multisig Owners",
+			"no-multisig-loaded": "Create or select a multisig account to view details",
+			"no-multisig-selected": "Please select a multisig account to view details",
+			"required-signatures": "Required signatures"
+		},
+		"multisig-accounts": {
+			"no-accounts": "No multisig accounts available",
+			"not-connected": "Please connect your wallet to see your multisig accounts",
+			"pending-transactions": "{{txs}} pending transactions"
+		},
+		"multisig-programs": {
+			"cta-create-program": "Create program",
+			"modal-title": "Create program",
+			"no-program-loaded": "No program details",
+			"no-programs": "No programs available",
+			"not-connected": "Please connect your wallet to see programs",
+			"program-detail-heading": "Program details",
+			"refresh-tooltip": "Click to refresh the list of programs",
+			"screen-title": "Programs - {{multisigName}} ({{programCount}})",
+			"screen-title-no-programs": "Programs"
+		},
+		"multisig-vaults": {
+			"back-to-multisig-accounts-cta": "Back to Multisig accounts",
+			"cta-change-multisig": "Transfer Ownership",
+			"cta-change-multisig-busy": "Changing Multisig",
+			"cta-close": "Close vault",
+			"cta-close-busy": "Closing vault",
+			"cta-transfer": "Initiate Withdrawal",
+			"cta-transfer-busy": "Initiating Withdrawal Request",
+			"no-transactions": "No transactions for this vault",
+			"no-vault-loaded": "No vault loaded",
+			"no-vaults": "No vaults available",
+			"not-connected": "Please connect your wallet to see vaults",
+			"refresh-tooltip": "Click to refresh the list of vaults",
+			"screen-title": "Vaults - {{multisigName}} ({{vaultCount}})",
+			"screen-title-no-vaults": "Vaults",
+			"validation-amount-high": "Amount exceeds the vault balance",
+			"vault-detail-heading": "Vault details"
+		},
+		"multisig-detail-heading": "Multisig account details",
+		"multisig-transactions": {
+			"column-created-on": "Created on",
+			"column-operation": "Operation",
+			"column-pending-signatures": "Signatures",
+			"column-program-id": "Program",
+			"loading-transactions": "Loading transactions",
+			"no-transactions": "This multisig account has no transactions"
+		},
+		"pending-transactions": "pending transactions",
+		"refresh-tooltip": "Click to refresh the list of multisig accounts",
+		"screen-title": "Multisig accounts",
+		"transfer-tokens": {
+			"main-cta": "Start Request",
+			"main-cta-busy": "Starting Withdrawal Request",
+			"modal-title": "Initiate Withdrawal Request",
+			"source-address-label": "Transfer from",
+			"source-address-placeholder": "Enter the address of the source account",
+			"success-message": "Tokens transferred successfully.",
+			"transfer-amount-label": "Amount",
+			"transfer-amount-placeholder": "Enter the amount of tokens to transfer",
+			"transfer-to-label": "Transfer to (Destination Account)",
+			"transfer-to-placeholder": "Enter the address of the destination account"
+		},
+		"update-multisig": {
+			"main-cta": "Save changes",
+			"main-cta-busy": "Saving changes",
+			"modal-title": "Edit multisig",
+			"success-message": "Your changes to the multisig account were saved!"
+		},
+		"upgrade-program": {
+			"buffer-account-label": "New program buffer",
+			"buffer-account-placeholder": "Enter the address of the buffer account",
+			"main-cta": "Upgrade",
+			"main-cta-busy": "Upgrading program",
+			"modal-title": "Upgrade program",
+			"program-address-label": "Program ID",
+			"program-address-placeholder": "Enter the address of the program",
+			"success-message": "Program upgraded successfully."
+		}
+	},
 	"notifications": {
 		"account-address-copied-message": "La cuenta ha sido copiada correctamente",
 		"account-address-not-copied-message": "No se pudo copiar la cuenta",
+		"create-money-stream-completed": "Your money stream is created",
+		"create-money-stream-completed-wait-for-confirm": "After the transaction is confirmed it should show up in the list.",
 		"error-cannot-faucet-mainnet-message": "No se puede hacer faucet en mainnet",
 		"error-cannot-fund-account-message": "No pudimos depositar fondos en su cuenta. Inténtelo más tarde.",
 		"error-creating-vault-message": "Could not create the vault, please try again later",
 		"error-ledger-title": "Error de Ledger",
 		"error-loading-streamid-message": "No pudimos encontrar o cargar la transferencia con el ID {{streamId}}",
+		"error-loading-treasuryid-message": "Could not find or open treasury with ID {{treasuryId}}",
 		"error-title": "Error",
 		"friend-referral-completed": "Friend referral completed",
 		"invalid-publickey-message": "Clave pública incorrecta. Revise la clave e intente de nuevo",
 		"invalid-streamid-message": "ID de transferencia incorrecto",
-		"network-connection-good": "Network connection is good",
+		"multisigid-copied-message": "",
+		"multisigid-not-copied-message": "",
 		"network-connection-down": "No network connection. App is OFFLINE!",
+		"network-connection-good": "Network connection is good",
 		"network-connection-poor": "Network connection quality is very poor",
 		"referral-link-copied-message": "Friend referral link copied to clipboard",
 		"referral-link-not-copied-message": "Could not copy your Friend referral link",
@@ -266,6 +414,9 @@
 		"streamid-not-copied-message": "No se pudo copiar dirección de la transferencia",
 		"success-account-funded-message": "Cuenta financiada",
 		"success-loading-stream-message": "Se cargó la transferencia con el ID {{streamId}}",
+		"success-loading-treasury-message": "The treasury with ID {{treasuryId}} has been loaded",
+		"treasuryid-copied-message": "Treasury address successfully copied to clipboard",
+		"treasuryid-not-copied-message": "Could not copy treasury Address",
 		"wallet-connect-message": "Conectado a la billetera {{address}}",
 		"wallet-connection-event-title": "Actualización de billetera",
 		"wallet-disconnect-message": "Desconectado de la billetera"
@@ -276,6 +427,19 @@
 		"streamid-empty": "Introduzca id de transferencia ",
 		"streamid-open-cta": "Iniciar transferencia",
 		"streamid-placeholder": "Stream ID created by Mean Finance"
+	},
+	"transfer-stream": {
+		"destination-address-is-sender": "The new address cannot be the sender",
+		"destination-is-own-account": "Transfer stream to yourself is not allowed",
+		"label-streamid-input": "New stream owner",
+		"modal-title": "Transfer stream",
+		"streamid-empty": "Missing address",
+		"streamid-open-cta": "Transfer",
+		"streamid-placeholder": "New beneficiary wallet address"
+	},
+	"payroll": {
+		"screen-subtitle": "Setup payroll for your employees",
+		"screen-title": "Payroll"
 	},
 	"referrals": {
 		"address-invalid": "The referral address is not a valid solana address",
@@ -290,9 +454,22 @@
 		"back-to-my-streams-cta": "Volver a las transferencia",
 		"create-new-stream-cta": "New transfer",
 		"lookup-stream-cta-tooltip": "Buscar transferencia",
+		"pause-stream-confirmation": "Pausing the stream will stop streaming money from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"pause-stream-cta": "Pause",
+		"pause-stream-modal-title": "Pause stream",
+		"refresh-tooltip": "Click to refresh streams",
+		"resume-stream-confirmation": "Resume money streaming from the treasury ({{treasury}}) to the beneficiary ({{beneficiary}}).",
+		"resume-stream-cta": "Resume",
 		"screen-title": "Transferencias",
-		"stream-stats-incoming": "Incoming",
-		"stream-stats-outgoing": "Outgoing",
+		"status": {
+			"scheduled": "Starting on {{date}}",
+			"status-running": "Running",
+			"status-scheduled": "Scheduled",
+			"status-stopped": "Stopped",
+			"stopped": "Ran out of funds",
+			"stopped-manually": "Manually stopped",
+			"streaming": "Streaming"
+		},
 		"stream-activity": {
 			"action-deposit": "Depósito",
 			"action-withdraw": "Retiro",
@@ -305,7 +482,13 @@
 		"stream-detail": {
 			"add-funds-cta": "Recargar (agregar fondos)",
 			"amount-funded-date": "financiado en",
+			"cancel-scheduled-transfer": "Cancel transfer",
 			"close-money-stream-menu-item": "Cerrar transferencia de dinero",
+			"transfer-money-stream-menu-item": "Transfer ownership",
+			"cta-disabled-closing": "Closing money stream...",
+			"cta-disabled-creating": "Create stream in progress...",
+			"cta-disabled-funding": "Add funds in progress...",
+			"cta-disabled-withdrawing": "Withdraw in progress...",
 			"heading": "Detalles de la transferencia",
 			"label-amount": "Saldo",
 			"label-funds-available-to-withdraw": "Fondos disponibles para retirar inmediatamente",
@@ -314,66 +497,79 @@
 			"label-funds-runout-today": "se acabará para",
 			"label-funds-sent": "Fondos enviados al destinatario",
 			"label-payment-rate": "Tasa de pago",
+			"label-received-from": "Recibido de",
 			"label-receiving-from": "Recibiendo de",
+			"label-reserved-allocation": "Reserved Allocation",
 			"label-sending-to": "Enviando a",
+			"label-sent-to": "Enviado a",
 			"label-start-date-default": "Fecha de inicio",
 			"label-start-date-scheduled": "Programado",
 			"label-start-date-scheduled-otp": "Entrega programada",
 			"label-start-date-started": "Iniciado",
+			"label-their-allocation": "Their allocation",
 			"label-total-deposits": "Cantidad total que ha depositado desde que comenzó la transferencia",
 			"label-total-withdrawals": "Cantidad total que ha retirado desde que comenzó la transferencia",
+			"label-your-allocation": "Your remaining allocation",
 			"no-stream": "Seleccione o busque una transferencia para ver los detalles",
 			"withdraw-funds-cta": "Retirar Fondos"
 		},
 		"stream-list": {
 			"no-streams": "No hay transferencias disponibles",
-			"subtitle-ended": "Transferencia no financiada por 72h",
-			"subtitle-paused-otp": "Pago único programado completado",
+			"not-connected": "Conecte su billetera para ver sus transferencias de dinero",
+			"subtitle-ended": "Esta transmisión ha terminado",
 			"subtitle-paused-inbound": "Esta transferencia está pausada debido a la falta de fondos.",
+			"subtitle-paused-otp": "Pago único programado completado",
 			"subtitle-paused-outbound": "Esta transferencia está pausada debido a la falta de fondos.",
 			"subtitle-pending-inbound": "Este contrato está pendiente de su aprobación",
 			"subtitle-pending-outbound": "Este contrato está pendiente la aprobación del beneficiario",
-			"subtitle-running-inbound": "Recibiendo dinero desde",
-			"subtitle-running-outbound": "Enviando dinero desde",
-			"subtitle-scheduled-inbound": "Configurado para recibir dinero en",
-			"subtitle-scheduled-outbound": "Establecido para comenzar en",
+			"subtitle-running-inbound": "Receiving {{rate}} since",
+			"subtitle-running-outbound": "Sending {{rate}} since",
+			"subtitle-scheduled-inbound": "Receiving {{rate}} on",
+			"subtitle-scheduled-outbound": "Sending {{rate}} on",
 			"title-paused-from": "Transferencia pausada",
 			"title-paused-to": "Transferencia pausada",
 			"title-pending-from": "Pendiente ejecutar",
 			"title-pending-to": "Pendiente ejecutar",
 			"title-receiving-from": "Recibiendo desde",
+			"title-scheduled-from": "Scheduled stream from",
+			"title-scheduled-to": "Scheduled stream to",
 			"title-sending-to": "Enviando a"
-		}
+		},
+		"stream-stats-incoming": "Incoming",
+		"stream-stats-outgoing": "Outgoing"
 	},
 	"swap": {
-		"clients-label-savings": "You save",
-		"screen-title": "Exchange",
-		"screen-subtitle": "Fastest and easiest way to swap two tokens",
 		"exchange-warning": "Mean Exchange solo está disponible en",
+		"frequency-label": "Frequency",
 		"input-label-destination": "Intercambiar a (est.)",
 		"input-label-source": "Intercambiar de",
 		"insufficient-liquidity": "Liquidez insuficiente para esta operación",
-		"token-select-destination": "Seleccione un token",
-		"token-select-source": "Seleccione un token",
-		"transaction-settings": "Transaction settings",
-		"slippage-tolerance": "Tolerancia al deslizamiento",
-		"frequency-label": "Frequency",
 		"pools-and-routes": "Pools and routes",
+		"routes-best-price-label": "Mejor precio",
+		"screen-subtitle": "Fastest and easiest way to swap two tokens",
+		"screen-title": "Exchange",
 		"show-routes": "Show routing options",
+		"slippage-tolerance": "Tolerancia al deslizamiento",
 		"tabset": {
 			"one-time": "One time",
 			"recurring": "Recurring"
-		}
+		},
+		"token-select-destination": "Seleccione un token",
+		"token-select-source": "Seleccione un token",
+		"transaction-settings": "Transaction settings"
 	},
 	"token-selector": {
+		"exchange-search-input-placeholder": "Buscar token por nombre o símbolo",
+		"looking-for-sol": "Looking for SOL? You need to",
 		"modal-title": "Seleccione un token",
-		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección"
+		"no-matches": "No se encontraron coincidencias",
+		"search-input-placeholder": "Buscar token por nombre, símbolo o la dirección",
+		"wrap-sol-first": "wrap it first to wSOL"
 	},
 	"transactions": {
-		"resume": "Summary",
 		"memo": {
 			"label": "Nota",
-			"placeholder": "Agregue nota adicional"
+			"placeholder": "Agregue una nota"
 		},
 		"memo2": {
 			"label": "Nota / Asunto",
@@ -398,10 +594,11 @@
 			"qr-scan-title": "Obtener dirección desde código QR",
 			"recipient-is-own-account": "No se puede enviar a su misma cuenta"
 		},
+		"resume": "Summary",
 		"send-amount": {
 			"label": "Enviar",
-			"label-right": "Saldo",
-			"label-amount": "Añadir fondos"
+			"label-amount": "Añadir fondos",
+			"label-right": "Saldo"
 		},
 		"send-date": {
 			"label": "Enviar en",
@@ -409,11 +606,11 @@
 		},
 		"status": {
 			"cta-view-stream": "Ver Transferencia de dinero",
-			"ddca-create-tx": "Create scheduled recurring exchange",
-			"ddca-create-tx-success": "Recurring exchange created successfully",
-			"ddca-create-tx-failure": "Could not create the recurring exchange",
 			"ddca-add-funds": "Funding vault with",
 			"ddca-add-funds-success": "Funds added successfully",
+			"ddca-create-tx": "Create scheduled recurring exchange",
+			"ddca-create-tx-failure": "Could not create the recurring exchange",
+			"ddca-create-tx-success": "Recurring exchange created successfully",
 			"instructions": "Confirma esta transacción en tu billetera",
 			"modal-title-executing-transaction": "Ejecutando transacción",
 			"modal-title-transaction-completed": "Transacción Completa",
@@ -422,6 +619,8 @@
 			"stream-started-pre": "Tu transferencia de dinero por",
 			"tx-add-funds-operation": "Adicionando fondos con",
 			"tx-add-funds-operation-success": "Fondos adicionados con éxito",
+			"tx-transfer-stream": "Transfer stream beneficiary to address {{newAddress}}",
+			"tx-transfer-stream-success": "Stream transferred successfully",
 			"tx-close-operation": "Cerrar la operación",
 			"tx-close-operation-success": "Transferencia cerrada con éxito",
 			"tx-close-vault-operation": "Close vault operation",
@@ -429,14 +628,17 @@
 			"tx-completed": "Operación completa",
 			"tx-confirm": "Confirmando transacción",
 			"tx-confirm-failure": "No se pudo confirmar la transacción",
-			"tx-confirm-failure-check": "Check your transaction in the link below",
+			"tx-confirm-failure-check": "Verifique su transacción en el siguiente enlace",
+			"tx-confirmation-status-confirmed": "Transacción confirmada!",
+			"tx-confirmation-status-timeout": "Tu transacción no se pudo confirmar en {{timeout}}",
+			"tx-confirmation-status-wait": "Esperando confirmación de la transacción...",
 			"tx-generic-operation-success": "Transaction completed successfully",
 			"tx-idle": "Idle",
 			"tx-init": "Inicializar transacción",
 			"tx-init-failure": "No se pudo iniciar la transacción",
 			"tx-rejected": "Transacción rechazada",
 			"tx-send": "Enviando transacción",
-			"tx-send-failure": "Error al enviar la transacción",
+			"tx-send-failure": "Su transacción no fue enviada. Actualice la página y vuelva a intentarlo.",
 			"tx-send-failure-smallamount": "Error al enviar la transacción. Cantidad demasiado pequeña",
 			"tx-send-operation": "Enviando",
 			"tx-send-operation-success": "fue enviado exitosamente",
@@ -462,48 +664,146 @@
 			"add-funds-repeating-payment-advice": "Debe agregar fondos para iniciar el pago periódico",
 			"beneficiary-receives": "El beneficiario recibe",
 			"exchange-on": "Intercambio en",
+			"hla-transaction-fee": "",
 			"min-recommended-amount": "Cantidad mínima recomendada",
+			"network-transaction-fee": "",
 			"price-impact": "Price impact",
+			"protocol-transaction-fee": "",
 			"recipient-receives": "El destinatario recibe",
 			"slippage": "Tolerancia al deslizamiento",
 			"transaction-fee": "Tarifa de transacción",
 			"you-receive": "Recibes"
 		},
 		"validation": {
+			"address-validation": "Formato de dirección no válido",
 			"amount-high": "La cantidad excede su saldo",
 			"amount-low": "No hay suficiente saldo",
 			"amount-lt-fee": "La cantidad debe ser mayor que la tarifa de transacción",
 			"amount-sol-high": "La cantidad excede su saldo SOL",
 			"amount-withdraw-high": "La cantidad es mayor que los fondos disponibles",
+			"cannot-use-own-account-as-treasury": "No puede usar su cuenta como identificación de tesorería",
+			"exchange-unavailable": "Exchange unavailable",
 			"insufficient-amount-needed": "Necesita al menos {{amount}} {{symbol}} para intercambiar",
 			"insufficient-balance-needed": "Necesita al menos {{balance}} SOL",
 			"invalid-amount": "Monto no válido",
 			"invalid-exchange": "Seleccione un token",
-			"exchange-unavailable": "Exchange unavailable",
+			"invalid-solana-address": "Invalid solana address",
 			"minimum-repeating-buy-amount": "You need a min of {{fromTokenAmount}} to start this repeating buy",
 			"minimum-swap-amount": "Necesita al menos {{mintAmount}} para cambiar por {{toMint}}",
 			"no-amount": "Ingrese la cantidad",
 			"no-balance": "Sin saldo",
 			"no-payment-rate": "Agregar tasa de pago",
 			"no-recipient": "Sin destinatario",
-			"select-recipient": "Seleccionar destinatario",
 			"no-valid-date": "Establecer una fecha válida",
 			"not-connected": "Conecte su billetera",
 			"payment-rate-high": "La tasa de pago excede su saldo",
+			"select-recipient": "Seleccionar destinatario",
+			"select-stream": "Select a stream",
+			"valid-address-required": "A valid solana address is required",
 			"valid-approve": "Aprobar en su billetera",
 			"valid-continue": "Continuar",
 			"valid-ddca-review": "Review",
 			"valid-start-funding": "Empezar a financiar",
-			"valid-start-withdrawal": "Iniciar retiro"
-		}
+			"valid-start-withdrawal": "Iniciar retiro",
+			"verified-recipient-unchecked": "Verificación del destinatario desmarcada"
+		},
+		"verified-recipient-label": "Estoy seguro de que la dirección del destinatario no pertenece a un intercambio."
 	},
 	"transfers": {
-		"screen-title": "Transfers",
-		"screen-subtitle": "Send money to anyone in the world faster"
+		"screen-subtitle": "Send money to anyone in the world faster",
+		"screen-title": "Transfers"
 	},
-	"payroll": {
-		"screen-title": "Payroll",
-		"screen-subtitle": "Setup payroll for your employees"
+	"treasuries": {
+		"add-funds": {
+			"allocation-label": "How do you want to allocate these funds?",
+			"allocation-option-evenly": "Allocate evenly across all Money Streams",
+			"allocation-option-none": "Do not allocate (leave in Reserves)",
+			"allocation-option-specific": "Allocate to a specific Money Stream",
+			"allocation-select-stream-label": "Select stream to fund",
+			"balance": "Balance",
+			"label": "Add funds",
+			"main-cta": "Fund treasury",
+			"main-cta-busy": "Funding treasury",
+			"modal-title": "Add funds to the Treasury",
+			"search-streams-placeholder": "Search stream by name or address",
+			"success-message": "Your treasury was funded successfully."
+		},
+		"back-to-treasuries-cta": "Back to Treasuries",
+		"close-treasury-confirmation": "Are you sure you want to close the treasury?",
+		"create-new-treasury-cta": "Create treasury",
+		"create-treasury": {
+			"main-cta": "Create",
+			"main-cta-busy": "Creating treasury",
+			"modal-title": "Create treasury",
+			"success-message": "Your new treasury was created successfully.",
+			"treasury-name-input-empty": "Enter Treasury name",
+			"treasury-name-input-label": "Treasury name",
+			"treasury-name-placeholder": "Type a name for your treasury",
+			"treasury-type-options": {
+				"treasury-type-locked-description": "With a locked treasury you can create streams that act like a vesting contract for reserved allocations, like the ones needed for investors. They usually have a fixed end date.",
+				"treasury-type-locked-name": "Locked Money Streaming Treasury",
+				"treasury-type-open-description": "With an open treasury, you can create money streams that run indefinitely. When the treasury runs out of money all streams stop, until it gets replenished.",
+				"treasury-type-open-name": "Open Money Streaming Treasury"
+			}
+		},
+		"lookup-treasury-cta-tooltip": "Lookup a treasury",
+		"open-treasury": {
+			"main-cta": "Open",
+			"modal-title": "Open treasury",
+			"treasuryid-input-empty": "Enter Treasury ID",
+			"treasuryid-input-label": "Treasury id to open",
+			"treasuryid-open-cta": "Open stream",
+			"treasuryid-placeholder": "Treasury ID created by Mean Finance"
+		},
+		"refresh-tooltip": "Click to refresh the list of treasuries",
+		"screen-title": "Treasuries",
+		"treasury-detail": {
+			"associated-token": "Associated Token",
+			"created-on": "Created on",
+			"cta-add-funds": "Add funds",
+			"cta-add-funds-busy": "Adding funds",
+			"cta-close": "Close treasury",
+			"cta-close-busy": "Closing treasury",
+			"funds-added-to-treasury": "Funds added to the treasury",
+			"no-treasury-loaded": "Create or lookup a treasury to view details",
+			"no-treasury-selected": "Please select or lookup a treasury to view details",
+			"number-of-streams": "Number of streams",
+			"treasury-address-label": "Address",
+			"treasury-name-label": "Treasury name"
+		},
+		"treasury-detail-heading": "Treasury details",
+		"treasury-list": {
+			"no-treasuries": "No treasuries available",
+			"not-connected": "Please connect your wallet to see your treasuries",
+			"total-streams-label": "streams"
+		},
+		"treasury-streams": {
+			"add-stream-modal-title": "Add stream to the treasury",
+			"allocate-funds-label": "Allocate funds",
+			"allocation-reserved-label": "This allocation is fully RESERVED",
+			"available-unallocated-balance-label": "Available Unallocated Balance",
+			"busy-pausing": "Stopping stream",
+			"busy-resuming": "Resuming stream",
+			"close-stream-also-closes-treasury-label": "Also close the treasury",
+			"column-activity": "Money streams",
+			"column-description": "Description",
+			"column-destination": "Destination",
+			"column-rate": "Rate",
+			"column-started": "Started",
+			"create-stream-main-cta": "Create stream",
+			"create-stream-main-cta-busy": "Creating stream",
+			"loading-streams": "Loading streams",
+			"minimum-allocation-advice": "You must set a minimum allocation for this Money Stream up to the unallocated balance available in the Treasury.",
+			"no-streams": "This treasury has no active streams",
+			"option-close-stream": "Close",
+			"option-explorer-link": "View on Solana Explorer",
+			"option-pause-stream": "Pause",
+			"option-resume-stream": "Resume",
+			"status-running": "Running",
+			"status-scheduled": "Scheduled",
+			"status-stopped": "Stopped",
+			"fee-payed-by-treasurer": "I want to pay fees for this stream instead of the beneficiary"
+		}
 	},
 	"ui-language": {
 		"en": "Inglés",
@@ -516,16 +816,16 @@
 			"blog": "Blog",
 			"code": "Código",
 			"developers": "Desarrolladores",
-			"help-support": "Help center",
 			"discord": "Discord",
 			"faucet": "Faucet",
+			"help-support": "Help center",
 			"how-to-use": "Docs",
 			"refer-a-friend": "Refer a friend {{referrals}}",
 			"switch-language": "Idioma",
 			"switch-theme": "Cambiar a",
-			"twitter": "Twitter",
 			"theme-dark": "Modo Oscuro",
-			"theme-light": "Modo Claro"
+			"theme-light": "Modo Claro",
+			"twitter": "Twitter"
 		},
 		"main-menu": {
 			"accounts": "Cuentas",
@@ -534,8 +834,9 @@
 			"services": {
 				"custody": "Custody",
 				"faucet": "Faucet",
-				"payroll": "Nómina de sueldos",
+				"multisig": "",
 				"submenu-title": "Servicios",
+				"treasuries": "Tesorería & Nómina de sueldos",
 				"wallet-guide": "Guía de Billeteras",
 				"wrap": "Wrap"
 			},
@@ -544,6 +845,8 @@
 		}
 	},
 	"wallet-selector": {
+		"more-options-collapsed": "Mostrar más opciones",
+		"more-options-expanded": "Mostrar menos opciones",
 		"primary-action": "Seleccionar"
 	},
 	"withdraw-funds": {

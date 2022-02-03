@@ -1,17 +1,14 @@
 import React, { useState } from "react";
-import { Button, InputNumber, Popover, Switch, Tooltip } from "antd";
+import { Button, InputNumber, Popover } from "antd";
 import { useTranslation } from "react-i18next";
-import { CloseOutlined, InfoCircleOutlined, SettingOutlined } from "@ant-design/icons";
+import { CloseOutlined, SettingOutlined } from "@ant-design/icons";
 import useWindowSize from "../../hooks/useWindowResize";
 import { MAX_SLIPPAGE_VALUE, MIN_SLIPPAGE_VALUE } from "../../constants";
 import "./style.less";
-import { InfoIcon } from "../InfoIcon";
 
 export const SwapSettings = (props: {
   currentValue: number;
   onValueSelected: any;
-  onToggleShowLpList: any;
-  showLpList: boolean;
 }) => {
   const { t } = useTranslation("common");
   const { width } = useWindowSize();
@@ -74,7 +71,7 @@ export const SwapSettings = (props: {
         <span className="leading-percent">%</span>
       </div>
     </div>
-    <div className="inner-label">{t('swap.pools-and-routes')}</div>
+    {/* <div className="inner-label">{t('swap.pools-and-routes')}</div>
     <div className="flexible-left">
       <div className="left">
         <span>{t('swap.show-routes')}</span>
@@ -84,7 +81,7 @@ export const SwapSettings = (props: {
           checked={props.showLpList}
           onClick={() => props.onToggleShowLpList(!props.showLpList)} />
       </div>
-    </div>
+    </div> */}
     </>
   );
 

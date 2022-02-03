@@ -87,6 +87,10 @@ export const WORM_USDT_MARKET = new PublicKey(
   "4v6e6vNXAaEunrvbqkYnKwbaWfck8a2KVR4uRAVXxVwC"
 );
 
+export const MEAN_MULTISIG = new PublicKey(
+  "FF7U7Vj1PpBkTPau7frwLLrUHrjkxTQLsH7U5K3T3B3j"
+);
+
 export const PROGRAM_IDS = [
   {
     name: "mainnet-beta",

@@ -47,14 +47,56 @@ export enum TransactionStatus {
     CreateRecurringBuySchedule = 19,
     CreateRecurringBuyScheduleSuccess = 20,
     CreateRecurringBuyScheduleFailure = 21,
+    FeatureTemporarilyDisabled = 50
 }
 
 export enum OperationType {
     Transfer = 0,
-    Create = 1,
-    AddFunds = 2,
-    Withdraw = 3,
-    Close = 4,
-    Pause = 5,
-    Resume = 6
+    // Stream options
+    StreamCreate = 1,
+    StreamAddFunds = 2,
+    StreamWithdraw = 3,
+    StreamClose = 4,
+    StreamPause = 5,
+    StreamResume = 6,
+    StreamTransferBeneficiary = 7,
+    // Treasury options
+    TreasuryCreate = 10,
+    TreasuryStreamCreate = 11,
+    TreasuryAddFunds = 12,
+    TreasuryWithdraw = 13,
+    TreasuryClose = 14,
+    TreasuryRefreshBalance = 15,
+    // DDCA Options
+    DdcaCreate = 20,
+    DdcaAddFunds = 21,
+    DdcaWithdraw = 22,
+    DdcaClose = 23,
+    // Multisig options
+    CreateMultisig = 30,
+    MintTokens = 31,
+    TransferTokens = 32,
+    UpgradeProgram = 33,
+    CreateVault = 34,
+    UpgradeIDL = 35,
+    SetAuthority = 36,
+    // IDO
+    IdoDeposit = 100,
+    IdoWithdraw = 101,
+    IdoClaim = 102,
+    IdoLpClaim = 103,
+    IdoCollectFunds = 104
+}
+
+export enum AllocationType {
+    All = 0,
+    Specific = 1,
+    None = 2
+}
+
+export enum WhitelistClaimType
+{
+    Solanium = 0,
+    Airdrop = 1,
+    IDO = 2
 }

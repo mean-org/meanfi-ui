@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { INPUT_AMOUNT_PATTERN } from "../constants";
 import { TokenInfo } from "@solana/spl-token-registry";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { CUSTOM_USDC, MEAN_TOKEN_LIST } from "../constants/token-list";
 import { getFormattedNumberToLocale, maxTrailingZeroes } from "./ui";
 import { TransactionFees } from '@mean-dao/money-streaming/lib/types';
 import { RENT_PROGRAM_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID } from "./ids";
@@ -24,6 +24,7 @@ import { ACCOUNT_LAYOUT } from './layouts';
 import { initializeAccount } from '@project-serum/serum/lib/token-instructions';
 import { AccountTokenParsedInfo, TokenAccountInfo } from '../models/token';
 import { BigNumber } from "bignumber.js";
+import BN from "bn.js";
 
 export type KnownTokenMap = Map<string, TokenInfo>;
 
@@ -221,6 +222,36 @@ export const getFormattedRateAmount = (amount: number): string => {
   return `${getFormattedNumberToLocale(formatAmount(amount, 2), 2)}`;
 }
 
+export const getAmountWithSymbol = (amount: number, address?: string, onlyValue = false) => {
+  let token: TokenInfo | undefined = undefined;
+  if (address) {
+    if (address === NATIVE_SOL.address) {
+      token = NATIVE_SOL as TokenInfo;
+    } else {
+      token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
+    }
+  }
+
+  const formatToLocale = (value: any, minDigits = 6) => {
+    const converted = parseFloat(value.toString());
+    const formatted = new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: minDigits, maximumFractionDigits: minDigits }).format(converted);
+    return formatted || '';
+  }
+
+  const inputAmount = amount || 0;
+  if (token) {
+    const formatted = new BigNumber(formatAmount(inputAmount, token.decimals));
+    const formatted2 = formatted.toFixed(token.decimals);
+    const toLocale = formatToLocale(formatted2, token.decimals);
+    if (onlyValue) { return toLocale; }
+    return `${toLocale} ${token.symbol}`;
+  } else if (address && !token) {
+    const formatted = formatToLocale(inputAmount);
+    return onlyValue ? formatted : `${formatted} [${shortenAddress(address, 4)}]`;
+  }
+  return `${formatToLocale(inputAmount)}`;
+}
+
 export const getTokenAmountAndSymbolByTokenAddress = (
   amount: number,
   address: string,
@@ -230,6 +261,8 @@ export const getTokenAmountAndSymbolByTokenAddress = (
   if (address) {
     if (address === NATIVE_SOL.address) {
       token = NATIVE_SOL as TokenInfo;
+    } else if (address === CUSTOM_USDC.address) {
+      token = CUSTOM_USDC as TokenInfo;
     } else {
       token = address ? MEAN_TOKEN_LIST.find(t => t.address === address) : undefined;
     }
@@ -242,25 +275,20 @@ export const getTokenAmountAndSymbolByTokenAddress = (
     if (onlyValue) { return toLocale; }
     return `${toLocale} ${token.symbol}`;
   } else if (address && !token) {
-    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, 4));
+    // TODO: Fair assumption but we should be able to work with either an address or a TokenInfo param
+    const unkToken: TokenInfo = {
+      address: address,
+      name: 'Unknown',
+      chainId: 101,
+      decimals: 6,
+      symbol: shortenAddress(address),
+    };
+    const formatted = getFormattedNumberToLocale(formatAmount(inputAmount, unkToken.decimals));
     return onlyValue
       ? maxTrailingZeroes(formatted, 2)
-      : `${maxTrailingZeroes(formatted, 2)} ${shortenAddress(address, 4)}`;
+      : `${maxTrailingZeroes(formatted, 2)} [${shortenAddress(address, 4)}]`;
   }
   return `${maxTrailingZeroes(getFormattedNumberToLocale(inputAmount), 2)}`;
-}
-
-export const truncateFloat = (value: any, decimals = 2): string => {
-  const numericString = value.toString();
-  const splitted = numericString.split('.');
-
-  if (splitted.length === 1 || splitted[1].length <= decimals) {
-    return numericString;
-  }
-
-  const reshapedDecimals = splitted[1].slice(0, decimals);
-  splitted[1] = reshapedDecimals;
-  return splitted.join('.');
 }
 
 export const getComputedFees = (fees: TransactionFees): number => {
@@ -268,16 +296,13 @@ export const getComputedFees = (fees: TransactionFees): number => {
 }
 
 export async function fetchAccountTokens(
-  pubkey: PublicKey,
-  cluster: string,
+  connection: Connection,
+  pubkey: PublicKey
 ) {
   let data;
   try {
-    const { value } = await new Connection(
-      cluster,
-      "processed"
-    ).getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
-    data = value.map((accountInfo) => {
+    const { value } = await connection.getParsedTokenAccountsByOwner(pubkey, { programId: TOKEN_PROGRAM_ID });
+    data = value.map((accountInfo: any) => {
       const parsedInfo = accountInfo.account.data.parsed.info as TokenAccountInfo;
       return { parsedInfo, pubkey: accountInfo.pubkey };
     });
@@ -546,8 +571,29 @@ export async function createTokenAccountIfNotExist(
 }
 
 export async function createAmmAuthority(programId: PublicKey) {
-  const seeds = [new Uint8Array(Buffer.from('amm authority'.replace('\u00A0', ' '), 'utf-8'))];
+  const seeds = [new Uint8Array(Buffer.from('amm authority'.replace('\u00A0', ' '), 'utf-8'))];
   const [publicKey, nonce] = await PublicKey.findProgramAddress(seeds, programId);
 
   return { publicKey, nonce }
+}
+
+export function getStreamedUnitsPerSecond(rateIntervalInSeconds: number, rateAmount: number) {
+  if (rateIntervalInSeconds <= 0) { return 0; }
+  return rateAmount / rateIntervalInSeconds;
+}
+
+export const toUiAmount = (amount: BN, decimals: number) => {
+  if (!decimals) { return 0; }
+  return amount.toNumber() / (10 ** decimals);
+}
+
+export const toTokenAmount = (amount: number, decimals: number) => {
+  if (!amount || !decimals) { return 0; }
+  return amount * (10 ** decimals);
+}
+
+export function cutNumber(amount: number, decimals: number) {
+  const str = `${amount}`;
+
+  return str.slice(0, str.indexOf('.') + decimals + 1);
 }

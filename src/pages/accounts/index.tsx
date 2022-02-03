@@ -24,13 +24,14 @@ import { Identicon } from '../../components/Identicon';
 import {
   fetchAccountTokens,
   findATokenAddress,
+  formatAmount,
   getAmountFromLamports,
   getFormattedRateAmount,
   getTokenAmountAndSymbolByTokenAddress,
   shortenAddress
 } from '../../utils/utils';
 import { Button, Empty, Result, Space, Spin, Switch, Tooltip } from 'antd';
-import { consoleOut, copyText, isProd, isValidAddress } from '../../utils/ui';
+import { consoleOut, copyText, isValidAddress } from '../../utils/ui';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import {
   SOLANA_WALLET_GUIDE,
@@ -38,15 +39,14 @@ import {
   EMOJIS,
   TRANSACTIONS_PER_PAGE,
   ACCOUNTS_LOW_BALANCE_LIMIT,
-  FALLBACK_COIN_IMAGE,
-  STREAMS_REFRESH_TIMEOUT
+  FALLBACK_COIN_IMAGE
 } from '../../constants';
 import { QrScannerModal } from '../../components/QrScannerModal';
 import { Helmet } from "react-helmet";
 import { IconCopy } from '../../Icons';
 import { notify } from '../../utils/notifications';
 import { fetchAccountHistory, MappedTransaction } from '../../utils/history';
-import { Link, Redirect, Route, useHistory, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isDesktop } from "react-device-detect";
 import useWindowSize from '../../hooks/useWindowResize';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -54,51 +54,72 @@ import { refreshCachedRpc } from '../../models/connections-hq';
 import { AccountTokenParsedInfo } from '../../models/token';
 import { getTokenByMintAddress } from '../../utils/tokens';
 import { AccountsMergeModal } from '../../components/AccountsMergeModal';
-import { TransactionStatus } from '../../models/enums';
+import { OperationType, TransactionStatus } from '../../models/enums';
 import { Streams } from '../../views';
 import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { StreamInfo } from '@mean-dao/money-streaming/lib/types';
 import { initialSummary, StreamsSummary } from '../../models/streams';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { MSP, Stream, STREAM_STATUS } from '@mean-dao/msp';
+import { StreamInfo, STREAM_STATE } from '@mean-dao/money-streaming';
 
 const antIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const QRCode = require('qrcode.react');
 
 export const AccountsView = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const connection = useConnectionConfig();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const { theme } = useContext(AppStateContext);
   const [customConnection, setCustomConnection] = useState<Connection>();
+  const [msp, setMsp] = useState<MSP | undefined>();
   const {
     coinPrices,
     userTokens,
     splTokenList,
     streamList,
+    streamListv1,
+    streamListv2,
+    streamDetail,
     transactions,
     selectedAsset,
     accountAddress,
+    loadingStreams,
     lastTxSignature,
     detailsPanelOpen,
+    shouldLoadTokens,
+    streamsSummary,
+    loadingStreamsSummary,
     streamProgramAddress,
     canShowAccountDetails,
+    streamV2ProgramAddress,
     previousWalletConnectState,
+    setStreamDetail,
     setTransactions,
     setSelectedAsset,
     setAccountAddress,
+    refreshStreamList,
     setDtailsPanelOpen,
+    setShouldLoadTokens,
+    setTransactionStatus,
+    setStreamsSummary,
+    setLastStreamsSummary,
+    setLoadingStreamsSummary,
     setAddAccountPanelOpen,
-    setCanShowAccountDetails,
     showDepositOptionsModal,
-    setTransactionStatus
+    setCanShowAccountDetails,
   } = useContext(AppStateContext);
-  const [redirect, setRedirect] = useState<string | null>(null);
+  const {
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+  } = useContext(TransactionStatusContext);
 
   const { t } = useTranslation('common');
-  const history = useHistory();
   const { width } = useWindowSize();
   const [isSmallUpScreen, setIsSmallUpScreen] = useState(isDesktop);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [accountAddressInput, setAccountAddressInput] = useState<string>('');
-  const [shouldLoadTokens, setShouldLoadTokens] = useState(false);
   const [tokensLoaded, setTokensLoaded] = useState(false);
   const [accountTokens, setAccountTokens] = useState<UserTokenAccount[]>([]);
   const [meanSupportedTokens, setMeanSupportedTokens] = useState<UserTokenAccount[]>([]);
@@ -106,15 +127,12 @@ export const AccountsView = () => {
   const [solAccountItems, setSolAccountItems] = useState(0);
   const [tokenAccountGroups, setTokenAccountGroups] = useState<Map<string, AccountTokenParsedInfo[]>>();
   const [selectedTokenMergeGroup, setSelectedTokenMergeGroup] = useState<AccountTokenParsedInfo[]>();
-  // const [popoverVisible, setPopoverVisible] = useState(false);
 
   // Flow control
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.Iddle);
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [shouldLoadTransactions, setShouldLoadTransactions] = useState(false);
   const [hideLowBalances, setHideLowBalances] = useLocalStorage('hideLowBalances', true);
-  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(initialSummary);
-  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(false);
 
   // QR scan modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -125,6 +143,28 @@ export const AccountsView = () => {
     triggerWindowResize();
     closeQrScannerModal();
   };
+
+  useEffect(() => {
+
+    if (!wallet || !publicKey || !connection || !connected || msp) {
+      return;
+    }
+
+    console.log('New MSP from /acounts');
+    setMsp(new MSP(
+      connection.endpoint,
+      streamV2ProgramAddress,
+      "finalized"
+    ));
+
+  }, [
+    msp,
+    connected, 
+    connection, 
+    publicKey, 
+    wallet,
+    streamV2ProgramAddress
+  ])
 
   const startSwitch = useCallback(() => {
     setStatus(FetchStatus.Fetching);
@@ -139,16 +179,20 @@ export const AccountsView = () => {
     startSwitch();
   }, [
     startSwitch,
-    setTransactions
+    setTransactions,
+    setShouldLoadTokens
   ])
 
   const selectAsset = useCallback((
     asset: UserTokenAccount,
+    clearTxList: boolean = true,
     openDetailsPanel: boolean = false
   ) => {
     setStatus(FetchStatus.Fetching);
-    setSolAccountItems(0);
-    setTransactions(undefined);
+    if (clearTxList) {
+      setSolAccountItems(0);
+      setTransactions(undefined);
+    }
     setSelectedAsset(asset);
     if (isSmallUpScreen || openDetailsPanel) {
       setDtailsPanelOpen(true);
@@ -223,14 +267,22 @@ export const AccountsView = () => {
     const queryParams = `${selectedAsset ? '?to=' + selectedAsset.symbol : ''}`;
     setDtailsPanelOpen(false);
     if (queryParams) {
-      history.push({
-        pathname: '/exchange',
-        search: queryParams,
-      });
+      navigate(`/exchange${queryParams}`);
     } else {
-      history.push('/exchange');
+      navigate('/exchange');
     }
   }
+
+  const isSelectedAssetNativeAccount = useCallback(() => {
+    return accountAddress && selectedAsset && accountAddress === selectedAsset.publicAddress ? true : false;
+  }, [
+    selectedAsset,
+    accountAddress,
+  ]);
+
+  const hasTransactions = useCallback(() => {
+    return transactions && transactions.length > 0 ? true : false;
+  }, [transactions]);
 
   const getScanAddress = useCallback((asset: UserTokenAccount): PublicKey | null => {
     /**
@@ -250,6 +302,7 @@ export const AccountsView = () => {
   },[accountAddress]);
 
   const getPricePerToken = useCallback((token: UserTokenAccount): number => {
+    if (!token || !token.symbol) { return 0; }
     const tokenSymbol = token.symbol.toUpperCase();
     const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
 
@@ -269,23 +322,17 @@ export const AccountsView = () => {
     return false;
   }
 
-  // const handlePopoverVisibleChange = (visibleChange: boolean) => {
-  //   setPopoverVisible(visibleChange);
-  // };
-
-  // const onTokenAccountGroupClick = (e: any) => {
-  //   consoleOut('onTokenAccountGroupClick event:', e, 'blue');
-  // }
-
   // Token Merger Modal
-  // Test with BZjZersWNduxssci1mhnUgWDBX9QTicLu4iFdTQvkP2W
   const hideTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(false), []);
   const showTokenMergerModal = useCallback(() => setTokenMergerModalVisibility(true), []);
   const [isTokenMergerModalVisible, setTokenMergerModalVisibility] = useState(false);
   const onFinishedTokenMerge = useCallback(() => {
     hideTokenMergerModal();
     setShouldLoadTokens(true);
-  }, [hideTokenMergerModal]);
+  }, [
+    setShouldLoadTokens,
+    hideTokenMergerModal
+  ]);
 
   // Setup custom connection with 'confirmed' commitment
   useEffect(() => {
@@ -301,191 +348,224 @@ export const AccountsView = () => {
   ]);
 
   // Create and cache Money Streaming Program instance
-  const ms = useMemo(() => new MoneyStreaming(connection.endpoint, streamProgramAddress),
-  [connection.endpoint, streamProgramAddress]);
+  const ms = useMemo(() => new MoneyStreaming(
+    connection.endpoint,
+    streamProgramAddress,
+    "finalized"
+  ), [
+    connection.endpoint,
+    streamProgramAddress
+  ]);
 
   const updateAtaFlag = useCallback(async (token: UserTokenAccount): Promise<boolean> => {
     const ata = await findATokenAddress(new PublicKey(accountAddress), new PublicKey(token.address));
     return ata && token.publicAddress && ata.toBase58() === token.publicAddress ? true : false;
   }, [accountAddress]);
 
-  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
+  // Load streams on entering /accounts
   useEffect(() => {
-    if (!connection || !customConnection || !accountAddress || !shouldLoadTokens || !userTokens || !splTokenList) {
+    if (!isFirstLoad) { return; }
+    setIsFirstLoad(false);
+    setTransactions([]);
+
+    setTimeout(() => {
+      setShouldLoadTokens(true);
+    }, 1000);
+
+    if (publicKey && (!streamList || streamList.length === 0)) {
+      consoleOut('Loading streams with wallet connection...', '', 'green');
+      refreshStreamList();
+    }
+  }, [
+    wallet,
+    publicKey,
+    streamList,
+    isFirstLoad,
+    shouldLoadTokens,
+    setTransactions,
+    refreshStreamList,
+    setShouldLoadTokens
+  ]);
+
+  // Fetch all the owned token accounts on demmand via setShouldLoadTokens(true)
+  // Also, do this after any Tx is completed in places where token balances were indeed changed)
+  useEffect(() => {
+    if (!customConnection || !accountAddress || !shouldLoadTokens || !userTokens || userTokens.length === 0 || !splTokenList || splTokenList.length === 0 ) {
       return;
     }
 
+    // setTimeout(() => {
+    //   setShouldLoadTokens(false);
+    // });
+
     const timeout = setTimeout(() => {
-      if (connection && customConnection && accountAddress && shouldLoadTokens &&
-          userTokens && userTokens.length && splTokenList && splTokenList.length) {
-        setShouldLoadTokens(false);
-        setTokensLoaded(false);
-  
-        let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
-        const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
-        const pk = new PublicKey(accountAddress);
-        let nativeBalance = 0;
+      setShouldLoadTokens(false);
+      setTokensLoaded(false);
 
-        // Fetch SOL balance.
-        customConnection.getBalance(pk)
-          .then(solBalance => {
-            nativeBalance = solBalance || 0;
-            meanTokensCopy[0].balance = nativeBalance / LAMPORTS_PER_SOL;
-            meanTokensCopy[0].publicAddress = accountAddress;
-            // We have the native account balance, now get the token accounts' balance
-            // but first, set all balances to zero
-            for (let index = 1; index < meanTokensCopy.length; index++) {
-              meanTokensCopy[index].balance = 0;
-            }
+      let meanTokensCopy = JSON.parse(JSON.stringify(userTokens)) as UserTokenAccount[];
+      const splTokensCopy = JSON.parse(JSON.stringify(splTokenList)) as UserTokenAccount[];
+      const pk = new PublicKey(accountAddress);
 
-            fetchAccountTokens(pk, connection.endpoint)
-              .then(accTks => {
-                if (accTks) {
-                  consoleOut('fetched accountTokens:', accTks.map(i => {
-                    return {
-                      pubAddress: i.pubkey.toBase58(),
-                      mintAddress: i.parsedInfo.mint,
-                      balance: i.parsedInfo.tokenAmount.uiAmount || 0
-                    };
-                  }), 'blue');
+      // Fetch SOL balance.
+      customConnection.getBalance(pk)
+        .then(solBalance => {
+          meanTokensCopy[0].balance = solBalance / LAMPORTS_PER_SOL;
+          meanTokensCopy[0].publicAddress = accountAddress;
 
-                  // Group the token accounts by mint.
-                  const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
-                  const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
-                  accTks.forEach((ta) => {
-                    const key = ta.parsedInfo.mint;
-                    const info = getTokenByMintAddress(key);
-                    const updatedTa = Object.assign({}, ta, {
-                      description: info ? `${info.name} (${info.symbol})` : ''
-                    });
-                    if (groupedTokenAccounts.has(key)) {
-                      const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
-                      current.push(updatedTa);
-                    } else {
-                      groupedTokenAccounts.set(key, [updatedTa]);
-                    }
+          fetchAccountTokens(customConnection, pk)
+            .then(accTks => {
+              if (accTks) {
+                consoleOut('fetched accountTokens:', accTks.map(i => {
+                  return {
+                    pubAddress: i.pubkey.toBase58(),
+                    mintAddress: i.parsedInfo.mint,
+                    balance: i.parsedInfo.tokenAmount.uiAmount || 0
+                  };
+                }), 'blue');
+
+                // Group the token accounts by mint.
+                const groupedTokenAccounts = new Map<string, AccountTokenParsedInfo[]>();
+                const tokenGroups = new Map<string, AccountTokenParsedInfo[]>();
+                accTks.forEach((ta) => {
+                  const key = ta.parsedInfo.mint;
+                  const info = getTokenByMintAddress(key);
+                  const updatedTa = Object.assign({}, ta, {
+                    description: info ? `${info.name} (${info.symbol})` : ''
                   });
-                  // Keep only groups with more than 1 item
-                  groupedTokenAccounts.forEach((item, key) => {
-                    if (item.length > 1) {
-                      tokenGroups.set(key, item);
-                    }
-                  });
-                  if (tokenGroups.size > 0) {
-                    consoleOut('tokenGroups:', tokenGroups, 'blue');
-                  }
-                  // Save groups for possible further merging
-                  if (tokenGroups.size) {
-                    setTokenAccountGroups(tokenGroups);
+                  if (groupedTokenAccounts.has(key)) {
+                    const current = groupedTokenAccounts.get(key) as AccountTokenParsedInfo[];
+                    current.push(updatedTa);
                   } else {
-                    setTokenAccountGroups(undefined);
+                    groupedTokenAccounts.set(key, [updatedTa]);
                   }
-
-                  // Update balances in the mean token list
-                  accTks.forEach(item => {
-                    let tokenIndex = 0;
-                    // Locate the token in meanTokensCopy
-                    tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                    if (tokenIndex !== -1) {
-                      // If we didn't already filled info for this associated token address
-                      if (!meanTokensCopy[tokenIndex].publicAddress) {
-                        // Add it
-                        meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                        meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                      } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
-                        // If we did and the publicAddress is different/new then duplicate this item with the new info
-                        const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
-                        newItem.publicAddress = item.pubkey.toBase58();
-                        newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                        meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
-                      }
-                    }
-                  });
-
-                  // Update balances in the SPL token list
-                  accTks.forEach(item => {
-                    const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
-                    if (tokenIndex !== -1) {
-                      splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
-                      splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
-                    }
-                  });
-
-                  // Create a list containing the tokens for the user accounts not in the meanTokensCopy
-                  const intersectedList = new Array<UserTokenAccount>();
-                  accTks.forEach(item => {
-                    // Loop through the user token accounts and add the token account to the list: meanTokensCopy
-                    // If it is not already on the list (diferentiate token accounts of the same mint)
-                    const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
-                    const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
-                    if (tokenFromSplTokenList && !isTokenAccountInTheList) {
-                      intersectedList.push(tokenFromSplTokenList);
-                    }
-                  });
-                  let sortedList = intersectedList.sort((a, b) => {
-                    var nameA = a.symbol.toUpperCase();
-                    var nameB = b.symbol.toUpperCase();
-                    if (nameA < nameB) {
-                      return -1;
-                    }
-                    if (nameA > nameB) {
-                      return 1;
-                    }
-                    // names must be equal
-                    return 0;
-                  });
-                  meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
-                    item.displayIndex = index;
-                    item.isAta = await updateAtaFlag(item);
-                  });
-                  sortedList.forEach(async (item: UserTokenAccount, index: number) => {
-                    item.displayIndex = meanTokensCopy.length + index;
-                    item.isAta = await updateAtaFlag(item);
-                  });
-                  // Concatenate both lists
-                  const finalList = meanTokensCopy.concat(sortedList);
-                  consoleOut('Tokens (sorted):', finalList, 'blue');
-                  // Report in the console for debugging
-                  const tokenTable: any[] = [];
-                  finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
-                      pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
-                      mintAddress: shortenAddress(item.address, 6),
-                      symbol: item.symbol,
-                      balance: item.balance
-                    })
-                  );
-                  console.table(tokenTable);
-                  // Update the state
-                  setMeanSupportedTokens(meanTokensCopy);
-                  setExtraUserTokensSorted(sortedList);
-                  setAccountTokens(finalList);
-                  setTokensLoaded(true);
-                } else {
-                  console.error('could not get account tokens');
-                  setMeanSupportedTokens(meanTokensCopy);
-                  setAccountTokens(meanTokensCopy);
-                  setExtraUserTokensSorted([]);
-                  setTokensLoaded(true);
-                  refreshCachedRpc();
+                });
+                // Keep only groups with more than 1 item
+                groupedTokenAccounts.forEach((item, key) => {
+                  if (item.length > 1) {
+                    tokenGroups.set(key, item);
+                  }
+                });
+                if (tokenGroups.size > 0) {
+                  consoleOut('tokenGroups:', tokenGroups, 'blue');
                 }
-                // Preset the first available token
-                selectAsset(meanTokensCopy[0]);
-              })
-              .catch(error => {
-                console.error(error);
+                // Save groups for possible further merging
+                if (tokenGroups.size) {
+                  setTokenAccountGroups(tokenGroups);
+                } else {
+                  setTokenAccountGroups(undefined);
+                }
+
+                // Update balances in the mean token list
+                accTks.forEach(item => {
+                  let tokenIndex = 0;
+                  // Locate the token in meanTokensCopy
+                  tokenIndex = meanTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    // If we didn't already filled info for this associated token address
+                    if (!meanTokensCopy[tokenIndex].publicAddress) {
+                      // Add it
+                      meanTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+                      meanTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                    } else if (meanTokensCopy[tokenIndex].publicAddress !== item.pubkey.toBase58()) {
+                      // If we did and the publicAddress is different/new then duplicate this item with the new info
+                      const newItem = JSON.parse(JSON.stringify(meanTokensCopy[tokenIndex])) as UserTokenAccount;
+                      newItem.publicAddress = item.pubkey.toBase58();
+                      newItem.balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                      meanTokensCopy.splice(tokenIndex + 1, 0, newItem);
+                    }
+                  }
+                });
+
+                // Update balances in the SPL token list
+                accTks.forEach(item => {
+                  const tokenIndex = splTokensCopy.findIndex(i => i.address === item.parsedInfo.mint);
+                  if (tokenIndex !== -1) {
+                    splTokensCopy[tokenIndex].publicAddress = item.pubkey.toBase58();
+                    splTokensCopy[tokenIndex].balance = item.parsedInfo.tokenAmount.uiAmount || 0;
+                  }
+                });
+
+                // Create a list containing the tokens for the user accounts not in the meanTokensCopy
+                const intersectedList = new Array<UserTokenAccount>();
+                accTks.forEach(item => {
+                  // Loop through the user token accounts and add the token account to the list: intersectedList
+                  // If it is not already on the list (diferentiate token accounts of the same mint)
+                  const isTokenAccountInTheList = meanTokensCopy.some(t => t.address === item.parsedInfo.mint && t.publicAddress === item.pubkey.toBase58());
+                  const tokenFromSplTokenList = splTokensCopy.find(t => t.address === item.parsedInfo.mint);
+                  if (tokenFromSplTokenList && !isTokenAccountInTheList) {
+                    intersectedList.push(tokenFromSplTokenList);
+                  }
+                });
+                let sortedList = intersectedList.sort((a, b) => {
+                  var nameA = a.symbol.toUpperCase();
+                  var nameB = b.symbol.toUpperCase();
+                  if (nameA < nameB) {
+                    return -1;
+                  }
+                  if (nameA > nameB) {
+                    return 1;
+                  }
+                  // names must be equal
+                  return 0;
+                });
+                meanTokensCopy.forEach(async (item: UserTokenAccount, index: number) => {
+                  item.displayIndex = index;
+                  item.isAta = await updateAtaFlag(item);
+                });
+                sortedList.forEach(async (item: UserTokenAccount, index: number) => {
+                  item.displayIndex = meanTokensCopy.length + index;
+                  item.isAta = await updateAtaFlag(item);
+                });
+
+                // Concatenate both lists
+                const finalList = meanTokensCopy.concat(sortedList);
+                consoleOut('Tokens (sorted):', finalList, 'blue');
+                // Report in the console for debugging
+                const tokenTable: any[] = [];
+                finalList.forEach((item: UserTokenAccount, index: number) => tokenTable.push({
+                    pubAddress: item.publicAddress ? shortenAddress(item.publicAddress, 6) : null,
+                    mintAddress: shortenAddress(item.address, 6),
+                    symbol: item.symbol,
+                    balance: item.balance
+                  })
+                );
+                console.table(tokenTable);
+                // Update the state
+                setMeanSupportedTokens(meanTokensCopy);
+                setExtraUserTokensSorted(sortedList);
+                setAccountTokens(finalList);
+                setTokensLoaded(true);
+              } else {
                 setMeanSupportedTokens(meanTokensCopy);
                 setAccountTokens(meanTokensCopy);
                 setExtraUserTokensSorted([]);
                 setTokensLoaded(true);
-                selectAsset(meanTokensCopy[0]);
                 refreshCachedRpc();
-              });
-          })
-          .catch(error => {
-            console.error(error);
-            refreshCachedRpc();
-          });
-      }
+              }
+              // Preset the first available token
+              if (selectedAsset) {
+                const meanTokenItemIndex = meanTokensCopy.findIndex(m => m.publicAddress === selectedAsset.publicAddress);
+                if (meanTokenItemIndex !== -1) {
+                  selectAsset(meanTokensCopy[meanTokenItemIndex], true);
+                }
+              } else {
+                selectAsset(meanTokensCopy[0]);
+              }
+            })
+            .catch(error => {
+              console.error(error);
+              setMeanSupportedTokens(meanTokensCopy);
+              setAccountTokens(meanTokensCopy);
+              setExtraUserTokensSorted([]);
+              setTokensLoaded(true);
+              selectAsset(meanTokensCopy[0], true);
+              refreshCachedRpc();
+            });
+        })
+        .catch(error => {
+          console.error(error);
+          refreshCachedRpc();
+        });
     });
 
     return () => {
@@ -493,14 +573,15 @@ export const AccountsView = () => {
     }
 
   }, [
-    accountAddress,
-    splTokenList,
-    userTokens,
-    connection,
     customConnection,
     shouldLoadTokens,
+    accountAddress,
+    selectedAsset,
+    splTokenList,
+    userTokens,
+    selectAsset,
     updateAtaFlag,
-    selectAsset
+    setShouldLoadTokens,
   ]);
 
   // Filter only useful Txs for the SOL account and return count
@@ -518,16 +599,17 @@ export const AccountsView = () => {
 
     if (txs && txs.length) {
 
-      const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
       // Show only txs that have SOL changes
       const filtered = txs.filter(tx => {
-        const meta = tx.parsedTransaction.meta;
-        if (meta && meta.err !== null) { return false; }
+        const meta = tx.parsedTransaction && tx.parsedTransaction.meta
+          ? tx.parsedTransaction.meta
+          : null;
+        if (!meta || meta.err !== null) { return false; }
         const accounts = tx.parsedTransaction.transaction.message.accountKeys;
         const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
-        if (isScanningWallet && accIdx === -1) { return false; }
+        if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
         const change = getChange(accIdx, meta);
-        return isScanningWallet && change !== 0 ? true : false;
+        return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
       });
 
       consoleOut(`${filtered.length} useful Txs`);
@@ -537,7 +619,7 @@ export const AccountsView = () => {
     }
   }, [
     accountAddress,
-    selectedAsset?.publicAddress
+    isSelectedAssetNativeAccount
   ]);
 
   // Load the transactions when signaled
@@ -545,6 +627,7 @@ export const AccountsView = () => {
 
     if (shouldLoadTransactions && tokensLoaded && customConnection && accountAddress && selectedAsset && !loadingTransactions) {
       setShouldLoadTransactions(false);
+      setLoadingTransactions(true);
 
       // Get the address to scan and ensure there is one
       const pk = getScanAddress(selectedAsset as UserTokenAccount);
@@ -555,8 +638,6 @@ export const AccountsView = () => {
         setStatus(FetchStatus.Fetched);
         return;
       }
-
-      setLoadingTransactions(true);
 
       let options = {
         limit: TRANSACTIONS_PER_PAGE
@@ -600,33 +681,12 @@ export const AccountsView = () => {
     accountAddress,
     customConnection,
     loadingTransactions,
+    loadingStreamsSummary,
     shouldLoadTransactions,
     getSolAccountItems,
     setTransactions,
     getScanAddress,
     startSwitch
-  ]);
-
-  // Auto execute (when entering /accounts) if we have an address already stored
-  useEffect(() => {
-    if (!accountAddress || !customConnection || tokensLoaded || accountTokens.length) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      consoleOut('loading user tokens...');
-      setShouldLoadTokens(true);
-    });
-
-    return () => {
-      clearTimeout(timeout);
-    }
-
-  }, [
-    accountTokens,
-    tokensLoaded,
-    accountAddress,
-    customConnection
   ]);
 
   // Hook on the wallet connect/disconnect
@@ -635,31 +695,43 @@ export const AccountsView = () => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected && publicKey) {
-        consoleOut('Preset account address...', publicKey.toBase58(), 'blue');
+        consoleOut('Preset account address...', publicKey.toBase58(), 'green');
+        setTimeout(() => {
+          setLastStreamsSummary(initialSummary);
+          setStreamsSummary(initialSummary);
+        });
+        refreshStreamList();
         setShouldLoadTokens(true);
+        setAddAccountPanelOpen(false);
+        setCanShowAccountDetails(true);
       } else if (previousWalletConnectState && !connected) {
         consoleOut('User is disconnecting...', '', 'blue');
-        setSolAccountItems(0);
-        setTransactions(undefined);
-        setStreamsSummary(initialSummary);
-      }
-      setTimeout(() => {
-        setCanShowAccountDetails(true);
+        setTimeout(() => {
+          setLastStreamsSummary(initialSummary);
+          setStreamsSummary(initialSummary);
+        });
+        if (streamDetail) {
+          setStreamDetail(undefined);
+        }
         setAddAccountPanelOpen(false);
-        startSwitch();
-      }, 150);
+        setCanShowAccountDetails(true);
+      }
     }
 
   }, [
-    connected,
-    previousWalletConnectState,
+    wallet,
     publicKey,
-    startSwitch,
-    setTransactions,
-    setSelectedAsset,
-    setAccountAddress,
-    setAddAccountPanelOpen,
+    connected,
+    streamDetail,
+    previousWalletConnectState,
     setCanShowAccountDetails,
+    setAddAccountPanelOpen,
+    setLastStreamsSummary,
+    setShouldLoadTokens,
+    setStreamsSummary,
+    refreshStreamList,
+    setStreamDetail,
+    startSwitch,
   ]);
 
   // Window resize listeners
@@ -695,6 +767,7 @@ export const AccountsView = () => {
     }
   }, [accountAddressInput]);
 
+  // Detect when entering small screen mode
   useEffect(() => {
     if (isSmallUpScreen && width < 576) {
       setIsSmallUpScreen(false);
@@ -706,9 +779,9 @@ export const AccountsView = () => {
     setDtailsPanelOpen
   ]);
 
-  const refreshStreamSummary = useCallback(async (streams: StreamInfo[], userWallet: PublicKey) => {
+  const refreshStreamSummary = useCallback(async () => {
 
-    if (!streams || !userWallet || loadingStreamsSummary) { return; }
+    if (!msp || !publicKey || (!streamListv1 && !streamListv2) || loadingStreamsSummary) { return; }
 
     setLoadingStreamsSummary(true);
 
@@ -719,48 +792,102 @@ export const AccountsView = () => {
       totalAmount: 0
     };
 
-    const updatedStreams = await ms.refreshStreams(streams, userWallet, userWallet);
+    const updatedStreamsv1 = await ms.refreshStreams(streamListv1 || [], publicKey);
+    const updatedStreamsv2 = await msp.refreshStreams(streamListv2 || [], publicKey);
 
-    for (let stream of updatedStreams) {
+    // consoleOut('=========== Block strat ===========', '', 'orange');
 
-        let freshStream = await ms.refreshStream(stream);
+    for (let stream of updatedStreamsv1) {
 
-        const streamIsOutgoing = 
-            freshStream.treasurerAddress &&
-            typeof freshStream.treasurerAddress !== 'string'
-                ? freshStream.treasurerAddress.equals(userWallet)
-                : freshStream.treasurerAddress === userWallet.toBase58();
+      const isIncoming = stream.beneficiaryAddress && stream.beneficiaryAddress === publicKey.toBase58()
+        ? true
+        : false;
 
-        let streamBalance = 0;
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
 
-        if (streamIsOutgoing) {
-            streamBalance = freshStream.escrowUnvestedAmount - freshStream.totalWithdrawals;
-            resume['outgoingAmount'] = resume['outgoingAmount'] + 1;  
-        } else {
-            streamBalance = freshStream.escrowVestedAmount - freshStream.totalWithdrawals;
-            resume['incomingAmount'] = resume['incomingAmount'] + 1;  
-        }
-        const asset = getTokenByMintAddress(freshStream.associatedToken as string);
-        const rate = getPricePerToken(asset as UserTokenAccount);
-        resume['totalNet'] = resume['totalNet'] + (streamBalance || 0 * rate);
+      // Get refreshed data
+      let freshStream = await ms.refreshStream(stream) as StreamInfo;
+      if (!freshStream || freshStream.state !== STREAM_STATE.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      if (isIncoming) {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowVestedAmount || 0) * rate);
+      } else {
+        resume['totalNet'] = resume['totalNet'] + ((freshStream.escrowUnvestedAmount || 0) * rate);
+      }
     }
 
-    resume['totalAmount'] = updatedStreams.length;
+    resume['totalAmount'] = updatedStreamsv1.length;
+
+    // consoleOut('totalNet v1:', resume['totalNet'], 'blue');
+
+    let streamsUsdNetChange = 0;
+
+    for (let stream of updatedStreamsv2) {
+
+      const isIncoming = stream.beneficiary && stream.beneficiary === publicKey.toBase58()
+        ? true
+        : false;
+
+      if (isIncoming) {
+        resume['incomingAmount'] = resume['incomingAmount'] + 1;
+      } else {
+        resume['outgoingAmount'] = resume['outgoingAmount'] + 1;
+      }
+
+      // Get refreshed data
+      let freshStream = await msp.refreshStream(stream) as Stream;
+      if (!freshStream || freshStream.status !== STREAM_STATUS.Running) { continue; }
+
+      const asset = getTokenByMintAddress(freshStream.associatedToken as string);
+      const rate = asset ? getPricePerToken(asset as UserTokenAccount) : 0;
+      const streamUnitsUsdPerSecond = parseFloat(freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9)) * rate;
+      // consoleOut(`rate for 1 ${asset ? asset.symbol : '[' + shortenAddress(freshStream.associatedToken as string, 6) + ']'}`, rate, 'blue');
+      // consoleOut(`streamUnitsPerSecond: ${isIncoming ? '↑' : '↓'}`, freshStream.streamUnitsPerSecond.toFixed(asset?.decimals || 9), 'blue');
+      // consoleOut(`streamUnitsUsdPerSecond: ${isIncoming ? '↑' : '↓'}`, streamUnitsUsdPerSecond, 'blue');
+      if (isIncoming) {
+        streamsUsdNetChange += streamUnitsUsdPerSecond;
+      } else {
+        streamsUsdNetChange -= streamUnitsUsdPerSecond;
+      }
+    }
+
+    resume['totalAmount'] += updatedStreamsv2.length;
+    resume['totalNet'] += streamsUsdNetChange;
+
+    // consoleOut('totalNet:', resume['totalNet'], 'blue');
+    // consoleOut('=========== Block ends ===========', '', 'orange');
+
+    // Update state
+    setLastStreamsSummary(streamsSummary);
     setStreamsSummary(resume);
     setLoadingStreamsSummary(false);
 
   }, [
-    ms,
-    loadingStreamsSummary,
-    getPricePerToken
+    ms, 
+    msp,
+    publicKey, 
+    streamListv1, 
+    streamListv2, 
+    streamsSummary, 
+    loadingStreamsSummary, 
+    getPricePerToken, 
+    setStreamsSummary, 
+    setLastStreamsSummary, 
+    setLoadingStreamsSummary
   ]);
 
   // Live data calculation
   useEffect(() => {
 
     const timeout = setTimeout(() => {
-      if (publicKey && streamList && streamList.length > 0) {
-        refreshStreamSummary(streamList, publicKey);
+      if (publicKey && streamList) {
+        refreshStreamSummary();
       }
     }, 1000);
 
@@ -774,12 +901,90 @@ export const AccountsView = () => {
     refreshStreamSummary
   ]);
 
+  // Handle what to do when new stream is created
+  useEffect(() => {
+    if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
+      if (lastSentTxOperationType === OperationType.StreamCreate || lastSentTxOperationType === OperationType.Transfer) {
+        refreshStreamList();
+      }
+    }
+  }, [
+    fetchTxInfoStatus,
+    lastSentTxSignature,
+    lastSentTxOperationType,
+    refreshStreamList,
+  ]);
+
   ///////////////
   // Rendering //
   ///////////////
 
-  const renderToken = (asset: UserTokenAccount, index: number) => {
-    const onTokenAccountClick = () => selectAsset(asset, true);
+  const renderMoneyStreamsSummary = (
+    <>
+      {/* Render Money Streams item if they exist and wallet is connected */}
+      {publicKey && (
+        <>
+        <Link to="/accounts/streams">
+          <div key="streams" className="transaction-list-row money-streams-summary">
+            <div className="icon-cell">
+              {loadingStreams ? (
+                <div className="token-icon animate-border-loading">
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}>
+                    <span className="font-bold text-shadow"><SyncOutlined spin /></span>
+                  </div>
+                </div>
+              ) : (
+                <div className={streamsSummary.totalNet !== 0 ? 'token-icon animate-border' : 'token-icon'}>
+                  <div className="streams-count simplelink" onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      refreshStreamList();
+                    }}>
+                    <span className="font-bold text-shadow">{streamsSummary.totalAmount || 0}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="description-cell">
+              <div className="title">{t('account-area.money-streams')}</div>
+              {streamsSummary.totalAmount === 0 ? (
+                <div className="subtitle">{t('account-area.no-money-streams')}</div>
+              ) : (
+                <div className="subtitle">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
+              )}
+            </div>
+            <div className="rate-cell">
+              {streamsSummary.totalAmount === 0 ? (
+                <span className="rate-amount">--</span>
+              ) : (
+                <>
+                  <div className="rate-amount">${formatAmount(streamsSummary.totalNet, 5)}</div>
+                  <div className="interval">net-change</div>
+                </>
+              )}
+            </div>
+            <div className="operation-vector">
+              {streamsSummary.totalNet > 0 ? (
+                <ArrowUpOutlined className="mean-svg-icons success bounce" />
+              ) : streamsSummary.totalNet < 0 ? (
+                <ArrowDownOutlined className="mean-svg-icons outgoing bounce" />
+              ) : (
+                <span className="online-status neutral"></span>
+              )}
+            </div>
+          </div>
+        </Link>
+        <div key="separator1" className="pinned-token-separator"></div>
+        </>
+      )}
+    </>
+  );
+
+  const renderAsset = (asset: UserTokenAccount, index: number) => {
+    const onTokenAccountClick = () => selectAsset(asset, true, true);
     const tokenPrice = getPricePerToken(asset);
     const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
       event.currentTarget.src = FALLBACK_COIN_IMAGE;
@@ -790,9 +995,11 @@ export const AccountsView = () => {
         ? true
         : false;
     }
-    const isNonAta = asset.address !== NATIVE_SOL_MINT.toBase58() && !asset.isAta && asset.publicAddress
+
+    const isOwnedTokenAccount = asset.publicAddress && asset.publicAddress !== accountAddress
           ? true
           : false;
+
     return (
       <div key={`${index}`} onClick={onTokenAccountClick}
           className={`transaction-list-row ${isSelectedToken()
@@ -802,7 +1009,7 @@ export const AccountsView = () => {
                 : ''}`
           }>
         <div className="icon-cell">
-          {isNonAta ? (
+          {publicKey && isOwnedTokenAccount && !asset.isAta ? (
             <Tooltip placement="bottomRight" title={t('account-area.non-ata-tooltip', { tokenSymbol: asset.symbol })}>
               <div className="token-icon grayed-out">
                 {asset.logoURI ? (
@@ -826,12 +1033,16 @@ export const AccountsView = () => {
           <div className="title">
             {asset.symbol}
             {tokenPrice > 0 ? (
-              <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
+              <span className={`badge small ml-1 ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
                 ${getFormattedRateAmount(tokenPrice)}
               </span>
             ) : (null)}
           </div>
-          <div className="subtitle text-truncate">{isNonAta ? t('account-area.non-ata-label') : asset.name}</div>
+          {publicKey ? (
+            <div className="subtitle text-truncate">{isOwnedTokenAccount && !asset.isAta && asset.name !== 'Unknown Token' ? t('account-area.non-ata-label') : asset.name}</div>
+            ) : (
+            <div className="subtitle text-truncate">{asset.name}</div>
+          )}
         </div>
         <div className="rate-cell">
           <div className="rate-amount">
@@ -847,47 +1058,13 @@ export const AccountsView = () => {
     );
   }
 
-  const renderTokenList = (
+  const renderAssetsList = (
     <>
     {accountTokens && accountTokens.length ? (
       <>
-        {/* Render Money Streams item if they exist and wallet is connected */}
-        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
-          <>
-          <Link to="/accounts/streams">
-            <div key="streams" className="transaction-list-row money-streams-summary">
-              <div className="icon-cell">
-                <div className="token-icon">
-                  <div className="streams-conunt">
-                    <span className="font-bold text-shadow">{streamsSummary.totalAmount}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">{t('account-area.money-streams')}</div>
-                <div className="subtitle text-truncate">{streamsSummary.incomingAmount} {t('streams.stream-stats-incoming')}, {streamsSummary.outgoingAmount} {t('streams.stream-stats-outgoing')}</div>
-              </div>
-              <div className="operation-vector">
-                {streamsSummary.totalNet > 0 ? (
-                  <ArrowUpOutlined className="mean-svg-icons success bounce" />
-                ) : (
-                  <ArrowDownOutlined className="mean-svg-icons error bounce" />
-                )}
-              </div>
-              <div className="rate-cell">
-                <div className="rate-amount">${getFormattedRateAmount(streamsSummary.totalNet)}</div>
-                <div className="interval">net-change</div>
-              </div>
-            </div>
-          </Link>
-          </>
-        )}
-        {(publicKey && streamsSummary && streamsSummary.totalAmount > 0) && (
-          <div key="separator1" className="pinned-token-separator"></div>
-        )}
         {/* Render mean supported tokens */}
         {(meanSupportedTokens && meanSupportedTokens.length > 0) && (
-          meanSupportedTokens.map((asset, index) => renderToken(asset, index))
+          meanSupportedTokens.map((asset, index) => renderAsset(asset, index))
         )}
         {/* Render divider if there are extra tokens */}
         {(accountTokens.length > meanSupportedTokens.length) && (
@@ -895,7 +1072,7 @@ export const AccountsView = () => {
         )}
         {/* Render extra user tokens */}
         {(extraUserTokensSorted && extraUserTokensSorted.length > 0) && (
-          extraUserTokensSorted.map((asset, index) => renderToken(asset, index + 50))
+          extraUserTokensSorted.map((asset, index) => renderAsset(asset, index + 50))
         )}
       </>
     ) : (
@@ -907,13 +1084,12 @@ export const AccountsView = () => {
   );
 
   const renderSolanaIcon = (
-    <img className="token-icon" src="solana-logo.png" alt="Solana logo" />
+    <img className="token-icon" src="/solana-logo.png" alt="Solana logo" />
   );
 
   const renderTransactions = () => {
-    const isScanningWallet = accountAddress === selectedAsset?.publicAddress ? true : false;
     if (transactions) {
-      if (isScanningWallet) {
+      if (isSelectedAssetNativeAccount()) {
         // Get amount change for each tx
         const getChange = (accountIndex: number, meta: ParsedConfirmedTransactionMeta | null): number => {
           if (meta !== null && accountIndex !== -1) {
@@ -930,13 +1106,15 @@ export const AccountsView = () => {
         }
         // Render only txs that have SOL changes
         const filtered = transactions.filter(tx => {
-          const meta = tx.parsedTransaction.meta;
-          if (meta && meta.err !== null) { return false; }
+          const meta = tx.parsedTransaction && tx.parsedTransaction.meta
+            ? tx.parsedTransaction.meta
+            : null;
+          if (!meta || meta.err !== null) { return false; }
           const accounts = tx.parsedTransaction.transaction.message.accountKeys;
           const accIdx = accounts.findIndex(acc => acc.pubkey.toBase58() === accountAddress);
-          if (isScanningWallet && accIdx === -1) { return false; }
+          if (isSelectedAssetNativeAccount() && accIdx === -1) { return false; }
           const change = getChange(accIdx, meta);
-          return isScanningWallet && change !== 0 ? true : false;
+          return isSelectedAssetNativeAccount() && change !== 0 ? true : false;
         });
         return filtered?.map((trans: MappedTransaction) => {
           return <TransactionItemView
@@ -949,7 +1127,7 @@ export const AccountsView = () => {
       } else {
         // Render the transactions collection
         return transactions?.map((trans: MappedTransaction) => {
-          if (trans.parsedTransaction.meta?.err === null) {
+          if (trans.parsedTransaction && trans.parsedTransaction.meta && trans.parsedTransaction.meta.err === null) {
             return <TransactionItemView
                       key={trans.signature}
                       transaction={trans}
@@ -978,7 +1156,7 @@ export const AccountsView = () => {
 
   const renderQrCode = (
     <div className="text-center mt-3">
-      <h3 className="mb-3">{t("assets.no-balance.line3")}</h3>
+      <h3 className="mb-3">{t('assets.no-balance.line3')}</h3>
       <div className={theme === 'light' ? 'qr-container bg-white' : 'qr-container bg-black'}>
         <QRCode
           value={accountAddress}
@@ -1005,14 +1183,16 @@ export const AccountsView = () => {
   const renderTokenBuyOptions = () => {
     return (
       <div className="buy-token-options">
-        <h3 className="text-center mb-3">{t('assets.no-balance.line1')} {getRandomEmoji()}</h3>
+        <h3 className="text-center mb-3">{t('assets.no-balance.line1', { tokenSymbol: selectedAsset?.symbol })} {getRandomEmoji()}</h3>
         <h3 className="text-center mb-2">{t('assets.no-balance.line2')}</h3>
         <Space size={[16, 16]} wrap>
-          <Button className="secondary-button" shape="round" size="middle" type="default"
-                  onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', {tokenSymbol: selectedAsset?.symbol})}</Button>
+          {isSelectedAssetNativeAccount() && (
+            <Button shape="round" type="ghost"
+                    onClick={showDepositOptionsModal}>{t('assets.no-balance.cta1', { tokenSymbol: selectedAsset?.symbol })}</Button>
+          )}
           {/* For SOL the first option is ok, any other token, we can use the exchange */}
           {selectedAsset?.publicAddress !== accountAddress && (
-            <Button className="secondary-button" shape="round" size="middle" type="default"
+            <Button shape="round" type="ghost"
                     onClick={handleGoToExchangeClick}>{t('assets.no-balance.cta2')}</Button>
           )}
         </Space>
@@ -1022,90 +1202,14 @@ export const AccountsView = () => {
   };
 
   const shallWeDraw = (): boolean => {
-    return ((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-            (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+    return ((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+            (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
       ? true
       : false;
   }
 
-  /*
-  const popoverTitleContent = (
-    <div className="flexible-left">
-      <div className="left">
-        {t('assets.merge-accounts-link')}
-      </div>
-      <div className="right">
-        <Button
-          type="default"
-          shape="circle"
-          icon={<CloseOutlined />}
-          onClick={() => handlePopoverVisibleChange(false)}
-        />
-      </div>
-    </div>
-  );
-
-  const popoverBodyContent = () => {
-    const output: JSX.Element[] = [];
-    <>
-      {(tokenAccountGroups && tokenAccountGroups.size) && (
-        <>
-        {tokenAccountGroups.forEach((value, keyName) => {
-          const asset = getTokenByMintAddress(keyName);
-          const imageOnErrorHandler = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            event.currentTarget.src = FALLBACK_COIN_IMAGE;
-            event.currentTarget.className = "error";
-          };
-          output.push(
-            <div className="transaction-list-row" key={keyName} onClick={onTokenAccountGroupClick}>
-              <div className="icon-cell">
-                <div className="token-icon">
-                  {asset?.logoURI ? (
-                    <img alt={`${asset.name}`} width={30} height={30} src={asset?.logoURI} onError={imageOnErrorHandler} />
-                  ) : (
-                    <Identicon address={keyName} style={{ width: "30", display: "inline-flex" }} />
-                  )}
-                </div>
-              </div>
-              <div className="description-cell">
-                <div className="title">
-                  {asset ? asset.symbol : '-'}
-                  <span className={`badge small ${theme === 'light' ? 'golden fg-dark' : 'darken'}`}>
-                    {value.length} {t('assets.accounts-label')}
-                  </span>
-                </div>
-                <div className="subtitle text-truncate">{asset ? asset.name : '-'}</div>
-              </div>
-              <div className="rate-cell">
-                <span className="flat-button fg-orange-red" onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  consoleOut('Merge onClick event:', e, 'blue');
-                  setSelectedTokenMergeGroup(value);
-                  showTokenMergerModal();
-                  // setPopoverVisible(false);
-                }}>
-                  <MergeCellsOutlined />
-                  <span className="ml-1">{t('assets.merge-accounts-cta')}</span>
-                </span>
-              </div>
-            </div>
-          );
-        })}
-        </>
-      )}
-    </>
-    return (
-      <div className="token-merger">
-        {output}
-      </div>
-    );
-  }
-  */
-
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
       <Helmet>
         <title>Accounts - Mean Finance</title>
         <link rel="canonical" href="https://app.meanfi.com/accounts" />
@@ -1117,8 +1221,9 @@ export const AccountsView = () => {
 
         {/* {isLocal() && (
           <div className="debug-bar">
-            <span className="ml-1">solAccountItems:</span><span className="ml-1 font-bold fg-dark-active">{solAccountItems}</span>
-            <span className="ml-1">tokenAccountGroups:</span><span className="ml-1 font-bold fg-dark-active">{tokenAccountGroups && tokenAccountGroups.size ? 'true' : 'false'}</span>
+            <span className="ml-1">proggress:</span><span className="ml-1 font-bold fg-dark-active">{fetchTxInfoStatus || '-'}</span>
+            <span className="ml-1">status:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxStatus || '-'}</span>
+            <span className="ml-1">lastSentTxSignature:</span><span className="ml-1 font-bold fg-dark-active">{lastSentTxSignature ? shortenAddress(lastSentTxSignature, 8) : '-'}</span>
           </div>
         )} */}
 
@@ -1173,7 +1278,8 @@ export const AccountsView = () => {
                     </div>
                     <div className="inner-container">
                       <div className="item-block vertical-scroll">
-                        {renderTokenList}
+                        {renderMoneyStreamsSummary}
+                        {renderAssetsList}
                       </div>
                       {(accountTokens && accountTokens.length > 0) && (
                         <div className="thin-bottom-ctas">
@@ -1244,25 +1350,24 @@ export const AccountsView = () => {
                         </div>
                       )}
                       {/* Activity list */}
-                      <div className={((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                      (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0))
+                      <div className={((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+                                      (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))
                                       ? 'transaction-list-data-wrapper vertical-scroll'
                                       : 'transaction-list-data-wrapper empty'}>
                         <div className="activity-list h-100">
                           {
-                            status === FetchStatus.Fetching && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                                                (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                            status === FetchStatus.Fetching && !((!isSelectedAssetNativeAccount() && hasTransactions()) ||
+                                                                (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0)) ? (
                               <div className="h-100 flex-center">
                                 <Spin indicator={antIcon} />
                               </div>
-                            ) : selectedAsset?.balance === 0 && !((accountAddress !== selectedAsset?.publicAddress && transactions && transactions.length > 0) ||
-                                                                  (accountAddress === selectedAsset?.publicAddress && transactions && transactions.length > 0 && solAccountItems > 0)) ? (
+                            ) : !selectedAsset?.publicAddress || (selectedAsset?.balance === 0 && !((!isSelectedAssetNativeAccount() && hasTransactions()) || (isSelectedAssetNativeAccount() && hasTransactions() && solAccountItems > 0))) ? (
                               renderTokenBuyOptions()
-                            ) : (transactions && transactions.length) ? (
+                            ) : hasTransactions() ? (
                               <div className="item-list-body compact">
                                 {renderTransactions()}
                               </div>
-                            ) : status === FetchStatus.Fetched && (!transactions || transactions.length === 0) ? (
+                            ) : status === FetchStatus.Fetched && !hasTransactions() ? (
                               <div className="h-100 flex-center">
                                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<p>{t('assets.no-transactions')}</p>} />
                               </div>
@@ -1276,6 +1381,7 @@ export const AccountsView = () => {
                       {lastTxSignature && (
                         <div className="stream-share-ctas">
                           <Button
+                            className="thin-stroke extra-small"
                             type="ghost"
                             shape="round"
                             size="small"
@@ -1291,7 +1397,7 @@ export const AccountsView = () => {
                 </div>
               ) : (
                 <>
-                  <div className="boxed-area add-account">
+                  <div className="boxed-area container-max-width-600 add-account">
                     {accountAddress && (
                       <div className="back-button">
                         <span className="icon-button-container">
@@ -1342,7 +1448,7 @@ export const AccountsView = () => {
                           <span className="field-label-left">
                             {accountAddressInput && !isValidAddress(accountAddressInput) ? (
                               <span className="fg-red">
-                                {t("assets.account-address-validation")}
+                                {t('transactions.validation.address-validation')}
                               </span>
                             ) : (
                               <span>&nbsp;</span>

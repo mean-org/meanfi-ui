@@ -165,12 +165,12 @@ export const DdcaAddFundsModal = (props: {
     const getTokenAccountBalanceByAddress = async (address: string): Promise<number> => {
       if (!address) return 0;
       try {
-        const accountInfo = await props.connection.getAccountInfo(address.toPublicKey());
+        const accountInfo = await props.connection.getAccountInfo(new PublicKey(address));
         if (!accountInfo) return 0;
         if (address === publicKey?.toBase58()) {
           return accountInfo.lamports / LAMPORTS_PER_SOL;
         }
-        const tokenAmount = (await props.connection.getTokenAccountBalance(address.toPublicKey())).value;
+        const tokenAmount = (await props.connection.getTokenAccountBalance(new PublicKey(address))).value;
         return tokenAmount.uiAmount || 0;
       } catch (error) {
         console.error(error);
@@ -181,7 +181,7 @@ export const DdcaAddFundsModal = (props: {
     (async () => {
       if (props.ddcaDetails) {
         let balance = 0;
-        const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, props.ddcaDetails.fromMint.toPublicKey());
+        const selectedTokenAddress = await findATokenAddress(publicKey as PublicKey, new PublicKey(props.ddcaDetails.fromMint));
         balance = await getTokenAccountBalanceByAddress(selectedTokenAddress.toBase58());
         setFromTokenBalance(balance);
       }
@@ -295,6 +295,7 @@ export const DdcaAddFundsModal = (props: {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -374,13 +375,30 @@ export const DdcaAddFundsModal = (props: {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
@@ -394,7 +412,7 @@ export const DdcaAddFundsModal = (props: {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
+          customLogger.logError('Add funds to DDCA vault transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -413,7 +431,6 @@ export const DdcaAddFundsModal = (props: {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await props.connection
           .sendEncodedTransaction(encodedTx)
@@ -469,7 +486,7 @@ export const DdcaAddFundsModal = (props: {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.AddFunds);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaAddFunds);
             onFinishedAddFundsTx();
           } else { onFinishedAddFundsTx(); }
         } else { onFinishedAddFundsTx(); }

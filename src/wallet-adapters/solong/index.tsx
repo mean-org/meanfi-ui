@@ -1,8 +1,8 @@
 import {
     BaseSignerWalletAdapter,
-    pollUntilReady,
     WalletAccountError,
     WalletNotConnectedError,
+    WalletNotReadyError,
     WalletPublicKeyError,
     WalletSignTransactionError,
 } from '@solana/wallet-adapter-base';
@@ -22,10 +22,7 @@ interface SolongWindow extends Window {
 
 declare const window: SolongWindow;
 
-export interface SolongWalletAdapterConfig {
-    pollInterval?: number;
-    pollCount?: number;
-}
+export interface SolongWalletAdapterConfig {}
 
 export class SolongWalletAdapter extends BaseSignerWalletAdapter {
     private _connecting: boolean;
@@ -37,16 +34,10 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
         this._connecting = false;
         this._wallet = null;
         this._publicKey = null;
-
-        if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
     get publicKey(): PublicKey | null {
         return this._publicKey;
-    }
-
-    get ready(): boolean {
-        return typeof window !== 'undefined' && !!window.solong;
     }
 
     get connecting(): boolean {
@@ -61,12 +52,30 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
         return false;
     }
 
+    async ready(): Promise<boolean> {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+
+        if (document.readyState === 'complete') return !!window.solong;
+
+        return new Promise((resolve) => {
+            function listener() {
+                window.removeEventListener('load', listener);
+                resolve(!!window.solong);
+            }
+
+            window.addEventListener('load', listener);
+        });
+    }
+
     async connect(): Promise<void> {
         try {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const wallet = typeof window !== 'undefined' && window.solong;
+            if (!(await this.ready())) throw new WalletNotReadyError();
+
+            const wallet = window!.solong!;
+
             if (!wallet) {
                 notify({
                     message: "Solong Error",
@@ -75,7 +84,6 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
                 });
                 return;
             }
-            // if (!wallet) throw new WalletNotFoundError();
 
             let account: string;
             try {
@@ -98,7 +106,6 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
         } catch (error: any) {
             this.emit('error', error);
             consoleOut(error?.message, error);
-            // throw error;
             return;
         } finally {
             this._connecting = false;
@@ -120,7 +127,7 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
             if (!wallet) throw new WalletNotConnectedError();
 
             try {
-                return await wallet.signTransaction(transaction);
+                return (await wallet.signTransaction(transaction)) || transaction;
             } catch (error: any) {
                 throw new WalletSignTransactionError(error?.message, error);
             }
@@ -131,18 +138,10 @@ export class SolongWalletAdapter extends BaseSignerWalletAdapter {
     }
 
     async signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
-        try {
-            const wallet = this._wallet;
-            if (!wallet) throw new WalletNotConnectedError();
-
-            try {
-                return await Promise.all(transactions.map((transaction) => wallet.signTransaction(transaction)));
-            } catch (error: any) {
-                throw new WalletSignTransactionError(error?.message, error);
-            }
-        } catch (error: any) {
-            this.emit('error', error);
-            throw error;
+        const signedTransactions: Transaction[] = [];
+        for (const transaction of transactions) {
+            signedTransactions.push(await this.signTransaction(transaction));
         }
+        return signedTransactions;
     }
 }

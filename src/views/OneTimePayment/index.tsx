@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, DatePicker, Spin, Row, Col } from "antd";
+import { Button, Modal, DatePicker, Spin, Checkbox, Select } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -8,20 +8,18 @@ import {
 } from "@ant-design/icons";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useConnection, useConnectionConfig } from "../../contexts/connection";
-import { IconCaretDown } from "../../Icons";
-import { formatAmount, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber } from "../../utils/utils";
-import { Identicon } from "../../components/Identicon";
+import { formatAmount, getAmountWithSymbol, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, toTokenAmount } from "../../utils/utils";
 import { DATEPICKER_FORMAT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { TransactionStatus } from "../../models/enums";
+import { OperationType, TransactionStatus } from "../../models/enums";
 import {
+  addMinutes,
   consoleOut,
   disabledDate,
   getAmountWithTokenSymbol,
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  getTxFeeAmount,
   isToday,
   isValidAddress
 } from "../../utils/ui";
@@ -31,15 +29,20 @@ import { AppStateContext } from "../../contexts/appstate";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { customLogger } from '../..';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { notify } from '../../utils/notifications';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { useNavigate } from 'react-router-dom';
+import { TokenDisplay } from '../../components/TokenDisplay';
+import { TextInput } from '../../components/TextInput';
+import { TokenListItem } from '../../components/TokenListItem';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 
+const { Option } = Select;
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const OneTimePayment = () => {
@@ -53,35 +56,46 @@ export const OneTimePayment = () => {
     tokenBalance,
     effectiveRate,
     coinPrices,
+    loadingPrices,
+    isWhitelisted,
     recipientAddress,
     recipientNote,
     paymentStartDate,
     fromCoinAmount,
     transactionStatus,
-    streamProgramAddress,
+    isVerifiedRecipient,
+    streamV2ProgramAddress,
     previousWalletConnectState,
+    refreshPrices,
     setSelectedToken,
-    resetContractValues,
-    setSelectedTokenBalance,
     setEffectiveRate,
-    setRecipientAddress,
     setRecipientNote,
-    setPaymentStartDate,
     setFromCoinAmount,
-    setTransactionStatus,
     setSelectedStream,
-    refreshStreamList,
+    resetContractValues,
+    setRecipientAddress,
+    setPaymentStartDate,
     refreshTokenBalance,
+    setTransactionStatus,
+    setIsVerifiedRecipient,
+    setSelectedTokenBalance,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
-
   const [isBusy, setIsBusy] = useState(false);
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
+  const [fixedScheduleValue, setFixedScheduleValue] = useState(0);
 
   useEffect(() => {
 
@@ -161,7 +175,7 @@ export const OneTimePayment = () => {
 
   useEffect(() => {
     const getTransactionFees = async (): Promise<TransactionFees> => {
-      return await calculateActionFees(connection, MSP_ACTIONS.scheduleOneTimePayment);
+      return await calculateActionFees(connection, MSP_ACTIONS.createStreamWithFunds);
     }
     if (!otpFees.mspFlatFee) {
       getTransactionFees().then(values => {
@@ -171,10 +185,26 @@ export const OneTimePayment = () => {
     }
   }, [connection, otpFees]);
 
+  const getFeeAmount = () => {
+    return isScheduledPayment() ? otpFees.blockchainFee + otpFees.mspFlatFee : otpFees.blockchainFee;
+  }
+
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-  const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    if (tokenFilter && !isValidAddress(tokenFilter)) {
+      setTokenFilter('');
+    }
+  }, [tokenFilter]);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -205,15 +235,26 @@ export const OneTimePayment = () => {
       setTransactionCancelled(true);
     }
     if (isSuccess()) {
+      setFixedScheduleValue(0);
       resetContractValues();
+      setIsVerifiedRecipient(false);
     }
+    resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
+    setIsVerifiedRecipient(false);
     setSelectedStream(undefined);
     closeTransactionModal();
-    refreshStreamList(true);
+    if (isScheduledPayment()) {
+      notify({
+        message: t('notifications.create-money-stream-completed'),
+        description: t('notifications.create-money-stream-completed-wait-for-confirm'),
+        type: "info"
+      });
+      navigate("/accounts/streams");
+    }
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -258,6 +299,56 @@ export const OneTimePayment = () => {
     }, 10);
   }
 
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
+
+    if (!tokenList) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      let showFromList = !searchString 
+        ? tokenList
+        : tokenList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
+  }, [
+    tokenList,
+  ]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
+  ]);
+
   // Effect auto-select token on wallet connect and clear balance on disconnect
   useEffect(() => {
     if (previousWalletConnectState !== connected) {
@@ -280,6 +371,18 @@ export const OneTimePayment = () => {
     setSelectedToken,
     setSelectedTokenBalance,
     setPreviousWalletConnectState,
+  ]);
+
+  // Reset results when the filter is cleared
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter(tokenFilter);
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
   ]);
 
   // Window resize listener
@@ -308,7 +411,15 @@ export const OneTimePayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -316,16 +427,14 @@ export const OneTimePayment = () => {
   }
 
   const isSendAmountValid = (): boolean => {
-    const isSafeAmount = connected && selectedToken && tokenBalance && fromCoinAmount &&
-                         parseFloat(fromCoinAmount) > 0 && parseFloat(fromCoinAmount) <= tokenBalance
-                         ? true
-                         : false;
-    if (isScheduledPayment()) {
-      return isSafeAmount && parseFloat(fromCoinAmount) > getTxFeeAmount(otpFees, fromCoinAmount)
-              ? true
-              : false;
-    }
-    return isSafeAmount;
+    return  connected &&
+            selectedToken &&
+            tokenBalance &&
+            fromCoinAmount &&
+            parseFloat(fromCoinAmount) > 0 &&
+            parseFloat(fromCoinAmount) <= tokenBalance
+      ? true
+      : false;
   }
 
   const areSendAmountSettingsValid = (): boolean => {
@@ -344,13 +453,13 @@ export const OneTimePayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : isScheduledPayment()
-        ? tokenBalance < getTxFeeAmount(otpFees, fromCoinAmount)
-          ? t('transactions.validation.amount-low')
-          : !paymentStartDate
-            ? t('transactions.validation.no-valid-date')
-            : t('transactions.validation.valid-approve')
-        : t('transactions.validation.valid-approve');
+      : !paymentStartDate
+      ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
+      : t('transactions.validation.valid-approve');
   }
 
   // Main action
@@ -359,16 +468,15 @@ export const OneTimePayment = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
-
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey && selectedToken) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
@@ -379,15 +487,27 @@ export const OneTimePayment = () => {
 
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
-        consoleOut('associatedToken:', selectedToken?.address);
-        const associatedToken = new PublicKey(selectedToken?.address as string);
-        const amount = parseFloat(fromCoinAmount as string);
+        consoleOut('associatedToken:', selectedToken.address);
+        const associatedToken = new PublicKey(selectedToken.address as string);
+        const amount = toTokenAmount(parseFloat(fromCoinAmount as string), selectedToken.decimals);
         const now = new Date();
         const parsedDate = Date.parse(paymentStartDate as string);
-        const fromParsedDate = new Date(parsedDate);
-        fromParsedDate.setHours(now.getHours());
-        fromParsedDate.setMinutes(now.getMinutes());
-        consoleOut('fromParsedDate.toUTCString()', fromParsedDate.toUTCString());
+        let startUtc = new Date(parsedDate);
+        startUtc.setHours(now.getHours());
+        startUtc.setMinutes(now.getMinutes());
+        startUtc.setSeconds(now.getSeconds());
+        startUtc.setMilliseconds(now.getMilliseconds());
+
+        // If current user is in the whitelist and we have an amount of minutes to add
+        // to the current date selection, calculate it!
+        if (isWhitelisted && fixedScheduleValue > 0) {
+          startUtc = addMinutes(startUtc, fixedScheduleValue);
+        }
+
+        consoleOut('fromParsedDate.toString()', startUtc.toString(), 'crimson');
+        consoleOut('fromParsedDate.toLocaleString()', startUtc.toLocaleString(), 'crimson');
+        consoleOut('fromParsedDate.toISOString()', startUtc.toISOString(), 'crimson');
+        consoleOut('fromParsedDate.toUTCString()', startUtc.toUTCString(), 'crimson');
 
         // Create a transaction
         const data = {
@@ -395,7 +515,7 @@ export const OneTimePayment = () => {
           beneficiary: beneficiary.toBase58(),                                        // beneficiary
           associatedToken: associatedToken.toBase58(),                                // beneficiaryMint
           amount: amount,                                                             // fundingAmount
-          fromParsedDate: fromParsedDate,                                             // startUtc
+          startUtc: startUtc,                                                         // startUtc
           recipientNote: recipientNote
             ? recipientNote.trim()
             : undefined                                                               // streamName
@@ -413,11 +533,11 @@ export const OneTimePayment = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', otpFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', getFeeAmount(), 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < otpFees.blockchainFee) {
+        if (nativeBalance < getFeeAmount()) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -427,19 +547,22 @@ export const OneTimePayment = () => {
             result: `Not enough balance (${
               getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
             }) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())
+              getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
+        // Init a streaming operation
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+
         return await moneyStream.oneTimePayment(
-          wallet.publicKey,
+          publicKey,
           beneficiary,                                                // beneficiary
           associatedToken,                                            // beneficiaryMint
           amount,                                                     // fundingAmount
-          fromParsedDate,                                             // startUtc
+          startUtc,                                                   // startUtc
           recipientNote
             ? recipientNote.trim()
             : undefined                                               // streamName
@@ -487,13 +610,30 @@ export const OneTimePayment = () => {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
@@ -507,7 +647,7 @@ export const OneTimePayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('One-Time Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('One-Time Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -526,10 +666,9 @@ export const OneTimePayment = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -573,7 +712,7 @@ export const OneTimePayment = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then(result => {
           consoleOut('confirmTransaction result:', result);
           if (result && result.value && !result.value.err) {
@@ -624,17 +763,37 @@ export const OneTimePayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
+            if (isScheduledPayment()) {
+              consoleOut('Send Tx to confirmation queue:', signature);
+              startFetchTxSignatureInfo(signature, "finalized", OperationType.Transfer);
               setIsBusy(false);
-            } else { setIsBusy(false); }
+              handleGoToStreamsClick();
+            } else {
+              const confirmed = await confirmTx();
+              consoleOut('confirmed:', confirmed);
+              if (confirmed) {
+                setIsBusy(false);
+              } else { setIsBusy(false); }
+            }
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   };
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onFixedScheduleValueChange = (value: any) => {
+    setFixedScheduleValue(value);
+  }
+
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
 
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
@@ -659,17 +818,40 @@ export const OneTimePayment = () => {
       : 0;
   }
 
-  const infoRow = (caption: string, value: string) => {
-    return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
-    );
-  }
+  const renderTokenList = (
+    <>
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
+            setSelectedToken(token);
+            consoleOut("token selected:", token.symbol, 'blue');
+            setEffectiveRate(getPricePerToken(token));
+            onCloseTokenSelector();
+          };
+
+          return (
+            <TokenListItem
+              key={token.address}
+              name={token.name || 'Unknown'}
+              mintAddress={token.address}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              onClick={onClick}
+              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+            />
+          );
+        })
+      )}
+    </>
+  );
 
   return (
     <>
+      {/* {isLocal() && (
+        <div className="debug-bar">
+          <span className="ml-1">tokenFilter:</span><span className="ml-1 font-bold fg-dark-active">{tokenFilter || '-'}</span>
+        </div>
+      )} */}
+
       <div className="contract-wrapper">
 
         {/* Recipient */}
@@ -705,7 +887,7 @@ export const OneTimePayment = () => {
           {
             recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="form-field-error">
-                {t("assets.account-address-validation")}
+                {t('transactions.validation.address-validation')}
               </span>
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">
@@ -721,23 +903,15 @@ export const OneTimePayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => showTokenSelector()}>
-                  <div className="token-icon">
-                    {selectedToken?.logoURI ? (
-                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                    ) : (
-                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
+                {selectedToken && (
+                  <TokenDisplay onClick={() => showTokenSelector()}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showCaretDown={true}
+                  />
+                )}
                 {selectedToken && tokenBalance ? (
-                  <div
-                    className="token-max simplelink"
-                    onClick={() =>
+                  <div className="token-max simplelink" onClick={() =>
                       setFromCoinAmount(
                         tokenBalance.toFixed(selectedToken.decimals)
                       )
@@ -769,15 +943,17 @@ export const OneTimePayment = () => {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
                     : "0"
                 }`}
               </span>
             </div>
             <div className="right inner-label">
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
             </div>
           </div>
         </div>
@@ -793,6 +969,7 @@ export const OneTimePayment = () => {
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
+                maxLength={32}
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo.placeholder')}
                 spellCheck="false"
@@ -833,29 +1010,27 @@ export const OneTimePayment = () => {
           </div>
         </div>
 
-        {/* Info */}
-        {(selectedToken && isScheduledPayment()) && (
-          <div className="p-2 mb-2">
-            {infoRow(
-              `1 ${selectedToken.symbol}:`,
-              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.transaction-fee') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.recipient-receives') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(otpFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-          </div>
+        {isWhitelisted && (
+          <>
+            <div className="form-label">Schedule transfer for: (For dev team only)</div>
+              <div className="well">
+                <Select value={fixedScheduleValue} bordered={false} onChange={onFixedScheduleValueChange} style={{ width: '100%' }}>
+                  <Option value={0}>No fixed scheduling</Option>
+                  <Option value={5}>5 minutes from now</Option>
+                  <Option value={10}>10 minutes from now</Option>
+                  <Option value={15}>15 minutes from now</Option>
+                  <Option value={20}>20 minutes from now</Option>
+                  <Option value={30}>30 minutes from now</Option>
+                </Select>
+              <div className="form-field-hint">Selecting a value will override your date selection</div>
+            </div>
+          </>
         )}
+
+        {/* Confirm recipient address is correct Checkbox */}
+        <div className="mb-2">
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+        </div>
 
         {/* Action button */}
         <Button
@@ -865,70 +1040,68 @@ export const OneTimePayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!isValidAddress(recipientAddress) || isAddressOwnAccount() || !paymentStartDate || !areSendAmountSettingsValid()}>
+          disabled={!isValidAddress(recipientAddress) ||
+            !isMemoValid() ||
+            isAddressOwnAccount() ||
+            !paymentStartDate ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
       </div>
 
       {/* Token selection modal */}
-      <Modal
-        className="mean-modal unpadded-content"
-        visible={isTokenSelectorModalVisible}
-        title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
-        onCancel={onCloseTokenSelector}
-        width={450}
-        footer={null}>
-        <div className="token-list">
-          {/* Loop through the tokens */}
-          {(selectedToken && tokenList) && (
-            tokenList.map((token, index) => {
-              const onClick = function () {
-                setSelectedToken(token);
-                consoleOut("token selected:", token.symbol, 'blue');
-                setEffectiveRate(getPricePerToken(token));
-                onCloseTokenSelector();
-              };
-              return (
-                <div
-                  key={index + 100}
-                  onClick={onClick}
-                  className={`token-item ${
-                    selectedToken && selectedToken.address === token.address
-                      ? "selected"
-                      : "simplelink"
-                  }`}>
-                  <div className="token-icon">
-                    {token.logoURI ? (
-                      <img
-                        alt={`${token.name}`}
-                        width={24}
-                        height={24}
-                        src={token.logoURI}
-                      />
-                    ) : (
-                      <Identicon
-                        address={token.address}
-                        style={{ width: "24", display: "inline-flex" }}
-                      />
-                    )}
-                  </div>
-                  <div className="token-description">
-                    <div className="token-symbol">{token.symbol}</div>
-                    <div className="token-name">{token.name}</div>
-                  </div>
-                  {
-                    connected && userBalances && userBalances[token.address] > 0 && (
-                      <div className="token-balance">
-                        {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                      </div>
-                    )
-                  }
-                </div>
-              );
-            })
-          )}
-        </div>
-      </Modal>
+      {isTokenSelectorModalVisible && (
+        <Modal
+          className="mean-modal unpadded-content"
+          visible={isTokenSelectorModalVisible}
+          title={<div className="modal-title">{t('token-selector.modal-title')}</div>}
+          onCancel={onCloseTokenSelector}
+          width={450}
+          footer={null}>
+          <div className="token-selector-wrapper">
+            <div className="token-search-wrapper">
+              <TextInput
+                id="token-search-otp"
+                value={tokenFilter}
+                allowClear={true}
+                extraClass="mb-2"
+                onInputClear={onInputCleared}
+                placeholder={t('token-selector.search-input-placeholder')}
+                onInputChange={onTokenSearchInputChange} />
+            </div>
+            <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+              <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+              <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+            </div>
+            <div className="token-list vertical-scroll">
+              {filteredTokenList.length > 0 && renderTokenList}
+              {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+                <TokenListItem
+                  key={tokenFilter}
+                  name="Unknown"
+                  mintAddress={tokenFilter}
+                  className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                  onClick={() => {
+                    const uknwnToken: TokenInfo = {
+                      address: tokenFilter,
+                      name: 'Unknown',
+                      chainId: 101,
+                      decimals: 6,
+                      symbol: '',
+                    };
+                    setSelectedToken(uknwnToken);
+                    consoleOut("token selected:", uknwnToken, 'blue');
+                    setEffectiveRate(0);
+                    onCloseTokenSelector();
+                  }}
+                  balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+                />
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* QR scan modal */}
       {isQrScannerModalVisible && (
@@ -952,14 +1125,16 @@ export const OneTimePayment = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.tx-send-operation')} {getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)}...</p>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{getAmountWithTokenSymbol(fromCoinAmount, selectedToken as TokenInfo)} {t('transactions.status.tx-send-operation-success')}.</p>
               <Button
                 block
@@ -977,11 +1152,11 @@ export const OneTimePayment = () => {
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
                     accountBalance: `${getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())}`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(otpFees.blockchainFee, NATIVE_SOL_MINT.toBase58())}`})
+                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(getFeeAmount(), NATIVE_SOL_MINT.toBase58())}`})
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block

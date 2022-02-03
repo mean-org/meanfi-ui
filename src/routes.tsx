@@ -1,4 +1,4 @@
-import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ConnectionProvider } from "./contexts/connection";
 import { AccountsProvider } from "./contexts/accounts";
 import { WalletProvider } from "./contexts/wallet";
@@ -9,61 +9,76 @@ import {
   CustodyView,
   ExchangeDcasView,
   FaucetView,
+  IdoBlockedView,
+  IdoLiveView,
+  IdoView,
   NotFoundView,
   PayrollView,
   PlaygroundView,
   SwapView,
   TransfersView,
-  WrapView
+  TreasuriesView,
+  WrapView,
+  MultisigView,
+  StatsView
 } from "./pages";
-import { ProcessReferals } from "./guards";
+
 import { ServiceUnavailableView } from "./pages/service-unavailable";
 import TransactionStatusProvider from "./contexts/transaction-status";
 import { isLocal, isProd } from "./utils/ui";
 import { OnlineStatusProvider } from "./contexts/online-status";
+import { IdoLpView } from "./pages/ido-lp";
+import { MultisigVaultsView } from "./pages/multisig-vaults";
+import { MultisigProgramsView } from "./pages/multisig-programs";
+import { SolanaStatusProvider } from "./contexts/cluster-stats";
 
-export function Routes() {
+export function AppRoutes() {
 
   return (
     <>
     <OnlineStatusProvider>
       <BrowserRouter basename={"/"}>
         <ConnectionProvider>
-          <WalletProvider>
-            <AccountsProvider>
-              <TransactionStatusProvider>
-                <AppStateProvider>
-                  <AppLayout>
-                    <Switch>
-                      <Route exact path="/">
-                        <Redirect to="/accounts" />
-                      </Route>
-                      <Route exact path="/accounts" children={<AccountsView />} />
-                      <Route exact path="/accounts/streams" children={<AccountsView />} />
-                      <Route exact path="/faucet" children={<FaucetView />} />
-                      <Route exact path="/transfers" children={<TransfersView />} />
-                      <Route exact path="/payroll" children={<PayrollView />} />
-                      <Route exact path="/exchange" children={<SwapView />} />
-                      {(isProd() || isLocal()) && (
-                        <Route exact path="/exchange-dcas" children={<ExchangeDcasView />} />
-                      )}
-                      <Route exact path="/wrap" children={<WrapView />} />
-                      {isLocal() && (
-                        <Route exact path="/playground" children={<PlaygroundView />} />
-                      )}
-                      <Route exact path="/custody" children={<CustodyView />} />
-                      <Route exact path="/referrals">
-                        <Redirect to="/accounts" />
-                      </Route>
-                      <Route exact path="/referrals/:address" component={ProcessReferals} />
-                      <Route exact path="/service-unavailable" component={ServiceUnavailableView} />
-                      <Route component={NotFoundView} />
-                    </Switch>
-                  </AppLayout>
-                </AppStateProvider>
-              </TransactionStatusProvider>
-            </AccountsProvider>
-          </WalletProvider>
+          <SolanaStatusProvider>
+            <WalletProvider>
+              <AccountsProvider>
+                <TransactionStatusProvider>
+                  <AppStateProvider>
+                    <AppLayout>
+                      <Routes>
+                        <Route path='/' element={<Navigate replace to='/accounts' />} />
+                        <Route path="/accounts" element={<AccountsView />} />
+                        <Route path="/accounts/streams" element={<AccountsView />} />
+                        <Route path="/faucet" element={<FaucetView />} />
+                        <Route path="/transfers" element={<TransfersView />} />
+                        <Route path="/treasuries" element={<TreasuriesView />} />
+                        <Route path="/payroll" element={<PayrollView />} />
+                        <Route path="/exchange" element={<SwapView />} />
+                        {(isProd() || isLocal()) && (
+                          <Route path="/exchange-dcas" element={<ExchangeDcasView />} />
+                        )}
+                        <Route path="/wrap" element={<WrapView />} />
+                        {isLocal() && (
+                          <Route path="/playground" element={<PlaygroundView />} />
+                        )}
+                        <Route path="/ido" element={<IdoView />} />
+                        <Route path="/ido-live" element={<IdoLiveView />} />
+                        <Route path="/ido-blocked" element={<IdoBlockedView />} />
+                        <Route path="/ido-lp" element={<IdoLpView />} />
+                        <Route path="/stats" element={<StatsView />} />
+                        <Route path="/custody" element={<CustodyView />} />
+                        <Route path="/multisig" element={<MultisigView />} />
+                        <Route path="/multisig-vaults" element={<MultisigVaultsView />} />
+                        <Route path="/multisig-programs" element={<MultisigProgramsView />} />
+                        <Route path="/service-unavailable" element={<ServiceUnavailableView />} />
+                        <Route path='*' element={<NotFoundView />} />
+                      </Routes>
+                    </AppLayout>
+                  </AppStateProvider>
+                </TransactionStatusProvider>
+              </AccountsProvider>
+            </WalletProvider>
+          </SolanaStatusProvider>
         </ConnectionProvider>
       </BrowserRouter>
     </OnlineStatusProvider>

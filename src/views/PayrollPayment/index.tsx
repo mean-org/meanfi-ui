@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Row, Col, InputNumber } from "antd";
+import { Button, Modal, Menu, Dropdown, DatePicker, Spin, Checkbox } from "antd";
 import {
   CheckOutlined,
   LoadingOutlined,
@@ -11,15 +11,16 @@ import { useConnection, useConnectionConfig } from "../../contexts/connection";
 import { IconCaretDown, IconEdit } from "../../Icons";
 import {
   formatAmount,
+  getAmountWithSymbol,
   getTokenAmountAndSymbolByTokenAddress,
   getTxIxResume,
   isValidNumber,
   shortenAddress,
 } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { DATEPICKER_FORMAT, PAYROLL_CONTRACT, WRAPPED_SOL_MINT_ADDRESS } from "../../constants";
+import { DATEPICKER_FORMAT, PAYROLL_CONTRACT } from "../../constants";
 import { QrScannerModal } from "../../components/QrScannerModal";
-import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
+import { OperationType, PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../../models/enums";
 import {
   consoleOut,
   disabledDate,
@@ -32,7 +33,6 @@ import {
   getTransactionModalTitle,
   getTransactionOperationDescription,
   getTransactionStatusForLogs,
-  getTxFeeAmount,
   isLocal,
   isToday,
   isValidAddress,
@@ -44,20 +44,25 @@ import { AppStateContext } from "../../contexts/appstate";
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import { TokenInfo } from "@solana/spl-token-registry";
 import { useAccountsContext, useNativeAccount } from "../../contexts/accounts";
-import { MoneyStreaming } from '@mean-dao/money-streaming/lib/money-streaming';
-import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
-import { calculateActionFees } from '@mean-dao/money-streaming/lib/utils';
 import { useTranslation } from "react-i18next";
 import { ContractDefinition } from "../../models/contract-definition";
-import { Redirect } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ACCOUNT_LAYOUT } from '../../utils/layouts';
 import { customLogger } from '../..';
 import { StepSelector } from '../../components/StepSelector';
+import { NATIVE_SOL_MINT } from '../../utils/ids';
+import { notify } from '../../utils/notifications';
+import { TransactionStatusContext } from '../../contexts/transaction-status';
+import { TokenDisplay } from '../../components/TokenDisplay';
+import { TextInput } from '../../components/TextInput';
+import { TokenListItem } from '../../components/TokenListItem';
+import { calculateActionFees, MSP, MSP_ACTIONS, TransactionFees } from '@mean-dao/msp';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
 export const PayrollPayment = () => {
+  const navigate = useNavigate();
   const connection = useConnection();
   const { endpoint } = useConnectionConfig();
   const { connected, publicKey, wallet } = useWallet();
@@ -69,42 +74,49 @@ export const PayrollPayment = () => {
     coinPrices,
     recipientAddress,
     recipientNote,
+    loadingPrices,
     paymentStartDate,
     fromCoinAmount,
     paymentRateAmount,
     paymentRateFrequency,
     transactionStatus,
-    streamProgramAddress,
+    isVerifiedRecipient,
+    streamV2ProgramAddress,
     timeSheetRequirement,
     previousWalletConnectState,
+    refreshPrices,
     setSelectedToken,
-    resetContractValues,
-    setSelectedTokenBalance,
     setEffectiveRate,
-    setRecipientAddress,
     setRecipientNote,
-    setPaymentStartDate,
     setFromCoinAmount,
-    setPaymentRateAmount,
-    setPaymentRateFrequency,
-    setTransactionStatus,
-    setSelectedStream,
-    refreshStreamList,
+    resetContractValues,
+    setRecipientAddress,
     refreshTokenBalance,
+    setPaymentStartDate,
+    setPaymentRateAmount,
+    setTransactionStatus,
+    setIsVerifiedRecipient,
+    setSelectedTokenBalance,
+    setPaymentRateFrequency,
     setTimeSheetRequirement,
     setPreviousWalletConnectState
   } = useContext(AppStateContext);
+  const {
+    clearTransactionStatusContext,
+    startFetchTxSignatureInfo,
+  } = useContext(TransactionStatusContext);
+
   const { t } = useTranslation('common');
   const [contract] = useState<ContractDefinition>(PAYROLL_CONTRACT);
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [destinationToken, setDestinationToken] = useState<TokenInfo>();
   const { account } = useNativeAccount();
   const accounts = useAccountsContext();
   const [userBalances, setUserBalances] = useState<any>();
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [tokenFilter, setTokenFilter] = useState("");
+  const [filteredTokenList, setFilteredTokenList] = useState<TokenInfo[]>([]);
 
   useEffect(() => {
 
@@ -194,11 +206,20 @@ export const PayrollPayment = () => {
     }
   }, [connection, payrollFees]);
 
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
+
   // Token selection modal
   const [isTokenSelectorModalVisible, setTokenSelectorModalVisibility] = useState(false);
   const showTokenSelector = useCallback(() => setTokenSelectorModalVisibility(true), []);
-  const onCloseTokenSelector = useCallback(() => setTokenSelectorModalVisibility(false), []);
-  const [subjectTokenSelection, setSubjectTokenSelection] = useState('payer');
+  const onCloseTokenSelector = useCallback(() => {
+    setTokenSelectorModalVisibility(false);
+    setTokenFilter('');
+  }, []);
 
   // Recipient Selector modal
   const [isQrScannerModalVisible, setIsQrScannerModalVisibility] = useState(false);
@@ -224,14 +245,19 @@ export const PayrollPayment = () => {
     if (isSuccess()) {
       resetContractValues();
     }
+    resetTransactionStatus();
   }
 
   const handleGoToStreamsClick = () => {
     resetContractValues();
-    setSelectedStream(undefined);
+    setCurrentStep(0);
     closeTransactionModal();
-    refreshStreamList(true);
-    setRedirect('/accounts/streams');
+    notify({
+      message: t('notifications.create-money-stream-completed'),
+      description: t('notifications.create-money-stream-completed-wait-for-confirm'),
+      type: "info"
+    });
+    navigate("/accounts/streams");
   };
 
   const handleFromCoinAmountChange = (e: any) => {
@@ -276,40 +302,69 @@ export const PayrollPayment = () => {
     }, 10);
   }
 
-  const onRateAmountChange = (value: any) => {
-    if (value === null || value === undefined || value === "") {
+  const handlePaymentRateAmountChange = (e: any) => {
+    const newValue = e.target.value;
+    if (newValue === null || newValue === undefined || newValue === "") {
       setPaymentRateAmount("");
-    } else if (isValidNumber(value)) {
-      setPaymentRateAmount(value);
+    } else if (newValue === '.') {
+      setPaymentRateAmount(".");
+    } else if (isValidNumber(newValue)) {
+      setPaymentRateAmount(newValue);
     }
-  }
-
-  // const handlePaymentRateAmountChange = (e: any) => {
-  //   const newValue = e.target.value;
-  //   if (newValue === null || newValue === undefined || newValue === "") {
-  //     setPaymentRateAmount("");
-  //   } else if (isValidNumber(newValue)) {
-  //     setPaymentRateAmount(newValue);
-  //   }
-  // };
+  };
 
   const handlePaymentRateOptionChange = (val: PaymentRateType) => {
     setPaymentRateFrequency(val);
   }
 
-  // Effect to set a default beneficiary token
-  useEffect(() => {
+  // Updates the token list everytime is filtered
+  const updateTokenListByFilter = useCallback((searchString: string) => {
 
-    if (tokenList && selectedToken) {
-      // Preset a token for the beneficiary account
-      if (!destinationToken) {
-        setDestinationToken(selectedToken);
-      }
+    if (!tokenList) {
+      return;
     }
+
+    const timeout = setTimeout(() => {
+
+      const filter = (t: any) => {
+        return (
+          t.symbol.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.name.toLowerCase().includes(searchString.toLowerCase()) ||
+          t.address.toLowerCase().includes(searchString.toLowerCase())
+        );
+      };
+
+      let showFromList = !searchString 
+        ? tokenList
+        : tokenList.filter((t: any) => filter(t));
+
+      setFilteredTokenList(showFromList);
+
+    });
+
+    return () => { 
+      clearTimeout(timeout);
+    }
+    
   }, [
-    tokenList,
-    selectedToken,
-    destinationToken
+    tokenList
+  ]);
+
+  const onInputCleared = useCallback(() => {
+    setTokenFilter('');
+    updateTokenListByFilter('');
+  },[
+    updateTokenListByFilter
+  ]);
+
+  const onTokenSearchInputChange = useCallback((e: any) => {
+
+    const newValue = e.target.value;
+    setTokenFilter(newValue);
+    updateTokenListByFilter(newValue);
+
+  },[
+    updateTokenListByFilter
   ]);
 
   // Effect auto-select token on wallet connect and clear balance on disconnect
@@ -336,6 +391,19 @@ export const PayrollPayment = () => {
     setPreviousWalletConnectState,
   ]);
 
+  // Reset results when the filter is cleared
+  useEffect(() => {
+    if (tokenList && tokenList.length && filteredTokenList.length === 0 && !tokenFilter) {
+      updateTokenListByFilter(tokenFilter);
+    }
+  }, [
+    tokenList,
+    tokenFilter,
+    filteredTokenList,
+    updateTokenListByFilter
+  ]);
+
+  // Window resize listener
   useEffect(() => {
     const resizeListener = () => {
       const NUM_CHARS = 4;
@@ -361,7 +429,15 @@ export const PayrollPayment = () => {
     }
   }, []);
 
-  // Validation
+  //////////////////
+  //  Validation  //
+  //////////////////
+
+  const isMemoValid = (): boolean => {
+    return recipientNote && recipientNote.length <= 32
+      ? true
+      : false;
+  }
 
   const isAddressOwnAccount = (): boolean => {
     return recipientAddress && wallet && wallet.publicKey && recipientAddress === wallet.publicKey.toBase58()
@@ -373,8 +449,7 @@ export const PayrollPayment = () => {
            selectedToken &&
            tokenBalance &&
            fromCoinAmount && parseFloat(fromCoinAmount) > 0 &&
-           parseFloat(fromCoinAmount) <= tokenBalance &&
-           parseFloat(fromCoinAmount) > getTxFeeAmount(payrollFees, fromCoinAmount)
+           parseFloat(fromCoinAmount) <= tokenBalance
             ? true
             : false;
   }
@@ -406,6 +481,8 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-balance')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
       : t('transactions.validation.valid-continue');
@@ -422,12 +499,14 @@ export const PayrollPayment = () => {
       ? t('transactions.validation.no-amount')
       : parseFloat(fromCoinAmount) > tokenBalance
       ? t('transactions.validation.amount-high')
-      : tokenBalance < getTxFeeAmount(payrollFees, fromCoinAmount)
-      ? t('transactions.validation.amount-low')
       : !paymentStartDate
       ? t('transactions.validation.no-valid-date')
+      : !recipientNote
+      ? 'Memo cannot be empty'
       : !arePaymentSettingsValid()
       ? getPaymentSettingsButtonLabel()
+      : !isVerifiedRecipient
+      ? t('transactions.validation.verified-recipient-unchecked')
       : t('transactions.validation.valid-approve');
   }
 
@@ -522,16 +601,15 @@ export const PayrollPayment = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
+    clearTransactionStatusContext();
     setTransactionCancelled(false);
     setIsBusy(true);
 
-    // Init a streaming operation
-    const moneyStream = new MoneyStreaming(endpoint, streamProgramAddress, "confirmed");
-
     const createTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && publicKey) {
         consoleOut("Start transaction for contract type:", contract?.name);
         consoleOut('Wallet address:', wallet?.publicKey?.toBase58());
 
@@ -543,8 +621,8 @@ export const PayrollPayment = () => {
         consoleOut('Beneficiary address:', recipientAddress);
         const beneficiary = new PublicKey(recipientAddress as string);
 
-        consoleOut('beneficiaryMint:', destinationToken?.address);
-        const beneficiaryMint = new PublicKey(destinationToken?.address as string);
+        consoleOut('beneficiaryMint:', selectedToken?.address);
+        const beneficiaryMint = new PublicKey(selectedToken?.address as string);
 
         const amount = parseFloat(fromCoinAmount as string);
         const rateAmount = parseFloat(paymentRateAmount as string);
@@ -586,11 +664,11 @@ export const PayrollPayment = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
-        consoleOut('blockchainFee:', payrollFees.blockchainFee, 'blue');
+        consoleOut('blockchainFee:', payrollFees.blockchainFee + payrollFees.mspFlatFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
-        if (nativeBalance < payrollFees.blockchainFee) {
+        if (nativeBalance < payrollFees.blockchainFee + payrollFees.mspFlatFee) {
           setTransactionStatus({
             lastOperation: transactionStatus.currentOperation,
             currentOperation: TransactionStatus.TransactionStartFailure
@@ -598,27 +676,31 @@ export const PayrollPayment = () => {
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: `Not enough balance (${
-              getTokenAmountAndSymbolByTokenAddress(nativeBalance, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL) to pay for network fees (${
-              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee, WRAPPED_SOL_MINT_ADDRESS, true)
-            } SOL)`
+              getTokenAmountAndSymbolByTokenAddress(nativeBalance, NATIVE_SOL_MINT.toBase58())
+            }) to pay for network fees (${
+              getTokenAmountAndSymbolByTokenAddress(payrollFees.blockchainFee + payrollFees.mspFlatFee, NATIVE_SOL_MINT.toBase58())
+            })`
           });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         }
 
+        // Init a streaming operation
+        console.log('PayrollPayment -> wallet.publicKey', wallet.publicKey.toBase58());
+        const moneyStream = new MSP(endpoint, streamV2ProgramAddress, "finalized");
+
         return await moneyStream.createStream(
-          wallet.publicKey,                                           // wallet
+          publicKey,                                                  // initializer
+          publicKey,                                                  // wallet
           undefined,                                                  // treasury
           beneficiary,                                                // beneficiary
           beneficiaryMint,                                            // beneficiaryMint
+          recipientNote,                                              // streamName
+          amount,                                                     // allocationAssigned
+          0,                                                          // allocationReserved
           rateAmount,                                                 // rateAmount
           getRateIntervalInSeconds(paymentRateFrequency),             // rateIntervalInSeconds
-          fromParsedDate,                                             // startUtc
-          recipientNote
-            ? recipientNote.trim()
-            : undefined,                                              // streamName
-          amount                                                      // fundingAmount
+          fromParsedDate                                              // startUtc
         )
         .then(value => {
           consoleOut('createStream returned transaction:', value);
@@ -662,6 +744,23 @@ export const PayrollPayment = () => {
         return await wallet.signTransaction(transaction)
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
+            return false;
+          }
           signedTransaction = signed;
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
@@ -669,7 +768,7 @@ export const PayrollPayment = () => {
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
@@ -683,7 +782,7 @@ export const PayrollPayment = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Payroll Payment transaction failed', { transcript: transactionLog });
+          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -702,10 +801,9 @@ export const PayrollPayment = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then(sig => {
             consoleOut('sendEncodedTransaction returned a signature:', sig);
             setTransactionStatus({
@@ -747,48 +845,6 @@ export const PayrollPayment = () => {
       }
     }
 
-    const confirmTx = async (): Promise<boolean> => {
-      return await connection
-        .confirmTransaction(signature, "confirmed")
-        .then(result => {
-          consoleOut('confirmTransaction result:', result);
-          if (result && result.value && !result.value.err) {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransactionSuccess,
-              currentOperation: TransactionStatus.TransactionFinished
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-              result: result.value
-            });
-            return true;
-          } else {
-            setTransactionStatus({
-              lastOperation: TransactionStatus.ConfirmTransaction,
-              currentOperation: TransactionStatus.ConfirmTransactionFailure
-            });
-            transactionLog.push({
-              action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-              result: signature
-            });
-            customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
-            return false;
-          }
-        })
-        .catch(e => {
-          setTransactionStatus({
-            lastOperation: TransactionStatus.ConfirmTransaction,
-            currentOperation: TransactionStatus.ConfirmTransactionFailure
-          });
-          transactionLog.push({
-            action: getTransactionStatusForLogs(TransactionStatus.ConfirmTransactionFailure),
-            result: signature
-          });
-          customLogger.logError('Payroll Payment transaction failed', { transcript: transactionLog });
-          return false;
-        });
-    }
-
     if (wallet) {
       showTransactionModal();
       const create = await createTx();
@@ -800,17 +856,25 @@ export const PayrollPayment = () => {
           const sent = await sendTx();
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
-            const confirmed = await confirmTx();
-            consoleOut('confirmed:', confirmed);
-            if (confirmed) {
-              setIsBusy(false);
-            } else { setIsBusy(false); }
+            consoleOut('Send Tx to confirmation queue:', signature);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.StreamCreate);
+            setIsBusy(false);
+            handleGoToStreamsClick();
           } else { setIsBusy(false); }
         } else { setIsBusy(false); }
       } else { setIsBusy(false); }
     }
 
   };
+
+  const onIsVerifiedRecipientChange = (e: any) => {
+    setIsVerifiedRecipient(e.target.checked);
+  }
+
+  const onGotoExchange = () => {
+    onCloseTokenSelector();
+    navigate('/exchange?from=SOL&to=wSOL');
+  }
 
   const isSuccess = (): boolean => {
     return transactionStatus.currentOperation === TransactionStatus.TransactionFinished;
@@ -830,15 +894,6 @@ export const PayrollPayment = () => {
   //   Rendering   //
   ///////////////////
 
-  const infoRow = (caption: string, value: string) => {
-    return (
-      <Row>
-        <Col span={12} className="text-right pr-1">{caption}</Col>
-        <Col span={12} className="text-left pl-1 fg-secondary-70">{value}</Col>
-      </Row>
-    );
-  }
-
   const paymentRateOptionsMenu = (
     <Menu>
       {getOptionsFromEnum(PaymentRateType).map((item) => {
@@ -853,84 +908,26 @@ export const PayrollPayment = () => {
     </Menu>
   );
 
-  const renderAvailableTokenList = (
+  const renderTokenList = (
     <>
-      {(destinationToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setDestinationToken(token);
+      {(filteredTokenList && filteredTokenList.length > 0) && (
+        filteredTokenList.map((token, index) => {
+          const onClick = function () {
             setSelectedToken(token);
-            consoleOut("token selected:", token);
+            consoleOut("token selected:", token.symbol, 'blue');
             setEffectiveRate(getPricePerToken(token));
             onCloseTokenSelector();
           };
-          return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                destinationToken && destinationToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
-          );
-        })
-      )}
-    </>
-  );
 
-  const renderUserTokenList = (
-    <>
-      {(selectedToken && tokenList) && (
-        tokenList.map((token, index) => {
-          const onClick = () => {
-            setSelectedToken(token);
-            setDestinationToken(token);
-            consoleOut("token selected:", token);
-            setEffectiveRate(getPricePerToken(token));
-            onCloseTokenSelector();
-          };
           return (
-            <div key={index + 100} onClick={onClick} className={`token-item ${
-                selectedToken && selectedToken.address === token.address
-                  ? "selected"
-                  : "simplelink"
-              }`}>
-              <div className="token-icon">
-                {token.logoURI ? (
-                  <img alt={`${token.name}`} width={24} height={24} src={token.logoURI} />
-                ) : (
-                  <Identicon address={token.address} style={{ width: "24", display: "inline-flex" }} />
-                )}
-              </div>
-              <div className="token-description">
-                <div className="token-symbol">{token.symbol}</div>
-                <div className="token-name">{token.name}</div>
-              </div>
-              {
-                connected && userBalances && userBalances[token.address] > 0 && (
-                  <div className="token-balance">
-                    {getTokenAmountAndSymbolByTokenAddress(userBalances[token.address], token.address, true)}
-                  </div>
-                )
-              }
-            </div>
+            <TokenListItem
+              key={token.address}
+              name={token.name || 'Unknown'}
+              mintAddress={token.address}
+              className={selectedToken && selectedToken.address === token.address ? "selected" : "simplelink"}
+              onClick={onClick}
+              balance={connected && userBalances && userBalances[token.address] > 0 ? userBalances[token.address] : 0}
+            />
           );
         })
       )}
@@ -959,8 +956,6 @@ export const PayrollPayment = () => {
 
   return (
     <>
-      {redirect && (<Redirect to={redirect} />)}
-
       <StepSelector step={currentStep} steps={2} onValueSelected={onStepperChange} />
 
       <div className={currentStep === 0 ? "contract-wrapper panel1 show" : "contract-wrapper panel1 hide"}>
@@ -998,7 +993,7 @@ export const PayrollPayment = () => {
           {
             recipientAddress && !isValidAddress(recipientAddress) ? (
               <span className="form-field-error">
-                {t("assets.account-address-validation")}
+                {t('transactions.validation.address-validation')}
               </span>
             ) : isAddressOwnAccount() ? (
               <span className="form-field-error">
@@ -1014,36 +1009,44 @@ export const PayrollPayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => {
-                  setSubjectTokenSelection('beneficiary');
-                  showTokenSelector();
-                  }}>
-                  <div className="token-icon">
-                    {destinationToken?.logoURI ? (
-                      <img alt={`${destinationToken.name}`} width={20} height={20} src={destinationToken.logoURI} />
-                    ) : (
-                      <Identicon address={destinationToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{destinationToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
+                {selectedToken && (
+                  <TokenDisplay onClick={() => showTokenSelector()}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showName={false}
+                    showCaretDown={true}
+                  />
+                )}
               </span>
             </div>
-            <div className="well-divider"></div>
             <div className="right">
-              <InputNumber
-                className="general-text-input"
-                min={0}
-                step={1}
+              <input
+                className="general-text-input text-right"
+                inputMode="decimal"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                onChange={handlePaymentRateAmountChange}
                 pattern="^[0-9]*[.,]?[0-9]*$"
                 placeholder="0.0"
-                value={parseFloat(paymentRateAmount)}
-                onChange={onRateAmountChange}
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                value={paymentRateAmount}
               />
             </div>
+          </div>
+          <div className="flex-fixed-right">
+            <div className="left inner-label">
+              <span>{t('transactions.send-amount.label-right')}:</span>
+              <span>
+                {`${tokenBalance && selectedToken
+                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
+                    : "0"
+                }`}
+              </span>
+            </div>
+            <div className="right inner-label">&nbsp;</div>
           </div>
         </div>
 
@@ -1106,6 +1109,7 @@ export const PayrollPayment = () => {
                 autoComplete="on"
                 autoCorrect="off"
                 type="text"
+                maxLength={32}
                 onChange={handleRecipientNoteChange}
                 placeholder={t('transactions.memo2.placeholder')}
                 spellCheck="false"
@@ -1123,7 +1127,11 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onContinueButtonClick}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid()}>
           {getStepOneContinueButtonLabel()}
         </Button>
 
@@ -1131,7 +1139,7 @@ export const PayrollPayment = () => {
 
       <div className={currentStep === 1 ? "contract-wrapper panel2 show" : "contract-wrapper panel2 hide"}>
 
-        {/* Resume */}
+        {/* Summary */}
         {publicKey && recipientAddress && (
           <>
             <div className="flex-fixed-right">
@@ -1150,7 +1158,7 @@ export const PayrollPayment = () => {
                 <div className="left flex-row">
                   <div className="flex-center">
                     <Identicon
-                      address={isValidAddress(recipientAddress) ? recipientAddress : WRAPPED_SOL_MINT_ADDRESS}
+                      address={isValidAddress(recipientAddress) ? recipientAddress : NATIVE_SOL_MINT.toBase58()}
                       style={{ width: "30", display: "inline-flex" }} />
                   </div>
                   <div className="flex-column pl-3">
@@ -1212,22 +1220,14 @@ export const PayrollPayment = () => {
           <div className="flex-fixed-left">
             <div className="left">
               <span className="add-on simplelink">
-                <div className="token-selector" onClick={() => {
-                    setSubjectTokenSelection('payer');
-                    showTokenSelector();
-                  }}>
-                  <div className="token-icon">
-                    {selectedToken?.logoURI ? (
-                      <img alt={`${selectedToken.name}`} width={20} height={20} src={selectedToken.logoURI} />
-                    ) : (
-                      <Identicon address={selectedToken?.address} style={{ width: "24", display: "inline-flex" }} />
-                    )}
-                  </div>
-                  <div className="token-symbol">{selectedToken?.symbol}</div>
-                  <span className="flex-center">
-                    <IconCaretDown className="mean-svg-icons" />
-                  </span>
-                </div>
+                {selectedToken && (
+                  <TokenDisplay onClick={() => showTokenSelector()}
+                    mintAddress={selectedToken.address}
+                    name={selectedToken.name}
+                    showName={false}
+                    showCaretDown={true}
+                  />
+                )}
                 {selectedToken && tokenBalance ? (
                   <div
                     className="token-max simplelink"
@@ -1263,42 +1263,25 @@ export const PayrollPayment = () => {
               <span>{t('transactions.send-amount.label-right')}:</span>
               <span>
                 {`${tokenBalance && selectedToken
-                    ? getTokenAmountAndSymbolByTokenAddress(tokenBalance, selectedToken?.address, true)
+                    ? getAmountWithSymbol(tokenBalance, selectedToken?.address, true)
                     : "0"
                 }`}
               </span>
             </div>
             <div className="right inner-label">
-              ~${fromCoinAmount && effectiveRate
-                ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
-                : "0.00"}
+              <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+                ~${fromCoinAmount && effectiveRate
+                  ? formatAmount(parseFloat(fromCoinAmount) * effectiveRate, 2)
+                  : "0.00"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Info */}
-        {selectedToken && (
-          <div className="p-2 mb-2">
-            {infoRow(
-              `1 ${selectedToken.symbol}:`,
-              effectiveRate ? `$${formatAmount(effectiveRate, 2)}` : "--"
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.transaction-fee') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-            {isSendAmountValid() && infoRow(
-              t('transactions.transaction-info.recipient-receives') + ':',
-              `${areSendAmountSettingsValid()
-                ? '~' + getTokenAmountAndSymbolByTokenAddress(parseFloat(fromCoinAmount) - getTxFeeAmount(payrollFees, fromCoinAmount), selectedToken?.address)
-                : '0'
-              }`
-            )}
-          </div>
-        )}
+        {/* Confirm recipient address is correct Checkbox */}
+        <div className="mb-2">
+          <Checkbox checked={isVerifiedRecipient} onChange={onIsVerifiedRecipientChange}>{t('transactions.verified-recipient-label')}</Checkbox>
+        </div>
 
         {/* Action button */}
         <Button
@@ -1308,7 +1291,13 @@ export const PayrollPayment = () => {
           shape="round"
           size="large"
           onClick={onTransactionStart}
-          disabled={!connected || !isValidAddress(recipientAddress) || isAddressOwnAccount() || !arePaymentSettingsValid() || !areSendAmountSettingsValid()}>
+          disabled={!connected ||
+            !isMemoValid() ||
+            !isValidAddress(recipientAddress) ||
+            isAddressOwnAccount() ||
+            !arePaymentSettingsValid() ||
+            !areSendAmountSettingsValid() ||
+            !isVerifiedRecipient}>
           {getTransactionStartButtonLabel()}
         </Button>
 
@@ -1330,8 +1319,46 @@ export const PayrollPayment = () => {
         onCancel={onCloseTokenSelector}
         width={450}
         footer={null}>
-        <div className="token-list">
-          {subjectTokenSelection === 'payer' ? renderUserTokenList : renderAvailableTokenList}
+        <div className="token-selector-wrapper">
+          <div className="token-search-wrapper">
+            <TextInput
+              id="token-search-pr"
+              value={tokenFilter}
+              allowClear={true}
+              extraClass="mb-2"
+              onInputClear={onInputCleared}
+              placeholder={t('token-selector.search-input-placeholder')}
+              onInputChange={onTokenSearchInputChange} />
+          </div>
+          <div className="flex-row align-items-center fg-secondary-60 mb-2 px-1">
+            <span>{t('token-selector.looking-for-sol')}</span>&nbsp;
+            <span className="simplelink underline" onClick={onGotoExchange}>{t('token-selector.wrap-sol-first')}</span>
+          </div>
+          <div className="token-list vertical-scroll">
+            {filteredTokenList.length > 0 && renderTokenList}
+            {(tokenFilter && isValidAddress(tokenFilter) && filteredTokenList.length === 0) && (
+              <TokenListItem
+                key={tokenFilter}
+                name="Unknown"
+                mintAddress={tokenFilter}
+                className={selectedToken && selectedToken.address === tokenFilter ? "selected" : "simplelink"}
+                onClick={() => {
+                  const uknwnToken: TokenInfo = {
+                    address: tokenFilter,
+                    name: 'Unknown',
+                    chainId: 101,
+                    decimals: 6,
+                    symbol: '',
+                  };
+                  setSelectedToken(uknwnToken);
+                  consoleOut("token selected:", uknwnToken, 'blue');
+                  setEffectiveRate(0);
+                  onCloseTokenSelector();
+                }}
+                balance={connected && userBalances && userBalances[tokenFilter] > 0 ? userBalances[tokenFilter] : 0}
+              />
+            )}
+          </div>
         </div>
       </Modal>
 
@@ -1349,14 +1376,16 @@ export const PayrollPayment = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.stream-started-pre')} {getPaymentRateLabel(paymentRateFrequency, paymentRateAmount)} {t('transactions.status.stream-started-post')}.</p>
               <Button
                 block
@@ -1373,20 +1402,18 @@ export const PayrollPayment = () => {
               {transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                 <h4 className="mb-4">
                   {t('transactions.status.tx-start-failure', {
-                    accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
+                    accountBalance: getTokenAmountAndSymbolByTokenAddress(
                       nativeBalance,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`,
-                    feeAmount: `${getTokenAmountAndSymbolByTokenAddress(
-                      payrollFees.blockchainFee,
-                      WRAPPED_SOL_MINT_ADDRESS,
-                      true
-                    )} SOL`})
+                      NATIVE_SOL_MINT.toBase58()
+                    ),
+                    feeAmount: getTokenAmountAndSymbolByTokenAddress(
+                      payrollFees.blockchainFee + payrollFees.mspFlatFee,
+                      NATIVE_SOL_MINT.toBase58()
+                    )})
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block

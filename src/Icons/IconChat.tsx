@@ -1,6 +1,6 @@
-export const IconChat = (props: {className: string}) => {
+export const IconChat = (props: {className: string; style?: React.CSSProperties;}) => {
     return (
-        <svg className={props.className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M8 9.49998C7.30964 9.49998 6.75 10.0596 6.75 10.75C6.75 11.4403 7.30964 12 8 12C8.69036 12 9.25 11.4403 9.25 10.75C9.25 10.0596 8.69036 9.49998 8 9.49998Z" fill="currentColor"/>
             <path d="M12 9.49998C11.3096 9.49998 10.75 10.0596 10.75 10.75C10.75 11.4403 11.3096 12 12 12C12.6904 12 13.25 11.4403 13.25 10.75C13.25 10.0596 12.6904 9.49998 12 9.49998Z" fill="currentColor"/>
             <path d="M14.75 10.75C14.75 10.0596 15.3096 9.49998 16 9.49998C16.6904 9.49998 17.25 10.0596 17.25 10.75C17.25 11.4403 16.6904 12 16 12C15.3096 12 14.75 11.4403 14.75 10.75Z" fill="currentColor"/>

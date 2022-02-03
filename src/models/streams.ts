@@ -1,13 +1,3 @@
-export interface StreamStats {
-    incoming: number;
-    outgoing: number;
-}
-
-export const defaultStreamStats: StreamStats = {
-    incoming: 0,
-    outgoing: 0
-};
-
 export interface StreamsSummary {
     totalNet: number;
     incomingAmount: number;
@@ -21,3 +11,10 @@ export const initialSummary: StreamsSummary = {
     outgoingAmount: 0,
     totalAmount: 0
 };
+
+export interface TreasuryStreamsBreakdown {
+    total: number;
+    scheduled: number;
+    running: number;
+    stopped: number;
+}

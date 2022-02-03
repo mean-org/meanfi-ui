@@ -1,12 +1,14 @@
 import { CheckOutlined, LoadingOutlined, WarningOutlined } from "@ant-design/icons";
-import { Button, Collapse, Divider, Form, InputNumber, Modal, Select, Spin } from "antd";
+import { Button, Collapse, Divider, Form, InputNumber, message, Modal, Select, Space, Spin } from "antd";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PreFooter } from "../../components/PreFooter";
 import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import { AppStateContext } from "../../contexts/appstate";
+import { SelectOption } from "../../models/common-types";
 import { TransactionStatus } from "../../models/enums";
 import { UserTokenAccount } from "../../models/transactions";
+import "./style.less";
 import {
   delay,
   consoleOut,
@@ -16,10 +18,11 @@ import {
   getTransactionStatusForLogs
 } from "../../utils/ui";
 import { getTokenAmountAndSymbolByTokenAddress, shortenAddress } from "../../utils/utils";
+import { IconCopy, IconExternalLink, IconTrash } from "../../Icons";
 
 const { Panel } = Collapse;
 const { Option } = Select;
-type TabOption = "first-tab" | "second-tab";
+type TabOption = "first-tab" | "second-tab" | "misc-tab";
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 const SAMPLE_SIGNATURE = '43n6nSvWLULwu3Gdpkc3P2NtxzKdncvBMdmQxaf2wkWkSLtq2j7QD31TRd499UqijXfeyLWRxJ6t9Z1epWXcixPq';
 
@@ -39,12 +42,6 @@ interface TxStatusConfig {
   timeDelay: number;
   initialStatus: TransactionStatus;
   finalStatus: TransactionStatus;
-}
-
-interface SelectOption {
-  key: number;
-  value: number;
-  label: string;
 }
 
 const TX_TEST_RUN_VALUES: TxStatusConfig[] = [
@@ -103,12 +100,19 @@ export const PlaygroundView = () => {
     const [currentPanel, setCurrentPanel] = useState<number | undefined>(undefined);
     const [txTestRunConfig, setTxTestRunConfig] = useState<TxStatusConfig[]>(TX_TEST_RUN_VALUES);
     const [currentPanelItem, setCurrentPanelItem] = useState<TxStatusConfig>();
-  
+
     useEffect(() => {
       if (!selectedMint) {
         setSelectedMint(userTokens[0]);
       }
     }, [selectedMint, userTokens]);
+
+    const resetTransactionStatus = () => {
+      setTransactionStatus({
+        lastOperation: TransactionStatus.Iddle,
+        currentOperation: TransactionStatus.Iddle
+      });
+    }
 
     const isSuccess = (): boolean => {
       return transactionStatus.currentOperation === TransactionStatus.TransactionFinished ? true : false;
@@ -131,6 +135,7 @@ export const PlaygroundView = () => {
       if (isSuccess()) {
         hideTransactionModal();
       }
+      resetTransactionStatus();
     };
 
     const onTransactionStart = async () => {
@@ -145,7 +150,7 @@ export const PlaygroundView = () => {
       });
 
       for await (const txStep of txTestRunConfig) {
-        if (transactionCancelled) { break; }
+        if (transactionCancelled || isError()) { break; }
         setTransactionStatus({
           lastOperation: transactionStatus.currentOperation,
           currentOperation: txStep.initialStatus
@@ -232,6 +237,18 @@ export const PlaygroundView = () => {
       const loadedItem = value ? txTestRunConfig[value - 1] : undefined;
       console.log('loadedItem:', loadedItem);
       setCurrentPanelItem(loadedItem);
+    }
+
+    const showMessage = () => {
+      message.success({
+        duration: 0,
+        content: 'This is a prompt message with custom className and style',
+        className: 'custom-message',
+      });
+    };
+    
+    const closeMessage = () => {
+      message.destroy();
     }
 
     const renderDemoNumberFormatting = (
@@ -350,36 +367,168 @@ export const PlaygroundView = () => {
       </>
     );
 
-    const renderContract = () => {
+  const renderMiscTab = (
+    <>
+    <div className="tabset-heading">Miscelaneous features</div>
+    <div className="text-left mb-3">
+      <Space>
+        <Button
+          type="default"
+          shape="round"
+          size="small"
+          className="thin-stroke"
+          onClick={showMessage}>
+          Show custom message
+        </Button>
+        <Button
+          type="default"
+          shape="round"
+          size="small"
+          className="thin-stroke"
+          onClick={closeMessage}>
+          Destroy message
+        </Button>
+      </Space>
+    </div>
+
+    <Divider/>
+
+    <h3>Primary, Secondary and Terciary buttons</h3>
+    <div className="row mb-2">
+      <div className="col">
+        <Button type="primary" shape="round" size="small" className="thin-stroke">Primary</Button>
+      </div>
+      <div className="col">
+        <Button type="default" shape="round" size="small" className="thin-stroke">Default</Button>
+      </div>
+      <div className="col">
+        <Button type="ghost"   shape="round" size="small" className="thin-stroke">Ghost</Button>
+      </div>
+    </div>
+    <h3>Primary, Secondary and Terciary buttons disabled</h3>
+    <div className="row mb-2">
+      <div className="col">
+        <Button type="primary" shape="round" size="small" className="thin-stroke" disabled={true}>Primary disabled</Button>
+      </div>
+      <div className="col">
+        <Button type="default" shape="round" size="small" className="thin-stroke" disabled={true}>Default disabled</Button>
+      </div>
+      <div className="col">
+        <Button type="ghost"   shape="round" size="small" className="thin-stroke" disabled={true}>Ghost disabled</Button>
+      </div>
+    </div>
+
+    <h3>Animated buttons</h3>
+    <div className="row mb-2">
+      <div className="col">
+        <button className="animated-button-red">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Red
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-green">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Green
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-blue">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Blue
+        </button>
+      </div>
+      <div className="col">
+        <button className="animated-button-gold">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          Gold
+        </button>
+      </div>
+    </div>
+
+    <h3>Flat buttons</h3>
+    <div className="mb-2">
+      <Space>
+        <span className="flat-button tiny">
+          <IconCopy className="mean-svg-icons" />
+          <span className="ml-1">copy item</span>
+        </span>
+        <span className="flat-button tiny">
+          <IconTrash className="mean-svg-icons" />
+          <span className="ml-1">delete item</span>
+        </span>
+        <span className="flat-button tiny">
+          <IconExternalLink className="mean-svg-icons" />
+          <span className="ml-1">view on blockchain</span>
+        </span>
+      </Space>
+    </div>
+
+    <h3>Flat stroked buttons</h3>
+    <div className="mb-2">
+      <Space>
+        <span className="flat-button tiny stroked">
+          <IconCopy className="mean-svg-icons" />
+          <span className="mx-1">copy item</span>
+        </span>
+        <span className="flat-button tiny stroked">
+          <IconTrash className="mean-svg-icons" />
+          <span className="mx-1">delete item</span>
+        </span>
+        <span className="flat-button tiny stroked">
+          <IconExternalLink className="mean-svg-icons" />
+          <span className="mx-1">view on blockchain</span>
+        </span>
+      </Space>
+    </div>
+    </>
+  );
+
+  const renderTab = () => {
       switch (currentTab) {
         case "first-tab":
           return renderDemoNumberFormatting;
         case "second-tab":
           return renderDemoTxWorkflow;
+        case "misc-tab":
+          return renderMiscTab;
         default:
           return null;
       }
-    }
+  }
 
   return (
     <>
-      <div className="solid-bg">
-        <section className="content">
-          <div className="container mt-4 flex-column flex-center">
-            <div className="boxed-area">
-              <div className="button-tabset-container">
-                <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
-                  Demo 1
-                </div>
-                <div className={`tab-button ${currentTab === "second-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("second-tab")}>
-                  Demo 2
-                </div>
+      <section>
+        <div className="container mt-4 flex-column flex-center">
+          <div className="boxed-area container-max-width-600">
+            <div className="button-tabset-container">
+              <div className={`tab-button ${currentTab === "first-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("first-tab")}>
+                Demo 1
               </div>
-              {renderContract()}
+              <div className={`tab-button ${currentTab === "second-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("second-tab")}>
+                Demo 2
+              </div>
+              <div className={`tab-button ${currentTab === "misc-tab" ? 'active' : ''}`} onClick={() => setCurrentTab("misc-tab")}>
+                Misc
+              </div>
             </div>
+            {renderTab()}
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <Modal
         className="mean-modal"
@@ -395,21 +544,21 @@ export const PlaygroundView = () => {
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">Whatever is about to happen...</p>
-              <div className="indication">
-                {t("transactions.status.instructions")}
-              </div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
               <h4 className="font-bold mb-1 text-uppercase">
-                {getTransactionOperationDescription(transactionStatus, t)}
+                {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
               </h4>
               <p className="operation">
-                {t("transactions.status.tx-generic-operation-success")}.
+                {t('transactions.status.tx-generic-operation-success')}.
               </p>
               <Button
                 block
@@ -417,7 +566,7 @@ export const PlaygroundView = () => {
                 shape="round"
                 size="middle"
                 onClick={hideTransactionModal}>
-                {t("general.cta-close")}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : isError() ? (
@@ -427,11 +576,11 @@ export const PlaygroundView = () => {
                 <h4 className="mb-4">Whatever special reason it failed for</h4>
               ) : (
                 <>
-                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus, t)}</h4>
+                  <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
                   {transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
                     <>
                       <p className="operation">
-                        {t("transactions.status.tx-confirm-failure-check")}
+                        {t('transactions.status.tx-confirm-failure-check')}
                       </p>
                       <p className="operation">
                         <a className="secondary-link"
@@ -449,14 +598,14 @@ export const PlaygroundView = () => {
                 shape="round"
                 size="middle"
                 onClick={hideTransactionModal}>
-                {t("general.cta-close")}
+                {t('general.cta-close')}
               </Button>
             </>
           ) : (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
               <h4 className="font-bold mb-4 text-uppercase">
-                {t("transactions.status.tx-wait")}...
+                {t('transactions.status.tx-wait')}...
               </h4>
             </>
           )}

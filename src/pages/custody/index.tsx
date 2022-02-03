@@ -13,7 +13,7 @@ export const CustodyView = () => {
   return (
     <div className="solid-bg">
 
-      <div className="hero">
+      <section className="hero">
         <h1 className="heading">Crypto Asset Custody</h1>
         <p className="subheading">The most advanced digital asset platform, for secure crypto custody, trading, staking, governance, and more.</p>
         <Button
@@ -24,7 +24,7 @@ export const CustodyView = () => {
           onClick={() => onApplyToMeanfiCustody()}>
           Apply to MeanFi Custody
         </Button>
-      </div>
+      </section>
 
       <section className="content">
         <div className="container">

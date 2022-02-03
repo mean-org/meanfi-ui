@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Layout } from "antd";
-import { Routes } from "./routes";
+import { AppRoutes } from "./routes";
 import "./App.less";
 import { useLocalStorageState } from './utils/utils';
 import { refreshCachedRpc } from './models/connections-hq';
@@ -67,7 +67,7 @@ function App() {
   if (loadingStatus === 'loading') {
     return loader;
   } else {
-    return <Routes />;
+    return <AppRoutes />;
   }
 }
 

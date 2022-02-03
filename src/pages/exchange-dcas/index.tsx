@@ -35,7 +35,7 @@ import { notify } from '../../utils/notifications';
 import { calculateActionFees, DdcaAccount, DdcaActivity, DdcaClient, DdcaDetails, DDCA_ACTIONS, TransactionFees } from '@mean-dao/ddca';
 import { Connection, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { getLiveRpc, RpcConfig } from '../../models/connections-hq';
-import { Redirect } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { OperationType, TransactionStatus } from '../../models/enums';
 import { NATIVE_SOL_MINT } from '../../utils/ids';
 import dateFormat from "dateformat";
@@ -70,11 +70,10 @@ export const ExchangeDcasView = () => {
     startFetchTxSignatureInfo,
     clearTransactionStatusContext,
   } = useContext(TransactionStatusContext);
-
+  const navigate = useNavigate();
   const { t } = useTranslation('common');
   const { publicKey, wallet, connected } = useWallet();
   const { account } = useNativeAccount();
-  const [redirect, setRedirect] = useState<string | null>(null);
   const [previousBalance, setPreviousBalance] = useState(account?.lamports);
   const [nativeBalance, setNativeBalance] = useState(0);
 
@@ -99,7 +98,7 @@ export const ExchangeDcasView = () => {
       if (cachedRpc.networkId !== 101) {
         const mainnetRpc = await getLiveRpc(101);
         if (!mainnetRpc) {
-          setRedirect('/service-unavailable');
+          navigate('/service-unavailable');
         }
         setMainnetRpc(mainnetRpc);
       } else {
@@ -107,7 +106,10 @@ export const ExchangeDcasView = () => {
       }
     })();
     return () => { }
-  }, [cachedRpc.networkId]);
+  }, [
+    cachedRpc.networkId,
+    navigate
+  ]);
 
   // Set and cache connection
   const connection = useMemo(() => new Connection(endpoint, "confirmed"), [endpoint]);
@@ -201,7 +203,6 @@ export const ExchangeDcasView = () => {
   const hideCloseDdcaTransactionModal = useCallback(() => setCloseDdcaTransactionModalVisibility(false), []);
 
   const onCloseDdcaTransactionFinished = () => {
-    resetTransactionStatus();
     hideCloseDdcaTransactionModal();
   };
 
@@ -212,6 +213,7 @@ export const ExchangeDcasView = () => {
     if (isSuccess()) {
       hideCloseDdcaTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   // Execute close
@@ -219,6 +221,7 @@ export const ExchangeDcasView = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -249,7 +252,7 @@ export const ExchangeDcasView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         consoleOut('maxBlockchainFee:', ddcaTxFees.maxBlockchainFee, 'blue');
         consoleOut('nativeBalance:', nativeBalance, 'blue');
@@ -266,7 +269,7 @@ export const ExchangeDcasView = () => {
               getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -311,21 +314,43 @@ export const ExchangeDcasView = () => {
     }
 
     const signTx = async (): Promise<boolean> => {
-      if (wallet) {
+      if (wallet && ddcaDetails && ddcaClient) {
         consoleOut('Signing transaction...');
         return await wallet.signTransaction(transaction)
-        .then((signed: Transaction) => {
+        .then(async (signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
-          setTransactionStatus({
-            lastOperation: TransactionStatus.SignTransactionSuccess,
-            currentOperation: TransactionStatus.SendTransaction
-          });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
-          return true;
+          const ddcaAccountPda = new PublicKey(ddcaDetails.ddcaAccountAddress);
+          try {
+            const updatedTx = await ddcaClient.updateCloseTx(ddcaAccountPda, signed);
+            signedTransaction = updatedTx;
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransactionSuccess,
+              currentOperation: TransactionStatus.SendTransaction
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
+              result: 'updateCloseTx returned an updated Tx'
+            });
+            return true;
+          } catch (error) {
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: { signer: `${wallet.publicKey.toBase58()}`, error: `${error}` }
+            });
+            customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
+            return false;
+          }
         })
         .catch(error => {
           console.error('Signing transaction failed!');
@@ -337,7 +362,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('Close DDCA transaction failed', { transcript: transactionLog });
+          customLogger.logError('Close DDCA transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -356,7 +381,6 @@ export const ExchangeDcasView = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -413,7 +437,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Close);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaClose);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -456,7 +480,6 @@ export const ExchangeDcasView = () => {
   const [withdrawFundsAmount, setWithdrawFundsAmount] = useState<number>(0);
 
   const onWithdrawTransactionFinished = () => {
-    resetTransactionStatus();
     hideWithdrawTransactionModal();
   };
 
@@ -467,6 +490,7 @@ export const ExchangeDcasView = () => {
     if (isSuccess()) {
       hideWithdrawTransactionModal();
     }
+    resetTransactionStatus();
   }
 
   // Execute withdraw
@@ -474,6 +498,7 @@ export const ExchangeDcasView = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: any;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     clearTransactionStatusContext();
@@ -508,7 +533,7 @@ export const ExchangeDcasView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         const lamports = await connection.getBalance(wallet.publicKey);
         const balance = (lamports / LAMPORTS_PER_SOL) || 0;
@@ -528,7 +553,7 @@ export const ExchangeDcasView = () => {
               getTokenAmountAndSymbolByTokenAddress(ddcaTxFees.maxBlockchainFee, NATIVE_SOL_MINT.toBase58())
             })`
           });
-          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -580,13 +605,30 @@ export const ExchangeDcasView = () => {
         .then((signed: Transaction) => {
           consoleOut('signTransaction returned a signed transaction:', signed);
           signedTransaction = signed;
+          // Try signature verification by serializing the transaction
+          try {
+            encodedTx = signedTransaction.serialize().toString('base64');
+            consoleOut('encodedTx:', encodedTx, 'orange');
+          } catch (error) {
+            console.error(error);
+            setTransactionStatus({
+              lastOperation: TransactionStatus.SignTransaction,
+              currentOperation: TransactionStatus.SignTransactionFailure
+            });
+            transactionLog.push({
+              action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+              result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+            });
+            customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
+            return false;
+          }
           setTransactionStatus({
             lastOperation: TransactionStatus.SignTransactionSuccess,
             currentOperation: TransactionStatus.SendTransaction
           });
           transactionLog.push({
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-            result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+            result: {signer: wallet.publicKey.toBase58()}
           });
           return true;
         })
@@ -600,7 +642,7 @@ export const ExchangeDcasView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
             result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
           });
-          customLogger.logWarning('DDCA withdraw transaction failed', { transcript: transactionLog });
+          customLogger.logError('DDCA withdraw transaction failed', { transcript: transactionLog });
           return false;
         });
       } else {
@@ -619,7 +661,6 @@ export const ExchangeDcasView = () => {
     }
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
           .sendEncodedTransaction(encodedTx)
@@ -676,7 +717,7 @@ export const ExchangeDcasView = () => {
           consoleOut('sent:', sent);
           if (sent && !transactionCancelled) {
             consoleOut('Send Tx to confirmation queue:', signature);
-            startFetchTxSignatureInfo(signature, "finalized", OperationType.Withdraw);
+            startFetchTxSignatureInfo(signature, "finalized", OperationType.DdcaWithdraw);
             setIsBusy(false);
             // Give time for several renders so startFetchTxSignatureInfo can update TransactionStatusContext
             await delay(250);
@@ -795,7 +836,7 @@ export const ExchangeDcasView = () => {
               }
             }
             if (!item) {
-              item = JSON.parse(JSON.stringify(dcas[0]));
+              item = Object.assign({}, dcas[0]);
             }
             if (item) {
               setSelectedDdca(item);
@@ -909,7 +950,7 @@ export const ExchangeDcasView = () => {
     if (!ddcaClient || !ddcaDetails) { return; }
 
     if (lastSentTxSignature && (fetchTxInfoStatus === "fetched" || fetchTxInfoStatus === "error")) {
-      if (lastSentTxOperationType === OperationType.Close) {
+      if (lastSentTxOperationType === OperationType.DdcaClose) {
         clearTransactionStatusContext();
         reloadRecurringBuys();
       } else {
@@ -1125,25 +1166,25 @@ export const ExchangeDcasView = () => {
   }
 
   const isCreating = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Create
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaCreate
             ? true
             : false;
   }
 
   const isClosing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Close
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaClose
             ? true
             : false;
   }
 
   const isWithdrawing = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.Withdraw
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaWithdraw
             ? true
             : false;
   }
 
   const isAddingFunds = (): boolean => {
-    return fetchTxInfoStatus === "fetching" && lastSentTxStatus !== "finalized" && lastSentTxOperationType === OperationType.AddFunds
+    return fetchTxInfoStatus === "fetching" && lastSentTxOperationType === OperationType.DdcaAddFunds
             ? true
             : false;
   }
@@ -1162,18 +1203,15 @@ export const ExchangeDcasView = () => {
     <Menu>
       {/*
         *     If exchangeFor is > 0 -> Withdraw is visible
-        *     If totalLeft is > 0 -> Cancel and withdraw everything
       */}
       {(ddcaDetails && ddcaDetails.toBalance > 0) && (
         <Menu.Item key="1" onClick={showWithdrawModal}>
           <span className="menu-item-text">Withdraw</span>
         </Menu.Item>
       )}
-      {(ddcaDetails && ddcaDetails.fromBalance > 0) && (
-        <Menu.Item key="2" onClick={showCloseDdcaModal}>
-          <span className="menu-item-text">Cancel and withdraw everything</span>
-        </Menu.Item>
-      )}
+      <Menu.Item key="2" onClick={showCloseDdcaModal}>
+        <span className="menu-item-text">Cancel and withdraw everything</span>
+      </Menu.Item>
     </Menu>
   );
 
@@ -1191,7 +1229,7 @@ export const ExchangeDcasView = () => {
             {ddcaDetails && (
               <div className="mb-3">
                 <div className="info-label">
-                  {t("streams.stream-detail.label-start-date-started")}
+                  {t('streams.stream-detail.label-start-date-started')}
                 </div>
                 <div className="transaction-detail-row">
                   <span className="info-icon">
@@ -1270,7 +1308,6 @@ export const ExchangeDcasView = () => {
               *  Visibe If exchangeFor > 0 || totalLeft is > 0
               *  {
               *     If exchangeFor is > 0 -> Withdraw is visible
-              *     If totalLeft is > 0 -> Cancel and withdraw everything
               *  }
             */}
             <div className="mt-3 mb-3 withdraw-container">
@@ -1284,14 +1321,14 @@ export const ExchangeDcasView = () => {
                 onClick={showAddFundsModal}>
                 {fetchTxInfoStatus === "fetching" && (<LoadingOutlined />)}
                 {isCreating()
-                  ? t("ddcas.add-funds-cta-disabled-executing-swap")
+                  ? t('ddcas.add-funds-cta-disabled-executing-swap')
                   : isClosing()
-                    ? t("ddcas.add-funds-cta-disabled-closing")
+                    ? t('ddcas.add-funds-cta-disabled-closing')
                     : isAddingFunds()
-                      ? t("ddcas.add-funds-cta-disabled-funding")
+                      ? t('ddcas.add-funds-cta-disabled-funding')
                       : isWithdrawing()
-                        ? t("ddcas.add-funds-cta-disabled-withdrawing")
-                        : t("streams.stream-detail.add-funds-cta")
+                        ? t('ddcas.add-funds-cta-disabled-withdrawing')
+                        : t('streams.stream-detail.add-funds-cta')
                 }
               </Button>
               {(ddcaDetails && (ddcaDetails.toBalance > 0 || ddcaDetails.fromBalance > 0) && fetchTxInfoStatus !== "fetching") && (
@@ -1322,7 +1359,7 @@ export const ExchangeDcasView = () => {
                       {t('streams.stream-activity.heading')}
                     </div>
                     <div className="std-table-cell fixed-width-150">
-                      {t("streams.stream-activity.label-date")}
+                      {t('streams.stream-activity.label-date')}
                     </div>
                   </div>
                 </div>
@@ -1366,7 +1403,7 @@ export const ExchangeDcasView = () => {
                     {t('streams.stream-activity.heading')}
                   </div>
                   <div className="std-table-cell fixed-width-150">
-                    {t("streams.stream-activity.label-date")}
+                    {t('streams.stream-activity.label-date')}
                   </div>
                 </div>
               </div>
@@ -1395,7 +1432,7 @@ export const ExchangeDcasView = () => {
       {selectedDdca && (
         <div className="stream-share-ctas">
           <span
-            className="copy-cta overflow-ellipsis-middle"
+            className="copy-cta"
             onClick={() => onCopyRecurringBuyAddress(selectedDdca.ddcaAccountAddress)}
           >
             {selectedDdca.ddcaAccountAddress}
@@ -1454,7 +1491,6 @@ export const ExchangeDcasView = () => {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <div className="container main-container">
 
         {isLocal() && (
@@ -1557,14 +1593,16 @@ export const ExchangeDcasView = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{t('transactions.status.tx-close-vault-operation')}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.tx-close-vault-operation-success')}</p>
               <Button
                 block
@@ -1594,7 +1632,7 @@ export const ExchangeDcasView = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block
@@ -1628,14 +1666,16 @@ export const ExchangeDcasView = () => {
           {isBusy ? (
             <>
               <Spin indicator={bigLoadingIcon} className="icon" />
-              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <h5 className="operation">{t('transactions.status.tx-withdraw-operation')} {getTokenAmountAndSymbolByTokenAddress(withdrawFundsAmount, ddcaDetails?.toMint as string)}</h5>
-              <div className="indication">{t('transactions.status.instructions')}</div>
+              {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                <div className="indication">{t('transactions.status.instructions')}</div>
+              )}
             </>
           ) : isSuccess() ? (
             <>
               <CheckOutlined style={{ fontSize: 48 }} className="icon" />
-              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+              <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               <p className="operation">{t('transactions.status.tx-withdraw-operation-success')}</p>
               <Button
                 block
@@ -1664,7 +1704,7 @@ export const ExchangeDcasView = () => {
                   }
                 </h4>
               ) : (
-                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus)}</h4>
+                <h4 className="font-bold mb-1 text-uppercase">{getTransactionOperationDescription(transactionStatus.currentOperation, t)}</h4>
               )}
               <Button
                 block

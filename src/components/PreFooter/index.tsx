@@ -7,11 +7,6 @@ export const PreFooter = () => {
 
   return (
     <div className="pre-footer">
-      <div className="pre-footer-notice">
-        <div className="wrapper">
-          {t('general.app-background-disclaimer')}
-        </div>
-      </div>
       <div className="pre-footer-menu">
         <div className="wrapper">
           <div className="flexible-left">
@@ -41,7 +36,7 @@ export const PreFooter = () => {
             </div>
             <div className="right">
               <span >
-                Made with <span className="emoji fg-red" aria-label="love" role="img">❤️</span> on Solana <img className="small-solana-icon" src="solana-logo.png" alt="Solana logo" />
+                Made with <span className="emoji fg-red" aria-label="love" role="img">❤️</span> on Solana <img className="small-solana-icon" src="/solana-logo.png" alt="Solana logo" />
               </span>
             </div>
           </div>

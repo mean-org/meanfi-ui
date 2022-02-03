@@ -5,8 +5,8 @@ import { TextInput } from "../../components/TextInput";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { formatAmount, getComputedFees, getTokenAmountAndSymbolByTokenAddress, getTxIxResume, isValidNumber, shortenAddress } from "../../utils/utils";
 import { Identicon } from "../../components/Identicon";
-import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled, WarningOutlined } from "@ant-design/icons";
-import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount, isProd } from "../../utils/ui";
+import { CheckOutlined, InfoCircleOutlined, LoadingOutlined, WarningFilled } from "@ant-design/icons";
+import { consoleOut, getTransactionModalTitle, getTransactionOperationDescription, getTransactionStatusForLogs, getTxPercentFeeAmount } from "../../utils/ui";
 import { useWallet } from "../../contexts/wallet";
 import { AppStateContext } from "../../contexts/appstate";
 import { MSP_ACTIONS, TransactionFees } from '@mean-dao/money-streaming/lib/types';
@@ -19,7 +19,6 @@ import { InfoIcon } from "../../components/InfoIcon";
 import { IconSwapFlip } from "../../Icons";
 import { environment } from "../../environments/environment";
 import { appConfig, customLogger } from "../..";
-import { Redirect } from "react-router-dom";
 import { DEFAULT_SLIPPAGE_PERCENT, SOLANA_EXPLORER_URI_INSPECT_TRANSACTION } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import "./style.less";
@@ -35,18 +34,17 @@ import {
   TokenInfo,
   FeesInfo,
   TOKENS,
-  NATIVE_SOL_MINT, 
-  USDC_MINT, 
-  USDT_MINT, 
+  NATIVE_SOL_MINT,
+  USDC_MINT,
   WRAPPED_SOL_MINT,
   ACCOUNT_LAYOUT
 
 } from "@mean-dao/hybrid-liquidity-ag";
 
 import { SerumClient } from "@mean-dao/hybrid-liquidity-ag/lib/serum/types";
-import { MSP_OPS, SRM_MINT } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { MSP_OPS } from "@mean-dao/hybrid-liquidity-ag/lib/types";
 import { ExchangeOutput } from "../../components/ExchangeOutput";
-import { objectToJson } from "../../utils/logger";
+import { MEAN_TOKEN_LIST } from "../../constants/token-list";
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -57,12 +55,12 @@ export const OneTimeExchange = (props: {
 }) => {
 
   const { t } = useTranslation("common");
-  const [redirect] = useState<string | null>(null);
   const { publicKey, wallet, connected } = useWallet();
   const {
     coinPrices,
     transactionStatus,
     previousWalletConnectState,
+    refreshPrices,
     setTransactionStatus,
     setPreviousWalletConnectState
 
@@ -90,8 +88,7 @@ export const OneTimeExchange = (props: {
   const [txFees, setTxFees] = useState<TransactionFees>();
   // AGGREGATOR
   const [currentTxSignature, setCurrentTxSignature] = useState("");
-  const [lastFromMint, setLastFromMint] = useLocalStorage('lastFromToken', NATIVE_SOL_MINT.toBase58());
-  const [fromMint, setFromMint] = useState<string | undefined>(props.queryFromMint ? props.queryFromMint : lastFromMint);
+  const [fromMint, setFromMint] = useState<string | undefined>();
   const [toMint, setToMint] = useState<string | undefined>(undefined);
   const [fromSwapAmount, setFromSwapAmount] = useState(0);
   const [fromBalance, setFromBalance] = useState('');
@@ -109,6 +106,36 @@ export const OneTimeExchange = (props: {
   const [transactionStartButtonLabel, setTransactionStartButtonLabel] = useState('');
   const [renderCount, setRenderCount] = useState(0);
   const [showLpList, setShowLpList] = useState(false);
+  const [paramsProcessed, setParamsProcessed] = useState(false);
+
+  // Set fromMint & toMint from query string if params are provided
+  useEffect(() => {
+    if (paramsProcessed) { return; }
+
+    setParamsProcessed(true);
+
+    if (props.queryFromMint || props.queryToMint) {
+      if (props.queryFromMint) {
+        setFromMint(props.queryFromMint);
+      }
+      if (props.queryToMint) {
+        setToMint(props.queryToMint as string);
+      }
+    } else if (!props.queryFromMint && !props.queryToMint) {
+      const from = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'USDC');
+      if (from && from.length) {
+        setFromMint(from[0].address);
+      }
+      const to = MEAN_TOKEN_LIST.filter(t => t.chainId === 101 && t.symbol === 'MEAN');
+      if (to && to.length) {
+        setToMint(to[0].address);
+      }
+    }
+  },[
+    paramsProcessed,
+    props.queryToMint,
+    props.queryFromMint
+  ]);
 
   const isWrap = useCallback(() => {
 
@@ -347,7 +374,7 @@ export const OneTimeExchange = (props: {
       const list: any = { };
 
       for (let info of TOKENS) {
-        let mint = JSON.parse(JSON.stringify(info));
+        let mint = Object.assign({}, info);
         if (mint.logoURI) {
           list[mint.address] = mint;
         }
@@ -540,8 +567,20 @@ export const OneTimeExchange = (props: {
             error(new Error("Client not found"));
             return;
           }
+
+          const btcMintInfo: any = Object
+            .values(mintList)
+            .filter((m: any) => m.symbol === 'BTC')[0];
+
+          const btcSwap = 
+            fromMint === btcMintInfo.address || 
+            toMint === btcMintInfo.address;
+
+          if (btcSwap) {
+            clients = clients.filter(c => !c.protocol.equals(SERUM));
+          }
   
-          // clients = clients.filter(c => c.protocol.equals(RAYDIUM));
+          // clients = clients.filter(c => c.protocol.equals(ORCA));
           setClients(clients);
           consoleOut('clients', clients, 'blue');
           const client = clients[0].protocol.equals(SERUM) 
@@ -569,10 +608,11 @@ export const OneTimeExchange = (props: {
     }
 
   },[
-    connection, 
-    fromMint, 
-    isUnwrap, 
-    isWrap, 
+    connection,
+    fromMint,
+    mintList,
+    isUnwrap,
+    isWrap,
     toMint,
     refreshTime,
     fromBalance
@@ -802,24 +842,24 @@ export const OneTimeExchange = (props: {
 
     const timeout = setTimeout(() => {
 
-      let label = t("transactions.validation.not-connected");
+      let label = t('transactions.validation.not-connected');
 
       if (!connected) {
-        label = t("transactions.validation.not-connected");
+        label = t('transactions.validation.not-connected');
       } else if (!fromMint || !toMint) {
-        label = t("transactions.validation.invalid-exchange");
-      } else if (!selectedClient || !exchangeInfo || !feesInfo) {
-        label = t("transactions.validation.exchange-unavailable");
+        label = t('transactions.validation.invalid-exchange');
+      } else if ((!selectedClient || !exchangeInfo || !feesInfo) && !isWrap() && !isUnwrap()) {
+        label = t('transactions.validation.exchange-unavailable');
       } else if(!isValidBalance()) {
 
         let needed = 0;
 
         if (isWrap()) {
-          needed = feesInfo.network;
+          needed = feesInfo?.network || 0;
         } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-          needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+          needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
         } else {
-          needed = feesInfo.network;
+          needed = feesInfo?.network || 0;
         }
 
         needed = parseFloat(needed.toFixed(6));
@@ -828,10 +868,10 @@ export const OneTimeExchange = (props: {
           needed = parseFloat(needed.toFixed(9));
         }
 
-        label = t("transactions.validation.insufficient-balance-needed", { balance: needed.toString() });
+        label = t('transactions.validation.insufficient-balance-needed', { balance: needed.toString() });
 
       } else if (fromSwapAmount === 0) {
-        label = t("transactions.validation.no-amount");
+        label = t('transactions.validation.no-amount');
       } else if (!isSwapAmountValid()) {
 
         let needed = 0;
@@ -842,17 +882,17 @@ export const OneTimeExchange = (props: {
         if (isFromSerum) {
           const from = fromMint === NATIVE_SOL_MINT.toBase58() ? WRAPPED_SOL_MINT.toBase58() : fromMint;
           if (selectedClient.market.baseMintAddress.toBase58() === from) {
-            needed = selectedClient.market.minOrderSize + feesInfo.protocol;
+            needed = selectedClient.market.minOrderSize + (feesInfo?.protocol || 0);
           } else {
-            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + feesInfo.protocol;
+            needed = selectedClient.market.minOrderSize / (exchange.outPrice || 1) + (feesInfo?.protocol || 0);
           }
         } else {
           if (isWrap()) {
-            needed = fromSwapAmount + feesInfo.network;
+            needed = fromSwapAmount + (feesInfo?.network || 0);
           } else if (fromMint === NATIVE_SOL_MINT.toBase58()) {
-            needed = fromSwapAmount + feesInfo.total + feesInfo.network;
+            needed = fromSwapAmount + (!feesInfo ? 0 : feesInfo.total + feesInfo.network);
           } else {
-            needed = fromSwapAmount + feesInfo.total;
+            needed = fromSwapAmount + (feesInfo?.total || 0);
           }
         }
 
@@ -863,21 +903,21 @@ export const OneTimeExchange = (props: {
         }
 
         if (needed === 0) {
-          label = t("transactions.validation.amount-low");
+          label = t('transactions.validation.amount-low');
         } else if (!isFromSerum) {
-          label = t("transactions.validation.insufficient-amount-needed", { 
+          label = t('transactions.validation.insufficient-amount-needed', { 
             amount: needed.toString(), 
             symbol: fromSymbol 
           });
         } else {
           const balance = parseFloat(fromBalance);
-          if (fromSwapAmount > (balance - feesInfo.network)) {
-            label = t("transactions.validation.insufficient-amount-needed", { 
+          if (fromSwapAmount > (balance - (feesInfo?.network || 0))) {
+            label = t('transactions.validation.insufficient-amount-needed', { 
               amount: fromSwapAmount.toString(), 
               symbol: fromSymbol 
             });
           } else {
-            label = t("transactions.validation.minimum-swap-amount", { 
+            label = t('transactions.validation.minimum-swap-amount', { 
               mintAmount: needed.toString(),
               fromMint: fromSymbol
             });
@@ -885,7 +925,7 @@ export const OneTimeExchange = (props: {
         }
 
       } else {    
-        label = t("transactions.validation.valid-approve");
+        label = t('transactions.validation.valid-approve');
       }
 
       setTransactionStartButtonLabel(label);
@@ -934,9 +974,9 @@ export const OneTimeExchange = (props: {
 
       const filter = (t: any) => {
         return (
-          t.symbol.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.name.toLowerCase().startsWith(tokenFilter.toLowerCase()) ||
-          t.address.toLowerCase().startsWith(tokenFilter.toLowerCase())
+          t.symbol.toLowerCase().includes(tokenFilter.toLowerCase()) ||
+          t.name.toLowerCase().includes(tokenFilter.toLowerCase()) ||
+          t.address.toLowerCase().includes(tokenFilter.toLowerCase())
         );
       };      
       
@@ -1100,7 +1140,7 @@ export const OneTimeExchange = (props: {
 
     if (toJson) {
       const flattenInfo = Object.assign({}, ...logStack);
-      return objectToJson(flattenInfo);
+      return flattenInfo;
     }
 
     return logStack;
@@ -1195,6 +1235,13 @@ export const OneTimeExchange = (props: {
     wallet
   ]);
 
+  const resetTransactionStatus = useCallback(() => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  },[setTransactionStatus])
+
   const isSuccess = useCallback(() => {
 
     return (
@@ -1244,11 +1291,13 @@ export const OneTimeExchange = (props: {
       updateRenderCount();
       hideSwapTransactionModal();
     }
-    
+    resetTransactionStatus();
+
   }, [
-    isBusy, 
-    isSuccess, 
-    updateRenderCount, 
+    isBusy,
+    isSuccess,
+    updateRenderCount,
+    resetTransactionStatus,
     hideSwapTransactionModal
   ]);
 
@@ -1345,7 +1394,7 @@ export const OneTimeExchange = (props: {
 
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-        result: {signer: wallet.publicKey.toBase58(), signature: signedTx.signature ? signedTx.signature.toString() : '-'}
+        result: {signer: wallet.publicKey.toBase58()}
       }]);
 
       return signedTx;
@@ -1361,7 +1410,7 @@ export const OneTimeExchange = (props: {
         action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
         result: {signer: `${wallet?.publicKey.toBase58() || '-'}`, error: `${_error}`}
       }]);
-      customLogger.logWarning('Swap transaction failed', { transcript: transactionLog });
+      customLogger.logError('Swap transaction failed', { transcript: transactionLog });
       throw(_error);
     }
 
@@ -1376,7 +1425,7 @@ export const OneTimeExchange = (props: {
   const sendTx = useCallback(async (currentTx: Transaction) => {
 
     const encodedTx = currentTx.serialize().toString('base64');
-    consoleOut('tx encoded => ', encodedTx);
+    consoleOut('encodedTx:', encodedTx, 'orange');
 
     try {
 
@@ -1384,9 +1433,7 @@ export const OneTimeExchange = (props: {
         throw new Error('Not connected');
       }
 
-      const sentTx = await connection.sendEncodedTransaction(encodedTx, { 
-        preflightCommitment: 'confirmed'
-      });
+      const sentTx = await connection.sendEncodedTransaction(encodedTx);
 
       if (!sentTx) {
         throw new Error('Cannot send the transaction');   
@@ -1510,7 +1557,7 @@ export const OneTimeExchange = (props: {
 
       setTransactionLog(current => [...current, {
         action: getTransactionStatusForLogs(TransactionStatus.TransactionFinished),
-        result: response.value  // TODO: Log this perhaps?
+        result: response.value
       }]);
 
       return response.value;
@@ -1617,6 +1664,11 @@ export const OneTimeExchange = (props: {
       : 0;
   }
 
+  const refreshPage = () => {
+    hideSwapTransactionModal();
+    window.location.reload();
+  }
+
   const infoRow = (caption: string, value: string, separator: string = '≈', route: boolean = false) => {
     return (
       <Row>
@@ -1640,42 +1692,42 @@ export const OneTimeExchange = (props: {
       {
         !refreshing && fromAmount && feesInfo &&
         infoRow(
-          t("transactions.transaction-info.network-transaction-fee"),
+          t('transactions.transaction-info.network-transaction-fee'),
           `${parseFloat(feesInfo.network.toFixed(mintList[fromMint].decimals))} SOL`
         )
       }
       {
-        !refreshing && fromAmount && feesInfo &&
+        !refreshing && fromAmount && feesInfo && !isWrap() && !isUnwrap() &&
         infoRow(
-          t("transactions.transaction-info.protocol-transaction-fee", { protocol: exchangeInfo.fromAmm }),
+          t('transactions.transaction-info.protocol-transaction-fee', { protocol: exchangeInfo.fromAmm }),
           `${parseFloat(feesInfo.protocol.toFixed(mintList[fromMint].decimals))} ${mintList[fromMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount && slippage &&
         infoRow(
-          t("transactions.transaction-info.slippage"),
+          t('transactions.transaction-info.slippage'),
           `${slippage.toFixed(2)}%`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.recipient-receives"),                
+          t('transactions.transaction-info.recipient-receives'),                
           `${exchangeInfo.minAmountOut?.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
         )
       }
       {
         !refreshing && fromAmount &&
         infoRow(
-          t("transactions.transaction-info.price-impact"),                
+          t('transactions.transaction-info.price-impact'),                
           `${parseFloat((exchangeInfo.priceImpact || 0).toFixed(4))}%`
         )
       }
       {
         !refreshing && fromAmount && exchangeInfo.fromAmm &&
         infoRow(
-          t("transactions.transaction-info.exchange-on"),
+          t('transactions.transaction-info.exchange-on'),
           `${exchangeInfo.fromAmm}`,
           ':'
         )
@@ -1699,7 +1751,6 @@ export const OneTimeExchange = (props: {
           const onClick = () => {
             if (!fromMint || fromMint !== token.address) {
               setFromMint(token.address);
-              setLastFromMint(token.address);
               setExchangeInfo(undefined);
               setRefreshTime(0);
               setRefreshing(true);
@@ -1753,7 +1804,7 @@ export const OneTimeExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -1818,7 +1869,7 @@ export const OneTimeExchange = (props: {
           );
         })
       ) : (
-        <p>{t("general.loading")}...</p>
+        <p>{t('general.loading')}...</p>
       )}
     </>
   );
@@ -1829,7 +1880,6 @@ export const OneTimeExchange = (props: {
 
   return (
     <>
-      {redirect && <Redirect to={redirect} />}
       <Spin spinning={isBusy || refreshing}>
         <div className="swap-wrapper">
 
@@ -1858,6 +1908,7 @@ export const OneTimeExchange = (props: {
               setSubjectTokenSelection("source");
               showTokenSelector();
             }}
+            onPriceClick={() => refreshPrices()}
             inputPosition={inputPosition}
             translationId="source"
             inputLabel={
@@ -1878,44 +1929,12 @@ export const OneTimeExchange = (props: {
             <span className="settings-wrapper pr-3">
               <SwapSettings
                 currentValue={slippage}
-                showLpList={showLpList}
-                onToggleShowLpList={onShowLpListToggled}
                 onValueSelected={onSlippageChanged}/>
             </span>
           </div>
 
           {/* Destination token / amount */}
-          {isProd() ? (
-            <ExchangeInput
-              token={toMint && mintList[toMint]}
-              tokenBalance={
-                (toMint && toBalance && mintList[toMint] && parseFloat(toBalance)
-                  ? parseFloat(toBalance).toFixed(mintList[toMint].decimals)
-                  : '')
-              }
-              tokenAmount={
-                (toMint && mintList[toMint] && exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut 
-                  ? exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)
-                  : '')
-              }
-              onInputChange={() => {}}
-              onMaxAmount={() => {}}
-              onSelectToken={() => {
-                setSubjectTokenSelection("destination");
-                showTokenSelector();
-              }}
-              inputPosition={inputPosition}
-              translationId="destination"
-              inputLabel={
-                toMint && mintList[toMint]
-                  ? `~$${
-                    exchangeInfo && exchangeInfo.amountIn && exchangeInfo.amountOut
-                    ? formatAmount(parseFloat(exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)) * getPricePerToken(mintList[toMint] as TokenInfo), 2)
-                    : '0.00'}`
-                  : ''
-              }
-            />
-          ) : (
+          {
             <ExchangeOutput
               fromToken={fromMint && mintList[fromMint]}
               fromTokenAmount={fromAmount}
@@ -1947,9 +1966,9 @@ export const OneTimeExchange = (props: {
                 consoleOut('onSelectedClient:', client, 'blue');
                 setSelectedClient(client);
               }}
-              showLpList={showLpList}
+              showLpList={showLpList && !isWrap() && !isUnwrap()}
             />
-          )}
+          }
 
           {/* Title bar with settings */}
           <div className="info-line-and-settings flexible-left">
@@ -2022,7 +2041,7 @@ export const OneTimeExchange = (props: {
             className="mean-modal unpadded-content"
             visible={isTokenSelectorModalVisible}
             title={
-              <div className="modal-title">{t("token-selector.modal-title")}</div>
+              <div className="modal-title">{t('token-selector.modal-title')}</div>
             }
             onCancel={onCloseTokenSelector}
             width={450}
@@ -2044,46 +2063,43 @@ export const OneTimeExchange = (props: {
 
           {/* SWAP Transaction execution modal */}
           <Modal
-            className="mean-modal"
+            className="mean-modal no-full-screen"
             maskClosable={false}
             visible={isSwapTransactionModalVisible}
             title={getTransactionModalTitle(transactionStatus, isBusy, t)}
             onCancel={hideSwapTransactionModal}
             afterClose={onAfterTransactionModalClosed}
-            width={330}
-            footer={null}
-          >
+            width={360}
+            footer={null}>
             <div className="transaction-progress">
               {isBusy ? (
                 <>
                   <Spin indicator={bigLoadingIcon} className="icon" />
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
+                  <h4 className="font-bold mb-1">
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
-                  <p className="operation">
-                    {
-                      fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut &&
-                      t("transactions.status.tx-swap-operation", {
-                        fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
-                        toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
-                      })
-                    }
-                  </p>
-                  <div className="indication">
-                    {t("transactions.status.instructions")}
-                  </div>
+                  {(fromMint && toMint && fromAmount && exchangeInfo && exchangeInfo.amountOut) && (
+                    <p className="operation">
+                      {
+                        t('transactions.status.tx-swap-operation', {
+                          fromAmount: `${fromAmount} ${mintList[fromMint].symbol}`,
+                          toAmount: `${exchangeInfo.amountOut.toFixed(mintList[toMint].decimals)} ${mintList[toMint].symbol}`
+                        })
+                      }
+                    </p>
+                  )}
+                  {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                    <div className="indication">{t('transactions.status.instructions')}</div>
+                  )}
                 </>
               ) : isSuccess() ? (
                 <>
-                  <CheckOutlined
-                    style={{ fontSize: 48 }}
-                    className="icon"
-                  />
-                  <h4 className="font-bold mb-1 text-uppercase">
-                    {getTransactionOperationDescription(transactionStatus, t)}
+                  <CheckOutlined style={{ fontSize: 48 }} className="icon" />
+                  <h4 className="font-bold mb-1">
+                    {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                   </h4>
                   <p className="operation">
-                    {t("transactions.status.tx-swap-operation-success")}.
+                    {t('transactions.status.tx-swap-operation-success')}.
                   </p>
                   <Button
                     block
@@ -2091,15 +2107,15 @@ export const OneTimeExchange = (props: {
                     shape="round"
                     size="middle"
                     onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
+                    {t('general.cta-close')}
                   </Button>
                 </>
               ) : isError() ? (
                 <>
-                  <WarningOutlined style={{ fontSize: 48 }} className="icon" />
+                  <InfoCircleOutlined style={{ fontSize: 48 }} className="icon" />
                   {txFees && transactionStatus.currentOperation === TransactionStatus.TransactionStartFailure ? (
                     <h4 className="mb-4">
-                      {t("transactions.status.tx-start-failure", {
+                      {t('transactions.status.tx-start-failure', {
                         accountBalance: getTokenAmountAndSymbolByTokenAddress(
                           parseFloat(fromBalance),
                           NATIVE_SOL_MINT.toBase58()
@@ -2112,13 +2128,13 @@ export const OneTimeExchange = (props: {
                     </h4>
                   ) : (
                     <>
-                      <h4 className="font-bold mb-1 text-uppercase">
-                        { getTransactionOperationDescription(transactionStatus, t) }
+                      <h4 className="font-bold mb-3">
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
-                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure && (
+                      {txFees && transactionStatus.currentOperation === TransactionStatus.ConfirmTransactionFailure ? (
                         <>
                           <p className="operation">
-                            {t("transactions.status.tx-confirm-failure-check")}
+                            {t('transactions.status.tx-confirm-failure-check')}
                           </p>
                           <p className="operation">
                             <a className="secondary-link" 
@@ -2129,28 +2145,53 @@ export const OneTimeExchange = (props: {
                             </a>
                           </p>
                         </>
+                      ) : transactionStatus.currentOperation === TransactionStatus.SendTransactionFailure ? (
+                        <div className="row two-col-ctas mt-3">
+                          <div className="col-6">
+                            <Button
+                              block
+                              type="text"
+                              shape="round"
+                              size="middle"
+                              onClick={onTransactionStart}>
+                              {t('general.retry')}
+                            </Button>
+                          </div>
+                          <div className="col-6">
+                            <Button
+                              block
+                              type="primary"
+                              shape="round"
+                              size="middle"
+                              onClick={() => refreshPage()}>
+                              {t('general.refresh')}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          block
+                          type="primary"
+                          shape="round"
+                          size="middle"
+                          onClick={hideSwapTransactionModal}>
+                          {t('general.cta-close')}
+                        </Button>
                       )}
                     </>
                   )}
-                  <Button
-                    block
-                    type="primary"
-                    shape="round"
-                    size="middle"
-                    onClick={hideSwapTransactionModal}>
-                    {t("general.cta-close")}
-                  </Button>
                 </>
               ) : (
                 <>
                   <Spin indicator={bigLoadingIcon} className="icon" />
                   <h4 className="font-bold mb-4 text-uppercase">
-                    {t("transactions.status.tx-wait")}...
+                    {t('transactions.status.tx-wait')}...
                   </h4>
                 </>
               )}
             </div>
           </Modal>
+
         </div>
       </Spin>
     </>

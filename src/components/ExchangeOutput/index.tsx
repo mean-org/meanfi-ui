@@ -1,10 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconCaretDown } from "../../Icons";
-import { Identicon } from "../Identicon";
 import { AppStateContext } from "../../contexts/appstate";
 import { formatAmount } from "../../utils/utils";
 import { TokenInfo } from "@mean-dao/hybrid-liquidity-ag/lib/types";
+import { TokenDisplay } from "../TokenDisplay";
 
 export const ExchangeOutput = (props: {
   fromToken: TokenInfo | undefined;
@@ -20,7 +19,11 @@ export const ExchangeOutput = (props: {
 }) => {
 
   const { t } = useTranslation("common");
-  const { coinPrices } = useContext(AppStateContext);
+  const {
+    coinPrices,
+    loadingPrices,
+    refreshPrices,
+  } = useContext(AppStateContext);
   const [selectedClient, setSelectedClient] = useState<any>();
   const [savings, setSavings] = useState(0);
 
@@ -101,7 +104,7 @@ export const ExchangeOutput = (props: {
         {/* Balance row */}
         <div className="flex-fixed-right">
           <div className="left inner-label">
-            <span>{t("transactions.send-amount.label-right")}:</span>
+            <span>{t('transactions.send-amount.label-right')}:</span>
             <span>
               {`${
                 props.toToken && props.toTokenBalance
@@ -110,7 +113,7 @@ export const ExchangeOutput = (props: {
               }`}
             </span>
             {props.toTokenBalance && (
-              <span className="balance-amount">
+              <span className={`balance-amount ${loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'}`} onClick={() => refreshPrices()}>
                 {`(~$${
                   props.toToken && props.toTokenBalance
                     ? formatAmount(
@@ -124,15 +127,11 @@ export const ExchangeOutput = (props: {
             )}
           </div>
           <div className="right inner-label">
-            <span>
-              ~$
-              {props.toToken && props.toTokenBalance
-                ? formatAmount(
-                    parseFloat(props.toTokenBalance) *
-                      getPricePerToken(props.toToken as TokenInfo),
-                    2
-                  )
-                : "0.00"}
+            <span className={loadingPrices ? 'click-disabled fg-orange-red pulsate' : 'simplelink'} onClick={() => refreshPrices()}>
+              ~${props.toToken && props.toTokenBalance
+                ? formatAmount(parseFloat(props.toTokenBalance) * getPricePerToken(props.toToken as TokenInfo), 2)
+                : "0.00"
+              }
             </span>
           </div>
         </div>
@@ -141,35 +140,14 @@ export const ExchangeOutput = (props: {
         <div className="flex-fixed-left">
           <div className="left">
             <span className="add-on simplelink">
-              <div className="token-selector" onClick={props.onSelectToken}>
-                {props.toToken ? (
-                  <>
-                    <div className="token-icon" style={{ marginRight: "8px" }}>
-                      {props.toToken.logoURI ? (
-                        <img
-                          alt={`${props.toToken.name}`}
-                          width={20}
-                          height={20}
-                          src={props.toToken.logoURI}
-                        />
-                      ) : (
-                        <Identicon
-                          address={props.toToken.address}
-                          style={{ width: "24", display: "inline-flex" }}
-                        />
-                      )}
-                    </div>
-                    <div className="token-symbol">{props.toToken.symbol}</div>
-                  </>
-                ) : (
-                  <span className="notoken-label">
-                    {t("swap.token-select-destination")}
-                  </span>
-                )}
-                <span className="flex-center">
-                  <IconCaretDown className="mean-svg-icons" />
-                </span>
-              </div>
+              <TokenDisplay onClick={props.onSelectToken}
+                  mintAddress={props.toToken ? props.toToken.address : ''}
+                  name={props.toToken ? props.toToken.name : ''}
+                  className="simplelink"
+                  noTokenLabel={t('swap.token-select-destination')}
+                  showName={false}
+                  showCaretDown={true}
+              />
             </span>
           </div>
           <div className="right">
@@ -205,7 +183,7 @@ export const ExchangeOutput = (props: {
                   selectedClient &&
                   selectedClient.exchange.fromAmm === c.exchange.fromAmm;
 
-                if (selectedClient.pool && c.pool) {
+                if (selected && selectedClient.pool && c.pool) {
                   selected = selectedClient.pool.name === c.pool.name;
                 }
 
@@ -229,7 +207,7 @@ export const ExchangeOutput = (props: {
                             selected ? "bg-orange-red" : "disabled"
                           }`}
                         >
-                          {t("swap.clients-label-savings")}:{" "}
+                          {t('swap.routes-best-price-label')}:{" "}
                           {formatAmount(
                             savings,
                             props.toToken?.decimals || 2

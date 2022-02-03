@@ -1,6 +1,6 @@
-export const IconSwapFlip = (props: {className: string}) => {
+export const IconSwapFlip = (props: {className: string; style?: React.CSSProperties;}) => {
     return (
-        <svg className={props.className} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g transform="matrix(-0.235961,0,0,-0.235961,14.2416,14.8905)">
                 <g>
                     <path fillRule="nonzero" fillOpacity="0" stroke="currentColor" strokeWidth="6px" d="M28.946,-27.937C28.967,-9.606 29.015,33.753 29.034,50.236" fill="none" />

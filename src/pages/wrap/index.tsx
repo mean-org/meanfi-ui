@@ -26,6 +26,7 @@ import { PreFooter } from "../../components/PreFooter";
 import { Identicon } from "../../components/Identicon";
 import { useNativeAccount } from "../../contexts/accounts";
 import { customLogger } from '../..';
+import { TokenDisplay } from '../../components/TokenDisplay';
 
 const bigLoadingIcon = <LoadingOutlined style={{ fontSize: 48 }} spin />;
 
@@ -114,6 +115,7 @@ export const WrapView = () => {
     let transaction: Transaction;
     let signedTransaction: Transaction;
     let signature: string;
+    let encodedTx: string;
     const transactionLog: any[] = [];
 
     setTransactionCancelled(false);
@@ -139,7 +141,7 @@ export const WrapView = () => {
           result: ''
         });
 
-        // Abort transaction in not enough balance to pay for gas fees and trigger TransactionStatus error
+        // Abort transaction if not enough balance to pay for gas fees and trigger TransactionStatus error
         // Whenever there is a flat fee, the balance needs to be higher than the sum of the flat fee plus the network fee
         const myFees = getTxFeeAmount(wrapFees, amount);
         if (nativeBalance < wrapFees.blockchainFee + myFees) {
@@ -151,7 +153,7 @@ export const WrapView = () => {
             action: getTransactionStatusForLogs(TransactionStatus.TransactionStartFailure),
             result: ''
           });
-          customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+          customLogger.logWarning('Wrap transaction failed', { transcript: transactionLog });
           return false;
         }
 
@@ -203,18 +205,32 @@ export const WrapView = () => {
         return await wallet
           .signTransaction(transaction)
           .then((signed: Transaction) => {
-            consoleOut(
-              "signTransaction returned a signed transaction:",
-              signed
-            );
+            consoleOut("signTransaction returned a signed transaction:", signed);
             signedTransaction = signed;
+            // Try signature verification by serializing the transaction
+            try {
+              encodedTx = signedTransaction.serialize().toString('base64');
+              consoleOut('encodedTx:', encodedTx, 'orange');
+            } catch (error) {
+              console.error(error);
+              setTransactionStatus({
+                lastOperation: TransactionStatus.SignTransaction,
+                currentOperation: TransactionStatus.SignTransactionFailure
+              });
+              transactionLog.push({
+                action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
+                result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
+              });
+              customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
+              return false;
+            }
             setTransactionStatus({
               lastOperation: TransactionStatus.SignTransactionSuccess,
               currentOperation: TransactionStatus.SendTransaction,
             });
             transactionLog.push({
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionSuccess),
-              result: {signer: wallet.publicKey.toBase58(), signature: signed.signature ? signed.signature.toString() : '-'}
+              result: {signer: wallet.publicKey.toBase58()}
             });
             return true;
           })
@@ -228,7 +244,7 @@ export const WrapView = () => {
               action: getTransactionStatusForLogs(TransactionStatus.SignTransactionFailure),
               result: {signer: `${wallet.publicKey.toBase58()}`, error: `${error}`}
             });
-            customLogger.logWarning('Wrap transaction failed', { transcript: transactionLog });
+            customLogger.logError('Wrap transaction failed', { transcript: transactionLog });
             return false;
           });
       } else {
@@ -247,10 +263,9 @@ export const WrapView = () => {
     };
 
     const sendTx = async (): Promise<boolean> => {
-      const encodedTx = signedTransaction.serialize().toString('base64');
       if (wallet) {
         return await connection
-          .sendEncodedTransaction(encodedTx, { preflightCommitment: "confirmed" })
+          .sendEncodedTransaction(encodedTx)
           .then((sig) => {
             consoleOut("sendEncodedTransaction returned a signature:", sig);
             setTransactionStatus({
@@ -293,7 +308,7 @@ export const WrapView = () => {
 
     const confirmTx = async (): Promise<boolean> => {
       return await connection
-        .confirmTransaction(signature, "confirmed")
+        .confirmTransaction(signature, "finalized")
         .then((result) => {
           consoleOut("confirmTransaction result:", result);
           setTransactionStatus({
@@ -335,8 +350,6 @@ export const WrapView = () => {
             const confirmed = await confirmTx();
             consoleOut("confirmed:", confirmed);
             if (confirmed) {
-              // Report success
-              customLogger.logInfo('Wrap transaction successful', { transcript: transactionLog });
               setIsBusy(false);
             } else {
               setIsBusy(false);
@@ -361,6 +374,7 @@ export const WrapView = () => {
       setWrapAmount("");
       hideTransactionModal();
     }
+    resetTransactionStatus();
   };
 
   const setValue = (value: string) => {
@@ -388,6 +402,13 @@ export const WrapView = () => {
       ? true
       : false;
   };
+
+  const resetTransactionStatus = () => {
+    setTransactionStatus({
+      lastOperation: TransactionStatus.Iddle,
+      currentOperation: TransactionStatus.Iddle
+    });
+  }
 
   const isSuccess = (): boolean => {
     return (
@@ -433,7 +454,7 @@ export const WrapView = () => {
                 <div className="transaction-field-row">
                   <span className="field-label-left">&nbsp;</span>
                   <span className="field-label-right">
-                    <span>{t("faucet.current-sol-balance")}:</span>
+                    <span>{t('faucet.current-sol-balance')}:</span>
                     <span className="balance-amount">
                       {`${nativeBalance
                           ? getTokenAmountAndSymbolByTokenAddress(
@@ -470,38 +491,18 @@ export const WrapView = () => {
                       {getMaxPossibleAmount() > 0 && (
                         <div className="token-max simplelink"
                           onClick={() => {
-                            setValue(
-                              getTokenAmountAndSymbolByTokenAddress(
-                                getMaxPossibleAmount(),
-                                WRAPPED_SOL_MINT_ADDRESS,
-                                true,
-                              )
-                            );
+                            setValue(getMaxPossibleAmount().toFixed(selectedToken?.decimals));
                           }}>
                           MAX
                         </div>
                       )}
                       {selectedToken && (
-                        <div className="token-selector p-0">
-                          <div className="token-icon">
-                            {selectedToken.logoURI ? (
-                              <img
-                                alt={`${selectedToken.name}`}
-                                width={20}
-                                height={20}
-                                src={selectedToken.logoURI}
-                              />
-                            ) : (
-                              <Identicon
-                                address={selectedToken.address}
-                                style={{ width: "24", display: "inline-flex" }}
-                              />
-                            )}
-                          </div>
-                          <div className="token-symbol">
-                            SOL
-                          </div>
-                        </div>
+                        <TokenDisplay onClick={() => {}}
+                          mintAddress={selectedToken.address}
+                          name={selectedToken.name}
+                          showName={false}
+                          showCaretDown={false}
+                        />
                       )}
                     </div>
                   </div>
@@ -510,15 +511,15 @@ export const WrapView = () => {
                   <span className="field-label-left">
                     {nativeBalance <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees)) ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-low")}
+                        {t('transactions.validation.amount-low')}
                       </span>
                     ) : parseFloat(wrapAmount) > getMaxPossibleAmount() ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-sol-high")}
+                        {t('transactions.validation.amount-sol-high')}
                       </span>
                     ) : parseFloat(wrapAmount) <= (wrapFees.blockchainFee + getTxPercentFeeAmount(wrapFees, wrapAmount)) ? (
                       <span className="fg-red">
-                        {t("transactions.validation.amount-lt-fee")}
+                        {t('transactions.validation.amount-lt-fee')}
                       </span>
                     ) : (
                       <span>&nbsp;</span>
@@ -529,7 +530,7 @@ export const WrapView = () => {
               </div>
               <div className="p-2 mb-2">
                 {infoRow(
-                  t("faucet.wrap-transaction-fee") + ":",
+                  t('faucet.wrap-transaction-fee') + ":",
                   `${
                     wrapFees
                       ? "~" +
@@ -543,7 +544,7 @@ export const WrapView = () => {
                 )}
                 {isValidInput() &&
                   infoRow(
-                    t("faucet.wrapped-amount") + ":",
+                    t('faucet.wrapped-amount') + ":",
                     `${
                       wrapFees
                         ? "~" +
@@ -568,7 +569,7 @@ export const WrapView = () => {
                 disabled={!isValidInput()}
                 onClick={onTransactionStart}
               >
-                {t("faucet.wrap-sol-cta")}
+                {t('faucet.wrap-sol-cta')}
               </Button>
               {/* Transaction execution modal */}
               <Modal
@@ -585,15 +586,15 @@ export const WrapView = () => {
                     <>
                       <Spin indicator={bigLoadingIcon} className="icon" />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus, t)}
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
-                        {t("transactions.status.tx-wrap-operation")}{" "}
+                        {t('transactions.status.tx-wrap-operation')}{" "}
                         {wrapAmount} SOL ...
                       </p>
-                      <div className="indication">
-                        {t("transactions.status.instructions")}
-                      </div>
+                      {transactionStatus.currentOperation === TransactionStatus.SignTransaction && (
+                        <div className="indication">{t('transactions.status.instructions')}</div>
+                      )}
                     </>
                   ) : isSuccess() ? (
                     <>
@@ -602,10 +603,10 @@ export const WrapView = () => {
                         className="icon"
                       />
                       <h4 className="font-bold mb-1 text-uppercase">
-                        {getTransactionOperationDescription(transactionStatus, t)}
+                        {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                       </h4>
                       <p className="operation">
-                        {t("transactions.status.tx-wrap-operation-success")}.
+                        {t('transactions.status.tx-wrap-operation-success')}.
                       </p>
                       <Button
                         block
@@ -614,7 +615,7 @@ export const WrapView = () => {
                         size="middle"
                         onClick={hideTransactionModal}
                       >
-                        {t("general.cta-close")}
+                        {t('general.cta-close')}
                       </Button>
                     </>
                   ) : isError() ? (
@@ -626,7 +627,7 @@ export const WrapView = () => {
                       {transactionStatus.currentOperation ===
                       TransactionStatus.TransactionStartFailure ? (
                         <h4 className="mb-4">
-                          {t("transactions.status.tx-start-failure", {
+                          {t('transactions.status.tx-start-failure', {
                             accountBalance: `${getTokenAmountAndSymbolByTokenAddress(
                               nativeBalance,
                               WRAPPED_SOL_MINT_ADDRESS,
@@ -641,9 +642,7 @@ export const WrapView = () => {
                         </h4>
                       ) : (
                         <h4 className="font-bold mb-1 text-uppercase">
-                          {getTransactionOperationDescription(
-                            transactionStatus, t
-                          )}
+                          {getTransactionOperationDescription(transactionStatus.currentOperation, t)}
                         </h4>
                       )}
                       <Button
@@ -652,14 +651,14 @@ export const WrapView = () => {
                         shape="round"
                         size="middle"
                         onClick={hideTransactionModal}>
-                        {t("general.cta-close")}
+                        {t('general.cta-close')}
                       </Button>
                     </>
                   ) : (
                     <>
                       <Spin indicator={bigLoadingIcon} className="icon" />
                       <h4 className="font-bold mb-4 text-uppercase">
-                        {t("transactions.status.tx-wait")}...
+                        {t('transactions.status.tx-wait')}...
                       </h4>
                     </>
                   )}
@@ -667,7 +666,7 @@ export const WrapView = () => {
               </Modal>
             </div>
           ) : (
-            <p>{t("general.not-connected")}.</p>
+            <p>{t('general.not-connected')}.</p>
           )}
         </div>
       </div>

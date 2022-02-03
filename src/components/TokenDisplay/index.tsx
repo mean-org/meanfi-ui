@@ -1,56 +1,77 @@
 import React from "react";
-import { useMint, useAccountByMint } from "../../contexts/accounts";
-import { TokenIcon } from "../TokenIcon";
+import { TokenInfo } from "@solana/spl-token-registry";
+import { IconCaretDown } from "../../Icons";
+import { getTokenByMintAddress } from "../../utils/tokens";
+import { shortenAddress } from "../../utils/utils";
+import { Identicon } from "../Identicon";
 
 export const TokenDisplay = (props: {
-  name: string;
-  mintAddress: string;
+  fullTokenInfo?: TokenInfo | undefined;
+  name?: string;
   icon?: JSX.Element;
-  showBalance?: boolean;
+  className?: string;
+  mintAddress: string;
+  showName?: boolean;
+  symbol?: string;
+  showCaretDown?: boolean;
+  noTokenLabel?: string;
+  onClick: any;
 }) => {
-  const { showBalance, mintAddress, name, icon } = props;
-  const tokenMint = useMint(mintAddress);
-  const tokenAccount = useAccountByMint(mintAddress);
-
-  let balance = 0;
-  let hasBalance = false;
-  if (showBalance) {
-    if (tokenAccount && tokenMint) {
-      balance =
-        tokenAccount.info.amount.toNumber() / Math.pow(10, tokenMint.decimals);
-      hasBalance = balance > 0;
-    }
-  }
+  const { name, icon, className, mintAddress, showName, showCaretDown, noTokenLabel, fullTokenInfo } = props;
+  const token = getTokenByMintAddress(mintAddress);
 
   return (
     <>
-      <div
-        title={mintAddress}
-        key={mintAddress}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {icon || <TokenIcon mintAddress={mintAddress} />}
-          {name}
-        </div>
-        {showBalance ? (
-          <span
-            title={balance.toString()}
-            key={mintAddress}
-            className="token-balance"
-          >
-            &nbsp;{" "}
-            {hasBalance
-              ? balance < 0.001
-                ? "<0.001"
-                : balance.toFixed(3)
-              : "-"}
-          </span>
-        ) : null}
+      <div title={mintAddress} key={mintAddress} className={`token-selector ${className || ''}`} onClick={props.onClick}>
+        {mintAddress ? (
+          <>
+            <div className="token-icon">
+              {fullTokenInfo ? (
+                <>
+                  {fullTokenInfo && fullTokenInfo.logoURI ? (
+                    <img alt={`${fullTokenInfo.name}`} width={20} height={20} src={fullTokenInfo.logoURI} />
+                  ) : (
+                    <Identicon address={mintAddress} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </>
+              ) : icon ? icon : (
+                <>
+                  {token && token.logoURI ? (
+                    <img alt={`${token.name}`} width={20} height={20} src={token.logoURI} />
+                  ) : (
+                    <Identicon address={mintAddress} style={{ width: "24", display: "inline-flex" }} />
+                  )}
+                </>
+              )}
+            </div>
+            {fullTokenInfo ? (
+              <div className="token-symbol">{fullTokenInfo.symbol}</div>
+            ) : props.symbol ? (
+              <div className="token-symbol">{props.symbol}</div>
+            ) : token && token.symbol ? (
+              <div className="token-symbol">{token.symbol}</div>
+            ) : (
+              <div className="token-symbol">{shortenAddress(mintAddress)}</div>
+            )}
+            {showName && (
+              <div className="token-name">{fullTokenInfo ? fullTokenInfo.name : name ? `(${name})` : token ? `(${token.name})` : ''}</div>
+            )}
+            {showCaretDown && (
+              <span className="flex-center dropdown-arrow">
+                <IconCaretDown className="mean-svg-icons" />
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <span className="notoken-label">{noTokenLabel}</span>
+            {showCaretDown && (
+              <span className="flex-center dropdown-arrow">
+                <IconCaretDown className="mean-svg-icons" />
+              </span>
+            )}
+          </>
+        )}
       </div>
     </>
   );

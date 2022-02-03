@@ -4,3 +4,8 @@ export class Language {
     flag!: string;
     locale!: string;
 }
+
+export interface Country {
+    isoCode: string;
+    name: string;
+}

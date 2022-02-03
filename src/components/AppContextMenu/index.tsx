@@ -6,7 +6,6 @@ import {
   IconChat,
   IconCodeBlock,
   IconLiveHelp,
-  IconLogout,
   IconMoon,
   IconSettings,
   IconShareBox,
@@ -24,13 +23,10 @@ import { Link } from 'react-router-dom';
 
 export const AppContextMenu = () => {
 
-  const { connected, disconnect, resetWalletProvider } = useWallet();
+  const { connected } = useWallet();
   const {
     theme,
-    referrals,
     setTheme,
-    setSelectedStream,
-    setStreamList
   } = useContext(AppStateContext);
 
   const { t, i18n } = useTranslation("common");
@@ -69,12 +65,10 @@ export const AppContextMenu = () => {
   const showFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(true), []);
   const hideFriendReferralModal = useCallback(() => setIsFriendReferralModalVisibility(false), []);
 
-  const onDisconnectWallet = () => {
-    setSelectedStream(undefined);
-    setStreamList(undefined);
-    disconnect();
-    resetWalletProvider();
-  }
+  // const onDisconnectWallet = () => {
+  //   disconnect();
+  //   resetWalletProvider();
+  // }
 
   const onSwitchTheme = () => {
     if (theme === 'light') {
@@ -122,7 +116,8 @@ export const AppContextMenu = () => {
       <Menu.Item key="3" onClick={() => openFriendReferralModal()}>
           <IconShareBox className="mean-svg-icons" />
           <span className="menu-item-text">
-            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: connected && referrals ? `(${referrals})` : '' })}
+            {t('ui-menus.app-context-menu.refer-a-friend', { referrals: '' })}
+            {/* {t('ui-menus.app-context-menu.refer-a-friend', { referrals: connected && referrals ? `(${referrals})` : '' })} */}
           </span>
       </Menu.Item>
       <Menu.Divider />

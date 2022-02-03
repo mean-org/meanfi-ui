@@ -1,13 +1,16 @@
 import Wallet from '@project-serum/sol-wallet-adapter';
 import {
     BaseMessageSignerWalletAdapter,
-    pollUntilReady,
     WalletAdapterNetwork,
+    WalletConnectionError,
     WalletDisconnectedError,
     WalletDisconnectionError,
+    WalletError,
     WalletNotConnectedError,
+    WalletNotReadyError,
     WalletSignMessageError,
     WalletSignTransactionError,
+    WalletTimeoutError,
     WalletWindowBlockedError,
     WalletWindowClosedError,
 } from '@solana/wallet-adapter-base';
@@ -28,8 +31,6 @@ declare const window: SolletWindow;
 export interface SolletWalletAdapterConfig {
     provider?: string | SolletWallet;
     network?: WalletAdapterNetwork;
-    pollInterval?: number;
-    pollCount?: number;
 }
 
 export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
@@ -40,23 +41,14 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
 
     constructor(config: SolletWalletAdapterConfig = {}) {
         super();
-        this._provider = config.provider || (typeof window === 'undefined' ? undefined : window.sollet);
+        this._provider = config.provider;
         this._network = config.network || WalletAdapterNetwork.Mainnet;
         this._connecting = false;
         this._wallet = null;
-
-        if (!this.ready) pollUntilReady(this, config.pollInterval || 1000, config.pollCount || 3);
     }
 
     get publicKey(): PublicKey | null {
         return this._wallet?.publicKey || null;
-    }
-
-    get ready(): boolean {
-        return (
-            typeof this._provider === 'string' ||
-            (typeof window !== 'undefined' && typeof window.sollet?.postMessage === 'function')
-        );
     }
 
     get connecting(): boolean {
@@ -67,12 +59,31 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
         return !!this._wallet?.connected;
     }
 
+    async ready(): Promise<boolean> {
+        if (typeof window === 'undefined' || typeof document === 'undefined') return false;
+
+        if (typeof this._provider === 'string' || typeof this._provider?.postMessage === 'function') return true;
+
+        if (document.readyState === 'complete') return typeof window.sollet?.postMessage === 'function';
+
+        return new Promise((resolve) => {
+            function listener() {
+                window.removeEventListener('load', listener);
+                resolve(typeof window.sollet?.postMessage === 'function');
+            }
+
+            window.addEventListener('load', listener);
+        });
+    }
+
     async connect(): Promise<void> {
         try {
             if (this.connected || this.connecting) return;
             this._connecting = true;
 
-            const provider = this._provider || (typeof window !== 'undefined' && window.sollet);
+            if (!(await this.ready())) throw new WalletNotReadyError();
+
+            const provider = this._provider || window!.sollet!;
             if (!provider) {
                 notify({
                     message: "Sollet Error",
@@ -80,7 +91,6 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                     type: 'error'
                 });
                 return;
-                // throw new WalletNotFoundError();
             }
 
             let wallet: Wallet;
@@ -127,15 +137,7 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                             }, 100);
                         } else {
                             // HACK: sol-wallet-adapter doesn't reject or emit an event if the extension is closed or ignored
-                            timeout = setTimeout(() => {
-                                notify({
-                                    message: "Sollet Error",
-                                    description: "Sollet extension closed or timed out",
-                                    type: 'error'
-                                });
-                                consoleOut(`Sollet Extension closed or ignored`);
-                                reject();
-                            }, 15000);
+                            timeout = setTimeout(() => reject(new WalletTimeoutError()), 10000);
                         }
                     });
                 } finally {
@@ -143,11 +145,9 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                     if (interval) clearInterval(interval);
                 }
             } catch (error: any) {
-                // if (error instanceof WalletError) throw error;
-                // throw new WalletConnectionError(error?.message, error);
                 consoleOut(error, error);
-                // throw error;
-                return;
+                if (error instanceof WalletError) throw error;
+                throw new WalletConnectionError(error?.message, error);
             }
 
             wallet.on('disconnect', this._disconnected);
@@ -179,6 +179,8 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                     (wallet as any).handleDisconnect = (...args: unknown[]): unknown => {
                         clearTimeout(timeout);
                         resolve();
+                        // HACK: sol-wallet-adapter rejects with an uncaught promise error
+                        (wallet as any)._responsePromises = new Map();
                         return handleDisconnect.apply(wallet, args);
                     };
 
@@ -190,7 +192,7 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
                         (error) => {
                             clearTimeout(timeout);
                             // HACK: sol-wallet-adapter rejects with an error on disconnect
-                            if (error.message === 'Wallet disconnected') {
+                            if (error?.message === 'Wallet disconnected') {
                                 resolve();
                             } else {
                                 reject(error);
@@ -203,9 +205,9 @@ export class SolletWalletAdapter extends BaseMessageSignerWalletAdapter {
             } finally {
                 (wallet as any).handleDisconnect = handleDisconnect;
             }
-
-            this.emit('disconnect');
         }
+
+        this.emit('disconnect');
     }
 
     async signTransaction(transaction: Transaction): Promise<Transaction> {

@@ -43,7 +43,7 @@ export const LanguageSelector = (props: {
     <Modal
       className="mean-modal simple-modal"
       title={
-        <div className="modal-title">{t("language-selector.modal-title")}</div>
+        <div className="modal-title">{t('language-selector.modal-title')}</div>
       }
       footer={null}
       visible={props.isVisible}

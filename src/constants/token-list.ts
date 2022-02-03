@@ -1,5 +1,24 @@
 import { TokenInfo } from '@solana/spl-token-registry';
 
+export const CUSTOM_USDC = {
+    chainId: 103,
+    address: 'FsWi13eBPngZ87JTyEcQsPjbQqefoPfLJyhtbNeGyLCX',
+    symbol: 'USDC',
+    name: 'USD Coin',
+    decimals: 6,
+    logoURI: 'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+    tags: [
+        'stablecoin',
+    ],
+    extensions: {
+        website: 'https://www.centre.io/',
+        coingeckoId: 'usd-coin',
+    },
+}
+
+export const PINNED_TOKENS = ['USDC', 'ETH', 'BTC', 'USDT', 'wSOL', 'MEAN'];
+export const COMMON_EXCHANGE_TOKENS = ['USDC', 'USDT', 'MEAN', 'wSOL'];
+
 export const MEAN_TOKEN_LIST: TokenInfo[] = [
     {
         chainId: 101,
@@ -247,6 +266,65 @@ export const MEAN_TOKEN_LIST: TokenInfo[] = [
         extensions: {
             coingeckoId: "jet"
         }
+    },
+    {
+        chainId: 101,
+        address: "PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y",
+        symbol: "PORT",
+        name: "Port Finance Token",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/PoRTjZMPXb9T7dyU7tpLEZRQj7e6ssfAE62j2oQuc6y/PORT.png",
+        tags: [],
+        extensions: {
+          serumV3Usdc: "8x8jf7ikJwgP9UthadtiGFgfFuyyyYPHL3obJAuxFWko"
+        }
+    },
+    {
+        chainId: 101,
+        address: "xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW",
+        symbol: "SLIM",
+        name: "Solanium",
+        decimals: 6,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/xxxxa1sKNGwFtw2kFn8XauW9xq8hBZ5kVtcSesTT9fW/logo.png",
+        extensions: { }
+    },
+    {
+        chainId: 101,
+        address: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+        symbol: "mSOL",
+        name: "Marinade staked SOL (mSOL)",
+        decimals: 9,
+        logoURI: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png",
+        extensions: {
+            serumV3Usdc: "6oGsL2puUgySccKzn9XA9afqF217LfxP5ocq4B3LWsjy"
+        }
+    },
+    {
+      chainId: 101,
+      address: 'MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD',
+      symbol: 'MEAN',
+      name: 'MEAN',
+      decimals: 6,
+      logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+      extensions: {
+        discord: 'https://discord.meanfi.com/',
+        medium: 'https://meandao.medium.com',
+        twitter: 'https://twitter.com/meanfinance',
+        website: 'https://www.meanfi.com/',
+      },
+    },
+    {
+      chainId: 103,
+      address: '9S52DYSokWP7kGutbxMsWU5VuGx5by7QPP1u6H7fPuni',
+      symbol: 'MEAN',
+      name: 'MEAN',
+      decimals: 6,
+      logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MEANeD3XDdUmNMsRGjASkSWdC8prLYsoRJ61pPeHctD/logo.svg',
+      extensions: {
+        discord: 'https://discord.meanfi.com/',
+        medium: 'https://meandao.medium.com',
+        twitter: 'https://twitter.com/meanfinance',
+        website: 'https://www.meanfi.com/',
+      },
     }
-
 ];

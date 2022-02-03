@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { findATokenAddress, getTokenByMintAddress, shortenAddress, useLocalStorageState } from "../utils/utils";
 import {
+  ALLOWED_ADDRESSES_LIST,
   BANNED_TOKENS,
   DDCA_FREQUENCY_OPTIONS,
   PRICE_REFRESH_TIMEOUT,
@@ -12,7 +13,6 @@ import { ContractDefinition } from "../models/contract-definition";
 import { DdcaFrequencyOption } from "../models/ddca-models";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { StreamActivity, StreamInfo } from '@mean-dao/money-streaming/lib/types';
-import { getStream, listStreamActivity, listStreams } from '@mean-dao/money-streaming/lib/utils';
 import { useWallet } from "./wallet";
 import { getNetworkIdByCluster, useConnection, useConnectionConfig } from "./connection";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
@@ -22,16 +22,20 @@ import { getPrices } from "../utils/api";
 import { notify } from "../utils/notifications";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { Connection } from "@solana/web3.js";
 import { UserTokenAccount } from "../models/transactions";
-import { MEAN_TOKEN_LIST } from "../constants/token-list";
+import { MEAN_TOKEN_LIST, PINNED_TOKENS } from "../constants/token-list";
 import { NATIVE_SOL } from "../utils/tokens";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { MappedTransaction } from "../utils/history";
-import { consoleOut } from "../utils/ui";
+import { consoleOut, isProd } from "../utils/ui";
 import { appConfig } from "..";
-import { ChainId } from "@saberhq/token-utils";
 import { DdcaAccount } from "@mean-dao/ddca";
+import { TransactionStatusContext } from "./transaction-status";
+import { MoneyStreaming } from "@mean-dao/money-streaming/lib/money-streaming";
+import { TreasuryTypeOption } from "../models/treasuries";
+import { TREASURY_TYPE_OPTIONS } from "../constants/treasury-type-options";
+import { initialSummary, StreamsSummary } from "../models/streams";
+import { MSP, Stream } from "@mean-dao/msp";
 
 export interface TransactionStatusInfo {
   lastOperation?: TransactionStatus | undefined;
@@ -40,6 +44,7 @@ export interface TransactionStatusInfo {
 
 interface AppStateConfig {
   theme: string | undefined;
+  isWhitelisted: boolean;
   detailsPanelOpen: boolean;
   isDepositOptionsModalVisible: boolean;
   tokenList: TokenInfo[];
@@ -48,26 +53,33 @@ interface AppStateConfig {
   fromCoinAmount: string;
   effectiveRate: number;
   coinPrices: any | null;
+  loadingPrices: boolean;
   contract: ContractDefinition | undefined;
-  ddcaOption: DdcaFrequencyOption | undefined;
+  treasuryOption: TreasuryTypeOption | undefined;
   recipientAddress: string;
   recipientNote: string;
   paymentStartDate: string | undefined;
   paymentRateAmount: string;
   paymentRateFrequency: PaymentRateType;
   timeSheetRequirement: TimesheetRequirementOption;
+  isVerifiedRecipient: boolean;
+  isAllocationReserved: boolean;
   transactionStatus: TransactionStatusInfo;
   previousWalletConnectState: boolean;
   loadingStreams: boolean;
-  streamList: StreamInfo[] | undefined;
-  selectedStream: StreamInfo | undefined;
-  streamDetail: StreamInfo | undefined;
+  streamListv1: StreamInfo[] | undefined;
+  streamListv2: Stream[] | undefined;
+  streamList: Array<Stream | StreamInfo> | undefined;
+  selectedStream: Stream | StreamInfo | undefined;
+  streamDetail: Stream | StreamInfo | undefined;
+  highLightableStreamId: string | undefined;
   streamProgramAddress: string;
+  streamV2ProgramAddress: string;
   loadingStreamActivity: boolean;
   streamActivity: StreamActivity[];
   customStreamDocked: boolean;
-  referrals: number;
   // Accounts
+  shouldLoadTokens: boolean;
   splTokenList: UserTokenAccount[];
   userTokens: UserTokenAccount[];
   selectedAsset: UserTokenAccount | undefined;
@@ -76,9 +88,15 @@ interface AppStateConfig {
   lastTxSignature: string;
   addAccountPanelOpen: boolean;
   canShowAccountDetails: boolean;
+  streamsSummary: StreamsSummary;
+  lastStreamsSummary: StreamsSummary;
+  loadingStreamsSummary: boolean;
   // DDCAs
+  ddcaOption: DdcaFrequencyOption | undefined;
   recurringBuys: DdcaAccount[];
   loadingRecurringBuys: boolean;
+  // Multisig
+  highLightableMultisigId: string | undefined;
   setTheme: (name: string) => void;
   setDtailsPanelOpen: (state: boolean) => void;
   showDepositOptionsModal: () => void;
@@ -86,42 +104,53 @@ interface AppStateConfig {
   setSelectedToken: (token: TokenInfo | undefined) => void;
   setSelectedTokenBalance: (balance: number) => void;
   setFromCoinAmount: (data: string) => void;
+  refreshPrices: () => void;
   setEffectiveRate: (rate: number) => void;
   setCoinPrices: (prices: any) => void;
   refreshTokenBalance: () => void;
   resetContractValues: () => void;
   refreshStreamList: (reset?: boolean) => void;
   setContract: (name: string) => void;
-  setDdcaOption: (name: string) => void;
+  setTreasuryOption: (option: TreasuryTypeOption | undefined) => void;
   setRecipientAddress: (address: string) => void;
   setRecipientNote: (note: string) => void;
   setPaymentStartDate: (date: string) => void;
   setPaymentRateAmount: (data: string) => void;
   setPaymentRateFrequency: (freq: PaymentRateType) => void;
   setTimeSheetRequirement: (req: TimesheetRequirementOption) => void;
+  setIsVerifiedRecipient: (state: boolean) => void;
+  setIsAllocationReserved: (state: boolean) => void;
   setTransactionStatus: (status: TransactionStatusInfo) => void;
   setPreviousWalletConnectState: (state: boolean) => void;
   setLoadingStreams: (state: boolean) => void;
-  setStreamList: (list: StreamInfo[] | undefined) => void;
-  setSelectedStream: (stream: StreamInfo | undefined) => void;
-  setStreamDetail: (stream: StreamInfo) => void;
-  openStreamById: (streamId: string) => void;
-  getStreamActivity: (streamId: string) => void;
+  setStreamList: (list: Array<StreamInfo | Stream> | undefined) => void;
+  setSelectedStream: (stream: Stream | StreamInfo | undefined) => void;
+  setStreamDetail: (stream: Stream | StreamInfo | undefined) => void;
+  setHighLightableStreamId: (id: string | undefined) => void,
+  openStreamById: (streamId: string, dock: boolean) => void;
+  getStreamActivity: (streamId: string, version: number) => void;
   setCustomStreamDocked: (state: boolean) => void;
-  setReferrals: (value: number) => void;
   // Accounts
+  setShouldLoadTokens: (state: boolean) => void;
   setTransactions: (map: MappedTransaction[] | undefined, addItems?: boolean) => void;
   setSelectedAsset: (asset: UserTokenAccount | undefined) => void;
   setAccountAddress: (address: string) => void;
   setAddAccountPanelOpen: (state: boolean) => void;
   setCanShowAccountDetails: (state: boolean) => void;
+  setStreamsSummary: (summary: StreamsSummary) => void;
+  setLastStreamsSummary: (summary: StreamsSummary) => void;
+  setLoadingStreamsSummary: (state: boolean) => void;
   // DDCAs
+  setDdcaOption: (name: string) => void;
   setRecurringBuys: (recurringBuys: DdcaAccount[]) => void;
   setLoadingRecurringBuys: (state: boolean) => void;
+  // Multisig
+  setHighLightableMultisigId: (id: string | undefined) => void,
 }
 
 const contextDefaultValues: AppStateConfig = {
   theme: undefined,
+  isWhitelisted: false,
   detailsPanelOpen: false,
   isDepositOptionsModalVisible: false,
   tokenList: [],
@@ -130,29 +159,36 @@ const contextDefaultValues: AppStateConfig = {
   fromCoinAmount: '',
   effectiveRate: 0,
   coinPrices: null,
+  loadingPrices: false,
   contract: undefined,
-  ddcaOption: undefined,
+  treasuryOption: TREASURY_TYPE_OPTIONS[0],
   recipientAddress: '',
   recipientNote: '',
   paymentStartDate: undefined,
   paymentRateAmount: '',
   paymentRateFrequency: PaymentRateType.PerMonth,
   timeSheetRequirement: TimesheetRequirementOption.NotRequired,
+  isVerifiedRecipient: false,
+  isAllocationReserved: false,
   transactionStatus: {
     lastOperation: TransactionStatus.Iddle,
     currentOperation: TransactionStatus.Iddle
   },
   previousWalletConnectState: false,
   loadingStreams: false,
+  streamListv1: undefined,
+  streamListv2: undefined,
   streamList: undefined,
   selectedStream: undefined,
   streamDetail: undefined,
+  highLightableStreamId: undefined,
   streamProgramAddress: '',
+  streamV2ProgramAddress: '',
   loadingStreamActivity: false,
   streamActivity: [],
   customStreamDocked: false,
-  referrals: 0,
   // Accounts
+  shouldLoadTokens: true,
   splTokenList: [],
   userTokens: [],
   selectedAsset: undefined,
@@ -161,18 +197,25 @@ const contextDefaultValues: AppStateConfig = {
   lastTxSignature: '',
   addAccountPanelOpen: true,
   canShowAccountDetails: false,
+  streamsSummary: initialSummary,
+  lastStreamsSummary: initialSummary,
+  loadingStreamsSummary: false,
   // DDCAs
+  ddcaOption: undefined,
   recurringBuys: [],
   loadingRecurringBuys: false,
+  // Multisig
+  highLightableMultisigId: undefined,
   setTheme: () => {},
   setDtailsPanelOpen: () => {},
   showDepositOptionsModal: () => {},
   hideDepositOptionsModal: () => {},
   setContract: () => {},
-  setDdcaOption: () => {},
+  setTreasuryOption: () => {},
   setSelectedToken: () => {},
   setSelectedTokenBalance: () => {},
   setFromCoinAmount: () => {},
+  refreshPrices: () => {},
   setEffectiveRate: () => {},
   setCoinPrices: () => {},
   refreshTokenBalance: () => {},
@@ -184,25 +227,34 @@ const contextDefaultValues: AppStateConfig = {
   setPaymentRateAmount: () => {},
   setPaymentRateFrequency: () => {},
   setTimeSheetRequirement: () => {},
+  setIsVerifiedRecipient: () => {},
+  setIsAllocationReserved: () => {},
   setTransactionStatus: () => {},
   setPreviousWalletConnectState: () => {},
   setLoadingStreams: () => {},
   setStreamList: () => {},
   setSelectedStream: () => {},
   setStreamDetail: () => {},
+  setHighLightableStreamId: () => {},
   openStreamById: () => {},
   getStreamActivity: () => {},
   setCustomStreamDocked: () => { },
-  setReferrals: () => {},
   // Accounts
+  setShouldLoadTokens: () => {},
   setTransactions: () => {},
   setSelectedAsset: () => {},
   setAccountAddress: () => {},
   setAddAccountPanelOpen: () => {},
   setCanShowAccountDetails: () => {},
+  setStreamsSummary: () => {},
+  setLastStreamsSummary: () => {},
+  setLoadingStreamsSummary: () => {},
   // DDCAs
+  setDdcaOption: () => {},
   setRecurringBuys: () => {},
   setLoadingRecurringBuys: () => {},
+  // Multisig
+  setHighLightableMultisigId: () => {},
 };
 
 export const AppStateContext = React.createContext<AppStateConfig>(contextDefaultValues);
@@ -212,23 +264,64 @@ const AppStateProvider: React.FC = ({ children }) => {
   const { t } = useTranslation('common');
   // Parent contexts
   const connection = useConnection();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, wallet } = useWallet();
   const connectionConfig = useConnectionConfig();
   const accounts = useAccountsContext();
+  const [isWhitelisted, setIsWhitelisted] = useState(contextDefaultValues.isWhitelisted);
   const [streamProgramAddress, setStreamProgramAddress] = useState('');
+  const [streamV2ProgramAddress, setStreamV2ProgramAddress] = useState('');
+  const {
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    clearTransactionStatusContext,
+  } = useContext(TransactionStatusContext);
+
+  const streamProgramAddressFromConfig = appConfig.getConfig().streamProgramAddress;
+  const streamV2ProgramAddressFromConfig = appConfig.getConfig().streamV2ProgramAddress;
 
   if (!streamProgramAddress) {
-    setStreamProgramAddress(appConfig.getConfig().streamProgramAddress);
+    setStreamProgramAddress(streamProgramAddressFromConfig);
   }
+
+  if (!streamV2ProgramAddress) {
+    setStreamV2ProgramAddress(streamV2ProgramAddressFromConfig);
+  }
+
+  // Create and cache Money Streaming Program instance
+  const ms = useMemo(() => new MoneyStreaming(
+    connectionConfig.endpoint,
+    streamProgramAddressFromConfig,
+    "finalized"
+  ), [
+    connectionConfig.endpoint,
+    streamProgramAddressFromConfig
+  ]);
+
+  const msp = useMemo(() => {
+    if (publicKey) {
+      console.log('New MSP from appState');
+      return new MSP(
+        connectionConfig.endpoint,
+        streamV2ProgramAddressFromConfig,
+        "finalized"
+      );
+    }
+  }, [
+    publicKey,
+    connectionConfig.endpoint,
+    streamV2ProgramAddressFromConfig
+  ]);
 
   const today = new Date().toLocaleDateString("en-US");
   const [theme, updateTheme] = useLocalStorageState("theme");
   const [detailsPanelOpen, updateDetailsPanelOpen] = useState(contextDefaultValues.detailsPanelOpen);
+  const [shouldLoadTokens, updateShouldLoadTokens] = useState(contextDefaultValues.shouldLoadTokens);
 
   const [contract, setSelectedContract] = useState<ContractDefinition | undefined>();
   const [contractName, setContractName] = useLocalStorageState("contractName");
 
   const [ddcaOption, updateDdcaOption] = useState<DdcaFrequencyOption | undefined>();
+  const [treasuryOption, updateTreasuryOption] = useState<TreasuryTypeOption | undefined>(contextDefaultValues.treasuryOption);
   const [ddcaOptionName, setDdcaOptionName] = useState<string>('');
 
   const [recipientAddress, updateRecipientAddress] = useState<string>(contextDefaultValues.recipientAddress);
@@ -238,16 +331,23 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [paymentRateAmount, updatePaymentRateAmount] = useState<string>(contextDefaultValues.paymentRateAmount);
   const [paymentRateFrequency, updatePaymentRateFrequency] = useState<PaymentRateType>(PaymentRateType.PerMonth);
   const [timeSheetRequirement, updateTimeSheetRequirement] = useState<TimesheetRequirementOption>(TimesheetRequirementOption.NotRequired);
+  const [isVerifiedRecipient, setIsVerifiedRecipient] = useState<boolean>(contextDefaultValues.isVerifiedRecipient);
+  const [isAllocationReserved, setIsAllocationReserved] = useState<boolean>(contextDefaultValues.isAllocationReserved);
   const [transactionStatus, updateTransactionStatus] = useState<TransactionStatusInfo>(contextDefaultValues.transactionStatus);
   const [previousWalletConnectState, updatePreviousWalletConnectState] = useState<boolean>(connected);
   const [tokenList, updateTokenlist] = useState<TokenInfo[]>([]);
-  const [streamList, setStreamList] = useState<StreamInfo[] | undefined>();
-  const [selectedStream, updateSelectedStream] = useState<StreamInfo | undefined>();
-  const [streamDetail, updateStreamDetail] = useState<StreamInfo | undefined>();
   const [loadingStreams, updateLoadingStreams] = useState(false);
   const [loadingStreamActivity, setLoadingStreamActivity] = useState(contextDefaultValues.loadingStreamActivity);
   const [streamActivity, setStreamActivity] = useState<StreamActivity[]>([]);
   const [customStreamDocked, setCustomStreamDocked] = useState(contextDefaultValues.customStreamDocked);
+
+  const [streamListv1, setStreamListv1] = useState<StreamInfo[] | undefined>();
+  const [streamListv2, setStreamListv2] = useState<Stream[] | undefined>();
+  const [streamList, setStreamList] = useState<Array<StreamInfo | Stream> | undefined>();
+  const [selectedStream, updateSelectedStream] = useState<Stream | StreamInfo | undefined>();
+  const [streamDetail, updateStreamDetail] = useState<Stream | StreamInfo | undefined>();
+  const [highLightableStreamId, setHighLightableStreamId] = useState<string | undefined>(contextDefaultValues.highLightableStreamId);
+  const [highLightableMultisigId, setHighLightableMultisigId] = useState<string | undefined>(contextDefaultValues.highLightableMultisigId);
 
   const setTheme = (name: string) => {
     updateTheme(name);
@@ -255,6 +355,10 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   const setDtailsPanelOpen = (state: boolean) => {
     updateDetailsPanelOpen(state);
+  }
+
+  const setShouldLoadTokens = (state: boolean) => {
+    updateShouldLoadTokens(state);
   }
 
   useEffect(() => {
@@ -267,6 +371,27 @@ const AppStateProvider: React.FC = ({ children }) => {
     applyTheme(theme);
     return () => {};
   }, [theme, updateTheme]);
+
+  // Update isWhitelisted
+  useEffect(() => {
+    const updateIsWhitelisted = () => {
+      if (!publicKey) {
+        setIsWhitelisted(false);
+      } else {
+        const isWl = ALLOWED_ADDRESSES_LIST.some(a => a === publicKey.toBase58());
+        setIsWhitelisted(isWl);
+      }
+    }
+
+    updateIsWhitelisted();
+    return () => {};
+  }, [
+    publicKey
+  ]);
+
+  useEffect(() => {
+    consoleOut('isWhitelisted:', isWhitelisted, 'blue');
+  }, [isWhitelisted]);
 
   const setLoadingStreams = (state: boolean) => {
     updateLoadingStreams(state);
@@ -286,6 +411,10 @@ const AppStateProvider: React.FC = ({ children }) => {
       updateDdcaOption(items[0]);
       setDdcaOptionName(name);
     }
+  }
+
+  const setTreasuryOption = (option: TreasuryTypeOption | undefined) => {
+    updateTreasuryOption(option);
   }
 
   const setRecipientAddress = (address: string) => {
@@ -327,6 +456,8 @@ const AppStateProvider: React.FC = ({ children }) => {
     setPaymentStartDate(today);
     setPaymentRateAmount('');
     setPaymentRateFrequency(PaymentRateType.PerMonth);
+    setIsVerifiedRecipient(false);
+    setIsAllocationReserved(false);
     setTransactionStatus({
       lastOperation: TransactionStatus.Iddle,
       currentOperation: TransactionStatus.Iddle
@@ -341,22 +472,34 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const openStreamById = async (streamId: string) => {
+  const openStreamById = async (streamId: string, dock = false) => {
     let streamPublicKey: PublicKey;
     try {
       streamPublicKey = new PublicKey(streamId);
       try {
-        const detail = await getStream(connection, streamPublicKey);
-        consoleOut('customStream', detail);
-        if (detail) {
-          setStreamDetail(detail);
-          setStreamList([detail]);
-          getStreamActivity(streamId);
-          setCustomStreamDocked(true);
-          notify({
-            description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
-            type: "success"
-          });
+        if (msp && publicKey) {
+          const detail = await msp.getStream(streamPublicKey);
+          consoleOut('customStream', detail);
+          if (detail) {
+            setStreamDetail(detail);
+            if (dock) {
+              setStreamList([detail]);
+              getStreamActivity(streamId, detail.version);
+              setCustomStreamDocked(true);
+              notify({
+                description: t('notifications.success-loading-stream-message', {streamId: shortenAddress(streamId, 10)}),
+                type: "success"
+              });
+            }
+          } else {
+            if (dock) {
+              notify({
+                message: t('notifications.error-title'),
+                description: t('notifications.error-loading-streamid-message', {streamId: shortenAddress(streamId as string, 10)}),
+                type: "error"
+              });
+            }
+          }
         } else {
           notify({
             message: t('notifications.error-title'),
@@ -381,45 +524,74 @@ const AppStateProvider: React.FC = ({ children }) => {
     }
   }
 
-  const getStreamActivity = useCallback((streamId: string) => {
-    if (!connected || !streamId) {
+  const getStreamActivity = useCallback((streamId: string, version: number) => {
+    if (!connected || !streamId || !ms || !msp) {
       return [];
     }
 
     if (!loadingStreamActivity) {
+
       setLoadingStreamActivity(true);
       const streamPublicKey = new PublicKey(streamId);
-      const newConnection = new Connection(connectionConfig.endpoint, "confirmed");
-      listStreamActivity(newConnection, streamPublicKey)
-        .then(value => {
-          consoleOut('activity:', value);
-          setStreamActivity(value);
-          setLoadingStreamActivity(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setStreamActivity([]);
-          setLoadingStreamActivity(false);
-        });
+
+      if (version < 2) {
+        ms.listStreamActivity(streamPublicKey)
+          .then(value => {
+            consoleOut('activity:', value);
+            setStreamActivity(value);
+            setLoadingStreamActivity(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamActivity([]);
+            setLoadingStreamActivity(false);
+          });
+
+      } else {
+        msp.listStreamActivity(streamPublicKey)
+          .then(value => {
+            consoleOut('activity:', value);
+            setStreamActivity(value);
+            setLoadingStreamActivity(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setStreamActivity([]);
+            setLoadingStreamActivity(false);
+          });  
+      }
     }
 
   }, [
+    ms,
+    msp,
     connected,
-    connectionConfig.endpoint,
     loadingStreamActivity
   ]);
 
-  const setSelectedStream = (stream: StreamInfo | undefined) => {
+  const setSelectedStream = (stream: Stream | StreamInfo | undefined) => {
     updateSelectedStream(stream);
-    updateStreamDetail(stream);
     if (stream) {
-      getStreamActivity(stream.id as string);
+      const mspInstance: any = stream.version < 2 ? ms : msp;
+      mspInstance.getStream(new PublicKey(stream.id as string))
+        .then((detail: Stream | StreamInfo) => {
+          consoleOut('detail:', detail, 'blue');
+          if (detail) {
+            updateStreamDetail(detail);
+            const token = getTokenByMintAddress(detail.associatedToken as string);
+            setSelectedToken(token);
+            if (!loadingStreamActivity) {
+              setLoadingStreamActivity(true);
+              getStreamActivity(detail.id as string, detail.version);
+            }
+          }
+        })
     } else {
       setStreamActivity([]);
     }
   }
 
-  const setStreamDetail = (stream: StreamInfo) => {
+  const setStreamDetail = (stream: Stream | StreamInfo | undefined) => {
     updateStreamDetail(stream);
   }
 
@@ -453,12 +625,10 @@ const AppStateProvider: React.FC = ({ children }) => {
   const [selectedToken, updateSelectedToken] = useState<TokenInfo>();
   const [tokenBalance, updateTokenBalance] = useState<number>(contextDefaultValues.tokenBalance);
   const [coinPrices, setCoinPrices] = useState<any>(null);
+  const [loadingPrices, setLoadingPrices] = useState<boolean>(contextDefaultValues.loadingPrices);
   const [effectiveRate, updateEffectiveRate] = useState<number>(contextDefaultValues.effectiveRate);
   const [shouldLoadCoinPrices, setShouldLoadCoinPrices] = useState(true);
   const [shouldUpdateToken, setShouldUpdateToken] = useState<boolean>(true);
-
-  // TODO: referrals are tempararily persisted in localStorage but we must use an API
-  const [referrals, updateReferrals] = useLocalStorage('referrals', contextDefaultValues.referrals);
 
   const setSelectedToken = (token: TokenInfo | undefined) => {
     updateSelectedToken(token);
@@ -473,43 +643,48 @@ const AppStateProvider: React.FC = ({ children }) => {
     updateEffectiveRate(rate);
   }
 
-  const setReferrals = (value: number) => {
-    if (publicKey) {
-      updateReferrals(value);
-    }
+  const refreshPrices = () => {
+    setLoadingPrices(true);
+    getCoinPrices();
   }
+
+  // Fetch coin prices
+  const getCoinPrices = useCallback(async () => {
+    try {
+      const prices = await getPrices();
+      if (prices) {
+        consoleOut("Coin prices:", prices, 'blue');
+        setCoinPrices(prices);
+        if (selectedToken) {
+          const tokenSymbol = selectedToken.symbol.toUpperCase();
+          const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
+          updateEffectiveRate(
+            prices[symbol] ? prices[symbol] : 0
+          );
+        }
+      } else {
+        setCoinPrices(null);
+      }
+      setLoadingPrices(false);
+    } catch (error) {
+      setCoinPrices(null);
+      setLoadingPrices(false);
+    }
+  },[selectedToken]);
 
   // Effect to load coin prices
   useEffect(() => {
     let coinTimer: any;
 
-    const getCoinPrices = async () => {
-      try {
-        await getPrices()
-          .then((prices) => {
-            consoleOut("Coin prices:", prices, 'blue');
-            setCoinPrices(prices);
-            if (selectedToken) {
-              const tokenSymbol = selectedToken.symbol.toUpperCase();
-              const symbol = tokenSymbol[0] === 'W' ? tokenSymbol.slice(1) : tokenSymbol;
-              updateEffectiveRate(
-                prices[symbol] ? prices[symbol] : 0
-              );
-            }
-          })
-          .catch(() => setCoinPrices(null));
-      } catch (error) {
-        setCoinPrices(null);
-      }
-    };
-
     if (shouldLoadCoinPrices && selectedToken) {
       setShouldLoadCoinPrices(false);
+      setLoadingPrices(true);
       getCoinPrices();
     }
 
     coinTimer = window.setInterval(() => {
       consoleOut(`Refreshing prices past ${PRICE_REFRESH_TIMEOUT / 60 / 1000}min...`);
+      setLoadingPrices(true);
       getCoinPrices();
     }, PRICE_REFRESH_TIMEOUT);
 
@@ -521,8 +696,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     };
   }, [
     coinPrices,
+    selectedToken,
     shouldLoadCoinPrices,
-    selectedToken
+    getCoinPrices
   ]);
 
   // Cache selected contract
@@ -594,90 +770,144 @@ const AppStateProvider: React.FC = ({ children }) => {
   ]);
 
   const refreshStreamList = useCallback((reset = false) => {
-    if (!publicKey) {
-      return [];
+    if (!publicKey || loadingStreams || fetchTxInfoStatus === "fetching" || customStreamDocked) {
+      return;
     }
 
-    if (!loadingStreams) {
-      updateLoadingStreams(true);
-      const programId = new PublicKey(streamProgramAddress);
+    if (msp) {
+      setLoadingStreams(true);
+      const signature = lastSentTxStatus || '';
+      setTimeout(() => {
+        clearTransactionStatusContext();
+      });
 
-      listStreams(connection, programId, publicKey, publicKey)
-        .then(streams => {
-          consoleOut('Streams:', streams, 'blue');
-          let item: StreamInfo | undefined;
-          if (streams.length) {
-            if (reset) {
-              item = streams[0];
-            } else {
-              // Try to get current item by its id
-              if (selectedStream) {
-                const itemFromServer = streams.find(i => i.id === selectedStream.id);
-                item = itemFromServer || selectedStream;
+      let streamAccumulator: any[] = [];
+      let rawStreamsv1: StreamInfo[] = [];
+      let rawStreamsv2: Stream[] = [];
+
+      msp.listStreams({treasurer: publicKey, beneficiary: publicKey})
+        .then(streamsv2 => {
+          streamAccumulator.push(...streamsv2);
+          rawStreamsv2 = streamsv2;
+          rawStreamsv2.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1);
+          ms.listStreams({treasurer: publicKey, beneficiary: publicKey})
+          .then(streamsv1 => {
+              streamAccumulator.push(...streamsv1);
+              rawStreamsv1 = streamsv1;
+              rawStreamsv1.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
+              streamAccumulator.sort((a, b) => (a.createdBlockTime < b.createdBlockTime) ? 1 : -1)
+              // Sort debugging block
+              if (!isProd()) {
+                const debugTable: any[] = [];
+                streamAccumulator.forEach(item => debugTable.push({
+                  createdBlockTime: item.createdBlockTime,
+                  name: item.version < 2 ? item.streamName : item.name.trim(),
+                }));
+                console.table(debugTable);
+              }
+              // End of debugging block
+              setStreamList(streamAccumulator);
+              setStreamListv2(rawStreamsv2);
+              setStreamListv1(rawStreamsv1);
+              consoleOut('Streams:', streamAccumulator, 'blue');
+              if (streamAccumulator.length) {
+                let item: Stream | StreamInfo | undefined;
+                if (reset) {
+                  if (signature) {
+                    item = streamAccumulator.find(d => d.transactionSignature === signature);
+                  } else {
+                    item = streamAccumulator[0];
+                  }
+                } else {
+                  // Try to get current item by its original Tx signature then its id
+                  if (signature) {
+                    item = streamAccumulator.find(d => d.transactionSignature === signature);
+                  } else if (highLightableStreamId) {
+                    const highLightableItem = streamAccumulator.find(i => i.id === highLightableStreamId);
+                    item = highLightableItem || streamAccumulator[0];
+                  } else if (selectedStream) {
+                    const itemFromServer = streamAccumulator.find(i => i.id === selectedStream.id);
+                    item = itemFromServer || streamAccumulator[0];
+                  } else {
+                    item = streamAccumulator[0];
+                  }
+                }
+                if (!item) {
+                  item = Object.assign({}, streamAccumulator[0]);
+                }
+                consoleOut('selectedStream:', item, 'blue');
+                if (item && selectedStream && item.id !== selectedStream.id) {
+                  updateSelectedStream(item);
+                  const mspInstance: any = item.version < 2 ? ms : msp;
+                  mspInstance.getStream(new PublicKey(item.id as string))
+                    .then((detail: Stream | StreamInfo) => {
+                      if (detail) {
+                        updateStreamDetail(detail);
+                        const token = getTokenByMintAddress(detail.associatedToken as string);
+                        setSelectedToken(token);
+                        if (!loadingStreamActivity) {
+                          setLoadingStreamActivity(true);
+                          const streamPublicKey = new PublicKey(detail.id as string);
+                          mspInstance.listStreamActivity(streamPublicKey)
+                            .then((value: any) => {
+                              consoleOut('activity:', value, 'blue');
+                              setStreamActivity(value);
+                              setLoadingStreamActivity(false);
+                            })
+                            .catch((err: any) => {
+                              console.error(err);
+                              setStreamActivity([]);
+                              setLoadingStreamActivity(false);
+                            });
+                        }
+                      }
+                    })
+                } else {
+                  if (item) {
+                    updateStreamDetail(item);
+                    getStreamActivity(item.id as string, item.version);
+                  }
+                }
               } else {
-                item = streams[0];
+                setStreamActivity([]);
+                updateSelectedStream(undefined);
+                updateStreamDetail(undefined);
               }
-            }
-            consoleOut('selectedStream:', item, 'blue');
-            if (item) {
-              console.log(item);
-              updateSelectedStream(item);
-              updateStreamDetail(item);
-              // setSelectedToken
-              const token = getTokenByMintAddress(item.associatedToken as string);
-              setSelectedToken(token);
-              if (!loadingStreamActivity) {
-                setLoadingStreamActivity(true);
-                const streamPublicKey = new PublicKey(item.id as string);
-                listStreamActivity(connection, streamPublicKey)
-                  .then(value => {
-                    consoleOut('activity:', value, 'blue');
-                    setStreamActivity(value);
-                    setLoadingStreamActivity(false);
-                  })
-                  .catch(err => {
-                    console.error(err);
-                    setStreamActivity([]);
-                    setLoadingStreamActivity(false);
-                  });
-              }
-            }
-          } else {
-            setStreamActivity([]);
-            updateSelectedStream(undefined);
-            updateStreamDetail(undefined);
-          }
-          setStreamList(streams);
-          updateLoadingStreams(false);
+              updateLoadingStreams(false);
+            }).catch(err => {
+              console.error(err);
+              updateLoadingStreams(false);
+            });
         }).catch(err => {
           console.error(err);
           updateLoadingStreams(false);
         });
     }
+
   }, [
-    connection,
-    streamProgramAddress,
-    loadingStreamActivity,
-    selectedStream,
+    ms,
+    msp,
+    publicKey,
     loadingStreams,
-    publicKey
+    selectedStream,
+    lastSentTxStatus,
+    fetchTxInfoStatus,
+    customStreamDocked,
+    loadingStreamActivity,
+    highLightableStreamId,
+    clearTransactionStatusContext,
+    getStreamActivity
   ]);
 
   // Streams refresh timeout
   useEffect(() => {
     let timer: any;
 
-    if (location.pathname === '/accounts' || location.pathname === '/accounts/streams') {
-      if (!streamList) {
-        refreshStreamList(true);
-      }
-
-      if (streamList && !customStreamDocked) {
-        timer = setInterval(() => {
-          consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
-          refreshStreamList(false);
-        }, STREAMS_REFRESH_TIMEOUT);
-      }
+    if (location.pathname.startsWith('/accounts') && !customStreamDocked) {
+      timer = setInterval(() => {
+        consoleOut(`Refreshing streams past ${STREAMS_REFRESH_TIMEOUT / 60 / 1000}min...`);
+        refreshStreamList();
+      }, STREAMS_REFRESH_TIMEOUT);
     }
 
     return () => clearInterval(timer);
@@ -768,13 +998,16 @@ const AppStateProvider: React.FC = ({ children }) => {
   /////////////////////////////////////
 
   const [accountAddress, updateAccountAddress] = useLocalStorage('lastUsedAccount', publicKey ? publicKey.toBase58() : '');
-  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>([]);
-  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>([]);
-  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>();
-  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(undefined);
-  const [lastTxSignature, setLastTxSignature] = useState<string>('');
-  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(false);
+  const [splTokenList, updateSplTokenList] = useState<UserTokenAccount[]>(contextDefaultValues.splTokenList);
+  const [userTokens, updateUserTokens] = useState<UserTokenAccount[]>(contextDefaultValues.userTokens);
+  const [transactions, updateTransactions] = useState<MappedTransaction[] | undefined>(contextDefaultValues.transactions);
+  const [selectedAsset, updateSelectedAsset] = useState<UserTokenAccount | undefined>(contextDefaultValues.selectedAsset);
+  const [lastTxSignature, setLastTxSignature] = useState<string>(contextDefaultValues.lastTxSignature);
+  const [addAccountPanelOpen, updateAddAccountPanelOpen] = useState(contextDefaultValues.addAccountPanelOpen);
   const [canShowAccountDetails, updateCanShowAccountDetails] = useState(accountAddress ? true : false);
+  const [streamsSummary, setStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.streamsSummary);
+  const [lastStreamsSummary, setLastStreamsSummary] = useState<StreamsSummary>(contextDefaultValues.lastStreamsSummary);
+  const [loadingStreamsSummary, setLoadingStreamsSummary] = useState(contextDefaultValues.loadingStreamsSummary);
 
   const setAddAccountPanelOpen = (state: boolean) => {
     updateAddAccountPanelOpen(state);
@@ -834,7 +1067,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       };
       sol.isMeanSupportedToken = true;
       list.push(sol);
-      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster))
+      MEAN_TOKEN_LIST.filter(t => t.chainId === getNetworkIdByCluster(connectionConfig.cluster) && PINNED_TOKENS.includes(t.symbol))
         .forEach(item => list.push(Object.assign({}, item, { isMeanSupportedToken: true })));
       // Update the list
       updateUserTokens(list);
@@ -843,7 +1076,7 @@ const AppStateProvider: React.FC = ({ children }) => {
       // Load the mainnet list
       const res = await new TokenListProvider().resolve();
       const mainnetList = res
-        .filterByChainId(ChainId.MainnetBeta)
+        .filterByChainId(101)
         .excludeByTag("nft")
         .getList() as UserTokenAccount[];
       // Filter out the banned tokens
@@ -869,9 +1102,9 @@ const AppStateProvider: React.FC = ({ children }) => {
 
   }, [connectionConfig.cluster]);
 
-  /////////////////////////////////////
-  // Added to support /accounts page //
-  /////////////////////////////////////
+  //////////////////////////////////
+  // Added to support /ddcas page //
+  //////////////////////////////////
 
   const [recurringBuys, updateRecurringBuys] = useState<DdcaAccount[]>([]);
   const [loadingRecurringBuys, updateLoadingRecurringBuys] = useState(false);
@@ -888,7 +1121,9 @@ const AppStateProvider: React.FC = ({ children }) => {
     <AppStateContext.Provider
       value={{
         theme,
+        isWhitelisted,
         detailsPanelOpen,
+        shouldLoadTokens,
         isDepositOptionsModalVisible,
         tokenList,
         selectedToken,
@@ -896,25 +1131,32 @@ const AppStateProvider: React.FC = ({ children }) => {
         fromCoinAmount,
         effectiveRate,
         coinPrices,
+        loadingPrices,
         contract,
         ddcaOption,
+        treasuryOption,
         recipientAddress,
         recipientNote,
         paymentStartDate,
         paymentRateAmount,
         paymentRateFrequency,
         timeSheetRequirement,
+        isVerifiedRecipient,
+        isAllocationReserved,
         transactionStatus,
         previousWalletConnectState,
         loadingStreams,
+        streamListv1,
+        streamListv2,
         streamList,
         selectedStream,
         streamDetail,
+        highLightableStreamId,
         streamProgramAddress,
+        streamV2ProgramAddress,
         loadingStreamActivity,
         streamActivity,
         customStreamDocked,
-        referrals,
         splTokenList,
         userTokens,
         selectedAsset,
@@ -923,15 +1165,21 @@ const AppStateProvider: React.FC = ({ children }) => {
         lastTxSignature,
         addAccountPanelOpen,
         canShowAccountDetails,
+        streamsSummary,
+        lastStreamsSummary,
+        loadingStreamsSummary,
         recurringBuys,
         loadingRecurringBuys,
+        highLightableMultisigId,
         setTheme,
         setDtailsPanelOpen,
+        setShouldLoadTokens,
         showDepositOptionsModal,
         hideDepositOptionsModal,
         setSelectedToken,
         setSelectedTokenBalance,
         setFromCoinAmount,
+        refreshPrices,
         setEffectiveRate,
         setCoinPrices,
         refreshTokenBalance,
@@ -939,29 +1187,36 @@ const AppStateProvider: React.FC = ({ children }) => {
         refreshStreamList,
         setContract,
         setDdcaOption,
+        setTreasuryOption,
         setRecipientAddress,
         setRecipientNote,
         setPaymentStartDate,
         setPaymentRateAmount,
         setPaymentRateFrequency,
         setTimeSheetRequirement,
+        setIsVerifiedRecipient,
+        setIsAllocationReserved,
         setTransactionStatus,
         setPreviousWalletConnectState,
         setLoadingStreams,
         setStreamList,
         setSelectedStream,
         setStreamDetail,
+        setHighLightableStreamId,
         openStreamById,
         getStreamActivity,
         setCustomStreamDocked,
-        setReferrals,
         setTransactions,
         setSelectedAsset,
         setAccountAddress,
         setAddAccountPanelOpen,
         setCanShowAccountDetails,
+        setStreamsSummary,
+        setLastStreamsSummary,
+        setLoadingStreamsSummary,
         setRecurringBuys,
-        setLoadingRecurringBuys
+        setLoadingRecurringBuys,
+        setHighLightableMultisigId
       }}>
       {children}
     </AppStateContext.Provider>

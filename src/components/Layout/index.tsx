@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Link, Redirect, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./../../App.less";
 import "./style.less";
 import { appConfig } from "../..";
@@ -20,26 +20,25 @@ import { environment } from "../../environments/environment";
 import { GOOGLE_ANALYTICS_PROD_TAG_ID } from "../../constants";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { reportConnectedAccount } from "../../utils/api";
+import useSolanaStatus from "../../contexts/cluster-stats";
 
 const { Header, Content, Footer } = Layout;
 
 export const AppLayout = React.memo((props: any) => {
   const location = useLocation();
-  const [redirect, setRedirect] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const {
     theme,
-    referrals,
     detailsPanelOpen,
     addAccountPanelOpen,
     canShowAccountDetails,
     previousWalletConnectState,
-    setReferrals,
     setStreamList,
     setSelectedAsset,
     setAccountAddress,
+    setShouldLoadTokens,
     refreshTokenBalance,
-    refreshStreamList,
     setDtailsPanelOpen,
     setAddAccountPanelOpen,
     setCanShowAccountDetails,
@@ -52,18 +51,35 @@ export const AppLayout = React.memo((props: any) => {
   const [previousChain, setChain] = useState("");
   const [gaInitialized, setGaInitialized] = useState(false);
   const [referralAddress, setReferralAddress] = useLocalStorage('pendingReferral', '');
+  const { performanceInfo } = useSolanaStatus();
 
   // Clear cachedRpc on App destroy (window is being reloaded)
-  useEffect(() => {
-    window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    return () => {
-        window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
-    }
-  })
+  // useEffect(() => {
+  //   window.addEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   return () => {
+  //       window.removeEventListener('beforeunload', handleTabClosingOrPageRefresh)
+  //   }
+  // })
 
+  useEffect(() => {
+    // performanceInfo.status === ClusterStatsStatus.Ready
+    if (performanceInfo) {
+      consoleOut('performanceInfo:', performanceInfo, 'blue');
+    }
+  }, [
+    performanceInfo
+  ]);
+
+  /*
   const handleTabClosingOrPageRefresh = () => {
     window.localStorage.removeItem('cachedRpc');
+    // TODO: Next lines are useful if we turn OFF wallet autoConnect
+    // if (window.localStorage.getItem('walletProvider')) {
+    //   window.localStorage.removeItem('walletProvider');
+    // }
+    // window.localStorage.removeItem('providerName');
   }
+  */
 
   const getPlatform = (): string => {
     return isDesktop ? 'Desktop' : isTablet ? 'Tablet' : isMobile ? 'Mobile' : 'Other';
@@ -74,7 +90,7 @@ export const AppLayout = React.memo((props: any) => {
     const token = appConfig.getConfig().influxDbToken;
     const org = appConfig.getConfig().influxDbOrg;
     const bucket = appConfig.getConfig().influxDbBucket;
-    const writeApi = new InfluxDB({url, token}).getWriteApi(org, bucket);
+    const writeApi = new InfluxDB({url, token, timeout: 3000, writeOptions: {maxRetries: 0}}).getWriteApi(org, bucket);
     const data = {
       platform: getPlatform(),
       browser: browserName,
@@ -139,7 +155,6 @@ export const AppLayout = React.memo((props: any) => {
     if (previousWalletConnectState !== connected) {
       // User is connecting
       if (!previousWalletConnectState && connected) {
-        consoleOut('User is connecting...', '', 'blue');
         if (publicKey) {
           const walletAddress = publicKey.toBase58();
           sendConnectionMetric(walletAddress);
@@ -153,19 +168,17 @@ export const AppLayout = React.memo((props: any) => {
               })
               .catch(error => console.error(error));
           } else {
-            reportConnectedAccount(walletAddress).then(result => consoleOut('reportConnectedAccount hit'));
+            reportConnectedAccount(walletAddress)
+              .then(result => consoleOut('reportConnectedAccount hit'))
+              .catch(error => console.error(error));;
           }
           // Let the AppState know which wallet address is connected and save it
           setAccountAddress(walletAddress);
           setSelectedAsset(undefined);
-
-          if (location.pathname === '/accounts/streams') {
-            refreshStreamList(true);
-          }
         }
+        refreshTokenBalance();
         setPreviousWalletConnectState(true);
       } else if (previousWalletConnectState && !connected) {
-        consoleOut('User is disconnecting...', '', 'blue');
         setPreviousWalletConnectState(false);
         setStreamList([]);
         refreshTokenBalance();
@@ -180,15 +193,12 @@ export const AppLayout = React.memo((props: any) => {
     location,
     publicKey,
     connected,
-    referrals,
     referralAddress,
     previousWalletConnectState,
     t,
-    setReferrals,
     setStreamList,
     setSelectedAsset,
     setAccountAddress,
-    refreshStreamList,
     setReferralAddress,
     refreshTokenBalance,
     sendConnectionMetric,
@@ -208,7 +218,7 @@ export const AppLayout = React.memo((props: any) => {
           description: t('referrals.address-processed'),
           type: "info"
         });
-        setRedirect('/');
+        navigate('/');
       } else {
         consoleOut('Invalid address', '', 'red');
         notify({
@@ -216,12 +226,13 @@ export const AppLayout = React.memo((props: any) => {
           description: t('referrals.address-invalid'),
           type: "error"
         });
-        setRedirect('/');
+        navigate('/');
       }
     }
   }, [
     location,
     t,
+    navigate,
     setReferralAddress,
   ]);
 
@@ -236,11 +247,16 @@ export const AppLayout = React.memo((props: any) => {
 
     addRouteNameClass();
 
+    if (location.pathname === '/' || location.pathname === '/accounts') {
+      setShouldLoadTokens(true);
+    }
+
     return () => {
       if (bodyClass) {
         document.body.classList.remove(bodyClass);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const closeAllPanels = () => {
@@ -254,7 +270,6 @@ export const AppLayout = React.memo((props: any) => {
 
   return (
     <>
-    {redirect && <Redirect to={redirect} />}
     <div className="App wormhole-bg">
       <Layout>
         <Header className="App-Bar">
@@ -264,17 +279,12 @@ export const AppLayout = React.memo((props: any) => {
           <div className="app-bar-inner">
             <Link to="/" className="flex-center">
               <div className="app-title simplelink">
-                <img className="app-logo" src={theme === 'dark' ? 'assets/mean-pay-logo-color-light.svg' : 'assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
+                <img className="app-logo" src={theme === 'dark' ? '/assets/mean-pay-logo-color-light.svg' : '/assets/mean-pay-logo-color-dark.svg'} alt="Mean Finance" />
               </div>
             </Link>
-            <AppBar menuType="desktop" />
+            <AppBar menuType="desktop" topNavVisible={(location.pathname === '/ido' || location.pathname === '/ido-live') ? false : true} />
           </div>
-          <AppBar menuType="mobile" />
-          {/* {isLocal() && (
-            <div className="debug-bar">
-              <span className="ml-1">loadingStreams:</span><span className="ml-1 font-bold fg-dark-active">{loadingStreams ? 'true' : 'false'}</span>
-            </div>
-          )} */}
+          <AppBar menuType="mobile" topNavVisible={false} />
         </Header>
         <Content>{props.children}</Content>
         <Footer>

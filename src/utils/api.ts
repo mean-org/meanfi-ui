@@ -1,22 +1,8 @@
-import { useState } from "react";
 import { appConfig } from "..";
 import { meanFiHeaders } from "../constants";
+import { Allocation } from "../models/common-types";
 import { getDefaultRpc, RpcConfig } from "../models/connections-hq";
-
-export function useCoinPrices() {
-  const [coinPrices, setCoinPrices] = useState<any>(null);
-
-  const getCoinPrices = async () => {
-    try {
-      const prices = await getPrices();
-      setCoinPrices(prices);
-    } catch (error) {
-      setCoinPrices(null);
-    }
-  };
-
-  return [getCoinPrices, coinPrices];
-}
+import { WhitelistClaimType } from "../models/enums";
 
 export const getPrices = async (path?: string): Promise<any> => {
   return fetch(path || "https://api.raydium.io/coin/price", {
@@ -31,10 +17,23 @@ export const getPrices = async (path?: string): Promise<any> => {
     });
 };
 
+export const getJupiterTokenList = async (path: string): Promise<any> => {
+  return fetch(path, {
+    method: "GET",
+  })
+    .then((response) => response.json())
+    .then((response) => {
+      return response;
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+};
+
 export const getRpcApiEndpoint = async (url: string, options?: RequestInit): Promise<any> => {
   try {
     const response = await fetch(url, options)
-    if (response.status === 200) {
+    if (response && response.status === 200) {
       const data = (await response.json()) as RpcConfig;
       // data.httpProvider = 'https://meanfi.rpcpool.com/'; // Use this to manually test RPC endpoints
       return data;
@@ -58,7 +57,7 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
   }
   try {
     const response = await fetch(url, options)
-    if (response.status === 200) {
+    if (response && response.status === 200) {
       return true;
     }
     return false;
@@ -66,3 +65,67 @@ export const reportConnectedAccount = async (address: string, refBy?: string): P
     throw(error);
   }
 };
+
+// GET /whitelists/{address} - Gets whitelist allocation - Allocation
+export const getWhitelistAllocation = async (address: string, claimType: WhitelistClaimType): Promise<Allocation | null> => {
+  const options: RequestInit = {
+    method: "GET",
+    headers: meanFiHeaders
+  }
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}?claimType=${claimType}`;
+  try {
+    const response = await fetch(url, options)
+    if (response && response.status === 200) {
+      const data = (await response.json());
+      return data.totalAllocation as Allocation;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export async function sendSignClaimTxRequest(address: string, base64ClaimTx: string): Promise<any> {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders,
+    body: JSON.stringify({
+      claimType: 1,
+      base64ClaimTransaction: base64ClaimTx,
+    }),
+  }
+
+  let url = `${appConfig.getConfig().apiUrl}/whitelists/${address}`;
+
+  try {
+    const response = await fetch(url, options)
+    if (response.status !== 200) {
+      throw new Error(`Error: request response status: ${response.status}`);
+    }
+    const signedClaimTxResponse = (await response.json()) as any;
+    return signedClaimTxResponse;
+  } catch (error) {
+    throw (error);
+  }
+}
+
+export const sendRecordClaimTxRequest = async (address: string, claimTxId: string): Promise<any> => {
+  const options: RequestInit = {
+    method: "POST",
+    headers: meanFiHeaders,
+  }
+
+  let url = `${appConfig.getConfig().apiUrl}/airdrop-claim-tx/${address}?txId=${claimTxId}`;
+
+  try {
+    const response = await fetch(url, options)
+    if (response.status !== 200) {
+      throw new Error(`Error: request response status: ${response.status}`);
+    }
+
+    return response;
+
+  } catch (error) {
+    throw (error);
+  }
+}

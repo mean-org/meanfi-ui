@@ -1,6 +1,6 @@
-export const IconGasStation = (props: {className: string}) => {
+export const IconGasStation = (props: {className: string; style?: React.CSSProperties;}) => {
     return (
-        <svg className={props.className} width="24" height="24" viewBox="0 0 384 384" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg className={props.className} style={props.style} width="24" height="24" viewBox="0 0 384 384" fill="none" xmlns="http://www.w3.org/2000/svg">
 		  	<path fillRule="evenodd" clipRule="evenodd" d="m352.427 90.24.32-.32-79.467-79.253-22.613 22.613 45.013 45.013c-20.053 7.68-34.347 26.987-34.347 49.707 0 29.44 23.893 53.333 53.333 53.333 7.573 0 14.827-1.6 21.333-4.48v153.813C336 342.4 326.4 352 314.667 352s-21.333-9.6-21.333-21.333v-96c0-23.573-19.093-42.667-42.667-42.667h-21.333V42.667C229.333 19.093 210.24 0 186.667 0h-128C35.093 0 16 19.093 16 42.667V384h213.333V224h32v106.667c0 29.44 23.893 53.333 53.333 53.333 29.44 0 53.333-23.893 53.333-53.333V128c.001-14.72-5.972-28.053-15.572-37.76zm-165.76 59.093h-128V42.667h128v106.666zm128 0c-11.733 0-21.333-9.6-21.333-21.333s9.6-21.333 21.333-21.333c11.733 0 21.333 9.6 21.333 21.333s-9.6 21.333-21.333 21.333z" fill="currentColor"/>
         </svg>
     );

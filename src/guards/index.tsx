@@ -1,1 +1,0 @@
-export { ProcessReferals } from './ProcessReferals';

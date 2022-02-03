@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
-import { useCallback, useMemo, useState } from "react";
-import { useWallet, WALLET_PROVIDERS } from "../../contexts/wallet";
-import { shortenAddress, useLocalStorageState } from "../../utils/utils";
+import { useCallback, useState } from "react";
+import { useWallet } from "../../contexts/wallet";
+import { shortenAddress } from "../../utils/utils";
 import {
   IconCopy,
   IconExternalLink,
@@ -28,13 +28,7 @@ export const CurrentUserBadge = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const showAccount = useCallback(() => setIsModalVisible(true), []);
   const close = useCallback(() => setIsModalVisible(false), []);
-  const [providerUrl] = useLocalStorageState("walletProvider");
-  const { wallet, select, disconnect, resetWalletProvider } = useWallet();
-
-  const usedProvider = useMemo(
-    () => WALLET_PROVIDERS.find(({ url }) => url === providerUrl),
-    [providerUrl]
-  );
+  const { wallet, provider, select, disconnect } = useWallet();
 
   const switchWallet = () => {
     setTimeout(() => {
@@ -61,16 +55,13 @@ export const CurrentUserBadge = () => {
     return null;
   }
 
-  const getUiTranslation = (translationId: string) => {
-    return t(`account-area.${translationId}`);
-  }
-
   const onDisconnectWallet = () => {
     setSelectedStream(undefined);
     setStreamList(undefined);
     close();
     disconnect();
-    resetWalletProvider();
+    // TODO: If we decide to turn OFF wallet autoConnect then next line will be needed
+    // resetWalletProvider();
   }
 
   return (
@@ -83,7 +74,7 @@ export const CurrentUserBadge = () => {
       <Modal
         className="mean-modal"
         visible={isModalVisible}
-        title={getUiTranslation('modal-title')}
+        title={t('account-area.modal-title')}
         onCancel={close}
         width={450}
         footer={null}>
@@ -91,17 +82,17 @@ export const CurrentUserBadge = () => {
           {/* Wallet */}
           <Row>
             <Col span={16}>
-              {getUiTranslation('wallet-provider')} {usedProvider?.name}
+              {t('account-area.wallet-provider')} {provider?.name}
             </Col>
             <Col span={8} className="text-right">
               <Button
                 shape="round"
                 size="small"
                 type="ghost"
-                className="mean-icon-button"
+                className="mean-icon-button thin-stroke extra-small"
                 onClick={switchWallet}>
                 <IconWallet className="mean-svg-icons" />
-                <span className="icon-button-text">{getUiTranslation('wallet-change')}</span>
+                <span className="icon-button-text">{t('account-area.wallet-change')}</span>
               </Button>
             </Col>
           </Row>
@@ -122,10 +113,10 @@ export const CurrentUserBadge = () => {
                 shape="round"
                 size="small"
                 type="ghost"
-                className="mean-icon-button"
+                className="mean-icon-button thin-stroke extra-small"
                 onClick={onDisconnectWallet}>
                 <IconLogout className="mean-svg-icons" />
-                <span className="icon-button-text">{getUiTranslation('disconnect')}</span>
+                <span className="icon-button-text">{t('account-area.disconnect')}</span>
               </Button>
             </Col>
           </Row>
@@ -134,14 +125,14 @@ export const CurrentUserBadge = () => {
             <Col span={10}>
               <span className="secondary-link" role="link" onClick={onCopyAddress}>
                 <IconCopy className="mean-svg-icons link" />
-                <span className="link-text">{getUiTranslation('copy-address')}</span>
+                <span className="link-text">{t('account-area.copy-address')}</span>
               </span>
             </Col>
             <Col span={14}>
               <a className="secondary-link" target="_blank" rel="noopener noreferrer"
                  href={`${SOLANA_EXPLORER_URI_INSPECT_ADDRESS}${wallet.publicKey}${getSolanaExplorerClusterParam()}`}>
                 <IconExternalLink className="mean-svg-icons link" />
-                <span className="link-text">{getUiTranslation('explorer-link')}</span>
+                <span className="link-text">{t('account-area.explorer-link')}</span>
               </a>
             </Col>
           </Row>

@@ -6,6 +6,8 @@ import { TransactionStatusInfo } from "../contexts/appstate";
 import { PaymentRateType, TimesheetRequirementOption, TransactionStatus } from "../models/enums";
 import { formatAmount } from "./utils";
 import { environment } from "../environments/environment";
+import { SIMPLE_DATE_FORMAT, SIMPLE_DATE_TIME_FORMAT, VERBOSE_DATE_FORMAT, VERBOSE_DATE_TIME_FORMAT } from "../constants";
+import dateFormat from "dateformat";
 
 export const isDev = (): boolean => {
     return environment === 'development';
@@ -20,12 +22,13 @@ export const isLocal = (): boolean => {
 }
 
 export function consoleOut(msg: any, value: any = 'NOT_SPECIFIED', color = 'black') {
-    if (!isLocal()) { return; }
-    if (msg) {
-        if (value === 'NOT_SPECIFIED') {
-            console.log(`%c${msg}`, `color: ${color}`);
-        } else {
-            console.log(`%c${msg}`, `color: ${color}`, value);
+    if (isLocal() || isDev()) {
+        if (msg) {
+            if (value === 'NOT_SPECIFIED') {
+                console.log(`%c${msg}`, `color: ${color}`);
+            } else {
+                console.log(`%c${msg}`, `color: ${color}`, value);
+            }
         }
     }
 }
@@ -53,6 +56,8 @@ export const formatters = {
     oneDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 1, maximumFractionDigits: 1 }),
     twoDecimal: new Intl.NumberFormat('en-US', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 };
+
+export const twoDigits = (num: number) => String(num).padStart(2, '0')
 
 export function isValidAddress(value: any): boolean {
     if (typeof value === 'string') {
@@ -168,6 +173,19 @@ export const copyText = (val: any): boolean => {
     return false;
 }
 
+export function getRemainingDays(targetDate?: string): number {
+    const date = new Date();
+    const time = new Date(date.getTime());
+    const toDate = targetDate ? new Date(targetDate) : null;
+    if ( toDate ) {
+        time.setMonth(toDate.getMonth());
+    } else {
+        time.setMonth(date.getMonth() + 1);
+    }
+    time.setDate(0);
+    return time.getDate() > date.getDate() ? time.getDate() - date.getDate() : 0;
+}
+
 export function timeConvert(n: number, decimals = 0, abbr = false): string {
     const num = n;
     const hours = (num / 60);
@@ -276,8 +294,8 @@ export const getRateIntervalInSeconds = (frequency: PaymentRateType): number => 
     return value;
 }
 
-export const getTransactionOperationDescription = (status: TransactionStatusInfo, trans?: any): string => {
-    switch (status.currentOperation) {
+export const getTransactionOperationDescription = (status: TransactionStatus | undefined, trans?: any): string => {
+    switch (status) {
         case TransactionStatus.TransactionStart:
             return trans ? trans('transactions.status.tx-start') : 'Collecting data';
         case TransactionStatus.InitTransaction:
@@ -424,10 +442,38 @@ export const maxTrailingZeroes = (original: any, zeroes = 2): string => {
     return result;
 }
 
-export const getFormattedNumberToLocale = (value: any, minDigits = 0) => {
+export const getFormattedNumberToLocale = (value: any, digits = 0) => {
     const converted = parseFloat(value.toString());
-    const formatted = new Intl.NumberFormat(undefined, { minimumSignificantDigits: 1, minimumFractionDigits: minDigits }).format(converted);
+    const formatted = new Intl.NumberFormat('en-US', {
+        minimumSignificantDigits: 1,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(converted);
     return formatted || '';
+}
+
+export const toUsCurrency = (value: any) => {
+    const converted = parseFloat(value.toString());
+    const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(converted);
+    return formatted || '';
+}
+
+export const getShortDate = (date: string, includeTime = false): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(
+        localDate,
+        includeTime ? SIMPLE_DATE_TIME_FORMAT : SIMPLE_DATE_FORMAT
+    );
+}
+
+export const getReadableDate = (date: string, includeTime = false): string => {
+    if (!date) { return ''; }
+    const localDate = new Date(date);
+    return dateFormat(
+        localDate,
+        includeTime ? VERBOSE_DATE_TIME_FORMAT : VERBOSE_DATE_FORMAT
+    );
 }
 
 export const getOrdinalDay = (date: Date): string => {
@@ -472,6 +518,14 @@ export function displayTimestamp(
     }).format(expireDate);
 
     return `${dateString} at ${timeString}`;
+}
+
+export function addMinutes(date: Date, minutes: number) {
+    return new Date(date.getTime() + minutes*60000);
+}
+
+export function addHours(date: Date, hours: number) {
+    return new Date(date.setUTCHours(date.getUTCHours() + hours));
 }
 
 export const getTxPercentFeeAmount = (fees: TransactionFees, amount?: any): number => {

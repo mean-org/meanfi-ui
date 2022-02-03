@@ -4,9 +4,13 @@ import { useConnection } from "./connection";
 import { fetchTransactionStatus } from "../utils/transactions";
 import { consoleOut, delay } from "../utils/ui";
 import { OperationType } from "../models/enums";
-import { TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
+import { SOLANA_EXPLORER_URI_INSPECT_TRANSACTION, TRANSACTION_STATUS_RETRY, TRANSACTION_STATUS_RETRY_TIMEOUT } from "../constants";
+import { message } from "antd";
+import { useTranslation } from "react-i18next";
+import { shortenAddress } from "../utils/utils";
 
 export type TxStatus = "fetching" | "fetched" | "error";
+const key = 'updatable';
 
 interface TransactionStatusConfig {
   lastSentTxSignature: string;
@@ -39,6 +43,7 @@ export const TransactionStatusContext = React.createContext<TransactionStatusCon
 const TransactionStatusProvider: React.FC = ({ children }) => {
   const today = new Date();
   const connection = useConnection();
+  const { t } = useTranslation('common');
 
   // Variables
   const [txTimestampAdded, setTxTimestampAdded] = useState(today.getTime());
@@ -61,6 +66,7 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     setLastSentTxStatus(undefined);
     setLastSentTxOperationType(type);
     setFetchingTxStatus(undefined);
+    message.loading({ content: t('transactions.status.tx-confirmation-status-wait'), key, duration: 0, className: 'custom-message' });
   }
 
   const clearTransactionStatusContext = () => {
@@ -114,18 +120,38 @@ const TransactionStatusProvider: React.FC = ({ children }) => {
     lastSentTxSignature
   ])
 
+  const warningMessage = (
+    <>
+    <span>
+      {t(
+        'transactions.status.tx-confirmation-status-timeout',
+        {timeout: `${TRANSACTION_STATUS_RETRY_TIMEOUT / 1000}${t('general.seconds')}`}
+      )}. {t('transactions.status.tx-confirm-failure-check')}.
+    </span>
+    <div>
+      <a className="secondary-link"
+          href={`${SOLANA_EXPLORER_URI_INSPECT_TRANSACTION}${lastSentTxSignature}`}
+          target="_blank"
+          rel="noopener noreferrer">
+          {shortenAddress(lastSentTxSignature, 8)}
+      </a>
+    </div>
+    </>
+  );
+
   useEffect(() => {
     if (!lastSentTxSignature || lastSentTxStatus === finality || fetchTxInfoStatus !== undefined) { return; }
 
     setFetchingTxStatus("fetching");
 
     (async () => {
-      consoleOut('Calling getTxStatus()...', '', 'crimson');
       const result = await getTxStatus();
       if (result === finality) {
         setFetchingTxStatus("fetched");
+        message.success({ content: t('transactions.status.tx-confirmation-status-confirmed'), key, duration: 3, className: 'custom-message' });
       } else {
         setFetchingTxStatus("error");
+        message.warning({ content: warningMessage, key, duration: 5, className: 'custom-message' });
       }
       consoleOut('Total confirmation time (s):', ((new Date().getTime()) - txTimestampAdded) / 1000,'blue');
     })();
