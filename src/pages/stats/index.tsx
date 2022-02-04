@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { PreFooter } from "../../components/PreFooter";
 import "./style.less";
 import { data } from "./data";
@@ -10,9 +10,62 @@ import { copyText } from '../../utils/ui';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { PriceGraph } from './PriceGraph';
+import { useConnection } from '../../contexts/connection';
+import { PublicKey } from '@solana/web3.js';
+import { AppStateContext } from '../../contexts/appstate';
+import { UserTokenAccount } from '../../models/transactions';
+import { TokenInfo } from '@solana/spl-token-registry';
+import { toUiAmount } from '../../utils/utils';
 
 export const StatsView = () => { 
   const { t } = useTranslation('common');
+  const connection = useConnection();
+  const {
+    userTokens,
+  } = useContext(AppStateContext);
+  const [meanTotalSupply, setMeanTotalSupply] = useState<number | undefined>(undefined);
+  const [meanDecimals, setMeanDecimals] = useState<number | undefined>(undefined);
+  const [meanMintAuth, setMeanMintAuth] = useState<string>('');
+  const [meanToken, setMeanToken] = useState<TokenInfo | UserTokenAccount | undefined>(undefined);
+
+  // Getters
+
+  // Data handling / fetching
+
+  // Get MEAN token info
+  useEffect(() => {
+    if (!connection) { return; }
+
+    (async () => {
+    
+      const token = userTokens.find(t => t.symbol === 'MEAN');
+      if (!token) { return; }
+      console.log('MEAN token:', token);
+      const mint = new PublicKey(token.address);
+      setMeanToken(token);
+
+      // 1. use getParsedAccountInfo
+      let accountInfo = await connection.getParsedAccountInfo(mint);
+      if (accountInfo) {
+        console.log(`raw data: ${JSON.stringify((accountInfo as any).value.data["parsed"]["info"])}`);
+        const amount = (accountInfo as any).value.data["parsed"]["info"]["supply"];
+        setMeanTotalSupply(toUiAmount(amount, meanToken ? meanToken.decimals : 6));
+        setMeanDecimals((accountInfo as any).value.data["parsed"]["info"]["decimals"]);
+        setMeanMintAuth((accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]);
+        // console.log(`supply: ${(accountInfo as any).value.data["parsed"]["info"]["supply"]}`);
+        // console.log(`decimals: ${(accountInfo as any).value.data["parsed"]["info"]["decimals"]}`);
+        // console.log(`mintAuthority: ${(accountInfo as any).value.data["parsed"]["info"]["mintAuthority"]}`);
+      }
+
+    })();
+
+  }, [
+    meanToken,
+    userTokens,
+    connection,
+  ]);
+
+  // Rendering
 
   return (
     <>
@@ -39,6 +92,14 @@ export const StatsView = () => {
     </>
   );
 }
+
+/**
+ * <CountUp
+    end={userAllocation.tokenAmount}
+    decimals={2}
+    separator=','
+    duration={2} />
+ */
 
 /*********************** PROMO SPACE *************************/
 export const PromoSpace = () => {
